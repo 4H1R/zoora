@@ -1,0 +1,560 @@
+{
+  "common": {
+    "brandName": "ادوکانکت",
+    "getStarted": "شروع کنید",
+    "learnMore": "بیشتر بدانید",
+    "search": "جستجو…",
+    "export": "خروجی",
+    "viewAll": "مشاهده همه",
+    "manage": "مدیریت",
+    "details": "جزئیات",
+    "save": "ذخیره",
+    "cancel": "انصراف",
+    "close": "بستن",
+    "joinClass": "ورود به کلاس",
+    "startClass": "شروع کلاس",
+    "endClass": "پایان کلاس",
+    "remindMe": "یادآوری",
+    "joinNow": "ورود",
+    "recording": "ضبط",
+    "publish": "انتشار",
+    "create": "ایجاد",
+    "delete": "حذف",
+    "deleteConfirm": {
+      "title": "آیا مطمئن هستید؟",
+      "description": "\"{{name}}\" به‌طور دائم حذف خواهد شد. این عمل قابل بازگشت نیست."
+    },
+    "default": "پیشفرض",
+    "noResults": "نتیجه‌ای یافت نشد."
+  },
+  "nav": {
+    "overview": "نمای کلی",
+    "classes": "کلاس‌ها",
+    "schedule": "برنامه زمانی",
+    "recordings": "ضبط‌ها",
+    "students": "دانشجویان",
+    "analytics": "تحلیل‌ها",
+    "settings": "تنظیمات",
+    "organization": "سازمان",
+    "myCourses": "دوره‌های من",
+    "library": "کتابخانه",
+    "messages": "پیام‌ها",
+    "browseCatalog": "مرور کاتالوگ",
+    "home": "خانه"
+  },
+  "dashboard": {
+    "greeting": "عصر بخیر، {{name}}",
+    "welcomeBack": "خوش برگشتید، {{name}}",
+    "newClass": "کلاس جدید",
+    "scheduleClass": "زمان‌بندی کلاس…",
+    "startNext": "شروع کلاس بعدی",
+    "todaySchedule": "امروز · {{date}}",
+    "viewSchedule": "مشاهده برنامه ←",
+    "recentActivity": "فعالیت اخیر",
+    "myClassrooms": "کلاس‌های من",
+    "myCourses": "دوره‌های من",
+    "thisWeekSchedule": "برنامه این هفته",
+    "recentLibrary": "موارد اخیر کتابخانه",
+    "fullCalendar": "تقویم کامل ←"
+  },
+  "stats": {
+    "activeStudents": "دانشجویان فعال",
+    "hoursTaught": "ساعات تدریس",
+    "avgAttendance": "میانگین حضور",
+    "recordings": "ضبط‌ها",
+    "enrolled": "ثبت‌نام شده",
+    "hoursLearned": "ساعات یادگیری",
+    "assignments": "تکالیف",
+    "avgProgress": "میانگین پیشرفت"
+  },
+  "status": {
+    "live": "زنده",
+    "scheduled": "برنامه‌ریزی شده",
+    "ended": "پایان یافته",
+    "processing": "در حال پردازش",
+    "failed": "ناموفق",
+    "draft": "پیش‌نویس",
+    "active": "فعال",
+    "startsIn": "شروع در {{time}}",
+    "endedAgo": "{{time}} پیش پایان یافت",
+    "liveNow": "اکنون زنده"
+  },
+  "home": {
+    "title": "به ادوکانکت خوش آمدید",
+    "subtitle": "پلتفرم کلاس مجازی"
+  },
+  "theme": {
+    "light": "تغییر به حالت روشن",
+    "dark": "تغییر به حالت تاریک"
+  },
+  "logout": {
+    "success": "با موفقیت خارج شدید"
+  },
+  "admin": {
+    "panel": "پنل مدیریت",
+    "platform": "پلتفرم",
+    "dashboard": {
+      "title": "داشبورد",
+      "welcome": "نمای کلی پلتفرم",
+      "welcomeHint": "آمار لحظه‌ای در تمام سازمان‌ها و منابع.",
+      "stats": {
+        "organizations": "سازمان‌ها",
+        "activeOrgs": "سازمان‌های فعال",
+        "users": "کل اعضا",
+        "classes": "کلاس‌ها",
+        "liveSessions": "جلسات زنده",
+        "quizzes": "آزمون‌ها",
+        "polls": "نظرسنجی‌ها",
+        "questionBanks": "بانک‌های سوال"
+      },
+      "recent": {
+        "usersTitle": "کاربران اخیر",
+        "orgsTitle": "سازمان‌های اخیر",
+        "viewAll": "مشاهده همه",
+        "empty": "موردی یافت نشد",
+        "name": "نام",
+        "username": "نام کاربری",
+        "role": "نقش",
+        "status": "وضعیت",
+        "created": "ایجاد شده"
+      }
+    },
+    "users": {
+      "title": "کاربران",
+      "searchPlaceholder": "جستجوی کاربران…",
+      "newUser": "کاربر جدید",
+      "name": "نام",
+      "username": "نام کاربری",
+      "isAdmin": "مدیر",
+      "isAdminLabel": "مدیر",
+      "isStaff": "کارمند",
+      "isStaffLabel": "کارمند",
+      "createdAt": "ایجاد شده",
+      "noResults": "کاربری یافت نشد",
+      "noResultsHint": "جستجو یا فیلترهای خود را تغییر دهید",
+      "stats": {
+        "total": "کل کاربران"
+      },
+      "actions": {
+        "edit": "ویرایش کاربر",
+        "delete": "حذف"
+      },
+      "form": {
+        "createTitle": "کاربر جدید",
+        "createDescription": "یک کاربر جدید در پلتفرم ایجاد کنید.",
+        "editTitle": "ویرایش کاربر",
+        "editDescription": "اطلاعات کاربر را بروزرسانی کنید.",
+        "name": "نام",
+        "namePlaceholder": "نام کامل",
+        "username": "نام کاربری",
+        "usernamePlaceholder": "نام کاربری",
+        "password": "رمز عبور",
+        "passwordPlaceholder": "رمز عبور (حداقل ۶ کاراکتر)",
+        "isAdmin": "مدیر",
+        "isStaff": "کارمند",
+        "role": "نقش",
+        "rolePlaceholder": "انتخاب نقش…",
+        "noRole": "بدون نقش",
+        "createSuccess": "کاربر ایجاد شد",
+        "updateSuccess": "کاربر بروزرسانی شد",
+        "deleteSuccess": "کاربر حذف شد",
+        "organization": "سازمان",
+        "organizationPlaceholder": "انتخاب سازمان…",
+        "passwordOptional": "اختیاری",
+        "passwordOptionalPlaceholder": "برای نگه داشتن رمز فعلی خالی بگذارید"
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش/پنهان ستون‌ها"
+      },
+      "organization": "سازمان"
+    },
+    "nav": {
+      "users": "کاربران",
+      "roles": "نقش‌ها",
+      "classes": "کلاس‌ها"
+    },
+    "classes": {
+      "title": "کلاس‌ها",
+      "searchPlaceholder": "جستجوی کلاس‌ها…",
+      "newClass": "کلاس جدید",
+      "name": "کلاس",
+      "teacher": "مدرس",
+      "organization": "سازمان",
+      "capacity": "ظرفیت",
+      "unlimited": "نامحدود",
+      "createdAt": "ایجاد شده",
+      "noResults": "کلاسی یافت نشد",
+      "noResultsHint": "جستجو یا فیلترهای خود را تغییر دهید",
+      "stats": {
+        "total": "کل کلاس‌ها"
+      },
+      "actions": {
+        "edit": "ویرایش کلاس",
+        "delete": "حذف"
+      },
+      "form": {
+        "createTitle": "کلاس جدید",
+        "createDescription": "یک کلاس جدید ایجاد کنید.",
+        "editTitle": "ویرایش کلاس",
+        "editDescription": "اطلاعات کلاس را به‌روز کنید.",
+        "name": "نام",
+        "namePlaceholder": "نام کلاس",
+        "description": "توضیحات",
+        "descriptionPlaceholder": "توضیحات اختیاری",
+        "capacity": "ظرفیت",
+        "capacityPlaceholder": "۰ = نامحدود",
+        "organization": "سازمان",
+        "organizationPlaceholder": "انتخاب سازمان…",
+        "teacher": "مدرس",
+        "teacherPlaceholder": "انتخاب مدرس…",
+        "createSuccess": "کلاس ایجاد شد",
+        "updateSuccess": "کلاس به‌روز شد",
+        "deleteSuccess": "کلاس حذف شد"
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش/پنهان ستون‌ها"
+      }
+    },
+    "roles": {
+      "title": "نقش‌ها",
+      "subtitle": "مدیریت نقش‌ها و دسترسی‌های آن‌ها در سراسر پلتفرم.",
+      "searchPlaceholder": "جستجوی نقش‌ها…",
+      "newRole": "نقش جدید",
+      "name": "نقش",
+      "organization": "سازمان",
+      "permissions": "دسترسی‌ها",
+      "permissionsCount": "{{count}} دسترسی",
+      "createdAt": "ایجاد شده",
+      "updatedAt": "به‌روزشده",
+      "noResults": "نقشی یافت نشد",
+      "noResultsHint": "جستجو یا فیلترهای خود را تغییر دهید",
+      "stats": {
+        "total": "کل نقش‌ها",
+        "permissions": "کل دسترسی‌ها"
+      },
+      "actions": {
+        "edit": "ویرایش نقش",
+        "delete": "حذف"
+      },
+      "form": {
+        "createTitle": "نقش جدید",
+        "createDescription": "یک نقش جدید ایجاد کنید و دسترسی‌ها را تعیین کنید.",
+        "editTitle": "ویرایش نقش",
+        "editDescription": "نام نقش و دسترسی‌ها را بروزرسانی کنید.",
+        "organization": "سازمان",
+        "organizationPlaceholder": "انتخاب سازمان…",
+        "name": "نام",
+        "namePlaceholder": "نام نقش",
+        "permissions": "دسترسی‌ها",
+        "permissionsPlaceholder": "انتخاب دسترسی‌ها…",
+        "createSuccess": "نقش ایجاد شد",
+        "updateSuccess": "نقش بروزرسانی شد",
+        "deleteSuccess": "نقش حذف شد"
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "sortBy": "مرتب‌سازی بر اساس",
+        "sortOptions": {
+          "name": "نام",
+          "created_at": "تاریخ ایجاد",
+          "updated_at": "تاریخ بروزرسانی"
+        },
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش/پنهان ستون‌ها"
+      }
+    },
+    "permissions": {
+      "title": "دسترسی‌ها",
+      "searchPlaceholder": "جستجو…",
+      "name": "دسترسی",
+      "resource": "منبع",
+      "action": "عملیات",
+      "createdAt": "ایجاد شده",
+      "updatedAt": "به‌روزشده",
+      "noResults": "دسترسی‌ای یافت نشد",
+      "noResultsHint": "جستجوی خود را تغییر دهید",
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش/پنهان ستون"
+      }
+    },
+    "organizations": "سازمان‌ها",
+    "projects": "پروژه‌ها",
+    "viewProject": "مشاهده پروژه",
+    "shareProject": "اشتراک‌گذاری پروژه",
+    "deleteProject": "حذف پروژه",
+    "more": "بیشتر",
+    "logOut": "خروج",
+    "pagination": {
+      "rowsPerPage": "ردیف در صفحه",
+      "showing": "{{from}}–{{to}} از {{total}}"
+    },
+    "orgs": {
+      "title": "سازمان‌ها",
+      "subtitle": "مستأجران پلتفرم Zoora. مدیریت دسترسی اعضا و تنظیمات سازمان.",
+      "searchPlaceholder": "جستجو…",
+      "includeDeleted": "شامل حذف‌شده‌ها",
+      "newOrg": "سازمان جدید",
+      "name": "سازمان",
+      "status": "وضعیت",
+      "totalUsers": "اعضا",
+      "statusLabels": {
+        "active": "فعال",
+        "trial": "آزمایشی",
+        "suspended": "معلق",
+        "archived": "بایگانی"
+      },
+      "tabs": {
+        "all": "همه",
+        "active": "فعال",
+        "trial": "آزمایشی",
+        "suspended": "معلق",
+        "archived": "بایگانی"
+      },
+      "createdAt": "تاریخ ایجاد",
+      "updatedAt": "تاریخ بروزرسانی",
+      "noResults": "سازمانی یافت نشد",
+      "noResultsHint": "فیلترها یا جستجوی خود را تغییر دهید",
+      "stats": {
+        "total": "کل سازمان‌ها",
+        "active": "فعال",
+        "deleted": "حذف‌شده",
+        "users": "کل اعضا"
+      },
+      "actions": {
+        "edit": "ویرایش سازمان",
+        "delete": "حذف",
+        "restore": "بازیابی",
+        "goToOrg": "رفتن به سازمان"
+      },
+      "form": {
+        "createTitle": "سازمان جدید",
+        "createDescription": "یک سازمان جدید به پلتفرم اضافه کنید.",
+        "editTitle": "ویرایش سازمان",
+        "editDescription": "جزئیات سازمان را بروزرسانی کنید.",
+        "name": "نام",
+        "namePlaceholder": "نام سازمان",
+        "description": "توضیحات",
+        "descriptionPlaceholder": "توضیحات مختصر (اختیاری)",
+        "status": "وضعیت",
+        "statusPlaceholder": "انتخاب وضعیت",
+        "createSuccess": "سازمان ایجاد شد",
+        "updateSuccess": "سازمان بروزرسانی شد",
+        "deleteSuccess": "سازمان حذف شد"
+      },
+      "pagination": {
+        "showing": "{{from}}–{{to}} از {{total}}",
+        "page": "{{current}} / {{total}}"
+      },
+      "switcher": {
+        "label": "سازمان",
+        "all": "همه سازمان‌ها",
+        "scope": "محدوده",
+        "search": "جستجوی سازمان…",
+        "recent": "اخیر",
+        "allOrgs": "همه سازمان‌ها",
+        "create": "ایجاد سازمان"
+      },
+      "toolbar": {
+        "plan": "پلن",
+        "planOptions": {
+          "all": "همه",
+          "enterprise": "سازمانی",
+          "business": "تجاری",
+          "starter": "مبتدی",
+          "trial": "آزمایشی"
+        },
+        "created": "تاریخ ایجاد",
+        "createdOptions": {
+          "anytime": "همیشه",
+          "today": "امروز",
+          "week": "این هفته",
+          "month": "این ماه",
+          "year": "امسال"
+        },
+        "moreFilters": "فیلترهای بیشتر",
+        "filters": "فیلترها",
+        "sort": "مرتب‌سازی",
+        "sortBy": "مرتب‌سازی بر اساس",
+        "sortOptions": {
+          "name": "نام",
+          "created_at": "تاریخ ایجاد",
+          "updated_at": "تاریخ بروزرسانی"
+        },
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش/پنهان ستون‌ها"
+      }
+    },
+    "roleAdmin": "مدیر پلتفرم",
+    "roleStaff": "مدیر",
+    "roleMember": "عضو"
+  },
+  "classes": {
+    "sessions": {
+      "newSession": "جلسه جدید",
+      "start": "شروع",
+      "empty": "هنوز جلسه‌ای وجود ندارد",
+      "form": {
+        "name": "نام",
+        "startTime": "زمان شروع",
+        "type": "نوع"
+      },
+      "types": {
+        "live": "زنده",
+        "quiz": "آزمون",
+        "practice": "تمرین"
+      }
+    }
+  },
+  "login": {
+    "title": "خوش برگشتید",
+    "subtitle": "برای ادامه وارد کلاس خود شوید.",
+    "subtitleStudent": "برای مشاهده کلاس‌ها و منابع امروز وارد شوید.",
+    "subtitleOrg": "برای مدیریت یادگیری سازمان خود وارد شوید.",
+    "newHere": "تازه وارد هستید؟",
+    "createAccount": "ایجاد حساب",
+    "role": {
+      "instructor": "مدرس",
+      "student": "دانشجو",
+      "organization": "سازمان"
+    },
+    "username": "نام کاربری",
+    "usernamePlaceholder": "نام کاربری خود را وارد کنید",
+    "password": "رمز عبور",
+    "passwordPlaceholder": "رمز عبور را وارد کنید",
+    "forgotPassword": "فراموشی رمز؟",
+    "showPassword": "نمایش رمز عبور",
+    "hidePassword": "پنهان کردن رمز عبور",
+    "rememberMe": "مرا در این دستگاه وارد نگه دار",
+    "submit": "ورود",
+    "submitting": "در حال ورود…",
+    "usernameError": "نام کاربری باید حداقل ۳ کاراکتر باشد",
+    "passwordError": "رمز عبور باید حداقل ۸ کاراکتر باشد",
+    "success": "خوش آمدید! در حال انتقال…",
+    "error": "نام کاربری یا رمز عبور نامعتبر است",
+    "separator": "یا ادامه با",
+    "googleLogin": "گوگل",
+    "appleLogin": "اپل",
+    "noAccount": "حساب کاربری ندارید؟",
+    "createOne": "ایجاد حساب",
+    "legalPrefix": "با ادامه، شما با",
+    "legalAnd": "و",
+    "terms": "شرایط استفاده",
+    "privacy": "سیاست حریم خصوصی"
+  },
+  "org": {
+    "panel": "سازمان",
+    "nav": {
+      "dashboard": "داشبورد",
+      "classes": "کلاس‌ها",
+      "members": "اعضا",
+      "management": "مدیریت",
+      "users": "کاربران",
+      "roles": "نقش‌ها و دسترسی‌ها",
+      "settings": "تنظیمات",
+      "files": "فایل‌ها"
+    },
+    "users": {
+      "title": "کاربران",
+      "searchPlaceholder": "جستجوی کاربران…",
+      "newUser": "کاربر جدید",
+      "name": "نام",
+      "username": "نام کاربری",
+      "role": "نقش",
+      "createdAt": "تاریخ ایجاد",
+      "noResults": "کاربری یافت نشد",
+      "noResultsHint": "جستجوی خود را تغییر دهید یا کاربر جدید بسازید.",
+      "stats": {
+        "total": "کل کاربران"
+      },
+      "actions": {
+        "edit": "ویرایش کاربر",
+        "delete": "حذف"
+      },
+      "form": {
+        "createTitle": "کاربر جدید",
+        "createDescription": "ایجاد کاربر جدید در این سازمان.",
+        "editTitle": "ویرایش کاربر",
+        "editDescription": "به‌روزرسانی اطلاعات کاربر.",
+        "name": "نام",
+        "namePlaceholder": "نام کامل",
+        "username": "نام کاربری",
+        "usernamePlaceholder": "نام کاربری",
+        "password": "رمز عبور",
+        "passwordPlaceholder": "رمز عبور (حداقل ۶ کاراکتر)",
+        "role": "نقش",
+        "rolePlaceholder": "انتخاب نقش…",
+        "noRole": "بدون نقش",
+        "createSuccess": "کاربر ایجاد شد",
+        "updateSuccess": "کاربر به‌روزرسانی شد",
+        "deleteSuccess": "کاربر حذف شد"
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "تغییر ستون‌ها"
+      }
+    },
+    "settings": {
+      "title": "تنظیمات سازمان",
+      "subtitle": "نام و توضیحات سازمان خود را به‌روزرسانی کنید.",
+      "name": "نام",
+      "namePlaceholder": "نام سازمان",
+      "description": "توضیحات",
+      "descriptionPlaceholder": "توضیحات مختصر درباره سازمان شما",
+      "nameError": "نام باید حداقل ۲ کاراکتر باشد",
+      "updateSuccess": "سازمان به‌روزرسانی شد",
+      "saving": "در حال ذخیره…"
+    },
+    "roles": {
+      "title": "نقش‌ها",
+      "searchPlaceholder": "جستجوی نقش‌ها…",
+      "newRole": "نقش جدید",
+      "name": "نقش",
+      "permissions": "دسترسی‌ها",
+      "permissionsCount": "{{count}} دسترسی",
+      "createdAt": "تاریخ ایجاد",
+      "noResults": "نقشی یافت نشد",
+      "noResultsHint": "جستجوی خود را تغییر دهید یا نقش جدید بسازید.",
+      "stats": {
+        "total": "کل نقش‌ها",
+        "permissions": "کل دسترسی‌ها"
+      },
+      "actions": {
+        "edit": "ویرایش نقش",
+        "delete": "حذف"
+      },
+      "form": {
+        "createTitle": "نقش جدید",
+        "createDescription": "یک نقش جدید ایجاد کنید و دسترسی‌ها را تعیین کنید.",
+        "editTitle": "ویرایش نقش",
+        "editDescription": "نام نقش و دسترسی‌ها را به‌روزرسانی کنید.",
+        "name": "نام",
+        "namePlaceholder": "نام نقش",
+        "permissions": "دسترسی‌ها",
+        "permissionsPlaceholder": "انتخاب دسترسی‌ها…",
+        "createSuccess": "نقش ایجاد شد",
+        "updateSuccess": "نقش به‌روزرسانی شد",
+        "deleteSuccess": "نقش حذف شد"
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "تغییر ستون‌ها"
+      }
+    }
+  },
+  "liveRoom": {
+    "session": "جلسه زنده",
+    "joinSession": "ورود به جلسه",
+    "joinError": "ورود به جلسه ناموفق بود. لطفاً دوباره تلاش کنید.",
+    "sessionEnded": "جلسه پایان یافته",
+    "leave": "خروج",
+    "maxParticipants": "حداکثر {{count}} شرکت‌کننده"
+  }
+}

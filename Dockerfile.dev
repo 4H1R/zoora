@@ -1,0 +1,21 @@
+FROM golang:1.25-alpine
+
+RUN apk add --no-cache \
+    git \
+    make \
+    curl \
+    bash
+
+RUN go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+RUN go install github.com/air-verse/air@latest
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+EXPOSE 8080
+
+CMD ["air"]

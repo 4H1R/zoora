@@ -1,0 +1,298 @@
+package questionbanks
+
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+
+	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/platform/httpx"
+	"github.com/4H1R/zoora/internal/platform/listparams"
+)
+
+var banksListConfig = domain.ListConfig{
+	AllowedSearchFields: []string{"name", "description"},
+	AllowedOrderFields:  []string{"created_at", "updated_at", "name"},
+	DefaultOrderBy:      "created_at",
+	DefaultOrderDir:     "desc",
+}
+
+var questionsListConfig = domain.ListConfig{
+	AllowedSearchFields: []string{"text"},
+	AllowedOrderFields:  []string{"created_at", "updated_at", "type"},
+	DefaultOrderBy:      "created_at",
+	DefaultOrderDir:     "desc",
+}
+
+type Handler struct {
+	svc domain.QuestionBankService
+}
+
+func NewHandler(svc domain.QuestionBankService) *Handler {
+	return &Handler{svc: svc}
+}
+
+func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.HandlerFunc, perm func(domain.PermissionName) gin.HandlerFunc) {
+	idParam := httpx.RequireUUIDParam("id")
+	questionIDParam := httpx.RequireUUIDParam("questionId")
+
+	authed := rg.Group("", authMiddleware)
+	{
+		authed.GET("/question-banks", h.List)
+		authed.POST("/question-banks", perm(domain.PermQuestionBanksCreate), h.Create)
+		authed.GET("/question-banks/:id", idParam, h.Get)
+		authed.PUT("/question-banks/:id", perm(domain.PermQuestionBanksUpdate), idParam, h.Update)
+		authed.DELETE("/question-banks/:id", perm(domain.PermQuestionBanksDelete), idParam, h.Delete)
+
+		authed.GET("/question-banks/:id/questions", idParam, h.ListQuestions)
+		authed.POST("/question-banks/:id/questions", perm(domain.PermQuestionBanksUpdate), idParam, h.CreateQuestion)
+		authed.GET("/question-banks/questions/:questionId", questionIDParam, h.GetQuestion)
+		authed.PUT("/question-banks/questions/:questionId", perm(domain.PermQuestionBanksUpdate), questionIDParam, h.UpdateQuestion)
+		authed.DELETE("/question-banks/questions/:questionId", perm(domain.PermQuestionBanksDelete), questionIDParam, h.DeleteQuestion)
+	}
+}
+
+// List returns question banks visible to the caller.
+// @Summary List question banks (scoped by org)
+// @Description Returns question banks filtered by caller's organization. Admins see all. Search matches substrings of: name, description. Orderable fields: created_at, updated_at, name.
+// @Tags QuestionBanks
+// @Produce json
+// @Security BearerAuth
+// @Param search query string false "Substring match on name/description"
+// @Param order_by query string false "One of: created_at, updated_at, name"
+// @Param order_dir query string false "asc or desc"
+// @Param page query int false "1-based page number"
+// @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.QuestionBank}}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 500 {object} domain.Response{error=domain.ErrorBody}
+// @Router /question-banks [get]
+func (h *Handler) List(c *gin.Context) {
+	p := listparams.Bind(c, banksListConfig)
+	banks, total, err := h.svc.List(c.Request.Context(), p)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(banks, total, p))
+}
+
+// Create creates a question bank in the caller's organization.
+// @Summary Create question bank
+// @Tags QuestionBanks
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body domain.CreateQuestionBankDTO true "Question bank data"
+// @Success 201 {object} domain.Response{data=domain.QuestionBank}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Router /question-banks [post]
+func (h *Handler) Create(c *gin.Context) {
+	var dto domain.CreateQuestionBankDTO
+	if err := httpx.Bind(c, &dto); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	bank, err := h.svc.Create(c.Request.Context(), dto)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusCreated, bank)
+}
+
+// Get returns a question bank by ID.
+// @Summary Get question bank
+// @Tags QuestionBanks
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Question bank UUID"
+// @Success 200 {object} domain.Response{data=domain.QuestionBank}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /question-banks/{id} [get]
+func (h *Handler) Get(c *gin.Context) {
+	bank, err := h.svc.GetByID(c.Request.Context(), httpx.UUIDParam(c, "id"))
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, bank)
+}
+
+// Update updates a question bank.
+// @Summary Update question bank
+// @Tags QuestionBanks
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Question bank UUID"
+// @Param body body domain.UpdateQuestionBankDTO true "Update data"
+// @Success 200 {object} domain.Response{data=domain.QuestionBank}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /question-banks/{id} [put]
+func (h *Handler) Update(c *gin.Context) {
+	var dto domain.UpdateQuestionBankDTO
+	if err := httpx.Bind(c, &dto); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	bank, err := h.svc.Update(c.Request.Context(), httpx.UUIDParam(c, "id"), dto)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, bank)
+}
+
+// Delete soft-deletes a question bank.
+// @Summary Delete question bank
+// @Tags QuestionBanks
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Question bank UUID"
+// @Success 200 {object} domain.Response
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /question-banks/{id} [delete]
+func (h *Handler) Delete(c *gin.Context) {
+	if err := h.svc.Delete(c.Request.Context(), httpx.UUIDParam(c, "id")); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, nil)
+}
+
+// ListQuestions returns questions belonging to a bank.
+// @Summary List questions in a bank
+// @Description Returns questions filtered by optional type. Search matches substrings of: text. Orderable fields: created_at, updated_at, type.
+// @Tags QuestionBanks
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Question bank UUID"
+// @Param type query string false "Filter by question type (descriptive, short_answer, choice)"
+// @Param search query string false "Substring match on text"
+// @Param order_by query string false "One of: created_at, updated_at, type"
+// @Param order_dir query string false "asc or desc"
+// @Param page query int false "1-based page number"
+// @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.Question}}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /question-banks/{id}/questions [get]
+func (h *Handler) ListQuestions(c *gin.Context) {
+	var q domain.ListQuestionsQuery
+	if err := c.ShouldBindQuery(&q); err != nil {
+		_ = c.Error(domain.NewValidationError(map[string]string{"query": err.Error()}))
+		return
+	}
+	q.ListParams = listparams.Bind(c, questionsListConfig)
+	questions, total, err := h.svc.ListQuestions(c.Request.Context(), httpx.UUIDParam(c, "id"), q)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(questions, total, q.ListParams))
+}
+
+// CreateQuestion adds a question to a bank.
+// @Summary Create question in bank
+// @Tags QuestionBanks
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Question bank UUID"
+// @Param body body domain.CreateQuestionDTO true "Question data"
+// @Success 201 {object} domain.Response{data=domain.Question}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /question-banks/{id}/questions [post]
+func (h *Handler) CreateQuestion(c *gin.Context) {
+	var dto domain.CreateQuestionDTO
+	if err := httpx.Bind(c, &dto); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	question, err := h.svc.CreateQuestion(c.Request.Context(), httpx.UUIDParam(c, "id"), dto)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusCreated, question)
+}
+
+// GetQuestion returns a question by ID.
+// @Summary Get question
+// @Tags QuestionBanks
+// @Produce json
+// @Security BearerAuth
+// @Param questionId path string true "Question UUID"
+// @Success 200 {object} domain.Response{data=domain.Question}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /question-banks/questions/{questionId} [get]
+func (h *Handler) GetQuestion(c *gin.Context) {
+	question, err := h.svc.GetQuestion(c.Request.Context(), httpx.UUIDParam(c, "questionId"))
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, question)
+}
+
+// UpdateQuestion updates a question.
+// @Summary Update question
+// @Tags QuestionBanks
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param questionId path string true "Question UUID"
+// @Param body body domain.UpdateQuestionDTO true "Update data"
+// @Success 200 {object} domain.Response{data=domain.Question}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /question-banks/questions/{questionId} [put]
+func (h *Handler) UpdateQuestion(c *gin.Context) {
+	var dto domain.UpdateQuestionDTO
+	if err := httpx.Bind(c, &dto); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	question, err := h.svc.UpdateQuestion(c.Request.Context(), httpx.UUIDParam(c, "questionId"), dto)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, question)
+}
+
+// DeleteQuestion soft-deletes a question.
+// @Summary Delete question
+// @Tags QuestionBanks
+// @Produce json
+// @Security BearerAuth
+// @Param questionId path string true "Question UUID"
+// @Success 200 {object} domain.Response
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /question-banks/questions/{questionId} [delete]
+func (h *Handler) DeleteQuestion(c *gin.Context) {
+	if err := h.svc.DeleteQuestion(c.Request.Context(), httpx.UUIDParam(c, "questionId")); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, nil)
+}

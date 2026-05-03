@@ -1,0 +1,560 @@
+{
+  "common": {
+    "brandName": "Zoora",
+    "getStarted": "Get started",
+    "learnMore": "Learn more",
+    "search": "Search…",
+    "export": "Export",
+    "viewAll": "View all",
+    "manage": "Manage",
+    "details": "Details",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "joinClass": "Join class",
+    "startClass": "Start class",
+    "endClass": "End class",
+    "remindMe": "Remind me",
+    "joinNow": "Join now",
+    "recording": "Recording",
+    "publish": "Publish",
+    "create": "Create",
+    "delete": "Delete",
+    "deleteConfirm": {
+      "title": "Are you sure?",
+      "description": "This will permanently delete \"{{name}}\". This action cannot be undone."
+    },
+    "default": "Default",
+    "noResults": "No results."
+  },
+  "nav": {
+    "overview": "Overview",
+    "classes": "Classes",
+    "schedule": "Schedule",
+    "recordings": "Recordings",
+    "students": "Students",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "organization": "Organization",
+    "myCourses": "My courses",
+    "library": "Library",
+    "messages": "Messages",
+    "browseCatalog": "Browse catalog",
+    "home": "Home"
+  },
+  "dashboard": {
+    "greeting": "Good afternoon, {{name}}",
+    "welcomeBack": "Welcome back, {{name}}",
+    "newClass": "New class",
+    "scheduleClass": "Schedule class…",
+    "startNext": "Start next class",
+    "todaySchedule": "Today · {{date}}",
+    "viewSchedule": "View schedule →",
+    "recentActivity": "Recent activity",
+    "myClassrooms": "My classrooms",
+    "myCourses": "My courses",
+    "thisWeekSchedule": "This week's schedule",
+    "recentLibrary": "Recent library items",
+    "fullCalendar": "Full calendar →"
+  },
+  "stats": {
+    "activeStudents": "Active students",
+    "hoursTaught": "Hours taught",
+    "avgAttendance": "Avg attendance",
+    "recordings": "Recordings",
+    "enrolled": "Enrolled",
+    "hoursLearned": "Hours learned",
+    "assignments": "Assignments",
+    "avgProgress": "Avg progress"
+  },
+  "status": {
+    "live": "LIVE",
+    "scheduled": "Scheduled",
+    "ended": "Ended",
+    "processing": "Processing",
+    "failed": "Failed",
+    "draft": "Draft",
+    "active": "Active",
+    "startsIn": "Starts in {{time}}",
+    "endedAgo": "Ended {{time}} ago",
+    "liveNow": "Live now"
+  },
+  "home": {
+    "title": "Welcome to Zoora",
+    "subtitle": "Virtual classroom platform"
+  },
+  "theme": {
+    "light": "Switch to light mode",
+    "dark": "Switch to dark mode"
+  },
+  "logout": {
+    "success": "You've logged out successfully"
+  },
+  "admin": {
+    "panel": "Admin Panel",
+    "platform": "Platform",
+    "dashboard": {
+      "title": "Dashboard",
+      "welcome": "Platform Overview",
+      "welcomeHint": "Real-time stats across all organizations and resources.",
+      "stats": {
+        "organizations": "Organizations",
+        "activeOrgs": "Active Organizations",
+        "users": "Total Members",
+        "classes": "Classes",
+        "liveSessions": "Live Sessions",
+        "quizzes": "Quizzes",
+        "polls": "Polls",
+        "questionBanks": "Question Banks"
+      },
+      "recent": {
+        "usersTitle": "Recent Users",
+        "orgsTitle": "Recent Organizations",
+        "viewAll": "View all",
+        "empty": "No recent items",
+        "name": "Name",
+        "username": "Username",
+        "role": "Role",
+        "status": "Status",
+        "created": "Created"
+      }
+    },
+    "users": {
+      "title": "Users",
+      "searchPlaceholder": "Search users…",
+      "newUser": "New user",
+      "name": "Name",
+      "username": "Username",
+      "isAdmin": "Admin",
+      "isAdminLabel": "Admin",
+      "isStaff": "Staff",
+      "isStaffLabel": "Staff",
+      "createdAt": "Created",
+      "noResults": "No users found",
+      "noResultsHint": "Try adjusting your search or filters",
+      "stats": {
+        "total": "Total users"
+      },
+      "actions": {
+        "edit": "Edit user",
+        "delete": "Delete"
+      },
+      "form": {
+        "createTitle": "New user",
+        "createDescription": "Create a new platform user.",
+        "editTitle": "Edit user",
+        "editDescription": "Update user details.",
+        "name": "Name",
+        "namePlaceholder": "Full name",
+        "username": "Username",
+        "usernamePlaceholder": "username",
+        "password": "Password",
+        "passwordPlaceholder": "Password (min. 6 characters)",
+        "isAdmin": "Admin",
+        "isStaff": "Staff",
+        "role": "Role",
+        "rolePlaceholder": "Select role…",
+        "noRole": "No Role",
+        "createSuccess": "User created",
+        "updateSuccess": "User updated",
+        "deleteSuccess": "User deleted",
+        "organization": "Organization",
+        "organizationPlaceholder": "Select organization…",
+        "passwordOptional": "optional",
+        "passwordOptionalPlaceholder": "Leave blank to keep current"
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      },
+      "organization": "Organization"
+    },
+    "nav": {
+      "users": "Users",
+      "roles": "Roles",
+      "classes": "Classes"
+    },
+    "classes": {
+      "title": "Classes",
+      "searchPlaceholder": "Search classes…",
+      "newClass": "New class",
+      "name": "Class",
+      "teacher": "Teacher",
+      "organization": "Organization",
+      "capacity": "Capacity",
+      "unlimited": "Unlimited",
+      "createdAt": "Created",
+      "noResults": "No classes found",
+      "noResultsHint": "Try adjusting your search or filters",
+      "stats": {
+        "total": "Total classes"
+      },
+      "actions": {
+        "edit": "Edit class",
+        "delete": "Delete"
+      },
+      "form": {
+        "createTitle": "New class",
+        "createDescription": "Create a new class.",
+        "editTitle": "Edit class",
+        "editDescription": "Update class details.",
+        "name": "Name",
+        "namePlaceholder": "Class name",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional description",
+        "capacity": "Capacity",
+        "capacityPlaceholder": "0 = unlimited",
+        "organization": "Organization",
+        "organizationPlaceholder": "Select organization…",
+        "teacher": "Teacher",
+        "teacherPlaceholder": "Select teacher…",
+        "createSuccess": "Class created",
+        "updateSuccess": "Class updated",
+        "deleteSuccess": "Class deleted"
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
+    },
+    "roles": {
+      "title": "Roles",
+      "subtitle": "Manage roles and their permissions across the platform.",
+      "searchPlaceholder": "Search roles…",
+      "newRole": "New role",
+      "name": "Role",
+      "organization": "Organization",
+      "permissions": "Permissions",
+      "permissionsCount": "{{count}} permissions",
+      "createdAt": "Created",
+      "updatedAt": "Updated",
+      "noResults": "No roles found",
+      "noResultsHint": "Try adjusting your search or filters",
+      "stats": {
+        "total": "Total roles",
+        "permissions": "Total permissions"
+      },
+      "actions": {
+        "edit": "Edit role",
+        "delete": "Delete"
+      },
+      "form": {
+        "createTitle": "New role",
+        "createDescription": "Create a new role and assign permissions.",
+        "editTitle": "Edit role",
+        "editDescription": "Update role name and permissions.",
+        "organization": "Organization",
+        "organizationPlaceholder": "Select organization…",
+        "name": "Name",
+        "namePlaceholder": "Role name",
+        "permissions": "Permissions",
+        "permissionsPlaceholder": "Select permissions…",
+        "createSuccess": "Role created",
+        "updateSuccess": "Role updated",
+        "deleteSuccess": "Role deleted"
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "sortBy": "Sort by",
+        "sortOptions": {
+          "name": "Name",
+          "created_at": "Created",
+          "updated_at": "Updated"
+        },
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
+    },
+    "permissions": {
+      "title": "Permissions",
+      "searchPlaceholder": "Search…",
+      "name": "Permission",
+      "resource": "Resource",
+      "action": "Action",
+      "createdAt": "Created",
+      "updatedAt": "Updated",
+      "noResults": "No permissions found",
+      "noResultsHint": "Try adjusting your search",
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
+    },
+    "organizations": "Organizations",
+    "projects": "Projects",
+    "viewProject": "View Project",
+    "shareProject": "Share Project",
+    "deleteProject": "Delete Project",
+    "more": "More",
+    "logOut": "Log out",
+    "pagination": {
+      "rowsPerPage": "Rows per page",
+      "showing": "{{from}}–{{to}} of {{total}}"
+    },
+    "orgs": {
+      "title": "Organizations",
+      "subtitle": "Tenants on the Zoora platform. Manage member access and organization settings.",
+      "searchPlaceholder": "Search…",
+      "includeDeleted": "Include deleted",
+      "newOrg": "New organization",
+      "name": "Organization",
+      "status": "Status",
+      "totalUsers": "Members",
+      "statusLabels": {
+        "active": "Active",
+        "trial": "Trial",
+        "suspended": "Suspended",
+        "archived": "Archived"
+      },
+      "tabs": {
+        "all": "All",
+        "active": "Active",
+        "trial": "Trial",
+        "suspended": "Suspended",
+        "archived": "Archived"
+      },
+      "createdAt": "Created",
+      "updatedAt": "Updated",
+      "noResults": "No organizations found",
+      "noResultsHint": "Try adjusting your search or filters",
+      "stats": {
+        "total": "Total organizations",
+        "active": "Active",
+        "deleted": "Deleted",
+        "users": "Total members"
+      },
+      "actions": {
+        "edit": "Edit organization",
+        "delete": "Delete",
+        "restore": "Restore",
+        "goToOrg": "Go to organization"
+      },
+      "form": {
+        "createTitle": "New organization",
+        "createDescription": "Add a new organization to the platform.",
+        "editTitle": "Edit organization",
+        "editDescription": "Update organization details.",
+        "name": "Name",
+        "namePlaceholder": "Organization name",
+        "description": "Description",
+        "descriptionPlaceholder": "Brief description (optional)",
+        "status": "Status",
+        "statusPlaceholder": "Select status",
+        "createSuccess": "Organization created",
+        "updateSuccess": "Organization updated",
+        "deleteSuccess": "Organization deleted"
+      },
+      "pagination": {
+        "showing": "{{from}}–{{to}} of {{total}}",
+        "page": "{{current}} / {{total}}"
+      },
+      "switcher": {
+        "label": "Organization",
+        "all": "All organizations",
+        "scope": "Scope",
+        "search": "Search organization…",
+        "recent": "Recent",
+        "allOrgs": "All organizations",
+        "create": "Create organization"
+      },
+      "toolbar": {
+        "plan": "Plan",
+        "planOptions": {
+          "all": "All",
+          "enterprise": "Enterprise",
+          "business": "Business",
+          "starter": "Starter",
+          "trial": "Trial"
+        },
+        "created": "Created",
+        "createdOptions": {
+          "anytime": "Anytime",
+          "today": "Today",
+          "week": "This week",
+          "month": "This month",
+          "year": "This year"
+        },
+        "moreFilters": "More filters",
+        "filters": "Filters",
+        "sort": "Sort",
+        "sortBy": "Sort by",
+        "sortOptions": {
+          "name": "Name",
+          "created_at": "Created",
+          "updated_at": "Updated"
+        },
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
+    },
+    "roleAdmin": "Platform admin",
+    "roleStaff": "Owner",
+    "roleMember": "Member"
+  },
+  "classes": {
+    "sessions": {
+      "newSession": "New session",
+      "start": "Start",
+      "empty": "No sessions yet",
+      "form": {
+        "name": "Name",
+        "startTime": "Start time",
+        "type": "Type"
+      },
+      "types": {
+        "live": "Live",
+        "quiz": "Quiz",
+        "practice": "Practice"
+      }
+    }
+  },
+  "login": {
+    "title": "Welcome back",
+    "subtitle": "Sign in to continue to your classroom.",
+    "subtitleStudent": "Sign in to see today's classes and resources.",
+    "subtitleOrg": "Sign in to manage your organization's learning.",
+    "newHere": "New here?",
+    "createAccount": "Create account",
+    "role": {
+      "instructor": "Instructor",
+      "student": "Student",
+      "organization": "Organization"
+    },
+    "username": "Username",
+    "usernamePlaceholder": "Enter your username",
+    "password": "Password",
+    "passwordPlaceholder": "Enter password",
+    "forgotPassword": "Forgot password?",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "rememberMe": "Keep me signed in on this device",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "usernameError": "Username must be at least 3 characters",
+    "passwordError": "Password must be at least 8 characters",
+    "success": "Welcome back! Redirecting…",
+    "error": "Invalid username or password",
+    "separator": "or continue with",
+    "googleLogin": "Google",
+    "appleLogin": "Apple",
+    "noAccount": "Don't have an account?",
+    "createOne": "Create one",
+    "legalPrefix": "By continuing, you agree to Zoora's",
+    "legalAnd": "and",
+    "terms": "Terms",
+    "privacy": "Privacy Policy"
+  },
+  "org": {
+    "panel": "Organization",
+    "nav": {
+      "dashboard": "Dashboard",
+      "classes": "Classes",
+      "members": "Members",
+      "management": "Management",
+      "users": "Users",
+      "roles": "Roles & Permissions",
+      "settings": "Settings",
+      "files": "Files"
+    },
+    "users": {
+      "title": "Users",
+      "searchPlaceholder": "Search users…",
+      "newUser": "New user",
+      "name": "Name",
+      "username": "Username",
+      "role": "Role",
+      "createdAt": "Created",
+      "noResults": "No users found",
+      "noResultsHint": "Try adjusting your search or create a new user.",
+      "stats": {
+        "total": "Total users"
+      },
+      "actions": {
+        "edit": "Edit user",
+        "delete": "Delete"
+      },
+      "form": {
+        "createTitle": "New user",
+        "createDescription": "Create a new user in this organization.",
+        "editTitle": "Edit user",
+        "editDescription": "Update user details.",
+        "name": "Name",
+        "namePlaceholder": "Full name",
+        "username": "Username",
+        "usernamePlaceholder": "username",
+        "password": "Password",
+        "passwordPlaceholder": "Password (min. 6 characters)",
+        "role": "Role",
+        "rolePlaceholder": "Select role…",
+        "noRole": "No Role",
+        "createSuccess": "User created",
+        "updateSuccess": "User updated",
+        "deleteSuccess": "User deleted"
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
+    },
+    "settings": {
+      "title": "Organization Settings",
+      "subtitle": "Update your organization's name and description.",
+      "name": "Name",
+      "namePlaceholder": "Organization name",
+      "description": "Description",
+      "descriptionPlaceholder": "Brief description of your organization",
+      "nameError": "Name must be at least 2 characters",
+      "updateSuccess": "Organization updated",
+      "saving": "Saving…"
+    },
+    "roles": {
+      "title": "Roles",
+      "searchPlaceholder": "Search roles…",
+      "newRole": "New role",
+      "name": "Role",
+      "permissions": "Permissions",
+      "permissionsCount": "{{count}} permissions",
+      "createdAt": "Created",
+      "noResults": "No roles found",
+      "noResultsHint": "Try adjusting your search or create a new role.",
+      "stats": {
+        "total": "Total roles",
+        "permissions": "Total permissions"
+      },
+      "actions": {
+        "edit": "Edit role",
+        "delete": "Delete"
+      },
+      "form": {
+        "createTitle": "New role",
+        "createDescription": "Create a new role and assign permissions.",
+        "editTitle": "Edit role",
+        "editDescription": "Update role name and permissions.",
+        "name": "Name",
+        "namePlaceholder": "Role name",
+        "permissions": "Permissions",
+        "permissionsPlaceholder": "Select permissions…",
+        "createSuccess": "Role created",
+        "updateSuccess": "Role updated",
+        "deleteSuccess": "Role deleted"
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
+    }
+  },
+  "liveRoom": {
+    "session": "Live Session",
+    "joinSession": "Join Session",
+    "joinError": "Failed to join session. Please try again.",
+    "sessionEnded": "Session Ended",
+    "leave": "Leave",
+    "maxParticipants": "Max {{count}} participants"
+  }
+}

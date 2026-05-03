@@ -1,0 +1,310 @@
+package practices
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"time"
+
+	"github.com/google/uuid"
+
+	"github.com/4H1R/zoora/internal/domain"
+)
+
+type service struct {
+	rooms    domain.PracticeRoomRepository
+	subs     domain.PracticeSubmissionRepository
+	sessions domain.ClassSessionRepository
+	classes  domain.ClassRepository
+	members  domain.ClassMemberRepository
+	logger   *slog.Logger
+}
+
+func NewService(
+	rooms domain.PracticeRoomRepository,
+	subs domain.PracticeSubmissionRepository,
+	sessions domain.ClassSessionRepository,
+	classes domain.ClassRepository,
+	members domain.ClassMemberRepository,
+	logger *slog.Logger,
+) domain.PracticeService {
+	return &service{
+		rooms:    rooms,
+		subs:     subs,
+		sessions: sessions,
+		classes:  classes,
+		members:  members,
+		logger:   logger,
+	}
+}
+
+func canManageRoom(caller domain.Caller, room *domain.PracticeRoom) bool {
+	if caller.IsAdmin {
+		return true
+	}
+	if caller.HasPermission("practices:update_any") {
+		return true
+	}
+	return caller.UserID == room.UserID
+}
+
+func (s *service) canViewRoom(ctx context.Context, caller domain.Caller, room *domain.PracticeRoom) (bool, error) {
+	if canManageRoom(caller, room) {
+		return true, nil
+	}
+	return s.members.Exists(ctx, room.ClassID, caller.UserID)
+}
+
+func (s *service) CreateRoom(ctx context.Context, dto domain.CreatePracticeRoomDTO) (*domain.PracticeRoom, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	session, err := s.sessions.FindByID(ctx, dto.ClassSessionID)
+	if err != nil {
+		return nil, err
+	}
+	class, err := s.classes.FindByID(ctx, session.ClassID)
+	if err != nil {
+		return nil, err
+	}
+	if !caller.IsAdmin && !caller.HasPermission("practices:create_any") && caller.UserID != class.UserID {
+		return nil, domain.ErrForbidden
+	}
+	room := &domain.PracticeRoom{
+		OrganizationID: class.OrganizationID,
+		ClassID:        class.ID,
+		ClassSessionID: dto.ClassSessionID,
+		UserID:         caller.UserID,
+		Title:          dto.Title,
+		Content:        dto.Content,
+		MaxScore:       dto.MaxScore,
+		StartTime:      dto.StartTime,
+		EndTime:        dto.EndTime,
+	}
+	if err := s.rooms.Create(ctx, room); err != nil {
+		return nil, err
+	}
+	s.logger.Info("practice room created",
+		"room_id", room.ID.String(),
+		"class_id", room.ClassID.String(),
+		"created_by", caller.UserID.String(),
+	)
+	return room, nil
+}
+
+func (s *service) GetRoom(ctx context.Context, id uuid.UUID) (*domain.PracticeRoom, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	room, err := s.rooms.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	visible, err := s.canViewRoom(ctx, caller, room)
+	if err != nil {
+		return nil, err
+	}
+	if !visible {
+		return nil, domain.ErrForbidden
+	}
+	return room, nil
+}
+
+func (s *service) UpdateRoom(ctx context.Context, id uuid.UUID, dto domain.UpdatePracticeRoomDTO) (*domain.PracticeRoom, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	room, err := s.rooms.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if !canManageRoom(caller, room) {
+		return nil, domain.ErrForbidden
+	}
+	if dto.Title != nil {
+		room.Title = *dto.Title
+	}
+	if dto.Content != nil {
+		room.Content = *dto.Content
+	}
+	if dto.MaxScore != nil {
+		room.MaxScore = *dto.MaxScore
+	}
+	if dto.StartTime != nil {
+		room.StartTime = *dto.StartTime
+	}
+	if dto.EndTime != nil {
+		room.EndTime = *dto.EndTime
+	}
+	if err := s.rooms.Update(ctx, room); err != nil {
+		return nil, err
+	}
+	return room, nil
+}
+
+func (s *service) DeleteRoom(ctx context.Context, id uuid.UUID) error {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return domain.ErrForbidden
+	}
+	room, err := s.rooms.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if !canManageRoom(caller, room) {
+		return domain.ErrForbidden
+	}
+	if err := s.rooms.Delete(ctx, id); err != nil {
+		return err
+	}
+	s.logger.Info("practice room deleted",
+		"room_id", id.String(),
+		"deleted_by", caller.UserID.String(),
+	)
+	return nil
+}
+
+func (s *service) ListRooms(ctx context.Context, q domain.ListPracticeRoomsQuery) ([]domain.PracticeRoom, int64, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, 0, domain.ErrForbidden
+	}
+	scope := s.resolveListScope(caller)
+	if !canListDeleted(caller) {
+		q.IncludeDeleted = false
+	}
+	return s.rooms.List(ctx, scope, q)
+}
+
+func (s *service) resolveListScope(caller domain.Caller) domain.PracticeRoomListScope {
+	if caller.IsAdmin || caller.HasPermission("practices:view_any") {
+		return domain.PracticeRoomListScope{All: true}
+	}
+	userID := caller.UserID
+	return domain.PracticeRoomListScope{
+		OwnerID:      &userID,
+		MemberUserID: &userID,
+	}
+}
+
+func canListDeleted(caller domain.Caller) bool {
+	return caller.IsAdmin || caller.HasPermission("practices:update_any")
+}
+
+// --- Submissions ---
+
+func (s *service) Submit(ctx context.Context, roomID uuid.UUID, dto domain.CreatePracticeSubmissionDTO) (*domain.PracticeSubmission, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	room, err := s.rooms.FindByID(ctx, roomID)
+	if err != nil {
+		return nil, err
+	}
+	isMember, err := s.members.Exists(ctx, room.ClassID, caller.UserID)
+	if err != nil {
+		return nil, err
+	}
+	if !isMember && !canManageRoom(caller, room) {
+		return nil, domain.ErrForbidden
+	}
+	now := time.Now()
+	if now.Before(room.StartTime) || now.After(room.EndTime) {
+		return nil, domain.NewValidationError(map[string]string{
+			"time": "submissions only accepted between start_time and end_time",
+		})
+	}
+	sub := &domain.PracticeSubmission{
+		PracticeRoomID: roomID,
+		UserID:         caller.UserID,
+		Content:        dto.Content,
+		SubmittedAt:    now,
+	}
+	if err := s.subs.Create(ctx, sub); err != nil {
+		return nil, err
+	}
+	s.logger.Info("practice submission created",
+		"submission_id", sub.ID.String(),
+		"room_id", roomID.String(),
+		"user_id", caller.UserID.String(),
+	)
+	return sub, nil
+}
+
+func (s *service) GetSubmission(ctx context.Context, id uuid.UUID) (*domain.PracticeSubmission, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	sub, err := s.subs.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if caller.UserID == sub.UserID {
+		return sub, nil
+	}
+	room, err := s.rooms.FindByID(ctx, sub.PracticeRoomID)
+	if err != nil {
+		return nil, err
+	}
+	if !canManageRoom(caller, room) {
+		return nil, domain.ErrForbidden
+	}
+	return sub, nil
+}
+
+func (s *service) ListSubmissions(ctx context.Context, roomID uuid.UUID, q domain.ListPracticeSubmissionsQuery) ([]domain.PracticeSubmission, int64, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, 0, domain.ErrForbidden
+	}
+	room, err := s.rooms.FindByID(ctx, roomID)
+	if err != nil {
+		return nil, 0, err
+	}
+	if !canManageRoom(caller, room) {
+		return nil, 0, domain.ErrForbidden
+	}
+	return s.subs.ListByRoom(ctx, roomID, q.ListParams)
+}
+
+func (s *service) Grade(ctx context.Context, submissionID uuid.UUID, dto domain.GradePracticeSubmissionDTO) (*domain.PracticeSubmission, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	sub, err := s.subs.FindByID(ctx, submissionID)
+	if err != nil {
+		return nil, err
+	}
+	room, err := s.rooms.FindByID(ctx, sub.PracticeRoomID)
+	if err != nil {
+		return nil, err
+	}
+	if !canManageRoom(caller, room) {
+		return nil, domain.ErrForbidden
+	}
+	if dto.Score != nil {
+		if room.MaxScore > 0 && *dto.Score > room.MaxScore {
+			return nil, domain.NewValidationError(map[string]string{
+				"score": fmt.Sprintf("score cannot exceed max_score (%g)", room.MaxScore),
+			})
+		}
+		sub.Score = dto.Score
+	}
+	if dto.TeacherComment != nil {
+		sub.TeacherComment = *dto.TeacherComment
+	}
+	if err := s.subs.Update(ctx, sub); err != nil {
+		return nil, err
+	}
+	s.logger.Info("practice submission graded",
+		"submission_id", submissionID.String(),
+		"graded_by", caller.UserID.String(),
+	)
+	return sub, nil
+}

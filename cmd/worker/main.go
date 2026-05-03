@@ -1,0 +1,86 @@
+package main
+
+import (
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/4H1R/zoora/internal/chat"
+	"github.com/4H1R/zoora/internal/classes"
+	"github.com/4H1R/zoora/internal/config"
+	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/livesessions"
+	"github.com/4H1R/zoora/internal/platform/database"
+	lk "github.com/4H1R/zoora/internal/platform/livekit"
+	"github.com/4H1R/zoora/internal/platform/logger"
+	"github.com/4H1R/zoora/internal/platform/queue"
+)
+
+func main() {
+	log := logger.New(false)
+
+	cfg, err := config.Load()
+	if err != nil {
+		log.Error("failed to load config", "error", err)
+		os.Exit(1)
+	}
+
+	if cfg.IsDevelopment() {
+		log = logger.New(true)
+	}
+
+	db, err := database.NewConnection(cfg.DatabaseURL, log)
+	if err != nil {
+		log.Error("failed to connect to database", "error", err)
+		os.Exit(1)
+	}
+
+	queueServer, err := queue.NewServer(cfg.RedisURL, log)
+	if err != nil {
+		log.Error("failed to initialize queue server", "error", err)
+		os.Exit(1)
+	}
+
+	transactor := database.NewTransactor(db)
+	chatRepo := chat.NewChatRepository(db)
+	chatMemberRepo := chat.NewMemberRepository(db)
+	chatMessageRepo := chat.NewMessageRepository(db)
+	chatReactionRepo := chat.NewReactionRepository(db)
+	chatSvc := chat.NewService(chatRepo, chatMemberRepo, chatMessageRepo, chatReactionRepo, transactor, log)
+
+	liveRoomRepo := livesessions.NewRoomRepository(db)
+	liveParticipantRepo := livesessions.NewParticipantRepository(db)
+	liveRecordingRepo := livesessions.NewRecordingRepository(db)
+	classSessionRepo := classes.NewSessionRepository(db)
+	classRepo := classes.NewRepository(db)
+	classMemberRepo := classes.NewMemberRepository(db)
+	livekitClient := lk.NewClient(cfg, log)
+	liveSessionService := livesessions.NewService(
+		liveRoomRepo, liveParticipantRepo, liveRecordingRepo,
+		classSessionRepo, classRepo, classMemberRepo,
+		chatSvc, transactor,
+		livekitClient, log,
+	)
+	queueServer.HandleFunc(domain.TypeLiveSessionAutoClose, livesessions.NewAutoCloseHandler(liveSessionService))
+
+	go func() {
+		log.Info("starting worker server")
+		if err := queueServer.Run(); err != nil {
+			log.Error("worker server error", "error", err)
+			os.Exit(1)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Info("shutting down worker...")
+
+	queueServer.Shutdown()
+
+	sqlDB, _ := db.DB()
+	sqlDB.Close()
+
+	log.Info("worker stopped")
+}

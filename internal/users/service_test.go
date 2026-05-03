@@ -1,0 +1,313 @@
+package users_test
+
+import (
+	"context"
+	"testing"
+
+	"log/slog"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"golang.org/x/crypto/bcrypt"
+
+	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/users"
+)
+
+type mockUserRepo struct{ mock.Mock }
+
+func (m *mockUserRepo) Create(ctx context.Context, user *domain.User) error {
+	return m.Called(ctx, user).Error(0)
+}
+func (m *mockUserRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.User), args.Error(1)
+}
+func (m *mockUserRepo) FindByUsername(ctx context.Context, username string) (*domain.User, error) {
+	args := m.Called(ctx, username)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.User), args.Error(1)
+}
+func (m *mockUserRepo) Update(ctx context.Context, user *domain.User) error {
+	return m.Called(ctx, user).Error(0)
+}
+func (m *mockUserRepo) Delete(ctx context.Context, id uuid.UUID) error {
+	return m.Called(ctx, id).Error(0)
+}
+func (m *mockUserRepo) List(ctx context.Context, q domain.ListUsersQuery) ([]domain.User, int64, error) {
+	args := m.Called(ctx, q)
+	return args.Get(0).([]domain.User), args.Get(1).(int64), args.Error(2)
+}
+func (m *mockUserRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
+	return m.Called(ctx, id).Error(0)
+}
+func (m *mockUserRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.User), args.Error(1)
+}
+func (m *mockUserRepo) AdminList(ctx context.Context, q domain.AdminListUsersQuery) ([]domain.User, int64, error) {
+	args := m.Called(ctx, q)
+	return args.Get(0).([]domain.User), args.Get(1).(int64), args.Error(2)
+}
+func (m *mockUserRepo) CountAll(ctx context.Context) (int64, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+type mockRoleRepo struct{ mock.Mock }
+
+func (m *mockRoleRepo) Create(ctx context.Context, role *domain.Role) error {
+	return m.Called(ctx, role).Error(0)
+}
+func (m *mockRoleRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Role, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Role), args.Error(1)
+}
+func (m *mockRoleRepo) FindPresetByName(ctx context.Context, name string) (*domain.Role, error) {
+	args := m.Called(ctx, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Role), args.Error(1)
+}
+func (m *mockRoleRepo) Update(ctx context.Context, role *domain.Role) error {
+	return m.Called(ctx, role).Error(0)
+}
+func (m *mockRoleRepo) Delete(ctx context.Context, id uuid.UUID) error {
+	return m.Called(ctx, id).Error(0)
+}
+func (m *mockRoleRepo) List(ctx context.Context, f domain.RoleFilter) ([]domain.Role, error) {
+	args := m.Called(ctx, f)
+	return args.Get(0).([]domain.Role), args.Error(1)
+}
+func (m *mockRoleRepo) AdminList(ctx context.Context, f domain.AdminRoleFilter) ([]domain.Role, int64, error) {
+	args := m.Called(ctx, f)
+	return args.Get(0).([]domain.Role), args.Get(1).(int64), args.Error(2)
+}
+func (m *mockRoleRepo) SetPermissions(ctx context.Context, roleID uuid.UUID, permissionIDs []uuid.UUID) error {
+	return m.Called(ctx, roleID, permissionIDs).Error(0)
+}
+func (m *mockRoleRepo) Stats(ctx context.Context, orgID *uuid.UUID) (*domain.RoleStats, error) {
+	args := m.Called(ctx, orgID)
+	return args.Get(0).(*domain.RoleStats), args.Error(1)
+}
+func (m *mockRoleRepo) GetPermissionNames(ctx context.Context, roleID uuid.UUID) ([]string, error) {
+	args := m.Called(ctx, roleID)
+	return args.Get(0).([]string), args.Error(1)
+}
+
+func TestCreateUser_AsAdmin(t *testing.T) {
+	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New(), IsAdmin: true})
+	logger := slog.Default()
+	repo := &mockUserRepo{}
+
+	repo.On("Create", ctx, mock.AnythingOfType("*domain.User")).Return(nil)
+
+	svc := users.NewService(repo, &mockRoleRepo{}, logger)
+
+	user, err := svc.Create(ctx, domain.CreateUserDTO{
+		Username: "newuser",
+		Name:     "New User",
+		Password: "password123",
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, "newuser", user.Username)
+	repo.AssertExpectations(t)
+}
+
+func TestCreateUser_DuplicateReturnedByRepo(t *testing.T) {
+	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New(), IsAdmin: true})
+	logger := slog.Default()
+	repo := &mockUserRepo{}
+
+	repo.On("Create", ctx, mock.AnythingOfType("*domain.User")).Return(domain.ErrConflict)
+
+	svc := users.NewService(repo, &mockRoleRepo{}, logger)
+
+	_, err := svc.Create(ctx, domain.CreateUserDTO{
+		Username: "newuser",
+		Name:     "New User",
+		Password: "password123",
+	})
+
+	assert.ErrorIs(t, err, domain.ErrConflict)
+}
+
+func TestGetProfile(t *testing.T) {
+	ctx := context.Background()
+	logger := slog.Default()
+	repo := &mockUserRepo{}
+
+	userID := uuid.New()
+	expected := &domain.User{ID: userID, Name: "Test"}
+	repo.On("FindByID", ctx, userID).Return(expected, nil)
+
+	svc := users.NewService(repo, &mockRoleRepo{}, logger)
+
+	user, err := svc.GetProfile(ctx, userID)
+	assert.NoError(t, err)
+	assert.Equal(t, "Test", user.Name)
+}
+
+func TestUpdateProfile(t *testing.T) {
+	ctx := context.Background()
+	logger := slog.Default()
+	repo := &mockUserRepo{}
+
+	userID := uuid.New()
+	existing := &domain.User{ID: userID, Name: "Old Name"}
+	repo.On("FindByID", ctx, userID).Return(existing, nil)
+	repo.On("Update", ctx, mock.AnythingOfType("*domain.User")).Return(nil)
+
+	svc := users.NewService(repo, &mockRoleRepo{}, logger)
+
+	user, err := svc.UpdateProfile(ctx, userID, domain.UpdateProfileDTO{Name: "New Name"})
+	assert.NoError(t, err)
+	assert.Equal(t, "New Name", user.Name)
+}
+
+func TestList_NoCaller_Forbidden(t *testing.T) {
+	ctx := context.Background()
+	logger := slog.Default()
+	repo := &mockUserRepo{}
+
+	svc := users.NewService(repo, &mockRoleRepo{}, logger)
+
+	_, _, err := svc.List(ctx, domain.ListUsersQuery{})
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+func TestList_AdminGetsAll(t *testing.T) {
+	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New(), IsAdmin: true})
+	logger := slog.Default()
+	repo := &mockUserRepo{}
+
+	userList := []domain.User{{Name: "User 1"}}
+	repo.On("List", ctx, mock.MatchedBy(func(q domain.ListUsersQuery) bool {
+		return q.ListParams.Page == 1 && q.ListParams.PageSize == domain.DefaultPageSize
+	})).Return(userList, int64(1), nil)
+
+	svc := users.NewService(repo, &mockRoleRepo{}, logger)
+
+	result, total, err := svc.List(ctx, domain.ListUsersQuery{})
+	assert.NoError(t, err)
+	assert.Len(t, result, 1)
+	assert.Equal(t, int64(1), total)
+}
+
+func TestList_AnyCallerGetsAll(t *testing.T) {
+	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New()})
+	logger := slog.Default()
+	repo := &mockUserRepo{}
+
+	userList := []domain.User{{Name: "User 1"}}
+	repo.On("List", ctx, mock.AnythingOfType("domain.ListUsersQuery")).Return(userList, int64(1), nil)
+
+	svc := users.NewService(repo, &mockRoleRepo{}, logger)
+
+	result, total, err := svc.List(ctx, domain.ListUsersQuery{})
+	assert.NoError(t, err)
+	assert.Len(t, result, 1)
+	assert.Equal(t, int64(1), total)
+}
+
+func TestGetByID_NoCaller_Forbidden(t *testing.T) {
+	ctx := context.Background()
+	logger := slog.Default()
+	repo := &mockUserRepo{}
+
+	svc := users.NewService(repo, &mockRoleRepo{}, logger)
+
+	_, err := svc.GetByID(ctx, uuid.New())
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+func TestDelete_NoCaller_Forbidden(t *testing.T) {
+	ctx := context.Background()
+	logger := slog.Default()
+	repo := &mockUserRepo{}
+
+	svc := users.NewService(repo, &mockRoleRepo{}, logger)
+
+	err := svc.Delete(ctx, uuid.New())
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+func TestDelete_SelfDelete_Forbidden(t *testing.T) {
+	callerID := uuid.New()
+	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: callerID, IsAdmin: true})
+	repo := &mockUserRepo{}
+
+	svc := users.NewService(repo, &mockRoleRepo{}, slog.Default())
+
+	err := svc.Delete(ctx, callerID)
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+	repo.AssertNotCalled(t, "Delete")
+}
+
+func TestDelete_Success(t *testing.T) {
+	callerID := uuid.New()
+	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: callerID, IsAdmin: true})
+	logger := slog.Default()
+	repo := &mockUserRepo{}
+
+	userID := uuid.New()
+	repo.On("Delete", ctx, userID).Return(nil)
+
+	svc := users.NewService(repo, &mockRoleRepo{}, logger)
+
+	err := svc.Delete(ctx, userID)
+	assert.NoError(t, err)
+	repo.AssertExpectations(t)
+}
+
+func TestChangePassword_WrongCurrentPassword(t *testing.T) {
+	ctx := context.Background()
+	logger := slog.Default()
+	repo := &mockUserRepo{}
+
+	userID := uuid.New()
+	hashed, _ := bcrypt.GenerateFromPassword([]byte("correctpass"), bcrypt.DefaultCost)
+	repo.On("FindByID", ctx, userID).Return(&domain.User{ID: userID, Password: string(hashed)}, nil)
+
+	svc := users.NewService(repo, &mockRoleRepo{}, logger)
+
+	err := svc.ChangePassword(ctx, userID, domain.ChangePasswordDTO{
+		CurrentPassword: "wrongpass",
+		NewPassword:     "newStrongPass1!",
+	})
+	assert.ErrorIs(t, err, domain.ErrUnauthorized)
+}
+
+func TestChangePassword_Success(t *testing.T) {
+	ctx := context.Background()
+	logger := slog.Default()
+	repo := &mockUserRepo{}
+
+	userID := uuid.New()
+	hashed, _ := bcrypt.GenerateFromPassword([]byte("correctpass"), bcrypt.DefaultCost)
+	repo.On("FindByID", ctx, userID).Return(&domain.User{ID: userID, Password: string(hashed)}, nil)
+	repo.On("Update", ctx, mock.AnythingOfType("*domain.User")).Return(nil)
+
+	svc := users.NewService(repo, &mockRoleRepo{}, logger)
+
+	err := svc.ChangePassword(ctx, userID, domain.ChangePasswordDTO{
+		CurrentPassword: "correctpass",
+		NewPassword:     "newStrongPass1!",
+	})
+	assert.NoError(t, err)
+	repo.AssertExpectations(t)
+}

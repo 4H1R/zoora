@@ -1,0 +1,121 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile.dev
+        ports:
+            - "${FORWARD_APP_PORT:-8080}:8080"
+        env_file:
+            - .env
+        environment:
+            DATABASE_URL: "postgres://${DB_USERNAME:-dev}:${DB_PASSWORD:-dev}@pgsql:5432/${DB_DATABASE:-zora}?sslmode=disable"
+            REDIS_URL: "redis://redis:6379"
+            LIVEKIT_HOST: "http://livekit:7880"
+            LIVEKIT_PUBLIC_URL: "ws://localhost:7880"
+            S3_ENDPOINT: "http://rustfs:9000"
+        volumes:
+            - ".:/app"
+            - "go-modules:/go/pkg/mod"
+            - "go-build-cache:/root/.cache/go-build"
+        working_dir: /app
+        networks:
+            - zoora
+        depends_on:
+            pgsql:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+    pgsql:
+        image: "postgres:18-alpine"
+        ports:
+            - "${FORWARD_DB_PORT:-5432}:5432"
+        environment:
+            PGPASSWORD: "${DB_PASSWORD:-dev}"
+            POSTGRES_DB: "${DB_DATABASE:-edusaas}"
+            POSTGRES_USER: "${DB_USERNAME:-dev}"
+            POSTGRES_PASSWORD: "${DB_PASSWORD:-dev}"
+        volumes:
+            - "pgsql-data:/var/lib/postgresql"
+        networks:
+            - zoora
+        healthcheck:
+            test:
+                - CMD
+                - pg_isready
+                - "-q"
+                - "-d"
+                - "${DB_DATABASE:-edusaas}"
+                - "-U"
+                - "${DB_USERNAME:-dev}"
+            retries: 3
+            timeout: 5s
+    redis:
+        image: "redis:alpine"
+        ports:
+            - "${FORWARD_REDIS_PORT:-6379}:6379"
+        volumes:
+            - "redis-data:/data"
+        networks:
+            - zoora
+        healthcheck:
+            test:
+                - CMD
+                - redis-cli
+                - ping
+            retries: 3
+            timeout: 5s
+    rustfs:
+        image: "rustfs/rustfs:latest"
+        ports:
+            - "${FORWARD_RUSTFS_PORT:-9000}:9000"
+            - "${FORWARD_RUSTFS_CONSOLE_PORT:-9001}:9001"
+        environment:
+            RUSTFS_VOLUMES: /data
+            RUSTFS_ADDRESS: "0.0.0.0:9000"
+            RUSTFS_CONSOLE_ADDRESS: "0.0.0.0:9001"
+            RUSTFS_CONSOLE_ENABLE: "true"
+            RUSTFS_EXTERNAL_ADDRESS: ":9000"
+            RUSTFS_CORS_ALLOWED_ORIGINS: "*"
+            RUSTFS_CONSOLE_CORS_ALLOWED_ORIGINS: "*"
+            RUSTFS_ACCESS_KEY: dev
+            RUSTFS_SECRET_KEY: dev
+            RUSTFS_LOG_LEVEL: info
+        volumes:
+            - "rustfs-data:/data"
+        networks:
+            - zoora
+        healthcheck:
+            test:
+                - CMD
+                - sh
+                - "-c"
+                - "curl -f http://127.0.0.1:9000/health && curl -f http://127.0.0.1:9001/health"
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 40s
+    livekit:
+        image: "livekit/livekit-server:latest"
+        ports:
+            - "${FORWARD_LIVEKIT_PORT:-7880}:7880"
+            - "${FORWARD_LIVEKIT_TCP_PORT:-7881}:7881"
+            - "${FORWARD_LIVEKIT_UDP_PORT:-7882}:7882/udp"
+        environment:
+            LIVEKIT_KEYS: "${LIVEKIT_API_KEY:-devkey}: ${LIVEKIT_API_SECRET:-devsecret}"
+        command: --dev --bind 0.0.0.0 --node-ip 127.0.0.1
+        networks:
+            - zoora
+networks:
+    zoora:
+        driver: bridge
+volumes:
+    pgsql-data:
+        driver: local
+    redis-data:
+        driver: local
+    rustfs-data:
+        driver: local
+    go-modules:
+        driver: local
+    go-build-cache:
+        driver: local

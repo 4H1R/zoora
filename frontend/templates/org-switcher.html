@@ -1,0 +1,91 @@
+<!-- Org switcher -->
+<div class="org-sw" id="orgSw">
+  <button class="trigger" id="orgTrigger">
+    <span class="mark mk-all">EC</span>
+    <span class="meta">
+      <span class="lab">Organization</span>
+      <span class="nm" id="orgCurrentName">All organizations</span>
+    </span>
+    <svg class="chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9" /></svg>
+  </button>
+
+  <div class="pop" role="listbox">
+    <div class="search">
+      <svg viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+      <input type="text" placeholder="Search organization…" id="orgSearch" />
+    </div>
+    <div class="grp">
+      <div class="grp-lab">Scope</div>
+      <div class="opt sel" data-org="all" data-mark="mk-all" data-name="All organizations">
+        <span class="mark mk-all">EC</span>
+        <span class="nm">All organizations</span>
+        <span class="meta">12</span>
+        <svg class="ck" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+      </div>
+    </div>
+    <div class="div"></div>
+    <div class="grp">
+      <div class="grp-lab">Recent</div>
+      <div class="opt" data-org="northwood" data-mark="mk-sage" data-name="Northwood Academy">
+        <span class="mark mk-sage">NA</span>
+        <span class="nm">Northwood Academy</span>
+        <span class="meta">2.4k</span>
+        <svg class="ck" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+      </div>
+      <div class="opt" data-org="meridian" data-mark="mk-slate" data-name="Meridian School District">
+        <span class="mark mk-slate">MS</span>
+        <span class="nm">Meridian School District</span>
+        <span class="meta">8.1k</span>
+        <svg class="ck" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+      </div>
+      <div class="opt" data-org="parkside" data-mark="mk-sand" data-name="Parkside Tutors Co.">
+        <span class="mark mk-sand">PT</span>
+        <span class="nm">Parkside Tutors Co.</span>
+        <span class="meta">412</span>
+        <svg class="ck" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+      </div>
+    </div>
+    <div class="div"></div>
+    <div class="grp">
+      <div class="grp-lab">All organizations</div>
+      <div class="opt" data-org="atlas" data-mark="mk-ink" data-name="Atlas Online Institute">
+        <span class="mark mk-ink">AO</span>
+        <span class="nm">Atlas Online Institute</span>
+        <span class="meta">1.1k</span>
+        <svg class="ck" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+      </div>
+      <div class="opt" data-org="bluepine" data-mark="mk-stone" data-name="Bluepine College Prep">
+        <span class="mark mk-stone">BC</span>
+        <span class="nm">Bluepine College Prep</span>
+        <span class="meta">684</span>
+        <svg class="ck" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+      </div>
+      <div class="opt" data-org="cedar" data-mark="mk-sage" data-name="Cedar Hill Charter">
+        <span class="mark mk-sage">CH</span>
+        <span class="nm">Cedar Hill Charter</span>
+        <span class="meta">1.9k</span>
+        <svg class="ck" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+      </div>
+      <div class="opt" data-org="quill" data-mark="mk-slate" data-name="Quill & Compass Academy">
+        <span class="mark mk-slate">QC</span>
+        <span class="nm">Quill & Compass Academy</span>
+        <span class="meta">312</span>
+        <svg class="ck" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+      </div>
+    </div>
+    <div class="div"></div>
+    <div class="footer">
+      <div class="opt" id="newOrgFromSwitcher">
+        <svg viewBox="0 0 24 24">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        <span class="nm">Create organization</span>
+        <span class="meta">⌘N</span>
+      </div>
+    </div>
+  </div>
+</div>

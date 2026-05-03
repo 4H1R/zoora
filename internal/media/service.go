@@ -1,0 +1,94 @@
+package media
+
+import (
+	"context"
+	"encoding/json"
+	"log/slog"
+	"time"
+
+	"github.com/google/uuid"
+
+	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/platform/storage"
+)
+
+const presignExpiry = 15 * time.Minute
+
+type service struct {
+	repo    domain.MediaRepository
+	storage *storage.Client
+	logger  *slog.Logger
+}
+
+func NewService(repo domain.MediaRepository, storage *storage.Client, logger *slog.Logger) domain.MediaService {
+	return &service{repo: repo, storage: storage, logger: logger}
+}
+
+func (s *service) PresignUpload(ctx context.Context, dto domain.PresignUploadDTO) (*domain.PresignUploadResponse, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+
+	modelID, _ := uuid.Parse(dto.ModelID)
+
+	m := &domain.Media{
+		ModelType:        dto.ModelType,
+		ModelID:          modelID,
+		CollectionName:   dto.CollectionName,
+		Name:             dto.FileName,
+		FileName:         dto.FileName,
+		MimeType:         dto.MimeType,
+		Disk:             "s3",
+		Size:             dto.Size,
+		CustomProperties: json.RawMessage(`{}`),
+	}
+
+	if err := s.repo.Create(ctx, m); err != nil {
+		return nil, err
+	}
+
+	url, err := s.storage.GeneratePresignedUploadURL(ctx, m.S3Key(), presignExpiry)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logger.Info("presigned upload generated",
+		"media_id", m.ID.String(),
+		"key", m.S3Key(),
+		"user_id", caller.UserID.String(),
+	)
+
+	return &domain.PresignUploadResponse{
+		UploadURL: url,
+		Key:       m.S3Key(),
+		Media:     m,
+	}, nil
+}
+
+func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*domain.Media, error) {
+	_, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	return s.repo.FindByID(ctx, id)
+}
+
+func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return domain.ErrForbidden
+	}
+	if !caller.IsAdmin && !caller.HasPermission("media:delete_any") {
+		return domain.ErrForbidden
+	}
+	return s.repo.Delete(ctx, id)
+}
+
+func (s *service) ListByModel(ctx context.Context, modelType string, modelID uuid.UUID, collection string) ([]domain.Media, error) {
+	_, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	return s.repo.ListByModel(ctx, modelType, modelID, collection)
+}
