@@ -1,7 +1,9 @@
 import type { GithubCom4H1RZooraInternalDomainUser } from "@/api/model"
 import type { NavGroup } from "@/components/layout/nav-main"
 
+import { useRouterState } from "@tanstack/react-router"
 import * as React from "react"
+import { useEffect } from "react"
 
 import { NavMain } from "@/components/layout/nav-main"
 import { NavUser } from "@/components/layout/nav-user"
@@ -26,7 +28,12 @@ export function AppSidebar({
   navGroups: NavGroup[]
   headerExtra?: React.ReactNode
 }) {
-  const { state } = useSidebar()
+  const { state, setOpenMobile } = useSidebar()
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+
+  useEffect(() => {
+    setOpenMobile(false)
+  }, [pathname, setOpenMobile])
 
   return (
     <Sidebar collapsible="icon" {...props}>

@@ -1,7 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
-import { createFileRoute } from "@tanstack/react-router"
-import { Building2Icon } from "lucide-react"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useEffect } from "react"
 import { useAccess } from "react-access-engine"
 import { useForm } from "react-hook-form"
@@ -35,10 +34,17 @@ function RouteComponent() {
   const { orgId } = Route.useParams()
   const { t } = useTranslation()
   const { can } = useAccess()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
 
   const canUpdate = can("organizations:update")
   const { data: orgResponse, isLoading } = useGetOrganizationsId(orgId)
+
+  useEffect(() => {
+    if (!canUpdate) {
+      navigate({ to: "/org/$orgId/dashboard", params: { orgId } })
+    }
+  }, [canUpdate, navigate, orgId])
   const org = orgResponse?.status === 200 ? orgResponse.data.data : undefined
 
   const updateMutation = usePutOrganizationsId({
@@ -84,60 +90,50 @@ function RouteComponent() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-xl py-4 lg:py-8">
-      <div className="mb-8 flex items-start gap-4">
-        <div className="bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-lg">
-          <Building2Icon className="size-5" />
-        </div>
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight">{t("org.settings.title")}</h1>
+    <div className="w-full">
+      <div className="border-border bg-card rounded-xl border">
+        <div className="border-border border-b px-6 py-4">
+          <h2 className="text-base font-semibold">{t("org.settings.title")}</h2>
           <p className="text-muted-foreground mt-1 text-sm">{t("org.settings.subtitle")}</p>
         </div>
-      </div>
-
-      <div className="border-border bg-card rounded-xl border p-6 shadow-sm">
         <form onSubmit={onSubmit} noValidate>
-          <FieldGroup>
-            <Field data-invalid={!!errors.name || undefined}>
-              <FieldLabel htmlFor="org-name" className="text-xs">
-                {t("org.settings.name")}
-              </FieldLabel>
-              <Input
-                id="org-name"
-                type="text"
-                placeholder={t("org.settings.namePlaceholder")}
-                className="h-10.5"
-                disabled={!canUpdate}
-                aria-invalid={!!errors.name}
-                {...register("name")}
-              />
-              {errors.name && <FieldError>{t(errors.name.message ?? "org.settings.nameError")}</FieldError>}
-            </Field>
+          <div className="p-6">
+            <FieldGroup>
+              <Field data-invalid={!!errors.name || undefined}>
+                <FieldLabel htmlFor="org-name" className="text-xs">
+                  {t("org.settings.name")}
+                </FieldLabel>
+                <Input
+                  id="org-name"
+                  type="text"
+                  placeholder={t("org.settings.namePlaceholder")}
+                  className="h-10.5"
+                  aria-invalid={!!errors.name}
+                  {...register("name")}
+                />
+                {errors.name && <FieldError>{t(errors.name.message ?? "org.settings.nameError")}</FieldError>}
+              </Field>
 
-            <Field>
-              <FieldLabel htmlFor="org-description" className="text-xs">
-                {t("org.settings.description")}
-              </FieldLabel>
-              <Textarea
-                id="org-description"
-                placeholder={t("org.settings.descriptionPlaceholder")}
-                rows={4}
-                disabled={!canUpdate}
-                {...register("description")}
-              />
-            </Field>
+              <Field>
+                <FieldLabel htmlFor="org-description" className="text-xs">
+                  {t("org.settings.description")}
+                </FieldLabel>
+                <Textarea
+                  id="org-description"
+                  placeholder={t("org.settings.descriptionPlaceholder")}
+                  rows={4}
+                  {...register("description")}
+                />
+              </Field>
+            </FieldGroup>
+          </div>
 
-            {canUpdate && (
-              <Button
-                type="submit"
-                disabled={isPending || !isDirty}
-                className="mt-2 h-10.5 w-full text-sm font-semibold sm:w-auto sm:px-8"
-              >
-                {isPending && <Spinner />}
-                {isPending ? t("org.settings.saving") : t("common.save")}
-              </Button>
-            )}
-          </FieldGroup>
+          <div className="flex items-center justify-end px-6 py-4">
+            <Button type="submit" disabled={isPending || !isDirty} className="h-10.5 text-sm font-semibold sm:px-8">
+              {isPending && <Spinner />}
+              {isPending ? t("org.settings.saving") : t("common.save")}
+            </Button>
+          </div>
         </form>
       </div>
     </div>

@@ -34,7 +34,7 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
                   tooltip={item.title}
                   isActive={pathname.startsWith(item.url)}
                   render={<Link to={item.url} />}
-                  className="data-active:[&_svg]:text-primary gap-2.5 px-2.5 py-1.5 text-[13px] [&_svg]:size-4 [&_svg]:[stroke-width:1.75]"
+                  className="data-active:[&_svg]:text-primary gap-2.5 px-2.5 py-1.5 text-sm [&_svg]:size-4 [&_svg]:[stroke-width:1.75]"
                 >
                   {item.icon}
                   <span>{item.title}</span>

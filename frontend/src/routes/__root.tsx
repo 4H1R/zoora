@@ -39,7 +39,7 @@ function RootComponent() {
     <DirectionProvider direction={dir}>
       <HeadContent />
       <Outlet />
-      <Toaster style={{ fontFamily: "inherit" }} />
+      <Toaster />
       <ReactQueryDevtools buttonPosition="bottom-left" />
       <TanStackRouterDevtools position="bottom-right" />
     </DirectionProvider>
