@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import { cn } from "@/lib/utils"
 
 interface LogoProps {
@@ -5,5 +7,6 @@ interface LogoProps {
 }
 
 export function Logo({ className }: LogoProps) {
-  return <p className={cn("font-bold", className)}>Edu Connect</p>
+  const { t } = useTranslation()
+  return <p className={cn("font-bold", className)}>{t("common.brandName")}</p>
 }

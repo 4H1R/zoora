@@ -56,7 +56,7 @@ func (h *Handler) CreateRole(c *gin.Context) {
 
 	role, err := h.svc.Create(c.Request.Context(), dto)
 	if err != nil {
-		domain.ErrorResponse(c, err)
+		_ = c.Error(err)
 		return
 	}
 	domain.SuccessResponse(c, http.StatusCreated, role)
@@ -77,7 +77,7 @@ func (h *Handler) CreateRole(c *gin.Context) {
 func (h *Handler) GetRoleByID(c *gin.Context) {
 	role, err := h.svc.GetByID(c.Request.Context(), httpx.UUIDParam(c, "id"))
 	if err != nil {
-		domain.ErrorResponse(c, err)
+		_ = c.Error(err)
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, role)
@@ -106,7 +106,7 @@ func (h *Handler) UpdateRole(c *gin.Context) {
 	}
 	role, err := h.svc.Update(c.Request.Context(), httpx.UUIDParam(c, "id"), dto)
 	if err != nil {
-		domain.ErrorResponse(c, err)
+		_ = c.Error(err)
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, role)
@@ -126,7 +126,7 @@ func (h *Handler) UpdateRole(c *gin.Context) {
 // @Router /roles/{id} [delete]
 func (h *Handler) DeleteRole(c *gin.Context) {
 	if err := h.svc.Delete(c.Request.Context(), httpx.UUIDParam(c, "id")); err != nil {
-		domain.ErrorResponse(c, err)
+		_ = c.Error(err)
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, nil)
@@ -152,7 +152,7 @@ func (h *Handler) ListRoles(c *gin.Context) {
 	}
 	roleList, err := h.svc.List(c.Request.Context(), filter)
 	if err != nil {
-		domain.ErrorResponse(c, err)
+		_ = c.Error(err)
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, roleList)
@@ -178,7 +178,7 @@ func (h *Handler) RoleStats(c *gin.Context) {
 	}
 	stats, err := h.svc.Stats(c.Request.Context(), orgID)
 	if err != nil {
-		domain.ErrorResponse(c, err)
+		_ = c.Error(err)
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, stats)
@@ -196,7 +196,7 @@ func (h *Handler) RoleStats(c *gin.Context) {
 func (h *Handler) ListPermissions(c *gin.Context) {
 	perms, err := h.permRepo.List(c.Request.Context())
 	if err != nil {
-		domain.ErrorResponse(c, err)
+		_ = c.Error(err)
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, perms)

@@ -44,7 +44,7 @@ func (h *Handler) Login(c *gin.Context) {
 
 	user, token, err := h.svc.Login(c.Request.Context(), dto)
 	if err != nil {
-		domain.ErrorResponse(c, err)
+		_ = c.Error(err)
 		return
 	}
 

@@ -41,7 +41,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 func (h *Handler) Get(c *gin.Context) {
 	org, err := h.svc.GetByID(c.Request.Context(), httpx.UUIDParam(c, "id"))
 	if err != nil {
-		domain.ErrorResponse(c, err)
+		_ = c.Error(err)
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, org)
@@ -70,7 +70,7 @@ func (h *Handler) Update(c *gin.Context) {
 	}
 	org, err := h.svc.Update(c.Request.Context(), httpx.UUIDParam(c, "id"), dto)
 	if err != nil {
-		domain.ErrorResponse(c, err)
+		_ = c.Error(err)
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, org)

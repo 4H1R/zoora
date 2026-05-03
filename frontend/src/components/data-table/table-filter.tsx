@@ -75,7 +75,7 @@ export function TableFilter<TData>({
           value={localSearch}
           onChange={(e) => setLocalSearch(e.target.value)}
           placeholder={searchPlaceholder}
-          className="h-8 w-full ps-9 text-sm lg:w-56"
+          className="h-9 w-full ps-9 text-sm lg:w-56"
         />
       </div>
       {children}
@@ -98,7 +98,7 @@ export function TableFilter<TData>({
       <Popover>
         <PopoverTrigger
           render={
-            <Button variant="outline" size="sm" className="h-8 gap-1.5 px-2.5 text-xs font-medium">
+            <Button variant="outline" size="sm" className="h-9 gap-1.5 px-2.5 text-xs font-medium">
               <ColumnsIcon className="size-3.5" />
               {columnsLabel}
             </Button>
