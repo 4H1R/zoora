@@ -8,7 +8,7 @@ services:
         env_file:
             - .env
         environment:
-            DATABASE_URL: "postgres://${DB_USERNAME:-dev}:${DB_PASSWORD:-dev}@pgsql:5432/${DB_DATABASE:-zora}?sslmode=disable"
+            DATABASE_URL: "postgres://${DB_USERNAME:-dev}:${DB_PASSWORD:-dev}@pgsql:5432/${DB_DATABASE:-zoora}?sslmode=disable"
             REDIS_URL: "redis://redis:6379"
             LIVEKIT_HOST: "http://livekit:7880"
             LIVEKIT_PUBLIC_URL: "ws://localhost:7880"
@@ -31,7 +31,7 @@ services:
             - "${FORWARD_DB_PORT:-5432}:5432"
         environment:
             PGPASSWORD: "${DB_PASSWORD:-dev}"
-            POSTGRES_DB: "${DB_DATABASE:-edusaas}"
+            POSTGRES_DB: "${DB_DATABASE:-zoora}"
             POSTGRES_USER: "${DB_USERNAME:-dev}"
             POSTGRES_PASSWORD: "${DB_PASSWORD:-dev}"
         volumes:
@@ -44,7 +44,7 @@ services:
                 - pg_isready
                 - "-q"
                 - "-d"
-                - "${DB_DATABASE:-edusaas}"
+                - "${DB_DATABASE:-zoora}"
                 - "-U"
                 - "${DB_USERNAME:-dev}"
             retries: 3
