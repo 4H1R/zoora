@@ -1,14 +1,11 @@
 {
     "name": "zoora",
     "version": "1.0.0",
-    "description": "",
-    "main": "index.js",
-    "directories": {
-        "doc": "docs",
-        "test": "tests"
-    },
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
+        "front:dev": "cd frontend && pnpm dev",
+        "front:typecheck": "cd frontend && pnpm typecheck",
+        "front:generate": "cd frontend && pnpm generate",
+        "front:format": "cd frontend && pnpm generate",
         "prepare": "husky"
     },
     "repository": {

@@ -8,260 +8,264 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from "./routes/__root"
-import { Route as AdminRouteImport } from "./routes/_admin"
-import { Route as AdminAdminClassesIndexRouteImport } from "./routes/_admin/admin/classes/index"
-import { Route as AdminAdminDashboardRouteImport } from "./routes/_admin/admin/dashboard"
-import { Route as AdminAdminIndexRouteImport } from "./routes/_admin/admin/index"
-import { Route as AdminAdminOrganizationsIndexRouteImport } from "./routes/_admin/admin/organizations/index"
-import { Route as AdminAdminPermissionsIndexRouteImport } from "./routes/_admin/admin/permissions/index"
-import { Route as AdminAdminRolesIndexRouteImport } from "./routes/_admin/admin/roles/index"
-import { Route as AdminAdminUsersIndexRouteImport } from "./routes/_admin/admin/users/index"
-import { Route as AuthRouteImport } from "./routes/_auth"
-import { Route as AuthOrgOrgIdRouteImport } from "./routes/_auth/org/$orgId"
-import { Route as AuthOrgOrgIdClassesClassIdRouteImport } from "./routes/_auth/org/$orgId/classes/$classId"
-import { Route as AuthOrgOrgIdClassesIndexRouteImport } from "./routes/_auth/org/$orgId/classes/index"
-import { Route as AuthOrgOrgIdDashboardRouteImport } from "./routes/_auth/org/$orgId/dashboard"
-import { Route as AuthOrgOrgIdMediasIndexRouteImport } from "./routes/_auth/org/$orgId/medias/index"
-import { Route as AuthOrgOrgIdRolesIndexRouteImport } from "./routes/_auth/org/$orgId/roles/index"
-import { Route as AuthOrgOrgIdSettingsRouteImport } from "./routes/_auth/org/$orgId/settings"
-import { Route as AuthOrgOrgIdUsersIndexRouteImport } from "./routes/_auth/org/$orgId/users/index"
-import { Route as GuestRouteImport } from "./routes/_guest"
-import { Route as GuestLoginRouteImport } from "./routes/_guest/login"
-import { Route as IndexRouteImport } from "./routes/index"
-import { Route as LiveLiveIdRouteImport } from "./routes/live/$liveId"
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as GuestRouteImport } from './routes/_guest'
+import { Route as AuthRouteImport } from './routes/_auth'
+import { Route as AdminRouteImport } from './routes/_admin'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as LiveLiveIdRouteImport } from './routes/live/$liveId'
+import { Route as GuestLoginRouteImport } from './routes/_guest/login'
+import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin/index'
+import { Route as AuthOrgOrgIdRouteImport } from './routes/_auth/org/$orgId'
+import { Route as AdminAdminDashboardRouteImport } from './routes/_admin/admin/dashboard'
+import { Route as AdminAdminUsersIndexRouteImport } from './routes/_admin/admin/users/index'
+import { Route as AdminAdminRolesIndexRouteImport } from './routes/_admin/admin/roles/index'
+import { Route as AdminAdminPermissionsIndexRouteImport } from './routes/_admin/admin/permissions/index'
+import { Route as AdminAdminOrganizationsIndexRouteImport } from './routes/_admin/admin/organizations/index'
+import { Route as AdminAdminClassesIndexRouteImport } from './routes/_admin/admin/classes/index'
+import { Route as AuthOrgOrgIdSettingsRouteImport } from './routes/_auth/org/$orgId/settings'
+import { Route as AuthOrgOrgIdDashboardRouteImport } from './routes/_auth/org/$orgId/dashboard'
+import { Route as AuthOrgOrgIdUsersIndexRouteImport } from './routes/_auth/org/$orgId/users/index'
+import { Route as AuthOrgOrgIdRolesIndexRouteImport } from './routes/_auth/org/$orgId/roles/index'
+import { Route as AuthOrgOrgIdMediasIndexRouteImport } from './routes/_auth/org/$orgId/medias/index'
+import { Route as AuthOrgOrgIdClassesIndexRouteImport } from './routes/_auth/org/$orgId/classes/index'
+import { Route as AuthOrgOrgIdClassesClassIdRouteImport } from './routes/_auth/org/$orgId/classes/$classId'
 
 const GuestRoute = GuestRouteImport.update({
-  id: "/_guest",
+  id: '/_guest',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
-  id: "/_auth",
+  id: '/_auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
-  id: "/_admin",
+  id: '/_admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LiveLiveIdRoute = LiveLiveIdRouteImport.update({
-  id: "/live/$liveId",
-  path: "/live/$liveId",
+  id: '/live/$liveId',
+  path: '/live/$liveId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GuestLoginRoute = GuestLoginRouteImport.update({
-  id: "/login",
-  path: "/login",
+  id: '/login',
+  path: '/login',
   getParentRoute: () => GuestRoute,
 } as any)
 const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
-  id: "/admin/",
-  path: "/admin/",
+  id: '/admin/',
+  path: '/admin/',
   getParentRoute: () => AdminRoute,
 } as any)
 const AuthOrgOrgIdRoute = AuthOrgOrgIdRouteImport.update({
-  id: "/org/$orgId",
-  path: "/org/$orgId",
+  id: '/org/$orgId',
+  path: '/org/$orgId',
   getParentRoute: () => AuthRoute,
 } as any)
 const AdminAdminDashboardRoute = AdminAdminDashboardRouteImport.update({
-  id: "/admin/dashboard",
-  path: "/admin/dashboard",
+  id: '/admin/dashboard',
+  path: '/admin/dashboard',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAdminUsersIndexRoute = AdminAdminUsersIndexRouteImport.update({
-  id: "/admin/users/",
-  path: "/admin/users/",
+  id: '/admin/users/',
+  path: '/admin/users/',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAdminRolesIndexRoute = AdminAdminRolesIndexRouteImport.update({
-  id: "/admin/roles/",
-  path: "/admin/roles/",
+  id: '/admin/roles/',
+  path: '/admin/roles/',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminAdminPermissionsIndexRoute = AdminAdminPermissionsIndexRouteImport.update({
-  id: "/admin/permissions/",
-  path: "/admin/permissions/",
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminAdminOrganizationsIndexRoute = AdminAdminOrganizationsIndexRouteImport.update({
-  id: "/admin/organizations/",
-  path: "/admin/organizations/",
-  getParentRoute: () => AdminRoute,
-} as any)
+const AdminAdminPermissionsIndexRoute =
+  AdminAdminPermissionsIndexRouteImport.update({
+    id: '/admin/permissions/',
+    path: '/admin/permissions/',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminOrganizationsIndexRoute =
+  AdminAdminOrganizationsIndexRouteImport.update({
+    id: '/admin/organizations/',
+    path: '/admin/organizations/',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminAdminClassesIndexRoute = AdminAdminClassesIndexRouteImport.update({
-  id: "/admin/classes/",
-  path: "/admin/classes/",
+  id: '/admin/classes/',
+  path: '/admin/classes/',
   getParentRoute: () => AdminRoute,
 } as any)
 const AuthOrgOrgIdSettingsRoute = AuthOrgOrgIdSettingsRouteImport.update({
-  id: "/settings",
-  path: "/settings",
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AuthOrgOrgIdRoute,
 } as any)
 const AuthOrgOrgIdDashboardRoute = AuthOrgOrgIdDashboardRouteImport.update({
-  id: "/dashboard",
-  path: "/dashboard",
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthOrgOrgIdRoute,
 } as any)
 const AuthOrgOrgIdUsersIndexRoute = AuthOrgOrgIdUsersIndexRouteImport.update({
-  id: "/users/",
-  path: "/users/",
+  id: '/users/',
+  path: '/users/',
   getParentRoute: () => AuthOrgOrgIdRoute,
 } as any)
 const AuthOrgOrgIdRolesIndexRoute = AuthOrgOrgIdRolesIndexRouteImport.update({
-  id: "/roles/",
-  path: "/roles/",
+  id: '/roles/',
+  path: '/roles/',
   getParentRoute: () => AuthOrgOrgIdRoute,
 } as any)
 const AuthOrgOrgIdMediasIndexRoute = AuthOrgOrgIdMediasIndexRouteImport.update({
-  id: "/medias/",
-  path: "/medias/",
+  id: '/medias/',
+  path: '/medias/',
   getParentRoute: () => AuthOrgOrgIdRoute,
 } as any)
-const AuthOrgOrgIdClassesIndexRoute = AuthOrgOrgIdClassesIndexRouteImport.update({
-  id: "/classes/",
-  path: "/classes/",
-  getParentRoute: () => AuthOrgOrgIdRoute,
-} as any)
-const AuthOrgOrgIdClassesClassIdRoute = AuthOrgOrgIdClassesClassIdRouteImport.update({
-  id: "/classes/$classId",
-  path: "/classes/$classId",
-  getParentRoute: () => AuthOrgOrgIdRoute,
-} as any)
+const AuthOrgOrgIdClassesIndexRoute =
+  AuthOrgOrgIdClassesIndexRouteImport.update({
+    id: '/classes/',
+    path: '/classes/',
+    getParentRoute: () => AuthOrgOrgIdRoute,
+  } as any)
+const AuthOrgOrgIdClassesClassIdRoute =
+  AuthOrgOrgIdClassesClassIdRouteImport.update({
+    id: '/classes/$classId',
+    path: '/classes/$classId',
+    getParentRoute: () => AuthOrgOrgIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  "/": typeof IndexRoute
-  "/login": typeof GuestLoginRoute
-  "/live/$liveId": typeof LiveLiveIdRoute
-  "/admin/dashboard": typeof AdminAdminDashboardRoute
-  "/org/$orgId": typeof AuthOrgOrgIdRouteWithChildren
-  "/admin/": typeof AdminAdminIndexRoute
-  "/org/$orgId/dashboard": typeof AuthOrgOrgIdDashboardRoute
-  "/org/$orgId/settings": typeof AuthOrgOrgIdSettingsRoute
-  "/admin/classes/": typeof AdminAdminClassesIndexRoute
-  "/admin/organizations/": typeof AdminAdminOrganizationsIndexRoute
-  "/admin/permissions/": typeof AdminAdminPermissionsIndexRoute
-  "/admin/roles/": typeof AdminAdminRolesIndexRoute
-  "/admin/users/": typeof AdminAdminUsersIndexRoute
-  "/org/$orgId/classes/$classId": typeof AuthOrgOrgIdClassesClassIdRoute
-  "/org/$orgId/classes/": typeof AuthOrgOrgIdClassesIndexRoute
-  "/org/$orgId/medias/": typeof AuthOrgOrgIdMediasIndexRoute
-  "/org/$orgId/roles/": typeof AuthOrgOrgIdRolesIndexRoute
-  "/org/$orgId/users/": typeof AuthOrgOrgIdUsersIndexRoute
+  '/': typeof IndexRoute
+  '/login': typeof GuestLoginRoute
+  '/live/$liveId': typeof LiveLiveIdRoute
+  '/admin/dashboard': typeof AdminAdminDashboardRoute
+  '/org/$orgId': typeof AuthOrgOrgIdRouteWithChildren
+  '/admin/': typeof AdminAdminIndexRoute
+  '/org/$orgId/dashboard': typeof AuthOrgOrgIdDashboardRoute
+  '/org/$orgId/settings': typeof AuthOrgOrgIdSettingsRoute
+  '/admin/classes/': typeof AdminAdminClassesIndexRoute
+  '/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
+  '/admin/permissions/': typeof AdminAdminPermissionsIndexRoute
+  '/admin/roles/': typeof AdminAdminRolesIndexRoute
+  '/admin/users/': typeof AdminAdminUsersIndexRoute
+  '/org/$orgId/classes/$classId': typeof AuthOrgOrgIdClassesClassIdRoute
+  '/org/$orgId/classes/': typeof AuthOrgOrgIdClassesIndexRoute
+  '/org/$orgId/medias/': typeof AuthOrgOrgIdMediasIndexRoute
+  '/org/$orgId/roles/': typeof AuthOrgOrgIdRolesIndexRoute
+  '/org/$orgId/users/': typeof AuthOrgOrgIdUsersIndexRoute
 }
 export interface FileRoutesByTo {
-  "/": typeof IndexRoute
-  "/login": typeof GuestLoginRoute
-  "/live/$liveId": typeof LiveLiveIdRoute
-  "/admin/dashboard": typeof AdminAdminDashboardRoute
-  "/org/$orgId": typeof AuthOrgOrgIdRouteWithChildren
-  "/admin": typeof AdminAdminIndexRoute
-  "/org/$orgId/dashboard": typeof AuthOrgOrgIdDashboardRoute
-  "/org/$orgId/settings": typeof AuthOrgOrgIdSettingsRoute
-  "/admin/classes": typeof AdminAdminClassesIndexRoute
-  "/admin/organizations": typeof AdminAdminOrganizationsIndexRoute
-  "/admin/permissions": typeof AdminAdminPermissionsIndexRoute
-  "/admin/roles": typeof AdminAdminRolesIndexRoute
-  "/admin/users": typeof AdminAdminUsersIndexRoute
-  "/org/$orgId/classes/$classId": typeof AuthOrgOrgIdClassesClassIdRoute
-  "/org/$orgId/classes": typeof AuthOrgOrgIdClassesIndexRoute
-  "/org/$orgId/medias": typeof AuthOrgOrgIdMediasIndexRoute
-  "/org/$orgId/roles": typeof AuthOrgOrgIdRolesIndexRoute
-  "/org/$orgId/users": typeof AuthOrgOrgIdUsersIndexRoute
+  '/': typeof IndexRoute
+  '/login': typeof GuestLoginRoute
+  '/live/$liveId': typeof LiveLiveIdRoute
+  '/admin/dashboard': typeof AdminAdminDashboardRoute
+  '/org/$orgId': typeof AuthOrgOrgIdRouteWithChildren
+  '/admin': typeof AdminAdminIndexRoute
+  '/org/$orgId/dashboard': typeof AuthOrgOrgIdDashboardRoute
+  '/org/$orgId/settings': typeof AuthOrgOrgIdSettingsRoute
+  '/admin/classes': typeof AdminAdminClassesIndexRoute
+  '/admin/organizations': typeof AdminAdminOrganizationsIndexRoute
+  '/admin/permissions': typeof AdminAdminPermissionsIndexRoute
+  '/admin/roles': typeof AdminAdminRolesIndexRoute
+  '/admin/users': typeof AdminAdminUsersIndexRoute
+  '/org/$orgId/classes/$classId': typeof AuthOrgOrgIdClassesClassIdRoute
+  '/org/$orgId/classes': typeof AuthOrgOrgIdClassesIndexRoute
+  '/org/$orgId/medias': typeof AuthOrgOrgIdMediasIndexRoute
+  '/org/$orgId/roles': typeof AuthOrgOrgIdRolesIndexRoute
+  '/org/$orgId/users': typeof AuthOrgOrgIdUsersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  "/": typeof IndexRoute
-  "/_admin": typeof AdminRouteWithChildren
-  "/_auth": typeof AuthRouteWithChildren
-  "/_guest": typeof GuestRouteWithChildren
-  "/_guest/login": typeof GuestLoginRoute
-  "/live/$liveId": typeof LiveLiveIdRoute
-  "/_admin/admin/dashboard": typeof AdminAdminDashboardRoute
-  "/_auth/org/$orgId": typeof AuthOrgOrgIdRouteWithChildren
-  "/_admin/admin/": typeof AdminAdminIndexRoute
-  "/_auth/org/$orgId/dashboard": typeof AuthOrgOrgIdDashboardRoute
-  "/_auth/org/$orgId/settings": typeof AuthOrgOrgIdSettingsRoute
-  "/_admin/admin/classes/": typeof AdminAdminClassesIndexRoute
-  "/_admin/admin/organizations/": typeof AdminAdminOrganizationsIndexRoute
-  "/_admin/admin/permissions/": typeof AdminAdminPermissionsIndexRoute
-  "/_admin/admin/roles/": typeof AdminAdminRolesIndexRoute
-  "/_admin/admin/users/": typeof AdminAdminUsersIndexRoute
-  "/_auth/org/$orgId/classes/$classId": typeof AuthOrgOrgIdClassesClassIdRoute
-  "/_auth/org/$orgId/classes/": typeof AuthOrgOrgIdClassesIndexRoute
-  "/_auth/org/$orgId/medias/": typeof AuthOrgOrgIdMediasIndexRoute
-  "/_auth/org/$orgId/roles/": typeof AuthOrgOrgIdRolesIndexRoute
-  "/_auth/org/$orgId/users/": typeof AuthOrgOrgIdUsersIndexRoute
+  '/': typeof IndexRoute
+  '/_admin': typeof AdminRouteWithChildren
+  '/_auth': typeof AuthRouteWithChildren
+  '/_guest': typeof GuestRouteWithChildren
+  '/_guest/login': typeof GuestLoginRoute
+  '/live/$liveId': typeof LiveLiveIdRoute
+  '/_admin/admin/dashboard': typeof AdminAdminDashboardRoute
+  '/_auth/org/$orgId': typeof AuthOrgOrgIdRouteWithChildren
+  '/_admin/admin/': typeof AdminAdminIndexRoute
+  '/_auth/org/$orgId/dashboard': typeof AuthOrgOrgIdDashboardRoute
+  '/_auth/org/$orgId/settings': typeof AuthOrgOrgIdSettingsRoute
+  '/_admin/admin/classes/': typeof AdminAdminClassesIndexRoute
+  '/_admin/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
+  '/_admin/admin/permissions/': typeof AdminAdminPermissionsIndexRoute
+  '/_admin/admin/roles/': typeof AdminAdminRolesIndexRoute
+  '/_admin/admin/users/': typeof AdminAdminUsersIndexRoute
+  '/_auth/org/$orgId/classes/$classId': typeof AuthOrgOrgIdClassesClassIdRoute
+  '/_auth/org/$orgId/classes/': typeof AuthOrgOrgIdClassesIndexRoute
+  '/_auth/org/$orgId/medias/': typeof AuthOrgOrgIdMediasIndexRoute
+  '/_auth/org/$orgId/roles/': typeof AuthOrgOrgIdRolesIndexRoute
+  '/_auth/org/$orgId/users/': typeof AuthOrgOrgIdUsersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | "/"
-    | "/login"
-    | "/live/$liveId"
-    | "/admin/dashboard"
-    | "/org/$orgId"
-    | "/admin/"
-    | "/org/$orgId/dashboard"
-    | "/org/$orgId/settings"
-    | "/admin/classes/"
-    | "/admin/organizations/"
-    | "/admin/permissions/"
-    | "/admin/roles/"
-    | "/admin/users/"
-    | "/org/$orgId/classes/$classId"
-    | "/org/$orgId/classes/"
-    | "/org/$orgId/medias/"
-    | "/org/$orgId/roles/"
-    | "/org/$orgId/users/"
+    | '/'
+    | '/login'
+    | '/live/$liveId'
+    | '/admin/dashboard'
+    | '/org/$orgId'
+    | '/admin/'
+    | '/org/$orgId/dashboard'
+    | '/org/$orgId/settings'
+    | '/admin/classes/'
+    | '/admin/organizations/'
+    | '/admin/permissions/'
+    | '/admin/roles/'
+    | '/admin/users/'
+    | '/org/$orgId/classes/$classId'
+    | '/org/$orgId/classes/'
+    | '/org/$orgId/medias/'
+    | '/org/$orgId/roles/'
+    | '/org/$orgId/users/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | "/"
-    | "/login"
-    | "/live/$liveId"
-    | "/admin/dashboard"
-    | "/org/$orgId"
-    | "/admin"
-    | "/org/$orgId/dashboard"
-    | "/org/$orgId/settings"
-    | "/admin/classes"
-    | "/admin/organizations"
-    | "/admin/permissions"
-    | "/admin/roles"
-    | "/admin/users"
-    | "/org/$orgId/classes/$classId"
-    | "/org/$orgId/classes"
-    | "/org/$orgId/medias"
-    | "/org/$orgId/roles"
-    | "/org/$orgId/users"
+    | '/'
+    | '/login'
+    | '/live/$liveId'
+    | '/admin/dashboard'
+    | '/org/$orgId'
+    | '/admin'
+    | '/org/$orgId/dashboard'
+    | '/org/$orgId/settings'
+    | '/admin/classes'
+    | '/admin/organizations'
+    | '/admin/permissions'
+    | '/admin/roles'
+    | '/admin/users'
+    | '/org/$orgId/classes/$classId'
+    | '/org/$orgId/classes'
+    | '/org/$orgId/medias'
+    | '/org/$orgId/roles'
+    | '/org/$orgId/users'
   id:
-    | "__root__"
-    | "/"
-    | "/_admin"
-    | "/_auth"
-    | "/_guest"
-    | "/_guest/login"
-    | "/live/$liveId"
-    | "/_admin/admin/dashboard"
-    | "/_auth/org/$orgId"
-    | "/_admin/admin/"
-    | "/_auth/org/$orgId/dashboard"
-    | "/_auth/org/$orgId/settings"
-    | "/_admin/admin/classes/"
-    | "/_admin/admin/organizations/"
-    | "/_admin/admin/permissions/"
-    | "/_admin/admin/roles/"
-    | "/_admin/admin/users/"
-    | "/_auth/org/$orgId/classes/$classId"
-    | "/_auth/org/$orgId/classes/"
-    | "/_auth/org/$orgId/medias/"
-    | "/_auth/org/$orgId/roles/"
-    | "/_auth/org/$orgId/users/"
+    | '__root__'
+    | '/'
+    | '/_admin'
+    | '/_auth'
+    | '/_guest'
+    | '/_guest/login'
+    | '/live/$liveId'
+    | '/_admin/admin/dashboard'
+    | '/_auth/org/$orgId'
+    | '/_admin/admin/'
+    | '/_auth/org/$orgId/dashboard'
+    | '/_auth/org/$orgId/settings'
+    | '/_admin/admin/classes/'
+    | '/_admin/admin/organizations/'
+    | '/_admin/admin/permissions/'
+    | '/_admin/admin/roles/'
+    | '/_admin/admin/users/'
+    | '/_auth/org/$orgId/classes/$classId'
+    | '/_auth/org/$orgId/classes/'
+    | '/_auth/org/$orgId/medias/'
+    | '/_auth/org/$orgId/roles/'
+    | '/_auth/org/$orgId/users/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -272,152 +276,152 @@ export interface RootRouteChildren {
   LiveLiveIdRoute: typeof LiveLiveIdRoute
 }
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/_guest": {
-      id: "/_guest"
-      path: ""
-      fullPath: "/"
+    '/_guest': {
+      id: '/_guest'
+      path: ''
+      fullPath: '/'
       preLoaderRoute: typeof GuestRouteImport
       parentRoute: typeof rootRouteImport
     }
-    "/_auth": {
-      id: "/_auth"
-      path: ""
-      fullPath: "/"
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: '/'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    "/_admin": {
-      id: "/_admin"
-      path: ""
-      fullPath: "/"
+    '/_admin': {
+      id: '/_admin'
+      path: ''
+      fullPath: '/'
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    "/": {
-      id: "/"
-      path: "/"
-      fullPath: "/"
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    "/live/$liveId": {
-      id: "/live/$liveId"
-      path: "/live/$liveId"
-      fullPath: "/live/$liveId"
+    '/live/$liveId': {
+      id: '/live/$liveId'
+      path: '/live/$liveId'
+      fullPath: '/live/$liveId'
       preLoaderRoute: typeof LiveLiveIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    "/_guest/login": {
-      id: "/_guest/login"
-      path: "/login"
-      fullPath: "/login"
+    '/_guest/login': {
+      id: '/_guest/login'
+      path: '/login'
+      fullPath: '/login'
       preLoaderRoute: typeof GuestLoginRouteImport
       parentRoute: typeof GuestRoute
     }
-    "/_admin/admin/": {
-      id: "/_admin/admin/"
-      path: "/admin"
-      fullPath: "/admin/"
+    '/_admin/admin/': {
+      id: '/_admin/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
       preLoaderRoute: typeof AdminAdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    "/_auth/org/$orgId": {
-      id: "/_auth/org/$orgId"
-      path: "/org/$orgId"
-      fullPath: "/org/$orgId"
+    '/_auth/org/$orgId': {
+      id: '/_auth/org/$orgId'
+      path: '/org/$orgId'
+      fullPath: '/org/$orgId'
       preLoaderRoute: typeof AuthOrgOrgIdRouteImport
       parentRoute: typeof AuthRoute
     }
-    "/_admin/admin/dashboard": {
-      id: "/_admin/admin/dashboard"
-      path: "/admin/dashboard"
-      fullPath: "/admin/dashboard"
+    '/_admin/admin/dashboard': {
+      id: '/_admin/admin/dashboard'
+      path: '/admin/dashboard'
+      fullPath: '/admin/dashboard'
       preLoaderRoute: typeof AdminAdminDashboardRouteImport
       parentRoute: typeof AdminRoute
     }
-    "/_admin/admin/users/": {
-      id: "/_admin/admin/users/"
-      path: "/admin/users"
-      fullPath: "/admin/users/"
+    '/_admin/admin/users/': {
+      id: '/_admin/admin/users/'
+      path: '/admin/users'
+      fullPath: '/admin/users/'
       preLoaderRoute: typeof AdminAdminUsersIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    "/_admin/admin/roles/": {
-      id: "/_admin/admin/roles/"
-      path: "/admin/roles"
-      fullPath: "/admin/roles/"
+    '/_admin/admin/roles/': {
+      id: '/_admin/admin/roles/'
+      path: '/admin/roles'
+      fullPath: '/admin/roles/'
       preLoaderRoute: typeof AdminAdminRolesIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    "/_admin/admin/permissions/": {
-      id: "/_admin/admin/permissions/"
-      path: "/admin/permissions"
-      fullPath: "/admin/permissions/"
+    '/_admin/admin/permissions/': {
+      id: '/_admin/admin/permissions/'
+      path: '/admin/permissions'
+      fullPath: '/admin/permissions/'
       preLoaderRoute: typeof AdminAdminPermissionsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    "/_admin/admin/organizations/": {
-      id: "/_admin/admin/organizations/"
-      path: "/admin/organizations"
-      fullPath: "/admin/organizations/"
+    '/_admin/admin/organizations/': {
+      id: '/_admin/admin/organizations/'
+      path: '/admin/organizations'
+      fullPath: '/admin/organizations/'
       preLoaderRoute: typeof AdminAdminOrganizationsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    "/_admin/admin/classes/": {
-      id: "/_admin/admin/classes/"
-      path: "/admin/classes"
-      fullPath: "/admin/classes/"
+    '/_admin/admin/classes/': {
+      id: '/_admin/admin/classes/'
+      path: '/admin/classes'
+      fullPath: '/admin/classes/'
       preLoaderRoute: typeof AdminAdminClassesIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    "/_auth/org/$orgId/settings": {
-      id: "/_auth/org/$orgId/settings"
-      path: "/settings"
-      fullPath: "/org/$orgId/settings"
+    '/_auth/org/$orgId/settings': {
+      id: '/_auth/org/$orgId/settings'
+      path: '/settings'
+      fullPath: '/org/$orgId/settings'
       preLoaderRoute: typeof AuthOrgOrgIdSettingsRouteImport
       parentRoute: typeof AuthOrgOrgIdRoute
     }
-    "/_auth/org/$orgId/dashboard": {
-      id: "/_auth/org/$orgId/dashboard"
-      path: "/dashboard"
-      fullPath: "/org/$orgId/dashboard"
+    '/_auth/org/$orgId/dashboard': {
+      id: '/_auth/org/$orgId/dashboard'
+      path: '/dashboard'
+      fullPath: '/org/$orgId/dashboard'
       preLoaderRoute: typeof AuthOrgOrgIdDashboardRouteImport
       parentRoute: typeof AuthOrgOrgIdRoute
     }
-    "/_auth/org/$orgId/users/": {
-      id: "/_auth/org/$orgId/users/"
-      path: "/users"
-      fullPath: "/org/$orgId/users/"
+    '/_auth/org/$orgId/users/': {
+      id: '/_auth/org/$orgId/users/'
+      path: '/users'
+      fullPath: '/org/$orgId/users/'
       preLoaderRoute: typeof AuthOrgOrgIdUsersIndexRouteImport
       parentRoute: typeof AuthOrgOrgIdRoute
     }
-    "/_auth/org/$orgId/roles/": {
-      id: "/_auth/org/$orgId/roles/"
-      path: "/roles"
-      fullPath: "/org/$orgId/roles/"
+    '/_auth/org/$orgId/roles/': {
+      id: '/_auth/org/$orgId/roles/'
+      path: '/roles'
+      fullPath: '/org/$orgId/roles/'
       preLoaderRoute: typeof AuthOrgOrgIdRolesIndexRouteImport
       parentRoute: typeof AuthOrgOrgIdRoute
     }
-    "/_auth/org/$orgId/medias/": {
-      id: "/_auth/org/$orgId/medias/"
-      path: "/medias"
-      fullPath: "/org/$orgId/medias/"
+    '/_auth/org/$orgId/medias/': {
+      id: '/_auth/org/$orgId/medias/'
+      path: '/medias'
+      fullPath: '/org/$orgId/medias/'
       preLoaderRoute: typeof AuthOrgOrgIdMediasIndexRouteImport
       parentRoute: typeof AuthOrgOrgIdRoute
     }
-    "/_auth/org/$orgId/classes/": {
-      id: "/_auth/org/$orgId/classes/"
-      path: "/classes"
-      fullPath: "/org/$orgId/classes/"
+    '/_auth/org/$orgId/classes/': {
+      id: '/_auth/org/$orgId/classes/'
+      path: '/classes'
+      fullPath: '/org/$orgId/classes/'
       preLoaderRoute: typeof AuthOrgOrgIdClassesIndexRouteImport
       parentRoute: typeof AuthOrgOrgIdRoute
     }
-    "/_auth/org/$orgId/classes/$classId": {
-      id: "/_auth/org/$orgId/classes/$classId"
-      path: "/classes/$classId"
-      fullPath: "/org/$orgId/classes/$classId"
+    '/_auth/org/$orgId/classes/$classId': {
+      id: '/_auth/org/$orgId/classes/$classId'
+      path: '/classes/$classId'
+      fullPath: '/org/$orgId/classes/$classId'
       preLoaderRoute: typeof AuthOrgOrgIdClassesClassIdRouteImport
       parentRoute: typeof AuthOrgOrgIdRoute
     }
@@ -466,7 +470,9 @@ const AuthOrgOrgIdRouteChildren: AuthOrgOrgIdRouteChildren = {
   AuthOrgOrgIdUsersIndexRoute: AuthOrgOrgIdUsersIndexRoute,
 }
 
-const AuthOrgOrgIdRouteWithChildren = AuthOrgOrgIdRoute._addFileChildren(AuthOrgOrgIdRouteChildren)
+const AuthOrgOrgIdRouteWithChildren = AuthOrgOrgIdRoute._addFileChildren(
+  AuthOrgOrgIdRouteChildren,
+)
 
 interface AuthRouteChildren {
   AuthOrgOrgIdRoute: typeof AuthOrgOrgIdRouteWithChildren
@@ -495,4 +501,6 @@ const rootRouteChildren: RootRouteChildren = {
   GuestRoute: GuestRouteWithChildren,
   LiveLiveIdRoute: LiveLiveIdRoute,
 }
-export const routeTree = rootRouteImport._addFileChildren(rootRouteChildren)._addFileTypes<FileRouteTypes>()
+export const routeTree = rootRouteImport
+  ._addFileChildren(rootRouteChildren)
+  ._addFileTypes<FileRouteTypes>()
