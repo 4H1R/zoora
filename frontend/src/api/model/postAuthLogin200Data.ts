@@ -5,9 +5,9 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainUser } from "./githubCom4H1RZooraInternalDomainUser"
+import type { GithubCom4H1RZooraInternalDomainUser } from './githubCom4H1RZooraInternalDomainUser';
 
 export type PostAuthLogin200Data = {
-  token?: string
-  user?: GithubCom4H1RZooraInternalDomainUser
-}
+  token?: string;
+  user?: GithubCom4H1RZooraInternalDomainUser;
+};

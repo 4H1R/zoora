@@ -7,8 +7,8 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO {
-  description?: string
+  description?: string;
   /** @minLength 2 */
-  name: string
-  organization_id: string
+  name: string;
+  organization_id: string;
 }

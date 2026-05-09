@@ -7,9 +7,9 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainCreateQuizDTO {
-  class_id: string
-  description?: string
-  duration_minutes: number
+  class_id: string;
+  description?: string;
+  duration_minutes: number;
   /** @minLength 2 */
-  title: string
+  title: string;
 }

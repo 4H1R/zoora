@@ -7,9 +7,10 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainUpdateClassDTO {
-  description?: string
+  description?: string;
   /** @minLength 2 */
-  name?: string
+  name?: string;
   /** @minimum 0 */
-  total_users?: number
+  total_users?: number;
+  user_id?: string;
 }

@@ -5,7 +5,25 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { ErrorType } from ".././mutator/custom-instance"
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   DeleteAdminQuestionBanksId401,
   DeleteAdminQuestionBanksId403,
@@ -35,28 +53,16 @@ import type {
   PutAdminQuestionBanksId403,
   PutAdminQuestionBanksId404,
   PutAdminQuestionBanksId409,
-  PutAdminQuestionBanksId500,
-} from "../model"
-import type {
-  DataTag,
-  DefinedInitialDataOptions,
-  DefinedUseQueryResult,
-  MutationFunction,
-  QueryClient,
-  QueryFunction,
-  QueryKey,
-  UndefinedInitialDataOptions,
-  UseMutationOptions,
-  UseMutationResult,
-  UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query"
+  PutAdminQuestionBanksId500
+} from '../model';
 
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { customInstance } from '.././mutator/custom-instance';
+import type { ErrorType } from '.././mutator/custom-instance';
 
-import { customInstance } from ".././mutator/custom-instance"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * @summary [Admin] List question banks
@@ -81,148 +87,118 @@ export type getAdminQuestionBanksResponse500 = {
   status: 500
 }
 
-export type getAdminQuestionBanksResponseSuccess = getAdminQuestionBanksResponse200 & {
-  headers: Headers
-}
-export type getAdminQuestionBanksResponseError = (
-  | getAdminQuestionBanksResponse401
-  | getAdminQuestionBanksResponse403
-  | getAdminQuestionBanksResponse500
-) & {
-  headers: Headers
-}
+export type getAdminQuestionBanksResponseSuccess = (getAdminQuestionBanksResponse200) & {
+  headers: Headers;
+};
+export type getAdminQuestionBanksResponseError = (getAdminQuestionBanksResponse401 | getAdminQuestionBanksResponse403 | getAdminQuestionBanksResponse500) & {
+  headers: Headers;
+};
 
-export type getAdminQuestionBanksResponse = getAdminQuestionBanksResponseSuccess | getAdminQuestionBanksResponseError
+export type getAdminQuestionBanksResponse = (getAdminQuestionBanksResponseSuccess | getAdminQuestionBanksResponseError)
 
-export const getGetAdminQuestionBanksUrl = (params?: GetAdminQuestionBanksParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetAdminQuestionBanksUrl = (params?: GetAdminQuestionBanksParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/admin/question-banks?${stringifiedParams}` : `/admin/question-banks`
 }
 
-export const getAdminQuestionBanks = async (
-  params?: GetAdminQuestionBanksParams,
-  options?: RequestInit
-): Promise<getAdminQuestionBanksResponse> => {
-  return customInstance<getAdminQuestionBanksResponse>(getGetAdminQuestionBanksUrl(params), {
+export const getAdminQuestionBanks = async (params?: GetAdminQuestionBanksParams, options?: RequestInit): Promise<getAdminQuestionBanksResponse> => {
+
+  return customInstance<getAdminQuestionBanksResponse>(getGetAdminQuestionBanksUrl(params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetAdminQuestionBanksQueryKey = (params?: GetAdminQuestionBanksParams) => {
-  return [`/admin/question-banks`, ...(params ? [params] : [])] as const
-}
 
-export const getGetAdminQuestionBanksQueryOptions = <
-  TData = Awaited<ReturnType<typeof getAdminQuestionBanks>>,
-  TError = ErrorType<GetAdminQuestionBanks401 | GetAdminQuestionBanks403 | GetAdminQuestionBanks500>,
->(
-  params?: GetAdminQuestionBanksParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuestionBanks>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetAdminQuestionBanksQueryKey = (params?: GetAdminQuestionBanksParams,) => {
+    return [
+    `/admin/question-banks`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminQuestionBanksQueryOptions = <TData = Awaited<ReturnType<typeof getAdminQuestionBanks>>, TError = ErrorType<GetAdminQuestionBanks401 | GetAdminQuestionBanks403 | GetAdminQuestionBanks500>>(params?: GetAdminQuestionBanksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuestionBanks>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetAdminQuestionBanksQueryKey(params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminQuestionBanks>>> = ({ signal }) =>
-    getAdminQuestionBanks(params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminQuestionBanksQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getAdminQuestionBanks>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminQuestionBanks>>> = ({ signal }) => getAdminQuestionBanks(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminQuestionBanks>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetAdminQuestionBanksQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminQuestionBanks>>>
-export type GetAdminQuestionBanksQueryError = ErrorType<
-  GetAdminQuestionBanks401 | GetAdminQuestionBanks403 | GetAdminQuestionBanks500
->
+export type GetAdminQuestionBanksQueryError = ErrorType<GetAdminQuestionBanks401 | GetAdminQuestionBanks403 | GetAdminQuestionBanks500>
 
-export function useGetAdminQuestionBanks<
-  TData = Awaited<ReturnType<typeof getAdminQuestionBanks>>,
-  TError = ErrorType<GetAdminQuestionBanks401 | GetAdminQuestionBanks403 | GetAdminQuestionBanks500>,
->(
-  params: undefined | GetAdminQuestionBanksParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuestionBanks>>, TError, TData>> &
-      Pick<
+
+export function useGetAdminQuestionBanks<TData = Awaited<ReturnType<typeof getAdminQuestionBanks>>, TError = ErrorType<GetAdminQuestionBanks401 | GetAdminQuestionBanks403 | GetAdminQuestionBanks500>>(
+ params: undefined |  GetAdminQuestionBanksParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuestionBanks>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAdminQuestionBanks>>,
           TError,
           Awaited<ReturnType<typeof getAdminQuestionBanks>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAdminQuestionBanks<
-  TData = Awaited<ReturnType<typeof getAdminQuestionBanks>>,
-  TError = ErrorType<GetAdminQuestionBanks401 | GetAdminQuestionBanks403 | GetAdminQuestionBanks500>,
->(
-  params?: GetAdminQuestionBanksParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuestionBanks>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminQuestionBanks<TData = Awaited<ReturnType<typeof getAdminQuestionBanks>>, TError = ErrorType<GetAdminQuestionBanks401 | GetAdminQuestionBanks403 | GetAdminQuestionBanks500>>(
+ params?: GetAdminQuestionBanksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuestionBanks>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAdminQuestionBanks>>,
           TError,
           Awaited<ReturnType<typeof getAdminQuestionBanks>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAdminQuestionBanks<
-  TData = Awaited<ReturnType<typeof getAdminQuestionBanks>>,
-  TError = ErrorType<GetAdminQuestionBanks401 | GetAdminQuestionBanks403 | GetAdminQuestionBanks500>,
->(
-  params?: GetAdminQuestionBanksParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuestionBanks>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminQuestionBanks<TData = Awaited<ReturnType<typeof getAdminQuestionBanks>>, TError = ErrorType<GetAdminQuestionBanks401 | GetAdminQuestionBanks403 | GetAdminQuestionBanks500>>(
+ params?: GetAdminQuestionBanksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuestionBanks>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary [Admin] List question banks
  */
 
-export function useGetAdminQuestionBanks<
-  TData = Awaited<ReturnType<typeof getAdminQuestionBanks>>,
-  TError = ErrorType<GetAdminQuestionBanks401 | GetAdminQuestionBanks403 | GetAdminQuestionBanks500>,
->(
-  params?: GetAdminQuestionBanksParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuestionBanks>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetAdminQuestionBanksQueryOptions(params, options)
+export function useGetAdminQuestionBanks<TData = Awaited<ReturnType<typeof getAdminQuestionBanks>>, TError = ErrorType<GetAdminQuestionBanks401 | GetAdminQuestionBanks403 | GetAdminQuestionBanks500>>(
+ params?: GetAdminQuestionBanksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuestionBanks>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetAdminQuestionBanksQueryOptions(params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary [Admin] Create question bank
@@ -257,121 +233,83 @@ export type postAdminQuestionBanksResponse500 = {
   status: 500
 }
 
-export type postAdminQuestionBanksResponseSuccess = postAdminQuestionBanksResponse201 & {
-  headers: Headers
-}
-export type postAdminQuestionBanksResponseError = (
-  | postAdminQuestionBanksResponse400
-  | postAdminQuestionBanksResponse401
-  | postAdminQuestionBanksResponse403
-  | postAdminQuestionBanksResponse409
-  | postAdminQuestionBanksResponse500
-) & {
-  headers: Headers
-}
+export type postAdminQuestionBanksResponseSuccess = (postAdminQuestionBanksResponse201) & {
+  headers: Headers;
+};
+export type postAdminQuestionBanksResponseError = (postAdminQuestionBanksResponse400 | postAdminQuestionBanksResponse401 | postAdminQuestionBanksResponse403 | postAdminQuestionBanksResponse409 | postAdminQuestionBanksResponse500) & {
+  headers: Headers;
+};
 
-export type postAdminQuestionBanksResponse = postAdminQuestionBanksResponseSuccess | postAdminQuestionBanksResponseError
+export type postAdminQuestionBanksResponse = (postAdminQuestionBanksResponseSuccess | postAdminQuestionBanksResponseError)
 
 export const getPostAdminQuestionBanksUrl = () => {
+
+
+
+
   return `/admin/question-banks`
 }
 
-export const postAdminQuestionBanks = async (
-  githubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO: GithubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO,
-  options?: RequestInit
-): Promise<postAdminQuestionBanksResponse> => {
-  return customInstance<postAdminQuestionBanksResponse>(getPostAdminQuestionBanksUrl(), {
+export const postAdminQuestionBanks = async (githubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO: GithubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO, options?: RequestInit): Promise<postAdminQuestionBanksResponse> => {
+
+  return customInstance<postAdminQuestionBanksResponse>(getPostAdminQuestionBanksUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO),
-  })
-}
-
-export const getPostAdminQuestionBanksMutationOptions = <
-  TError = ErrorType<
-    | PostAdminQuestionBanks400
-    | PostAdminQuestionBanks401
-    | PostAdminQuestionBanks403
-    | PostAdminQuestionBanks409
-    | PostAdminQuestionBanks500
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postAdminQuestionBanks>>,
-    TError,
-    { data: GithubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postAdminQuestionBanks>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO },
-  TContext
-> => {
-  const mutationKey = ["postAdminQuestionBanks"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postAdminQuestionBanks>>,
-    { data: GithubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO }
-  > = (props) => {
-    const { data } = props ?? {}
-
-    return postAdminQuestionBanks(data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostAdminQuestionBanksMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminQuestionBanks>>>
-export type PostAdminQuestionBanksMutationBody = GithubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO
-export type PostAdminQuestionBanksMutationError = ErrorType<
-  | PostAdminQuestionBanks400
-  | PostAdminQuestionBanks401
-  | PostAdminQuestionBanks403
-  | PostAdminQuestionBanks409
-  | PostAdminQuestionBanks500
->
 
-/**
+
+export const getPostAdminQuestionBanksMutationOptions = <TError = ErrorType<PostAdminQuestionBanks400 | PostAdminQuestionBanks401 | PostAdminQuestionBanks403 | PostAdminQuestionBanks409 | PostAdminQuestionBanks500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminQuestionBanks>>, TError,{data: GithubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAdminQuestionBanks>>, TError,{data: GithubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO}, TContext> => {
+
+const mutationKey = ['postAdminQuestionBanks'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAdminQuestionBanks>>, {data: GithubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAdminQuestionBanks(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAdminQuestionBanksMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminQuestionBanks>>>
+    export type PostAdminQuestionBanksMutationBody = GithubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO
+    export type PostAdminQuestionBanksMutationError = ErrorType<PostAdminQuestionBanks400 | PostAdminQuestionBanks401 | PostAdminQuestionBanks403 | PostAdminQuestionBanks409 | PostAdminQuestionBanks500>
+
+    /**
  * @summary [Admin] Create question bank
  */
-export const usePostAdminQuestionBanks = <
-  TError = ErrorType<
-    | PostAdminQuestionBanks400
-    | PostAdminQuestionBanks401
-    | PostAdminQuestionBanks403
-    | PostAdminQuestionBanks409
-    | PostAdminQuestionBanks500
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postAdminQuestionBanks>>,
-      TError,
-      { data: GithubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postAdminQuestionBanks>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO },
-  TContext
-> => {
-  return useMutation(getPostAdminQuestionBanksMutationOptions(options), queryClient)
-}
-/**
+export const usePostAdminQuestionBanks = <TError = ErrorType<PostAdminQuestionBanks400 | PostAdminQuestionBanks401 | PostAdminQuestionBanks403 | PostAdminQuestionBanks409 | PostAdminQuestionBanks500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminQuestionBanks>>, TError,{data: GithubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAdminQuestionBanks>>,
+        TError,
+        {data: GithubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO},
+        TContext
+      > => {
+      return useMutation(getPostAdminQuestionBanksMutationOptions(options), queryClient);
+    }
+    /**
  * @summary [Admin] Hard-delete question
  */
 export type deleteAdminQuestionBanksQuestionsQuestionIdResponse200 = {
@@ -399,123 +337,82 @@ export type deleteAdminQuestionBanksQuestionsQuestionIdResponse500 = {
   status: 500
 }
 
-export type deleteAdminQuestionBanksQuestionsQuestionIdResponseSuccess =
-  deleteAdminQuestionBanksQuestionsQuestionIdResponse200 & {
-    headers: Headers
-  }
-export type deleteAdminQuestionBanksQuestionsQuestionIdResponseError = (
-  | deleteAdminQuestionBanksQuestionsQuestionIdResponse401
-  | deleteAdminQuestionBanksQuestionsQuestionIdResponse403
-  | deleteAdminQuestionBanksQuestionsQuestionIdResponse404
-  | deleteAdminQuestionBanksQuestionsQuestionIdResponse500
-) & {
-  headers: Headers
-}
+export type deleteAdminQuestionBanksQuestionsQuestionIdResponseSuccess = (deleteAdminQuestionBanksQuestionsQuestionIdResponse200) & {
+  headers: Headers;
+};
+export type deleteAdminQuestionBanksQuestionsQuestionIdResponseError = (deleteAdminQuestionBanksQuestionsQuestionIdResponse401 | deleteAdminQuestionBanksQuestionsQuestionIdResponse403 | deleteAdminQuestionBanksQuestionsQuestionIdResponse404 | deleteAdminQuestionBanksQuestionsQuestionIdResponse500) & {
+  headers: Headers;
+};
 
-export type deleteAdminQuestionBanksQuestionsQuestionIdResponse =
-  | deleteAdminQuestionBanksQuestionsQuestionIdResponseSuccess
-  | deleteAdminQuestionBanksQuestionsQuestionIdResponseError
+export type deleteAdminQuestionBanksQuestionsQuestionIdResponse = (deleteAdminQuestionBanksQuestionsQuestionIdResponseSuccess | deleteAdminQuestionBanksQuestionsQuestionIdResponseError)
 
-export const getDeleteAdminQuestionBanksQuestionsQuestionIdUrl = (questionId: string) => {
+export const getDeleteAdminQuestionBanksQuestionsQuestionIdUrl = (questionId: string,) => {
+
+
+
+
   return `/admin/question-banks/questions/${questionId}`
 }
 
-export const deleteAdminQuestionBanksQuestionsQuestionId = async (
-  questionId: string,
-  options?: RequestInit
-): Promise<deleteAdminQuestionBanksQuestionsQuestionIdResponse> => {
-  return customInstance<deleteAdminQuestionBanksQuestionsQuestionIdResponse>(
-    getDeleteAdminQuestionBanksQuestionsQuestionIdUrl(questionId),
-    {
-      ...options,
-      method: "DELETE",
-    }
-  )
-}
+export const deleteAdminQuestionBanksQuestionsQuestionId = async (questionId: string, options?: RequestInit): Promise<deleteAdminQuestionBanksQuestionsQuestionIdResponse> => {
 
-export const getDeleteAdminQuestionBanksQuestionsQuestionIdMutationOptions = <
-  TError = ErrorType<
-    | DeleteAdminQuestionBanksQuestionsQuestionId401
-    | DeleteAdminQuestionBanksQuestionsQuestionId403
-    | DeleteAdminQuestionBanksQuestionsQuestionId404
-    | DeleteAdminQuestionBanksQuestionsQuestionId500
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteAdminQuestionBanksQuestionsQuestionId>>,
-    TError,
-    { questionId: string },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteAdminQuestionBanksQuestionsQuestionId>>,
-  TError,
-  { questionId: string },
-  TContext
-> => {
-  const mutationKey = ["deleteAdminQuestionBanksQuestionsQuestionId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
+  return customInstance<deleteAdminQuestionBanksQuestionsQuestionIdResponse>(getDeleteAdminQuestionBanksQuestionsQuestionIdUrl(questionId),
+  {
+    ...options,
+    method: 'DELETE'
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteAdminQuestionBanksQuestionsQuestionId>>,
-    { questionId: string }
-  > = (props) => {
-    const { questionId } = props ?? {}
 
-    return deleteAdminQuestionBanksQuestionsQuestionId(questionId, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteAdminQuestionBanksQuestionsQuestionIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteAdminQuestionBanksQuestionsQuestionId>>
->
 
-export type DeleteAdminQuestionBanksQuestionsQuestionIdMutationError = ErrorType<
-  | DeleteAdminQuestionBanksQuestionsQuestionId401
-  | DeleteAdminQuestionBanksQuestionsQuestionId403
-  | DeleteAdminQuestionBanksQuestionsQuestionId404
-  | DeleteAdminQuestionBanksQuestionsQuestionId500
->
 
-/**
+export const getDeleteAdminQuestionBanksQuestionsQuestionIdMutationOptions = <TError = ErrorType<DeleteAdminQuestionBanksQuestionsQuestionId401 | DeleteAdminQuestionBanksQuestionsQuestionId403 | DeleteAdminQuestionBanksQuestionsQuestionId404 | DeleteAdminQuestionBanksQuestionsQuestionId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminQuestionBanksQuestionsQuestionId>>, TError,{questionId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminQuestionBanksQuestionsQuestionId>>, TError,{questionId: string}, TContext> => {
+
+const mutationKey = ['deleteAdminQuestionBanksQuestionsQuestionId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminQuestionBanksQuestionsQuestionId>>, {questionId: string}> = (props) => {
+          const {questionId} = props ?? {};
+
+          return  deleteAdminQuestionBanksQuestionsQuestionId(questionId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminQuestionBanksQuestionsQuestionIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminQuestionBanksQuestionsQuestionId>>>
+
+    export type DeleteAdminQuestionBanksQuestionsQuestionIdMutationError = ErrorType<DeleteAdminQuestionBanksQuestionsQuestionId401 | DeleteAdminQuestionBanksQuestionsQuestionId403 | DeleteAdminQuestionBanksQuestionsQuestionId404 | DeleteAdminQuestionBanksQuestionsQuestionId500>
+
+    /**
  * @summary [Admin] Hard-delete question
  */
-export const useDeleteAdminQuestionBanksQuestionsQuestionId = <
-  TError = ErrorType<
-    | DeleteAdminQuestionBanksQuestionsQuestionId401
-    | DeleteAdminQuestionBanksQuestionsQuestionId403
-    | DeleteAdminQuestionBanksQuestionsQuestionId404
-    | DeleteAdminQuestionBanksQuestionsQuestionId500
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteAdminQuestionBanksQuestionsQuestionId>>,
-      TError,
-      { questionId: string },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteAdminQuestionBanksQuestionsQuestionId>>,
-  TError,
-  { questionId: string },
-  TContext
-> => {
-  return useMutation(getDeleteAdminQuestionBanksQuestionsQuestionIdMutationOptions(options), queryClient)
-}
-/**
+export const useDeleteAdminQuestionBanksQuestionsQuestionId = <TError = ErrorType<DeleteAdminQuestionBanksQuestionsQuestionId401 | DeleteAdminQuestionBanksQuestionsQuestionId403 | DeleteAdminQuestionBanksQuestionsQuestionId404 | DeleteAdminQuestionBanksQuestionsQuestionId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminQuestionBanksQuestionsQuestionId>>, TError,{questionId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminQuestionBanksQuestionsQuestionId>>,
+        TError,
+        {questionId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteAdminQuestionBanksQuestionsQuestionIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary [Admin] Update question bank
  */
 export type putAdminQuestionBanksIdResponse200 = {
@@ -553,128 +450,84 @@ export type putAdminQuestionBanksIdResponse500 = {
   status: 500
 }
 
-export type putAdminQuestionBanksIdResponseSuccess = putAdminQuestionBanksIdResponse200 & {
-  headers: Headers
-}
-export type putAdminQuestionBanksIdResponseError = (
-  | putAdminQuestionBanksIdResponse400
-  | putAdminQuestionBanksIdResponse401
-  | putAdminQuestionBanksIdResponse403
-  | putAdminQuestionBanksIdResponse404
-  | putAdminQuestionBanksIdResponse409
-  | putAdminQuestionBanksIdResponse500
-) & {
-  headers: Headers
-}
+export type putAdminQuestionBanksIdResponseSuccess = (putAdminQuestionBanksIdResponse200) & {
+  headers: Headers;
+};
+export type putAdminQuestionBanksIdResponseError = (putAdminQuestionBanksIdResponse400 | putAdminQuestionBanksIdResponse401 | putAdminQuestionBanksIdResponse403 | putAdminQuestionBanksIdResponse404 | putAdminQuestionBanksIdResponse409 | putAdminQuestionBanksIdResponse500) & {
+  headers: Headers;
+};
 
-export type putAdminQuestionBanksIdResponse =
-  | putAdminQuestionBanksIdResponseSuccess
-  | putAdminQuestionBanksIdResponseError
+export type putAdminQuestionBanksIdResponse = (putAdminQuestionBanksIdResponseSuccess | putAdminQuestionBanksIdResponseError)
 
-export const getPutAdminQuestionBanksIdUrl = (id: string) => {
+export const getPutAdminQuestionBanksIdUrl = (id: string,) => {
+
+
+
+
   return `/admin/question-banks/${id}`
 }
 
-export const putAdminQuestionBanksId = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainAdminUpdateQuestionBankDTO: GithubCom4H1RZooraInternalDomainAdminUpdateQuestionBankDTO,
-  options?: RequestInit
-): Promise<putAdminQuestionBanksIdResponse> => {
-  return customInstance<putAdminQuestionBanksIdResponse>(getPutAdminQuestionBanksIdUrl(id), {
+export const putAdminQuestionBanksId = async (id: string,
+    githubCom4H1RZooraInternalDomainAdminUpdateQuestionBankDTO: GithubCom4H1RZooraInternalDomainAdminUpdateQuestionBankDTO, options?: RequestInit): Promise<putAdminQuestionBanksIdResponse> => {
+
+  return customInstance<putAdminQuestionBanksIdResponse>(getPutAdminQuestionBanksIdUrl(id),
+  {
     ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainAdminUpdateQuestionBankDTO),
-  })
-}
-
-export const getPutAdminQuestionBanksIdMutationOptions = <
-  TError = ErrorType<
-    | PutAdminQuestionBanksId400
-    | PutAdminQuestionBanksId401
-    | PutAdminQuestionBanksId403
-    | PutAdminQuestionBanksId404
-    | PutAdminQuestionBanksId409
-    | PutAdminQuestionBanksId500
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putAdminQuestionBanksId>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainAdminUpdateQuestionBankDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putAdminQuestionBanksId>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainAdminUpdateQuestionBankDTO },
-  TContext
-> => {
-  const mutationKey = ["putAdminQuestionBanksId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putAdminQuestionBanksId>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainAdminUpdateQuestionBankDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return putAdminQuestionBanksId(id, data, requestOptions)
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainAdminUpdateQuestionBankDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutAdminQuestionBanksIdMutationResult = NonNullable<Awaited<ReturnType<typeof putAdminQuestionBanksId>>>
-export type PutAdminQuestionBanksIdMutationBody = GithubCom4H1RZooraInternalDomainAdminUpdateQuestionBankDTO
-export type PutAdminQuestionBanksIdMutationError = ErrorType<
-  | PutAdminQuestionBanksId400
-  | PutAdminQuestionBanksId401
-  | PutAdminQuestionBanksId403
-  | PutAdminQuestionBanksId404
-  | PutAdminQuestionBanksId409
-  | PutAdminQuestionBanksId500
->
 
-/**
+
+export const getPutAdminQuestionBanksIdMutationOptions = <TError = ErrorType<PutAdminQuestionBanksId400 | PutAdminQuestionBanksId401 | PutAdminQuestionBanksId403 | PutAdminQuestionBanksId404 | PutAdminQuestionBanksId409 | PutAdminQuestionBanksId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putAdminQuestionBanksId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainAdminUpdateQuestionBankDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putAdminQuestionBanksId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainAdminUpdateQuestionBankDTO}, TContext> => {
+
+const mutationKey = ['putAdminQuestionBanksId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putAdminQuestionBanksId>>, {id: string;data: GithubCom4H1RZooraInternalDomainAdminUpdateQuestionBankDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  putAdminQuestionBanksId(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutAdminQuestionBanksIdMutationResult = NonNullable<Awaited<ReturnType<typeof putAdminQuestionBanksId>>>
+    export type PutAdminQuestionBanksIdMutationBody = GithubCom4H1RZooraInternalDomainAdminUpdateQuestionBankDTO
+    export type PutAdminQuestionBanksIdMutationError = ErrorType<PutAdminQuestionBanksId400 | PutAdminQuestionBanksId401 | PutAdminQuestionBanksId403 | PutAdminQuestionBanksId404 | PutAdminQuestionBanksId409 | PutAdminQuestionBanksId500>
+
+    /**
  * @summary [Admin] Update question bank
  */
-export const usePutAdminQuestionBanksId = <
-  TError = ErrorType<
-    | PutAdminQuestionBanksId400
-    | PutAdminQuestionBanksId401
-    | PutAdminQuestionBanksId403
-    | PutAdminQuestionBanksId404
-    | PutAdminQuestionBanksId409
-    | PutAdminQuestionBanksId500
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putAdminQuestionBanksId>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainAdminUpdateQuestionBankDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putAdminQuestionBanksId>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainAdminUpdateQuestionBankDTO },
-  TContext
-> => {
-  return useMutation(getPutAdminQuestionBanksIdMutationOptions(options), queryClient)
-}
-/**
+export const usePutAdminQuestionBanksId = <TError = ErrorType<PutAdminQuestionBanksId400 | PutAdminQuestionBanksId401 | PutAdminQuestionBanksId403 | PutAdminQuestionBanksId404 | PutAdminQuestionBanksId409 | PutAdminQuestionBanksId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putAdminQuestionBanksId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainAdminUpdateQuestionBankDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putAdminQuestionBanksId>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainAdminUpdateQuestionBankDTO},
+        TContext
+      > => {
+      return useMutation(getPutAdminQuestionBanksIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary [Admin] Hard-delete question bank
  */
 export type deleteAdminQuestionBanksIdResponse200 = {
@@ -702,104 +555,78 @@ export type deleteAdminQuestionBanksIdResponse500 = {
   status: 500
 }
 
-export type deleteAdminQuestionBanksIdResponseSuccess = deleteAdminQuestionBanksIdResponse200 & {
-  headers: Headers
-}
-export type deleteAdminQuestionBanksIdResponseError = (
-  | deleteAdminQuestionBanksIdResponse401
-  | deleteAdminQuestionBanksIdResponse403
-  | deleteAdminQuestionBanksIdResponse404
-  | deleteAdminQuestionBanksIdResponse500
-) & {
-  headers: Headers
-}
+export type deleteAdminQuestionBanksIdResponseSuccess = (deleteAdminQuestionBanksIdResponse200) & {
+  headers: Headers;
+};
+export type deleteAdminQuestionBanksIdResponseError = (deleteAdminQuestionBanksIdResponse401 | deleteAdminQuestionBanksIdResponse403 | deleteAdminQuestionBanksIdResponse404 | deleteAdminQuestionBanksIdResponse500) & {
+  headers: Headers;
+};
 
-export type deleteAdminQuestionBanksIdResponse =
-  | deleteAdminQuestionBanksIdResponseSuccess
-  | deleteAdminQuestionBanksIdResponseError
+export type deleteAdminQuestionBanksIdResponse = (deleteAdminQuestionBanksIdResponseSuccess | deleteAdminQuestionBanksIdResponseError)
 
-export const getDeleteAdminQuestionBanksIdUrl = (id: string) => {
+export const getDeleteAdminQuestionBanksIdUrl = (id: string,) => {
+
+
+
+
   return `/admin/question-banks/${id}`
 }
 
-export const deleteAdminQuestionBanksId = async (
-  id: string,
-  options?: RequestInit
-): Promise<deleteAdminQuestionBanksIdResponse> => {
-  return customInstance<deleteAdminQuestionBanksIdResponse>(getDeleteAdminQuestionBanksIdUrl(id), {
+export const deleteAdminQuestionBanksId = async (id: string, options?: RequestInit): Promise<deleteAdminQuestionBanksIdResponse> => {
+
+  return customInstance<deleteAdminQuestionBanksIdResponse>(getDeleteAdminQuestionBanksIdUrl(id),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeleteAdminQuestionBanksIdMutationOptions = <
-  TError = ErrorType<
-    | DeleteAdminQuestionBanksId401
-    | DeleteAdminQuestionBanksId403
-    | DeleteAdminQuestionBanksId404
-    | DeleteAdminQuestionBanksId500
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteAdminQuestionBanksId>>,
-    TError,
-    { id: string },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminQuestionBanksId>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["deleteAdminQuestionBanksId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminQuestionBanksId>>, { id: string }> = (
-    props
-  ) => {
-    const { id } = props ?? {}
-
-    return deleteAdminQuestionBanksId(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteAdminQuestionBanksIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteAdminQuestionBanksId>>
->
 
-export type DeleteAdminQuestionBanksIdMutationError = ErrorType<
-  | DeleteAdminQuestionBanksId401
-  | DeleteAdminQuestionBanksId403
-  | DeleteAdminQuestionBanksId404
-  | DeleteAdminQuestionBanksId500
->
 
-/**
+export const getDeleteAdminQuestionBanksIdMutationOptions = <TError = ErrorType<DeleteAdminQuestionBanksId401 | DeleteAdminQuestionBanksId403 | DeleteAdminQuestionBanksId404 | DeleteAdminQuestionBanksId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminQuestionBanksId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminQuestionBanksId>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteAdminQuestionBanksId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminQuestionBanksId>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteAdminQuestionBanksId(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminQuestionBanksIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminQuestionBanksId>>>
+
+    export type DeleteAdminQuestionBanksIdMutationError = ErrorType<DeleteAdminQuestionBanksId401 | DeleteAdminQuestionBanksId403 | DeleteAdminQuestionBanksId404 | DeleteAdminQuestionBanksId500>
+
+    /**
  * @summary [Admin] Hard-delete question bank
  */
-export const useDeleteAdminQuestionBanksId = <
-  TError = ErrorType<
-    | DeleteAdminQuestionBanksId401
-    | DeleteAdminQuestionBanksId403
-    | DeleteAdminQuestionBanksId404
-    | DeleteAdminQuestionBanksId500
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteAdminQuestionBanksId>>,
-      TError,
-      { id: string },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof deleteAdminQuestionBanksId>>, TError, { id: string }, TContext> => {
-  return useMutation(getDeleteAdminQuestionBanksIdMutationOptions(options), queryClient)
-}
+export const useDeleteAdminQuestionBanksId = <TError = ErrorType<DeleteAdminQuestionBanksId401 | DeleteAdminQuestionBanksId403 | DeleteAdminQuestionBanksId404 | DeleteAdminQuestionBanksId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminQuestionBanksId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminQuestionBanksId>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteAdminQuestionBanksIdMutationOptions(options), queryClient);
+    }

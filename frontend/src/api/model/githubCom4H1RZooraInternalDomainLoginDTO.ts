@@ -7,6 +7,6 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainLoginDTO {
-  password: string
-  username: string
+  password: string;
+  username: string;
 }

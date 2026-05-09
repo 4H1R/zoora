@@ -5,20 +5,20 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainClassSession } from "./githubCom4H1RZooraInternalDomainClassSession"
-import type { GithubCom4H1RZooraInternalDomainLiveRoomConfig } from "./githubCom4H1RZooraInternalDomainLiveRoomConfig"
-import type { GithubCom4H1RZooraInternalDomainLiveRoomStatus } from "./githubCom4H1RZooraInternalDomainLiveRoomStatus"
+import type { GithubCom4H1RZooraInternalDomainClassSession } from './githubCom4H1RZooraInternalDomainClassSession';
+import type { GithubCom4H1RZooraInternalDomainLiveRoomConfig } from './githubCom4H1RZooraInternalDomainLiveRoomConfig';
+import type { GithubCom4H1RZooraInternalDomainLiveRoomStatus } from './githubCom4H1RZooraInternalDomainLiveRoomStatus';
 
 export interface GithubCom4H1RZooraInternalDomainLiveRoom {
-  actual_end_time?: string
-  actual_start_time?: string
-  class_session?: GithubCom4H1RZooraInternalDomainClassSession
-  class_session_id?: string
-  config?: GithubCom4H1RZooraInternalDomainLiveRoomConfig
-  created_at?: string
-  host_last_seen_at?: string
-  id?: string
-  livekit_room_name?: string
-  status?: GithubCom4H1RZooraInternalDomainLiveRoomStatus
-  updated_at?: string
+  actual_end_time?: string;
+  actual_start_time?: string;
+  class_session?: GithubCom4H1RZooraInternalDomainClassSession;
+  class_session_id?: string;
+  config?: GithubCom4H1RZooraInternalDomainLiveRoomConfig;
+  created_at?: string;
+  host_last_seen_at?: string;
+  id?: string;
+  livekit_room_name?: string;
+  status?: GithubCom4H1RZooraInternalDomainLiveRoomStatus;
+  updated_at?: string;
 }

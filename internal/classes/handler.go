@@ -50,19 +50,19 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 
 	authed := rg.Group("", authMiddleware)
 	{
-		authed.GET("/classes", h.List)
+		authed.GET("/classes", perm(domain.PermClassesView), h.List)
 		authed.POST("/classes", perm(domain.PermClassesCreate), h.Create)
-		authed.GET("/classes/:id", idParam, h.Get)
+		authed.GET("/classes/:id", perm(domain.PermClassesView), idParam, h.Get)
 		authed.PUT("/classes/:id", perm(domain.PermClassesUpdate), idParam, h.Update)
 		authed.DELETE("/classes/:id", perm(domain.PermClassesDelete), idParam, h.Delete)
 
-		authed.GET("/classes/:id/sessions", idParam, h.ListSessions)
+		authed.GET("/classes/:id/sessions", perm(domain.PermClassesView), idParam, h.ListSessions)
 		authed.POST("/classes/:id/sessions", perm(domain.PermClassesUpdate), idParam, h.CreateSession)
-		authed.GET("/classes/sessions/:sessionId", sessionIDParam, h.GetSession)
+		authed.GET("/classes/sessions/:sessionId", perm(domain.PermClassesView), sessionIDParam, h.GetSession)
 		authed.PUT("/classes/sessions/:sessionId", perm(domain.PermClassesUpdate), sessionIDParam, h.UpdateSession)
 		authed.DELETE("/classes/sessions/:sessionId", perm(domain.PermClassesDelete), sessionIDParam, h.DeleteSession)
 
-		authed.GET("/classes/:id/members", idParam, h.ListMembers)
+		authed.GET("/classes/:id/members", perm(domain.PermClassesView), idParam, h.ListMembers)
 		authed.POST("/classes/:id/members", perm(domain.PermClassesJoin), idParam, h.Enroll)
 		authed.DELETE("/classes/:id/members/:userId", perm(domain.PermClassesJoin), idParam, userIDParam, h.Leave)
 	}

@@ -26,6 +26,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { usePermissionLabel } from "@/lib/permissions"
 import { cn } from "@/lib/utils"
 
 const roleSchema = z.object({
@@ -47,6 +48,7 @@ export function RoleFormDialog({ open, onOpenChange, role, organizationId }: Rol
   const queryClient = useQueryClient()
   const isEdit = !!role
   const [permOpen, setPermOpen] = useState(false)
+  const permissionLabel = usePermissionLabel()
 
   const { data: permData } = useGetPermissions()
   const permissions = (permData?.data?.data as Permission[] | undefined) ?? []
@@ -159,7 +161,7 @@ export function RoleFormDialog({ open, onOpenChange, role, organizationId }: Rol
                 <div className="flex flex-wrap gap-1">
                   {selectedPerms.map((p) => (
                     <Badge key={p.id} variant="secondary" className="text-[11px]">
-                      {p.name}
+                      {p.name ? permissionLabel(p.name) : ""}
                     </Badge>
                   ))}
                 </div>
@@ -179,11 +181,11 @@ export function RoleFormDialog({ open, onOpenChange, role, organizationId }: Rol
                       return (
                         <CommandItem
                           key={perm.id}
-                          value={perm.name}
+                          value={perm.name ? permissionLabel(perm.name) : perm.name}
                           onSelect={() => perm.id && togglePermission(perm.id)}
                         >
                           <CheckIcon className={cn("me-2 size-4", isSelected ? "opacity-100" : "opacity-0")} />
-                          <span className="text-sm">{perm.name}</span>
+                          <span className="text-sm">{perm.name ? permissionLabel(perm.name) : ""}</span>
                         </CommandItem>
                       )
                     })}

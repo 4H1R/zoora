@@ -7,6 +7,6 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainUpsertGradebookCellDTO {
-  student_id: string
-  value: string
+  student_id: string;
+  value: string;
 }

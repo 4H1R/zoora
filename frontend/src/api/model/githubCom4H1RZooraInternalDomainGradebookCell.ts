@@ -7,9 +7,9 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainGradebookCell {
-  column_id?: string
-  id?: string
-  student_id?: string
-  updated_at?: string
-  value?: string
+  column_id?: string;
+  id?: string;
+  student_id?: string;
+  updated_at?: string;
+  value?: string;
 }

@@ -5,7 +5,25 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { ErrorType } from ".././mutator/custom-instance"
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   DeletePracticesId401,
   DeletePracticesId403,
@@ -53,28 +71,16 @@ import type {
   PutPracticesSubmissionsSubmissionIdGrade400,
   PutPracticesSubmissionsSubmissionIdGrade401,
   PutPracticesSubmissionsSubmissionIdGrade403,
-  PutPracticesSubmissionsSubmissionIdGrade404,
-} from "../model"
-import type {
-  DataTag,
-  DefinedInitialDataOptions,
-  DefinedUseQueryResult,
-  MutationFunction,
-  QueryClient,
-  QueryFunction,
-  QueryKey,
-  UndefinedInitialDataOptions,
-  UseMutationOptions,
-  UseMutationResult,
-  UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query"
+  PutPracticesSubmissionsSubmissionIdGrade404
+} from '../model';
 
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { customInstance } from '.././mutator/custom-instance';
+import type { ErrorType } from '.././mutator/custom-instance';
 
-import { customInstance } from ".././mutator/custom-instance"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * Returns practice rooms filtered by caller role. Filter by class_id or class_session_id. Search matches: title, content. Orderable: created_at, updated_at, start_time, end_time, title.
@@ -100,146 +106,118 @@ export type getPracticesResponse500 = {
   status: 500
 }
 
-export type getPracticesResponseSuccess = getPracticesResponse200 & {
-  headers: Headers
-}
-export type getPracticesResponseError = (
-  | getPracticesResponse401
-  | getPracticesResponse403
-  | getPracticesResponse500
-) & {
-  headers: Headers
-}
+export type getPracticesResponseSuccess = (getPracticesResponse200) & {
+  headers: Headers;
+};
+export type getPracticesResponseError = (getPracticesResponse401 | getPracticesResponse403 | getPracticesResponse500) & {
+  headers: Headers;
+};
 
-export type getPracticesResponse = getPracticesResponseSuccess | getPracticesResponseError
+export type getPracticesResponse = (getPracticesResponseSuccess | getPracticesResponseError)
 
-export const getGetPracticesUrl = (params?: GetPracticesParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetPracticesUrl = (params?: GetPracticesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/practices?${stringifiedParams}` : `/practices`
 }
 
-export const getPractices = async (
-  params?: GetPracticesParams,
-  options?: RequestInit
-): Promise<getPracticesResponse> => {
-  return customInstance<getPracticesResponse>(getGetPracticesUrl(params), {
+export const getPractices = async (params?: GetPracticesParams, options?: RequestInit): Promise<getPracticesResponse> => {
+
+  return customInstance<getPracticesResponse>(getGetPracticesUrl(params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetPracticesQueryKey = (params?: GetPracticesParams) => {
-  return [`/practices`, ...(params ? [params] : [])] as const
-}
 
-export const getGetPracticesQueryOptions = <
-  TData = Awaited<ReturnType<typeof getPractices>>,
-  TError = ErrorType<GetPractices401 | GetPractices403 | GetPractices500>,
->(
-  params?: GetPracticesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPractices>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetPracticesQueryKey = (params?: GetPracticesParams,) => {
+    return [
+    `/practices`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPracticesQueryOptions = <TData = Awaited<ReturnType<typeof getPractices>>, TError = ErrorType<GetPractices401 | GetPractices403 | GetPractices500>>(params?: GetPracticesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPractices>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetPracticesQueryKey(params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPractices>>> = ({ signal }) =>
-    getPractices(params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetPracticesQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getPractices>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPractices>>> = ({ signal }) => getPractices(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPractices>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetPracticesQueryResult = NonNullable<Awaited<ReturnType<typeof getPractices>>>
 export type GetPracticesQueryError = ErrorType<GetPractices401 | GetPractices403 | GetPractices500>
 
-export function useGetPractices<
-  TData = Awaited<ReturnType<typeof getPractices>>,
-  TError = ErrorType<GetPractices401 | GetPractices403 | GetPractices500>,
->(
-  params: undefined | GetPracticesParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPractices>>, TError, TData>> &
-      Pick<
+
+export function useGetPractices<TData = Awaited<ReturnType<typeof getPractices>>, TError = ErrorType<GetPractices401 | GetPractices403 | GetPractices500>>(
+ params: undefined |  GetPracticesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPractices>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPractices>>,
           TError,
           Awaited<ReturnType<typeof getPractices>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPractices<
-  TData = Awaited<ReturnType<typeof getPractices>>,
-  TError = ErrorType<GetPractices401 | GetPractices403 | GetPractices500>,
->(
-  params?: GetPracticesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPractices>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPractices<TData = Awaited<ReturnType<typeof getPractices>>, TError = ErrorType<GetPractices401 | GetPractices403 | GetPractices500>>(
+ params?: GetPracticesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPractices>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPractices>>,
           TError,
           Awaited<ReturnType<typeof getPractices>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPractices<
-  TData = Awaited<ReturnType<typeof getPractices>>,
-  TError = ErrorType<GetPractices401 | GetPractices403 | GetPractices500>,
->(
-  params?: GetPracticesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPractices>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPractices<TData = Awaited<ReturnType<typeof getPractices>>, TError = ErrorType<GetPractices401 | GetPractices403 | GetPractices500>>(
+ params?: GetPracticesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPractices>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List practice rooms
  */
 
-export function useGetPractices<
-  TData = Awaited<ReturnType<typeof getPractices>>,
-  TError = ErrorType<GetPractices401 | GetPractices403 | GetPractices500>,
->(
-  params?: GetPracticesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPractices>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetPracticesQueryOptions(params, options)
+export function useGetPractices<TData = Awaited<ReturnType<typeof getPractices>>, TError = ErrorType<GetPractices401 | GetPractices403 | GetPractices500>>(
+ params?: GetPracticesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPractices>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetPracticesQueryOptions(params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Create practice room
@@ -269,104 +247,83 @@ export type postPracticesResponse404 = {
   status: 404
 }
 
-export type postPracticesResponseSuccess = postPracticesResponse201 & {
-  headers: Headers
-}
-export type postPracticesResponseError = (
-  | postPracticesResponse400
-  | postPracticesResponse401
-  | postPracticesResponse403
-  | postPracticesResponse404
-) & {
-  headers: Headers
-}
+export type postPracticesResponseSuccess = (postPracticesResponse201) & {
+  headers: Headers;
+};
+export type postPracticesResponseError = (postPracticesResponse400 | postPracticesResponse401 | postPracticesResponse403 | postPracticesResponse404) & {
+  headers: Headers;
+};
 
-export type postPracticesResponse = postPracticesResponseSuccess | postPracticesResponseError
+export type postPracticesResponse = (postPracticesResponseSuccess | postPracticesResponseError)
 
 export const getPostPracticesUrl = () => {
+
+
+
+
   return `/practices`
 }
 
-export const postPractices = async (
-  githubCom4H1RZooraInternalDomainCreatePracticeRoomDTO: GithubCom4H1RZooraInternalDomainCreatePracticeRoomDTO,
-  options?: RequestInit
-): Promise<postPracticesResponse> => {
-  return customInstance<postPracticesResponse>(getPostPracticesUrl(), {
+export const postPractices = async (githubCom4H1RZooraInternalDomainCreatePracticeRoomDTO: GithubCom4H1RZooraInternalDomainCreatePracticeRoomDTO, options?: RequestInit): Promise<postPracticesResponse> => {
+
+  return customInstance<postPracticesResponse>(getPostPracticesUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainCreatePracticeRoomDTO),
-  })
-}
-
-export const getPostPracticesMutationOptions = <
-  TError = ErrorType<PostPractices400 | PostPractices401 | PostPractices403 | PostPractices404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postPractices>>,
-    TError,
-    { data: GithubCom4H1RZooraInternalDomainCreatePracticeRoomDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postPractices>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainCreatePracticeRoomDTO },
-  TContext
-> => {
-  const mutationKey = ["postPractices"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postPractices>>,
-    { data: GithubCom4H1RZooraInternalDomainCreatePracticeRoomDTO }
-  > = (props) => {
-    const { data } = props ?? {}
-
-    return postPractices(data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainCreatePracticeRoomDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostPracticesMutationResult = NonNullable<Awaited<ReturnType<typeof postPractices>>>
-export type PostPracticesMutationBody = GithubCom4H1RZooraInternalDomainCreatePracticeRoomDTO
-export type PostPracticesMutationError = ErrorType<
-  PostPractices400 | PostPractices401 | PostPractices403 | PostPractices404
->
 
-/**
+
+export const getPostPracticesMutationOptions = <TError = ErrorType<PostPractices400 | PostPractices401 | PostPractices403 | PostPractices404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postPractices>>, TError,{data: GithubCom4H1RZooraInternalDomainCreatePracticeRoomDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postPractices>>, TError,{data: GithubCom4H1RZooraInternalDomainCreatePracticeRoomDTO}, TContext> => {
+
+const mutationKey = ['postPractices'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postPractices>>, {data: GithubCom4H1RZooraInternalDomainCreatePracticeRoomDTO}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postPractices(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostPracticesMutationResult = NonNullable<Awaited<ReturnType<typeof postPractices>>>
+    export type PostPracticesMutationBody = GithubCom4H1RZooraInternalDomainCreatePracticeRoomDTO
+    export type PostPracticesMutationError = ErrorType<PostPractices400 | PostPractices401 | PostPractices403 | PostPractices404>
+
+    /**
  * @summary Create practice room
  */
-export const usePostPractices = <
-  TError = ErrorType<PostPractices400 | PostPractices401 | PostPractices403 | PostPractices404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postPractices>>,
-      TError,
-      { data: GithubCom4H1RZooraInternalDomainCreatePracticeRoomDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postPractices>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainCreatePracticeRoomDTO },
-  TContext
-> => {
-  return useMutation(getPostPracticesMutationOptions(options), queryClient)
-}
-/**
+export const usePostPractices = <TError = ErrorType<PostPractices400 | PostPractices401 | PostPractices403 | PostPractices404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postPractices>>, TError,{data: GithubCom4H1RZooraInternalDomainCreatePracticeRoomDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postPractices>>,
+        TError,
+        {data: GithubCom4H1RZooraInternalDomainCreatePracticeRoomDTO},
+        TContext
+      > => {
+      return useMutation(getPostPracticesMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get submission
  */
 export type getPracticesSubmissionsSubmissionIdResponse200 = {
@@ -389,167 +346,111 @@ export type getPracticesSubmissionsSubmissionIdResponse404 = {
   status: 404
 }
 
-export type getPracticesSubmissionsSubmissionIdResponseSuccess = getPracticesSubmissionsSubmissionIdResponse200 & {
-  headers: Headers
-}
-export type getPracticesSubmissionsSubmissionIdResponseError = (
-  | getPracticesSubmissionsSubmissionIdResponse401
-  | getPracticesSubmissionsSubmissionIdResponse403
-  | getPracticesSubmissionsSubmissionIdResponse404
-) & {
-  headers: Headers
-}
+export type getPracticesSubmissionsSubmissionIdResponseSuccess = (getPracticesSubmissionsSubmissionIdResponse200) & {
+  headers: Headers;
+};
+export type getPracticesSubmissionsSubmissionIdResponseError = (getPracticesSubmissionsSubmissionIdResponse401 | getPracticesSubmissionsSubmissionIdResponse403 | getPracticesSubmissionsSubmissionIdResponse404) & {
+  headers: Headers;
+};
 
-export type getPracticesSubmissionsSubmissionIdResponse =
-  | getPracticesSubmissionsSubmissionIdResponseSuccess
-  | getPracticesSubmissionsSubmissionIdResponseError
+export type getPracticesSubmissionsSubmissionIdResponse = (getPracticesSubmissionsSubmissionIdResponseSuccess | getPracticesSubmissionsSubmissionIdResponseError)
 
-export const getGetPracticesSubmissionsSubmissionIdUrl = (submissionId: string) => {
+export const getGetPracticesSubmissionsSubmissionIdUrl = (submissionId: string,) => {
+
+
+
+
   return `/practices/submissions/${submissionId}`
 }
 
-export const getPracticesSubmissionsSubmissionId = async (
-  submissionId: string,
-  options?: RequestInit
-): Promise<getPracticesSubmissionsSubmissionIdResponse> => {
-  return customInstance<getPracticesSubmissionsSubmissionIdResponse>(
-    getGetPracticesSubmissionsSubmissionIdUrl(submissionId),
-    {
-      ...options,
-      method: "GET",
-    }
-  )
-}
+export const getPracticesSubmissionsSubmissionId = async (submissionId: string, options?: RequestInit): Promise<getPracticesSubmissionsSubmissionIdResponse> => {
 
-export const getGetPracticesSubmissionsSubmissionIdQueryKey = (submissionId: string) => {
-  return [`/practices/submissions/${submissionId}`] as const
-}
+  return customInstance<getPracticesSubmissionsSubmissionIdResponse>(getGetPracticesSubmissionsSubmissionIdUrl(submissionId),
+  {
+    ...options,
+    method: 'GET'
 
-export const getGetPracticesSubmissionsSubmissionIdQueryOptions = <
-  TData = Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>,
-  TError = ErrorType<
-    | GetPracticesSubmissionsSubmissionId401
-    | GetPracticesSubmissionsSubmissionId403
-    | GetPracticesSubmissionsSubmissionId404
-  >,
->(
-  submissionId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
+
   }
+);}
+
+
+
+
+
+export const getGetPracticesSubmissionsSubmissionIdQueryKey = (submissionId: string,) => {
+    return [
+    `/practices/submissions/${submissionId}`
+    ] as const;
+    }
+
+
+export const getGetPracticesSubmissionsSubmissionIdQueryOptions = <TData = Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>, TError = ErrorType<GetPracticesSubmissionsSubmissionId401 | GetPracticesSubmissionsSubmissionId403 | GetPracticesSubmissionsSubmissionId404>>(submissionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetPracticesSubmissionsSubmissionIdQueryKey(submissionId)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>> = ({ signal }) =>
-    getPracticesSubmissionsSubmissionId(submissionId, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetPracticesSubmissionsSubmissionIdQueryKey(submissionId);
 
-  return { queryKey, queryFn, enabled: !!submissionId, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>> = ({ signal }) => getPracticesSubmissionsSubmissionId(submissionId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(submissionId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetPracticesSubmissionsSubmissionIdQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>
->
-export type GetPracticesSubmissionsSubmissionIdQueryError = ErrorType<
-  | GetPracticesSubmissionsSubmissionId401
-  | GetPracticesSubmissionsSubmissionId403
-  | GetPracticesSubmissionsSubmissionId404
->
+export type GetPracticesSubmissionsSubmissionIdQueryResult = NonNullable<Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>>
+export type GetPracticesSubmissionsSubmissionIdQueryError = ErrorType<GetPracticesSubmissionsSubmissionId401 | GetPracticesSubmissionsSubmissionId403 | GetPracticesSubmissionsSubmissionId404>
 
-export function useGetPracticesSubmissionsSubmissionId<
-  TData = Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>,
-  TError = ErrorType<
-    | GetPracticesSubmissionsSubmissionId401
-    | GetPracticesSubmissionsSubmissionId403
-    | GetPracticesSubmissionsSubmissionId404
-  >,
->(
-  submissionId: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>, TError, TData>> &
-      Pick<
+
+export function useGetPracticesSubmissionsSubmissionId<TData = Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>, TError = ErrorType<GetPracticesSubmissionsSubmissionId401 | GetPracticesSubmissionsSubmissionId403 | GetPracticesSubmissionsSubmissionId404>>(
+ submissionId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>,
           TError,
           Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPracticesSubmissionsSubmissionId<
-  TData = Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>,
-  TError = ErrorType<
-    | GetPracticesSubmissionsSubmissionId401
-    | GetPracticesSubmissionsSubmissionId403
-    | GetPracticesSubmissionsSubmissionId404
-  >,
->(
-  submissionId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPracticesSubmissionsSubmissionId<TData = Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>, TError = ErrorType<GetPracticesSubmissionsSubmissionId401 | GetPracticesSubmissionsSubmissionId403 | GetPracticesSubmissionsSubmissionId404>>(
+ submissionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>,
           TError,
           Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPracticesSubmissionsSubmissionId<
-  TData = Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>,
-  TError = ErrorType<
-    | GetPracticesSubmissionsSubmissionId401
-    | GetPracticesSubmissionsSubmissionId403
-    | GetPracticesSubmissionsSubmissionId404
-  >,
->(
-  submissionId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPracticesSubmissionsSubmissionId<TData = Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>, TError = ErrorType<GetPracticesSubmissionsSubmissionId401 | GetPracticesSubmissionsSubmissionId403 | GetPracticesSubmissionsSubmissionId404>>(
+ submissionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get submission
  */
 
-export function useGetPracticesSubmissionsSubmissionId<
-  TData = Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>,
-  TError = ErrorType<
-    | GetPracticesSubmissionsSubmissionId401
-    | GetPracticesSubmissionsSubmissionId403
-    | GetPracticesSubmissionsSubmissionId404
-  >,
->(
-  submissionId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetPracticesSubmissionsSubmissionIdQueryOptions(submissionId, options)
+export function useGetPracticesSubmissionsSubmissionId<TData = Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>, TError = ErrorType<GetPracticesSubmissionsSubmissionId401 | GetPracticesSubmissionsSubmissionId403 | GetPracticesSubmissionsSubmissionId404>>(
+ submissionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesSubmissionsSubmissionId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetPracticesSubmissionsSubmissionIdQueryOptions(submissionId,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Grade submission
@@ -579,127 +480,84 @@ export type putPracticesSubmissionsSubmissionIdGradeResponse404 = {
   status: 404
 }
 
-export type putPracticesSubmissionsSubmissionIdGradeResponseSuccess =
-  putPracticesSubmissionsSubmissionIdGradeResponse200 & {
-    headers: Headers
-  }
-export type putPracticesSubmissionsSubmissionIdGradeResponseError = (
-  | putPracticesSubmissionsSubmissionIdGradeResponse400
-  | putPracticesSubmissionsSubmissionIdGradeResponse401
-  | putPracticesSubmissionsSubmissionIdGradeResponse403
-  | putPracticesSubmissionsSubmissionIdGradeResponse404
-) & {
-  headers: Headers
-}
+export type putPracticesSubmissionsSubmissionIdGradeResponseSuccess = (putPracticesSubmissionsSubmissionIdGradeResponse200) & {
+  headers: Headers;
+};
+export type putPracticesSubmissionsSubmissionIdGradeResponseError = (putPracticesSubmissionsSubmissionIdGradeResponse400 | putPracticesSubmissionsSubmissionIdGradeResponse401 | putPracticesSubmissionsSubmissionIdGradeResponse403 | putPracticesSubmissionsSubmissionIdGradeResponse404) & {
+  headers: Headers;
+};
 
-export type putPracticesSubmissionsSubmissionIdGradeResponse =
-  | putPracticesSubmissionsSubmissionIdGradeResponseSuccess
-  | putPracticesSubmissionsSubmissionIdGradeResponseError
+export type putPracticesSubmissionsSubmissionIdGradeResponse = (putPracticesSubmissionsSubmissionIdGradeResponseSuccess | putPracticesSubmissionsSubmissionIdGradeResponseError)
 
-export const getPutPracticesSubmissionsSubmissionIdGradeUrl = (submissionId: string) => {
+export const getPutPracticesSubmissionsSubmissionIdGradeUrl = (submissionId: string,) => {
+
+
+
+
   return `/practices/submissions/${submissionId}/grade`
 }
 
-export const putPracticesSubmissionsSubmissionIdGrade = async (
-  submissionId: string,
-  githubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO: GithubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO,
-  options?: RequestInit
-): Promise<putPracticesSubmissionsSubmissionIdGradeResponse> => {
-  return customInstance<putPracticesSubmissionsSubmissionIdGradeResponse>(
-    getPutPracticesSubmissionsSubmissionIdGradeUrl(submissionId),
-    {
-      ...options,
-      method: "PUT",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(githubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO),
-    }
-  )
-}
+export const putPracticesSubmissionsSubmissionIdGrade = async (submissionId: string,
+    githubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO: GithubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO, options?: RequestInit): Promise<putPracticesSubmissionsSubmissionIdGradeResponse> => {
 
-export const getPutPracticesSubmissionsSubmissionIdGradeMutationOptions = <
-  TError = ErrorType<
-    | PutPracticesSubmissionsSubmissionIdGrade400
-    | PutPracticesSubmissionsSubmissionIdGrade401
-    | PutPracticesSubmissionsSubmissionIdGrade403
-    | PutPracticesSubmissionsSubmissionIdGrade404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putPracticesSubmissionsSubmissionIdGrade>>,
-    TError,
-    { submissionId: string; data: GithubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putPracticesSubmissionsSubmissionIdGrade>>,
-  TError,
-  { submissionId: string; data: GithubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO },
-  TContext
-> => {
-  const mutationKey = ["putPracticesSubmissionsSubmissionIdGrade"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putPracticesSubmissionsSubmissionIdGrade>>,
-    { submissionId: string; data: GithubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO }
-  > = (props) => {
-    const { submissionId, data } = props ?? {}
-
-    return putPracticesSubmissionsSubmissionIdGrade(submissionId, data, requestOptions)
+  return customInstance<putPracticesSubmissionsSubmissionIdGradeResponse>(getPutPracticesSubmissionsSubmissionIdGradeUrl(submissionId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutPracticesSubmissionsSubmissionIdGradeMutationResult = NonNullable<
-  Awaited<ReturnType<typeof putPracticesSubmissionsSubmissionIdGrade>>
->
-export type PutPracticesSubmissionsSubmissionIdGradeMutationBody =
-  GithubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO
-export type PutPracticesSubmissionsSubmissionIdGradeMutationError = ErrorType<
-  | PutPracticesSubmissionsSubmissionIdGrade400
-  | PutPracticesSubmissionsSubmissionIdGrade401
-  | PutPracticesSubmissionsSubmissionIdGrade403
-  | PutPracticesSubmissionsSubmissionIdGrade404
->
 
-/**
+
+export const getPutPracticesSubmissionsSubmissionIdGradeMutationOptions = <TError = ErrorType<PutPracticesSubmissionsSubmissionIdGrade400 | PutPracticesSubmissionsSubmissionIdGrade401 | PutPracticesSubmissionsSubmissionIdGrade403 | PutPracticesSubmissionsSubmissionIdGrade404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putPracticesSubmissionsSubmissionIdGrade>>, TError,{submissionId: string;data: GithubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putPracticesSubmissionsSubmissionIdGrade>>, TError,{submissionId: string;data: GithubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO}, TContext> => {
+
+const mutationKey = ['putPracticesSubmissionsSubmissionIdGrade'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putPracticesSubmissionsSubmissionIdGrade>>, {submissionId: string;data: GithubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO}> = (props) => {
+          const {submissionId,data} = props ?? {};
+
+          return  putPracticesSubmissionsSubmissionIdGrade(submissionId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutPracticesSubmissionsSubmissionIdGradeMutationResult = NonNullable<Awaited<ReturnType<typeof putPracticesSubmissionsSubmissionIdGrade>>>
+    export type PutPracticesSubmissionsSubmissionIdGradeMutationBody = GithubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO
+    export type PutPracticesSubmissionsSubmissionIdGradeMutationError = ErrorType<PutPracticesSubmissionsSubmissionIdGrade400 | PutPracticesSubmissionsSubmissionIdGrade401 | PutPracticesSubmissionsSubmissionIdGrade403 | PutPracticesSubmissionsSubmissionIdGrade404>
+
+    /**
  * @summary Grade submission
  */
-export const usePutPracticesSubmissionsSubmissionIdGrade = <
-  TError = ErrorType<
-    | PutPracticesSubmissionsSubmissionIdGrade400
-    | PutPracticesSubmissionsSubmissionIdGrade401
-    | PutPracticesSubmissionsSubmissionIdGrade403
-    | PutPracticesSubmissionsSubmissionIdGrade404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putPracticesSubmissionsSubmissionIdGrade>>,
-      TError,
-      { submissionId: string; data: GithubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putPracticesSubmissionsSubmissionIdGrade>>,
-  TError,
-  { submissionId: string; data: GithubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO },
-  TContext
-> => {
-  return useMutation(getPutPracticesSubmissionsSubmissionIdGradeMutationOptions(options), queryClient)
-}
-/**
+export const usePutPracticesSubmissionsSubmissionIdGrade = <TError = ErrorType<PutPracticesSubmissionsSubmissionIdGrade400 | PutPracticesSubmissionsSubmissionIdGrade401 | PutPracticesSubmissionsSubmissionIdGrade403 | PutPracticesSubmissionsSubmissionIdGrade404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putPracticesSubmissionsSubmissionIdGrade>>, TError,{submissionId: string;data: GithubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putPracticesSubmissionsSubmissionIdGrade>>,
+        TError,
+        {submissionId: string;data: GithubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO},
+        TContext
+      > => {
+      return useMutation(getPutPracticesSubmissionsSubmissionIdGradeMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get practice room
  */
 export type getPracticesIdResponse200 = {
@@ -722,133 +580,111 @@ export type getPracticesIdResponse404 = {
   status: 404
 }
 
-export type getPracticesIdResponseSuccess = getPracticesIdResponse200 & {
-  headers: Headers
-}
-export type getPracticesIdResponseError = (
-  | getPracticesIdResponse401
-  | getPracticesIdResponse403
-  | getPracticesIdResponse404
-) & {
-  headers: Headers
-}
+export type getPracticesIdResponseSuccess = (getPracticesIdResponse200) & {
+  headers: Headers;
+};
+export type getPracticesIdResponseError = (getPracticesIdResponse401 | getPracticesIdResponse403 | getPracticesIdResponse404) & {
+  headers: Headers;
+};
 
-export type getPracticesIdResponse = getPracticesIdResponseSuccess | getPracticesIdResponseError
+export type getPracticesIdResponse = (getPracticesIdResponseSuccess | getPracticesIdResponseError)
 
-export const getGetPracticesIdUrl = (id: string) => {
+export const getGetPracticesIdUrl = (id: string,) => {
+
+
+
+
   return `/practices/${id}`
 }
 
 export const getPracticesId = async (id: string, options?: RequestInit): Promise<getPracticesIdResponse> => {
-  return customInstance<getPracticesIdResponse>(getGetPracticesIdUrl(id), {
+
+  return customInstance<getPracticesIdResponse>(getGetPracticesIdUrl(id),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetPracticesIdQueryKey = (id: string) => {
-  return [`/practices/${id}`] as const
-}
 
-export const getGetPracticesIdQueryOptions = <
-  TData = Awaited<ReturnType<typeof getPracticesId>>,
-  TError = ErrorType<GetPracticesId401 | GetPracticesId403 | GetPracticesId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetPracticesIdQueryKey = (id: string,) => {
+    return [
+    `/practices/${id}`
+    ] as const;
+    }
+
+
+export const getGetPracticesIdQueryOptions = <TData = Awaited<ReturnType<typeof getPracticesId>>, TError = ErrorType<GetPracticesId401 | GetPracticesId403 | GetPracticesId404>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetPracticesIdQueryKey(id)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPracticesId>>> = ({ signal }) =>
-    getPracticesId(id, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetPracticesIdQueryKey(id);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getPracticesId>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPracticesId>>> = ({ signal }) => getPracticesId(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPracticesId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetPracticesIdQueryResult = NonNullable<Awaited<ReturnType<typeof getPracticesId>>>
 export type GetPracticesIdQueryError = ErrorType<GetPracticesId401 | GetPracticesId403 | GetPracticesId404>
 
-export function useGetPracticesId<
-  TData = Awaited<ReturnType<typeof getPracticesId>>,
-  TError = ErrorType<GetPracticesId401 | GetPracticesId403 | GetPracticesId404>,
->(
-  id: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesId>>, TError, TData>> &
-      Pick<
+
+export function useGetPracticesId<TData = Awaited<ReturnType<typeof getPracticesId>>, TError = ErrorType<GetPracticesId401 | GetPracticesId403 | GetPracticesId404>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPracticesId>>,
           TError,
           Awaited<ReturnType<typeof getPracticesId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPracticesId<
-  TData = Awaited<ReturnType<typeof getPracticesId>>,
-  TError = ErrorType<GetPracticesId401 | GetPracticesId403 | GetPracticesId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesId>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPracticesId<TData = Awaited<ReturnType<typeof getPracticesId>>, TError = ErrorType<GetPracticesId401 | GetPracticesId403 | GetPracticesId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPracticesId>>,
           TError,
           Awaited<ReturnType<typeof getPracticesId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPracticesId<
-  TData = Awaited<ReturnType<typeof getPracticesId>>,
-  TError = ErrorType<GetPracticesId401 | GetPracticesId403 | GetPracticesId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPracticesId<TData = Awaited<ReturnType<typeof getPracticesId>>, TError = ErrorType<GetPracticesId401 | GetPracticesId403 | GetPracticesId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get practice room
  */
 
-export function useGetPracticesId<
-  TData = Awaited<ReturnType<typeof getPracticesId>>,
-  TError = ErrorType<GetPracticesId401 | GetPracticesId403 | GetPracticesId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetPracticesIdQueryOptions(id, options)
+export function useGetPracticesId<TData = Awaited<ReturnType<typeof getPracticesId>>, TError = ErrorType<GetPracticesId401 | GetPracticesId403 | GetPracticesId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetPracticesIdQueryOptions(id,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Update practice room
@@ -878,105 +714,84 @@ export type putPracticesIdResponse404 = {
   status: 404
 }
 
-export type putPracticesIdResponseSuccess = putPracticesIdResponse200 & {
-  headers: Headers
-}
-export type putPracticesIdResponseError = (
-  | putPracticesIdResponse400
-  | putPracticesIdResponse401
-  | putPracticesIdResponse403
-  | putPracticesIdResponse404
-) & {
-  headers: Headers
-}
+export type putPracticesIdResponseSuccess = (putPracticesIdResponse200) & {
+  headers: Headers;
+};
+export type putPracticesIdResponseError = (putPracticesIdResponse400 | putPracticesIdResponse401 | putPracticesIdResponse403 | putPracticesIdResponse404) & {
+  headers: Headers;
+};
 
-export type putPracticesIdResponse = putPracticesIdResponseSuccess | putPracticesIdResponseError
+export type putPracticesIdResponse = (putPracticesIdResponseSuccess | putPracticesIdResponseError)
 
-export const getPutPracticesIdUrl = (id: string) => {
+export const getPutPracticesIdUrl = (id: string,) => {
+
+
+
+
   return `/practices/${id}`
 }
 
-export const putPracticesId = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO: GithubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO,
-  options?: RequestInit
-): Promise<putPracticesIdResponse> => {
-  return customInstance<putPracticesIdResponse>(getPutPracticesIdUrl(id), {
+export const putPracticesId = async (id: string,
+    githubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO: GithubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO, options?: RequestInit): Promise<putPracticesIdResponse> => {
+
+  return customInstance<putPracticesIdResponse>(getPutPracticesIdUrl(id),
+  {
     ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO),
-  })
-}
-
-export const getPutPracticesIdMutationOptions = <
-  TError = ErrorType<PutPracticesId400 | PutPracticesId401 | PutPracticesId403 | PutPracticesId404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putPracticesId>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putPracticesId>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO },
-  TContext
-> => {
-  const mutationKey = ["putPracticesId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putPracticesId>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return putPracticesId(id, data, requestOptions)
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutPracticesIdMutationResult = NonNullable<Awaited<ReturnType<typeof putPracticesId>>>
-export type PutPracticesIdMutationBody = GithubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO
-export type PutPracticesIdMutationError = ErrorType<
-  PutPracticesId400 | PutPracticesId401 | PutPracticesId403 | PutPracticesId404
->
 
-/**
+
+export const getPutPracticesIdMutationOptions = <TError = ErrorType<PutPracticesId400 | PutPracticesId401 | PutPracticesId403 | PutPracticesId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putPracticesId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putPracticesId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO}, TContext> => {
+
+const mutationKey = ['putPracticesId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putPracticesId>>, {id: string;data: GithubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  putPracticesId(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutPracticesIdMutationResult = NonNullable<Awaited<ReturnType<typeof putPracticesId>>>
+    export type PutPracticesIdMutationBody = GithubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO
+    export type PutPracticesIdMutationError = ErrorType<PutPracticesId400 | PutPracticesId401 | PutPracticesId403 | PutPracticesId404>
+
+    /**
  * @summary Update practice room
  */
-export const usePutPracticesId = <
-  TError = ErrorType<PutPracticesId400 | PutPracticesId401 | PutPracticesId403 | PutPracticesId404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putPracticesId>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putPracticesId>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO },
-  TContext
-> => {
-  return useMutation(getPutPracticesIdMutationOptions(options), queryClient)
-}
-/**
+export const usePutPracticesId = <TError = ErrorType<PutPracticesId400 | PutPracticesId401 | PutPracticesId403 | PutPracticesId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putPracticesId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putPracticesId>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO},
+        TContext
+      > => {
+      return useMutation(getPutPracticesIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Delete practice room
  */
 export type deletePracticesIdResponse200 = {
@@ -999,75 +814,82 @@ export type deletePracticesIdResponse404 = {
   status: 404
 }
 
-export type deletePracticesIdResponseSuccess = deletePracticesIdResponse200 & {
-  headers: Headers
-}
-export type deletePracticesIdResponseError = (
-  | deletePracticesIdResponse401
-  | deletePracticesIdResponse403
-  | deletePracticesIdResponse404
-) & {
-  headers: Headers
-}
+export type deletePracticesIdResponseSuccess = (deletePracticesIdResponse200) & {
+  headers: Headers;
+};
+export type deletePracticesIdResponseError = (deletePracticesIdResponse401 | deletePracticesIdResponse403 | deletePracticesIdResponse404) & {
+  headers: Headers;
+};
 
-export type deletePracticesIdResponse = deletePracticesIdResponseSuccess | deletePracticesIdResponseError
+export type deletePracticesIdResponse = (deletePracticesIdResponseSuccess | deletePracticesIdResponseError)
 
-export const getDeletePracticesIdUrl = (id: string) => {
+export const getDeletePracticesIdUrl = (id: string,) => {
+
+
+
+
   return `/practices/${id}`
 }
 
 export const deletePracticesId = async (id: string, options?: RequestInit): Promise<deletePracticesIdResponse> => {
-  return customInstance<deletePracticesIdResponse>(getDeletePracticesIdUrl(id), {
+
+  return customInstance<deletePracticesIdResponse>(getDeletePracticesIdUrl(id),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeletePracticesIdMutationOptions = <
-  TError = ErrorType<DeletePracticesId401 | DeletePracticesId403 | DeletePracticesId404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof deletePracticesId>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof deletePracticesId>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["deletePracticesId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePracticesId>>, { id: string }> = (props) => {
-    const { id } = props ?? {}
-
-    return deletePracticesId(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeletePracticesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deletePracticesId>>>
 
-export type DeletePracticesIdMutationError = ErrorType<
-  DeletePracticesId401 | DeletePracticesId403 | DeletePracticesId404
->
 
-/**
+export const getDeletePracticesIdMutationOptions = <TError = ErrorType<DeletePracticesId401 | DeletePracticesId403 | DeletePracticesId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePracticesId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deletePracticesId>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deletePracticesId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePracticesId>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deletePracticesId(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePracticesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deletePracticesId>>>
+
+    export type DeletePracticesIdMutationError = ErrorType<DeletePracticesId401 | DeletePracticesId403 | DeletePracticesId404>
+
+    /**
  * @summary Delete practice room
  */
-export const useDeletePracticesId = <
-  TError = ErrorType<DeletePracticesId401 | DeletePracticesId403 | DeletePracticesId404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof deletePracticesId>>, TError, { id: string }, TContext>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof deletePracticesId>>, TError, { id: string }, TContext> => {
-  return useMutation(getDeletePracticesIdMutationOptions(options), queryClient)
-}
-/**
+export const useDeletePracticesId = <TError = ErrorType<DeletePracticesId401 | DeletePracticesId403 | DeletePracticesId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePracticesId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deletePracticesId>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeletePracticesIdMutationOptions(options), queryClient);
+    }
+    /**
  * Only room owner, staff, and admins can view all submissions. Orderable: submitted_at, created_at, score.
  * @summary List submissions for practice room
  */
@@ -1091,158 +913,126 @@ export type getPracticesIdSubmissionsResponse404 = {
   status: 404
 }
 
-export type getPracticesIdSubmissionsResponseSuccess = getPracticesIdSubmissionsResponse200 & {
-  headers: Headers
-}
-export type getPracticesIdSubmissionsResponseError = (
-  | getPracticesIdSubmissionsResponse401
-  | getPracticesIdSubmissionsResponse403
-  | getPracticesIdSubmissionsResponse404
-) & {
-  headers: Headers
-}
+export type getPracticesIdSubmissionsResponseSuccess = (getPracticesIdSubmissionsResponse200) & {
+  headers: Headers;
+};
+export type getPracticesIdSubmissionsResponseError = (getPracticesIdSubmissionsResponse401 | getPracticesIdSubmissionsResponse403 | getPracticesIdSubmissionsResponse404) & {
+  headers: Headers;
+};
 
-export type getPracticesIdSubmissionsResponse =
-  | getPracticesIdSubmissionsResponseSuccess
-  | getPracticesIdSubmissionsResponseError
+export type getPracticesIdSubmissionsResponse = (getPracticesIdSubmissionsResponseSuccess | getPracticesIdSubmissionsResponseError)
 
-export const getGetPracticesIdSubmissionsUrl = (id: string, params?: GetPracticesIdSubmissionsParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetPracticesIdSubmissionsUrl = (id: string,
+    params?: GetPracticesIdSubmissionsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
-  })
+  });
 
-  const stringifiedParams = normalizedParams.toString()
+  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0
-    ? `/practices/${id}/submissions?${stringifiedParams}`
-    : `/practices/${id}/submissions`
+  return stringifiedParams.length > 0 ? `/practices/${id}/submissions?${stringifiedParams}` : `/practices/${id}/submissions`
 }
 
-export const getPracticesIdSubmissions = async (
-  id: string,
-  params?: GetPracticesIdSubmissionsParams,
-  options?: RequestInit
-): Promise<getPracticesIdSubmissionsResponse> => {
-  return customInstance<getPracticesIdSubmissionsResponse>(getGetPracticesIdSubmissionsUrl(id, params), {
+export const getPracticesIdSubmissions = async (id: string,
+    params?: GetPracticesIdSubmissionsParams, options?: RequestInit): Promise<getPracticesIdSubmissionsResponse> => {
+
+  return customInstance<getPracticesIdSubmissionsResponse>(getGetPracticesIdSubmissionsUrl(id,params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetPracticesIdSubmissionsQueryKey = (id: string, params?: GetPracticesIdSubmissionsParams) => {
-  return [`/practices/${id}/submissions`, ...(params ? [params] : [])] as const
-}
 
-export const getGetPracticesIdSubmissionsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getPracticesIdSubmissions>>,
-  TError = ErrorType<GetPracticesIdSubmissions401 | GetPracticesIdSubmissions403 | GetPracticesIdSubmissions404>,
->(
-  id: string,
-  params?: GetPracticesIdSubmissionsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesIdSubmissions>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetPracticesIdSubmissionsQueryKey = (id: string,
+    params?: GetPracticesIdSubmissionsParams,) => {
+    return [
+    `/practices/${id}/submissions`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPracticesIdSubmissionsQueryOptions = <TData = Awaited<ReturnType<typeof getPracticesIdSubmissions>>, TError = ErrorType<GetPracticesIdSubmissions401 | GetPracticesIdSubmissions403 | GetPracticesIdSubmissions404>>(id: string,
+    params?: GetPracticesIdSubmissionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesIdSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetPracticesIdSubmissionsQueryKey(id, params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPracticesIdSubmissions>>> = ({ signal }) =>
-    getPracticesIdSubmissions(id, params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetPracticesIdSubmissionsQueryKey(id,params);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getPracticesIdSubmissions>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPracticesIdSubmissions>>> = ({ signal }) => getPracticesIdSubmissions(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPracticesIdSubmissions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetPracticesIdSubmissionsQueryResult = NonNullable<Awaited<ReturnType<typeof getPracticesIdSubmissions>>>
-export type GetPracticesIdSubmissionsQueryError = ErrorType<
-  GetPracticesIdSubmissions401 | GetPracticesIdSubmissions403 | GetPracticesIdSubmissions404
->
+export type GetPracticesIdSubmissionsQueryError = ErrorType<GetPracticesIdSubmissions401 | GetPracticesIdSubmissions403 | GetPracticesIdSubmissions404>
 
-export function useGetPracticesIdSubmissions<
-  TData = Awaited<ReturnType<typeof getPracticesIdSubmissions>>,
-  TError = ErrorType<GetPracticesIdSubmissions401 | GetPracticesIdSubmissions403 | GetPracticesIdSubmissions404>,
->(
-  id: string,
-  params: undefined | GetPracticesIdSubmissionsParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesIdSubmissions>>, TError, TData>> &
-      Pick<
+
+export function useGetPracticesIdSubmissions<TData = Awaited<ReturnType<typeof getPracticesIdSubmissions>>, TError = ErrorType<GetPracticesIdSubmissions401 | GetPracticesIdSubmissions403 | GetPracticesIdSubmissions404>>(
+ id: string,
+    params: undefined |  GetPracticesIdSubmissionsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesIdSubmissions>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPracticesIdSubmissions>>,
           TError,
           Awaited<ReturnType<typeof getPracticesIdSubmissions>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPracticesIdSubmissions<
-  TData = Awaited<ReturnType<typeof getPracticesIdSubmissions>>,
-  TError = ErrorType<GetPracticesIdSubmissions401 | GetPracticesIdSubmissions403 | GetPracticesIdSubmissions404>,
->(
-  id: string,
-  params?: GetPracticesIdSubmissionsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesIdSubmissions>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPracticesIdSubmissions<TData = Awaited<ReturnType<typeof getPracticesIdSubmissions>>, TError = ErrorType<GetPracticesIdSubmissions401 | GetPracticesIdSubmissions403 | GetPracticesIdSubmissions404>>(
+ id: string,
+    params?: GetPracticesIdSubmissionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesIdSubmissions>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPracticesIdSubmissions>>,
           TError,
           Awaited<ReturnType<typeof getPracticesIdSubmissions>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPracticesIdSubmissions<
-  TData = Awaited<ReturnType<typeof getPracticesIdSubmissions>>,
-  TError = ErrorType<GetPracticesIdSubmissions401 | GetPracticesIdSubmissions403 | GetPracticesIdSubmissions404>,
->(
-  id: string,
-  params?: GetPracticesIdSubmissionsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesIdSubmissions>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPracticesIdSubmissions<TData = Awaited<ReturnType<typeof getPracticesIdSubmissions>>, TError = ErrorType<GetPracticesIdSubmissions401 | GetPracticesIdSubmissions403 | GetPracticesIdSubmissions404>>(
+ id: string,
+    params?: GetPracticesIdSubmissionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesIdSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List submissions for practice room
  */
 
-export function useGetPracticesIdSubmissions<
-  TData = Awaited<ReturnType<typeof getPracticesIdSubmissions>>,
-  TError = ErrorType<GetPracticesIdSubmissions401 | GetPracticesIdSubmissions403 | GetPracticesIdSubmissions404>,
->(
-  id: string,
-  params?: GetPracticesIdSubmissionsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesIdSubmissions>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetPracticesIdSubmissionsQueryOptions(id, params, options)
+export function useGetPracticesIdSubmissions<TData = Awaited<ReturnType<typeof getPracticesIdSubmissions>>, TError = ErrorType<GetPracticesIdSubmissions401 | GetPracticesIdSubmissions403 | GetPracticesIdSubmissions404>>(
+ id: string,
+    params?: GetPracticesIdSubmissionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPracticesIdSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetPracticesIdSubmissionsQueryOptions(id,params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * Students can only submit between start_time and end_time.
@@ -1278,122 +1068,80 @@ export type postPracticesIdSubmissionsResponse409 = {
   status: 409
 }
 
-export type postPracticesIdSubmissionsResponseSuccess = postPracticesIdSubmissionsResponse201 & {
-  headers: Headers
-}
-export type postPracticesIdSubmissionsResponseError = (
-  | postPracticesIdSubmissionsResponse400
-  | postPracticesIdSubmissionsResponse401
-  | postPracticesIdSubmissionsResponse403
-  | postPracticesIdSubmissionsResponse404
-  | postPracticesIdSubmissionsResponse409
-) & {
-  headers: Headers
-}
+export type postPracticesIdSubmissionsResponseSuccess = (postPracticesIdSubmissionsResponse201) & {
+  headers: Headers;
+};
+export type postPracticesIdSubmissionsResponseError = (postPracticesIdSubmissionsResponse400 | postPracticesIdSubmissionsResponse401 | postPracticesIdSubmissionsResponse403 | postPracticesIdSubmissionsResponse404 | postPracticesIdSubmissionsResponse409) & {
+  headers: Headers;
+};
 
-export type postPracticesIdSubmissionsResponse =
-  | postPracticesIdSubmissionsResponseSuccess
-  | postPracticesIdSubmissionsResponseError
+export type postPracticesIdSubmissionsResponse = (postPracticesIdSubmissionsResponseSuccess | postPracticesIdSubmissionsResponseError)
 
-export const getPostPracticesIdSubmissionsUrl = (id: string) => {
+export const getPostPracticesIdSubmissionsUrl = (id: string,) => {
+
+
+
+
   return `/practices/${id}/submissions`
 }
 
-export const postPracticesIdSubmissions = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO: GithubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO,
-  options?: RequestInit
-): Promise<postPracticesIdSubmissionsResponse> => {
-  return customInstance<postPracticesIdSubmissionsResponse>(getPostPracticesIdSubmissionsUrl(id), {
+export const postPracticesIdSubmissions = async (id: string,
+    githubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO: GithubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO, options?: RequestInit): Promise<postPracticesIdSubmissionsResponse> => {
+
+  return customInstance<postPracticesIdSubmissionsResponse>(getPostPracticesIdSubmissionsUrl(id),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO),
-  })
-}
-
-export const getPostPracticesIdSubmissionsMutationOptions = <
-  TError = ErrorType<
-    | PostPracticesIdSubmissions400
-    | PostPracticesIdSubmissions401
-    | PostPracticesIdSubmissions403
-    | PostPracticesIdSubmissions404
-    | PostPracticesIdSubmissions409
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postPracticesIdSubmissions>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postPracticesIdSubmissions>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO },
-  TContext
-> => {
-  const mutationKey = ["postPracticesIdSubmissions"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postPracticesIdSubmissions>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return postPracticesIdSubmissions(id, data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostPracticesIdSubmissionsMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postPracticesIdSubmissions>>
->
-export type PostPracticesIdSubmissionsMutationBody = GithubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO
-export type PostPracticesIdSubmissionsMutationError = ErrorType<
-  | PostPracticesIdSubmissions400
-  | PostPracticesIdSubmissions401
-  | PostPracticesIdSubmissions403
-  | PostPracticesIdSubmissions404
-  | PostPracticesIdSubmissions409
->
 
-/**
+
+export const getPostPracticesIdSubmissionsMutationOptions = <TError = ErrorType<PostPracticesIdSubmissions400 | PostPracticesIdSubmissions401 | PostPracticesIdSubmissions403 | PostPracticesIdSubmissions404 | PostPracticesIdSubmissions409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postPracticesIdSubmissions>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postPracticesIdSubmissions>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO}, TContext> => {
+
+const mutationKey = ['postPracticesIdSubmissions'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postPracticesIdSubmissions>>, {id: string;data: GithubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postPracticesIdSubmissions(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostPracticesIdSubmissionsMutationResult = NonNullable<Awaited<ReturnType<typeof postPracticesIdSubmissions>>>
+    export type PostPracticesIdSubmissionsMutationBody = GithubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO
+    export type PostPracticesIdSubmissionsMutationError = ErrorType<PostPracticesIdSubmissions400 | PostPracticesIdSubmissions401 | PostPracticesIdSubmissions403 | PostPracticesIdSubmissions404 | PostPracticesIdSubmissions409>
+
+    /**
  * @summary Submit to practice room
  */
-export const usePostPracticesIdSubmissions = <
-  TError = ErrorType<
-    | PostPracticesIdSubmissions400
-    | PostPracticesIdSubmissions401
-    | PostPracticesIdSubmissions403
-    | PostPracticesIdSubmissions404
-    | PostPracticesIdSubmissions409
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postPracticesIdSubmissions>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postPracticesIdSubmissions>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO },
-  TContext
-> => {
-  return useMutation(getPostPracticesIdSubmissionsMutationOptions(options), queryClient)
-}
+export const usePostPracticesIdSubmissions = <TError = ErrorType<PostPracticesIdSubmissions400 | PostPracticesIdSubmissions401 | PostPracticesIdSubmissions403 | PostPracticesIdSubmissions404 | PostPracticesIdSubmissions409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postPracticesIdSubmissions>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postPracticesIdSubmissions>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO},
+        TContext
+      > => {
+      return useMutation(getPostPracticesIdSubmissionsMutationOptions(options), queryClient);
+    }

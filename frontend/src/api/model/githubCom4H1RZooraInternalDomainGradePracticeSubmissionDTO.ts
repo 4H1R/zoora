@@ -8,6 +8,6 @@
 
 export interface GithubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO {
   /** @minimum 0 */
-  score?: number
-  teacher_comment?: string
+  score?: number;
+  teacher_comment?: string;
 }

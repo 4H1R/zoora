@@ -5,8 +5,8 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainSubmitAnswerDTO } from "./githubCom4H1RZooraInternalDomainSubmitAnswerDTO"
+import type { GithubCom4H1RZooraInternalDomainSubmitAnswerDTO } from './githubCom4H1RZooraInternalDomainSubmitAnswerDTO';
 
 export interface GithubCom4H1RZooraInternalDomainSubmitQuizDTO {
-  answers: GithubCom4H1RZooraInternalDomainSubmitAnswerDTO[]
+  answers: GithubCom4H1RZooraInternalDomainSubmitAnswerDTO[];
 }

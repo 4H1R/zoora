@@ -7,6 +7,6 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainPollOption {
-  label?: string
-  value?: string
+  label?: string;
+  value?: string;
 }

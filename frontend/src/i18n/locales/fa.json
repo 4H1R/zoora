@@ -7,6 +7,7 @@
     "export": "خروجی",
     "viewAll": "مشاهده همه",
     "manage": "مدیریت",
+    "continue": "ادامه",
     "details": "جزئیات",
     "save": "ذخیره",
     "cancel": "انصراف",
@@ -411,6 +412,38 @@
       }
     }
   },
+  "classesPage": {
+    "title": "کلاس‌ها",
+    "searchPlaceholder": "جستجوی کلاس‌ها…",
+    "gridView": "نمای شبکه‌ای",
+    "tableView": "نمای جدول",
+    "newClass": "کلاس جدید",
+    "noResults": "کلاسی یافت نشد",
+    "noResultsHint": "جستجو را تغییر دهید یا کلاس جدیدی ایجاد کنید.",
+    "capacity": "ظرفیت",
+    "stats": {
+      "total": "کلاس‌ها",
+      "students": "دانشجویان"
+    },
+    "table": {
+      "class": "کلاس",
+      "instructor": "مدرس",
+      "capacity": "ظرفیت"
+    },
+    "form": {
+      "createTitle": "کلاس جدید",
+      "createDescription": "یک کلاس جدید در سازمان خود ایجاد کنید.",
+      "name": "نام",
+      "namePlaceholder": "نام کلاس",
+      "description": "توضیحات",
+      "descriptionPlaceholder": "توضیحات اختیاری",
+      "capacity": "ظرفیت",
+      "capacityPlaceholder": "۰ = نامحدود",
+      "teacher": "مدرس",
+      "teacherPlaceholder": "انتخاب مدرس…",
+      "createSuccess": "کلاس ایجاد شد"
+    }
+  },
   "login": {
     "title": "خوش برگشتید",
     "subtitle": "برای ادامه وارد کلاس خود شوید.",
@@ -549,12 +582,66 @@
       }
     }
   },
+  "roles": {
+    "presets": {
+      "Staff": "کارمند",
+      "Teacher": "مدرس"
+    }
+  },
+  "permissions": {
+    "resources": {
+      "users": "کاربران",
+      "roles": "نقش‌ها",
+      "organizations": "سازمان‌ها",
+      "classes": "کلاس‌ها",
+      "livesessions": "جلسات زنده",
+      "recordings": "ضبط‌ها",
+      "question_banks": "بانک‌های سوال",
+      "quizzes": "آزمون‌ها",
+      "polls": "نظرسنجی‌ها",
+      "chats": "چت‌ها",
+      "media": "رسانه",
+      "practices": "تمرین‌ها",
+      "gradebook": "کارنامه",
+      "offlines": "جلسات آفلاین",
+      "attendance": "حضور و غیاب"
+    },
+    "actions": {
+      "view": "مشاهده",
+      "view_any": "مشاهده همه",
+      "create": "ایجاد",
+      "create_any": "ایجاد برای همه",
+      "update": "ویرایش",
+      "update_any": "ویرایش همه",
+      "delete": "حذف",
+      "delete_any": "حذف همه",
+      "join": "پیوستن",
+      "join_any": "پیوستن به هر جلسه",
+      "manage": "مدیریت",
+      "manage_any": "مدیریت همه",
+      "download": "دانلود",
+      "write": "نوشتن",
+      "submit": "ارسال",
+      "grade": "نمره‌دهی"
+    }
+  },
   "liveRoom": {
     "session": "جلسه زنده",
-    "joinSession": "ورود به جلسه",
+    "joinSession": "ورود به کلاس",
     "joinError": "ورود به جلسه ناموفق بود. لطفاً دوباره تلاش کنید.",
     "sessionEnded": "جلسه پایان یافته",
     "leave": "خروج",
-    "maxParticipants": "حداکثر {{count}} شرکت‌کننده"
+    "maxParticipants": "حداکثر {{count}} شرکت‌کننده",
+    "backToDashboard": "بازگشت به داشبورد",
+    "classStarted": "کلاس شروع شده است",
+    "instructor": "مدرس",
+    "startTime": "زمان شروع",
+    "participants": "حاضران",
+    "capacity": "ظرفیت",
+    "recordingEnabled": "فعال",
+    "recordingNotice": "این جلسه ضبط می‌شود. با ورود، با شرایط ضبط و حفظ حریم خصوصی موافقت می‌کنید.",
+    "back": "بازگشت",
+    "secureEntry": "ورود امن",
+    "avSettingsNote": "میکروفن و دوربین داخل کلاس تنظیم می‌شوند"
   }
 }

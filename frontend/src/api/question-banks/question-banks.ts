@@ -5,7 +5,25 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { ErrorType } from ".././mutator/custom-instance"
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   DeleteQuestionBanksId401,
   DeleteQuestionBanksId403,
@@ -54,28 +72,16 @@ import type {
   PutQuestionBanksQuestionsQuestionId400,
   PutQuestionBanksQuestionsQuestionId401,
   PutQuestionBanksQuestionsQuestionId403,
-  PutQuestionBanksQuestionsQuestionId404,
-} from "../model"
-import type {
-  DataTag,
-  DefinedInitialDataOptions,
-  DefinedUseQueryResult,
-  MutationFunction,
-  QueryClient,
-  QueryFunction,
-  QueryKey,
-  UndefinedInitialDataOptions,
-  UseMutationOptions,
-  UseMutationResult,
-  UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query"
+  PutQuestionBanksQuestionsQuestionId404
+} from '../model';
 
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { customInstance } from '.././mutator/custom-instance';
+import type { ErrorType } from '.././mutator/custom-instance';
 
-import { customInstance } from ".././mutator/custom-instance"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * Returns question banks filtered by caller's organization. Admins see all. Search matches substrings of: name, description. Orderable fields: created_at, updated_at, name.
@@ -101,146 +107,118 @@ export type getQuestionBanksResponse500 = {
   status: 500
 }
 
-export type getQuestionBanksResponseSuccess = getQuestionBanksResponse200 & {
-  headers: Headers
-}
-export type getQuestionBanksResponseError = (
-  | getQuestionBanksResponse401
-  | getQuestionBanksResponse403
-  | getQuestionBanksResponse500
-) & {
-  headers: Headers
-}
+export type getQuestionBanksResponseSuccess = (getQuestionBanksResponse200) & {
+  headers: Headers;
+};
+export type getQuestionBanksResponseError = (getQuestionBanksResponse401 | getQuestionBanksResponse403 | getQuestionBanksResponse500) & {
+  headers: Headers;
+};
 
-export type getQuestionBanksResponse = getQuestionBanksResponseSuccess | getQuestionBanksResponseError
+export type getQuestionBanksResponse = (getQuestionBanksResponseSuccess | getQuestionBanksResponseError)
 
-export const getGetQuestionBanksUrl = (params?: GetQuestionBanksParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetQuestionBanksUrl = (params?: GetQuestionBanksParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/question-banks?${stringifiedParams}` : `/question-banks`
 }
 
-export const getQuestionBanks = async (
-  params?: GetQuestionBanksParams,
-  options?: RequestInit
-): Promise<getQuestionBanksResponse> => {
-  return customInstance<getQuestionBanksResponse>(getGetQuestionBanksUrl(params), {
+export const getQuestionBanks = async (params?: GetQuestionBanksParams, options?: RequestInit): Promise<getQuestionBanksResponse> => {
+
+  return customInstance<getQuestionBanksResponse>(getGetQuestionBanksUrl(params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetQuestionBanksQueryKey = (params?: GetQuestionBanksParams) => {
-  return [`/question-banks`, ...(params ? [params] : [])] as const
-}
 
-export const getGetQuestionBanksQueryOptions = <
-  TData = Awaited<ReturnType<typeof getQuestionBanks>>,
-  TError = ErrorType<GetQuestionBanks401 | GetQuestionBanks403 | GetQuestionBanks500>,
->(
-  params?: GetQuestionBanksParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanks>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetQuestionBanksQueryKey = (params?: GetQuestionBanksParams,) => {
+    return [
+    `/question-banks`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetQuestionBanksQueryOptions = <TData = Awaited<ReturnType<typeof getQuestionBanks>>, TError = ErrorType<GetQuestionBanks401 | GetQuestionBanks403 | GetQuestionBanks500>>(params?: GetQuestionBanksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanks>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetQuestionBanksQueryKey(params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuestionBanks>>> = ({ signal }) =>
-    getQuestionBanks(params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetQuestionBanksQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getQuestionBanks>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuestionBanks>>> = ({ signal }) => getQuestionBanks(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanks>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetQuestionBanksQueryResult = NonNullable<Awaited<ReturnType<typeof getQuestionBanks>>>
 export type GetQuestionBanksQueryError = ErrorType<GetQuestionBanks401 | GetQuestionBanks403 | GetQuestionBanks500>
 
-export function useGetQuestionBanks<
-  TData = Awaited<ReturnType<typeof getQuestionBanks>>,
-  TError = ErrorType<GetQuestionBanks401 | GetQuestionBanks403 | GetQuestionBanks500>,
->(
-  params: undefined | GetQuestionBanksParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanks>>, TError, TData>> &
-      Pick<
+
+export function useGetQuestionBanks<TData = Awaited<ReturnType<typeof getQuestionBanks>>, TError = ErrorType<GetQuestionBanks401 | GetQuestionBanks403 | GetQuestionBanks500>>(
+ params: undefined |  GetQuestionBanksParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanks>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuestionBanks>>,
           TError,
           Awaited<ReturnType<typeof getQuestionBanks>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuestionBanks<
-  TData = Awaited<ReturnType<typeof getQuestionBanks>>,
-  TError = ErrorType<GetQuestionBanks401 | GetQuestionBanks403 | GetQuestionBanks500>,
->(
-  params?: GetQuestionBanksParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanks>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuestionBanks<TData = Awaited<ReturnType<typeof getQuestionBanks>>, TError = ErrorType<GetQuestionBanks401 | GetQuestionBanks403 | GetQuestionBanks500>>(
+ params?: GetQuestionBanksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanks>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuestionBanks>>,
           TError,
           Awaited<ReturnType<typeof getQuestionBanks>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuestionBanks<
-  TData = Awaited<ReturnType<typeof getQuestionBanks>>,
-  TError = ErrorType<GetQuestionBanks401 | GetQuestionBanks403 | GetQuestionBanks500>,
->(
-  params?: GetQuestionBanksParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanks>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuestionBanks<TData = Awaited<ReturnType<typeof getQuestionBanks>>, TError = ErrorType<GetQuestionBanks401 | GetQuestionBanks403 | GetQuestionBanks500>>(
+ params?: GetQuestionBanksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanks>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List question banks (scoped by org)
  */
 
-export function useGetQuestionBanks<
-  TData = Awaited<ReturnType<typeof getQuestionBanks>>,
-  TError = ErrorType<GetQuestionBanks401 | GetQuestionBanks403 | GetQuestionBanks500>,
->(
-  params?: GetQuestionBanksParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanks>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetQuestionBanksQueryOptions(params, options)
+export function useGetQuestionBanks<TData = Awaited<ReturnType<typeof getQuestionBanks>>, TError = ErrorType<GetQuestionBanks401 | GetQuestionBanks403 | GetQuestionBanks500>>(
+ params?: GetQuestionBanksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanks>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetQuestionBanksQueryOptions(params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Create question bank
@@ -265,103 +243,83 @@ export type postQuestionBanksResponse403 = {
   status: 403
 }
 
-export type postQuestionBanksResponseSuccess = postQuestionBanksResponse201 & {
-  headers: Headers
-}
-export type postQuestionBanksResponseError = (
-  | postQuestionBanksResponse400
-  | postQuestionBanksResponse401
-  | postQuestionBanksResponse403
-) & {
-  headers: Headers
-}
+export type postQuestionBanksResponseSuccess = (postQuestionBanksResponse201) & {
+  headers: Headers;
+};
+export type postQuestionBanksResponseError = (postQuestionBanksResponse400 | postQuestionBanksResponse401 | postQuestionBanksResponse403) & {
+  headers: Headers;
+};
 
-export type postQuestionBanksResponse = postQuestionBanksResponseSuccess | postQuestionBanksResponseError
+export type postQuestionBanksResponse = (postQuestionBanksResponseSuccess | postQuestionBanksResponseError)
 
 export const getPostQuestionBanksUrl = () => {
+
+
+
+
   return `/question-banks`
 }
 
-export const postQuestionBanks = async (
-  githubCom4H1RZooraInternalDomainCreateQuestionBankDTO: GithubCom4H1RZooraInternalDomainCreateQuestionBankDTO,
-  options?: RequestInit
-): Promise<postQuestionBanksResponse> => {
-  return customInstance<postQuestionBanksResponse>(getPostQuestionBanksUrl(), {
+export const postQuestionBanks = async (githubCom4H1RZooraInternalDomainCreateQuestionBankDTO: GithubCom4H1RZooraInternalDomainCreateQuestionBankDTO, options?: RequestInit): Promise<postQuestionBanksResponse> => {
+
+  return customInstance<postQuestionBanksResponse>(getPostQuestionBanksUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainCreateQuestionBankDTO),
-  })
-}
-
-export const getPostQuestionBanksMutationOptions = <
-  TError = ErrorType<PostQuestionBanks400 | PostQuestionBanks401 | PostQuestionBanks403>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postQuestionBanks>>,
-    TError,
-    { data: GithubCom4H1RZooraInternalDomainCreateQuestionBankDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postQuestionBanks>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainCreateQuestionBankDTO },
-  TContext
-> => {
-  const mutationKey = ["postQuestionBanks"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postQuestionBanks>>,
-    { data: GithubCom4H1RZooraInternalDomainCreateQuestionBankDTO }
-  > = (props) => {
-    const { data } = props ?? {}
-
-    return postQuestionBanks(data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainCreateQuestionBankDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostQuestionBanksMutationResult = NonNullable<Awaited<ReturnType<typeof postQuestionBanks>>>
-export type PostQuestionBanksMutationBody = GithubCom4H1RZooraInternalDomainCreateQuestionBankDTO
-export type PostQuestionBanksMutationError = ErrorType<
-  PostQuestionBanks400 | PostQuestionBanks401 | PostQuestionBanks403
->
 
-/**
+
+export const getPostQuestionBanksMutationOptions = <TError = ErrorType<PostQuestionBanks400 | PostQuestionBanks401 | PostQuestionBanks403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuestionBanks>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateQuestionBankDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postQuestionBanks>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateQuestionBankDTO}, TContext> => {
+
+const mutationKey = ['postQuestionBanks'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postQuestionBanks>>, {data: GithubCom4H1RZooraInternalDomainCreateQuestionBankDTO}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postQuestionBanks(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostQuestionBanksMutationResult = NonNullable<Awaited<ReturnType<typeof postQuestionBanks>>>
+    export type PostQuestionBanksMutationBody = GithubCom4H1RZooraInternalDomainCreateQuestionBankDTO
+    export type PostQuestionBanksMutationError = ErrorType<PostQuestionBanks400 | PostQuestionBanks401 | PostQuestionBanks403>
+
+    /**
  * @summary Create question bank
  */
-export const usePostQuestionBanks = <
-  TError = ErrorType<PostQuestionBanks400 | PostQuestionBanks401 | PostQuestionBanks403>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postQuestionBanks>>,
-      TError,
-      { data: GithubCom4H1RZooraInternalDomainCreateQuestionBankDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postQuestionBanks>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainCreateQuestionBankDTO },
-  TContext
-> => {
-  return useMutation(getPostQuestionBanksMutationOptions(options), queryClient)
-}
-/**
+export const usePostQuestionBanks = <TError = ErrorType<PostQuestionBanks400 | PostQuestionBanks401 | PostQuestionBanks403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuestionBanks>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateQuestionBankDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postQuestionBanks>>,
+        TError,
+        {data: GithubCom4H1RZooraInternalDomainCreateQuestionBankDTO},
+        TContext
+      > => {
+      return useMutation(getPostQuestionBanksMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get question
  */
 export type getQuestionBanksQuestionsQuestionIdResponse200 = {
@@ -384,167 +342,111 @@ export type getQuestionBanksQuestionsQuestionIdResponse404 = {
   status: 404
 }
 
-export type getQuestionBanksQuestionsQuestionIdResponseSuccess = getQuestionBanksQuestionsQuestionIdResponse200 & {
-  headers: Headers
-}
-export type getQuestionBanksQuestionsQuestionIdResponseError = (
-  | getQuestionBanksQuestionsQuestionIdResponse401
-  | getQuestionBanksQuestionsQuestionIdResponse403
-  | getQuestionBanksQuestionsQuestionIdResponse404
-) & {
-  headers: Headers
-}
+export type getQuestionBanksQuestionsQuestionIdResponseSuccess = (getQuestionBanksQuestionsQuestionIdResponse200) & {
+  headers: Headers;
+};
+export type getQuestionBanksQuestionsQuestionIdResponseError = (getQuestionBanksQuestionsQuestionIdResponse401 | getQuestionBanksQuestionsQuestionIdResponse403 | getQuestionBanksQuestionsQuestionIdResponse404) & {
+  headers: Headers;
+};
 
-export type getQuestionBanksQuestionsQuestionIdResponse =
-  | getQuestionBanksQuestionsQuestionIdResponseSuccess
-  | getQuestionBanksQuestionsQuestionIdResponseError
+export type getQuestionBanksQuestionsQuestionIdResponse = (getQuestionBanksQuestionsQuestionIdResponseSuccess | getQuestionBanksQuestionsQuestionIdResponseError)
 
-export const getGetQuestionBanksQuestionsQuestionIdUrl = (questionId: string) => {
+export const getGetQuestionBanksQuestionsQuestionIdUrl = (questionId: string,) => {
+
+
+
+
   return `/question-banks/questions/${questionId}`
 }
 
-export const getQuestionBanksQuestionsQuestionId = async (
-  questionId: string,
-  options?: RequestInit
-): Promise<getQuestionBanksQuestionsQuestionIdResponse> => {
-  return customInstance<getQuestionBanksQuestionsQuestionIdResponse>(
-    getGetQuestionBanksQuestionsQuestionIdUrl(questionId),
-    {
-      ...options,
-      method: "GET",
-    }
-  )
-}
+export const getQuestionBanksQuestionsQuestionId = async (questionId: string, options?: RequestInit): Promise<getQuestionBanksQuestionsQuestionIdResponse> => {
 
-export const getGetQuestionBanksQuestionsQuestionIdQueryKey = (questionId: string) => {
-  return [`/question-banks/questions/${questionId}`] as const
-}
+  return customInstance<getQuestionBanksQuestionsQuestionIdResponse>(getGetQuestionBanksQuestionsQuestionIdUrl(questionId),
+  {
+    ...options,
+    method: 'GET'
 
-export const getGetQuestionBanksQuestionsQuestionIdQueryOptions = <
-  TData = Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>,
-  TError = ErrorType<
-    | GetQuestionBanksQuestionsQuestionId401
-    | GetQuestionBanksQuestionsQuestionId403
-    | GetQuestionBanksQuestionsQuestionId404
-  >,
->(
-  questionId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
+
   }
+);}
+
+
+
+
+
+export const getGetQuestionBanksQuestionsQuestionIdQueryKey = (questionId: string,) => {
+    return [
+    `/question-banks/questions/${questionId}`
+    ] as const;
+    }
+
+
+export const getGetQuestionBanksQuestionsQuestionIdQueryOptions = <TData = Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>, TError = ErrorType<GetQuestionBanksQuestionsQuestionId401 | GetQuestionBanksQuestionsQuestionId403 | GetQuestionBanksQuestionsQuestionId404>>(questionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetQuestionBanksQuestionsQuestionIdQueryKey(questionId)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>> = ({ signal }) =>
-    getQuestionBanksQuestionsQuestionId(questionId, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetQuestionBanksQuestionsQuestionIdQueryKey(questionId);
 
-  return { queryKey, queryFn, enabled: !!questionId, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>> = ({ signal }) => getQuestionBanksQuestionsQuestionId(questionId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(questionId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetQuestionBanksQuestionsQuestionIdQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>
->
-export type GetQuestionBanksQuestionsQuestionIdQueryError = ErrorType<
-  | GetQuestionBanksQuestionsQuestionId401
-  | GetQuestionBanksQuestionsQuestionId403
-  | GetQuestionBanksQuestionsQuestionId404
->
+export type GetQuestionBanksQuestionsQuestionIdQueryResult = NonNullable<Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>>
+export type GetQuestionBanksQuestionsQuestionIdQueryError = ErrorType<GetQuestionBanksQuestionsQuestionId401 | GetQuestionBanksQuestionsQuestionId403 | GetQuestionBanksQuestionsQuestionId404>
 
-export function useGetQuestionBanksQuestionsQuestionId<
-  TData = Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>,
-  TError = ErrorType<
-    | GetQuestionBanksQuestionsQuestionId401
-    | GetQuestionBanksQuestionsQuestionId403
-    | GetQuestionBanksQuestionsQuestionId404
-  >,
->(
-  questionId: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>, TError, TData>> &
-      Pick<
+
+export function useGetQuestionBanksQuestionsQuestionId<TData = Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>, TError = ErrorType<GetQuestionBanksQuestionsQuestionId401 | GetQuestionBanksQuestionsQuestionId403 | GetQuestionBanksQuestionsQuestionId404>>(
+ questionId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>,
           TError,
           Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuestionBanksQuestionsQuestionId<
-  TData = Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>,
-  TError = ErrorType<
-    | GetQuestionBanksQuestionsQuestionId401
-    | GetQuestionBanksQuestionsQuestionId403
-    | GetQuestionBanksQuestionsQuestionId404
-  >,
->(
-  questionId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuestionBanksQuestionsQuestionId<TData = Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>, TError = ErrorType<GetQuestionBanksQuestionsQuestionId401 | GetQuestionBanksQuestionsQuestionId403 | GetQuestionBanksQuestionsQuestionId404>>(
+ questionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>,
           TError,
           Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuestionBanksQuestionsQuestionId<
-  TData = Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>,
-  TError = ErrorType<
-    | GetQuestionBanksQuestionsQuestionId401
-    | GetQuestionBanksQuestionsQuestionId403
-    | GetQuestionBanksQuestionsQuestionId404
-  >,
->(
-  questionId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuestionBanksQuestionsQuestionId<TData = Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>, TError = ErrorType<GetQuestionBanksQuestionsQuestionId401 | GetQuestionBanksQuestionsQuestionId403 | GetQuestionBanksQuestionsQuestionId404>>(
+ questionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get question
  */
 
-export function useGetQuestionBanksQuestionsQuestionId<
-  TData = Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>,
-  TError = ErrorType<
-    | GetQuestionBanksQuestionsQuestionId401
-    | GetQuestionBanksQuestionsQuestionId403
-    | GetQuestionBanksQuestionsQuestionId404
-  >,
->(
-  questionId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetQuestionBanksQuestionsQuestionIdQueryOptions(questionId, options)
+export function useGetQuestionBanksQuestionsQuestionId<TData = Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>, TError = ErrorType<GetQuestionBanksQuestionsQuestionId401 | GetQuestionBanksQuestionsQuestionId403 | GetQuestionBanksQuestionsQuestionId404>>(
+ questionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksQuestionsQuestionId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetQuestionBanksQuestionsQuestionIdQueryOptions(questionId,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Update question
@@ -574,125 +476,84 @@ export type putQuestionBanksQuestionsQuestionIdResponse404 = {
   status: 404
 }
 
-export type putQuestionBanksQuestionsQuestionIdResponseSuccess = putQuestionBanksQuestionsQuestionIdResponse200 & {
-  headers: Headers
-}
-export type putQuestionBanksQuestionsQuestionIdResponseError = (
-  | putQuestionBanksQuestionsQuestionIdResponse400
-  | putQuestionBanksQuestionsQuestionIdResponse401
-  | putQuestionBanksQuestionsQuestionIdResponse403
-  | putQuestionBanksQuestionsQuestionIdResponse404
-) & {
-  headers: Headers
-}
+export type putQuestionBanksQuestionsQuestionIdResponseSuccess = (putQuestionBanksQuestionsQuestionIdResponse200) & {
+  headers: Headers;
+};
+export type putQuestionBanksQuestionsQuestionIdResponseError = (putQuestionBanksQuestionsQuestionIdResponse400 | putQuestionBanksQuestionsQuestionIdResponse401 | putQuestionBanksQuestionsQuestionIdResponse403 | putQuestionBanksQuestionsQuestionIdResponse404) & {
+  headers: Headers;
+};
 
-export type putQuestionBanksQuestionsQuestionIdResponse =
-  | putQuestionBanksQuestionsQuestionIdResponseSuccess
-  | putQuestionBanksQuestionsQuestionIdResponseError
+export type putQuestionBanksQuestionsQuestionIdResponse = (putQuestionBanksQuestionsQuestionIdResponseSuccess | putQuestionBanksQuestionsQuestionIdResponseError)
 
-export const getPutQuestionBanksQuestionsQuestionIdUrl = (questionId: string) => {
+export const getPutQuestionBanksQuestionsQuestionIdUrl = (questionId: string,) => {
+
+
+
+
   return `/question-banks/questions/${questionId}`
 }
 
-export const putQuestionBanksQuestionsQuestionId = async (
-  questionId: string,
-  githubCom4H1RZooraInternalDomainUpdateQuestionDTO: GithubCom4H1RZooraInternalDomainUpdateQuestionDTO,
-  options?: RequestInit
-): Promise<putQuestionBanksQuestionsQuestionIdResponse> => {
-  return customInstance<putQuestionBanksQuestionsQuestionIdResponse>(
-    getPutQuestionBanksQuestionsQuestionIdUrl(questionId),
-    {
-      ...options,
-      method: "PUT",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(githubCom4H1RZooraInternalDomainUpdateQuestionDTO),
-    }
-  )
-}
+export const putQuestionBanksQuestionsQuestionId = async (questionId: string,
+    githubCom4H1RZooraInternalDomainUpdateQuestionDTO: GithubCom4H1RZooraInternalDomainUpdateQuestionDTO, options?: RequestInit): Promise<putQuestionBanksQuestionsQuestionIdResponse> => {
 
-export const getPutQuestionBanksQuestionsQuestionIdMutationOptions = <
-  TError = ErrorType<
-    | PutQuestionBanksQuestionsQuestionId400
-    | PutQuestionBanksQuestionsQuestionId401
-    | PutQuestionBanksQuestionsQuestionId403
-    | PutQuestionBanksQuestionsQuestionId404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putQuestionBanksQuestionsQuestionId>>,
-    TError,
-    { questionId: string; data: GithubCom4H1RZooraInternalDomainUpdateQuestionDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putQuestionBanksQuestionsQuestionId>>,
-  TError,
-  { questionId: string; data: GithubCom4H1RZooraInternalDomainUpdateQuestionDTO },
-  TContext
-> => {
-  const mutationKey = ["putQuestionBanksQuestionsQuestionId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putQuestionBanksQuestionsQuestionId>>,
-    { questionId: string; data: GithubCom4H1RZooraInternalDomainUpdateQuestionDTO }
-  > = (props) => {
-    const { questionId, data } = props ?? {}
-
-    return putQuestionBanksQuestionsQuestionId(questionId, data, requestOptions)
+  return customInstance<putQuestionBanksQuestionsQuestionIdResponse>(getPutQuestionBanksQuestionsQuestionIdUrl(questionId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainUpdateQuestionDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutQuestionBanksQuestionsQuestionIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof putQuestionBanksQuestionsQuestionId>>
->
-export type PutQuestionBanksQuestionsQuestionIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateQuestionDTO
-export type PutQuestionBanksQuestionsQuestionIdMutationError = ErrorType<
-  | PutQuestionBanksQuestionsQuestionId400
-  | PutQuestionBanksQuestionsQuestionId401
-  | PutQuestionBanksQuestionsQuestionId403
-  | PutQuestionBanksQuestionsQuestionId404
->
 
-/**
+
+export const getPutQuestionBanksQuestionsQuestionIdMutationOptions = <TError = ErrorType<PutQuestionBanksQuestionsQuestionId400 | PutQuestionBanksQuestionsQuestionId401 | PutQuestionBanksQuestionsQuestionId403 | PutQuestionBanksQuestionsQuestionId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putQuestionBanksQuestionsQuestionId>>, TError,{questionId: string;data: GithubCom4H1RZooraInternalDomainUpdateQuestionDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putQuestionBanksQuestionsQuestionId>>, TError,{questionId: string;data: GithubCom4H1RZooraInternalDomainUpdateQuestionDTO}, TContext> => {
+
+const mutationKey = ['putQuestionBanksQuestionsQuestionId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putQuestionBanksQuestionsQuestionId>>, {questionId: string;data: GithubCom4H1RZooraInternalDomainUpdateQuestionDTO}> = (props) => {
+          const {questionId,data} = props ?? {};
+
+          return  putQuestionBanksQuestionsQuestionId(questionId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutQuestionBanksQuestionsQuestionIdMutationResult = NonNullable<Awaited<ReturnType<typeof putQuestionBanksQuestionsQuestionId>>>
+    export type PutQuestionBanksQuestionsQuestionIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateQuestionDTO
+    export type PutQuestionBanksQuestionsQuestionIdMutationError = ErrorType<PutQuestionBanksQuestionsQuestionId400 | PutQuestionBanksQuestionsQuestionId401 | PutQuestionBanksQuestionsQuestionId403 | PutQuestionBanksQuestionsQuestionId404>
+
+    /**
  * @summary Update question
  */
-export const usePutQuestionBanksQuestionsQuestionId = <
-  TError = ErrorType<
-    | PutQuestionBanksQuestionsQuestionId400
-    | PutQuestionBanksQuestionsQuestionId401
-    | PutQuestionBanksQuestionsQuestionId403
-    | PutQuestionBanksQuestionsQuestionId404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putQuestionBanksQuestionsQuestionId>>,
-      TError,
-      { questionId: string; data: GithubCom4H1RZooraInternalDomainUpdateQuestionDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putQuestionBanksQuestionsQuestionId>>,
-  TError,
-  { questionId: string; data: GithubCom4H1RZooraInternalDomainUpdateQuestionDTO },
-  TContext
-> => {
-  return useMutation(getPutQuestionBanksQuestionsQuestionIdMutationOptions(options), queryClient)
-}
-/**
+export const usePutQuestionBanksQuestionsQuestionId = <TError = ErrorType<PutQuestionBanksQuestionsQuestionId400 | PutQuestionBanksQuestionsQuestionId401 | PutQuestionBanksQuestionsQuestionId403 | PutQuestionBanksQuestionsQuestionId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putQuestionBanksQuestionsQuestionId>>, TError,{questionId: string;data: GithubCom4H1RZooraInternalDomainUpdateQuestionDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putQuestionBanksQuestionsQuestionId>>,
+        TError,
+        {questionId: string;data: GithubCom4H1RZooraInternalDomainUpdateQuestionDTO},
+        TContext
+      > => {
+      return useMutation(getPutQuestionBanksQuestionsQuestionIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Delete question
  */
 export type deleteQuestionBanksQuestionsQuestionIdResponse200 = {
@@ -715,119 +576,82 @@ export type deleteQuestionBanksQuestionsQuestionIdResponse404 = {
   status: 404
 }
 
-export type deleteQuestionBanksQuestionsQuestionIdResponseSuccess =
-  deleteQuestionBanksQuestionsQuestionIdResponse200 & {
-    headers: Headers
-  }
-export type deleteQuestionBanksQuestionsQuestionIdResponseError = (
-  | deleteQuestionBanksQuestionsQuestionIdResponse401
-  | deleteQuestionBanksQuestionsQuestionIdResponse403
-  | deleteQuestionBanksQuestionsQuestionIdResponse404
-) & {
-  headers: Headers
-}
+export type deleteQuestionBanksQuestionsQuestionIdResponseSuccess = (deleteQuestionBanksQuestionsQuestionIdResponse200) & {
+  headers: Headers;
+};
+export type deleteQuestionBanksQuestionsQuestionIdResponseError = (deleteQuestionBanksQuestionsQuestionIdResponse401 | deleteQuestionBanksQuestionsQuestionIdResponse403 | deleteQuestionBanksQuestionsQuestionIdResponse404) & {
+  headers: Headers;
+};
 
-export type deleteQuestionBanksQuestionsQuestionIdResponse =
-  | deleteQuestionBanksQuestionsQuestionIdResponseSuccess
-  | deleteQuestionBanksQuestionsQuestionIdResponseError
+export type deleteQuestionBanksQuestionsQuestionIdResponse = (deleteQuestionBanksQuestionsQuestionIdResponseSuccess | deleteQuestionBanksQuestionsQuestionIdResponseError)
 
-export const getDeleteQuestionBanksQuestionsQuestionIdUrl = (questionId: string) => {
+export const getDeleteQuestionBanksQuestionsQuestionIdUrl = (questionId: string,) => {
+
+
+
+
   return `/question-banks/questions/${questionId}`
 }
 
-export const deleteQuestionBanksQuestionsQuestionId = async (
-  questionId: string,
-  options?: RequestInit
-): Promise<deleteQuestionBanksQuestionsQuestionIdResponse> => {
-  return customInstance<deleteQuestionBanksQuestionsQuestionIdResponse>(
-    getDeleteQuestionBanksQuestionsQuestionIdUrl(questionId),
-    {
-      ...options,
-      method: "DELETE",
-    }
-  )
-}
+export const deleteQuestionBanksQuestionsQuestionId = async (questionId: string, options?: RequestInit): Promise<deleteQuestionBanksQuestionsQuestionIdResponse> => {
 
-export const getDeleteQuestionBanksQuestionsQuestionIdMutationOptions = <
-  TError = ErrorType<
-    | DeleteQuestionBanksQuestionsQuestionId401
-    | DeleteQuestionBanksQuestionsQuestionId403
-    | DeleteQuestionBanksQuestionsQuestionId404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteQuestionBanksQuestionsQuestionId>>,
-    TError,
-    { questionId: string },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteQuestionBanksQuestionsQuestionId>>,
-  TError,
-  { questionId: string },
-  TContext
-> => {
-  const mutationKey = ["deleteQuestionBanksQuestionsQuestionId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
+  return customInstance<deleteQuestionBanksQuestionsQuestionIdResponse>(getDeleteQuestionBanksQuestionsQuestionIdUrl(questionId),
+  {
+    ...options,
+    method: 'DELETE'
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteQuestionBanksQuestionsQuestionId>>,
-    { questionId: string }
-  > = (props) => {
-    const { questionId } = props ?? {}
 
-    return deleteQuestionBanksQuestionsQuestionId(questionId, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteQuestionBanksQuestionsQuestionIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteQuestionBanksQuestionsQuestionId>>
->
 
-export type DeleteQuestionBanksQuestionsQuestionIdMutationError = ErrorType<
-  | DeleteQuestionBanksQuestionsQuestionId401
-  | DeleteQuestionBanksQuestionsQuestionId403
-  | DeleteQuestionBanksQuestionsQuestionId404
->
 
-/**
+export const getDeleteQuestionBanksQuestionsQuestionIdMutationOptions = <TError = ErrorType<DeleteQuestionBanksQuestionsQuestionId401 | DeleteQuestionBanksQuestionsQuestionId403 | DeleteQuestionBanksQuestionsQuestionId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteQuestionBanksQuestionsQuestionId>>, TError,{questionId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteQuestionBanksQuestionsQuestionId>>, TError,{questionId: string}, TContext> => {
+
+const mutationKey = ['deleteQuestionBanksQuestionsQuestionId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteQuestionBanksQuestionsQuestionId>>, {questionId: string}> = (props) => {
+          const {questionId} = props ?? {};
+
+          return  deleteQuestionBanksQuestionsQuestionId(questionId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteQuestionBanksQuestionsQuestionIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteQuestionBanksQuestionsQuestionId>>>
+
+    export type DeleteQuestionBanksQuestionsQuestionIdMutationError = ErrorType<DeleteQuestionBanksQuestionsQuestionId401 | DeleteQuestionBanksQuestionsQuestionId403 | DeleteQuestionBanksQuestionsQuestionId404>
+
+    /**
  * @summary Delete question
  */
-export const useDeleteQuestionBanksQuestionsQuestionId = <
-  TError = ErrorType<
-    | DeleteQuestionBanksQuestionsQuestionId401
-    | DeleteQuestionBanksQuestionsQuestionId403
-    | DeleteQuestionBanksQuestionsQuestionId404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteQuestionBanksQuestionsQuestionId>>,
-      TError,
-      { questionId: string },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteQuestionBanksQuestionsQuestionId>>,
-  TError,
-  { questionId: string },
-  TContext
-> => {
-  return useMutation(getDeleteQuestionBanksQuestionsQuestionIdMutationOptions(options), queryClient)
-}
-/**
+export const useDeleteQuestionBanksQuestionsQuestionId = <TError = ErrorType<DeleteQuestionBanksQuestionsQuestionId401 | DeleteQuestionBanksQuestionsQuestionId403 | DeleteQuestionBanksQuestionsQuestionId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteQuestionBanksQuestionsQuestionId>>, TError,{questionId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteQuestionBanksQuestionsQuestionId>>,
+        TError,
+        {questionId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteQuestionBanksQuestionsQuestionIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get question bank
  */
 export type getQuestionBanksIdResponse200 = {
@@ -850,135 +674,111 @@ export type getQuestionBanksIdResponse404 = {
   status: 404
 }
 
-export type getQuestionBanksIdResponseSuccess = getQuestionBanksIdResponse200 & {
-  headers: Headers
-}
-export type getQuestionBanksIdResponseError = (
-  | getQuestionBanksIdResponse401
-  | getQuestionBanksIdResponse403
-  | getQuestionBanksIdResponse404
-) & {
-  headers: Headers
-}
+export type getQuestionBanksIdResponseSuccess = (getQuestionBanksIdResponse200) & {
+  headers: Headers;
+};
+export type getQuestionBanksIdResponseError = (getQuestionBanksIdResponse401 | getQuestionBanksIdResponse403 | getQuestionBanksIdResponse404) & {
+  headers: Headers;
+};
 
-export type getQuestionBanksIdResponse = getQuestionBanksIdResponseSuccess | getQuestionBanksIdResponseError
+export type getQuestionBanksIdResponse = (getQuestionBanksIdResponseSuccess | getQuestionBanksIdResponseError)
 
-export const getGetQuestionBanksIdUrl = (id: string) => {
+export const getGetQuestionBanksIdUrl = (id: string,) => {
+
+
+
+
   return `/question-banks/${id}`
 }
 
 export const getQuestionBanksId = async (id: string, options?: RequestInit): Promise<getQuestionBanksIdResponse> => {
-  return customInstance<getQuestionBanksIdResponse>(getGetQuestionBanksIdUrl(id), {
+
+  return customInstance<getQuestionBanksIdResponse>(getGetQuestionBanksIdUrl(id),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetQuestionBanksIdQueryKey = (id: string) => {
-  return [`/question-banks/${id}`] as const
-}
 
-export const getGetQuestionBanksIdQueryOptions = <
-  TData = Awaited<ReturnType<typeof getQuestionBanksId>>,
-  TError = ErrorType<GetQuestionBanksId401 | GetQuestionBanksId403 | GetQuestionBanksId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetQuestionBanksIdQueryKey = (id: string,) => {
+    return [
+    `/question-banks/${id}`
+    ] as const;
+    }
+
+
+export const getGetQuestionBanksIdQueryOptions = <TData = Awaited<ReturnType<typeof getQuestionBanksId>>, TError = ErrorType<GetQuestionBanksId401 | GetQuestionBanksId403 | GetQuestionBanksId404>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetQuestionBanksIdQueryKey(id)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuestionBanksId>>> = ({ signal }) =>
-    getQuestionBanksId(id, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetQuestionBanksIdQueryKey(id);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getQuestionBanksId>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuestionBanksId>>> = ({ signal }) => getQuestionBanksId(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetQuestionBanksIdQueryResult = NonNullable<Awaited<ReturnType<typeof getQuestionBanksId>>>
-export type GetQuestionBanksIdQueryError = ErrorType<
-  GetQuestionBanksId401 | GetQuestionBanksId403 | GetQuestionBanksId404
->
+export type GetQuestionBanksIdQueryError = ErrorType<GetQuestionBanksId401 | GetQuestionBanksId403 | GetQuestionBanksId404>
 
-export function useGetQuestionBanksId<
-  TData = Awaited<ReturnType<typeof getQuestionBanksId>>,
-  TError = ErrorType<GetQuestionBanksId401 | GetQuestionBanksId403 | GetQuestionBanksId404>,
->(
-  id: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksId>>, TError, TData>> &
-      Pick<
+
+export function useGetQuestionBanksId<TData = Awaited<ReturnType<typeof getQuestionBanksId>>, TError = ErrorType<GetQuestionBanksId401 | GetQuestionBanksId403 | GetQuestionBanksId404>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuestionBanksId>>,
           TError,
           Awaited<ReturnType<typeof getQuestionBanksId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuestionBanksId<
-  TData = Awaited<ReturnType<typeof getQuestionBanksId>>,
-  TError = ErrorType<GetQuestionBanksId401 | GetQuestionBanksId403 | GetQuestionBanksId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksId>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuestionBanksId<TData = Awaited<ReturnType<typeof getQuestionBanksId>>, TError = ErrorType<GetQuestionBanksId401 | GetQuestionBanksId403 | GetQuestionBanksId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuestionBanksId>>,
           TError,
           Awaited<ReturnType<typeof getQuestionBanksId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuestionBanksId<
-  TData = Awaited<ReturnType<typeof getQuestionBanksId>>,
-  TError = ErrorType<GetQuestionBanksId401 | GetQuestionBanksId403 | GetQuestionBanksId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuestionBanksId<TData = Awaited<ReturnType<typeof getQuestionBanksId>>, TError = ErrorType<GetQuestionBanksId401 | GetQuestionBanksId403 | GetQuestionBanksId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get question bank
  */
 
-export function useGetQuestionBanksId<
-  TData = Awaited<ReturnType<typeof getQuestionBanksId>>,
-  TError = ErrorType<GetQuestionBanksId401 | GetQuestionBanksId403 | GetQuestionBanksId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetQuestionBanksIdQueryOptions(id, options)
+export function useGetQuestionBanksId<TData = Awaited<ReturnType<typeof getQuestionBanksId>>, TError = ErrorType<GetQuestionBanksId401 | GetQuestionBanksId403 | GetQuestionBanksId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetQuestionBanksIdQueryOptions(id,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Update question bank
@@ -1008,105 +808,84 @@ export type putQuestionBanksIdResponse404 = {
   status: 404
 }
 
-export type putQuestionBanksIdResponseSuccess = putQuestionBanksIdResponse200 & {
-  headers: Headers
-}
-export type putQuestionBanksIdResponseError = (
-  | putQuestionBanksIdResponse400
-  | putQuestionBanksIdResponse401
-  | putQuestionBanksIdResponse403
-  | putQuestionBanksIdResponse404
-) & {
-  headers: Headers
-}
+export type putQuestionBanksIdResponseSuccess = (putQuestionBanksIdResponse200) & {
+  headers: Headers;
+};
+export type putQuestionBanksIdResponseError = (putQuestionBanksIdResponse400 | putQuestionBanksIdResponse401 | putQuestionBanksIdResponse403 | putQuestionBanksIdResponse404) & {
+  headers: Headers;
+};
 
-export type putQuestionBanksIdResponse = putQuestionBanksIdResponseSuccess | putQuestionBanksIdResponseError
+export type putQuestionBanksIdResponse = (putQuestionBanksIdResponseSuccess | putQuestionBanksIdResponseError)
 
-export const getPutQuestionBanksIdUrl = (id: string) => {
+export const getPutQuestionBanksIdUrl = (id: string,) => {
+
+
+
+
   return `/question-banks/${id}`
 }
 
-export const putQuestionBanksId = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainUpdateQuestionBankDTO: GithubCom4H1RZooraInternalDomainUpdateQuestionBankDTO,
-  options?: RequestInit
-): Promise<putQuestionBanksIdResponse> => {
-  return customInstance<putQuestionBanksIdResponse>(getPutQuestionBanksIdUrl(id), {
+export const putQuestionBanksId = async (id: string,
+    githubCom4H1RZooraInternalDomainUpdateQuestionBankDTO: GithubCom4H1RZooraInternalDomainUpdateQuestionBankDTO, options?: RequestInit): Promise<putQuestionBanksIdResponse> => {
+
+  return customInstance<putQuestionBanksIdResponse>(getPutQuestionBanksIdUrl(id),
+  {
     ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainUpdateQuestionBankDTO),
-  })
-}
-
-export const getPutQuestionBanksIdMutationOptions = <
-  TError = ErrorType<PutQuestionBanksId400 | PutQuestionBanksId401 | PutQuestionBanksId403 | PutQuestionBanksId404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putQuestionBanksId>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainUpdateQuestionBankDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putQuestionBanksId>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainUpdateQuestionBankDTO },
-  TContext
-> => {
-  const mutationKey = ["putQuestionBanksId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putQuestionBanksId>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainUpdateQuestionBankDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return putQuestionBanksId(id, data, requestOptions)
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainUpdateQuestionBankDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutQuestionBanksIdMutationResult = NonNullable<Awaited<ReturnType<typeof putQuestionBanksId>>>
-export type PutQuestionBanksIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateQuestionBankDTO
-export type PutQuestionBanksIdMutationError = ErrorType<
-  PutQuestionBanksId400 | PutQuestionBanksId401 | PutQuestionBanksId403 | PutQuestionBanksId404
->
 
-/**
+
+export const getPutQuestionBanksIdMutationOptions = <TError = ErrorType<PutQuestionBanksId400 | PutQuestionBanksId401 | PutQuestionBanksId403 | PutQuestionBanksId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putQuestionBanksId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateQuestionBankDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putQuestionBanksId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateQuestionBankDTO}, TContext> => {
+
+const mutationKey = ['putQuestionBanksId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putQuestionBanksId>>, {id: string;data: GithubCom4H1RZooraInternalDomainUpdateQuestionBankDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  putQuestionBanksId(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutQuestionBanksIdMutationResult = NonNullable<Awaited<ReturnType<typeof putQuestionBanksId>>>
+    export type PutQuestionBanksIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateQuestionBankDTO
+    export type PutQuestionBanksIdMutationError = ErrorType<PutQuestionBanksId400 | PutQuestionBanksId401 | PutQuestionBanksId403 | PutQuestionBanksId404>
+
+    /**
  * @summary Update question bank
  */
-export const usePutQuestionBanksId = <
-  TError = ErrorType<PutQuestionBanksId400 | PutQuestionBanksId401 | PutQuestionBanksId403 | PutQuestionBanksId404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putQuestionBanksId>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainUpdateQuestionBankDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putQuestionBanksId>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainUpdateQuestionBankDTO },
-  TContext
-> => {
-  return useMutation(getPutQuestionBanksIdMutationOptions(options), queryClient)
-}
-/**
+export const usePutQuestionBanksId = <TError = ErrorType<PutQuestionBanksId400 | PutQuestionBanksId401 | PutQuestionBanksId403 | PutQuestionBanksId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putQuestionBanksId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateQuestionBankDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putQuestionBanksId>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainUpdateQuestionBankDTO},
+        TContext
+      > => {
+      return useMutation(getPutQuestionBanksIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Delete question bank
  */
 export type deleteQuestionBanksIdResponse200 = {
@@ -1129,78 +908,82 @@ export type deleteQuestionBanksIdResponse404 = {
   status: 404
 }
 
-export type deleteQuestionBanksIdResponseSuccess = deleteQuestionBanksIdResponse200 & {
-  headers: Headers
-}
-export type deleteQuestionBanksIdResponseError = (
-  | deleteQuestionBanksIdResponse401
-  | deleteQuestionBanksIdResponse403
-  | deleteQuestionBanksIdResponse404
-) & {
-  headers: Headers
-}
+export type deleteQuestionBanksIdResponseSuccess = (deleteQuestionBanksIdResponse200) & {
+  headers: Headers;
+};
+export type deleteQuestionBanksIdResponseError = (deleteQuestionBanksIdResponse401 | deleteQuestionBanksIdResponse403 | deleteQuestionBanksIdResponse404) & {
+  headers: Headers;
+};
 
-export type deleteQuestionBanksIdResponse = deleteQuestionBanksIdResponseSuccess | deleteQuestionBanksIdResponseError
+export type deleteQuestionBanksIdResponse = (deleteQuestionBanksIdResponseSuccess | deleteQuestionBanksIdResponseError)
 
-export const getDeleteQuestionBanksIdUrl = (id: string) => {
+export const getDeleteQuestionBanksIdUrl = (id: string,) => {
+
+
+
+
   return `/question-banks/${id}`
 }
 
-export const deleteQuestionBanksId = async (
-  id: string,
-  options?: RequestInit
-): Promise<deleteQuestionBanksIdResponse> => {
-  return customInstance<deleteQuestionBanksIdResponse>(getDeleteQuestionBanksIdUrl(id), {
+export const deleteQuestionBanksId = async (id: string, options?: RequestInit): Promise<deleteQuestionBanksIdResponse> => {
+
+  return customInstance<deleteQuestionBanksIdResponse>(getDeleteQuestionBanksIdUrl(id),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeleteQuestionBanksIdMutationOptions = <
-  TError = ErrorType<DeleteQuestionBanksId401 | DeleteQuestionBanksId403 | DeleteQuestionBanksId404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteQuestionBanksId>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof deleteQuestionBanksId>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["deleteQuestionBanksId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteQuestionBanksId>>, { id: string }> = (props) => {
-    const { id } = props ?? {}
-
-    return deleteQuestionBanksId(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteQuestionBanksIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteQuestionBanksId>>>
 
-export type DeleteQuestionBanksIdMutationError = ErrorType<
-  DeleteQuestionBanksId401 | DeleteQuestionBanksId403 | DeleteQuestionBanksId404
->
 
-/**
+export const getDeleteQuestionBanksIdMutationOptions = <TError = ErrorType<DeleteQuestionBanksId401 | DeleteQuestionBanksId403 | DeleteQuestionBanksId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteQuestionBanksId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteQuestionBanksId>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteQuestionBanksId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteQuestionBanksId>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteQuestionBanksId(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteQuestionBanksIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteQuestionBanksId>>>
+
+    export type DeleteQuestionBanksIdMutationError = ErrorType<DeleteQuestionBanksId401 | DeleteQuestionBanksId403 | DeleteQuestionBanksId404>
+
+    /**
  * @summary Delete question bank
  */
-export const useDeleteQuestionBanksId = <
-  TError = ErrorType<DeleteQuestionBanksId401 | DeleteQuestionBanksId403 | DeleteQuestionBanksId404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteQuestionBanksId>>, TError, { id: string }, TContext>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof deleteQuestionBanksId>>, TError, { id: string }, TContext> => {
-  return useMutation(getDeleteQuestionBanksIdMutationOptions(options), queryClient)
-}
-/**
+export const useDeleteQuestionBanksId = <TError = ErrorType<DeleteQuestionBanksId401 | DeleteQuestionBanksId403 | DeleteQuestionBanksId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteQuestionBanksId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteQuestionBanksId>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteQuestionBanksIdMutationOptions(options), queryClient);
+    }
+    /**
  * Returns questions filtered by optional type. Search matches substrings of: text. Orderable fields: created_at, updated_at, type.
  * @summary List questions in a bank
  */
@@ -1224,160 +1007,126 @@ export type getQuestionBanksIdQuestionsResponse404 = {
   status: 404
 }
 
-export type getQuestionBanksIdQuestionsResponseSuccess = getQuestionBanksIdQuestionsResponse200 & {
-  headers: Headers
-}
-export type getQuestionBanksIdQuestionsResponseError = (
-  | getQuestionBanksIdQuestionsResponse401
-  | getQuestionBanksIdQuestionsResponse403
-  | getQuestionBanksIdQuestionsResponse404
-) & {
-  headers: Headers
-}
+export type getQuestionBanksIdQuestionsResponseSuccess = (getQuestionBanksIdQuestionsResponse200) & {
+  headers: Headers;
+};
+export type getQuestionBanksIdQuestionsResponseError = (getQuestionBanksIdQuestionsResponse401 | getQuestionBanksIdQuestionsResponse403 | getQuestionBanksIdQuestionsResponse404) & {
+  headers: Headers;
+};
 
-export type getQuestionBanksIdQuestionsResponse =
-  | getQuestionBanksIdQuestionsResponseSuccess
-  | getQuestionBanksIdQuestionsResponseError
+export type getQuestionBanksIdQuestionsResponse = (getQuestionBanksIdQuestionsResponseSuccess | getQuestionBanksIdQuestionsResponseError)
 
-export const getGetQuestionBanksIdQuestionsUrl = (id: string, params?: GetQuestionBanksIdQuestionsParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetQuestionBanksIdQuestionsUrl = (id: string,
+    params?: GetQuestionBanksIdQuestionsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
-  })
+  });
 
-  const stringifiedParams = normalizedParams.toString()
+  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0
-    ? `/question-banks/${id}/questions?${stringifiedParams}`
-    : `/question-banks/${id}/questions`
+  return stringifiedParams.length > 0 ? `/question-banks/${id}/questions?${stringifiedParams}` : `/question-banks/${id}/questions`
 }
 
-export const getQuestionBanksIdQuestions = async (
-  id: string,
-  params?: GetQuestionBanksIdQuestionsParams,
-  options?: RequestInit
-): Promise<getQuestionBanksIdQuestionsResponse> => {
-  return customInstance<getQuestionBanksIdQuestionsResponse>(getGetQuestionBanksIdQuestionsUrl(id, params), {
+export const getQuestionBanksIdQuestions = async (id: string,
+    params?: GetQuestionBanksIdQuestionsParams, options?: RequestInit): Promise<getQuestionBanksIdQuestionsResponse> => {
+
+  return customInstance<getQuestionBanksIdQuestionsResponse>(getGetQuestionBanksIdQuestionsUrl(id,params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetQuestionBanksIdQuestionsQueryKey = (id: string, params?: GetQuestionBanksIdQuestionsParams) => {
-  return [`/question-banks/${id}/questions`, ...(params ? [params] : [])] as const
-}
 
-export const getGetQuestionBanksIdQuestionsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>,
-  TError = ErrorType<GetQuestionBanksIdQuestions401 | GetQuestionBanksIdQuestions403 | GetQuestionBanksIdQuestions404>,
->(
-  id: string,
-  params?: GetQuestionBanksIdQuestionsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetQuestionBanksIdQuestionsQueryKey = (id: string,
+    params?: GetQuestionBanksIdQuestionsParams,) => {
+    return [
+    `/question-banks/${id}/questions`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetQuestionBanksIdQuestionsQueryOptions = <TData = Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>, TError = ErrorType<GetQuestionBanksIdQuestions401 | GetQuestionBanksIdQuestions403 | GetQuestionBanksIdQuestions404>>(id: string,
+    params?: GetQuestionBanksIdQuestionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetQuestionBanksIdQuestionsQueryKey(id, params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>> = ({ signal }) =>
-    getQuestionBanksIdQuestions(id, params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetQuestionBanksIdQuestionsQueryKey(id,params);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>> = ({ signal }) => getQuestionBanksIdQuestions(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetQuestionBanksIdQuestionsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>
->
-export type GetQuestionBanksIdQuestionsQueryError = ErrorType<
-  GetQuestionBanksIdQuestions401 | GetQuestionBanksIdQuestions403 | GetQuestionBanksIdQuestions404
->
+export type GetQuestionBanksIdQuestionsQueryResult = NonNullable<Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>>
+export type GetQuestionBanksIdQuestionsQueryError = ErrorType<GetQuestionBanksIdQuestions401 | GetQuestionBanksIdQuestions403 | GetQuestionBanksIdQuestions404>
 
-export function useGetQuestionBanksIdQuestions<
-  TData = Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>,
-  TError = ErrorType<GetQuestionBanksIdQuestions401 | GetQuestionBanksIdQuestions403 | GetQuestionBanksIdQuestions404>,
->(
-  id: string,
-  params: undefined | GetQuestionBanksIdQuestionsParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>, TError, TData>> &
-      Pick<
+
+export function useGetQuestionBanksIdQuestions<TData = Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>, TError = ErrorType<GetQuestionBanksIdQuestions401 | GetQuestionBanksIdQuestions403 | GetQuestionBanksIdQuestions404>>(
+ id: string,
+    params: undefined |  GetQuestionBanksIdQuestionsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>,
           TError,
           Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuestionBanksIdQuestions<
-  TData = Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>,
-  TError = ErrorType<GetQuestionBanksIdQuestions401 | GetQuestionBanksIdQuestions403 | GetQuestionBanksIdQuestions404>,
->(
-  id: string,
-  params?: GetQuestionBanksIdQuestionsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuestionBanksIdQuestions<TData = Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>, TError = ErrorType<GetQuestionBanksIdQuestions401 | GetQuestionBanksIdQuestions403 | GetQuestionBanksIdQuestions404>>(
+ id: string,
+    params?: GetQuestionBanksIdQuestionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>,
           TError,
           Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuestionBanksIdQuestions<
-  TData = Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>,
-  TError = ErrorType<GetQuestionBanksIdQuestions401 | GetQuestionBanksIdQuestions403 | GetQuestionBanksIdQuestions404>,
->(
-  id: string,
-  params?: GetQuestionBanksIdQuestionsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuestionBanksIdQuestions<TData = Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>, TError = ErrorType<GetQuestionBanksIdQuestions401 | GetQuestionBanksIdQuestions403 | GetQuestionBanksIdQuestions404>>(
+ id: string,
+    params?: GetQuestionBanksIdQuestionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List questions in a bank
  */
 
-export function useGetQuestionBanksIdQuestions<
-  TData = Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>,
-  TError = ErrorType<GetQuestionBanksIdQuestions401 | GetQuestionBanksIdQuestions403 | GetQuestionBanksIdQuestions404>,
->(
-  id: string,
-  params?: GetQuestionBanksIdQuestionsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetQuestionBanksIdQuestionsQueryOptions(id, params, options)
+export function useGetQuestionBanksIdQuestions<TData = Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>, TError = ErrorType<GetQuestionBanksIdQuestions401 | GetQuestionBanksIdQuestions403 | GetQuestionBanksIdQuestions404>>(
+ id: string,
+    params?: GetQuestionBanksIdQuestionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksIdQuestions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetQuestionBanksIdQuestionsQueryOptions(id,params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Create question in bank
@@ -1407,118 +1156,80 @@ export type postQuestionBanksIdQuestionsResponse404 = {
   status: 404
 }
 
-export type postQuestionBanksIdQuestionsResponseSuccess = postQuestionBanksIdQuestionsResponse201 & {
-  headers: Headers
-}
-export type postQuestionBanksIdQuestionsResponseError = (
-  | postQuestionBanksIdQuestionsResponse400
-  | postQuestionBanksIdQuestionsResponse401
-  | postQuestionBanksIdQuestionsResponse403
-  | postQuestionBanksIdQuestionsResponse404
-) & {
-  headers: Headers
-}
+export type postQuestionBanksIdQuestionsResponseSuccess = (postQuestionBanksIdQuestionsResponse201) & {
+  headers: Headers;
+};
+export type postQuestionBanksIdQuestionsResponseError = (postQuestionBanksIdQuestionsResponse400 | postQuestionBanksIdQuestionsResponse401 | postQuestionBanksIdQuestionsResponse403 | postQuestionBanksIdQuestionsResponse404) & {
+  headers: Headers;
+};
 
-export type postQuestionBanksIdQuestionsResponse =
-  | postQuestionBanksIdQuestionsResponseSuccess
-  | postQuestionBanksIdQuestionsResponseError
+export type postQuestionBanksIdQuestionsResponse = (postQuestionBanksIdQuestionsResponseSuccess | postQuestionBanksIdQuestionsResponseError)
 
-export const getPostQuestionBanksIdQuestionsUrl = (id: string) => {
+export const getPostQuestionBanksIdQuestionsUrl = (id: string,) => {
+
+
+
+
   return `/question-banks/${id}/questions`
 }
 
-export const postQuestionBanksIdQuestions = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainCreateQuestionDTO: GithubCom4H1RZooraInternalDomainCreateQuestionDTO,
-  options?: RequestInit
-): Promise<postQuestionBanksIdQuestionsResponse> => {
-  return customInstance<postQuestionBanksIdQuestionsResponse>(getPostQuestionBanksIdQuestionsUrl(id), {
+export const postQuestionBanksIdQuestions = async (id: string,
+    githubCom4H1RZooraInternalDomainCreateQuestionDTO: GithubCom4H1RZooraInternalDomainCreateQuestionDTO, options?: RequestInit): Promise<postQuestionBanksIdQuestionsResponse> => {
+
+  return customInstance<postQuestionBanksIdQuestionsResponse>(getPostQuestionBanksIdQuestionsUrl(id),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainCreateQuestionDTO),
-  })
-}
-
-export const getPostQuestionBanksIdQuestionsMutationOptions = <
-  TError = ErrorType<
-    | PostQuestionBanksIdQuestions400
-    | PostQuestionBanksIdQuestions401
-    | PostQuestionBanksIdQuestions403
-    | PostQuestionBanksIdQuestions404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postQuestionBanksIdQuestions>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainCreateQuestionDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postQuestionBanksIdQuestions>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainCreateQuestionDTO },
-  TContext
-> => {
-  const mutationKey = ["postQuestionBanksIdQuestions"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postQuestionBanksIdQuestions>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainCreateQuestionDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return postQuestionBanksIdQuestions(id, data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainCreateQuestionDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostQuestionBanksIdQuestionsMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postQuestionBanksIdQuestions>>
->
-export type PostQuestionBanksIdQuestionsMutationBody = GithubCom4H1RZooraInternalDomainCreateQuestionDTO
-export type PostQuestionBanksIdQuestionsMutationError = ErrorType<
-  | PostQuestionBanksIdQuestions400
-  | PostQuestionBanksIdQuestions401
-  | PostQuestionBanksIdQuestions403
-  | PostQuestionBanksIdQuestions404
->
 
-/**
+
+export const getPostQuestionBanksIdQuestionsMutationOptions = <TError = ErrorType<PostQuestionBanksIdQuestions400 | PostQuestionBanksIdQuestions401 | PostQuestionBanksIdQuestions403 | PostQuestionBanksIdQuestions404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuestionBanksIdQuestions>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainCreateQuestionDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postQuestionBanksIdQuestions>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainCreateQuestionDTO}, TContext> => {
+
+const mutationKey = ['postQuestionBanksIdQuestions'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postQuestionBanksIdQuestions>>, {id: string;data: GithubCom4H1RZooraInternalDomainCreateQuestionDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postQuestionBanksIdQuestions(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostQuestionBanksIdQuestionsMutationResult = NonNullable<Awaited<ReturnType<typeof postQuestionBanksIdQuestions>>>
+    export type PostQuestionBanksIdQuestionsMutationBody = GithubCom4H1RZooraInternalDomainCreateQuestionDTO
+    export type PostQuestionBanksIdQuestionsMutationError = ErrorType<PostQuestionBanksIdQuestions400 | PostQuestionBanksIdQuestions401 | PostQuestionBanksIdQuestions403 | PostQuestionBanksIdQuestions404>
+
+    /**
  * @summary Create question in bank
  */
-export const usePostQuestionBanksIdQuestions = <
-  TError = ErrorType<
-    | PostQuestionBanksIdQuestions400
-    | PostQuestionBanksIdQuestions401
-    | PostQuestionBanksIdQuestions403
-    | PostQuestionBanksIdQuestions404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postQuestionBanksIdQuestions>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainCreateQuestionDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postQuestionBanksIdQuestions>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainCreateQuestionDTO },
-  TContext
-> => {
-  return useMutation(getPostQuestionBanksIdQuestionsMutationOptions(options), queryClient)
-}
+export const usePostQuestionBanksIdQuestions = <TError = ErrorType<PostQuestionBanksIdQuestions400 | PostQuestionBanksIdQuestions401 | PostQuestionBanksIdQuestions403 | PostQuestionBanksIdQuestions404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuestionBanksIdQuestions>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainCreateQuestionDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postQuestionBanksIdQuestions>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainCreateQuestionDTO},
+        TContext
+      > => {
+      return useMutation(getPostQuestionBanksIdQuestionsMutationOptions(options), queryClient);
+    }

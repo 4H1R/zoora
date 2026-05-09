@@ -6,11 +6,11 @@
  * OpenAPI spec version: 1.0
  */
 
-export type GithubCom4H1RZooraInternalDomainSubmissionStatus =
-  (typeof GithubCom4H1RZooraInternalDomainSubmissionStatus)[keyof typeof GithubCom4H1RZooraInternalDomainSubmissionStatus]
+export type GithubCom4H1RZooraInternalDomainSubmissionStatus = typeof GithubCom4H1RZooraInternalDomainSubmissionStatus[keyof typeof GithubCom4H1RZooraInternalDomainSubmissionStatus];
+
 
 export const GithubCom4H1RZooraInternalDomainSubmissionStatus = {
-  SubmissionStatusInProgress: "in_progress",
-  SubmissionStatusSubmitted: "submitted",
-  SubmissionStatusGraded: "graded",
-} as const
+  SubmissionStatusInProgress: 'in_progress',
+  SubmissionStatusSubmitted: 'submitted',
+  SubmissionStatusGraded: 'graded',
+} as const;

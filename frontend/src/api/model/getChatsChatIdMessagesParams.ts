@@ -7,20 +7,20 @@
  */
 
 export type GetChatsChatIdMessagesParams = {
-  /**
-   * Parent message UUID for threads
-   */
-  parent_message_id?: string
-  /**
-   * Page number
-   */
-  page?: number
-  /**
-   * Order field
-   */
-  order_by?: string
-  /**
-   * Order direction
-   */
-  order_dir?: string
-}
+/**
+ * Parent message UUID for threads
+ */
+parent_message_id?: string;
+/**
+ * Page number
+ */
+page?: number;
+/**
+ * Order field
+ */
+order_by?: string;
+/**
+ * Order direction
+ */
+order_dir?: string;
+};

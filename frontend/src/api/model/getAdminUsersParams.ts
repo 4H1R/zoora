@@ -7,36 +7,36 @@
  */
 
 export type GetAdminUsersParams = {
-  /**
-   * Filter by organization UUID
-   */
-  organization_id?: string
-  /**
-   * Filter by admin flag
-   */
-  is_admin?: boolean
-  /**
-   * Include soft-deleted users
-   */
-  include_deleted?: boolean
-  /**
-   * Substring match on username/name
-   */
-  search?: string
-  /**
-   * One of: created_at, updated_at, username, name
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-  /**
-   * Items per page (default 20)
-   */
-  page_size?: number
-}
+/**
+ * Filter by organization UUID
+ */
+organization_id?: string;
+/**
+ * Filter by admin flag
+ */
+is_admin?: boolean;
+/**
+ * Include soft-deleted users
+ */
+include_deleted?: boolean;
+/**
+ * Substring match on username/name
+ */
+search?: string;
+/**
+ * One of: created_at, updated_at, username, name
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+/**
+ * Items per page (default 20)
+ */
+page_size?: number;
+};

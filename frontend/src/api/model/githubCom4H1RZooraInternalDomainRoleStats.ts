@@ -7,6 +7,6 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainRoleStats {
-  total_permissions?: number
-  total_roles?: number
+  total_permissions?: number;
+  total_roles?: number;
 }

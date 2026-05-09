@@ -7,6 +7,6 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainAutoMarkResult {
-  marked?: number
-  skipped?: number
+  marked?: number;
+  skipped?: number;
 }

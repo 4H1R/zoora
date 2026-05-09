@@ -5,7 +5,25 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { ErrorType } from ".././mutator/custom-instance"
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   DeleteClassesIdGradebookColumnsColumnId401,
   DeleteClassesIdGradebookColumnsColumnId403,
@@ -31,28 +49,16 @@ import type {
   PutClassesIdGradebookColumnsColumnId400,
   PutClassesIdGradebookColumnsColumnId401,
   PutClassesIdGradebookColumnsColumnId403,
-  PutClassesIdGradebookColumnsColumnId404,
-} from "../model"
-import type {
-  DataTag,
-  DefinedInitialDataOptions,
-  DefinedUseQueryResult,
-  MutationFunction,
-  QueryClient,
-  QueryFunction,
-  QueryKey,
-  UndefinedInitialDataOptions,
-  UseMutationOptions,
-  UseMutationResult,
-  UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query"
+  PutClassesIdGradebookColumnsColumnId404
+} from '../model';
 
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { customInstance } from '.././mutator/custom-instance';
+import type { ErrorType } from '.././mutator/custom-instance';
 
-import { customInstance } from ".././mutator/custom-instance"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * @summary Get gradebook matrix
@@ -77,138 +83,111 @@ export type getClassesIdGradebookResponse404 = {
   status: 404
 }
 
-export type getClassesIdGradebookResponseSuccess = getClassesIdGradebookResponse200 & {
-  headers: Headers
-}
-export type getClassesIdGradebookResponseError = (
-  | getClassesIdGradebookResponse401
-  | getClassesIdGradebookResponse403
-  | getClassesIdGradebookResponse404
-) & {
-  headers: Headers
-}
+export type getClassesIdGradebookResponseSuccess = (getClassesIdGradebookResponse200) & {
+  headers: Headers;
+};
+export type getClassesIdGradebookResponseError = (getClassesIdGradebookResponse401 | getClassesIdGradebookResponse403 | getClassesIdGradebookResponse404) & {
+  headers: Headers;
+};
 
-export type getClassesIdGradebookResponse = getClassesIdGradebookResponseSuccess | getClassesIdGradebookResponseError
+export type getClassesIdGradebookResponse = (getClassesIdGradebookResponseSuccess | getClassesIdGradebookResponseError)
 
-export const getGetClassesIdGradebookUrl = (id: string) => {
+export const getGetClassesIdGradebookUrl = (id: string,) => {
+
+
+
+
   return `/classes/${id}/gradebook`
 }
 
-export const getClassesIdGradebook = async (
-  id: string,
-  options?: RequestInit
-): Promise<getClassesIdGradebookResponse> => {
-  return customInstance<getClassesIdGradebookResponse>(getGetClassesIdGradebookUrl(id), {
+export const getClassesIdGradebook = async (id: string, options?: RequestInit): Promise<getClassesIdGradebookResponse> => {
+
+  return customInstance<getClassesIdGradebookResponse>(getGetClassesIdGradebookUrl(id),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetClassesIdGradebookQueryKey = (id: string) => {
-  return [`/classes/${id}/gradebook`] as const
-}
 
-export const getGetClassesIdGradebookQueryOptions = <
-  TData = Awaited<ReturnType<typeof getClassesIdGradebook>>,
-  TError = ErrorType<GetClassesIdGradebook401 | GetClassesIdGradebook403 | GetClassesIdGradebook404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdGradebook>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetClassesIdGradebookQueryKey = (id: string,) => {
+    return [
+    `/classes/${id}/gradebook`
+    ] as const;
+    }
+
+
+export const getGetClassesIdGradebookQueryOptions = <TData = Awaited<ReturnType<typeof getClassesIdGradebook>>, TError = ErrorType<GetClassesIdGradebook401 | GetClassesIdGradebook403 | GetClassesIdGradebook404>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdGradebook>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetClassesIdGradebookQueryKey(id)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getClassesIdGradebook>>> = ({ signal }) =>
-    getClassesIdGradebook(id, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetClassesIdGradebookQueryKey(id);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getClassesIdGradebook>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClassesIdGradebook>>> = ({ signal }) => getClassesIdGradebook(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClassesIdGradebook>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetClassesIdGradebookQueryResult = NonNullable<Awaited<ReturnType<typeof getClassesIdGradebook>>>
-export type GetClassesIdGradebookQueryError = ErrorType<
-  GetClassesIdGradebook401 | GetClassesIdGradebook403 | GetClassesIdGradebook404
->
+export type GetClassesIdGradebookQueryError = ErrorType<GetClassesIdGradebook401 | GetClassesIdGradebook403 | GetClassesIdGradebook404>
 
-export function useGetClassesIdGradebook<
-  TData = Awaited<ReturnType<typeof getClassesIdGradebook>>,
-  TError = ErrorType<GetClassesIdGradebook401 | GetClassesIdGradebook403 | GetClassesIdGradebook404>,
->(
-  id: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdGradebook>>, TError, TData>> &
-      Pick<
+
+export function useGetClassesIdGradebook<TData = Awaited<ReturnType<typeof getClassesIdGradebook>>, TError = ErrorType<GetClassesIdGradebook401 | GetClassesIdGradebook403 | GetClassesIdGradebook404>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdGradebook>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getClassesIdGradebook>>,
           TError,
           Awaited<ReturnType<typeof getClassesIdGradebook>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetClassesIdGradebook<
-  TData = Awaited<ReturnType<typeof getClassesIdGradebook>>,
-  TError = ErrorType<GetClassesIdGradebook401 | GetClassesIdGradebook403 | GetClassesIdGradebook404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdGradebook>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClassesIdGradebook<TData = Awaited<ReturnType<typeof getClassesIdGradebook>>, TError = ErrorType<GetClassesIdGradebook401 | GetClassesIdGradebook403 | GetClassesIdGradebook404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdGradebook>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getClassesIdGradebook>>,
           TError,
           Awaited<ReturnType<typeof getClassesIdGradebook>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetClassesIdGradebook<
-  TData = Awaited<ReturnType<typeof getClassesIdGradebook>>,
-  TError = ErrorType<GetClassesIdGradebook401 | GetClassesIdGradebook403 | GetClassesIdGradebook404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdGradebook>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClassesIdGradebook<TData = Awaited<ReturnType<typeof getClassesIdGradebook>>, TError = ErrorType<GetClassesIdGradebook401 | GetClassesIdGradebook403 | GetClassesIdGradebook404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdGradebook>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get gradebook matrix
  */
 
-export function useGetClassesIdGradebook<
-  TData = Awaited<ReturnType<typeof getClassesIdGradebook>>,
-  TError = ErrorType<GetClassesIdGradebook401 | GetClassesIdGradebook403 | GetClassesIdGradebook404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdGradebook>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetClassesIdGradebookQueryOptions(id, options)
+export function useGetClassesIdGradebook<TData = Awaited<ReturnType<typeof getClassesIdGradebook>>, TError = ErrorType<GetClassesIdGradebook401 | GetClassesIdGradebook403 | GetClassesIdGradebook404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdGradebook>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetClassesIdGradebookQueryOptions(id,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Create gradebook column
@@ -233,112 +212,84 @@ export type postClassesIdGradebookColumnsResponse403 = {
   status: 403
 }
 
-export type postClassesIdGradebookColumnsResponseSuccess = postClassesIdGradebookColumnsResponse201 & {
-  headers: Headers
-}
-export type postClassesIdGradebookColumnsResponseError = (
-  | postClassesIdGradebookColumnsResponse400
-  | postClassesIdGradebookColumnsResponse401
-  | postClassesIdGradebookColumnsResponse403
-) & {
-  headers: Headers
-}
+export type postClassesIdGradebookColumnsResponseSuccess = (postClassesIdGradebookColumnsResponse201) & {
+  headers: Headers;
+};
+export type postClassesIdGradebookColumnsResponseError = (postClassesIdGradebookColumnsResponse400 | postClassesIdGradebookColumnsResponse401 | postClassesIdGradebookColumnsResponse403) & {
+  headers: Headers;
+};
 
-export type postClassesIdGradebookColumnsResponse =
-  | postClassesIdGradebookColumnsResponseSuccess
-  | postClassesIdGradebookColumnsResponseError
+export type postClassesIdGradebookColumnsResponse = (postClassesIdGradebookColumnsResponseSuccess | postClassesIdGradebookColumnsResponseError)
 
-export const getPostClassesIdGradebookColumnsUrl = (id: string) => {
+export const getPostClassesIdGradebookColumnsUrl = (id: string,) => {
+
+
+
+
   return `/classes/${id}/gradebook/columns`
 }
 
-export const postClassesIdGradebookColumns = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainCreateGradebookColumnDTO: GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTO,
-  options?: RequestInit
-): Promise<postClassesIdGradebookColumnsResponse> => {
-  return customInstance<postClassesIdGradebookColumnsResponse>(getPostClassesIdGradebookColumnsUrl(id), {
+export const postClassesIdGradebookColumns = async (id: string,
+    githubCom4H1RZooraInternalDomainCreateGradebookColumnDTO: GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTO, options?: RequestInit): Promise<postClassesIdGradebookColumnsResponse> => {
+
+  return customInstance<postClassesIdGradebookColumnsResponse>(getPostClassesIdGradebookColumnsUrl(id),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainCreateGradebookColumnDTO),
-  })
-}
-
-export const getPostClassesIdGradebookColumnsMutationOptions = <
-  TError = ErrorType<
-    PostClassesIdGradebookColumns400 | PostClassesIdGradebookColumns401 | PostClassesIdGradebookColumns403
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postClassesIdGradebookColumns>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postClassesIdGradebookColumns>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTO },
-  TContext
-> => {
-  const mutationKey = ["postClassesIdGradebookColumns"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postClassesIdGradebookColumns>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return postClassesIdGradebookColumns(id, data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainCreateGradebookColumnDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostClassesIdGradebookColumnsMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postClassesIdGradebookColumns>>
->
-export type PostClassesIdGradebookColumnsMutationBody = GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTO
-export type PostClassesIdGradebookColumnsMutationError = ErrorType<
-  PostClassesIdGradebookColumns400 | PostClassesIdGradebookColumns401 | PostClassesIdGradebookColumns403
->
 
-/**
+
+export const getPostClassesIdGradebookColumnsMutationOptions = <TError = ErrorType<PostClassesIdGradebookColumns400 | PostClassesIdGradebookColumns401 | PostClassesIdGradebookColumns403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postClassesIdGradebookColumns>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postClassesIdGradebookColumns>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTO}, TContext> => {
+
+const mutationKey = ['postClassesIdGradebookColumns'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postClassesIdGradebookColumns>>, {id: string;data: GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postClassesIdGradebookColumns(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostClassesIdGradebookColumnsMutationResult = NonNullable<Awaited<ReturnType<typeof postClassesIdGradebookColumns>>>
+    export type PostClassesIdGradebookColumnsMutationBody = GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTO
+    export type PostClassesIdGradebookColumnsMutationError = ErrorType<PostClassesIdGradebookColumns400 | PostClassesIdGradebookColumns401 | PostClassesIdGradebookColumns403>
+
+    /**
  * @summary Create gradebook column
  */
-export const usePostClassesIdGradebookColumns = <
-  TError = ErrorType<
-    PostClassesIdGradebookColumns400 | PostClassesIdGradebookColumns401 | PostClassesIdGradebookColumns403
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postClassesIdGradebookColumns>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postClassesIdGradebookColumns>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTO },
-  TContext
-> => {
-  return useMutation(getPostClassesIdGradebookColumnsMutationOptions(options), queryClient)
-}
-/**
+export const usePostClassesIdGradebookColumns = <TError = ErrorType<PostClassesIdGradebookColumns400 | PostClassesIdGradebookColumns401 | PostClassesIdGradebookColumns403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postClassesIdGradebookColumns>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postClassesIdGradebookColumns>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTO},
+        TContext
+      > => {
+      return useMutation(getPostClassesIdGradebookColumnsMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Update gradebook column
  */
 export type putClassesIdGradebookColumnsColumnIdResponse200 = {
@@ -366,126 +317,86 @@ export type putClassesIdGradebookColumnsColumnIdResponse404 = {
   status: 404
 }
 
-export type putClassesIdGradebookColumnsColumnIdResponseSuccess = putClassesIdGradebookColumnsColumnIdResponse200 & {
-  headers: Headers
-}
-export type putClassesIdGradebookColumnsColumnIdResponseError = (
-  | putClassesIdGradebookColumnsColumnIdResponse400
-  | putClassesIdGradebookColumnsColumnIdResponse401
-  | putClassesIdGradebookColumnsColumnIdResponse403
-  | putClassesIdGradebookColumnsColumnIdResponse404
-) & {
-  headers: Headers
-}
+export type putClassesIdGradebookColumnsColumnIdResponseSuccess = (putClassesIdGradebookColumnsColumnIdResponse200) & {
+  headers: Headers;
+};
+export type putClassesIdGradebookColumnsColumnIdResponseError = (putClassesIdGradebookColumnsColumnIdResponse400 | putClassesIdGradebookColumnsColumnIdResponse401 | putClassesIdGradebookColumnsColumnIdResponse403 | putClassesIdGradebookColumnsColumnIdResponse404) & {
+  headers: Headers;
+};
 
-export type putClassesIdGradebookColumnsColumnIdResponse =
-  | putClassesIdGradebookColumnsColumnIdResponseSuccess
-  | putClassesIdGradebookColumnsColumnIdResponseError
+export type putClassesIdGradebookColumnsColumnIdResponse = (putClassesIdGradebookColumnsColumnIdResponseSuccess | putClassesIdGradebookColumnsColumnIdResponseError)
 
-export const getPutClassesIdGradebookColumnsColumnIdUrl = (id: string, columnId: string) => {
+export const getPutClassesIdGradebookColumnsColumnIdUrl = (id: string,
+    columnId: string,) => {
+
+
+
+
   return `/classes/${id}/gradebook/columns/${columnId}`
 }
 
-export const putClassesIdGradebookColumnsColumnId = async (
-  id: string,
-  columnId: string,
-  githubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO: GithubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO,
-  options?: RequestInit
-): Promise<putClassesIdGradebookColumnsColumnIdResponse> => {
-  return customInstance<putClassesIdGradebookColumnsColumnIdResponse>(
-    getPutClassesIdGradebookColumnsColumnIdUrl(id, columnId),
-    {
-      ...options,
-      method: "PUT",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(githubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO),
-    }
-  )
-}
+export const putClassesIdGradebookColumnsColumnId = async (id: string,
+    columnId: string,
+    githubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO: GithubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO, options?: RequestInit): Promise<putClassesIdGradebookColumnsColumnIdResponse> => {
 
-export const getPutClassesIdGradebookColumnsColumnIdMutationOptions = <
-  TError = ErrorType<
-    | PutClassesIdGradebookColumnsColumnId400
-    | PutClassesIdGradebookColumnsColumnId401
-    | PutClassesIdGradebookColumnsColumnId403
-    | PutClassesIdGradebookColumnsColumnId404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putClassesIdGradebookColumnsColumnId>>,
-    TError,
-    { id: string; columnId: string; data: GithubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putClassesIdGradebookColumnsColumnId>>,
-  TError,
-  { id: string; columnId: string; data: GithubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO },
-  TContext
-> => {
-  const mutationKey = ["putClassesIdGradebookColumnsColumnId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putClassesIdGradebookColumnsColumnId>>,
-    { id: string; columnId: string; data: GithubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO }
-  > = (props) => {
-    const { id, columnId, data } = props ?? {}
-
-    return putClassesIdGradebookColumnsColumnId(id, columnId, data, requestOptions)
+  return customInstance<putClassesIdGradebookColumnsColumnIdResponse>(getPutClassesIdGradebookColumnsColumnIdUrl(id,columnId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutClassesIdGradebookColumnsColumnIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof putClassesIdGradebookColumnsColumnId>>
->
-export type PutClassesIdGradebookColumnsColumnIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO
-export type PutClassesIdGradebookColumnsColumnIdMutationError = ErrorType<
-  | PutClassesIdGradebookColumnsColumnId400
-  | PutClassesIdGradebookColumnsColumnId401
-  | PutClassesIdGradebookColumnsColumnId403
-  | PutClassesIdGradebookColumnsColumnId404
->
 
-/**
+
+export const getPutClassesIdGradebookColumnsColumnIdMutationOptions = <TError = ErrorType<PutClassesIdGradebookColumnsColumnId400 | PutClassesIdGradebookColumnsColumnId401 | PutClassesIdGradebookColumnsColumnId403 | PutClassesIdGradebookColumnsColumnId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putClassesIdGradebookColumnsColumnId>>, TError,{id: string;columnId: string;data: GithubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putClassesIdGradebookColumnsColumnId>>, TError,{id: string;columnId: string;data: GithubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO}, TContext> => {
+
+const mutationKey = ['putClassesIdGradebookColumnsColumnId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putClassesIdGradebookColumnsColumnId>>, {id: string;columnId: string;data: GithubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO}> = (props) => {
+          const {id,columnId,data} = props ?? {};
+
+          return  putClassesIdGradebookColumnsColumnId(id,columnId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutClassesIdGradebookColumnsColumnIdMutationResult = NonNullable<Awaited<ReturnType<typeof putClassesIdGradebookColumnsColumnId>>>
+    export type PutClassesIdGradebookColumnsColumnIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO
+    export type PutClassesIdGradebookColumnsColumnIdMutationError = ErrorType<PutClassesIdGradebookColumnsColumnId400 | PutClassesIdGradebookColumnsColumnId401 | PutClassesIdGradebookColumnsColumnId403 | PutClassesIdGradebookColumnsColumnId404>
+
+    /**
  * @summary Update gradebook column
  */
-export const usePutClassesIdGradebookColumnsColumnId = <
-  TError = ErrorType<
-    | PutClassesIdGradebookColumnsColumnId400
-    | PutClassesIdGradebookColumnsColumnId401
-    | PutClassesIdGradebookColumnsColumnId403
-    | PutClassesIdGradebookColumnsColumnId404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putClassesIdGradebookColumnsColumnId>>,
-      TError,
-      { id: string; columnId: string; data: GithubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putClassesIdGradebookColumnsColumnId>>,
-  TError,
-  { id: string; columnId: string; data: GithubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO },
-  TContext
-> => {
-  return useMutation(getPutClassesIdGradebookColumnsColumnIdMutationOptions(options), queryClient)
-}
-/**
+export const usePutClassesIdGradebookColumnsColumnId = <TError = ErrorType<PutClassesIdGradebookColumnsColumnId400 | PutClassesIdGradebookColumnsColumnId401 | PutClassesIdGradebookColumnsColumnId403 | PutClassesIdGradebookColumnsColumnId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putClassesIdGradebookColumnsColumnId>>, TError,{id: string;columnId: string;data: GithubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putClassesIdGradebookColumnsColumnId>>,
+        TError,
+        {id: string;columnId: string;data: GithubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO},
+        TContext
+      > => {
+      return useMutation(getPutClassesIdGradebookColumnsColumnIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Delete gradebook column
  */
 export type deleteClassesIdGradebookColumnsColumnIdResponse200 = {
@@ -508,120 +419,84 @@ export type deleteClassesIdGradebookColumnsColumnIdResponse404 = {
   status: 404
 }
 
-export type deleteClassesIdGradebookColumnsColumnIdResponseSuccess =
-  deleteClassesIdGradebookColumnsColumnIdResponse200 & {
-    headers: Headers
-  }
-export type deleteClassesIdGradebookColumnsColumnIdResponseError = (
-  | deleteClassesIdGradebookColumnsColumnIdResponse401
-  | deleteClassesIdGradebookColumnsColumnIdResponse403
-  | deleteClassesIdGradebookColumnsColumnIdResponse404
-) & {
-  headers: Headers
-}
+export type deleteClassesIdGradebookColumnsColumnIdResponseSuccess = (deleteClassesIdGradebookColumnsColumnIdResponse200) & {
+  headers: Headers;
+};
+export type deleteClassesIdGradebookColumnsColumnIdResponseError = (deleteClassesIdGradebookColumnsColumnIdResponse401 | deleteClassesIdGradebookColumnsColumnIdResponse403 | deleteClassesIdGradebookColumnsColumnIdResponse404) & {
+  headers: Headers;
+};
 
-export type deleteClassesIdGradebookColumnsColumnIdResponse =
-  | deleteClassesIdGradebookColumnsColumnIdResponseSuccess
-  | deleteClassesIdGradebookColumnsColumnIdResponseError
+export type deleteClassesIdGradebookColumnsColumnIdResponse = (deleteClassesIdGradebookColumnsColumnIdResponseSuccess | deleteClassesIdGradebookColumnsColumnIdResponseError)
 
-export const getDeleteClassesIdGradebookColumnsColumnIdUrl = (id: string, columnId: string) => {
+export const getDeleteClassesIdGradebookColumnsColumnIdUrl = (id: string,
+    columnId: string,) => {
+
+
+
+
   return `/classes/${id}/gradebook/columns/${columnId}`
 }
 
-export const deleteClassesIdGradebookColumnsColumnId = async (
-  id: string,
-  columnId: string,
-  options?: RequestInit
-): Promise<deleteClassesIdGradebookColumnsColumnIdResponse> => {
-  return customInstance<deleteClassesIdGradebookColumnsColumnIdResponse>(
-    getDeleteClassesIdGradebookColumnsColumnIdUrl(id, columnId),
-    {
-      ...options,
-      method: "DELETE",
-    }
-  )
-}
+export const deleteClassesIdGradebookColumnsColumnId = async (id: string,
+    columnId: string, options?: RequestInit): Promise<deleteClassesIdGradebookColumnsColumnIdResponse> => {
 
-export const getDeleteClassesIdGradebookColumnsColumnIdMutationOptions = <
-  TError = ErrorType<
-    | DeleteClassesIdGradebookColumnsColumnId401
-    | DeleteClassesIdGradebookColumnsColumnId403
-    | DeleteClassesIdGradebookColumnsColumnId404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteClassesIdGradebookColumnsColumnId>>,
-    TError,
-    { id: string; columnId: string },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteClassesIdGradebookColumnsColumnId>>,
-  TError,
-  { id: string; columnId: string },
-  TContext
-> => {
-  const mutationKey = ["deleteClassesIdGradebookColumnsColumnId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
+  return customInstance<deleteClassesIdGradebookColumnsColumnIdResponse>(getDeleteClassesIdGradebookColumnsColumnIdUrl(id,columnId),
+  {
+    ...options,
+    method: 'DELETE'
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteClassesIdGradebookColumnsColumnId>>,
-    { id: string; columnId: string }
-  > = (props) => {
-    const { id, columnId } = props ?? {}
 
-    return deleteClassesIdGradebookColumnsColumnId(id, columnId, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteClassesIdGradebookColumnsColumnIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteClassesIdGradebookColumnsColumnId>>
->
 
-export type DeleteClassesIdGradebookColumnsColumnIdMutationError = ErrorType<
-  | DeleteClassesIdGradebookColumnsColumnId401
-  | DeleteClassesIdGradebookColumnsColumnId403
-  | DeleteClassesIdGradebookColumnsColumnId404
->
 
-/**
+export const getDeleteClassesIdGradebookColumnsColumnIdMutationOptions = <TError = ErrorType<DeleteClassesIdGradebookColumnsColumnId401 | DeleteClassesIdGradebookColumnsColumnId403 | DeleteClassesIdGradebookColumnsColumnId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteClassesIdGradebookColumnsColumnId>>, TError,{id: string;columnId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteClassesIdGradebookColumnsColumnId>>, TError,{id: string;columnId: string}, TContext> => {
+
+const mutationKey = ['deleteClassesIdGradebookColumnsColumnId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteClassesIdGradebookColumnsColumnId>>, {id: string;columnId: string}> = (props) => {
+          const {id,columnId} = props ?? {};
+
+          return  deleteClassesIdGradebookColumnsColumnId(id,columnId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteClassesIdGradebookColumnsColumnIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteClassesIdGradebookColumnsColumnId>>>
+
+    export type DeleteClassesIdGradebookColumnsColumnIdMutationError = ErrorType<DeleteClassesIdGradebookColumnsColumnId401 | DeleteClassesIdGradebookColumnsColumnId403 | DeleteClassesIdGradebookColumnsColumnId404>
+
+    /**
  * @summary Delete gradebook column
  */
-export const useDeleteClassesIdGradebookColumnsColumnId = <
-  TError = ErrorType<
-    | DeleteClassesIdGradebookColumnsColumnId401
-    | DeleteClassesIdGradebookColumnsColumnId403
-    | DeleteClassesIdGradebookColumnsColumnId404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteClassesIdGradebookColumnsColumnId>>,
-      TError,
-      { id: string; columnId: string },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteClassesIdGradebookColumnsColumnId>>,
-  TError,
-  { id: string; columnId: string },
-  TContext
-> => {
-  return useMutation(getDeleteClassesIdGradebookColumnsColumnIdMutationOptions(options), queryClient)
-}
-/**
+export const useDeleteClassesIdGradebookColumnsColumnId = <TError = ErrorType<DeleteClassesIdGradebookColumnsColumnId401 | DeleteClassesIdGradebookColumnsColumnId403 | DeleteClassesIdGradebookColumnsColumnId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteClassesIdGradebookColumnsColumnId>>, TError,{id: string;columnId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteClassesIdGradebookColumnsColumnId>>,
+        TError,
+        {id: string;columnId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteClassesIdGradebookColumnsColumnIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Upsert gradebook cell
  */
 export type postClassesIdGradebookColumnsColumnIdCellsResponse200 = {
@@ -649,124 +524,82 @@ export type postClassesIdGradebookColumnsColumnIdCellsResponse404 = {
   status: 404
 }
 
-export type postClassesIdGradebookColumnsColumnIdCellsResponseSuccess =
-  postClassesIdGradebookColumnsColumnIdCellsResponse200 & {
-    headers: Headers
-  }
-export type postClassesIdGradebookColumnsColumnIdCellsResponseError = (
-  | postClassesIdGradebookColumnsColumnIdCellsResponse400
-  | postClassesIdGradebookColumnsColumnIdCellsResponse401
-  | postClassesIdGradebookColumnsColumnIdCellsResponse403
-  | postClassesIdGradebookColumnsColumnIdCellsResponse404
-) & {
-  headers: Headers
-}
+export type postClassesIdGradebookColumnsColumnIdCellsResponseSuccess = (postClassesIdGradebookColumnsColumnIdCellsResponse200) & {
+  headers: Headers;
+};
+export type postClassesIdGradebookColumnsColumnIdCellsResponseError = (postClassesIdGradebookColumnsColumnIdCellsResponse400 | postClassesIdGradebookColumnsColumnIdCellsResponse401 | postClassesIdGradebookColumnsColumnIdCellsResponse403 | postClassesIdGradebookColumnsColumnIdCellsResponse404) & {
+  headers: Headers;
+};
 
-export type postClassesIdGradebookColumnsColumnIdCellsResponse =
-  | postClassesIdGradebookColumnsColumnIdCellsResponseSuccess
-  | postClassesIdGradebookColumnsColumnIdCellsResponseError
+export type postClassesIdGradebookColumnsColumnIdCellsResponse = (postClassesIdGradebookColumnsColumnIdCellsResponseSuccess | postClassesIdGradebookColumnsColumnIdCellsResponseError)
 
-export const getPostClassesIdGradebookColumnsColumnIdCellsUrl = (id: string, columnId: string) => {
+export const getPostClassesIdGradebookColumnsColumnIdCellsUrl = (id: string,
+    columnId: string,) => {
+
+
+
+
   return `/classes/${id}/gradebook/columns/${columnId}/cells`
 }
 
-export const postClassesIdGradebookColumnsColumnIdCells = async (
-  id: string,
-  columnId: string,
-  githubCom4H1RZooraInternalDomainUpsertGradebookCellDTO: GithubCom4H1RZooraInternalDomainUpsertGradebookCellDTO,
-  options?: RequestInit
-): Promise<postClassesIdGradebookColumnsColumnIdCellsResponse> => {
-  return customInstance<postClassesIdGradebookColumnsColumnIdCellsResponse>(
-    getPostClassesIdGradebookColumnsColumnIdCellsUrl(id, columnId),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(githubCom4H1RZooraInternalDomainUpsertGradebookCellDTO),
-    }
-  )
-}
+export const postClassesIdGradebookColumnsColumnIdCells = async (id: string,
+    columnId: string,
+    githubCom4H1RZooraInternalDomainUpsertGradebookCellDTO: GithubCom4H1RZooraInternalDomainUpsertGradebookCellDTO, options?: RequestInit): Promise<postClassesIdGradebookColumnsColumnIdCellsResponse> => {
 
-export const getPostClassesIdGradebookColumnsColumnIdCellsMutationOptions = <
-  TError = ErrorType<
-    | PostClassesIdGradebookColumnsColumnIdCells400
-    | PostClassesIdGradebookColumnsColumnIdCells401
-    | PostClassesIdGradebookColumnsColumnIdCells403
-    | PostClassesIdGradebookColumnsColumnIdCells404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postClassesIdGradebookColumnsColumnIdCells>>,
-    TError,
-    { id: string; columnId: string; data: GithubCom4H1RZooraInternalDomainUpsertGradebookCellDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postClassesIdGradebookColumnsColumnIdCells>>,
-  TError,
-  { id: string; columnId: string; data: GithubCom4H1RZooraInternalDomainUpsertGradebookCellDTO },
-  TContext
-> => {
-  const mutationKey = ["postClassesIdGradebookColumnsColumnIdCells"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postClassesIdGradebookColumnsColumnIdCells>>,
-    { id: string; columnId: string; data: GithubCom4H1RZooraInternalDomainUpsertGradebookCellDTO }
-  > = (props) => {
-    const { id, columnId, data } = props ?? {}
-
-    return postClassesIdGradebookColumnsColumnIdCells(id, columnId, data, requestOptions)
+  return customInstance<postClassesIdGradebookColumnsColumnIdCellsResponse>(getPostClassesIdGradebookColumnsColumnIdCellsUrl(id,columnId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainUpsertGradebookCellDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostClassesIdGradebookColumnsColumnIdCellsMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postClassesIdGradebookColumnsColumnIdCells>>
->
-export type PostClassesIdGradebookColumnsColumnIdCellsMutationBody =
-  GithubCom4H1RZooraInternalDomainUpsertGradebookCellDTO
-export type PostClassesIdGradebookColumnsColumnIdCellsMutationError = ErrorType<
-  | PostClassesIdGradebookColumnsColumnIdCells400
-  | PostClassesIdGradebookColumnsColumnIdCells401
-  | PostClassesIdGradebookColumnsColumnIdCells403
-  | PostClassesIdGradebookColumnsColumnIdCells404
->
 
-/**
+
+export const getPostClassesIdGradebookColumnsColumnIdCellsMutationOptions = <TError = ErrorType<PostClassesIdGradebookColumnsColumnIdCells400 | PostClassesIdGradebookColumnsColumnIdCells401 | PostClassesIdGradebookColumnsColumnIdCells403 | PostClassesIdGradebookColumnsColumnIdCells404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postClassesIdGradebookColumnsColumnIdCells>>, TError,{id: string;columnId: string;data: GithubCom4H1RZooraInternalDomainUpsertGradebookCellDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postClassesIdGradebookColumnsColumnIdCells>>, TError,{id: string;columnId: string;data: GithubCom4H1RZooraInternalDomainUpsertGradebookCellDTO}, TContext> => {
+
+const mutationKey = ['postClassesIdGradebookColumnsColumnIdCells'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postClassesIdGradebookColumnsColumnIdCells>>, {id: string;columnId: string;data: GithubCom4H1RZooraInternalDomainUpsertGradebookCellDTO}> = (props) => {
+          const {id,columnId,data} = props ?? {};
+
+          return  postClassesIdGradebookColumnsColumnIdCells(id,columnId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostClassesIdGradebookColumnsColumnIdCellsMutationResult = NonNullable<Awaited<ReturnType<typeof postClassesIdGradebookColumnsColumnIdCells>>>
+    export type PostClassesIdGradebookColumnsColumnIdCellsMutationBody = GithubCom4H1RZooraInternalDomainUpsertGradebookCellDTO
+    export type PostClassesIdGradebookColumnsColumnIdCellsMutationError = ErrorType<PostClassesIdGradebookColumnsColumnIdCells400 | PostClassesIdGradebookColumnsColumnIdCells401 | PostClassesIdGradebookColumnsColumnIdCells403 | PostClassesIdGradebookColumnsColumnIdCells404>
+
+    /**
  * @summary Upsert gradebook cell
  */
-export const usePostClassesIdGradebookColumnsColumnIdCells = <
-  TError = ErrorType<
-    | PostClassesIdGradebookColumnsColumnIdCells400
-    | PostClassesIdGradebookColumnsColumnIdCells401
-    | PostClassesIdGradebookColumnsColumnIdCells403
-    | PostClassesIdGradebookColumnsColumnIdCells404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postClassesIdGradebookColumnsColumnIdCells>>,
-      TError,
-      { id: string; columnId: string; data: GithubCom4H1RZooraInternalDomainUpsertGradebookCellDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postClassesIdGradebookColumnsColumnIdCells>>,
-  TError,
-  { id: string; columnId: string; data: GithubCom4H1RZooraInternalDomainUpsertGradebookCellDTO },
-  TContext
-> => {
-  return useMutation(getPostClassesIdGradebookColumnsColumnIdCellsMutationOptions(options), queryClient)
-}
+export const usePostClassesIdGradebookColumnsColumnIdCells = <TError = ErrorType<PostClassesIdGradebookColumnsColumnIdCells400 | PostClassesIdGradebookColumnsColumnIdCells401 | PostClassesIdGradebookColumnsColumnIdCells403 | PostClassesIdGradebookColumnsColumnIdCells404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postClassesIdGradebookColumnsColumnIdCells>>, TError,{id: string;columnId: string;data: GithubCom4H1RZooraInternalDomainUpsertGradebookCellDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postClassesIdGradebookColumnsColumnIdCells>>,
+        TError,
+        {id: string;columnId: string;data: GithubCom4H1RZooraInternalDomainUpsertGradebookCellDTO},
+        TContext
+      > => {
+      return useMutation(getPostClassesIdGradebookColumnsColumnIdCellsMutationOptions(options), queryClient);
+    }

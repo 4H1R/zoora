@@ -5,13 +5,13 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTOType } from "./githubCom4H1RZooraInternalDomainCreateGradebookColumnDTOType"
+import type { GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTOType } from './githubCom4H1RZooraInternalDomainCreateGradebookColumnDTOType';
 
 export interface GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTO {
   /** @minimum 0 */
-  order_index?: number
-  source_id?: string
+  order_index?: number;
+  source_id?: string;
   /** @minLength 1 */
-  title: string
-  type: GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTOType
+  title: string;
+  type: GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTOType;
 }

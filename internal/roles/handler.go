@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/platform/httpx"
@@ -25,12 +24,12 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 	authed := rg.Group("", authMiddleware)
 	{
 		authed.POST("/roles", perm(domain.PermRolesCreate), h.CreateRole)
-		authed.GET("/roles", h.ListRoles)
+		authed.GET("/roles", perm(domain.PermRolesView), h.ListRoles)
 		authed.GET("/roles/stats", perm(domain.PermRolesView), h.RoleStats)
 		authed.GET("/roles/:id", perm(domain.PermRolesView), idParam, h.GetRoleByID)
 		authed.PUT("/roles/:id", perm(domain.PermRolesUpdate), idParam, h.UpdateRole)
 		authed.DELETE("/roles/:id", perm(domain.PermRolesDelete), idParam, h.DeleteRole)
-		authed.GET("/permissions", h.ListPermissions)
+		authed.GET("/permissions", perm(domain.PermRolesView), h.ListPermissions)
 	}
 }
 
@@ -137,20 +136,13 @@ func (h *Handler) DeleteRole(c *gin.Context) {
 // @Tags Roles
 // @Produce json
 // @Security BearerAuth
-// @Param organization_id query string false "Filter by organization UUID"
 // @Success 200 {object} domain.Response{data=[]domain.Role}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 403 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 500 {object} domain.Response{error=domain.ErrorBody}
 // @Router /roles [get]
 func (h *Handler) ListRoles(c *gin.Context) {
-	var filter domain.RoleFilter
-	if orgIDStr := c.Query("organization_id"); orgIDStr != "" {
-		if id, err := uuid.Parse(orgIDStr); err == nil {
-			filter.OrganizationID = &id
-		}
-	}
-	roleList, err := h.svc.List(c.Request.Context(), filter)
+	roleList, err := h.svc.List(c.Request.Context(), domain.RoleFilter{})
 	if err != nil {
 		_ = c.Error(err)
 		return
@@ -163,20 +155,13 @@ func (h *Handler) ListRoles(c *gin.Context) {
 // @Tags Roles
 // @Produce json
 // @Security BearerAuth
-// @Param organization_id query string false "Filter by organization UUID"
 // @Success 200 {object} domain.Response{data=domain.RoleStats}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 403 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 500 {object} domain.Response{error=domain.ErrorBody}
 // @Router /roles/stats [get]
 func (h *Handler) RoleStats(c *gin.Context) {
-	var orgID *uuid.UUID
-	if orgIDStr := c.Query("organization_id"); orgIDStr != "" {
-		if id, err := uuid.Parse(orgIDStr); err == nil {
-			orgID = &id
-		}
-	}
-	stats, err := h.svc.Stats(c.Request.Context(), orgID)
+	stats, err := h.svc.Stats(c.Request.Context())
 	if err != nil {
 		_ = c.Error(err)
 		return

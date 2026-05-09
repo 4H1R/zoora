@@ -7,6 +7,6 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainChangePasswordDTO {
-  current_password: string
-  new_password: string
+  current_password: string;
+  new_password: string;
 }

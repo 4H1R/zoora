@@ -7,12 +7,12 @@
  */
 
 export type GetClassesIdMembersParams = {
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-}
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+};

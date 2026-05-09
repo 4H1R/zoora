@@ -7,9 +7,9 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainSubmissionAnswer {
-  earned_score?: number
-  question_id?: string
-  selected_option_ids?: string[]
-  spent_seconds?: number
-  value?: string
+  earned_score?: number;
+  question_id?: string;
+  selected_option_ids?: string[];
+  spent_seconds?: number;
+  value?: string;
 }

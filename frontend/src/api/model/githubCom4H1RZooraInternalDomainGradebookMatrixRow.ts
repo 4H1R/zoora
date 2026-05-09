@@ -5,12 +5,12 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainGradebookMatrixRowCells } from "./githubCom4H1RZooraInternalDomainGradebookMatrixRowCells"
-import type { GithubCom4H1RZooraInternalDomainUser } from "./githubCom4H1RZooraInternalDomainUser"
+import type { GithubCom4H1RZooraInternalDomainGradebookMatrixRowCells } from './githubCom4H1RZooraInternalDomainGradebookMatrixRowCells';
+import type { GithubCom4H1RZooraInternalDomainUser } from './githubCom4H1RZooraInternalDomainUser';
 
 export interface GithubCom4H1RZooraInternalDomainGradebookMatrixRow {
   /** column_id -> value */
-  cells?: GithubCom4H1RZooraInternalDomainGradebookMatrixRowCells
-  student?: GithubCom4H1RZooraInternalDomainUser
-  student_id?: string
+  cells?: GithubCom4H1RZooraInternalDomainGradebookMatrixRowCells;
+  student?: GithubCom4H1RZooraInternalDomainUser;
+  student_id?: string;
 }

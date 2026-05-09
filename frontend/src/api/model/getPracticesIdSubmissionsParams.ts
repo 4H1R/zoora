@@ -7,16 +7,16 @@
  */
 
 export type GetPracticesIdSubmissionsParams = {
-  /**
-   * One of: submitted_at, created_at, score
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-}
+/**
+ * One of: submitted_at, created_at, score
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+};

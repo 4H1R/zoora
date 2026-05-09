@@ -9,4 +9,4 @@
 /**
  * column_id -> value
  */
-export type GithubCom4H1RZooraInternalDomainGradebookMatrixRowCells = { [key: string]: string }
+export type GithubCom4H1RZooraInternalDomainGradebookMatrixRowCells = {[key: string]: string};

@@ -6,11 +6,11 @@
  * OpenAPI spec version: 1.0
  */
 
-export type GithubCom4H1RZooraInternalDomainLiveRoomStatus =
-  (typeof GithubCom4H1RZooraInternalDomainLiveRoomStatus)[keyof typeof GithubCom4H1RZooraInternalDomainLiveRoomStatus]
+export type GithubCom4H1RZooraInternalDomainLiveRoomStatus = typeof GithubCom4H1RZooraInternalDomainLiveRoomStatus[keyof typeof GithubCom4H1RZooraInternalDomainLiveRoomStatus];
+
 
 export const GithubCom4H1RZooraInternalDomainLiveRoomStatus = {
-  LiveRoomStatusCreated: "created",
-  LiveRoomStatusActive: "active",
-  LiveRoomStatusFinished: "finished",
-} as const
+  LiveRoomStatusCreated: 'created',
+  LiveRoomStatusActive: 'active',
+  LiveRoomStatusFinished: 'finished',
+} as const;

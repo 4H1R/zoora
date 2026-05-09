@@ -5,7 +5,25 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { ErrorType } from ".././mutator/custom-instance"
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   DeleteQuizzesId401,
   DeleteQuizzesId403,
@@ -103,28 +121,16 @@ import type {
   PutQuizzesRulesRuleId400,
   PutQuizzesRulesRuleId401,
   PutQuizzesRulesRuleId403,
-  PutQuizzesRulesRuleId404,
-} from "../model"
-import type {
-  DataTag,
-  DefinedInitialDataOptions,
-  DefinedUseQueryResult,
-  MutationFunction,
-  QueryClient,
-  QueryFunction,
-  QueryKey,
-  UndefinedInitialDataOptions,
-  UseMutationOptions,
-  UseMutationResult,
-  UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query"
+  PutQuizzesRulesRuleId404
+} from '../model';
 
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { customInstance } from '.././mutator/custom-instance';
+import type { ErrorType } from '.././mutator/custom-instance';
 
-import { customInstance } from ".././mutator/custom-instance"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * Returns quizzes filtered by caller role: admins see all, org-admins see their org, teachers see owned quizzes, students see quizzes for enrolled classes. Search matches substrings of: title, description. Orderable fields: created_at, updated_at, title, duration_minutes.
@@ -150,139 +156,118 @@ export type getQuizzesResponse500 = {
   status: 500
 }
 
-export type getQuizzesResponseSuccess = getQuizzesResponse200 & {
-  headers: Headers
-}
+export type getQuizzesResponseSuccess = (getQuizzesResponse200) & {
+  headers: Headers;
+};
 export type getQuizzesResponseError = (getQuizzesResponse401 | getQuizzesResponse403 | getQuizzesResponse500) & {
-  headers: Headers
-}
+  headers: Headers;
+};
 
-export type getQuizzesResponse = getQuizzesResponseSuccess | getQuizzesResponseError
+export type getQuizzesResponse = (getQuizzesResponseSuccess | getQuizzesResponseError)
 
-export const getGetQuizzesUrl = (params?: GetQuizzesParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetQuizzesUrl = (params?: GetQuizzesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/quizzes?${stringifiedParams}` : `/quizzes`
 }
 
 export const getQuizzes = async (params?: GetQuizzesParams, options?: RequestInit): Promise<getQuizzesResponse> => {
-  return customInstance<getQuizzesResponse>(getGetQuizzesUrl(params), {
+
+  return customInstance<getQuizzesResponse>(getGetQuizzesUrl(params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetQuizzesQueryKey = (params?: GetQuizzesParams) => {
-  return [`/quizzes`, ...(params ? [params] : [])] as const
-}
 
-export const getGetQuizzesQueryOptions = <
-  TData = Awaited<ReturnType<typeof getQuizzes>>,
-  TError = ErrorType<GetQuizzes401 | GetQuizzes403 | GetQuizzes500>,
->(
-  params?: GetQuizzesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzes>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetQuizzesQueryKey = (params?: GetQuizzesParams,) => {
+    return [
+    `/quizzes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetQuizzesQueryOptions = <TData = Awaited<ReturnType<typeof getQuizzes>>, TError = ErrorType<GetQuizzes401 | GetQuizzes403 | GetQuizzes500>>(params?: GetQuizzesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetQuizzesQueryKey(params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzes>>> = ({ signal }) =>
-    getQuizzes(params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetQuizzesQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getQuizzes>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzes>>> = ({ signal }) => getQuizzes(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuizzes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetQuizzesQueryResult = NonNullable<Awaited<ReturnType<typeof getQuizzes>>>
 export type GetQuizzesQueryError = ErrorType<GetQuizzes401 | GetQuizzes403 | GetQuizzes500>
 
-export function useGetQuizzes<
-  TData = Awaited<ReturnType<typeof getQuizzes>>,
-  TError = ErrorType<GetQuizzes401 | GetQuizzes403 | GetQuizzes500>,
->(
-  params: undefined | GetQuizzesParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzes>>, TError, TData>> &
-      Pick<
+
+export function useGetQuizzes<TData = Awaited<ReturnType<typeof getQuizzes>>, TError = ErrorType<GetQuizzes401 | GetQuizzes403 | GetQuizzes500>>(
+ params: undefined |  GetQuizzesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzes>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuizzes>>,
           TError,
           Awaited<ReturnType<typeof getQuizzes>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuizzes<
-  TData = Awaited<ReturnType<typeof getQuizzes>>,
-  TError = ErrorType<GetQuizzes401 | GetQuizzes403 | GetQuizzes500>,
->(
-  params?: GetQuizzesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzes>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzes<TData = Awaited<ReturnType<typeof getQuizzes>>, TError = ErrorType<GetQuizzes401 | GetQuizzes403 | GetQuizzes500>>(
+ params?: GetQuizzesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzes>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuizzes>>,
           TError,
           Awaited<ReturnType<typeof getQuizzes>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuizzes<
-  TData = Awaited<ReturnType<typeof getQuizzes>>,
-  TError = ErrorType<GetQuizzes401 | GetQuizzes403 | GetQuizzes500>,
->(
-  params?: GetQuizzesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzes>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzes<TData = Awaited<ReturnType<typeof getQuizzes>>, TError = ErrorType<GetQuizzes401 | GetQuizzes403 | GetQuizzes500>>(
+ params?: GetQuizzesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List quizzes (scoped by RBAC)
  */
 
-export function useGetQuizzes<
-  TData = Awaited<ReturnType<typeof getQuizzes>>,
-  TError = ErrorType<GetQuizzes401 | GetQuizzes403 | GetQuizzes500>,
->(
-  params?: GetQuizzesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzes>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetQuizzesQueryOptions(params, options)
+export function useGetQuizzes<TData = Awaited<ReturnType<typeof getQuizzes>>, TError = ErrorType<GetQuizzes401 | GetQuizzes403 | GetQuizzes500>>(
+ params?: GetQuizzesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetQuizzesQueryOptions(params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Create quiz
@@ -307,97 +292,83 @@ export type postQuizzesResponse403 = {
   status: 403
 }
 
-export type postQuizzesResponseSuccess = postQuizzesResponse201 & {
-  headers: Headers
-}
+export type postQuizzesResponseSuccess = (postQuizzesResponse201) & {
+  headers: Headers;
+};
 export type postQuizzesResponseError = (postQuizzesResponse400 | postQuizzesResponse401 | postQuizzesResponse403) & {
-  headers: Headers
-}
+  headers: Headers;
+};
 
-export type postQuizzesResponse = postQuizzesResponseSuccess | postQuizzesResponseError
+export type postQuizzesResponse = (postQuizzesResponseSuccess | postQuizzesResponseError)
 
 export const getPostQuizzesUrl = () => {
+
+
+
+
   return `/quizzes`
 }
 
-export const postQuizzes = async (
-  githubCom4H1RZooraInternalDomainCreateQuizDTO: GithubCom4H1RZooraInternalDomainCreateQuizDTO,
-  options?: RequestInit
-): Promise<postQuizzesResponse> => {
-  return customInstance<postQuizzesResponse>(getPostQuizzesUrl(), {
+export const postQuizzes = async (githubCom4H1RZooraInternalDomainCreateQuizDTO: GithubCom4H1RZooraInternalDomainCreateQuizDTO, options?: RequestInit): Promise<postQuizzesResponse> => {
+
+  return customInstance<postQuizzesResponse>(getPostQuizzesUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainCreateQuizDTO),
-  })
-}
-
-export const getPostQuizzesMutationOptions = <
-  TError = ErrorType<PostQuizzes400 | PostQuizzes401 | PostQuizzes403>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postQuizzes>>,
-    TError,
-    { data: GithubCom4H1RZooraInternalDomainCreateQuizDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postQuizzes>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainCreateQuizDTO },
-  TContext
-> => {
-  const mutationKey = ["postQuizzes"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postQuizzes>>,
-    { data: GithubCom4H1RZooraInternalDomainCreateQuizDTO }
-  > = (props) => {
-    const { data } = props ?? {}
-
-    return postQuizzes(data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainCreateQuizDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostQuizzesMutationResult = NonNullable<Awaited<ReturnType<typeof postQuizzes>>>
-export type PostQuizzesMutationBody = GithubCom4H1RZooraInternalDomainCreateQuizDTO
-export type PostQuizzesMutationError = ErrorType<PostQuizzes400 | PostQuizzes401 | PostQuizzes403>
 
-/**
+
+export const getPostQuizzesMutationOptions = <TError = ErrorType<PostQuizzes400 | PostQuizzes401 | PostQuizzes403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzes>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateQuizDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postQuizzes>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateQuizDTO}, TContext> => {
+
+const mutationKey = ['postQuizzes'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postQuizzes>>, {data: GithubCom4H1RZooraInternalDomainCreateQuizDTO}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postQuizzes(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostQuizzesMutationResult = NonNullable<Awaited<ReturnType<typeof postQuizzes>>>
+    export type PostQuizzesMutationBody = GithubCom4H1RZooraInternalDomainCreateQuizDTO
+    export type PostQuizzesMutationError = ErrorType<PostQuizzes400 | PostQuizzes401 | PostQuizzes403>
+
+    /**
  * @summary Create quiz
  */
-export const usePostQuizzes = <
-  TError = ErrorType<PostQuizzes400 | PostQuizzes401 | PostQuizzes403>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postQuizzes>>,
-      TError,
-      { data: GithubCom4H1RZooraInternalDomainCreateQuizDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postQuizzes>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainCreateQuizDTO },
-  TContext
-> => {
-  return useMutation(getPostQuizzesMutationOptions(options), queryClient)
-}
-/**
+export const usePostQuizzes = <TError = ErrorType<PostQuizzes400 | PostQuizzes401 | PostQuizzes403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzes>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateQuizDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postQuizzes>>,
+        TError,
+        {data: GithubCom4H1RZooraInternalDomainCreateQuizDTO},
+        TContext
+      > => {
+      return useMutation(getPostQuizzesMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get quiz room
  */
 export type getQuizzesRoomsRoomIdResponse200 = {
@@ -420,138 +391,111 @@ export type getQuizzesRoomsRoomIdResponse404 = {
   status: 404
 }
 
-export type getQuizzesRoomsRoomIdResponseSuccess = getQuizzesRoomsRoomIdResponse200 & {
-  headers: Headers
-}
-export type getQuizzesRoomsRoomIdResponseError = (
-  | getQuizzesRoomsRoomIdResponse401
-  | getQuizzesRoomsRoomIdResponse403
-  | getQuizzesRoomsRoomIdResponse404
-) & {
-  headers: Headers
-}
+export type getQuizzesRoomsRoomIdResponseSuccess = (getQuizzesRoomsRoomIdResponse200) & {
+  headers: Headers;
+};
+export type getQuizzesRoomsRoomIdResponseError = (getQuizzesRoomsRoomIdResponse401 | getQuizzesRoomsRoomIdResponse403 | getQuizzesRoomsRoomIdResponse404) & {
+  headers: Headers;
+};
 
-export type getQuizzesRoomsRoomIdResponse = getQuizzesRoomsRoomIdResponseSuccess | getQuizzesRoomsRoomIdResponseError
+export type getQuizzesRoomsRoomIdResponse = (getQuizzesRoomsRoomIdResponseSuccess | getQuizzesRoomsRoomIdResponseError)
 
-export const getGetQuizzesRoomsRoomIdUrl = (roomId: string) => {
+export const getGetQuizzesRoomsRoomIdUrl = (roomId: string,) => {
+
+
+
+
   return `/quizzes/rooms/${roomId}`
 }
 
-export const getQuizzesRoomsRoomId = async (
-  roomId: string,
-  options?: RequestInit
-): Promise<getQuizzesRoomsRoomIdResponse> => {
-  return customInstance<getQuizzesRoomsRoomIdResponse>(getGetQuizzesRoomsRoomIdUrl(roomId), {
+export const getQuizzesRoomsRoomId = async (roomId: string, options?: RequestInit): Promise<getQuizzesRoomsRoomIdResponse> => {
+
+  return customInstance<getQuizzesRoomsRoomIdResponse>(getGetQuizzesRoomsRoomIdUrl(roomId),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetQuizzesRoomsRoomIdQueryKey = (roomId: string) => {
-  return [`/quizzes/rooms/${roomId}`] as const
-}
 
-export const getGetQuizzesRoomsRoomIdQueryOptions = <
-  TData = Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>,
-  TError = ErrorType<GetQuizzesRoomsRoomId401 | GetQuizzesRoomsRoomId403 | GetQuizzesRoomsRoomId404>,
->(
-  roomId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetQuizzesRoomsRoomIdQueryKey = (roomId: string,) => {
+    return [
+    `/quizzes/rooms/${roomId}`
+    ] as const;
+    }
+
+
+export const getGetQuizzesRoomsRoomIdQueryOptions = <TData = Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>, TError = ErrorType<GetQuizzesRoomsRoomId401 | GetQuizzesRoomsRoomId403 | GetQuizzesRoomsRoomId404>>(roomId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetQuizzesRoomsRoomIdQueryKey(roomId)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>> = ({ signal }) =>
-    getQuizzesRoomsRoomId(roomId, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetQuizzesRoomsRoomIdQueryKey(roomId);
 
-  return { queryKey, queryFn, enabled: !!roomId, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>> = ({ signal }) => getQuizzesRoomsRoomId(roomId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(roomId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetQuizzesRoomsRoomIdQueryResult = NonNullable<Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>>
-export type GetQuizzesRoomsRoomIdQueryError = ErrorType<
-  GetQuizzesRoomsRoomId401 | GetQuizzesRoomsRoomId403 | GetQuizzesRoomsRoomId404
->
+export type GetQuizzesRoomsRoomIdQueryError = ErrorType<GetQuizzesRoomsRoomId401 | GetQuizzesRoomsRoomId403 | GetQuizzesRoomsRoomId404>
 
-export function useGetQuizzesRoomsRoomId<
-  TData = Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>,
-  TError = ErrorType<GetQuizzesRoomsRoomId401 | GetQuizzesRoomsRoomId403 | GetQuizzesRoomsRoomId404>,
->(
-  roomId: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>, TError, TData>> &
-      Pick<
+
+export function useGetQuizzesRoomsRoomId<TData = Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>, TError = ErrorType<GetQuizzesRoomsRoomId401 | GetQuizzesRoomsRoomId403 | GetQuizzesRoomsRoomId404>>(
+ roomId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>,
           TError,
           Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuizzesRoomsRoomId<
-  TData = Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>,
-  TError = ErrorType<GetQuizzesRoomsRoomId401 | GetQuizzesRoomsRoomId403 | GetQuizzesRoomsRoomId404>,
->(
-  roomId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesRoomsRoomId<TData = Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>, TError = ErrorType<GetQuizzesRoomsRoomId401 | GetQuizzesRoomsRoomId403 | GetQuizzesRoomsRoomId404>>(
+ roomId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>,
           TError,
           Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuizzesRoomsRoomId<
-  TData = Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>,
-  TError = ErrorType<GetQuizzesRoomsRoomId401 | GetQuizzesRoomsRoomId403 | GetQuizzesRoomsRoomId404>,
->(
-  roomId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesRoomsRoomId<TData = Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>, TError = ErrorType<GetQuizzesRoomsRoomId401 | GetQuizzesRoomsRoomId403 | GetQuizzesRoomsRoomId404>>(
+ roomId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get quiz room
  */
 
-export function useGetQuizzesRoomsRoomId<
-  TData = Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>,
-  TError = ErrorType<GetQuizzesRoomsRoomId401 | GetQuizzesRoomsRoomId403 | GetQuizzesRoomsRoomId404>,
->(
-  roomId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetQuizzesRoomsRoomIdQueryOptions(roomId, options)
+export function useGetQuizzesRoomsRoomId<TData = Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>, TError = ErrorType<GetQuizzesRoomsRoomId401 | GetQuizzesRoomsRoomId403 | GetQuizzesRoomsRoomId404>>(
+ roomId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRoomsRoomId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetQuizzesRoomsRoomIdQueryOptions(roomId,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary End quiz room
@@ -576,92 +520,82 @@ export type postQuizzesRoomsRoomIdEndResponse404 = {
   status: 404
 }
 
-export type postQuizzesRoomsRoomIdEndResponseSuccess = postQuizzesRoomsRoomIdEndResponse200 & {
-  headers: Headers
-}
-export type postQuizzesRoomsRoomIdEndResponseError = (
-  | postQuizzesRoomsRoomIdEndResponse401
-  | postQuizzesRoomsRoomIdEndResponse403
-  | postQuizzesRoomsRoomIdEndResponse404
-) & {
-  headers: Headers
-}
+export type postQuizzesRoomsRoomIdEndResponseSuccess = (postQuizzesRoomsRoomIdEndResponse200) & {
+  headers: Headers;
+};
+export type postQuizzesRoomsRoomIdEndResponseError = (postQuizzesRoomsRoomIdEndResponse401 | postQuizzesRoomsRoomIdEndResponse403 | postQuizzesRoomsRoomIdEndResponse404) & {
+  headers: Headers;
+};
 
-export type postQuizzesRoomsRoomIdEndResponse =
-  | postQuizzesRoomsRoomIdEndResponseSuccess
-  | postQuizzesRoomsRoomIdEndResponseError
+export type postQuizzesRoomsRoomIdEndResponse = (postQuizzesRoomsRoomIdEndResponseSuccess | postQuizzesRoomsRoomIdEndResponseError)
 
-export const getPostQuizzesRoomsRoomIdEndUrl = (roomId: string) => {
+export const getPostQuizzesRoomsRoomIdEndUrl = (roomId: string,) => {
+
+
+
+
   return `/quizzes/rooms/${roomId}/end`
 }
 
-export const postQuizzesRoomsRoomIdEnd = async (
-  roomId: string,
-  options?: RequestInit
-): Promise<postQuizzesRoomsRoomIdEndResponse> => {
-  return customInstance<postQuizzesRoomsRoomIdEndResponse>(getPostQuizzesRoomsRoomIdEndUrl(roomId), {
+export const postQuizzesRoomsRoomIdEnd = async (roomId: string, options?: RequestInit): Promise<postQuizzesRoomsRoomIdEndResponse> => {
+
+  return customInstance<postQuizzesRoomsRoomIdEndResponse>(getPostQuizzesRoomsRoomIdEndUrl(roomId),
+  {
     ...options,
-    method: "POST",
-  })
-}
+    method: 'POST'
 
-export const getPostQuizzesRoomsRoomIdEndMutationOptions = <
-  TError = ErrorType<PostQuizzesRoomsRoomIdEnd401 | PostQuizzesRoomsRoomIdEnd403 | PostQuizzesRoomsRoomIdEnd404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postQuizzesRoomsRoomIdEnd>>,
-    TError,
-    { roomId: string },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof postQuizzesRoomsRoomIdEnd>>, TError, { roomId: string }, TContext> => {
-  const mutationKey = ["postQuizzesRoomsRoomIdEnd"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof postQuizzesRoomsRoomIdEnd>>, { roomId: string }> = (
-    props
-  ) => {
-    const { roomId } = props ?? {}
-
-    return postQuizzesRoomsRoomIdEnd(roomId, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostQuizzesRoomsRoomIdEndMutationResult = NonNullable<Awaited<ReturnType<typeof postQuizzesRoomsRoomIdEnd>>>
 
-export type PostQuizzesRoomsRoomIdEndMutationError = ErrorType<
-  PostQuizzesRoomsRoomIdEnd401 | PostQuizzesRoomsRoomIdEnd403 | PostQuizzesRoomsRoomIdEnd404
->
 
-/**
+export const getPostQuizzesRoomsRoomIdEndMutationOptions = <TError = ErrorType<PostQuizzesRoomsRoomIdEnd401 | PostQuizzesRoomsRoomIdEnd403 | PostQuizzesRoomsRoomIdEnd404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzesRoomsRoomIdEnd>>, TError,{roomId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postQuizzesRoomsRoomIdEnd>>, TError,{roomId: string}, TContext> => {
+
+const mutationKey = ['postQuizzesRoomsRoomIdEnd'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postQuizzesRoomsRoomIdEnd>>, {roomId: string}> = (props) => {
+          const {roomId} = props ?? {};
+
+          return  postQuizzesRoomsRoomIdEnd(roomId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostQuizzesRoomsRoomIdEndMutationResult = NonNullable<Awaited<ReturnType<typeof postQuizzesRoomsRoomIdEnd>>>
+
+    export type PostQuizzesRoomsRoomIdEndMutationError = ErrorType<PostQuizzesRoomsRoomIdEnd401 | PostQuizzesRoomsRoomIdEnd403 | PostQuizzesRoomsRoomIdEnd404>
+
+    /**
  * @summary End quiz room
  */
-export const usePostQuizzesRoomsRoomIdEnd = <
-  TError = ErrorType<PostQuizzesRoomsRoomIdEnd401 | PostQuizzesRoomsRoomIdEnd403 | PostQuizzesRoomsRoomIdEnd404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postQuizzesRoomsRoomIdEnd>>,
-      TError,
-      { roomId: string },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof postQuizzesRoomsRoomIdEnd>>, TError, { roomId: string }, TContext> => {
-  return useMutation(getPostQuizzesRoomsRoomIdEndMutationOptions(options), queryClient)
-}
-/**
+export const usePostQuizzesRoomsRoomIdEnd = <TError = ErrorType<PostQuizzesRoomsRoomIdEnd401 | PostQuizzesRoomsRoomIdEnd403 | PostQuizzesRoomsRoomIdEnd404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzesRoomsRoomIdEnd>>, TError,{roomId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postQuizzesRoomsRoomIdEnd>>,
+        TError,
+        {roomId: string},
+        TContext
+      > => {
+      return useMutation(getPostQuizzesRoomsRoomIdEndMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Start quiz room
  */
 export type postQuizzesRoomsRoomIdStartResponse200 = {
@@ -684,99 +618,82 @@ export type postQuizzesRoomsRoomIdStartResponse404 = {
   status: 404
 }
 
-export type postQuizzesRoomsRoomIdStartResponseSuccess = postQuizzesRoomsRoomIdStartResponse200 & {
-  headers: Headers
-}
-export type postQuizzesRoomsRoomIdStartResponseError = (
-  | postQuizzesRoomsRoomIdStartResponse401
-  | postQuizzesRoomsRoomIdStartResponse403
-  | postQuizzesRoomsRoomIdStartResponse404
-) & {
-  headers: Headers
-}
+export type postQuizzesRoomsRoomIdStartResponseSuccess = (postQuizzesRoomsRoomIdStartResponse200) & {
+  headers: Headers;
+};
+export type postQuizzesRoomsRoomIdStartResponseError = (postQuizzesRoomsRoomIdStartResponse401 | postQuizzesRoomsRoomIdStartResponse403 | postQuizzesRoomsRoomIdStartResponse404) & {
+  headers: Headers;
+};
 
-export type postQuizzesRoomsRoomIdStartResponse =
-  | postQuizzesRoomsRoomIdStartResponseSuccess
-  | postQuizzesRoomsRoomIdStartResponseError
+export type postQuizzesRoomsRoomIdStartResponse = (postQuizzesRoomsRoomIdStartResponseSuccess | postQuizzesRoomsRoomIdStartResponseError)
 
-export const getPostQuizzesRoomsRoomIdStartUrl = (roomId: string) => {
+export const getPostQuizzesRoomsRoomIdStartUrl = (roomId: string,) => {
+
+
+
+
   return `/quizzes/rooms/${roomId}/start`
 }
 
-export const postQuizzesRoomsRoomIdStart = async (
-  roomId: string,
-  options?: RequestInit
-): Promise<postQuizzesRoomsRoomIdStartResponse> => {
-  return customInstance<postQuizzesRoomsRoomIdStartResponse>(getPostQuizzesRoomsRoomIdStartUrl(roomId), {
+export const postQuizzesRoomsRoomIdStart = async (roomId: string, options?: RequestInit): Promise<postQuizzesRoomsRoomIdStartResponse> => {
+
+  return customInstance<postQuizzesRoomsRoomIdStartResponse>(getPostQuizzesRoomsRoomIdStartUrl(roomId),
+  {
     ...options,
-    method: "POST",
-  })
-}
+    method: 'POST'
 
-export const getPostQuizzesRoomsRoomIdStartMutationOptions = <
-  TError = ErrorType<PostQuizzesRoomsRoomIdStart401 | PostQuizzesRoomsRoomIdStart403 | PostQuizzesRoomsRoomIdStart404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postQuizzesRoomsRoomIdStart>>,
-    TError,
-    { roomId: string },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postQuizzesRoomsRoomIdStart>>,
-  TError,
-  { roomId: string },
-  TContext
-> => {
-  const mutationKey = ["postQuizzesRoomsRoomIdStart"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof postQuizzesRoomsRoomIdStart>>, { roomId: string }> = (
-    props
-  ) => {
-    const { roomId } = props ?? {}
-
-    return postQuizzesRoomsRoomIdStart(roomId, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostQuizzesRoomsRoomIdStartMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postQuizzesRoomsRoomIdStart>>
->
 
-export type PostQuizzesRoomsRoomIdStartMutationError = ErrorType<
-  PostQuizzesRoomsRoomIdStart401 | PostQuizzesRoomsRoomIdStart403 | PostQuizzesRoomsRoomIdStart404
->
 
-/**
+export const getPostQuizzesRoomsRoomIdStartMutationOptions = <TError = ErrorType<PostQuizzesRoomsRoomIdStart401 | PostQuizzesRoomsRoomIdStart403 | PostQuizzesRoomsRoomIdStart404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzesRoomsRoomIdStart>>, TError,{roomId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postQuizzesRoomsRoomIdStart>>, TError,{roomId: string}, TContext> => {
+
+const mutationKey = ['postQuizzesRoomsRoomIdStart'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postQuizzesRoomsRoomIdStart>>, {roomId: string}> = (props) => {
+          const {roomId} = props ?? {};
+
+          return  postQuizzesRoomsRoomIdStart(roomId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostQuizzesRoomsRoomIdStartMutationResult = NonNullable<Awaited<ReturnType<typeof postQuizzesRoomsRoomIdStart>>>
+
+    export type PostQuizzesRoomsRoomIdStartMutationError = ErrorType<PostQuizzesRoomsRoomIdStart401 | PostQuizzesRoomsRoomIdStart403 | PostQuizzesRoomsRoomIdStart404>
+
+    /**
  * @summary Start quiz room
  */
-export const usePostQuizzesRoomsRoomIdStart = <
-  TError = ErrorType<PostQuizzesRoomsRoomIdStart401 | PostQuizzesRoomsRoomIdStart403 | PostQuizzesRoomsRoomIdStart404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postQuizzesRoomsRoomIdStart>>,
-      TError,
-      { roomId: string },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof postQuizzesRoomsRoomIdStart>>, TError, { roomId: string }, TContext> => {
-  return useMutation(getPostQuizzesRoomsRoomIdStartMutationOptions(options), queryClient)
-}
-/**
+export const usePostQuizzesRoomsRoomIdStart = <TError = ErrorType<PostQuizzesRoomsRoomIdStart401 | PostQuizzesRoomsRoomIdStart403 | PostQuizzesRoomsRoomIdStart404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzesRoomsRoomIdStart>>, TError,{roomId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postQuizzesRoomsRoomIdStart>>,
+        TError,
+        {roomId: string},
+        TContext
+      > => {
+      return useMutation(getPostQuizzesRoomsRoomIdStartMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get quiz rule
  */
 export type getQuizzesRulesRuleIdResponse200 = {
@@ -799,138 +716,111 @@ export type getQuizzesRulesRuleIdResponse404 = {
   status: 404
 }
 
-export type getQuizzesRulesRuleIdResponseSuccess = getQuizzesRulesRuleIdResponse200 & {
-  headers: Headers
-}
-export type getQuizzesRulesRuleIdResponseError = (
-  | getQuizzesRulesRuleIdResponse401
-  | getQuizzesRulesRuleIdResponse403
-  | getQuizzesRulesRuleIdResponse404
-) & {
-  headers: Headers
-}
+export type getQuizzesRulesRuleIdResponseSuccess = (getQuizzesRulesRuleIdResponse200) & {
+  headers: Headers;
+};
+export type getQuizzesRulesRuleIdResponseError = (getQuizzesRulesRuleIdResponse401 | getQuizzesRulesRuleIdResponse403 | getQuizzesRulesRuleIdResponse404) & {
+  headers: Headers;
+};
 
-export type getQuizzesRulesRuleIdResponse = getQuizzesRulesRuleIdResponseSuccess | getQuizzesRulesRuleIdResponseError
+export type getQuizzesRulesRuleIdResponse = (getQuizzesRulesRuleIdResponseSuccess | getQuizzesRulesRuleIdResponseError)
 
-export const getGetQuizzesRulesRuleIdUrl = (ruleId: string) => {
+export const getGetQuizzesRulesRuleIdUrl = (ruleId: string,) => {
+
+
+
+
   return `/quizzes/rules/${ruleId}`
 }
 
-export const getQuizzesRulesRuleId = async (
-  ruleId: string,
-  options?: RequestInit
-): Promise<getQuizzesRulesRuleIdResponse> => {
-  return customInstance<getQuizzesRulesRuleIdResponse>(getGetQuizzesRulesRuleIdUrl(ruleId), {
+export const getQuizzesRulesRuleId = async (ruleId: string, options?: RequestInit): Promise<getQuizzesRulesRuleIdResponse> => {
+
+  return customInstance<getQuizzesRulesRuleIdResponse>(getGetQuizzesRulesRuleIdUrl(ruleId),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetQuizzesRulesRuleIdQueryKey = (ruleId: string) => {
-  return [`/quizzes/rules/${ruleId}`] as const
-}
 
-export const getGetQuizzesRulesRuleIdQueryOptions = <
-  TData = Awaited<ReturnType<typeof getQuizzesRulesRuleId>>,
-  TError = ErrorType<GetQuizzesRulesRuleId401 | GetQuizzesRulesRuleId403 | GetQuizzesRulesRuleId404>,
->(
-  ruleId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRulesRuleId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetQuizzesRulesRuleIdQueryKey = (ruleId: string,) => {
+    return [
+    `/quizzes/rules/${ruleId}`
+    ] as const;
+    }
+
+
+export const getGetQuizzesRulesRuleIdQueryOptions = <TData = Awaited<ReturnType<typeof getQuizzesRulesRuleId>>, TError = ErrorType<GetQuizzesRulesRuleId401 | GetQuizzesRulesRuleId403 | GetQuizzesRulesRuleId404>>(ruleId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRulesRuleId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetQuizzesRulesRuleIdQueryKey(ruleId)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzesRulesRuleId>>> = ({ signal }) =>
-    getQuizzesRulesRuleId(ruleId, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetQuizzesRulesRuleIdQueryKey(ruleId);
 
-  return { queryKey, queryFn, enabled: !!ruleId, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getQuizzesRulesRuleId>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzesRulesRuleId>>> = ({ signal }) => getQuizzesRulesRuleId(ruleId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(ruleId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRulesRuleId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetQuizzesRulesRuleIdQueryResult = NonNullable<Awaited<ReturnType<typeof getQuizzesRulesRuleId>>>
-export type GetQuizzesRulesRuleIdQueryError = ErrorType<
-  GetQuizzesRulesRuleId401 | GetQuizzesRulesRuleId403 | GetQuizzesRulesRuleId404
->
+export type GetQuizzesRulesRuleIdQueryError = ErrorType<GetQuizzesRulesRuleId401 | GetQuizzesRulesRuleId403 | GetQuizzesRulesRuleId404>
 
-export function useGetQuizzesRulesRuleId<
-  TData = Awaited<ReturnType<typeof getQuizzesRulesRuleId>>,
-  TError = ErrorType<GetQuizzesRulesRuleId401 | GetQuizzesRulesRuleId403 | GetQuizzesRulesRuleId404>,
->(
-  ruleId: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRulesRuleId>>, TError, TData>> &
-      Pick<
+
+export function useGetQuizzesRulesRuleId<TData = Awaited<ReturnType<typeof getQuizzesRulesRuleId>>, TError = ErrorType<GetQuizzesRulesRuleId401 | GetQuizzesRulesRuleId403 | GetQuizzesRulesRuleId404>>(
+ ruleId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRulesRuleId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuizzesRulesRuleId>>,
           TError,
           Awaited<ReturnType<typeof getQuizzesRulesRuleId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuizzesRulesRuleId<
-  TData = Awaited<ReturnType<typeof getQuizzesRulesRuleId>>,
-  TError = ErrorType<GetQuizzesRulesRuleId401 | GetQuizzesRulesRuleId403 | GetQuizzesRulesRuleId404>,
->(
-  ruleId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRulesRuleId>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesRulesRuleId<TData = Awaited<ReturnType<typeof getQuizzesRulesRuleId>>, TError = ErrorType<GetQuizzesRulesRuleId401 | GetQuizzesRulesRuleId403 | GetQuizzesRulesRuleId404>>(
+ ruleId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRulesRuleId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuizzesRulesRuleId>>,
           TError,
           Awaited<ReturnType<typeof getQuizzesRulesRuleId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuizzesRulesRuleId<
-  TData = Awaited<ReturnType<typeof getQuizzesRulesRuleId>>,
-  TError = ErrorType<GetQuizzesRulesRuleId401 | GetQuizzesRulesRuleId403 | GetQuizzesRulesRuleId404>,
->(
-  ruleId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRulesRuleId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesRulesRuleId<TData = Awaited<ReturnType<typeof getQuizzesRulesRuleId>>, TError = ErrorType<GetQuizzesRulesRuleId401 | GetQuizzesRulesRuleId403 | GetQuizzesRulesRuleId404>>(
+ ruleId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRulesRuleId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get quiz rule
  */
 
-export function useGetQuizzesRulesRuleId<
-  TData = Awaited<ReturnType<typeof getQuizzesRulesRuleId>>,
-  TError = ErrorType<GetQuizzesRulesRuleId401 | GetQuizzesRulesRuleId403 | GetQuizzesRulesRuleId404>,
->(
-  ruleId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRulesRuleId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetQuizzesRulesRuleIdQueryOptions(ruleId, options)
+export function useGetQuizzesRulesRuleId<TData = Awaited<ReturnType<typeof getQuizzesRulesRuleId>>, TError = ErrorType<GetQuizzesRulesRuleId401 | GetQuizzesRulesRuleId403 | GetQuizzesRulesRuleId404>>(
+ ruleId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesRulesRuleId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetQuizzesRulesRuleIdQueryOptions(ruleId,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Update quiz rule
@@ -960,109 +850,84 @@ export type putQuizzesRulesRuleIdResponse404 = {
   status: 404
 }
 
-export type putQuizzesRulesRuleIdResponseSuccess = putQuizzesRulesRuleIdResponse200 & {
-  headers: Headers
-}
-export type putQuizzesRulesRuleIdResponseError = (
-  | putQuizzesRulesRuleIdResponse400
-  | putQuizzesRulesRuleIdResponse401
-  | putQuizzesRulesRuleIdResponse403
-  | putQuizzesRulesRuleIdResponse404
-) & {
-  headers: Headers
-}
+export type putQuizzesRulesRuleIdResponseSuccess = (putQuizzesRulesRuleIdResponse200) & {
+  headers: Headers;
+};
+export type putQuizzesRulesRuleIdResponseError = (putQuizzesRulesRuleIdResponse400 | putQuizzesRulesRuleIdResponse401 | putQuizzesRulesRuleIdResponse403 | putQuizzesRulesRuleIdResponse404) & {
+  headers: Headers;
+};
 
-export type putQuizzesRulesRuleIdResponse = putQuizzesRulesRuleIdResponseSuccess | putQuizzesRulesRuleIdResponseError
+export type putQuizzesRulesRuleIdResponse = (putQuizzesRulesRuleIdResponseSuccess | putQuizzesRulesRuleIdResponseError)
 
-export const getPutQuizzesRulesRuleIdUrl = (ruleId: string) => {
+export const getPutQuizzesRulesRuleIdUrl = (ruleId: string,) => {
+
+
+
+
   return `/quizzes/rules/${ruleId}`
 }
 
-export const putQuizzesRulesRuleId = async (
-  ruleId: string,
-  githubCom4H1RZooraInternalDomainUpdateQuizRuleDTO: GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTO,
-  options?: RequestInit
-): Promise<putQuizzesRulesRuleIdResponse> => {
-  return customInstance<putQuizzesRulesRuleIdResponse>(getPutQuizzesRulesRuleIdUrl(ruleId), {
+export const putQuizzesRulesRuleId = async (ruleId: string,
+    githubCom4H1RZooraInternalDomainUpdateQuizRuleDTO: GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTO, options?: RequestInit): Promise<putQuizzesRulesRuleIdResponse> => {
+
+  return customInstance<putQuizzesRulesRuleIdResponse>(getPutQuizzesRulesRuleIdUrl(ruleId),
+  {
     ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainUpdateQuizRuleDTO),
-  })
-}
-
-export const getPutQuizzesRulesRuleIdMutationOptions = <
-  TError = ErrorType<
-    PutQuizzesRulesRuleId400 | PutQuizzesRulesRuleId401 | PutQuizzesRulesRuleId403 | PutQuizzesRulesRuleId404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putQuizzesRulesRuleId>>,
-    TError,
-    { ruleId: string; data: GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putQuizzesRulesRuleId>>,
-  TError,
-  { ruleId: string; data: GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTO },
-  TContext
-> => {
-  const mutationKey = ["putQuizzesRulesRuleId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putQuizzesRulesRuleId>>,
-    { ruleId: string; data: GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTO }
-  > = (props) => {
-    const { ruleId, data } = props ?? {}
-
-    return putQuizzesRulesRuleId(ruleId, data, requestOptions)
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainUpdateQuizRuleDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutQuizzesRulesRuleIdMutationResult = NonNullable<Awaited<ReturnType<typeof putQuizzesRulesRuleId>>>
-export type PutQuizzesRulesRuleIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTO
-export type PutQuizzesRulesRuleIdMutationError = ErrorType<
-  PutQuizzesRulesRuleId400 | PutQuizzesRulesRuleId401 | PutQuizzesRulesRuleId403 | PutQuizzesRulesRuleId404
->
 
-/**
+
+export const getPutQuizzesRulesRuleIdMutationOptions = <TError = ErrorType<PutQuizzesRulesRuleId400 | PutQuizzesRulesRuleId401 | PutQuizzesRulesRuleId403 | PutQuizzesRulesRuleId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putQuizzesRulesRuleId>>, TError,{ruleId: string;data: GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putQuizzesRulesRuleId>>, TError,{ruleId: string;data: GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTO}, TContext> => {
+
+const mutationKey = ['putQuizzesRulesRuleId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putQuizzesRulesRuleId>>, {ruleId: string;data: GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTO}> = (props) => {
+          const {ruleId,data} = props ?? {};
+
+          return  putQuizzesRulesRuleId(ruleId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutQuizzesRulesRuleIdMutationResult = NonNullable<Awaited<ReturnType<typeof putQuizzesRulesRuleId>>>
+    export type PutQuizzesRulesRuleIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTO
+    export type PutQuizzesRulesRuleIdMutationError = ErrorType<PutQuizzesRulesRuleId400 | PutQuizzesRulesRuleId401 | PutQuizzesRulesRuleId403 | PutQuizzesRulesRuleId404>
+
+    /**
  * @summary Update quiz rule
  */
-export const usePutQuizzesRulesRuleId = <
-  TError = ErrorType<
-    PutQuizzesRulesRuleId400 | PutQuizzesRulesRuleId401 | PutQuizzesRulesRuleId403 | PutQuizzesRulesRuleId404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putQuizzesRulesRuleId>>,
-      TError,
-      { ruleId: string; data: GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putQuizzesRulesRuleId>>,
-  TError,
-  { ruleId: string; data: GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTO },
-  TContext
-> => {
-  return useMutation(getPutQuizzesRulesRuleIdMutationOptions(options), queryClient)
-}
-/**
+export const usePutQuizzesRulesRuleId = <TError = ErrorType<PutQuizzesRulesRuleId400 | PutQuizzesRulesRuleId401 | PutQuizzesRulesRuleId403 | PutQuizzesRulesRuleId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putQuizzesRulesRuleId>>, TError,{ruleId: string;data: GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putQuizzesRulesRuleId>>,
+        TError,
+        {ruleId: string;data: GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTO},
+        TContext
+      > => {
+      return useMutation(getPutQuizzesRulesRuleIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Delete quiz rule
  */
 export type deleteQuizzesRulesRuleIdResponse200 = {
@@ -1085,92 +950,82 @@ export type deleteQuizzesRulesRuleIdResponse404 = {
   status: 404
 }
 
-export type deleteQuizzesRulesRuleIdResponseSuccess = deleteQuizzesRulesRuleIdResponse200 & {
-  headers: Headers
-}
-export type deleteQuizzesRulesRuleIdResponseError = (
-  | deleteQuizzesRulesRuleIdResponse401
-  | deleteQuizzesRulesRuleIdResponse403
-  | deleteQuizzesRulesRuleIdResponse404
-) & {
-  headers: Headers
-}
+export type deleteQuizzesRulesRuleIdResponseSuccess = (deleteQuizzesRulesRuleIdResponse200) & {
+  headers: Headers;
+};
+export type deleteQuizzesRulesRuleIdResponseError = (deleteQuizzesRulesRuleIdResponse401 | deleteQuizzesRulesRuleIdResponse403 | deleteQuizzesRulesRuleIdResponse404) & {
+  headers: Headers;
+};
 
-export type deleteQuizzesRulesRuleIdResponse =
-  | deleteQuizzesRulesRuleIdResponseSuccess
-  | deleteQuizzesRulesRuleIdResponseError
+export type deleteQuizzesRulesRuleIdResponse = (deleteQuizzesRulesRuleIdResponseSuccess | deleteQuizzesRulesRuleIdResponseError)
 
-export const getDeleteQuizzesRulesRuleIdUrl = (ruleId: string) => {
+export const getDeleteQuizzesRulesRuleIdUrl = (ruleId: string,) => {
+
+
+
+
   return `/quizzes/rules/${ruleId}`
 }
 
-export const deleteQuizzesRulesRuleId = async (
-  ruleId: string,
-  options?: RequestInit
-): Promise<deleteQuizzesRulesRuleIdResponse> => {
-  return customInstance<deleteQuizzesRulesRuleIdResponse>(getDeleteQuizzesRulesRuleIdUrl(ruleId), {
+export const deleteQuizzesRulesRuleId = async (ruleId: string, options?: RequestInit): Promise<deleteQuizzesRulesRuleIdResponse> => {
+
+  return customInstance<deleteQuizzesRulesRuleIdResponse>(getDeleteQuizzesRulesRuleIdUrl(ruleId),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeleteQuizzesRulesRuleIdMutationOptions = <
-  TError = ErrorType<DeleteQuizzesRulesRuleId401 | DeleteQuizzesRulesRuleId403 | DeleteQuizzesRulesRuleId404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteQuizzesRulesRuleId>>,
-    TError,
-    { ruleId: string },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof deleteQuizzesRulesRuleId>>, TError, { ruleId: string }, TContext> => {
-  const mutationKey = ["deleteQuizzesRulesRuleId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteQuizzesRulesRuleId>>, { ruleId: string }> = (
-    props
-  ) => {
-    const { ruleId } = props ?? {}
-
-    return deleteQuizzesRulesRuleId(ruleId, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteQuizzesRulesRuleIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteQuizzesRulesRuleId>>>
 
-export type DeleteQuizzesRulesRuleIdMutationError = ErrorType<
-  DeleteQuizzesRulesRuleId401 | DeleteQuizzesRulesRuleId403 | DeleteQuizzesRulesRuleId404
->
 
-/**
+export const getDeleteQuizzesRulesRuleIdMutationOptions = <TError = ErrorType<DeleteQuizzesRulesRuleId401 | DeleteQuizzesRulesRuleId403 | DeleteQuizzesRulesRuleId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteQuizzesRulesRuleId>>, TError,{ruleId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteQuizzesRulesRuleId>>, TError,{ruleId: string}, TContext> => {
+
+const mutationKey = ['deleteQuizzesRulesRuleId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteQuizzesRulesRuleId>>, {ruleId: string}> = (props) => {
+          const {ruleId} = props ?? {};
+
+          return  deleteQuizzesRulesRuleId(ruleId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteQuizzesRulesRuleIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteQuizzesRulesRuleId>>>
+
+    export type DeleteQuizzesRulesRuleIdMutationError = ErrorType<DeleteQuizzesRulesRuleId401 | DeleteQuizzesRulesRuleId403 | DeleteQuizzesRulesRuleId404>
+
+    /**
  * @summary Delete quiz rule
  */
-export const useDeleteQuizzesRulesRuleId = <
-  TError = ErrorType<DeleteQuizzesRulesRuleId401 | DeleteQuizzesRulesRuleId403 | DeleteQuizzesRulesRuleId404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteQuizzesRulesRuleId>>,
-      TError,
-      { ruleId: string },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof deleteQuizzesRulesRuleId>>, TError, { ruleId: string }, TContext> => {
-  return useMutation(getDeleteQuizzesRulesRuleIdMutationOptions(options), queryClient)
-}
-/**
+export const useDeleteQuizzesRulesRuleId = <TError = ErrorType<DeleteQuizzesRulesRuleId401 | DeleteQuizzesRulesRuleId403 | DeleteQuizzesRulesRuleId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteQuizzesRulesRuleId>>, TError,{ruleId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteQuizzesRulesRuleId>>,
+        TError,
+        {ruleId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteQuizzesRulesRuleIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get quiz submission
  */
 export type getQuizzesSubmissionsSubmissionIdResponse200 = {
@@ -1193,155 +1048,111 @@ export type getQuizzesSubmissionsSubmissionIdResponse404 = {
   status: 404
 }
 
-export type getQuizzesSubmissionsSubmissionIdResponseSuccess = getQuizzesSubmissionsSubmissionIdResponse200 & {
-  headers: Headers
-}
-export type getQuizzesSubmissionsSubmissionIdResponseError = (
-  | getQuizzesSubmissionsSubmissionIdResponse401
-  | getQuizzesSubmissionsSubmissionIdResponse403
-  | getQuizzesSubmissionsSubmissionIdResponse404
-) & {
-  headers: Headers
-}
+export type getQuizzesSubmissionsSubmissionIdResponseSuccess = (getQuizzesSubmissionsSubmissionIdResponse200) & {
+  headers: Headers;
+};
+export type getQuizzesSubmissionsSubmissionIdResponseError = (getQuizzesSubmissionsSubmissionIdResponse401 | getQuizzesSubmissionsSubmissionIdResponse403 | getQuizzesSubmissionsSubmissionIdResponse404) & {
+  headers: Headers;
+};
 
-export type getQuizzesSubmissionsSubmissionIdResponse =
-  | getQuizzesSubmissionsSubmissionIdResponseSuccess
-  | getQuizzesSubmissionsSubmissionIdResponseError
+export type getQuizzesSubmissionsSubmissionIdResponse = (getQuizzesSubmissionsSubmissionIdResponseSuccess | getQuizzesSubmissionsSubmissionIdResponseError)
 
-export const getGetQuizzesSubmissionsSubmissionIdUrl = (submissionId: string) => {
+export const getGetQuizzesSubmissionsSubmissionIdUrl = (submissionId: string,) => {
+
+
+
+
   return `/quizzes/submissions/${submissionId}`
 }
 
-export const getQuizzesSubmissionsSubmissionId = async (
-  submissionId: string,
-  options?: RequestInit
-): Promise<getQuizzesSubmissionsSubmissionIdResponse> => {
-  return customInstance<getQuizzesSubmissionsSubmissionIdResponse>(
-    getGetQuizzesSubmissionsSubmissionIdUrl(submissionId),
-    {
-      ...options,
-      method: "GET",
-    }
-  )
-}
+export const getQuizzesSubmissionsSubmissionId = async (submissionId: string, options?: RequestInit): Promise<getQuizzesSubmissionsSubmissionIdResponse> => {
 
-export const getGetQuizzesSubmissionsSubmissionIdQueryKey = (submissionId: string) => {
-  return [`/quizzes/submissions/${submissionId}`] as const
-}
+  return customInstance<getQuizzesSubmissionsSubmissionIdResponse>(getGetQuizzesSubmissionsSubmissionIdUrl(submissionId),
+  {
+    ...options,
+    method: 'GET'
 
-export const getGetQuizzesSubmissionsSubmissionIdQueryOptions = <
-  TData = Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>,
-  TError = ErrorType<
-    GetQuizzesSubmissionsSubmissionId401 | GetQuizzesSubmissionsSubmissionId403 | GetQuizzesSubmissionsSubmissionId404
-  >,
->(
-  submissionId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
+
   }
+);}
+
+
+
+
+
+export const getGetQuizzesSubmissionsSubmissionIdQueryKey = (submissionId: string,) => {
+    return [
+    `/quizzes/submissions/${submissionId}`
+    ] as const;
+    }
+
+
+export const getGetQuizzesSubmissionsSubmissionIdQueryOptions = <TData = Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>, TError = ErrorType<GetQuizzesSubmissionsSubmissionId401 | GetQuizzesSubmissionsSubmissionId403 | GetQuizzesSubmissionsSubmissionId404>>(submissionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetQuizzesSubmissionsSubmissionIdQueryKey(submissionId)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>> = ({ signal }) =>
-    getQuizzesSubmissionsSubmissionId(submissionId, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetQuizzesSubmissionsSubmissionIdQueryKey(submissionId);
 
-  return { queryKey, queryFn, enabled: !!submissionId, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>> = ({ signal }) => getQuizzesSubmissionsSubmissionId(submissionId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(submissionId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetQuizzesSubmissionsSubmissionIdQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>
->
-export type GetQuizzesSubmissionsSubmissionIdQueryError = ErrorType<
-  GetQuizzesSubmissionsSubmissionId401 | GetQuizzesSubmissionsSubmissionId403 | GetQuizzesSubmissionsSubmissionId404
->
+export type GetQuizzesSubmissionsSubmissionIdQueryResult = NonNullable<Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>>
+export type GetQuizzesSubmissionsSubmissionIdQueryError = ErrorType<GetQuizzesSubmissionsSubmissionId401 | GetQuizzesSubmissionsSubmissionId403 | GetQuizzesSubmissionsSubmissionId404>
 
-export function useGetQuizzesSubmissionsSubmissionId<
-  TData = Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>,
-  TError = ErrorType<
-    GetQuizzesSubmissionsSubmissionId401 | GetQuizzesSubmissionsSubmissionId403 | GetQuizzesSubmissionsSubmissionId404
-  >,
->(
-  submissionId: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>, TError, TData>> &
-      Pick<
+
+export function useGetQuizzesSubmissionsSubmissionId<TData = Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>, TError = ErrorType<GetQuizzesSubmissionsSubmissionId401 | GetQuizzesSubmissionsSubmissionId403 | GetQuizzesSubmissionsSubmissionId404>>(
+ submissionId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>,
           TError,
           Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuizzesSubmissionsSubmissionId<
-  TData = Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>,
-  TError = ErrorType<
-    GetQuizzesSubmissionsSubmissionId401 | GetQuizzesSubmissionsSubmissionId403 | GetQuizzesSubmissionsSubmissionId404
-  >,
->(
-  submissionId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesSubmissionsSubmissionId<TData = Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>, TError = ErrorType<GetQuizzesSubmissionsSubmissionId401 | GetQuizzesSubmissionsSubmissionId403 | GetQuizzesSubmissionsSubmissionId404>>(
+ submissionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>,
           TError,
           Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuizzesSubmissionsSubmissionId<
-  TData = Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>,
-  TError = ErrorType<
-    GetQuizzesSubmissionsSubmissionId401 | GetQuizzesSubmissionsSubmissionId403 | GetQuizzesSubmissionsSubmissionId404
-  >,
->(
-  submissionId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesSubmissionsSubmissionId<TData = Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>, TError = ErrorType<GetQuizzesSubmissionsSubmissionId401 | GetQuizzesSubmissionsSubmissionId403 | GetQuizzesSubmissionsSubmissionId404>>(
+ submissionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get quiz submission
  */
 
-export function useGetQuizzesSubmissionsSubmissionId<
-  TData = Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>,
-  TError = ErrorType<
-    GetQuizzesSubmissionsSubmissionId401 | GetQuizzesSubmissionsSubmissionId403 | GetQuizzesSubmissionsSubmissionId404
-  >,
->(
-  submissionId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetQuizzesSubmissionsSubmissionIdQueryOptions(submissionId, options)
+export function useGetQuizzesSubmissionsSubmissionId<TData = Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>, TError = ErrorType<GetQuizzesSubmissionsSubmissionId401 | GetQuizzesSubmissionsSubmissionId403 | GetQuizzesSubmissionsSubmissionId404>>(
+ submissionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesSubmissionsSubmissionId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetQuizzesSubmissionsSubmissionIdQueryOptions(submissionId,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * Allows the quiz owner to manually set scores for individual answers and recalculates the total.
@@ -1372,126 +1183,84 @@ export type postQuizzesSubmissionsSubmissionIdGradeResponse404 = {
   status: 404
 }
 
-export type postQuizzesSubmissionsSubmissionIdGradeResponseSuccess =
-  postQuizzesSubmissionsSubmissionIdGradeResponse200 & {
-    headers: Headers
-  }
-export type postQuizzesSubmissionsSubmissionIdGradeResponseError = (
-  | postQuizzesSubmissionsSubmissionIdGradeResponse400
-  | postQuizzesSubmissionsSubmissionIdGradeResponse401
-  | postQuizzesSubmissionsSubmissionIdGradeResponse403
-  | postQuizzesSubmissionsSubmissionIdGradeResponse404
-) & {
-  headers: Headers
-}
+export type postQuizzesSubmissionsSubmissionIdGradeResponseSuccess = (postQuizzesSubmissionsSubmissionIdGradeResponse200) & {
+  headers: Headers;
+};
+export type postQuizzesSubmissionsSubmissionIdGradeResponseError = (postQuizzesSubmissionsSubmissionIdGradeResponse400 | postQuizzesSubmissionsSubmissionIdGradeResponse401 | postQuizzesSubmissionsSubmissionIdGradeResponse403 | postQuizzesSubmissionsSubmissionIdGradeResponse404) & {
+  headers: Headers;
+};
 
-export type postQuizzesSubmissionsSubmissionIdGradeResponse =
-  | postQuizzesSubmissionsSubmissionIdGradeResponseSuccess
-  | postQuizzesSubmissionsSubmissionIdGradeResponseError
+export type postQuizzesSubmissionsSubmissionIdGradeResponse = (postQuizzesSubmissionsSubmissionIdGradeResponseSuccess | postQuizzesSubmissionsSubmissionIdGradeResponseError)
 
-export const getPostQuizzesSubmissionsSubmissionIdGradeUrl = (submissionId: string) => {
+export const getPostQuizzesSubmissionsSubmissionIdGradeUrl = (submissionId: string,) => {
+
+
+
+
   return `/quizzes/submissions/${submissionId}/grade`
 }
 
-export const postQuizzesSubmissionsSubmissionIdGrade = async (
-  submissionId: string,
-  githubCom4H1RZooraInternalDomainGradeSubmissionDTO: GithubCom4H1RZooraInternalDomainGradeSubmissionDTO,
-  options?: RequestInit
-): Promise<postQuizzesSubmissionsSubmissionIdGradeResponse> => {
-  return customInstance<postQuizzesSubmissionsSubmissionIdGradeResponse>(
-    getPostQuizzesSubmissionsSubmissionIdGradeUrl(submissionId),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(githubCom4H1RZooraInternalDomainGradeSubmissionDTO),
-    }
-  )
-}
+export const postQuizzesSubmissionsSubmissionIdGrade = async (submissionId: string,
+    githubCom4H1RZooraInternalDomainGradeSubmissionDTO: GithubCom4H1RZooraInternalDomainGradeSubmissionDTO, options?: RequestInit): Promise<postQuizzesSubmissionsSubmissionIdGradeResponse> => {
 
-export const getPostQuizzesSubmissionsSubmissionIdGradeMutationOptions = <
-  TError = ErrorType<
-    | PostQuizzesSubmissionsSubmissionIdGrade400
-    | PostQuizzesSubmissionsSubmissionIdGrade401
-    | PostQuizzesSubmissionsSubmissionIdGrade403
-    | PostQuizzesSubmissionsSubmissionIdGrade404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdGrade>>,
-    TError,
-    { submissionId: string; data: GithubCom4H1RZooraInternalDomainGradeSubmissionDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdGrade>>,
-  TError,
-  { submissionId: string; data: GithubCom4H1RZooraInternalDomainGradeSubmissionDTO },
-  TContext
-> => {
-  const mutationKey = ["postQuizzesSubmissionsSubmissionIdGrade"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdGrade>>,
-    { submissionId: string; data: GithubCom4H1RZooraInternalDomainGradeSubmissionDTO }
-  > = (props) => {
-    const { submissionId, data } = props ?? {}
-
-    return postQuizzesSubmissionsSubmissionIdGrade(submissionId, data, requestOptions)
+  return customInstance<postQuizzesSubmissionsSubmissionIdGradeResponse>(getPostQuizzesSubmissionsSubmissionIdGradeUrl(submissionId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainGradeSubmissionDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostQuizzesSubmissionsSubmissionIdGradeMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdGrade>>
->
-export type PostQuizzesSubmissionsSubmissionIdGradeMutationBody = GithubCom4H1RZooraInternalDomainGradeSubmissionDTO
-export type PostQuizzesSubmissionsSubmissionIdGradeMutationError = ErrorType<
-  | PostQuizzesSubmissionsSubmissionIdGrade400
-  | PostQuizzesSubmissionsSubmissionIdGrade401
-  | PostQuizzesSubmissionsSubmissionIdGrade403
-  | PostQuizzesSubmissionsSubmissionIdGrade404
->
 
-/**
+
+export const getPostQuizzesSubmissionsSubmissionIdGradeMutationOptions = <TError = ErrorType<PostQuizzesSubmissionsSubmissionIdGrade400 | PostQuizzesSubmissionsSubmissionIdGrade401 | PostQuizzesSubmissionsSubmissionIdGrade403 | PostQuizzesSubmissionsSubmissionIdGrade404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdGrade>>, TError,{submissionId: string;data: GithubCom4H1RZooraInternalDomainGradeSubmissionDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdGrade>>, TError,{submissionId: string;data: GithubCom4H1RZooraInternalDomainGradeSubmissionDTO}, TContext> => {
+
+const mutationKey = ['postQuizzesSubmissionsSubmissionIdGrade'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdGrade>>, {submissionId: string;data: GithubCom4H1RZooraInternalDomainGradeSubmissionDTO}> = (props) => {
+          const {submissionId,data} = props ?? {};
+
+          return  postQuizzesSubmissionsSubmissionIdGrade(submissionId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostQuizzesSubmissionsSubmissionIdGradeMutationResult = NonNullable<Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdGrade>>>
+    export type PostQuizzesSubmissionsSubmissionIdGradeMutationBody = GithubCom4H1RZooraInternalDomainGradeSubmissionDTO
+    export type PostQuizzesSubmissionsSubmissionIdGradeMutationError = ErrorType<PostQuizzesSubmissionsSubmissionIdGrade400 | PostQuizzesSubmissionsSubmissionIdGrade401 | PostQuizzesSubmissionsSubmissionIdGrade403 | PostQuizzesSubmissionsSubmissionIdGrade404>
+
+    /**
  * @summary Grade quiz submission
  */
-export const usePostQuizzesSubmissionsSubmissionIdGrade = <
-  TError = ErrorType<
-    | PostQuizzesSubmissionsSubmissionIdGrade400
-    | PostQuizzesSubmissionsSubmissionIdGrade401
-    | PostQuizzesSubmissionsSubmissionIdGrade403
-    | PostQuizzesSubmissionsSubmissionIdGrade404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdGrade>>,
-      TError,
-      { submissionId: string; data: GithubCom4H1RZooraInternalDomainGradeSubmissionDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdGrade>>,
-  TError,
-  { submissionId: string; data: GithubCom4H1RZooraInternalDomainGradeSubmissionDTO },
-  TContext
-> => {
-  return useMutation(getPostQuizzesSubmissionsSubmissionIdGradeMutationOptions(options), queryClient)
-}
-/**
+export const usePostQuizzesSubmissionsSubmissionIdGrade = <TError = ErrorType<PostQuizzesSubmissionsSubmissionIdGrade400 | PostQuizzesSubmissionsSubmissionIdGrade401 | PostQuizzesSubmissionsSubmissionIdGrade403 | PostQuizzesSubmissionsSubmissionIdGrade404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdGrade>>, TError,{submissionId: string;data: GithubCom4H1RZooraInternalDomainGradeSubmissionDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdGrade>>,
+        TError,
+        {submissionId: string;data: GithubCom4H1RZooraInternalDomainGradeSubmissionDTO},
+        TContext
+      > => {
+      return useMutation(getPostQuizzesSubmissionsSubmissionIdGradeMutationOptions(options), queryClient);
+    }
+    /**
  * Submits answers for an in-progress submission. Auto-grades choice and short_answer questions. Enforces duration limit with 30s grace period.
  * @summary Submit quiz answers
  */
@@ -1520,126 +1289,84 @@ export type postQuizzesSubmissionsSubmissionIdSubmitResponse409 = {
   status: 409
 }
 
-export type postQuizzesSubmissionsSubmissionIdSubmitResponseSuccess =
-  postQuizzesSubmissionsSubmissionIdSubmitResponse200 & {
-    headers: Headers
-  }
-export type postQuizzesSubmissionsSubmissionIdSubmitResponseError = (
-  | postQuizzesSubmissionsSubmissionIdSubmitResponse400
-  | postQuizzesSubmissionsSubmissionIdSubmitResponse401
-  | postQuizzesSubmissionsSubmissionIdSubmitResponse403
-  | postQuizzesSubmissionsSubmissionIdSubmitResponse409
-) & {
-  headers: Headers
-}
+export type postQuizzesSubmissionsSubmissionIdSubmitResponseSuccess = (postQuizzesSubmissionsSubmissionIdSubmitResponse200) & {
+  headers: Headers;
+};
+export type postQuizzesSubmissionsSubmissionIdSubmitResponseError = (postQuizzesSubmissionsSubmissionIdSubmitResponse400 | postQuizzesSubmissionsSubmissionIdSubmitResponse401 | postQuizzesSubmissionsSubmissionIdSubmitResponse403 | postQuizzesSubmissionsSubmissionIdSubmitResponse409) & {
+  headers: Headers;
+};
 
-export type postQuizzesSubmissionsSubmissionIdSubmitResponse =
-  | postQuizzesSubmissionsSubmissionIdSubmitResponseSuccess
-  | postQuizzesSubmissionsSubmissionIdSubmitResponseError
+export type postQuizzesSubmissionsSubmissionIdSubmitResponse = (postQuizzesSubmissionsSubmissionIdSubmitResponseSuccess | postQuizzesSubmissionsSubmissionIdSubmitResponseError)
 
-export const getPostQuizzesSubmissionsSubmissionIdSubmitUrl = (submissionId: string) => {
+export const getPostQuizzesSubmissionsSubmissionIdSubmitUrl = (submissionId: string,) => {
+
+
+
+
   return `/quizzes/submissions/${submissionId}/submit`
 }
 
-export const postQuizzesSubmissionsSubmissionIdSubmit = async (
-  submissionId: string,
-  githubCom4H1RZooraInternalDomainSubmitQuizDTO: GithubCom4H1RZooraInternalDomainSubmitQuizDTO,
-  options?: RequestInit
-): Promise<postQuizzesSubmissionsSubmissionIdSubmitResponse> => {
-  return customInstance<postQuizzesSubmissionsSubmissionIdSubmitResponse>(
-    getPostQuizzesSubmissionsSubmissionIdSubmitUrl(submissionId),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(githubCom4H1RZooraInternalDomainSubmitQuizDTO),
-    }
-  )
-}
+export const postQuizzesSubmissionsSubmissionIdSubmit = async (submissionId: string,
+    githubCom4H1RZooraInternalDomainSubmitQuizDTO: GithubCom4H1RZooraInternalDomainSubmitQuizDTO, options?: RequestInit): Promise<postQuizzesSubmissionsSubmissionIdSubmitResponse> => {
 
-export const getPostQuizzesSubmissionsSubmissionIdSubmitMutationOptions = <
-  TError = ErrorType<
-    | PostQuizzesSubmissionsSubmissionIdSubmit400
-    | PostQuizzesSubmissionsSubmissionIdSubmit401
-    | PostQuizzesSubmissionsSubmissionIdSubmit403
-    | PostQuizzesSubmissionsSubmissionIdSubmit409
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdSubmit>>,
-    TError,
-    { submissionId: string; data: GithubCom4H1RZooraInternalDomainSubmitQuizDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdSubmit>>,
-  TError,
-  { submissionId: string; data: GithubCom4H1RZooraInternalDomainSubmitQuizDTO },
-  TContext
-> => {
-  const mutationKey = ["postQuizzesSubmissionsSubmissionIdSubmit"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdSubmit>>,
-    { submissionId: string; data: GithubCom4H1RZooraInternalDomainSubmitQuizDTO }
-  > = (props) => {
-    const { submissionId, data } = props ?? {}
-
-    return postQuizzesSubmissionsSubmissionIdSubmit(submissionId, data, requestOptions)
+  return customInstance<postQuizzesSubmissionsSubmissionIdSubmitResponse>(getPostQuizzesSubmissionsSubmissionIdSubmitUrl(submissionId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainSubmitQuizDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostQuizzesSubmissionsSubmissionIdSubmitMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdSubmit>>
->
-export type PostQuizzesSubmissionsSubmissionIdSubmitMutationBody = GithubCom4H1RZooraInternalDomainSubmitQuizDTO
-export type PostQuizzesSubmissionsSubmissionIdSubmitMutationError = ErrorType<
-  | PostQuizzesSubmissionsSubmissionIdSubmit400
-  | PostQuizzesSubmissionsSubmissionIdSubmit401
-  | PostQuizzesSubmissionsSubmissionIdSubmit403
-  | PostQuizzesSubmissionsSubmissionIdSubmit409
->
 
-/**
+
+export const getPostQuizzesSubmissionsSubmissionIdSubmitMutationOptions = <TError = ErrorType<PostQuizzesSubmissionsSubmissionIdSubmit400 | PostQuizzesSubmissionsSubmissionIdSubmit401 | PostQuizzesSubmissionsSubmissionIdSubmit403 | PostQuizzesSubmissionsSubmissionIdSubmit409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdSubmit>>, TError,{submissionId: string;data: GithubCom4H1RZooraInternalDomainSubmitQuizDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdSubmit>>, TError,{submissionId: string;data: GithubCom4H1RZooraInternalDomainSubmitQuizDTO}, TContext> => {
+
+const mutationKey = ['postQuizzesSubmissionsSubmissionIdSubmit'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdSubmit>>, {submissionId: string;data: GithubCom4H1RZooraInternalDomainSubmitQuizDTO}> = (props) => {
+          const {submissionId,data} = props ?? {};
+
+          return  postQuizzesSubmissionsSubmissionIdSubmit(submissionId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostQuizzesSubmissionsSubmissionIdSubmitMutationResult = NonNullable<Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdSubmit>>>
+    export type PostQuizzesSubmissionsSubmissionIdSubmitMutationBody = GithubCom4H1RZooraInternalDomainSubmitQuizDTO
+    export type PostQuizzesSubmissionsSubmissionIdSubmitMutationError = ErrorType<PostQuizzesSubmissionsSubmissionIdSubmit400 | PostQuizzesSubmissionsSubmissionIdSubmit401 | PostQuizzesSubmissionsSubmissionIdSubmit403 | PostQuizzesSubmissionsSubmissionIdSubmit409>
+
+    /**
  * @summary Submit quiz answers
  */
-export const usePostQuizzesSubmissionsSubmissionIdSubmit = <
-  TError = ErrorType<
-    | PostQuizzesSubmissionsSubmissionIdSubmit400
-    | PostQuizzesSubmissionsSubmissionIdSubmit401
-    | PostQuizzesSubmissionsSubmissionIdSubmit403
-    | PostQuizzesSubmissionsSubmissionIdSubmit409
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdSubmit>>,
-      TError,
-      { submissionId: string; data: GithubCom4H1RZooraInternalDomainSubmitQuizDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdSubmit>>,
-  TError,
-  { submissionId: string; data: GithubCom4H1RZooraInternalDomainSubmitQuizDTO },
-  TContext
-> => {
-  return useMutation(getPostQuizzesSubmissionsSubmissionIdSubmitMutationOptions(options), queryClient)
-}
-/**
+export const usePostQuizzesSubmissionsSubmissionIdSubmit = <TError = ErrorType<PostQuizzesSubmissionsSubmissionIdSubmit400 | PostQuizzesSubmissionsSubmissionIdSubmit401 | PostQuizzesSubmissionsSubmissionIdSubmit403 | PostQuizzesSubmissionsSubmissionIdSubmit409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdSubmit>>, TError,{submissionId: string;data: GithubCom4H1RZooraInternalDomainSubmitQuizDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdSubmit>>,
+        TError,
+        {submissionId: string;data: GithubCom4H1RZooraInternalDomainSubmitQuizDTO},
+        TContext
+      > => {
+      return useMutation(getPostQuizzesSubmissionsSubmissionIdSubmitMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get quiz
  */
 export type getQuizzesIdResponse200 = {
@@ -1662,133 +1389,111 @@ export type getQuizzesIdResponse404 = {
   status: 404
 }
 
-export type getQuizzesIdResponseSuccess = getQuizzesIdResponse200 & {
-  headers: Headers
-}
-export type getQuizzesIdResponseError = (
-  | getQuizzesIdResponse401
-  | getQuizzesIdResponse403
-  | getQuizzesIdResponse404
-) & {
-  headers: Headers
-}
+export type getQuizzesIdResponseSuccess = (getQuizzesIdResponse200) & {
+  headers: Headers;
+};
+export type getQuizzesIdResponseError = (getQuizzesIdResponse401 | getQuizzesIdResponse403 | getQuizzesIdResponse404) & {
+  headers: Headers;
+};
 
-export type getQuizzesIdResponse = getQuizzesIdResponseSuccess | getQuizzesIdResponseError
+export type getQuizzesIdResponse = (getQuizzesIdResponseSuccess | getQuizzesIdResponseError)
 
-export const getGetQuizzesIdUrl = (id: string) => {
+export const getGetQuizzesIdUrl = (id: string,) => {
+
+
+
+
   return `/quizzes/${id}`
 }
 
 export const getQuizzesId = async (id: string, options?: RequestInit): Promise<getQuizzesIdResponse> => {
-  return customInstance<getQuizzesIdResponse>(getGetQuizzesIdUrl(id), {
+
+  return customInstance<getQuizzesIdResponse>(getGetQuizzesIdUrl(id),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetQuizzesIdQueryKey = (id: string) => {
-  return [`/quizzes/${id}`] as const
-}
 
-export const getGetQuizzesIdQueryOptions = <
-  TData = Awaited<ReturnType<typeof getQuizzesId>>,
-  TError = ErrorType<GetQuizzesId401 | GetQuizzesId403 | GetQuizzesId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetQuizzesIdQueryKey = (id: string,) => {
+    return [
+    `/quizzes/${id}`
+    ] as const;
+    }
+
+
+export const getGetQuizzesIdQueryOptions = <TData = Awaited<ReturnType<typeof getQuizzesId>>, TError = ErrorType<GetQuizzesId401 | GetQuizzesId403 | GetQuizzesId404>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetQuizzesIdQueryKey(id)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzesId>>> = ({ signal }) =>
-    getQuizzesId(id, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetQuizzesIdQueryKey(id);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getQuizzesId>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzesId>>> = ({ signal }) => getQuizzesId(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuizzesId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetQuizzesIdQueryResult = NonNullable<Awaited<ReturnType<typeof getQuizzesId>>>
 export type GetQuizzesIdQueryError = ErrorType<GetQuizzesId401 | GetQuizzesId403 | GetQuizzesId404>
 
-export function useGetQuizzesId<
-  TData = Awaited<ReturnType<typeof getQuizzesId>>,
-  TError = ErrorType<GetQuizzesId401 | GetQuizzesId403 | GetQuizzesId404>,
->(
-  id: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesId>>, TError, TData>> &
-      Pick<
+
+export function useGetQuizzesId<TData = Awaited<ReturnType<typeof getQuizzesId>>, TError = ErrorType<GetQuizzesId401 | GetQuizzesId403 | GetQuizzesId404>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuizzesId>>,
           TError,
           Awaited<ReturnType<typeof getQuizzesId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuizzesId<
-  TData = Awaited<ReturnType<typeof getQuizzesId>>,
-  TError = ErrorType<GetQuizzesId401 | GetQuizzesId403 | GetQuizzesId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesId>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesId<TData = Awaited<ReturnType<typeof getQuizzesId>>, TError = ErrorType<GetQuizzesId401 | GetQuizzesId403 | GetQuizzesId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuizzesId>>,
           TError,
           Awaited<ReturnType<typeof getQuizzesId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuizzesId<
-  TData = Awaited<ReturnType<typeof getQuizzesId>>,
-  TError = ErrorType<GetQuizzesId401 | GetQuizzesId403 | GetQuizzesId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesId<TData = Awaited<ReturnType<typeof getQuizzesId>>, TError = ErrorType<GetQuizzesId401 | GetQuizzesId403 | GetQuizzesId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get quiz
  */
 
-export function useGetQuizzesId<
-  TData = Awaited<ReturnType<typeof getQuizzesId>>,
-  TError = ErrorType<GetQuizzesId401 | GetQuizzesId403 | GetQuizzesId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetQuizzesIdQueryOptions(id, options)
+export function useGetQuizzesId<TData = Awaited<ReturnType<typeof getQuizzesId>>, TError = ErrorType<GetQuizzesId401 | GetQuizzesId403 | GetQuizzesId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetQuizzesIdQueryOptions(id,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Update quiz
@@ -1818,103 +1523,84 @@ export type putQuizzesIdResponse404 = {
   status: 404
 }
 
-export type putQuizzesIdResponseSuccess = putQuizzesIdResponse200 & {
-  headers: Headers
-}
-export type putQuizzesIdResponseError = (
-  | putQuizzesIdResponse400
-  | putQuizzesIdResponse401
-  | putQuizzesIdResponse403
-  | putQuizzesIdResponse404
-) & {
-  headers: Headers
-}
+export type putQuizzesIdResponseSuccess = (putQuizzesIdResponse200) & {
+  headers: Headers;
+};
+export type putQuizzesIdResponseError = (putQuizzesIdResponse400 | putQuizzesIdResponse401 | putQuizzesIdResponse403 | putQuizzesIdResponse404) & {
+  headers: Headers;
+};
 
-export type putQuizzesIdResponse = putQuizzesIdResponseSuccess | putQuizzesIdResponseError
+export type putQuizzesIdResponse = (putQuizzesIdResponseSuccess | putQuizzesIdResponseError)
 
-export const getPutQuizzesIdUrl = (id: string) => {
+export const getPutQuizzesIdUrl = (id: string,) => {
+
+
+
+
   return `/quizzes/${id}`
 }
 
-export const putQuizzesId = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainUpdateQuizDTO: GithubCom4H1RZooraInternalDomainUpdateQuizDTO,
-  options?: RequestInit
-): Promise<putQuizzesIdResponse> => {
-  return customInstance<putQuizzesIdResponse>(getPutQuizzesIdUrl(id), {
+export const putQuizzesId = async (id: string,
+    githubCom4H1RZooraInternalDomainUpdateQuizDTO: GithubCom4H1RZooraInternalDomainUpdateQuizDTO, options?: RequestInit): Promise<putQuizzesIdResponse> => {
+
+  return customInstance<putQuizzesIdResponse>(getPutQuizzesIdUrl(id),
+  {
     ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainUpdateQuizDTO),
-  })
-}
-
-export const getPutQuizzesIdMutationOptions = <
-  TError = ErrorType<PutQuizzesId400 | PutQuizzesId401 | PutQuizzesId403 | PutQuizzesId404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putQuizzesId>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainUpdateQuizDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putQuizzesId>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainUpdateQuizDTO },
-  TContext
-> => {
-  const mutationKey = ["putQuizzesId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putQuizzesId>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainUpdateQuizDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return putQuizzesId(id, data, requestOptions)
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainUpdateQuizDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutQuizzesIdMutationResult = NonNullable<Awaited<ReturnType<typeof putQuizzesId>>>
-export type PutQuizzesIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateQuizDTO
-export type PutQuizzesIdMutationError = ErrorType<PutQuizzesId400 | PutQuizzesId401 | PutQuizzesId403 | PutQuizzesId404>
 
-/**
+
+export const getPutQuizzesIdMutationOptions = <TError = ErrorType<PutQuizzesId400 | PutQuizzesId401 | PutQuizzesId403 | PutQuizzesId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putQuizzesId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateQuizDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putQuizzesId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateQuizDTO}, TContext> => {
+
+const mutationKey = ['putQuizzesId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putQuizzesId>>, {id: string;data: GithubCom4H1RZooraInternalDomainUpdateQuizDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  putQuizzesId(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutQuizzesIdMutationResult = NonNullable<Awaited<ReturnType<typeof putQuizzesId>>>
+    export type PutQuizzesIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateQuizDTO
+    export type PutQuizzesIdMutationError = ErrorType<PutQuizzesId400 | PutQuizzesId401 | PutQuizzesId403 | PutQuizzesId404>
+
+    /**
  * @summary Update quiz
  */
-export const usePutQuizzesId = <
-  TError = ErrorType<PutQuizzesId400 | PutQuizzesId401 | PutQuizzesId403 | PutQuizzesId404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putQuizzesId>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainUpdateQuizDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putQuizzesId>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainUpdateQuizDTO },
-  TContext
-> => {
-  return useMutation(getPutQuizzesIdMutationOptions(options), queryClient)
-}
-/**
+export const usePutQuizzesId = <TError = ErrorType<PutQuizzesId400 | PutQuizzesId401 | PutQuizzesId403 | PutQuizzesId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putQuizzesId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateQuizDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putQuizzesId>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainUpdateQuizDTO},
+        TContext
+      > => {
+      return useMutation(getPutQuizzesIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Delete quiz
  */
 export type deleteQuizzesIdResponse200 = {
@@ -1937,73 +1623,82 @@ export type deleteQuizzesIdResponse404 = {
   status: 404
 }
 
-export type deleteQuizzesIdResponseSuccess = deleteQuizzesIdResponse200 & {
-  headers: Headers
-}
-export type deleteQuizzesIdResponseError = (
-  | deleteQuizzesIdResponse401
-  | deleteQuizzesIdResponse403
-  | deleteQuizzesIdResponse404
-) & {
-  headers: Headers
-}
+export type deleteQuizzesIdResponseSuccess = (deleteQuizzesIdResponse200) & {
+  headers: Headers;
+};
+export type deleteQuizzesIdResponseError = (deleteQuizzesIdResponse401 | deleteQuizzesIdResponse403 | deleteQuizzesIdResponse404) & {
+  headers: Headers;
+};
 
-export type deleteQuizzesIdResponse = deleteQuizzesIdResponseSuccess | deleteQuizzesIdResponseError
+export type deleteQuizzesIdResponse = (deleteQuizzesIdResponseSuccess | deleteQuizzesIdResponseError)
 
-export const getDeleteQuizzesIdUrl = (id: string) => {
+export const getDeleteQuizzesIdUrl = (id: string,) => {
+
+
+
+
   return `/quizzes/${id}`
 }
 
 export const deleteQuizzesId = async (id: string, options?: RequestInit): Promise<deleteQuizzesIdResponse> => {
-  return customInstance<deleteQuizzesIdResponse>(getDeleteQuizzesIdUrl(id), {
+
+  return customInstance<deleteQuizzesIdResponse>(getDeleteQuizzesIdUrl(id),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeleteQuizzesIdMutationOptions = <
-  TError = ErrorType<DeleteQuizzesId401 | DeleteQuizzesId403 | DeleteQuizzesId404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteQuizzesId>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof deleteQuizzesId>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["deleteQuizzesId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteQuizzesId>>, { id: string }> = (props) => {
-    const { id } = props ?? {}
-
-    return deleteQuizzesId(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteQuizzesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteQuizzesId>>>
 
-export type DeleteQuizzesIdMutationError = ErrorType<DeleteQuizzesId401 | DeleteQuizzesId403 | DeleteQuizzesId404>
 
-/**
+export const getDeleteQuizzesIdMutationOptions = <TError = ErrorType<DeleteQuizzesId401 | DeleteQuizzesId403 | DeleteQuizzesId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteQuizzesId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteQuizzesId>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteQuizzesId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteQuizzesId>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteQuizzesId(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteQuizzesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteQuizzesId>>>
+
+    export type DeleteQuizzesIdMutationError = ErrorType<DeleteQuizzesId401 | DeleteQuizzesId403 | DeleteQuizzesId404>
+
+    /**
  * @summary Delete quiz
  */
-export const useDeleteQuizzesId = <
-  TError = ErrorType<DeleteQuizzesId401 | DeleteQuizzesId403 | DeleteQuizzesId404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteQuizzesId>>, TError, { id: string }, TContext>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof deleteQuizzesId>>, TError, { id: string }, TContext> => {
-  return useMutation(getDeleteQuizzesIdMutationOptions(options), queryClient)
-}
-/**
+export const useDeleteQuizzesId = <TError = ErrorType<DeleteQuizzesId401 | DeleteQuizzesId403 | DeleteQuizzesId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteQuizzesId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteQuizzesId>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteQuizzesIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary List quiz rooms
  */
 export type getQuizzesIdRoomsResponse200 = {
@@ -2026,152 +1721,126 @@ export type getQuizzesIdRoomsResponse404 = {
   status: 404
 }
 
-export type getQuizzesIdRoomsResponseSuccess = getQuizzesIdRoomsResponse200 & {
-  headers: Headers
-}
-export type getQuizzesIdRoomsResponseError = (
-  | getQuizzesIdRoomsResponse401
-  | getQuizzesIdRoomsResponse403
-  | getQuizzesIdRoomsResponse404
-) & {
-  headers: Headers
-}
+export type getQuizzesIdRoomsResponseSuccess = (getQuizzesIdRoomsResponse200) & {
+  headers: Headers;
+};
+export type getQuizzesIdRoomsResponseError = (getQuizzesIdRoomsResponse401 | getQuizzesIdRoomsResponse403 | getQuizzesIdRoomsResponse404) & {
+  headers: Headers;
+};
 
-export type getQuizzesIdRoomsResponse = getQuizzesIdRoomsResponseSuccess | getQuizzesIdRoomsResponseError
+export type getQuizzesIdRoomsResponse = (getQuizzesIdRoomsResponseSuccess | getQuizzesIdRoomsResponseError)
 
-export const getGetQuizzesIdRoomsUrl = (id: string, params?: GetQuizzesIdRoomsParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetQuizzesIdRoomsUrl = (id: string,
+    params?: GetQuizzesIdRoomsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/quizzes/${id}/rooms?${stringifiedParams}` : `/quizzes/${id}/rooms`
 }
 
-export const getQuizzesIdRooms = async (
-  id: string,
-  params?: GetQuizzesIdRoomsParams,
-  options?: RequestInit
-): Promise<getQuizzesIdRoomsResponse> => {
-  return customInstance<getQuizzesIdRoomsResponse>(getGetQuizzesIdRoomsUrl(id, params), {
+export const getQuizzesIdRooms = async (id: string,
+    params?: GetQuizzesIdRoomsParams, options?: RequestInit): Promise<getQuizzesIdRoomsResponse> => {
+
+  return customInstance<getQuizzesIdRoomsResponse>(getGetQuizzesIdRoomsUrl(id,params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetQuizzesIdRoomsQueryKey = (id: string, params?: GetQuizzesIdRoomsParams) => {
-  return [`/quizzes/${id}/rooms`, ...(params ? [params] : [])] as const
-}
 
-export const getGetQuizzesIdRoomsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getQuizzesIdRooms>>,
-  TError = ErrorType<GetQuizzesIdRooms401 | GetQuizzesIdRooms403 | GetQuizzesIdRooms404>,
->(
-  id: string,
-  params?: GetQuizzesIdRoomsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRooms>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetQuizzesIdRoomsQueryKey = (id: string,
+    params?: GetQuizzesIdRoomsParams,) => {
+    return [
+    `/quizzes/${id}/rooms`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetQuizzesIdRoomsQueryOptions = <TData = Awaited<ReturnType<typeof getQuizzesIdRooms>>, TError = ErrorType<GetQuizzesIdRooms401 | GetQuizzesIdRooms403 | GetQuizzesIdRooms404>>(id: string,
+    params?: GetQuizzesIdRoomsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRooms>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetQuizzesIdRoomsQueryKey(id, params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzesIdRooms>>> = ({ signal }) =>
-    getQuizzesIdRooms(id, params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetQuizzesIdRoomsQueryKey(id,params);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getQuizzesIdRooms>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzesIdRooms>>> = ({ signal }) => getQuizzesIdRooms(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRooms>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetQuizzesIdRoomsQueryResult = NonNullable<Awaited<ReturnType<typeof getQuizzesIdRooms>>>
 export type GetQuizzesIdRoomsQueryError = ErrorType<GetQuizzesIdRooms401 | GetQuizzesIdRooms403 | GetQuizzesIdRooms404>
 
-export function useGetQuizzesIdRooms<
-  TData = Awaited<ReturnType<typeof getQuizzesIdRooms>>,
-  TError = ErrorType<GetQuizzesIdRooms401 | GetQuizzesIdRooms403 | GetQuizzesIdRooms404>,
->(
-  id: string,
-  params: undefined | GetQuizzesIdRoomsParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRooms>>, TError, TData>> &
-      Pick<
+
+export function useGetQuizzesIdRooms<TData = Awaited<ReturnType<typeof getQuizzesIdRooms>>, TError = ErrorType<GetQuizzesIdRooms401 | GetQuizzesIdRooms403 | GetQuizzesIdRooms404>>(
+ id: string,
+    params: undefined |  GetQuizzesIdRoomsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRooms>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuizzesIdRooms>>,
           TError,
           Awaited<ReturnType<typeof getQuizzesIdRooms>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuizzesIdRooms<
-  TData = Awaited<ReturnType<typeof getQuizzesIdRooms>>,
-  TError = ErrorType<GetQuizzesIdRooms401 | GetQuizzesIdRooms403 | GetQuizzesIdRooms404>,
->(
-  id: string,
-  params?: GetQuizzesIdRoomsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRooms>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesIdRooms<TData = Awaited<ReturnType<typeof getQuizzesIdRooms>>, TError = ErrorType<GetQuizzesIdRooms401 | GetQuizzesIdRooms403 | GetQuizzesIdRooms404>>(
+ id: string,
+    params?: GetQuizzesIdRoomsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRooms>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuizzesIdRooms>>,
           TError,
           Awaited<ReturnType<typeof getQuizzesIdRooms>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuizzesIdRooms<
-  TData = Awaited<ReturnType<typeof getQuizzesIdRooms>>,
-  TError = ErrorType<GetQuizzesIdRooms401 | GetQuizzesIdRooms403 | GetQuizzesIdRooms404>,
->(
-  id: string,
-  params?: GetQuizzesIdRoomsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRooms>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesIdRooms<TData = Awaited<ReturnType<typeof getQuizzesIdRooms>>, TError = ErrorType<GetQuizzesIdRooms401 | GetQuizzesIdRooms403 | GetQuizzesIdRooms404>>(
+ id: string,
+    params?: GetQuizzesIdRoomsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRooms>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List quiz rooms
  */
 
-export function useGetQuizzesIdRooms<
-  TData = Awaited<ReturnType<typeof getQuizzesIdRooms>>,
-  TError = ErrorType<GetQuizzesIdRooms401 | GetQuizzesIdRooms403 | GetQuizzesIdRooms404>,
->(
-  id: string,
-  params?: GetQuizzesIdRoomsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRooms>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetQuizzesIdRoomsQueryOptions(id, params, options)
+export function useGetQuizzesIdRooms<TData = Awaited<ReturnType<typeof getQuizzesIdRooms>>, TError = ErrorType<GetQuizzesIdRooms401 | GetQuizzesIdRooms403 | GetQuizzesIdRooms404>>(
+ id: string,
+    params?: GetQuizzesIdRoomsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRooms>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetQuizzesIdRoomsQueryOptions(id,params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Create quiz room
@@ -2201,105 +1870,84 @@ export type postQuizzesIdRoomsResponse404 = {
   status: 404
 }
 
-export type postQuizzesIdRoomsResponseSuccess = postQuizzesIdRoomsResponse201 & {
-  headers: Headers
-}
-export type postQuizzesIdRoomsResponseError = (
-  | postQuizzesIdRoomsResponse400
-  | postQuizzesIdRoomsResponse401
-  | postQuizzesIdRoomsResponse403
-  | postQuizzesIdRoomsResponse404
-) & {
-  headers: Headers
-}
+export type postQuizzesIdRoomsResponseSuccess = (postQuizzesIdRoomsResponse201) & {
+  headers: Headers;
+};
+export type postQuizzesIdRoomsResponseError = (postQuizzesIdRoomsResponse400 | postQuizzesIdRoomsResponse401 | postQuizzesIdRoomsResponse403 | postQuizzesIdRoomsResponse404) & {
+  headers: Headers;
+};
 
-export type postQuizzesIdRoomsResponse = postQuizzesIdRoomsResponseSuccess | postQuizzesIdRoomsResponseError
+export type postQuizzesIdRoomsResponse = (postQuizzesIdRoomsResponseSuccess | postQuizzesIdRoomsResponseError)
 
-export const getPostQuizzesIdRoomsUrl = (id: string) => {
+export const getPostQuizzesIdRoomsUrl = (id: string,) => {
+
+
+
+
   return `/quizzes/${id}/rooms`
 }
 
-export const postQuizzesIdRooms = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainCreateQuizRoomDTO: GithubCom4H1RZooraInternalDomainCreateQuizRoomDTO,
-  options?: RequestInit
-): Promise<postQuizzesIdRoomsResponse> => {
-  return customInstance<postQuizzesIdRoomsResponse>(getPostQuizzesIdRoomsUrl(id), {
+export const postQuizzesIdRooms = async (id: string,
+    githubCom4H1RZooraInternalDomainCreateQuizRoomDTO: GithubCom4H1RZooraInternalDomainCreateQuizRoomDTO, options?: RequestInit): Promise<postQuizzesIdRoomsResponse> => {
+
+  return customInstance<postQuizzesIdRoomsResponse>(getPostQuizzesIdRoomsUrl(id),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainCreateQuizRoomDTO),
-  })
-}
-
-export const getPostQuizzesIdRoomsMutationOptions = <
-  TError = ErrorType<PostQuizzesIdRooms400 | PostQuizzesIdRooms401 | PostQuizzesIdRooms403 | PostQuizzesIdRooms404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postQuizzesIdRooms>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainCreateQuizRoomDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postQuizzesIdRooms>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainCreateQuizRoomDTO },
-  TContext
-> => {
-  const mutationKey = ["postQuizzesIdRooms"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postQuizzesIdRooms>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainCreateQuizRoomDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return postQuizzesIdRooms(id, data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainCreateQuizRoomDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostQuizzesIdRoomsMutationResult = NonNullable<Awaited<ReturnType<typeof postQuizzesIdRooms>>>
-export type PostQuizzesIdRoomsMutationBody = GithubCom4H1RZooraInternalDomainCreateQuizRoomDTO
-export type PostQuizzesIdRoomsMutationError = ErrorType<
-  PostQuizzesIdRooms400 | PostQuizzesIdRooms401 | PostQuizzesIdRooms403 | PostQuizzesIdRooms404
->
 
-/**
+
+export const getPostQuizzesIdRoomsMutationOptions = <TError = ErrorType<PostQuizzesIdRooms400 | PostQuizzesIdRooms401 | PostQuizzesIdRooms403 | PostQuizzesIdRooms404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzesIdRooms>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainCreateQuizRoomDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postQuizzesIdRooms>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainCreateQuizRoomDTO}, TContext> => {
+
+const mutationKey = ['postQuizzesIdRooms'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postQuizzesIdRooms>>, {id: string;data: GithubCom4H1RZooraInternalDomainCreateQuizRoomDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postQuizzesIdRooms(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostQuizzesIdRoomsMutationResult = NonNullable<Awaited<ReturnType<typeof postQuizzesIdRooms>>>
+    export type PostQuizzesIdRoomsMutationBody = GithubCom4H1RZooraInternalDomainCreateQuizRoomDTO
+    export type PostQuizzesIdRoomsMutationError = ErrorType<PostQuizzesIdRooms400 | PostQuizzesIdRooms401 | PostQuizzesIdRooms403 | PostQuizzesIdRooms404>
+
+    /**
  * @summary Create quiz room
  */
-export const usePostQuizzesIdRooms = <
-  TError = ErrorType<PostQuizzesIdRooms400 | PostQuizzesIdRooms401 | PostQuizzesIdRooms403 | PostQuizzesIdRooms404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postQuizzesIdRooms>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainCreateQuizRoomDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postQuizzesIdRooms>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainCreateQuizRoomDTO },
-  TContext
-> => {
-  return useMutation(getPostQuizzesIdRoomsMutationOptions(options), queryClient)
-}
-/**
+export const usePostQuizzesIdRooms = <TError = ErrorType<PostQuizzesIdRooms400 | PostQuizzesIdRooms401 | PostQuizzesIdRooms403 | PostQuizzesIdRooms404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzesIdRooms>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainCreateQuizRoomDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postQuizzesIdRooms>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainCreateQuizRoomDTO},
+        TContext
+      > => {
+      return useMutation(getPostQuizzesIdRoomsMutationOptions(options), queryClient);
+    }
+    /**
  * @summary List quiz rules
  */
 export type getQuizzesIdRulesResponse200 = {
@@ -2322,152 +1970,126 @@ export type getQuizzesIdRulesResponse404 = {
   status: 404
 }
 
-export type getQuizzesIdRulesResponseSuccess = getQuizzesIdRulesResponse200 & {
-  headers: Headers
-}
-export type getQuizzesIdRulesResponseError = (
-  | getQuizzesIdRulesResponse401
-  | getQuizzesIdRulesResponse403
-  | getQuizzesIdRulesResponse404
-) & {
-  headers: Headers
-}
+export type getQuizzesIdRulesResponseSuccess = (getQuizzesIdRulesResponse200) & {
+  headers: Headers;
+};
+export type getQuizzesIdRulesResponseError = (getQuizzesIdRulesResponse401 | getQuizzesIdRulesResponse403 | getQuizzesIdRulesResponse404) & {
+  headers: Headers;
+};
 
-export type getQuizzesIdRulesResponse = getQuizzesIdRulesResponseSuccess | getQuizzesIdRulesResponseError
+export type getQuizzesIdRulesResponse = (getQuizzesIdRulesResponseSuccess | getQuizzesIdRulesResponseError)
 
-export const getGetQuizzesIdRulesUrl = (id: string, params?: GetQuizzesIdRulesParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetQuizzesIdRulesUrl = (id: string,
+    params?: GetQuizzesIdRulesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/quizzes/${id}/rules?${stringifiedParams}` : `/quizzes/${id}/rules`
 }
 
-export const getQuizzesIdRules = async (
-  id: string,
-  params?: GetQuizzesIdRulesParams,
-  options?: RequestInit
-): Promise<getQuizzesIdRulesResponse> => {
-  return customInstance<getQuizzesIdRulesResponse>(getGetQuizzesIdRulesUrl(id, params), {
+export const getQuizzesIdRules = async (id: string,
+    params?: GetQuizzesIdRulesParams, options?: RequestInit): Promise<getQuizzesIdRulesResponse> => {
+
+  return customInstance<getQuizzesIdRulesResponse>(getGetQuizzesIdRulesUrl(id,params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetQuizzesIdRulesQueryKey = (id: string, params?: GetQuizzesIdRulesParams) => {
-  return [`/quizzes/${id}/rules`, ...(params ? [params] : [])] as const
-}
 
-export const getGetQuizzesIdRulesQueryOptions = <
-  TData = Awaited<ReturnType<typeof getQuizzesIdRules>>,
-  TError = ErrorType<GetQuizzesIdRules401 | GetQuizzesIdRules403 | GetQuizzesIdRules404>,
->(
-  id: string,
-  params?: GetQuizzesIdRulesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRules>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetQuizzesIdRulesQueryKey = (id: string,
+    params?: GetQuizzesIdRulesParams,) => {
+    return [
+    `/quizzes/${id}/rules`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetQuizzesIdRulesQueryOptions = <TData = Awaited<ReturnType<typeof getQuizzesIdRules>>, TError = ErrorType<GetQuizzesIdRules401 | GetQuizzesIdRules403 | GetQuizzesIdRules404>>(id: string,
+    params?: GetQuizzesIdRulesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetQuizzesIdRulesQueryKey(id, params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzesIdRules>>> = ({ signal }) =>
-    getQuizzesIdRules(id, params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetQuizzesIdRulesQueryKey(id,params);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getQuizzesIdRules>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzesIdRules>>> = ({ signal }) => getQuizzesIdRules(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRules>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetQuizzesIdRulesQueryResult = NonNullable<Awaited<ReturnType<typeof getQuizzesIdRules>>>
 export type GetQuizzesIdRulesQueryError = ErrorType<GetQuizzesIdRules401 | GetQuizzesIdRules403 | GetQuizzesIdRules404>
 
-export function useGetQuizzesIdRules<
-  TData = Awaited<ReturnType<typeof getQuizzesIdRules>>,
-  TError = ErrorType<GetQuizzesIdRules401 | GetQuizzesIdRules403 | GetQuizzesIdRules404>,
->(
-  id: string,
-  params: undefined | GetQuizzesIdRulesParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRules>>, TError, TData>> &
-      Pick<
+
+export function useGetQuizzesIdRules<TData = Awaited<ReturnType<typeof getQuizzesIdRules>>, TError = ErrorType<GetQuizzesIdRules401 | GetQuizzesIdRules403 | GetQuizzesIdRules404>>(
+ id: string,
+    params: undefined |  GetQuizzesIdRulesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRules>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuizzesIdRules>>,
           TError,
           Awaited<ReturnType<typeof getQuizzesIdRules>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuizzesIdRules<
-  TData = Awaited<ReturnType<typeof getQuizzesIdRules>>,
-  TError = ErrorType<GetQuizzesIdRules401 | GetQuizzesIdRules403 | GetQuizzesIdRules404>,
->(
-  id: string,
-  params?: GetQuizzesIdRulesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRules>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesIdRules<TData = Awaited<ReturnType<typeof getQuizzesIdRules>>, TError = ErrorType<GetQuizzesIdRules401 | GetQuizzesIdRules403 | GetQuizzesIdRules404>>(
+ id: string,
+    params?: GetQuizzesIdRulesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRules>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuizzesIdRules>>,
           TError,
           Awaited<ReturnType<typeof getQuizzesIdRules>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuizzesIdRules<
-  TData = Awaited<ReturnType<typeof getQuizzesIdRules>>,
-  TError = ErrorType<GetQuizzesIdRules401 | GetQuizzesIdRules403 | GetQuizzesIdRules404>,
->(
-  id: string,
-  params?: GetQuizzesIdRulesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRules>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesIdRules<TData = Awaited<ReturnType<typeof getQuizzesIdRules>>, TError = ErrorType<GetQuizzesIdRules401 | GetQuizzesIdRules403 | GetQuizzesIdRules404>>(
+ id: string,
+    params?: GetQuizzesIdRulesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List quiz rules
  */
 
-export function useGetQuizzesIdRules<
-  TData = Awaited<ReturnType<typeof getQuizzesIdRules>>,
-  TError = ErrorType<GetQuizzesIdRules401 | GetQuizzesIdRules403 | GetQuizzesIdRules404>,
->(
-  id: string,
-  params?: GetQuizzesIdRulesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRules>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetQuizzesIdRulesQueryOptions(id, params, options)
+export function useGetQuizzesIdRules<TData = Awaited<ReturnType<typeof getQuizzesIdRules>>, TError = ErrorType<GetQuizzesIdRules401 | GetQuizzesIdRules403 | GetQuizzesIdRules404>>(
+ id: string,
+    params?: GetQuizzesIdRulesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetQuizzesIdRulesQueryOptions(id,params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Create quiz rule
@@ -2497,105 +2119,84 @@ export type postQuizzesIdRulesResponse404 = {
   status: 404
 }
 
-export type postQuizzesIdRulesResponseSuccess = postQuizzesIdRulesResponse201 & {
-  headers: Headers
-}
-export type postQuizzesIdRulesResponseError = (
-  | postQuizzesIdRulesResponse400
-  | postQuizzesIdRulesResponse401
-  | postQuizzesIdRulesResponse403
-  | postQuizzesIdRulesResponse404
-) & {
-  headers: Headers
-}
+export type postQuizzesIdRulesResponseSuccess = (postQuizzesIdRulesResponse201) & {
+  headers: Headers;
+};
+export type postQuizzesIdRulesResponseError = (postQuizzesIdRulesResponse400 | postQuizzesIdRulesResponse401 | postQuizzesIdRulesResponse403 | postQuizzesIdRulesResponse404) & {
+  headers: Headers;
+};
 
-export type postQuizzesIdRulesResponse = postQuizzesIdRulesResponseSuccess | postQuizzesIdRulesResponseError
+export type postQuizzesIdRulesResponse = (postQuizzesIdRulesResponseSuccess | postQuizzesIdRulesResponseError)
 
-export const getPostQuizzesIdRulesUrl = (id: string) => {
+export const getPostQuizzesIdRulesUrl = (id: string,) => {
+
+
+
+
   return `/quizzes/${id}/rules`
 }
 
-export const postQuizzesIdRules = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainCreateQuizRuleDTO: GithubCom4H1RZooraInternalDomainCreateQuizRuleDTO,
-  options?: RequestInit
-): Promise<postQuizzesIdRulesResponse> => {
-  return customInstance<postQuizzesIdRulesResponse>(getPostQuizzesIdRulesUrl(id), {
+export const postQuizzesIdRules = async (id: string,
+    githubCom4H1RZooraInternalDomainCreateQuizRuleDTO: GithubCom4H1RZooraInternalDomainCreateQuizRuleDTO, options?: RequestInit): Promise<postQuizzesIdRulesResponse> => {
+
+  return customInstance<postQuizzesIdRulesResponse>(getPostQuizzesIdRulesUrl(id),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainCreateQuizRuleDTO),
-  })
-}
-
-export const getPostQuizzesIdRulesMutationOptions = <
-  TError = ErrorType<PostQuizzesIdRules400 | PostQuizzesIdRules401 | PostQuizzesIdRules403 | PostQuizzesIdRules404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postQuizzesIdRules>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainCreateQuizRuleDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postQuizzesIdRules>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainCreateQuizRuleDTO },
-  TContext
-> => {
-  const mutationKey = ["postQuizzesIdRules"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postQuizzesIdRules>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainCreateQuizRuleDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return postQuizzesIdRules(id, data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainCreateQuizRuleDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostQuizzesIdRulesMutationResult = NonNullable<Awaited<ReturnType<typeof postQuizzesIdRules>>>
-export type PostQuizzesIdRulesMutationBody = GithubCom4H1RZooraInternalDomainCreateQuizRuleDTO
-export type PostQuizzesIdRulesMutationError = ErrorType<
-  PostQuizzesIdRules400 | PostQuizzesIdRules401 | PostQuizzesIdRules403 | PostQuizzesIdRules404
->
 
-/**
+
+export const getPostQuizzesIdRulesMutationOptions = <TError = ErrorType<PostQuizzesIdRules400 | PostQuizzesIdRules401 | PostQuizzesIdRules403 | PostQuizzesIdRules404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzesIdRules>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainCreateQuizRuleDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postQuizzesIdRules>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainCreateQuizRuleDTO}, TContext> => {
+
+const mutationKey = ['postQuizzesIdRules'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postQuizzesIdRules>>, {id: string;data: GithubCom4H1RZooraInternalDomainCreateQuizRuleDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postQuizzesIdRules(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostQuizzesIdRulesMutationResult = NonNullable<Awaited<ReturnType<typeof postQuizzesIdRules>>>
+    export type PostQuizzesIdRulesMutationBody = GithubCom4H1RZooraInternalDomainCreateQuizRuleDTO
+    export type PostQuizzesIdRulesMutationError = ErrorType<PostQuizzesIdRules400 | PostQuizzesIdRules401 | PostQuizzesIdRules403 | PostQuizzesIdRules404>
+
+    /**
  * @summary Create quiz rule
  */
-export const usePostQuizzesIdRules = <
-  TError = ErrorType<PostQuizzesIdRules400 | PostQuizzesIdRules401 | PostQuizzesIdRules403 | PostQuizzesIdRules404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postQuizzesIdRules>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainCreateQuizRuleDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postQuizzesIdRules>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainCreateQuizRuleDTO },
-  TContext
-> => {
-  return useMutation(getPostQuizzesIdRulesMutationOptions(options), queryClient)
-}
-/**
+export const usePostQuizzesIdRules = <TError = ErrorType<PostQuizzesIdRules400 | PostQuizzesIdRules401 | PostQuizzesIdRules403 | PostQuizzesIdRules404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzesIdRules>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainCreateQuizRuleDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postQuizzesIdRules>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainCreateQuizRuleDTO},
+        TContext
+      > => {
+      return useMutation(getPostQuizzesIdRulesMutationOptions(options), queryClient);
+    }
+    /**
  * Teachers/managers see all submissions; students see only their own.
  * @summary List quiz submissions
  */
@@ -2614,153 +2215,126 @@ export type getQuizzesIdSubmissionsResponse403 = {
   status: 403
 }
 
-export type getQuizzesIdSubmissionsResponseSuccess = getQuizzesIdSubmissionsResponse200 & {
-  headers: Headers
-}
-export type getQuizzesIdSubmissionsResponseError = (
-  | getQuizzesIdSubmissionsResponse401
-  | getQuizzesIdSubmissionsResponse403
-) & {
-  headers: Headers
-}
+export type getQuizzesIdSubmissionsResponseSuccess = (getQuizzesIdSubmissionsResponse200) & {
+  headers: Headers;
+};
+export type getQuizzesIdSubmissionsResponseError = (getQuizzesIdSubmissionsResponse401 | getQuizzesIdSubmissionsResponse403) & {
+  headers: Headers;
+};
 
-export type getQuizzesIdSubmissionsResponse =
-  | getQuizzesIdSubmissionsResponseSuccess
-  | getQuizzesIdSubmissionsResponseError
+export type getQuizzesIdSubmissionsResponse = (getQuizzesIdSubmissionsResponseSuccess | getQuizzesIdSubmissionsResponseError)
 
-export const getGetQuizzesIdSubmissionsUrl = (id: string, params?: GetQuizzesIdSubmissionsParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetQuizzesIdSubmissionsUrl = (id: string,
+    params?: GetQuizzesIdSubmissionsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/quizzes/${id}/submissions?${stringifiedParams}` : `/quizzes/${id}/submissions`
 }
 
-export const getQuizzesIdSubmissions = async (
-  id: string,
-  params?: GetQuizzesIdSubmissionsParams,
-  options?: RequestInit
-): Promise<getQuizzesIdSubmissionsResponse> => {
-  return customInstance<getQuizzesIdSubmissionsResponse>(getGetQuizzesIdSubmissionsUrl(id, params), {
+export const getQuizzesIdSubmissions = async (id: string,
+    params?: GetQuizzesIdSubmissionsParams, options?: RequestInit): Promise<getQuizzesIdSubmissionsResponse> => {
+
+  return customInstance<getQuizzesIdSubmissionsResponse>(getGetQuizzesIdSubmissionsUrl(id,params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetQuizzesIdSubmissionsQueryKey = (id: string, params?: GetQuizzesIdSubmissionsParams) => {
-  return [`/quizzes/${id}/submissions`, ...(params ? [params] : [])] as const
-}
 
-export const getGetQuizzesIdSubmissionsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getQuizzesIdSubmissions>>,
-  TError = ErrorType<GetQuizzesIdSubmissions401 | GetQuizzesIdSubmissions403>,
->(
-  id: string,
-  params?: GetQuizzesIdSubmissionsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdSubmissions>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetQuizzesIdSubmissionsQueryKey = (id: string,
+    params?: GetQuizzesIdSubmissionsParams,) => {
+    return [
+    `/quizzes/${id}/submissions`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetQuizzesIdSubmissionsQueryOptions = <TData = Awaited<ReturnType<typeof getQuizzesIdSubmissions>>, TError = ErrorType<GetQuizzesIdSubmissions401 | GetQuizzesIdSubmissions403>>(id: string,
+    params?: GetQuizzesIdSubmissionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetQuizzesIdSubmissionsQueryKey(id, params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzesIdSubmissions>>> = ({ signal }) =>
-    getQuizzesIdSubmissions(id, params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetQuizzesIdSubmissionsQueryKey(id,params);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getQuizzesIdSubmissions>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzesIdSubmissions>>> = ({ signal }) => getQuizzesIdSubmissions(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdSubmissions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetQuizzesIdSubmissionsQueryResult = NonNullable<Awaited<ReturnType<typeof getQuizzesIdSubmissions>>>
 export type GetQuizzesIdSubmissionsQueryError = ErrorType<GetQuizzesIdSubmissions401 | GetQuizzesIdSubmissions403>
 
-export function useGetQuizzesIdSubmissions<
-  TData = Awaited<ReturnType<typeof getQuizzesIdSubmissions>>,
-  TError = ErrorType<GetQuizzesIdSubmissions401 | GetQuizzesIdSubmissions403>,
->(
-  id: string,
-  params: undefined | GetQuizzesIdSubmissionsParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdSubmissions>>, TError, TData>> &
-      Pick<
+
+export function useGetQuizzesIdSubmissions<TData = Awaited<ReturnType<typeof getQuizzesIdSubmissions>>, TError = ErrorType<GetQuizzesIdSubmissions401 | GetQuizzesIdSubmissions403>>(
+ id: string,
+    params: undefined |  GetQuizzesIdSubmissionsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdSubmissions>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuizzesIdSubmissions>>,
           TError,
           Awaited<ReturnType<typeof getQuizzesIdSubmissions>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuizzesIdSubmissions<
-  TData = Awaited<ReturnType<typeof getQuizzesIdSubmissions>>,
-  TError = ErrorType<GetQuizzesIdSubmissions401 | GetQuizzesIdSubmissions403>,
->(
-  id: string,
-  params?: GetQuizzesIdSubmissionsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdSubmissions>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesIdSubmissions<TData = Awaited<ReturnType<typeof getQuizzesIdSubmissions>>, TError = ErrorType<GetQuizzesIdSubmissions401 | GetQuizzesIdSubmissions403>>(
+ id: string,
+    params?: GetQuizzesIdSubmissionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdSubmissions>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuizzesIdSubmissions>>,
           TError,
           Awaited<ReturnType<typeof getQuizzesIdSubmissions>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuizzesIdSubmissions<
-  TData = Awaited<ReturnType<typeof getQuizzesIdSubmissions>>,
-  TError = ErrorType<GetQuizzesIdSubmissions401 | GetQuizzesIdSubmissions403>,
->(
-  id: string,
-  params?: GetQuizzesIdSubmissionsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdSubmissions>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesIdSubmissions<TData = Awaited<ReturnType<typeof getQuizzesIdSubmissions>>, TError = ErrorType<GetQuizzesIdSubmissions401 | GetQuizzesIdSubmissions403>>(
+ id: string,
+    params?: GetQuizzesIdSubmissionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List quiz submissions
  */
 
-export function useGetQuizzesIdSubmissions<
-  TData = Awaited<ReturnType<typeof getQuizzesIdSubmissions>>,
-  TError = ErrorType<GetQuizzesIdSubmissions401 | GetQuizzesIdSubmissions403>,
->(
-  id: string,
-  params?: GetQuizzesIdSubmissionsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdSubmissions>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetQuizzesIdSubmissionsQueryOptions(id, params, options)
+export function useGetQuizzesIdSubmissions<TData = Awaited<ReturnType<typeof getQuizzesIdSubmissions>>, TError = ErrorType<GetQuizzesIdSubmissions401 | GetQuizzesIdSubmissions403>>(
+ id: string,
+    params?: GetQuizzesIdSubmissionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetQuizzesIdSubmissionsQueryOptions(id,params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * Starts a submission for the authenticated student. Requires enrollment in the quiz's class and an open quiz room. Only one submission per user per quiz is allowed.
@@ -2791,113 +2365,80 @@ export type postQuizzesIdSubmissionsResponse409 = {
   status: 409
 }
 
-export type postQuizzesIdSubmissionsResponseSuccess = postQuizzesIdSubmissionsResponse201 & {
-  headers: Headers
-}
-export type postQuizzesIdSubmissionsResponseError = (
-  | postQuizzesIdSubmissionsResponse400
-  | postQuizzesIdSubmissionsResponse401
-  | postQuizzesIdSubmissionsResponse403
-  | postQuizzesIdSubmissionsResponse409
-) & {
-  headers: Headers
-}
+export type postQuizzesIdSubmissionsResponseSuccess = (postQuizzesIdSubmissionsResponse201) & {
+  headers: Headers;
+};
+export type postQuizzesIdSubmissionsResponseError = (postQuizzesIdSubmissionsResponse400 | postQuizzesIdSubmissionsResponse401 | postQuizzesIdSubmissionsResponse403 | postQuizzesIdSubmissionsResponse409) & {
+  headers: Headers;
+};
 
-export type postQuizzesIdSubmissionsResponse =
-  | postQuizzesIdSubmissionsResponseSuccess
-  | postQuizzesIdSubmissionsResponseError
+export type postQuizzesIdSubmissionsResponse = (postQuizzesIdSubmissionsResponseSuccess | postQuizzesIdSubmissionsResponseError)
 
-export const getPostQuizzesIdSubmissionsUrl = (id: string) => {
+export const getPostQuizzesIdSubmissionsUrl = (id: string,) => {
+
+
+
+
   return `/quizzes/${id}/submissions`
 }
 
-export const postQuizzesIdSubmissions = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainStartQuizSubmissionDTO: GithubCom4H1RZooraInternalDomainStartQuizSubmissionDTO,
-  options?: RequestInit
-): Promise<postQuizzesIdSubmissionsResponse> => {
-  return customInstance<postQuizzesIdSubmissionsResponse>(getPostQuizzesIdSubmissionsUrl(id), {
+export const postQuizzesIdSubmissions = async (id: string,
+    githubCom4H1RZooraInternalDomainStartQuizSubmissionDTO: GithubCom4H1RZooraInternalDomainStartQuizSubmissionDTO, options?: RequestInit): Promise<postQuizzesIdSubmissionsResponse> => {
+
+  return customInstance<postQuizzesIdSubmissionsResponse>(getPostQuizzesIdSubmissionsUrl(id),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainStartQuizSubmissionDTO),
-  })
-}
-
-export const getPostQuizzesIdSubmissionsMutationOptions = <
-  TError = ErrorType<
-    | PostQuizzesIdSubmissions400
-    | PostQuizzesIdSubmissions401
-    | PostQuizzesIdSubmissions403
-    | PostQuizzesIdSubmissions409
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postQuizzesIdSubmissions>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainStartQuizSubmissionDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postQuizzesIdSubmissions>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainStartQuizSubmissionDTO },
-  TContext
-> => {
-  const mutationKey = ["postQuizzesIdSubmissions"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postQuizzesIdSubmissions>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainStartQuizSubmissionDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return postQuizzesIdSubmissions(id, data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainStartQuizSubmissionDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostQuizzesIdSubmissionsMutationResult = NonNullable<Awaited<ReturnType<typeof postQuizzesIdSubmissions>>>
-export type PostQuizzesIdSubmissionsMutationBody = GithubCom4H1RZooraInternalDomainStartQuizSubmissionDTO
-export type PostQuizzesIdSubmissionsMutationError = ErrorType<
-  PostQuizzesIdSubmissions400 | PostQuizzesIdSubmissions401 | PostQuizzesIdSubmissions403 | PostQuizzesIdSubmissions409
->
 
-/**
+
+export const getPostQuizzesIdSubmissionsMutationOptions = <TError = ErrorType<PostQuizzesIdSubmissions400 | PostQuizzesIdSubmissions401 | PostQuizzesIdSubmissions403 | PostQuizzesIdSubmissions409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzesIdSubmissions>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainStartQuizSubmissionDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postQuizzesIdSubmissions>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainStartQuizSubmissionDTO}, TContext> => {
+
+const mutationKey = ['postQuizzesIdSubmissions'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postQuizzesIdSubmissions>>, {id: string;data: GithubCom4H1RZooraInternalDomainStartQuizSubmissionDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postQuizzesIdSubmissions(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostQuizzesIdSubmissionsMutationResult = NonNullable<Awaited<ReturnType<typeof postQuizzesIdSubmissions>>>
+    export type PostQuizzesIdSubmissionsMutationBody = GithubCom4H1RZooraInternalDomainStartQuizSubmissionDTO
+    export type PostQuizzesIdSubmissionsMutationError = ErrorType<PostQuizzesIdSubmissions400 | PostQuizzesIdSubmissions401 | PostQuizzesIdSubmissions403 | PostQuizzesIdSubmissions409>
+
+    /**
  * @summary Start quiz submission
  */
-export const usePostQuizzesIdSubmissions = <
-  TError = ErrorType<
-    | PostQuizzesIdSubmissions400
-    | PostQuizzesIdSubmissions401
-    | PostQuizzesIdSubmissions403
-    | PostQuizzesIdSubmissions409
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postQuizzesIdSubmissions>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainStartQuizSubmissionDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postQuizzesIdSubmissions>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainStartQuizSubmissionDTO },
-  TContext
-> => {
-  return useMutation(getPostQuizzesIdSubmissionsMutationOptions(options), queryClient)
-}
+export const usePostQuizzesIdSubmissions = <TError = ErrorType<PostQuizzesIdSubmissions400 | PostQuizzesIdSubmissions401 | PostQuizzesIdSubmissions403 | PostQuizzesIdSubmissions409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzesIdSubmissions>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainStartQuizSubmissionDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postQuizzesIdSubmissions>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainStartQuizSubmissionDTO},
+        TContext
+      > => {
+      return useMutation(getPostQuizzesIdSubmissionsMutationOptions(options), queryClient);
+    }

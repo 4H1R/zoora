@@ -7,32 +7,32 @@
  */
 
 export type GetChatsParams = {
-  /**
-   * Model type filter
-   */
-  model_type?: string
-  /**
-   * Model UUID filter
-   */
-  model_id?: string
-  /**
-   * Status filter
-   */
-  status?: string
-  /**
-   * Page number
-   */
-  page?: number
-  /**
-   * Search term
-   */
-  search?: string
-  /**
-   * Order field
-   */
-  order_by?: string
-  /**
-   * Order direction
-   */
-  order_dir?: string
-}
+/**
+ * Model type filter
+ */
+model_type?: string;
+/**
+ * Model UUID filter
+ */
+model_id?: string;
+/**
+ * Status filter
+ */
+status?: string;
+/**
+ * Page number
+ */
+page?: number;
+/**
+ * Search term
+ */
+search?: string;
+/**
+ * Order field
+ */
+order_by?: string;
+/**
+ * Order direction
+ */
+order_dir?: string;
+};

@@ -7,5 +7,5 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainAdminForceResetPasswordDTO {
-  new_password: string
+  new_password: string;
 }

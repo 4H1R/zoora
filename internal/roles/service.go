@@ -176,7 +176,12 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 func (s *service) List(ctx context.Context, f domain.RoleFilter) ([]domain.Role, error) {
-	if f.OrganizationID != nil {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	if !caller.IsAdmin && caller.OrgID != nil {
+		f.OrganizationID = caller.OrgID
 		f.IncludePreset = true
 	}
 	return s.roleRepo.List(ctx, f)
@@ -186,6 +191,18 @@ func (s *service) AdminList(ctx context.Context, f domain.AdminRoleFilter) ([]do
 	return s.roleRepo.AdminList(ctx, f)
 }
 
-func (s *service) Stats(ctx context.Context, orgID *uuid.UUID) (*domain.RoleStats, error) {
+func (s *service) Stats(ctx context.Context) (*domain.RoleStats, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	var orgID *uuid.UUID
+	if !caller.IsAdmin && caller.OrgID != nil {
+		orgID = caller.OrgID
+	}
+	return s.roleRepo.Stats(ctx, orgID)
+}
+
+func (s *service) AdminStats(ctx context.Context, orgID *uuid.UUID) (*domain.RoleStats, error) {
 	return s.roleRepo.Stats(ctx, orgID)
 }

@@ -87,7 +87,7 @@ func (h *AdminHandler) Stats(c *gin.Context) {
 			orgID = &id
 		}
 	}
-	stats, err := h.svc.Stats(c.Request.Context(), orgID)
+	stats, err := h.svc.AdminStats(c.Request.Context(), orgID)
 	if err != nil {
 		_ = c.Error(err)
 		return

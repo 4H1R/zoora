@@ -4,6 +4,8 @@ import type { ErrorType } from "@/api/mutator/custom-instance"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
+
+import { orgHead } from "@/lib/org-head"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -19,6 +21,7 @@ import { getLiveRooms, usePostLiveRooms } from "@/api/live-sessions/live-session
 import { GithubCom4H1RZooraInternalDomainCreateClassSessionDTOType as SessionType } from "@/api/model"
 
 export const Route = createFileRoute("/_auth/org/$orgId/classes/$classId")({
+  head: () => orgHead("org.nav.classes"),
   component: RouteComponent,
 })
 

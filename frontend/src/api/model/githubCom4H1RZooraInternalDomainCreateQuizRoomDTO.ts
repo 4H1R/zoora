@@ -7,5 +7,5 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainCreateQuizRoomDTO {
-  class_session_id: string
+  class_session_id: string;
 }

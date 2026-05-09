@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
+import i18n from "@/i18n"
 
 import GridBackground from "@/components/auth/gradient-background"
 import { LoginForm } from "@/components/auth/login-form"
@@ -7,6 +8,10 @@ import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 export const Route = createFileRoute("/_guest/login")({
+  head: () => {
+    const title = `${i18n.t("login.title")} — ${i18n.t("common.brandName")}`
+    return { meta: [{ title }, { name: "description", content: title }] }
+  },
   component: LoginComponent,
 })
 

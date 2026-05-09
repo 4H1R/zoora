@@ -5,18 +5,18 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainQuestionBank } from "./githubCom4H1RZooraInternalDomainQuestionBank"
-import type { GithubCom4H1RZooraInternalDomainQuestionOption } from "./githubCom4H1RZooraInternalDomainQuestionOption"
-import type { GithubCom4H1RZooraInternalDomainQuestionType } from "./githubCom4H1RZooraInternalDomainQuestionType"
+import type { GithubCom4H1RZooraInternalDomainQuestionBank } from './githubCom4H1RZooraInternalDomainQuestionBank';
+import type { GithubCom4H1RZooraInternalDomainQuestionOption } from './githubCom4H1RZooraInternalDomainQuestionOption';
+import type { GithubCom4H1RZooraInternalDomainQuestionType } from './githubCom4H1RZooraInternalDomainQuestionType';
 
 export interface GithubCom4H1RZooraInternalDomainQuestion {
-  bank?: GithubCom4H1RZooraInternalDomainQuestionBank
-  bank_id?: string
-  created_at?: string
-  id?: string
-  options?: GithubCom4H1RZooraInternalDomainQuestionOption[]
-  organization_id?: string
-  text?: string
-  type?: GithubCom4H1RZooraInternalDomainQuestionType
-  updated_at?: string
+  bank?: GithubCom4H1RZooraInternalDomainQuestionBank;
+  bank_id?: string;
+  created_at?: string;
+  id?: string;
+  options?: GithubCom4H1RZooraInternalDomainQuestionOption[];
+  organization_id?: string;
+  text?: string;
+  type?: GithubCom4H1RZooraInternalDomainQuestionType;
+  updated_at?: string;
 }

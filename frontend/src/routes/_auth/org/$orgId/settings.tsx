@@ -1,6 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
+
+import { orgHead } from "@/lib/org-head"
 import { useEffect } from "react"
 import { useAccess } from "react-access-engine"
 import { useForm } from "react-hook-form"
@@ -20,6 +22,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 
 export const Route = createFileRoute("/_auth/org/$orgId/settings")({
+  head: () => orgHead("org.nav.settings"),
   component: RouteComponent,
 })
 
@@ -92,10 +95,6 @@ function RouteComponent() {
   return (
     <div className="w-full">
       <div className="border-border bg-card rounded-xl border">
-        <div className="border-border border-b px-6 py-4">
-          <h2 className="text-base font-semibold">{t("org.settings.title")}</h2>
-          <p className="text-muted-foreground mt-1 text-sm">{t("org.settings.subtitle")}</p>
-        </div>
         <form onSubmit={onSubmit} noValidate>
           <div className="p-6">
             <FieldGroup>

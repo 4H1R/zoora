@@ -6,11 +6,11 @@
  * OpenAPI spec version: 1.0
  */
 
-export type GithubCom4H1RZooraInternalDomainLiveRecordingStatus =
-  (typeof GithubCom4H1RZooraInternalDomainLiveRecordingStatus)[keyof typeof GithubCom4H1RZooraInternalDomainLiveRecordingStatus]
+export type GithubCom4H1RZooraInternalDomainLiveRecordingStatus = typeof GithubCom4H1RZooraInternalDomainLiveRecordingStatus[keyof typeof GithubCom4H1RZooraInternalDomainLiveRecordingStatus];
+
 
 export const GithubCom4H1RZooraInternalDomainLiveRecordingStatus = {
-  LiveRecordingStatusStarted: "started",
-  LiveRecordingStatusCompleted: "completed",
-  LiveRecordingStatusFailed: "failed",
-} as const
+  LiveRecordingStatusStarted: 'started',
+  LiveRecordingStatusCompleted: 'completed',
+  LiveRecordingStatusFailed: 'failed',
+} as const;

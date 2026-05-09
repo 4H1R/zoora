@@ -5,7 +5,25 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { ErrorType } from ".././mutator/custom-instance"
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   DeleteLiveRoomsIdRecordingsRecordingId200,
   DeleteLiveRoomsIdRecordingsRecordingId400,
@@ -65,28 +83,16 @@ import type {
   PutLiveRoomsIdConfig400,
   PutLiveRoomsIdConfig401,
   PutLiveRoomsIdConfig403,
-  PutLiveRoomsIdConfig404,
-} from "../model"
-import type {
-  DataTag,
-  DefinedInitialDataOptions,
-  DefinedUseQueryResult,
-  MutationFunction,
-  QueryClient,
-  QueryFunction,
-  QueryKey,
-  UndefinedInitialDataOptions,
-  UseMutationOptions,
-  UseMutationResult,
-  UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query"
+  PutLiveRoomsIdConfig404
+} from '../model';
 
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { customInstance } from '.././mutator/custom-instance';
+import type { ErrorType } from '.././mutator/custom-instance';
 
-import { customInstance } from ".././mutator/custom-instance"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * @summary List live rooms (scoped by RBAC)
@@ -106,142 +112,118 @@ export type getLiveRoomsResponse403 = {
   status: 403
 }
 
-export type getLiveRoomsResponseSuccess = getLiveRoomsResponse200 & {
-  headers: Headers
-}
+export type getLiveRoomsResponseSuccess = (getLiveRoomsResponse200) & {
+  headers: Headers;
+};
 export type getLiveRoomsResponseError = (getLiveRoomsResponse401 | getLiveRoomsResponse403) & {
-  headers: Headers
-}
+  headers: Headers;
+};
 
-export type getLiveRoomsResponse = getLiveRoomsResponseSuccess | getLiveRoomsResponseError
+export type getLiveRoomsResponse = (getLiveRoomsResponseSuccess | getLiveRoomsResponseError)
 
-export const getGetLiveRoomsUrl = (params?: GetLiveRoomsParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetLiveRoomsUrl = (params?: GetLiveRoomsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/live-rooms?${stringifiedParams}` : `/live-rooms`
 }
 
-export const getLiveRooms = async (
-  params?: GetLiveRoomsParams,
-  options?: RequestInit
-): Promise<getLiveRoomsResponse> => {
-  return customInstance<getLiveRoomsResponse>(getGetLiveRoomsUrl(params), {
+export const getLiveRooms = async (params?: GetLiveRoomsParams, options?: RequestInit): Promise<getLiveRoomsResponse> => {
+
+  return customInstance<getLiveRoomsResponse>(getGetLiveRoomsUrl(params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetLiveRoomsQueryKey = (params?: GetLiveRoomsParams) => {
-  return [`/live-rooms`, ...(params ? [params] : [])] as const
-}
 
-export const getGetLiveRoomsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getLiveRooms>>,
-  TError = ErrorType<GetLiveRooms401 | GetLiveRooms403>,
->(
-  params?: GetLiveRoomsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRooms>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetLiveRoomsQueryKey = (params?: GetLiveRoomsParams,) => {
+    return [
+    `/live-rooms`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetLiveRoomsQueryOptions = <TData = Awaited<ReturnType<typeof getLiveRooms>>, TError = ErrorType<GetLiveRooms401 | GetLiveRooms403>>(params?: GetLiveRoomsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRooms>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetLiveRoomsQueryKey(params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLiveRooms>>> = ({ signal }) =>
-    getLiveRooms(params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetLiveRoomsQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getLiveRooms>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLiveRooms>>> = ({ signal }) => getLiveRooms(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLiveRooms>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetLiveRoomsQueryResult = NonNullable<Awaited<ReturnType<typeof getLiveRooms>>>
 export type GetLiveRoomsQueryError = ErrorType<GetLiveRooms401 | GetLiveRooms403>
 
-export function useGetLiveRooms<
-  TData = Awaited<ReturnType<typeof getLiveRooms>>,
-  TError = ErrorType<GetLiveRooms401 | GetLiveRooms403>,
->(
-  params: undefined | GetLiveRoomsParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRooms>>, TError, TData>> &
-      Pick<
+
+export function useGetLiveRooms<TData = Awaited<ReturnType<typeof getLiveRooms>>, TError = ErrorType<GetLiveRooms401 | GetLiveRooms403>>(
+ params: undefined |  GetLiveRoomsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRooms>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLiveRooms>>,
           TError,
           Awaited<ReturnType<typeof getLiveRooms>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetLiveRooms<
-  TData = Awaited<ReturnType<typeof getLiveRooms>>,
-  TError = ErrorType<GetLiveRooms401 | GetLiveRooms403>,
->(
-  params?: GetLiveRoomsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRooms>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLiveRooms<TData = Awaited<ReturnType<typeof getLiveRooms>>, TError = ErrorType<GetLiveRooms401 | GetLiveRooms403>>(
+ params?: GetLiveRoomsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRooms>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLiveRooms>>,
           TError,
           Awaited<ReturnType<typeof getLiveRooms>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetLiveRooms<
-  TData = Awaited<ReturnType<typeof getLiveRooms>>,
-  TError = ErrorType<GetLiveRooms401 | GetLiveRooms403>,
->(
-  params?: GetLiveRoomsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRooms>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLiveRooms<TData = Awaited<ReturnType<typeof getLiveRooms>>, TError = ErrorType<GetLiveRooms401 | GetLiveRooms403>>(
+ params?: GetLiveRoomsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRooms>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List live rooms (scoped by RBAC)
  */
 
-export function useGetLiveRooms<
-  TData = Awaited<ReturnType<typeof getLiveRooms>>,
-  TError = ErrorType<GetLiveRooms401 | GetLiveRooms403>,
->(
-  params?: GetLiveRoomsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRooms>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetLiveRoomsQueryOptions(params, options)
+export function useGetLiveRooms<TData = Awaited<ReturnType<typeof getLiveRooms>>, TError = ErrorType<GetLiveRooms401 | GetLiveRooms403>>(
+ params?: GetLiveRoomsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRooms>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetLiveRoomsQueryOptions(params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Create live room
@@ -271,104 +253,83 @@ export type postLiveRoomsResponse409 = {
   status: 409
 }
 
-export type postLiveRoomsResponseSuccess = postLiveRoomsResponse201 & {
-  headers: Headers
-}
-export type postLiveRoomsResponseError = (
-  | postLiveRoomsResponse400
-  | postLiveRoomsResponse401
-  | postLiveRoomsResponse403
-  | postLiveRoomsResponse409
-) & {
-  headers: Headers
-}
+export type postLiveRoomsResponseSuccess = (postLiveRoomsResponse201) & {
+  headers: Headers;
+};
+export type postLiveRoomsResponseError = (postLiveRoomsResponse400 | postLiveRoomsResponse401 | postLiveRoomsResponse403 | postLiveRoomsResponse409) & {
+  headers: Headers;
+};
 
-export type postLiveRoomsResponse = postLiveRoomsResponseSuccess | postLiveRoomsResponseError
+export type postLiveRoomsResponse = (postLiveRoomsResponseSuccess | postLiveRoomsResponseError)
 
 export const getPostLiveRoomsUrl = () => {
+
+
+
+
   return `/live-rooms`
 }
 
-export const postLiveRooms = async (
-  githubCom4H1RZooraInternalDomainCreateLiveRoomDTO: GithubCom4H1RZooraInternalDomainCreateLiveRoomDTO,
-  options?: RequestInit
-): Promise<postLiveRoomsResponse> => {
-  return customInstance<postLiveRoomsResponse>(getPostLiveRoomsUrl(), {
+export const postLiveRooms = async (githubCom4H1RZooraInternalDomainCreateLiveRoomDTO: GithubCom4H1RZooraInternalDomainCreateLiveRoomDTO, options?: RequestInit): Promise<postLiveRoomsResponse> => {
+
+  return customInstance<postLiveRoomsResponse>(getPostLiveRoomsUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainCreateLiveRoomDTO),
-  })
-}
-
-export const getPostLiveRoomsMutationOptions = <
-  TError = ErrorType<PostLiveRooms400 | PostLiveRooms401 | PostLiveRooms403 | PostLiveRooms409>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postLiveRooms>>,
-    TError,
-    { data: GithubCom4H1RZooraInternalDomainCreateLiveRoomDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postLiveRooms>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainCreateLiveRoomDTO },
-  TContext
-> => {
-  const mutationKey = ["postLiveRooms"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postLiveRooms>>,
-    { data: GithubCom4H1RZooraInternalDomainCreateLiveRoomDTO }
-  > = (props) => {
-    const { data } = props ?? {}
-
-    return postLiveRooms(data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainCreateLiveRoomDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostLiveRoomsMutationResult = NonNullable<Awaited<ReturnType<typeof postLiveRooms>>>
-export type PostLiveRoomsMutationBody = GithubCom4H1RZooraInternalDomainCreateLiveRoomDTO
-export type PostLiveRoomsMutationError = ErrorType<
-  PostLiveRooms400 | PostLiveRooms401 | PostLiveRooms403 | PostLiveRooms409
->
 
-/**
+
+export const getPostLiveRoomsMutationOptions = <TError = ErrorType<PostLiveRooms400 | PostLiveRooms401 | PostLiveRooms403 | PostLiveRooms409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRooms>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateLiveRoomDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postLiveRooms>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateLiveRoomDTO}, TContext> => {
+
+const mutationKey = ['postLiveRooms'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postLiveRooms>>, {data: GithubCom4H1RZooraInternalDomainCreateLiveRoomDTO}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postLiveRooms(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostLiveRoomsMutationResult = NonNullable<Awaited<ReturnType<typeof postLiveRooms>>>
+    export type PostLiveRoomsMutationBody = GithubCom4H1RZooraInternalDomainCreateLiveRoomDTO
+    export type PostLiveRoomsMutationError = ErrorType<PostLiveRooms400 | PostLiveRooms401 | PostLiveRooms403 | PostLiveRooms409>
+
+    /**
  * @summary Create live room
  */
-export const usePostLiveRooms = <
-  TError = ErrorType<PostLiveRooms400 | PostLiveRooms401 | PostLiveRooms403 | PostLiveRooms409>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postLiveRooms>>,
-      TError,
-      { data: GithubCom4H1RZooraInternalDomainCreateLiveRoomDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postLiveRooms>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainCreateLiveRoomDTO },
-  TContext
-> => {
-  return useMutation(getPostLiveRoomsMutationOptions(options), queryClient)
-}
-/**
+export const usePostLiveRooms = <TError = ErrorType<PostLiveRooms400 | PostLiveRooms401 | PostLiveRooms403 | PostLiveRooms409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRooms>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateLiveRoomDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postLiveRooms>>,
+        TError,
+        {data: GithubCom4H1RZooraInternalDomainCreateLiveRoomDTO},
+        TContext
+      > => {
+      return useMutation(getPostLiveRoomsMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get live room
  */
 export type getLiveRoomsIdResponse200 = {
@@ -391,133 +352,111 @@ export type getLiveRoomsIdResponse404 = {
   status: 404
 }
 
-export type getLiveRoomsIdResponseSuccess = getLiveRoomsIdResponse200 & {
-  headers: Headers
-}
-export type getLiveRoomsIdResponseError = (
-  | getLiveRoomsIdResponse401
-  | getLiveRoomsIdResponse403
-  | getLiveRoomsIdResponse404
-) & {
-  headers: Headers
-}
+export type getLiveRoomsIdResponseSuccess = (getLiveRoomsIdResponse200) & {
+  headers: Headers;
+};
+export type getLiveRoomsIdResponseError = (getLiveRoomsIdResponse401 | getLiveRoomsIdResponse403 | getLiveRoomsIdResponse404) & {
+  headers: Headers;
+};
 
-export type getLiveRoomsIdResponse = getLiveRoomsIdResponseSuccess | getLiveRoomsIdResponseError
+export type getLiveRoomsIdResponse = (getLiveRoomsIdResponseSuccess | getLiveRoomsIdResponseError)
 
-export const getGetLiveRoomsIdUrl = (id: string) => {
+export const getGetLiveRoomsIdUrl = (id: string,) => {
+
+
+
+
   return `/live-rooms/${id}`
 }
 
 export const getLiveRoomsId = async (id: string, options?: RequestInit): Promise<getLiveRoomsIdResponse> => {
-  return customInstance<getLiveRoomsIdResponse>(getGetLiveRoomsIdUrl(id), {
+
+  return customInstance<getLiveRoomsIdResponse>(getGetLiveRoomsIdUrl(id),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetLiveRoomsIdQueryKey = (id: string) => {
-  return [`/live-rooms/${id}`] as const
-}
 
-export const getGetLiveRoomsIdQueryOptions = <
-  TData = Awaited<ReturnType<typeof getLiveRoomsId>>,
-  TError = ErrorType<GetLiveRoomsId401 | GetLiveRoomsId403 | GetLiveRoomsId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetLiveRoomsIdQueryKey = (id: string,) => {
+    return [
+    `/live-rooms/${id}`
+    ] as const;
+    }
+
+
+export const getGetLiveRoomsIdQueryOptions = <TData = Awaited<ReturnType<typeof getLiveRoomsId>>, TError = ErrorType<GetLiveRoomsId401 | GetLiveRoomsId403 | GetLiveRoomsId404>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetLiveRoomsIdQueryKey(id)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLiveRoomsId>>> = ({ signal }) =>
-    getLiveRoomsId(id, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetLiveRoomsIdQueryKey(id);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getLiveRoomsId>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLiveRoomsId>>> = ({ signal }) => getLiveRoomsId(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetLiveRoomsIdQueryResult = NonNullable<Awaited<ReturnType<typeof getLiveRoomsId>>>
 export type GetLiveRoomsIdQueryError = ErrorType<GetLiveRoomsId401 | GetLiveRoomsId403 | GetLiveRoomsId404>
 
-export function useGetLiveRoomsId<
-  TData = Awaited<ReturnType<typeof getLiveRoomsId>>,
-  TError = ErrorType<GetLiveRoomsId401 | GetLiveRoomsId403 | GetLiveRoomsId404>,
->(
-  id: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsId>>, TError, TData>> &
-      Pick<
+
+export function useGetLiveRoomsId<TData = Awaited<ReturnType<typeof getLiveRoomsId>>, TError = ErrorType<GetLiveRoomsId401 | GetLiveRoomsId403 | GetLiveRoomsId404>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLiveRoomsId>>,
           TError,
           Awaited<ReturnType<typeof getLiveRoomsId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetLiveRoomsId<
-  TData = Awaited<ReturnType<typeof getLiveRoomsId>>,
-  TError = ErrorType<GetLiveRoomsId401 | GetLiveRoomsId403 | GetLiveRoomsId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsId>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLiveRoomsId<TData = Awaited<ReturnType<typeof getLiveRoomsId>>, TError = ErrorType<GetLiveRoomsId401 | GetLiveRoomsId403 | GetLiveRoomsId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLiveRoomsId>>,
           TError,
           Awaited<ReturnType<typeof getLiveRoomsId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetLiveRoomsId<
-  TData = Awaited<ReturnType<typeof getLiveRoomsId>>,
-  TError = ErrorType<GetLiveRoomsId401 | GetLiveRoomsId403 | GetLiveRoomsId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLiveRoomsId<TData = Awaited<ReturnType<typeof getLiveRoomsId>>, TError = ErrorType<GetLiveRoomsId401 | GetLiveRoomsId403 | GetLiveRoomsId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get live room
  */
 
-export function useGetLiveRoomsId<
-  TData = Awaited<ReturnType<typeof getLiveRoomsId>>,
-  TError = ErrorType<GetLiveRoomsId401 | GetLiveRoomsId403 | GetLiveRoomsId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetLiveRoomsIdQueryOptions(id, options)
+export function useGetLiveRoomsId<TData = Awaited<ReturnType<typeof getLiveRoomsId>>, TError = ErrorType<GetLiveRoomsId401 | GetLiveRoomsId403 | GetLiveRoomsId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetLiveRoomsIdQueryOptions(id,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Update live room config
@@ -547,109 +486,84 @@ export type putLiveRoomsIdConfigResponse404 = {
   status: 404
 }
 
-export type putLiveRoomsIdConfigResponseSuccess = putLiveRoomsIdConfigResponse200 & {
-  headers: Headers
-}
-export type putLiveRoomsIdConfigResponseError = (
-  | putLiveRoomsIdConfigResponse400
-  | putLiveRoomsIdConfigResponse401
-  | putLiveRoomsIdConfigResponse403
-  | putLiveRoomsIdConfigResponse404
-) & {
-  headers: Headers
-}
+export type putLiveRoomsIdConfigResponseSuccess = (putLiveRoomsIdConfigResponse200) & {
+  headers: Headers;
+};
+export type putLiveRoomsIdConfigResponseError = (putLiveRoomsIdConfigResponse400 | putLiveRoomsIdConfigResponse401 | putLiveRoomsIdConfigResponse403 | putLiveRoomsIdConfigResponse404) & {
+  headers: Headers;
+};
 
-export type putLiveRoomsIdConfigResponse = putLiveRoomsIdConfigResponseSuccess | putLiveRoomsIdConfigResponseError
+export type putLiveRoomsIdConfigResponse = (putLiveRoomsIdConfigResponseSuccess | putLiveRoomsIdConfigResponseError)
 
-export const getPutLiveRoomsIdConfigUrl = (id: string) => {
+export const getPutLiveRoomsIdConfigUrl = (id: string,) => {
+
+
+
+
   return `/live-rooms/${id}/config`
 }
 
-export const putLiveRoomsIdConfig = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO: GithubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO,
-  options?: RequestInit
-): Promise<putLiveRoomsIdConfigResponse> => {
-  return customInstance<putLiveRoomsIdConfigResponse>(getPutLiveRoomsIdConfigUrl(id), {
+export const putLiveRoomsIdConfig = async (id: string,
+    githubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO: GithubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO, options?: RequestInit): Promise<putLiveRoomsIdConfigResponse> => {
+
+  return customInstance<putLiveRoomsIdConfigResponse>(getPutLiveRoomsIdConfigUrl(id),
+  {
     ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO),
-  })
-}
-
-export const getPutLiveRoomsIdConfigMutationOptions = <
-  TError = ErrorType<
-    PutLiveRoomsIdConfig400 | PutLiveRoomsIdConfig401 | PutLiveRoomsIdConfig403 | PutLiveRoomsIdConfig404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putLiveRoomsIdConfig>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putLiveRoomsIdConfig>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO },
-  TContext
-> => {
-  const mutationKey = ["putLiveRoomsIdConfig"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putLiveRoomsIdConfig>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return putLiveRoomsIdConfig(id, data, requestOptions)
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutLiveRoomsIdConfigMutationResult = NonNullable<Awaited<ReturnType<typeof putLiveRoomsIdConfig>>>
-export type PutLiveRoomsIdConfigMutationBody = GithubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO
-export type PutLiveRoomsIdConfigMutationError = ErrorType<
-  PutLiveRoomsIdConfig400 | PutLiveRoomsIdConfig401 | PutLiveRoomsIdConfig403 | PutLiveRoomsIdConfig404
->
 
-/**
+
+export const getPutLiveRoomsIdConfigMutationOptions = <TError = ErrorType<PutLiveRoomsIdConfig400 | PutLiveRoomsIdConfig401 | PutLiveRoomsIdConfig403 | PutLiveRoomsIdConfig404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putLiveRoomsIdConfig>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putLiveRoomsIdConfig>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO}, TContext> => {
+
+const mutationKey = ['putLiveRoomsIdConfig'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putLiveRoomsIdConfig>>, {id: string;data: GithubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  putLiveRoomsIdConfig(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutLiveRoomsIdConfigMutationResult = NonNullable<Awaited<ReturnType<typeof putLiveRoomsIdConfig>>>
+    export type PutLiveRoomsIdConfigMutationBody = GithubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO
+    export type PutLiveRoomsIdConfigMutationError = ErrorType<PutLiveRoomsIdConfig400 | PutLiveRoomsIdConfig401 | PutLiveRoomsIdConfig403 | PutLiveRoomsIdConfig404>
+
+    /**
  * @summary Update live room config
  */
-export const usePutLiveRoomsIdConfig = <
-  TError = ErrorType<
-    PutLiveRoomsIdConfig400 | PutLiveRoomsIdConfig401 | PutLiveRoomsIdConfig403 | PutLiveRoomsIdConfig404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putLiveRoomsIdConfig>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putLiveRoomsIdConfig>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO },
-  TContext
-> => {
-  return useMutation(getPutLiveRoomsIdConfigMutationOptions(options), queryClient)
-}
-/**
+export const usePutLiveRoomsIdConfig = <TError = ErrorType<PutLiveRoomsIdConfig400 | PutLiveRoomsIdConfig401 | PutLiveRoomsIdConfig403 | PutLiveRoomsIdConfig404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putLiveRoomsIdConfig>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putLiveRoomsIdConfig>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO},
+        TContext
+      > => {
+      return useMutation(getPutLiveRoomsIdConfigMutationOptions(options), queryClient);
+    }
+    /**
  * @summary End live room
  */
 export type postLiveRoomsIdEndResponse200 = {
@@ -677,76 +591,82 @@ export type postLiveRoomsIdEndResponse404 = {
   status: 404
 }
 
-export type postLiveRoomsIdEndResponseSuccess = postLiveRoomsIdEndResponse200 & {
-  headers: Headers
-}
-export type postLiveRoomsIdEndResponseError = (
-  | postLiveRoomsIdEndResponse400
-  | postLiveRoomsIdEndResponse401
-  | postLiveRoomsIdEndResponse403
-  | postLiveRoomsIdEndResponse404
-) & {
-  headers: Headers
-}
+export type postLiveRoomsIdEndResponseSuccess = (postLiveRoomsIdEndResponse200) & {
+  headers: Headers;
+};
+export type postLiveRoomsIdEndResponseError = (postLiveRoomsIdEndResponse400 | postLiveRoomsIdEndResponse401 | postLiveRoomsIdEndResponse403 | postLiveRoomsIdEndResponse404) & {
+  headers: Headers;
+};
 
-export type postLiveRoomsIdEndResponse = postLiveRoomsIdEndResponseSuccess | postLiveRoomsIdEndResponseError
+export type postLiveRoomsIdEndResponse = (postLiveRoomsIdEndResponseSuccess | postLiveRoomsIdEndResponseError)
 
-export const getPostLiveRoomsIdEndUrl = (id: string) => {
+export const getPostLiveRoomsIdEndUrl = (id: string,) => {
+
+
+
+
   return `/live-rooms/${id}/end`
 }
 
 export const postLiveRoomsIdEnd = async (id: string, options?: RequestInit): Promise<postLiveRoomsIdEndResponse> => {
-  return customInstance<postLiveRoomsIdEndResponse>(getPostLiveRoomsIdEndUrl(id), {
+
+  return customInstance<postLiveRoomsIdEndResponse>(getPostLiveRoomsIdEndUrl(id),
+  {
     ...options,
-    method: "POST",
-  })
-}
+    method: 'POST'
 
-export const getPostLiveRoomsIdEndMutationOptions = <
-  TError = ErrorType<PostLiveRoomsIdEnd400 | PostLiveRoomsIdEnd401 | PostLiveRoomsIdEnd403 | PostLiveRoomsIdEnd404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdEnd>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdEnd>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["postLiveRoomsIdEnd"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof postLiveRoomsIdEnd>>, { id: string }> = (props) => {
-    const { id } = props ?? {}
-
-    return postLiveRoomsIdEnd(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostLiveRoomsIdEndMutationResult = NonNullable<Awaited<ReturnType<typeof postLiveRoomsIdEnd>>>
 
-export type PostLiveRoomsIdEndMutationError = ErrorType<
-  PostLiveRoomsIdEnd400 | PostLiveRoomsIdEnd401 | PostLiveRoomsIdEnd403 | PostLiveRoomsIdEnd404
->
 
-/**
+export const getPostLiveRoomsIdEndMutationOptions = <TError = ErrorType<PostLiveRoomsIdEnd400 | PostLiveRoomsIdEnd401 | PostLiveRoomsIdEnd403 | PostLiveRoomsIdEnd404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdEnd>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdEnd>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['postLiveRoomsIdEnd'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postLiveRoomsIdEnd>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  postLiveRoomsIdEnd(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostLiveRoomsIdEndMutationResult = NonNullable<Awaited<ReturnType<typeof postLiveRoomsIdEnd>>>
+
+    export type PostLiveRoomsIdEndMutationError = ErrorType<PostLiveRoomsIdEnd400 | PostLiveRoomsIdEnd401 | PostLiveRoomsIdEnd403 | PostLiveRoomsIdEnd404>
+
+    /**
  * @summary End live room
  */
-export const usePostLiveRoomsIdEnd = <
-  TError = ErrorType<PostLiveRoomsIdEnd400 | PostLiveRoomsIdEnd401 | PostLiveRoomsIdEnd403 | PostLiveRoomsIdEnd404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdEnd>>, TError, { id: string }, TContext>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof postLiveRoomsIdEnd>>, TError, { id: string }, TContext> => {
-  return useMutation(getPostLiveRoomsIdEndMutationOptions(options), queryClient)
-}
-/**
+export const usePostLiveRoomsIdEnd = <TError = ErrorType<PostLiveRoomsIdEnd400 | PostLiveRoomsIdEnd401 | PostLiveRoomsIdEnd403 | PostLiveRoomsIdEnd404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdEnd>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postLiveRoomsIdEnd>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getPostLiveRoomsIdEndMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Heartbeat for live room
  */
 export type postLiveRoomsIdHeartbeatResponse200 = {
@@ -769,87 +689,82 @@ export type postLiveRoomsIdHeartbeatResponse404 = {
   status: 404
 }
 
-export type postLiveRoomsIdHeartbeatResponseSuccess = postLiveRoomsIdHeartbeatResponse200 & {
-  headers: Headers
-}
-export type postLiveRoomsIdHeartbeatResponseError = (
-  | postLiveRoomsIdHeartbeatResponse401
-  | postLiveRoomsIdHeartbeatResponse403
-  | postLiveRoomsIdHeartbeatResponse404
-) & {
-  headers: Headers
-}
+export type postLiveRoomsIdHeartbeatResponseSuccess = (postLiveRoomsIdHeartbeatResponse200) & {
+  headers: Headers;
+};
+export type postLiveRoomsIdHeartbeatResponseError = (postLiveRoomsIdHeartbeatResponse401 | postLiveRoomsIdHeartbeatResponse403 | postLiveRoomsIdHeartbeatResponse404) & {
+  headers: Headers;
+};
 
-export type postLiveRoomsIdHeartbeatResponse =
-  | postLiveRoomsIdHeartbeatResponseSuccess
-  | postLiveRoomsIdHeartbeatResponseError
+export type postLiveRoomsIdHeartbeatResponse = (postLiveRoomsIdHeartbeatResponseSuccess | postLiveRoomsIdHeartbeatResponseError)
 
-export const getPostLiveRoomsIdHeartbeatUrl = (id: string) => {
+export const getPostLiveRoomsIdHeartbeatUrl = (id: string,) => {
+
+
+
+
   return `/live-rooms/${id}/heartbeat`
 }
 
-export const postLiveRoomsIdHeartbeat = async (
-  id: string,
-  options?: RequestInit
-): Promise<postLiveRoomsIdHeartbeatResponse> => {
-  return customInstance<postLiveRoomsIdHeartbeatResponse>(getPostLiveRoomsIdHeartbeatUrl(id), {
+export const postLiveRoomsIdHeartbeat = async (id: string, options?: RequestInit): Promise<postLiveRoomsIdHeartbeatResponse> => {
+
+  return customInstance<postLiveRoomsIdHeartbeatResponse>(getPostLiveRoomsIdHeartbeatUrl(id),
+  {
     ...options,
-    method: "POST",
-  })
-}
+    method: 'POST'
 
-export const getPostLiveRoomsIdHeartbeatMutationOptions = <
-  TError = ErrorType<PostLiveRoomsIdHeartbeat401 | PostLiveRoomsIdHeartbeat403 | PostLiveRoomsIdHeartbeat404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdHeartbeat>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdHeartbeat>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["postLiveRoomsIdHeartbeat"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof postLiveRoomsIdHeartbeat>>, { id: string }> = (
-    props
-  ) => {
-    const { id } = props ?? {}
-
-    return postLiveRoomsIdHeartbeat(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostLiveRoomsIdHeartbeatMutationResult = NonNullable<Awaited<ReturnType<typeof postLiveRoomsIdHeartbeat>>>
 
-export type PostLiveRoomsIdHeartbeatMutationError = ErrorType<
-  PostLiveRoomsIdHeartbeat401 | PostLiveRoomsIdHeartbeat403 | PostLiveRoomsIdHeartbeat404
->
 
-/**
+export const getPostLiveRoomsIdHeartbeatMutationOptions = <TError = ErrorType<PostLiveRoomsIdHeartbeat401 | PostLiveRoomsIdHeartbeat403 | PostLiveRoomsIdHeartbeat404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdHeartbeat>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdHeartbeat>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['postLiveRoomsIdHeartbeat'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postLiveRoomsIdHeartbeat>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  postLiveRoomsIdHeartbeat(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostLiveRoomsIdHeartbeatMutationResult = NonNullable<Awaited<ReturnType<typeof postLiveRoomsIdHeartbeat>>>
+
+    export type PostLiveRoomsIdHeartbeatMutationError = ErrorType<PostLiveRoomsIdHeartbeat401 | PostLiveRoomsIdHeartbeat403 | PostLiveRoomsIdHeartbeat404>
+
+    /**
  * @summary Heartbeat for live room
  */
-export const usePostLiveRoomsIdHeartbeat = <
-  TError = ErrorType<PostLiveRoomsIdHeartbeat401 | PostLiveRoomsIdHeartbeat403 | PostLiveRoomsIdHeartbeat404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postLiveRoomsIdHeartbeat>>,
-      TError,
-      { id: string },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof postLiveRoomsIdHeartbeat>>, TError, { id: string }, TContext> => {
-  return useMutation(getPostLiveRoomsIdHeartbeatMutationOptions(options), queryClient)
-}
-/**
+export const usePostLiveRoomsIdHeartbeat = <TError = ErrorType<PostLiveRoomsIdHeartbeat401 | PostLiveRoomsIdHeartbeat403 | PostLiveRoomsIdHeartbeat404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdHeartbeat>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postLiveRoomsIdHeartbeat>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getPostLiveRoomsIdHeartbeatMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Join live room
  */
 export type postLiveRoomsIdJoinResponse200 = {
@@ -872,75 +787,82 @@ export type postLiveRoomsIdJoinResponse404 = {
   status: 404
 }
 
-export type postLiveRoomsIdJoinResponseSuccess = postLiveRoomsIdJoinResponse200 & {
-  headers: Headers
-}
-export type postLiveRoomsIdJoinResponseError = (
-  | postLiveRoomsIdJoinResponse401
-  | postLiveRoomsIdJoinResponse403
-  | postLiveRoomsIdJoinResponse404
-) & {
-  headers: Headers
-}
+export type postLiveRoomsIdJoinResponseSuccess = (postLiveRoomsIdJoinResponse200) & {
+  headers: Headers;
+};
+export type postLiveRoomsIdJoinResponseError = (postLiveRoomsIdJoinResponse401 | postLiveRoomsIdJoinResponse403 | postLiveRoomsIdJoinResponse404) & {
+  headers: Headers;
+};
 
-export type postLiveRoomsIdJoinResponse = postLiveRoomsIdJoinResponseSuccess | postLiveRoomsIdJoinResponseError
+export type postLiveRoomsIdJoinResponse = (postLiveRoomsIdJoinResponseSuccess | postLiveRoomsIdJoinResponseError)
 
-export const getPostLiveRoomsIdJoinUrl = (id: string) => {
+export const getPostLiveRoomsIdJoinUrl = (id: string,) => {
+
+
+
+
   return `/live-rooms/${id}/join`
 }
 
 export const postLiveRoomsIdJoin = async (id: string, options?: RequestInit): Promise<postLiveRoomsIdJoinResponse> => {
-  return customInstance<postLiveRoomsIdJoinResponse>(getPostLiveRoomsIdJoinUrl(id), {
+
+  return customInstance<postLiveRoomsIdJoinResponse>(getPostLiveRoomsIdJoinUrl(id),
+  {
     ...options,
-    method: "POST",
-  })
-}
+    method: 'POST'
 
-export const getPostLiveRoomsIdJoinMutationOptions = <
-  TError = ErrorType<PostLiveRoomsIdJoin401 | PostLiveRoomsIdJoin403 | PostLiveRoomsIdJoin404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdJoin>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdJoin>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["postLiveRoomsIdJoin"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof postLiveRoomsIdJoin>>, { id: string }> = (props) => {
-    const { id } = props ?? {}
-
-    return postLiveRoomsIdJoin(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostLiveRoomsIdJoinMutationResult = NonNullable<Awaited<ReturnType<typeof postLiveRoomsIdJoin>>>
 
-export type PostLiveRoomsIdJoinMutationError = ErrorType<
-  PostLiveRoomsIdJoin401 | PostLiveRoomsIdJoin403 | PostLiveRoomsIdJoin404
->
 
-/**
+export const getPostLiveRoomsIdJoinMutationOptions = <TError = ErrorType<PostLiveRoomsIdJoin401 | PostLiveRoomsIdJoin403 | PostLiveRoomsIdJoin404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdJoin>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdJoin>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['postLiveRoomsIdJoin'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postLiveRoomsIdJoin>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  postLiveRoomsIdJoin(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostLiveRoomsIdJoinMutationResult = NonNullable<Awaited<ReturnType<typeof postLiveRoomsIdJoin>>>
+
+    export type PostLiveRoomsIdJoinMutationError = ErrorType<PostLiveRoomsIdJoin401 | PostLiveRoomsIdJoin403 | PostLiveRoomsIdJoin404>
+
+    /**
  * @summary Join live room
  */
-export const usePostLiveRoomsIdJoin = <
-  TError = ErrorType<PostLiveRoomsIdJoin401 | PostLiveRoomsIdJoin403 | PostLiveRoomsIdJoin404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdJoin>>, TError, { id: string }, TContext>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof postLiveRoomsIdJoin>>, TError, { id: string }, TContext> => {
-  return useMutation(getPostLiveRoomsIdJoinMutationOptions(options), queryClient)
-}
-/**
+export const usePostLiveRoomsIdJoin = <TError = ErrorType<PostLiveRoomsIdJoin401 | PostLiveRoomsIdJoin403 | PostLiveRoomsIdJoin404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdJoin>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postLiveRoomsIdJoin>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getPostLiveRoomsIdJoinMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Leave live room
  */
 export type postLiveRoomsIdLeaveResponse200 = {
@@ -958,72 +880,82 @@ export type postLiveRoomsIdLeaveResponse404 = {
   status: 404
 }
 
-export type postLiveRoomsIdLeaveResponseSuccess = postLiveRoomsIdLeaveResponse200 & {
-  headers: Headers
-}
+export type postLiveRoomsIdLeaveResponseSuccess = (postLiveRoomsIdLeaveResponse200) & {
+  headers: Headers;
+};
 export type postLiveRoomsIdLeaveResponseError = (postLiveRoomsIdLeaveResponse401 | postLiveRoomsIdLeaveResponse404) & {
-  headers: Headers
-}
+  headers: Headers;
+};
 
-export type postLiveRoomsIdLeaveResponse = postLiveRoomsIdLeaveResponseSuccess | postLiveRoomsIdLeaveResponseError
+export type postLiveRoomsIdLeaveResponse = (postLiveRoomsIdLeaveResponseSuccess | postLiveRoomsIdLeaveResponseError)
 
-export const getPostLiveRoomsIdLeaveUrl = (id: string) => {
+export const getPostLiveRoomsIdLeaveUrl = (id: string,) => {
+
+
+
+
   return `/live-rooms/${id}/leave`
 }
 
-export const postLiveRoomsIdLeave = async (
-  id: string,
-  options?: RequestInit
-): Promise<postLiveRoomsIdLeaveResponse> => {
-  return customInstance<postLiveRoomsIdLeaveResponse>(getPostLiveRoomsIdLeaveUrl(id), {
+export const postLiveRoomsIdLeave = async (id: string, options?: RequestInit): Promise<postLiveRoomsIdLeaveResponse> => {
+
+  return customInstance<postLiveRoomsIdLeaveResponse>(getPostLiveRoomsIdLeaveUrl(id),
+  {
     ...options,
-    method: "POST",
-  })
-}
+    method: 'POST'
 
-export const getPostLiveRoomsIdLeaveMutationOptions = <
-  TError = ErrorType<PostLiveRoomsIdLeave401 | PostLiveRoomsIdLeave404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdLeave>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdLeave>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["postLiveRoomsIdLeave"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof postLiveRoomsIdLeave>>, { id: string }> = (props) => {
-    const { id } = props ?? {}
-
-    return postLiveRoomsIdLeave(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostLiveRoomsIdLeaveMutationResult = NonNullable<Awaited<ReturnType<typeof postLiveRoomsIdLeave>>>
 
-export type PostLiveRoomsIdLeaveMutationError = ErrorType<PostLiveRoomsIdLeave401 | PostLiveRoomsIdLeave404>
 
-/**
+export const getPostLiveRoomsIdLeaveMutationOptions = <TError = ErrorType<PostLiveRoomsIdLeave401 | PostLiveRoomsIdLeave404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdLeave>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdLeave>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['postLiveRoomsIdLeave'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postLiveRoomsIdLeave>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  postLiveRoomsIdLeave(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostLiveRoomsIdLeaveMutationResult = NonNullable<Awaited<ReturnType<typeof postLiveRoomsIdLeave>>>
+
+    export type PostLiveRoomsIdLeaveMutationError = ErrorType<PostLiveRoomsIdLeave401 | PostLiveRoomsIdLeave404>
+
+    /**
  * @summary Leave live room
  */
-export const usePostLiveRoomsIdLeave = <
-  TError = ErrorType<PostLiveRoomsIdLeave401 | PostLiveRoomsIdLeave404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdLeave>>, TError, { id: string }, TContext>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof postLiveRoomsIdLeave>>, TError, { id: string }, TContext> => {
-  return useMutation(getPostLiveRoomsIdLeaveMutationOptions(options), queryClient)
-}
-/**
+export const usePostLiveRoomsIdLeave = <TError = ErrorType<PostLiveRoomsIdLeave401 | PostLiveRoomsIdLeave404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdLeave>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postLiveRoomsIdLeave>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getPostLiveRoomsIdLeaveMutationOptions(options), queryClient);
+    }
+    /**
  * @summary List live room participants
  */
 export type getLiveRoomsIdParticipantsResponse200 = {
@@ -1046,158 +978,126 @@ export type getLiveRoomsIdParticipantsResponse404 = {
   status: 404
 }
 
-export type getLiveRoomsIdParticipantsResponseSuccess = getLiveRoomsIdParticipantsResponse200 & {
-  headers: Headers
-}
-export type getLiveRoomsIdParticipantsResponseError = (
-  | getLiveRoomsIdParticipantsResponse401
-  | getLiveRoomsIdParticipantsResponse403
-  | getLiveRoomsIdParticipantsResponse404
-) & {
-  headers: Headers
-}
+export type getLiveRoomsIdParticipantsResponseSuccess = (getLiveRoomsIdParticipantsResponse200) & {
+  headers: Headers;
+};
+export type getLiveRoomsIdParticipantsResponseError = (getLiveRoomsIdParticipantsResponse401 | getLiveRoomsIdParticipantsResponse403 | getLiveRoomsIdParticipantsResponse404) & {
+  headers: Headers;
+};
 
-export type getLiveRoomsIdParticipantsResponse =
-  | getLiveRoomsIdParticipantsResponseSuccess
-  | getLiveRoomsIdParticipantsResponseError
+export type getLiveRoomsIdParticipantsResponse = (getLiveRoomsIdParticipantsResponseSuccess | getLiveRoomsIdParticipantsResponseError)
 
-export const getGetLiveRoomsIdParticipantsUrl = (id: string, params?: GetLiveRoomsIdParticipantsParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetLiveRoomsIdParticipantsUrl = (id: string,
+    params?: GetLiveRoomsIdParticipantsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
-  })
+  });
 
-  const stringifiedParams = normalizedParams.toString()
+  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0
-    ? `/live-rooms/${id}/participants?${stringifiedParams}`
-    : `/live-rooms/${id}/participants`
+  return stringifiedParams.length > 0 ? `/live-rooms/${id}/participants?${stringifiedParams}` : `/live-rooms/${id}/participants`
 }
 
-export const getLiveRoomsIdParticipants = async (
-  id: string,
-  params?: GetLiveRoomsIdParticipantsParams,
-  options?: RequestInit
-): Promise<getLiveRoomsIdParticipantsResponse> => {
-  return customInstance<getLiveRoomsIdParticipantsResponse>(getGetLiveRoomsIdParticipantsUrl(id, params), {
+export const getLiveRoomsIdParticipants = async (id: string,
+    params?: GetLiveRoomsIdParticipantsParams, options?: RequestInit): Promise<getLiveRoomsIdParticipantsResponse> => {
+
+  return customInstance<getLiveRoomsIdParticipantsResponse>(getGetLiveRoomsIdParticipantsUrl(id,params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetLiveRoomsIdParticipantsQueryKey = (id: string, params?: GetLiveRoomsIdParticipantsParams) => {
-  return [`/live-rooms/${id}/participants`, ...(params ? [params] : [])] as const
-}
 
-export const getGetLiveRoomsIdParticipantsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>,
-  TError = ErrorType<GetLiveRoomsIdParticipants401 | GetLiveRoomsIdParticipants403 | GetLiveRoomsIdParticipants404>,
->(
-  id: string,
-  params?: GetLiveRoomsIdParticipantsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetLiveRoomsIdParticipantsQueryKey = (id: string,
+    params?: GetLiveRoomsIdParticipantsParams,) => {
+    return [
+    `/live-rooms/${id}/participants`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetLiveRoomsIdParticipantsQueryOptions = <TData = Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>, TError = ErrorType<GetLiveRoomsIdParticipants401 | GetLiveRoomsIdParticipants403 | GetLiveRoomsIdParticipants404>>(id: string,
+    params?: GetLiveRoomsIdParticipantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetLiveRoomsIdParticipantsQueryKey(id, params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>> = ({ signal }) =>
-    getLiveRoomsIdParticipants(id, params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetLiveRoomsIdParticipantsQueryKey(id,params);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>> = ({ signal }) => getLiveRoomsIdParticipants(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetLiveRoomsIdParticipantsQueryResult = NonNullable<Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>>
-export type GetLiveRoomsIdParticipantsQueryError = ErrorType<
-  GetLiveRoomsIdParticipants401 | GetLiveRoomsIdParticipants403 | GetLiveRoomsIdParticipants404
->
+export type GetLiveRoomsIdParticipantsQueryError = ErrorType<GetLiveRoomsIdParticipants401 | GetLiveRoomsIdParticipants403 | GetLiveRoomsIdParticipants404>
 
-export function useGetLiveRoomsIdParticipants<
-  TData = Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>,
-  TError = ErrorType<GetLiveRoomsIdParticipants401 | GetLiveRoomsIdParticipants403 | GetLiveRoomsIdParticipants404>,
->(
-  id: string,
-  params: undefined | GetLiveRoomsIdParticipantsParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>, TError, TData>> &
-      Pick<
+
+export function useGetLiveRoomsIdParticipants<TData = Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>, TError = ErrorType<GetLiveRoomsIdParticipants401 | GetLiveRoomsIdParticipants403 | GetLiveRoomsIdParticipants404>>(
+ id: string,
+    params: undefined |  GetLiveRoomsIdParticipantsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>,
           TError,
           Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetLiveRoomsIdParticipants<
-  TData = Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>,
-  TError = ErrorType<GetLiveRoomsIdParticipants401 | GetLiveRoomsIdParticipants403 | GetLiveRoomsIdParticipants404>,
->(
-  id: string,
-  params?: GetLiveRoomsIdParticipantsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLiveRoomsIdParticipants<TData = Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>, TError = ErrorType<GetLiveRoomsIdParticipants401 | GetLiveRoomsIdParticipants403 | GetLiveRoomsIdParticipants404>>(
+ id: string,
+    params?: GetLiveRoomsIdParticipantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>,
           TError,
           Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetLiveRoomsIdParticipants<
-  TData = Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>,
-  TError = ErrorType<GetLiveRoomsIdParticipants401 | GetLiveRoomsIdParticipants403 | GetLiveRoomsIdParticipants404>,
->(
-  id: string,
-  params?: GetLiveRoomsIdParticipantsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLiveRoomsIdParticipants<TData = Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>, TError = ErrorType<GetLiveRoomsIdParticipants401 | GetLiveRoomsIdParticipants403 | GetLiveRoomsIdParticipants404>>(
+ id: string,
+    params?: GetLiveRoomsIdParticipantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List live room participants
  */
 
-export function useGetLiveRoomsIdParticipants<
-  TData = Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>,
-  TError = ErrorType<GetLiveRoomsIdParticipants401 | GetLiveRoomsIdParticipants403 | GetLiveRoomsIdParticipants404>,
->(
-  id: string,
-  params?: GetLiveRoomsIdParticipantsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetLiveRoomsIdParticipantsQueryOptions(id, params, options)
+export function useGetLiveRoomsIdParticipants<TData = Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>, TError = ErrorType<GetLiveRoomsIdParticipants401 | GetLiveRoomsIdParticipants403 | GetLiveRoomsIdParticipants404>>(
+ id: string,
+    params?: GetLiveRoomsIdParticipantsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdParticipants>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetLiveRoomsIdParticipantsQueryOptions(id,params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary List recordings
@@ -1222,140 +1122,111 @@ export type getLiveRoomsIdRecordingsResponse404 = {
   status: 404
 }
 
-export type getLiveRoomsIdRecordingsResponseSuccess = getLiveRoomsIdRecordingsResponse200 & {
-  headers: Headers
-}
-export type getLiveRoomsIdRecordingsResponseError = (
-  | getLiveRoomsIdRecordingsResponse401
-  | getLiveRoomsIdRecordingsResponse403
-  | getLiveRoomsIdRecordingsResponse404
-) & {
-  headers: Headers
-}
+export type getLiveRoomsIdRecordingsResponseSuccess = (getLiveRoomsIdRecordingsResponse200) & {
+  headers: Headers;
+};
+export type getLiveRoomsIdRecordingsResponseError = (getLiveRoomsIdRecordingsResponse401 | getLiveRoomsIdRecordingsResponse403 | getLiveRoomsIdRecordingsResponse404) & {
+  headers: Headers;
+};
 
-export type getLiveRoomsIdRecordingsResponse =
-  | getLiveRoomsIdRecordingsResponseSuccess
-  | getLiveRoomsIdRecordingsResponseError
+export type getLiveRoomsIdRecordingsResponse = (getLiveRoomsIdRecordingsResponseSuccess | getLiveRoomsIdRecordingsResponseError)
 
-export const getGetLiveRoomsIdRecordingsUrl = (id: string) => {
+export const getGetLiveRoomsIdRecordingsUrl = (id: string,) => {
+
+
+
+
   return `/live-rooms/${id}/recordings`
 }
 
-export const getLiveRoomsIdRecordings = async (
-  id: string,
-  options?: RequestInit
-): Promise<getLiveRoomsIdRecordingsResponse> => {
-  return customInstance<getLiveRoomsIdRecordingsResponse>(getGetLiveRoomsIdRecordingsUrl(id), {
+export const getLiveRoomsIdRecordings = async (id: string, options?: RequestInit): Promise<getLiveRoomsIdRecordingsResponse> => {
+
+  return customInstance<getLiveRoomsIdRecordingsResponse>(getGetLiveRoomsIdRecordingsUrl(id),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetLiveRoomsIdRecordingsQueryKey = (id: string) => {
-  return [`/live-rooms/${id}/recordings`] as const
-}
 
-export const getGetLiveRoomsIdRecordingsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>,
-  TError = ErrorType<GetLiveRoomsIdRecordings401 | GetLiveRoomsIdRecordings403 | GetLiveRoomsIdRecordings404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetLiveRoomsIdRecordingsQueryKey = (id: string,) => {
+    return [
+    `/live-rooms/${id}/recordings`
+    ] as const;
+    }
+
+
+export const getGetLiveRoomsIdRecordingsQueryOptions = <TData = Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError = ErrorType<GetLiveRoomsIdRecordings401 | GetLiveRoomsIdRecordings403 | GetLiveRoomsIdRecordings404>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetLiveRoomsIdRecordingsQueryKey(id)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>> = ({ signal }) =>
-    getLiveRoomsIdRecordings(id, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetLiveRoomsIdRecordingsQueryKey(id);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>> = ({ signal }) => getLiveRoomsIdRecordings(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetLiveRoomsIdRecordingsQueryResult = NonNullable<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>>
-export type GetLiveRoomsIdRecordingsQueryError = ErrorType<
-  GetLiveRoomsIdRecordings401 | GetLiveRoomsIdRecordings403 | GetLiveRoomsIdRecordings404
->
+export type GetLiveRoomsIdRecordingsQueryError = ErrorType<GetLiveRoomsIdRecordings401 | GetLiveRoomsIdRecordings403 | GetLiveRoomsIdRecordings404>
 
-export function useGetLiveRoomsIdRecordings<
-  TData = Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>,
-  TError = ErrorType<GetLiveRoomsIdRecordings401 | GetLiveRoomsIdRecordings403 | GetLiveRoomsIdRecordings404>,
->(
-  id: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>> &
-      Pick<
+
+export function useGetLiveRoomsIdRecordings<TData = Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError = ErrorType<GetLiveRoomsIdRecordings401 | GetLiveRoomsIdRecordings403 | GetLiveRoomsIdRecordings404>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>,
           TError,
           Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetLiveRoomsIdRecordings<
-  TData = Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>,
-  TError = ErrorType<GetLiveRoomsIdRecordings401 | GetLiveRoomsIdRecordings403 | GetLiveRoomsIdRecordings404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLiveRoomsIdRecordings<TData = Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError = ErrorType<GetLiveRoomsIdRecordings401 | GetLiveRoomsIdRecordings403 | GetLiveRoomsIdRecordings404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>,
           TError,
           Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetLiveRoomsIdRecordings<
-  TData = Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>,
-  TError = ErrorType<GetLiveRoomsIdRecordings401 | GetLiveRoomsIdRecordings403 | GetLiveRoomsIdRecordings404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLiveRoomsIdRecordings<TData = Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError = ErrorType<GetLiveRoomsIdRecordings401 | GetLiveRoomsIdRecordings403 | GetLiveRoomsIdRecordings404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List recordings
  */
 
-export function useGetLiveRoomsIdRecordings<
-  TData = Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>,
-  TError = ErrorType<GetLiveRoomsIdRecordings401 | GetLiveRoomsIdRecordings403 | GetLiveRoomsIdRecordings404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetLiveRoomsIdRecordingsQueryOptions(id, options)
+export function useGetLiveRoomsIdRecordings<TData = Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError = ErrorType<GetLiveRoomsIdRecordings401 | GetLiveRoomsIdRecordings403 | GetLiveRoomsIdRecordings404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetLiveRoomsIdRecordingsQueryOptions(id,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Start recording
@@ -1385,101 +1256,82 @@ export type postLiveRoomsIdRecordingsResponse404 = {
   status: 404
 }
 
-export type postLiveRoomsIdRecordingsResponseSuccess = postLiveRoomsIdRecordingsResponse201 & {
-  headers: Headers
-}
-export type postLiveRoomsIdRecordingsResponseError = (
-  | postLiveRoomsIdRecordingsResponse400
-  | postLiveRoomsIdRecordingsResponse401
-  | postLiveRoomsIdRecordingsResponse403
-  | postLiveRoomsIdRecordingsResponse404
-) & {
-  headers: Headers
-}
+export type postLiveRoomsIdRecordingsResponseSuccess = (postLiveRoomsIdRecordingsResponse201) & {
+  headers: Headers;
+};
+export type postLiveRoomsIdRecordingsResponseError = (postLiveRoomsIdRecordingsResponse400 | postLiveRoomsIdRecordingsResponse401 | postLiveRoomsIdRecordingsResponse403 | postLiveRoomsIdRecordingsResponse404) & {
+  headers: Headers;
+};
 
-export type postLiveRoomsIdRecordingsResponse =
-  | postLiveRoomsIdRecordingsResponseSuccess
-  | postLiveRoomsIdRecordingsResponseError
+export type postLiveRoomsIdRecordingsResponse = (postLiveRoomsIdRecordingsResponseSuccess | postLiveRoomsIdRecordingsResponseError)
 
-export const getPostLiveRoomsIdRecordingsUrl = (id: string) => {
+export const getPostLiveRoomsIdRecordingsUrl = (id: string,) => {
+
+
+
+
   return `/live-rooms/${id}/recordings`
 }
 
-export const postLiveRoomsIdRecordings = async (
-  id: string,
-  options?: RequestInit
-): Promise<postLiveRoomsIdRecordingsResponse> => {
-  return customInstance<postLiveRoomsIdRecordingsResponse>(getPostLiveRoomsIdRecordingsUrl(id), {
+export const postLiveRoomsIdRecordings = async (id: string, options?: RequestInit): Promise<postLiveRoomsIdRecordingsResponse> => {
+
+  return customInstance<postLiveRoomsIdRecordingsResponse>(getPostLiveRoomsIdRecordingsUrl(id),
+  {
     ...options,
-    method: "POST",
-  })
-}
+    method: 'POST'
 
-export const getPostLiveRoomsIdRecordingsMutationOptions = <
-  TError = ErrorType<
-    | PostLiveRoomsIdRecordings400
-    | PostLiveRoomsIdRecordings401
-    | PostLiveRoomsIdRecordings403
-    | PostLiveRoomsIdRecordings404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdRecordings>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdRecordings>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["postLiveRoomsIdRecordings"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof postLiveRoomsIdRecordings>>, { id: string }> = (
-    props
-  ) => {
-    const { id } = props ?? {}
-
-    return postLiveRoomsIdRecordings(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostLiveRoomsIdRecordingsMutationResult = NonNullable<Awaited<ReturnType<typeof postLiveRoomsIdRecordings>>>
 
-export type PostLiveRoomsIdRecordingsMutationError = ErrorType<
-  | PostLiveRoomsIdRecordings400
-  | PostLiveRoomsIdRecordings401
-  | PostLiveRoomsIdRecordings403
-  | PostLiveRoomsIdRecordings404
->
 
-/**
+export const getPostLiveRoomsIdRecordingsMutationOptions = <TError = ErrorType<PostLiveRoomsIdRecordings400 | PostLiveRoomsIdRecordings401 | PostLiveRoomsIdRecordings403 | PostLiveRoomsIdRecordings404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdRecordings>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdRecordings>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['postLiveRoomsIdRecordings'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postLiveRoomsIdRecordings>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  postLiveRoomsIdRecordings(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostLiveRoomsIdRecordingsMutationResult = NonNullable<Awaited<ReturnType<typeof postLiveRoomsIdRecordings>>>
+
+    export type PostLiveRoomsIdRecordingsMutationError = ErrorType<PostLiveRoomsIdRecordings400 | PostLiveRoomsIdRecordings401 | PostLiveRoomsIdRecordings403 | PostLiveRoomsIdRecordings404>
+
+    /**
  * @summary Start recording
  */
-export const usePostLiveRoomsIdRecordings = <
-  TError = ErrorType<
-    | PostLiveRoomsIdRecordings400
-    | PostLiveRoomsIdRecordings401
-    | PostLiveRoomsIdRecordings403
-    | PostLiveRoomsIdRecordings404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postLiveRoomsIdRecordings>>,
-      TError,
-      { id: string },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof postLiveRoomsIdRecordings>>, TError, { id: string }, TContext> => {
-  return useMutation(getPostLiveRoomsIdRecordingsMutationOptions(options), queryClient)
-}
-/**
+export const usePostLiveRoomsIdRecordings = <TError = ErrorType<PostLiveRoomsIdRecordings400 | PostLiveRoomsIdRecordings401 | PostLiveRoomsIdRecordings403 | PostLiveRoomsIdRecordings404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdRecordings>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postLiveRoomsIdRecordings>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getPostLiveRoomsIdRecordingsMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Stop recording
  */
 export type deleteLiveRoomsIdRecordingsRecordingIdResponse200 = {
@@ -1507,124 +1359,84 @@ export type deleteLiveRoomsIdRecordingsRecordingIdResponse404 = {
   status: 404
 }
 
-export type deleteLiveRoomsIdRecordingsRecordingIdResponseSuccess =
-  deleteLiveRoomsIdRecordingsRecordingIdResponse200 & {
-    headers: Headers
-  }
-export type deleteLiveRoomsIdRecordingsRecordingIdResponseError = (
-  | deleteLiveRoomsIdRecordingsRecordingIdResponse400
-  | deleteLiveRoomsIdRecordingsRecordingIdResponse401
-  | deleteLiveRoomsIdRecordingsRecordingIdResponse403
-  | deleteLiveRoomsIdRecordingsRecordingIdResponse404
-) & {
-  headers: Headers
-}
+export type deleteLiveRoomsIdRecordingsRecordingIdResponseSuccess = (deleteLiveRoomsIdRecordingsRecordingIdResponse200) & {
+  headers: Headers;
+};
+export type deleteLiveRoomsIdRecordingsRecordingIdResponseError = (deleteLiveRoomsIdRecordingsRecordingIdResponse400 | deleteLiveRoomsIdRecordingsRecordingIdResponse401 | deleteLiveRoomsIdRecordingsRecordingIdResponse403 | deleteLiveRoomsIdRecordingsRecordingIdResponse404) & {
+  headers: Headers;
+};
 
-export type deleteLiveRoomsIdRecordingsRecordingIdResponse =
-  | deleteLiveRoomsIdRecordingsRecordingIdResponseSuccess
-  | deleteLiveRoomsIdRecordingsRecordingIdResponseError
+export type deleteLiveRoomsIdRecordingsRecordingIdResponse = (deleteLiveRoomsIdRecordingsRecordingIdResponseSuccess | deleteLiveRoomsIdRecordingsRecordingIdResponseError)
 
-export const getDeleteLiveRoomsIdRecordingsRecordingIdUrl = (id: string, recordingId: string) => {
+export const getDeleteLiveRoomsIdRecordingsRecordingIdUrl = (id: string,
+    recordingId: string,) => {
+
+
+
+
   return `/live-rooms/${id}/recordings/${recordingId}`
 }
 
-export const deleteLiveRoomsIdRecordingsRecordingId = async (
-  id: string,
-  recordingId: string,
-  options?: RequestInit
-): Promise<deleteLiveRoomsIdRecordingsRecordingIdResponse> => {
-  return customInstance<deleteLiveRoomsIdRecordingsRecordingIdResponse>(
-    getDeleteLiveRoomsIdRecordingsRecordingIdUrl(id, recordingId),
-    {
-      ...options,
-      method: "DELETE",
-    }
-  )
-}
+export const deleteLiveRoomsIdRecordingsRecordingId = async (id: string,
+    recordingId: string, options?: RequestInit): Promise<deleteLiveRoomsIdRecordingsRecordingIdResponse> => {
 
-export const getDeleteLiveRoomsIdRecordingsRecordingIdMutationOptions = <
-  TError = ErrorType<
-    | DeleteLiveRoomsIdRecordingsRecordingId400
-    | DeleteLiveRoomsIdRecordingsRecordingId401
-    | DeleteLiveRoomsIdRecordingsRecordingId403
-    | DeleteLiveRoomsIdRecordingsRecordingId404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteLiveRoomsIdRecordingsRecordingId>>,
-    TError,
-    { id: string; recordingId: string },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteLiveRoomsIdRecordingsRecordingId>>,
-  TError,
-  { id: string; recordingId: string },
-  TContext
-> => {
-  const mutationKey = ["deleteLiveRoomsIdRecordingsRecordingId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
+  return customInstance<deleteLiveRoomsIdRecordingsRecordingIdResponse>(getDeleteLiveRoomsIdRecordingsRecordingIdUrl(id,recordingId),
+  {
+    ...options,
+    method: 'DELETE'
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteLiveRoomsIdRecordingsRecordingId>>,
-    { id: string; recordingId: string }
-  > = (props) => {
-    const { id, recordingId } = props ?? {}
 
-    return deleteLiveRoomsIdRecordingsRecordingId(id, recordingId, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteLiveRoomsIdRecordingsRecordingIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteLiveRoomsIdRecordingsRecordingId>>
->
 
-export type DeleteLiveRoomsIdRecordingsRecordingIdMutationError = ErrorType<
-  | DeleteLiveRoomsIdRecordingsRecordingId400
-  | DeleteLiveRoomsIdRecordingsRecordingId401
-  | DeleteLiveRoomsIdRecordingsRecordingId403
-  | DeleteLiveRoomsIdRecordingsRecordingId404
->
 
-/**
+export const getDeleteLiveRoomsIdRecordingsRecordingIdMutationOptions = <TError = ErrorType<DeleteLiveRoomsIdRecordingsRecordingId400 | DeleteLiveRoomsIdRecordingsRecordingId401 | DeleteLiveRoomsIdRecordingsRecordingId403 | DeleteLiveRoomsIdRecordingsRecordingId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLiveRoomsIdRecordingsRecordingId>>, TError,{id: string;recordingId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteLiveRoomsIdRecordingsRecordingId>>, TError,{id: string;recordingId: string}, TContext> => {
+
+const mutationKey = ['deleteLiveRoomsIdRecordingsRecordingId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteLiveRoomsIdRecordingsRecordingId>>, {id: string;recordingId: string}> = (props) => {
+          const {id,recordingId} = props ?? {};
+
+          return  deleteLiveRoomsIdRecordingsRecordingId(id,recordingId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteLiveRoomsIdRecordingsRecordingIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteLiveRoomsIdRecordingsRecordingId>>>
+
+    export type DeleteLiveRoomsIdRecordingsRecordingIdMutationError = ErrorType<DeleteLiveRoomsIdRecordingsRecordingId400 | DeleteLiveRoomsIdRecordingsRecordingId401 | DeleteLiveRoomsIdRecordingsRecordingId403 | DeleteLiveRoomsIdRecordingsRecordingId404>
+
+    /**
  * @summary Stop recording
  */
-export const useDeleteLiveRoomsIdRecordingsRecordingId = <
-  TError = ErrorType<
-    | DeleteLiveRoomsIdRecordingsRecordingId400
-    | DeleteLiveRoomsIdRecordingsRecordingId401
-    | DeleteLiveRoomsIdRecordingsRecordingId403
-    | DeleteLiveRoomsIdRecordingsRecordingId404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteLiveRoomsIdRecordingsRecordingId>>,
-      TError,
-      { id: string; recordingId: string },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteLiveRoomsIdRecordingsRecordingId>>,
-  TError,
-  { id: string; recordingId: string },
-  TContext
-> => {
-  return useMutation(getDeleteLiveRoomsIdRecordingsRecordingIdMutationOptions(options), queryClient)
-}
-/**
+export const useDeleteLiveRoomsIdRecordingsRecordingId = <TError = ErrorType<DeleteLiveRoomsIdRecordingsRecordingId400 | DeleteLiveRoomsIdRecordingsRecordingId401 | DeleteLiveRoomsIdRecordingsRecordingId403 | DeleteLiveRoomsIdRecordingsRecordingId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLiveRoomsIdRecordingsRecordingId>>, TError,{id: string;recordingId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteLiveRoomsIdRecordingsRecordingId>>,
+        TError,
+        {id: string;recordingId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteLiveRoomsIdRecordingsRecordingIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Start live room
  */
 export type postLiveRoomsIdStartResponse200 = {
@@ -1652,79 +1464,78 @@ export type postLiveRoomsIdStartResponse404 = {
   status: 404
 }
 
-export type postLiveRoomsIdStartResponseSuccess = postLiveRoomsIdStartResponse200 & {
-  headers: Headers
-}
-export type postLiveRoomsIdStartResponseError = (
-  | postLiveRoomsIdStartResponse400
-  | postLiveRoomsIdStartResponse401
-  | postLiveRoomsIdStartResponse403
-  | postLiveRoomsIdStartResponse404
-) & {
-  headers: Headers
-}
+export type postLiveRoomsIdStartResponseSuccess = (postLiveRoomsIdStartResponse200) & {
+  headers: Headers;
+};
+export type postLiveRoomsIdStartResponseError = (postLiveRoomsIdStartResponse400 | postLiveRoomsIdStartResponse401 | postLiveRoomsIdStartResponse403 | postLiveRoomsIdStartResponse404) & {
+  headers: Headers;
+};
 
-export type postLiveRoomsIdStartResponse = postLiveRoomsIdStartResponseSuccess | postLiveRoomsIdStartResponseError
+export type postLiveRoomsIdStartResponse = (postLiveRoomsIdStartResponseSuccess | postLiveRoomsIdStartResponseError)
 
-export const getPostLiveRoomsIdStartUrl = (id: string) => {
+export const getPostLiveRoomsIdStartUrl = (id: string,) => {
+
+
+
+
   return `/live-rooms/${id}/start`
 }
 
-export const postLiveRoomsIdStart = async (
-  id: string,
-  options?: RequestInit
-): Promise<postLiveRoomsIdStartResponse> => {
-  return customInstance<postLiveRoomsIdStartResponse>(getPostLiveRoomsIdStartUrl(id), {
+export const postLiveRoomsIdStart = async (id: string, options?: RequestInit): Promise<postLiveRoomsIdStartResponse> => {
+
+  return customInstance<postLiveRoomsIdStartResponse>(getPostLiveRoomsIdStartUrl(id),
+  {
     ...options,
-    method: "POST",
-  })
-}
+    method: 'POST'
 
-export const getPostLiveRoomsIdStartMutationOptions = <
-  TError = ErrorType<
-    PostLiveRoomsIdStart400 | PostLiveRoomsIdStart401 | PostLiveRoomsIdStart403 | PostLiveRoomsIdStart404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdStart>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdStart>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["postLiveRoomsIdStart"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof postLiveRoomsIdStart>>, { id: string }> = (props) => {
-    const { id } = props ?? {}
-
-    return postLiveRoomsIdStart(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostLiveRoomsIdStartMutationResult = NonNullable<Awaited<ReturnType<typeof postLiveRoomsIdStart>>>
 
-export type PostLiveRoomsIdStartMutationError = ErrorType<
-  PostLiveRoomsIdStart400 | PostLiveRoomsIdStart401 | PostLiveRoomsIdStart403 | PostLiveRoomsIdStart404
->
 
-/**
+export const getPostLiveRoomsIdStartMutationOptions = <TError = ErrorType<PostLiveRoomsIdStart400 | PostLiveRoomsIdStart401 | PostLiveRoomsIdStart403 | PostLiveRoomsIdStart404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdStart>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdStart>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['postLiveRoomsIdStart'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postLiveRoomsIdStart>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  postLiveRoomsIdStart(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostLiveRoomsIdStartMutationResult = NonNullable<Awaited<ReturnType<typeof postLiveRoomsIdStart>>>
+
+    export type PostLiveRoomsIdStartMutationError = ErrorType<PostLiveRoomsIdStart400 | PostLiveRoomsIdStart401 | PostLiveRoomsIdStart403 | PostLiveRoomsIdStart404>
+
+    /**
  * @summary Start live room
  */
-export const usePostLiveRoomsIdStart = <
-  TError = ErrorType<
-    PostLiveRoomsIdStart400 | PostLiveRoomsIdStart401 | PostLiveRoomsIdStart403 | PostLiveRoomsIdStart404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdStart>>, TError, { id: string }, TContext>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof postLiveRoomsIdStart>>, TError, { id: string }, TContext> => {
-  return useMutation(getPostLiveRoomsIdStartMutationOptions(options), queryClient)
-}
+export const usePostLiveRoomsIdStart = <TError = ErrorType<PostLiveRoomsIdStart400 | PostLiveRoomsIdStart401 | PostLiveRoomsIdStart403 | PostLiveRoomsIdStart404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdStart>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postLiveRoomsIdStart>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getPostLiveRoomsIdStartMutationOptions(options), queryClient);
+    }

@@ -5,14 +5,14 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainClass } from "./githubCom4H1RZooraInternalDomainClass"
-import type { GithubCom4H1RZooraInternalDomainUser } from "./githubCom4H1RZooraInternalDomainUser"
+import type { GithubCom4H1RZooraInternalDomainClass } from './githubCom4H1RZooraInternalDomainClass';
+import type { GithubCom4H1RZooraInternalDomainUser } from './githubCom4H1RZooraInternalDomainUser';
 
 export interface GithubCom4H1RZooraInternalDomainClassMember {
-  class?: GithubCom4H1RZooraInternalDomainClass
-  class_id?: string
-  created_at?: string
-  id?: string
-  user?: GithubCom4H1RZooraInternalDomainUser
-  user_id?: string
+  class?: GithubCom4H1RZooraInternalDomainClass;
+  class_id?: string;
+  created_at?: string;
+  id?: string;
+  user?: GithubCom4H1RZooraInternalDomainUser;
+  user_id?: string;
 }

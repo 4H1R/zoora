@@ -7,8 +7,8 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainUpdateRoleDTO {
-  is_preset?: boolean
+  is_preset?: boolean;
   /** @minLength 2 */
-  name?: string
-  permission_ids?: string[]
+  name?: string;
+  permission_ids?: string[];
 }

@@ -5,7 +5,25 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { ErrorType } from ".././mutator/custom-instance"
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   DeleteRolesId401,
   DeleteRolesId403,
@@ -23,12 +41,10 @@ import type {
   GetRolesId403,
   GetRolesId404,
   GetRolesId500,
-  GetRolesParams,
   GetRolesStats200,
   GetRolesStats401,
   GetRolesStats403,
   GetRolesStats500,
-  GetRolesStatsParams,
   GithubCom4H1RZooraInternalDomainCreateRoleDTO,
   GithubCom4H1RZooraInternalDomainResponse,
   GithubCom4H1RZooraInternalDomainUpdateRoleDTO,
@@ -42,28 +58,16 @@ import type {
   PutRolesId401,
   PutRolesId403,
   PutRolesId404,
-  PutRolesId500,
-} from "../model"
-import type {
-  DataTag,
-  DefinedInitialDataOptions,
-  DefinedUseQueryResult,
-  MutationFunction,
-  QueryClient,
-  QueryFunction,
-  QueryKey,
-  UndefinedInitialDataOptions,
-  UseMutationOptions,
-  UseMutationResult,
-  UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query"
+  PutRolesId500
+} from '../model';
 
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { customInstance } from '.././mutator/custom-instance';
+import type { ErrorType } from '.././mutator/custom-instance';
 
-import { customInstance } from ".././mutator/custom-instance"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * @summary List permissions
@@ -83,122 +87,111 @@ export type getPermissionsResponse500 = {
   status: 500
 }
 
-export type getPermissionsResponseSuccess = getPermissionsResponse200 & {
-  headers: Headers
-}
+export type getPermissionsResponseSuccess = (getPermissionsResponse200) & {
+  headers: Headers;
+};
 export type getPermissionsResponseError = (getPermissionsResponse401 | getPermissionsResponse500) & {
-  headers: Headers
-}
+  headers: Headers;
+};
 
-export type getPermissionsResponse = getPermissionsResponseSuccess | getPermissionsResponseError
+export type getPermissionsResponse = (getPermissionsResponseSuccess | getPermissionsResponseError)
 
 export const getGetPermissionsUrl = () => {
+
+
+
+
   return `/permissions`
 }
 
-export const getPermissions = async (options?: RequestInit): Promise<getPermissionsResponse> => {
-  return customInstance<getPermissionsResponse>(getGetPermissionsUrl(), {
+export const getPermissions = async ( options?: RequestInit): Promise<getPermissionsResponse> => {
+
+  return customInstance<getPermissionsResponse>(getGetPermissionsUrl(),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
 
 export const getGetPermissionsQueryKey = () => {
-  return [`/permissions`] as const
-}
+    return [
+    `/permissions`
+    ] as const;
+    }
 
-export const getGetPermissionsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getPermissions>>,
-  TError = ErrorType<GetPermissions401 | GetPermissions500>,
->(options?: {
-  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPermissions>>, TError, TData>>
-  request?: SecondParameter<typeof customInstance>
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetPermissionsQueryKey()
+export const getGetPermissionsQueryOptions = <TData = Awaited<ReturnType<typeof getPermissions>>, TError = ErrorType<GetPermissions401 | GetPermissions500>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPermissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPermissions>>> = ({ signal }) =>
-    getPermissions({ signal, ...requestOptions })
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getPermissions>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+  const queryKey =  queryOptions?.queryKey ?? getGetPermissionsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPermissions>>> = ({ signal }) => getPermissions({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPermissions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetPermissionsQueryResult = NonNullable<Awaited<ReturnType<typeof getPermissions>>>
 export type GetPermissionsQueryError = ErrorType<GetPermissions401 | GetPermissions500>
 
-export function useGetPermissions<
-  TData = Awaited<ReturnType<typeof getPermissions>>,
-  TError = ErrorType<GetPermissions401 | GetPermissions500>,
->(
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPermissions>>, TError, TData>> &
-      Pick<
+
+export function useGetPermissions<TData = Awaited<ReturnType<typeof getPermissions>>, TError = ErrorType<GetPermissions401 | GetPermissions500>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPermissions>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPermissions>>,
           TError,
           Awaited<ReturnType<typeof getPermissions>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPermissions<
-  TData = Awaited<ReturnType<typeof getPermissions>>,
-  TError = ErrorType<GetPermissions401 | GetPermissions500>,
->(
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPermissions>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPermissions<TData = Awaited<ReturnType<typeof getPermissions>>, TError = ErrorType<GetPermissions401 | GetPermissions500>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPermissions>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPermissions>>,
           TError,
           Awaited<ReturnType<typeof getPermissions>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPermissions<
-  TData = Awaited<ReturnType<typeof getPermissions>>,
-  TError = ErrorType<GetPermissions401 | GetPermissions500>,
->(
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPermissions>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPermissions<TData = Awaited<ReturnType<typeof getPermissions>>, TError = ErrorType<GetPermissions401 | GetPermissions500>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPermissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List permissions
  */
 
-export function useGetPermissions<
-  TData = Awaited<ReturnType<typeof getPermissions>>,
-  TError = ErrorType<GetPermissions401 | GetPermissions500>,
->(
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPermissions>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useGetPermissions<TData = Awaited<ReturnType<typeof getPermissions>>, TError = ErrorType<GetPermissions401 | GetPermissions500>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPermissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
   const queryOptions = getGetPermissionsQueryOptions(options)
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary List roles
@@ -223,131 +216,111 @@ export type getRolesResponse500 = {
   status: 500
 }
 
-export type getRolesResponseSuccess = getRolesResponse200 & {
-  headers: Headers
-}
+export type getRolesResponseSuccess = (getRolesResponse200) & {
+  headers: Headers;
+};
 export type getRolesResponseError = (getRolesResponse401 | getRolesResponse403 | getRolesResponse500) & {
-  headers: Headers
+  headers: Headers;
+};
+
+export type getRolesResponse = (getRolesResponseSuccess | getRolesResponseError)
+
+export const getGetRolesUrl = () => {
+
+
+
+
+  return `/roles`
 }
 
-export type getRolesResponse = getRolesResponseSuccess | getRolesResponseError
+export const getRoles = async ( options?: RequestInit): Promise<getRolesResponse> => {
 
-export const getGetRolesUrl = (params?: GetRolesParams) => {
-  const normalizedParams = new URLSearchParams()
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
-
-  const stringifiedParams = normalizedParams.toString()
-
-  return stringifiedParams.length > 0 ? `/roles?${stringifiedParams}` : `/roles`
-}
-
-export const getRoles = async (params?: GetRolesParams, options?: RequestInit): Promise<getRolesResponse> => {
-  return customInstance<getRolesResponse>(getGetRolesUrl(params), {
+  return customInstance<getRolesResponse>(getGetRolesUrl(),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetRolesQueryKey = (params?: GetRolesParams) => {
-  return [`/roles`, ...(params ? [params] : [])] as const
-}
 
-export const getGetRolesQueryOptions = <
-  TData = Awaited<ReturnType<typeof getRoles>>,
-  TError = ErrorType<GetRoles401 | GetRoles403 | GetRoles500>,
->(
-  params?: GetRolesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoles>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetRolesQueryKey = () => {
+    return [
+    `/roles`
+    ] as const;
+    }
+
+
+export const getGetRolesQueryOptions = <TData = Awaited<ReturnType<typeof getRoles>>, TError = ErrorType<GetRoles401 | GetRoles403 | GetRoles500>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoles>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetRolesQueryKey(params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRoles>>> = ({ signal }) =>
-    getRoles(params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetRolesQueryKey();
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getRoles>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRoles>>> = ({ signal }) => getRoles({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRoles>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetRolesQueryResult = NonNullable<Awaited<ReturnType<typeof getRoles>>>
 export type GetRolesQueryError = ErrorType<GetRoles401 | GetRoles403 | GetRoles500>
 
-export function useGetRoles<
-  TData = Awaited<ReturnType<typeof getRoles>>,
-  TError = ErrorType<GetRoles401 | GetRoles403 | GetRoles500>,
->(
-  params: undefined | GetRolesParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoles>>, TError, TData>> &
-      Pick<
-        DefinedInitialDataOptions<Awaited<ReturnType<typeof getRoles>>, TError, Awaited<ReturnType<typeof getRoles>>>,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRoles<
-  TData = Awaited<ReturnType<typeof getRoles>>,
-  TError = ErrorType<GetRoles401 | GetRoles403 | GetRoles500>,
->(
-  params?: GetRolesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoles>>, TError, TData>> &
-      Pick<
-        UndefinedInitialDataOptions<Awaited<ReturnType<typeof getRoles>>, TError, Awaited<ReturnType<typeof getRoles>>>,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRoles<
-  TData = Awaited<ReturnType<typeof getRoles>>,
-  TError = ErrorType<GetRoles401 | GetRoles403 | GetRoles500>,
->(
-  params?: GetRolesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoles>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetRoles<TData = Awaited<ReturnType<typeof getRoles>>, TError = ErrorType<GetRoles401 | GetRoles403 | GetRoles500>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoles>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRoles>>,
+          TError,
+          Awaited<ReturnType<typeof getRoles>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetRoles<TData = Awaited<ReturnType<typeof getRoles>>, TError = ErrorType<GetRoles401 | GetRoles403 | GetRoles500>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoles>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRoles>>,
+          TError,
+          Awaited<ReturnType<typeof getRoles>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetRoles<TData = Awaited<ReturnType<typeof getRoles>>, TError = ErrorType<GetRoles401 | GetRoles403 | GetRoles500>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoles>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List roles
  */
 
-export function useGetRoles<
-  TData = Awaited<ReturnType<typeof getRoles>>,
-  TError = ErrorType<GetRoles401 | GetRoles403 | GetRoles500>,
->(
-  params?: GetRolesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoles>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetRolesQueryOptions(params, options)
+export function useGetRoles<TData = Awaited<ReturnType<typeof getRoles>>, TError = ErrorType<GetRoles401 | GetRoles403 | GetRoles500>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoles>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetRolesQueryOptions(options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Create role
@@ -377,102 +350,83 @@ export type postRolesResponse500 = {
   status: 500
 }
 
-export type postRolesResponseSuccess = postRolesResponse201 & {
-  headers: Headers
-}
-export type postRolesResponseError = (
-  | postRolesResponse400
-  | postRolesResponse401
-  | postRolesResponse403
-  | postRolesResponse500
-) & {
-  headers: Headers
-}
+export type postRolesResponseSuccess = (postRolesResponse201) & {
+  headers: Headers;
+};
+export type postRolesResponseError = (postRolesResponse400 | postRolesResponse401 | postRolesResponse403 | postRolesResponse500) & {
+  headers: Headers;
+};
 
-export type postRolesResponse = postRolesResponseSuccess | postRolesResponseError
+export type postRolesResponse = (postRolesResponseSuccess | postRolesResponseError)
 
 export const getPostRolesUrl = () => {
+
+
+
+
   return `/roles`
 }
 
-export const postRoles = async (
-  githubCom4H1RZooraInternalDomainCreateRoleDTO: GithubCom4H1RZooraInternalDomainCreateRoleDTO,
-  options?: RequestInit
-): Promise<postRolesResponse> => {
-  return customInstance<postRolesResponse>(getPostRolesUrl(), {
+export const postRoles = async (githubCom4H1RZooraInternalDomainCreateRoleDTO: GithubCom4H1RZooraInternalDomainCreateRoleDTO, options?: RequestInit): Promise<postRolesResponse> => {
+
+  return customInstance<postRolesResponse>(getPostRolesUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainCreateRoleDTO),
-  })
-}
-
-export const getPostRolesMutationOptions = <
-  TError = ErrorType<PostRoles400 | PostRoles401 | PostRoles403 | PostRoles500>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postRoles>>,
-    TError,
-    { data: GithubCom4H1RZooraInternalDomainCreateRoleDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postRoles>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainCreateRoleDTO },
-  TContext
-> => {
-  const mutationKey = ["postRoles"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postRoles>>,
-    { data: GithubCom4H1RZooraInternalDomainCreateRoleDTO }
-  > = (props) => {
-    const { data } = props ?? {}
-
-    return postRoles(data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainCreateRoleDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostRolesMutationResult = NonNullable<Awaited<ReturnType<typeof postRoles>>>
-export type PostRolesMutationBody = GithubCom4H1RZooraInternalDomainCreateRoleDTO
-export type PostRolesMutationError = ErrorType<PostRoles400 | PostRoles401 | PostRoles403 | PostRoles500>
 
-/**
+
+export const getPostRolesMutationOptions = <TError = ErrorType<PostRoles400 | PostRoles401 | PostRoles403 | PostRoles500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postRoles>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateRoleDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postRoles>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateRoleDTO}, TContext> => {
+
+const mutationKey = ['postRoles'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postRoles>>, {data: GithubCom4H1RZooraInternalDomainCreateRoleDTO}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postRoles(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostRolesMutationResult = NonNullable<Awaited<ReturnType<typeof postRoles>>>
+    export type PostRolesMutationBody = GithubCom4H1RZooraInternalDomainCreateRoleDTO
+    export type PostRolesMutationError = ErrorType<PostRoles400 | PostRoles401 | PostRoles403 | PostRoles500>
+
+    /**
  * @summary Create role
  */
-export const usePostRoles = <
-  TError = ErrorType<PostRoles400 | PostRoles401 | PostRoles403 | PostRoles500>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postRoles>>,
-      TError,
-      { data: GithubCom4H1RZooraInternalDomainCreateRoleDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postRoles>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainCreateRoleDTO },
-  TContext
-> => {
-  return useMutation(getPostRolesMutationOptions(options), queryClient)
-}
-/**
+export const usePostRoles = <TError = ErrorType<PostRoles400 | PostRoles401 | PostRoles403 | PostRoles500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postRoles>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateRoleDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postRoles>>,
+        TError,
+        {data: GithubCom4H1RZooraInternalDomainCreateRoleDTO},
+        TContext
+      > => {
+      return useMutation(getPostRolesMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get role stats
  */
 export type getRolesStatsResponse200 = {
@@ -495,146 +449,111 @@ export type getRolesStatsResponse500 = {
   status: 500
 }
 
-export type getRolesStatsResponseSuccess = getRolesStatsResponse200 & {
-  headers: Headers
-}
-export type getRolesStatsResponseError = (
-  | getRolesStatsResponse401
-  | getRolesStatsResponse403
-  | getRolesStatsResponse500
-) & {
-  headers: Headers
-}
+export type getRolesStatsResponseSuccess = (getRolesStatsResponse200) & {
+  headers: Headers;
+};
+export type getRolesStatsResponseError = (getRolesStatsResponse401 | getRolesStatsResponse403 | getRolesStatsResponse500) & {
+  headers: Headers;
+};
 
-export type getRolesStatsResponse = getRolesStatsResponseSuccess | getRolesStatsResponseError
+export type getRolesStatsResponse = (getRolesStatsResponseSuccess | getRolesStatsResponseError)
 
-export const getGetRolesStatsUrl = (params?: GetRolesStatsParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetRolesStatsUrl = () => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
 
-  return stringifiedParams.length > 0 ? `/roles/stats?${stringifiedParams}` : `/roles/stats`
+
+  return `/roles/stats`
 }
 
-export const getRolesStats = async (
-  params?: GetRolesStatsParams,
-  options?: RequestInit
-): Promise<getRolesStatsResponse> => {
-  return customInstance<getRolesStatsResponse>(getGetRolesStatsUrl(params), {
+export const getRolesStats = async ( options?: RequestInit): Promise<getRolesStatsResponse> => {
+
+  return customInstance<getRolesStatsResponse>(getGetRolesStatsUrl(),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetRolesStatsQueryKey = (params?: GetRolesStatsParams) => {
-  return [`/roles/stats`, ...(params ? [params] : [])] as const
-}
 
-export const getGetRolesStatsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getRolesStats>>,
-  TError = ErrorType<GetRolesStats401 | GetRolesStats403 | GetRolesStats500>,
->(
-  params?: GetRolesStatsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesStats>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetRolesStatsQueryKey = () => {
+    return [
+    `/roles/stats`
+    ] as const;
+    }
+
+
+export const getGetRolesStatsQueryOptions = <TData = Awaited<ReturnType<typeof getRolesStats>>, TError = ErrorType<GetRolesStats401 | GetRolesStats403 | GetRolesStats500>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesStats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetRolesStatsQueryKey(params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRolesStats>>> = ({ signal }) =>
-    getRolesStats(params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetRolesStatsQueryKey();
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getRolesStats>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRolesStats>>> = ({ signal }) => getRolesStats({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRolesStats>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetRolesStatsQueryResult = NonNullable<Awaited<ReturnType<typeof getRolesStats>>>
 export type GetRolesStatsQueryError = ErrorType<GetRolesStats401 | GetRolesStats403 | GetRolesStats500>
 
-export function useGetRolesStats<
-  TData = Awaited<ReturnType<typeof getRolesStats>>,
-  TError = ErrorType<GetRolesStats401 | GetRolesStats403 | GetRolesStats500>,
->(
-  params: undefined | GetRolesStatsParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesStats>>, TError, TData>> &
-      Pick<
+
+export function useGetRolesStats<TData = Awaited<ReturnType<typeof getRolesStats>>, TError = ErrorType<GetRolesStats401 | GetRolesStats403 | GetRolesStats500>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesStats>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRolesStats>>,
           TError,
           Awaited<ReturnType<typeof getRolesStats>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRolesStats<
-  TData = Awaited<ReturnType<typeof getRolesStats>>,
-  TError = ErrorType<GetRolesStats401 | GetRolesStats403 | GetRolesStats500>,
->(
-  params?: GetRolesStatsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesStats>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetRolesStats<TData = Awaited<ReturnType<typeof getRolesStats>>, TError = ErrorType<GetRolesStats401 | GetRolesStats403 | GetRolesStats500>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesStats>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRolesStats>>,
           TError,
           Awaited<ReturnType<typeof getRolesStats>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRolesStats<
-  TData = Awaited<ReturnType<typeof getRolesStats>>,
-  TError = ErrorType<GetRolesStats401 | GetRolesStats403 | GetRolesStats500>,
->(
-  params?: GetRolesStatsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesStats>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetRolesStats<TData = Awaited<ReturnType<typeof getRolesStats>>, TError = ErrorType<GetRolesStats401 | GetRolesStats403 | GetRolesStats500>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesStats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get role stats
  */
 
-export function useGetRolesStats<
-  TData = Awaited<ReturnType<typeof getRolesStats>>,
-  TError = ErrorType<GetRolesStats401 | GetRolesStats403 | GetRolesStats500>,
->(
-  params?: GetRolesStatsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesStats>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetRolesStatsQueryOptions(params, options)
+export function useGetRolesStats<TData = Awaited<ReturnType<typeof getRolesStats>>, TError = ErrorType<GetRolesStats401 | GetRolesStats403 | GetRolesStats500>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesStats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetRolesStatsQueryOptions(options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Get role by ID
@@ -664,134 +583,111 @@ export type getRolesIdResponse500 = {
   status: 500
 }
 
-export type getRolesIdResponseSuccess = getRolesIdResponse200 & {
-  headers: Headers
-}
-export type getRolesIdResponseError = (
-  | getRolesIdResponse401
-  | getRolesIdResponse403
-  | getRolesIdResponse404
-  | getRolesIdResponse500
-) & {
-  headers: Headers
-}
+export type getRolesIdResponseSuccess = (getRolesIdResponse200) & {
+  headers: Headers;
+};
+export type getRolesIdResponseError = (getRolesIdResponse401 | getRolesIdResponse403 | getRolesIdResponse404 | getRolesIdResponse500) & {
+  headers: Headers;
+};
 
-export type getRolesIdResponse = getRolesIdResponseSuccess | getRolesIdResponseError
+export type getRolesIdResponse = (getRolesIdResponseSuccess | getRolesIdResponseError)
 
-export const getGetRolesIdUrl = (id: string) => {
+export const getGetRolesIdUrl = (id: string,) => {
+
+
+
+
   return `/roles/${id}`
 }
 
 export const getRolesId = async (id: string, options?: RequestInit): Promise<getRolesIdResponse> => {
-  return customInstance<getRolesIdResponse>(getGetRolesIdUrl(id), {
+
+  return customInstance<getRolesIdResponse>(getGetRolesIdUrl(id),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetRolesIdQueryKey = (id: string) => {
-  return [`/roles/${id}`] as const
-}
 
-export const getGetRolesIdQueryOptions = <
-  TData = Awaited<ReturnType<typeof getRolesId>>,
-  TError = ErrorType<GetRolesId401 | GetRolesId403 | GetRolesId404 | GetRolesId500>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetRolesIdQueryKey = (id: string,) => {
+    return [
+    `/roles/${id}`
+    ] as const;
+    }
+
+
+export const getGetRolesIdQueryOptions = <TData = Awaited<ReturnType<typeof getRolesId>>, TError = ErrorType<GetRolesId401 | GetRolesId403 | GetRolesId404 | GetRolesId500>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetRolesIdQueryKey(id)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRolesId>>> = ({ signal }) =>
-    getRolesId(id, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetRolesIdQueryKey(id);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getRolesId>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRolesId>>> = ({ signal }) => getRolesId(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRolesId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetRolesIdQueryResult = NonNullable<Awaited<ReturnType<typeof getRolesId>>>
 export type GetRolesIdQueryError = ErrorType<GetRolesId401 | GetRolesId403 | GetRolesId404 | GetRolesId500>
 
-export function useGetRolesId<
-  TData = Awaited<ReturnType<typeof getRolesId>>,
-  TError = ErrorType<GetRolesId401 | GetRolesId403 | GetRolesId404 | GetRolesId500>,
->(
-  id: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesId>>, TError, TData>> &
-      Pick<
+
+export function useGetRolesId<TData = Awaited<ReturnType<typeof getRolesId>>, TError = ErrorType<GetRolesId401 | GetRolesId403 | GetRolesId404 | GetRolesId500>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRolesId>>,
           TError,
           Awaited<ReturnType<typeof getRolesId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRolesId<
-  TData = Awaited<ReturnType<typeof getRolesId>>,
-  TError = ErrorType<GetRolesId401 | GetRolesId403 | GetRolesId404 | GetRolesId500>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesId>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetRolesId<TData = Awaited<ReturnType<typeof getRolesId>>, TError = ErrorType<GetRolesId401 | GetRolesId403 | GetRolesId404 | GetRolesId500>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRolesId>>,
           TError,
           Awaited<ReturnType<typeof getRolesId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRolesId<
-  TData = Awaited<ReturnType<typeof getRolesId>>,
-  TError = ErrorType<GetRolesId401 | GetRolesId403 | GetRolesId404 | GetRolesId500>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetRolesId<TData = Awaited<ReturnType<typeof getRolesId>>, TError = ErrorType<GetRolesId401 | GetRolesId403 | GetRolesId404 | GetRolesId500>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get role by ID
  */
 
-export function useGetRolesId<
-  TData = Awaited<ReturnType<typeof getRolesId>>,
-  TError = ErrorType<GetRolesId401 | GetRolesId403 | GetRolesId404 | GetRolesId500>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetRolesIdQueryOptions(id, options)
+export function useGetRolesId<TData = Awaited<ReturnType<typeof getRolesId>>, TError = ErrorType<GetRolesId401 | GetRolesId403 | GetRolesId404 | GetRolesId500>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRolesId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetRolesIdQueryOptions(id,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Update role
@@ -826,106 +722,84 @@ export type putRolesIdResponse500 = {
   status: 500
 }
 
-export type putRolesIdResponseSuccess = putRolesIdResponse200 & {
-  headers: Headers
-}
-export type putRolesIdResponseError = (
-  | putRolesIdResponse400
-  | putRolesIdResponse401
-  | putRolesIdResponse403
-  | putRolesIdResponse404
-  | putRolesIdResponse500
-) & {
-  headers: Headers
-}
+export type putRolesIdResponseSuccess = (putRolesIdResponse200) & {
+  headers: Headers;
+};
+export type putRolesIdResponseError = (putRolesIdResponse400 | putRolesIdResponse401 | putRolesIdResponse403 | putRolesIdResponse404 | putRolesIdResponse500) & {
+  headers: Headers;
+};
 
-export type putRolesIdResponse = putRolesIdResponseSuccess | putRolesIdResponseError
+export type putRolesIdResponse = (putRolesIdResponseSuccess | putRolesIdResponseError)
 
-export const getPutRolesIdUrl = (id: string) => {
+export const getPutRolesIdUrl = (id: string,) => {
+
+
+
+
   return `/roles/${id}`
 }
 
-export const putRolesId = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainUpdateRoleDTO: GithubCom4H1RZooraInternalDomainUpdateRoleDTO,
-  options?: RequestInit
-): Promise<putRolesIdResponse> => {
-  return customInstance<putRolesIdResponse>(getPutRolesIdUrl(id), {
+export const putRolesId = async (id: string,
+    githubCom4H1RZooraInternalDomainUpdateRoleDTO: GithubCom4H1RZooraInternalDomainUpdateRoleDTO, options?: RequestInit): Promise<putRolesIdResponse> => {
+
+  return customInstance<putRolesIdResponse>(getPutRolesIdUrl(id),
+  {
     ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainUpdateRoleDTO),
-  })
-}
-
-export const getPutRolesIdMutationOptions = <
-  TError = ErrorType<PutRolesId400 | PutRolesId401 | PutRolesId403 | PutRolesId404 | PutRolesId500>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putRolesId>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainUpdateRoleDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putRolesId>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainUpdateRoleDTO },
-  TContext
-> => {
-  const mutationKey = ["putRolesId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putRolesId>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainUpdateRoleDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return putRolesId(id, data, requestOptions)
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainUpdateRoleDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutRolesIdMutationResult = NonNullable<Awaited<ReturnType<typeof putRolesId>>>
-export type PutRolesIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateRoleDTO
-export type PutRolesIdMutationError = ErrorType<
-  PutRolesId400 | PutRolesId401 | PutRolesId403 | PutRolesId404 | PutRolesId500
->
 
-/**
+
+export const getPutRolesIdMutationOptions = <TError = ErrorType<PutRolesId400 | PutRolesId401 | PutRolesId403 | PutRolesId404 | PutRolesId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putRolesId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateRoleDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putRolesId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateRoleDTO}, TContext> => {
+
+const mutationKey = ['putRolesId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putRolesId>>, {id: string;data: GithubCom4H1RZooraInternalDomainUpdateRoleDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  putRolesId(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutRolesIdMutationResult = NonNullable<Awaited<ReturnType<typeof putRolesId>>>
+    export type PutRolesIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateRoleDTO
+    export type PutRolesIdMutationError = ErrorType<PutRolesId400 | PutRolesId401 | PutRolesId403 | PutRolesId404 | PutRolesId500>
+
+    /**
  * @summary Update role
  */
-export const usePutRolesId = <
-  TError = ErrorType<PutRolesId400 | PutRolesId401 | PutRolesId403 | PutRolesId404 | PutRolesId500>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putRolesId>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainUpdateRoleDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putRolesId>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainUpdateRoleDTO },
-  TContext
-> => {
-  return useMutation(getPutRolesIdMutationOptions(options), queryClient)
-}
-/**
+export const usePutRolesId = <TError = ErrorType<PutRolesId400 | PutRolesId401 | PutRolesId403 | PutRolesId404 | PutRolesId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putRolesId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateRoleDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putRolesId>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainUpdateRoleDTO},
+        TContext
+      > => {
+      return useMutation(getPutRolesIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Delete role
  */
 export type deleteRolesIdResponse200 = {
@@ -953,72 +827,78 @@ export type deleteRolesIdResponse500 = {
   status: 500
 }
 
-export type deleteRolesIdResponseSuccess = deleteRolesIdResponse200 & {
-  headers: Headers
-}
-export type deleteRolesIdResponseError = (
-  | deleteRolesIdResponse401
-  | deleteRolesIdResponse403
-  | deleteRolesIdResponse404
-  | deleteRolesIdResponse500
-) & {
-  headers: Headers
-}
+export type deleteRolesIdResponseSuccess = (deleteRolesIdResponse200) & {
+  headers: Headers;
+};
+export type deleteRolesIdResponseError = (deleteRolesIdResponse401 | deleteRolesIdResponse403 | deleteRolesIdResponse404 | deleteRolesIdResponse500) & {
+  headers: Headers;
+};
 
-export type deleteRolesIdResponse = deleteRolesIdResponseSuccess | deleteRolesIdResponseError
+export type deleteRolesIdResponse = (deleteRolesIdResponseSuccess | deleteRolesIdResponseError)
 
-export const getDeleteRolesIdUrl = (id: string) => {
+export const getDeleteRolesIdUrl = (id: string,) => {
+
+
+
+
   return `/roles/${id}`
 }
 
 export const deleteRolesId = async (id: string, options?: RequestInit): Promise<deleteRolesIdResponse> => {
-  return customInstance<deleteRolesIdResponse>(getDeleteRolesIdUrl(id), {
+
+  return customInstance<deleteRolesIdResponse>(getDeleteRolesIdUrl(id),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeleteRolesIdMutationOptions = <
-  TError = ErrorType<DeleteRolesId401 | DeleteRolesId403 | DeleteRolesId404 | DeleteRolesId500>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteRolesId>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof deleteRolesId>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["deleteRolesId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteRolesId>>, { id: string }> = (props) => {
-    const { id } = props ?? {}
-
-    return deleteRolesId(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteRolesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteRolesId>>>
 
-export type DeleteRolesIdMutationError = ErrorType<
-  DeleteRolesId401 | DeleteRolesId403 | DeleteRolesId404 | DeleteRolesId500
->
 
-/**
+export const getDeleteRolesIdMutationOptions = <TError = ErrorType<DeleteRolesId401 | DeleteRolesId403 | DeleteRolesId404 | DeleteRolesId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRolesId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteRolesId>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteRolesId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteRolesId>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteRolesId(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteRolesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteRolesId>>>
+
+    export type DeleteRolesIdMutationError = ErrorType<DeleteRolesId401 | DeleteRolesId403 | DeleteRolesId404 | DeleteRolesId500>
+
+    /**
  * @summary Delete role
  */
-export const useDeleteRolesId = <
-  TError = ErrorType<DeleteRolesId401 | DeleteRolesId403 | DeleteRolesId404 | DeleteRolesId500>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteRolesId>>, TError, { id: string }, TContext>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof deleteRolesId>>, TError, { id: string }, TContext> => {
-  return useMutation(getDeleteRolesIdMutationOptions(options), queryClient)
-}
+export const useDeleteRolesId = <TError = ErrorType<DeleteRolesId401 | DeleteRolesId403 | DeleteRolesId404 | DeleteRolesId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRolesId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteRolesId>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteRolesIdMutationOptions(options), queryClient);
+    }

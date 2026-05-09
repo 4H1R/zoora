@@ -7,7 +7,7 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainQuestionOption {
-  id?: string
-  score?: number
-  value?: string
+  id?: string;
+  score?: number;
+  value?: string;
 }

@@ -7,16 +7,16 @@
  */
 
 export type GetMediaParams = {
-  /**
-   * Model type (e.g. users, classes)
-   */
-  model_type: string
-  /**
-   * Model UUID
-   */
-  model_id: string
-  /**
-   * Collection name filter
-   */
-  collection?: string
-}
+/**
+ * Model type (e.g. users, classes)
+ */
+model_type: string;
+/**
+ * Model UUID
+ */
+model_id: string;
+/**
+ * Collection name filter
+ */
+collection?: string;
+};

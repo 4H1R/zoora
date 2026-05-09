@@ -2,6 +2,8 @@ import type { GithubCom4H1RZooraInternalDomainUser as User } from "@/api/model"
 
 import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
+
+import { orgHead } from "@/lib/org-head"
 import { PlusIcon, UsersIcon } from "lucide-react"
 import { useState } from "react"
 import { Can } from "react-access-engine"
@@ -24,6 +26,7 @@ import { useUserColumns } from "./-columns"
 import { UserFormDialog } from "./-user-form-dialog"
 
 export const Route = createFileRoute("/_auth/org/$orgId/users/")({
+  head: () => orgHead("org.nav.users"),
   validateSearch: adminSearchSchema,
   component: UsersPage,
 })
@@ -58,10 +61,9 @@ function UsersPage() {
   const { data, isLoading } = useGetUsers({
     page: currentPage,
     page_size: pageSize,
-    organization_id: orgId,
   })
 
-  const { rolesMap } = useRolesMap(orgId)
+  const { rolesMap } = useRolesMap()
 
   const deleteMutation = useDeleteUsersId({
     mutation: {

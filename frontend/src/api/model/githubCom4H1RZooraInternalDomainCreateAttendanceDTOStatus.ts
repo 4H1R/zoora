@@ -6,12 +6,12 @@
  * OpenAPI spec version: 1.0
  */
 
-export type GithubCom4H1RZooraInternalDomainCreateAttendanceDTOStatus =
-  (typeof GithubCom4H1RZooraInternalDomainCreateAttendanceDTOStatus)[keyof typeof GithubCom4H1RZooraInternalDomainCreateAttendanceDTOStatus]
+export type GithubCom4H1RZooraInternalDomainCreateAttendanceDTOStatus = typeof GithubCom4H1RZooraInternalDomainCreateAttendanceDTOStatus[keyof typeof GithubCom4H1RZooraInternalDomainCreateAttendanceDTOStatus];
+
 
 export const GithubCom4H1RZooraInternalDomainCreateAttendanceDTOStatus = {
-  present: "present",
-  absent: "absent",
-  late: "late",
-  excused: "excused",
-} as const
+  present: 'present',
+  absent: 'absent',
+  late: 'late',
+  excused: 'excused',
+} as const;

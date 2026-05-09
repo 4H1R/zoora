@@ -7,24 +7,24 @@
  */
 
 export type GetClassesIdSessionsSessionIdAttendanceParams = {
-  /**
-   * Filter by status: present|absent|late|excused
-   */
-  status?: string
-  /**
-   * Filter by user UUID
-   */
-  user_id?: string
-  /**
-   * One of: created_at, updated_at, status
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-}
+/**
+ * Filter by status: present|absent|late|excused
+ */
+status?: string;
+/**
+ * Filter by user UUID
+ */
+user_id?: string;
+/**
+ * One of: created_at, updated_at, status
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+};

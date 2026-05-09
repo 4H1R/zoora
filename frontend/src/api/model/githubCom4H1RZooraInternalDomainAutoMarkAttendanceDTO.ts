@@ -5,11 +5,11 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTOSource } from "./githubCom4H1RZooraInternalDomainAutoMarkAttendanceDTOSource"
+import type { GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTOSource } from './githubCom4H1RZooraInternalDomainAutoMarkAttendanceDTOSource';
 
 export interface GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO {
   /** @minimum 0 */
-  min_duration_seconds?: number
-  room_id: string
-  source: GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTOSource
+  min_duration_seconds?: number;
+  room_id: string;
+  source: GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTOSource;
 }

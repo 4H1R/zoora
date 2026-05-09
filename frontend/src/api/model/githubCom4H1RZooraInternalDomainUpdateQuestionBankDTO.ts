@@ -7,7 +7,7 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainUpdateQuestionBankDTO {
-  description?: string
+  description?: string;
   /** @minLength 2 */
-  name?: string
+  name?: string;
 }

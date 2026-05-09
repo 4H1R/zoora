@@ -6,4 +6,4 @@
  * OpenAPI spec version: 1.0
  */
 
-export type GithubCom4H1RZooraInternalDomainErrorBodyFields = { [key: string]: string }
+export type GithubCom4H1RZooraInternalDomainErrorBodyFields = {[key: string]: string};

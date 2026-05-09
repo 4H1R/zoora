@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0
  */
 
-export type GithubCom4H1RZooraInternalDomainAutoMarkSource =
-  (typeof GithubCom4H1RZooraInternalDomainAutoMarkSource)[keyof typeof GithubCom4H1RZooraInternalDomainAutoMarkSource]
+export type GithubCom4H1RZooraInternalDomainAutoMarkSource = typeof GithubCom4H1RZooraInternalDomainAutoMarkSource[keyof typeof GithubCom4H1RZooraInternalDomainAutoMarkSource];
+
 
 export const GithubCom4H1RZooraInternalDomainAutoMarkSource = {
-  AutoMarkSourceLive: "live_room",
-  AutoMarkSourceOffline: "offline_room",
-} as const
+  AutoMarkSourceLive: 'live_room',
+  AutoMarkSourceOffline: 'offline_room',
+} as const;

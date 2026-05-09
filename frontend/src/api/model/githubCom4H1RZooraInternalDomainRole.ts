@@ -5,14 +5,14 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainPermission } from "./githubCom4H1RZooraInternalDomainPermission"
+import type { GithubCom4H1RZooraInternalDomainPermission } from './githubCom4H1RZooraInternalDomainPermission';
 
 export interface GithubCom4H1RZooraInternalDomainRole {
-  created_at?: string
-  id?: string
-  is_preset?: boolean
-  name?: string
-  organization_id?: string
-  permissions?: GithubCom4H1RZooraInternalDomainPermission[]
-  updated_at?: string
+  created_at?: string;
+  id?: string;
+  is_preset?: boolean;
+  name?: string;
+  organization_id?: string;
+  permissions?: GithubCom4H1RZooraInternalDomainPermission[];
+  updated_at?: string;
 }

@@ -7,13 +7,13 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainCreateUserDTO {
-  is_admin?: boolean
+  is_admin?: boolean;
   /** @minLength 2 */
-  name: string
-  organization_id?: string
+  name: string;
+  organization_id?: string;
   /** @minLength 6 */
-  password: string
-  role_id?: string
+  password: string;
+  role_id?: string;
   /** @minLength 3 */
-  username: string
+  username: string;
 }

@@ -5,7 +5,25 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { ErrorType } from ".././mutator/custom-instance"
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   DeleteMediaId401,
   DeleteMediaId403,
@@ -22,28 +40,16 @@ import type {
   PostMediaPresign201,
   PostMediaPresign400,
   PostMediaPresign401,
-  PostMediaPresign403,
-} from "../model"
-import type {
-  DataTag,
-  DefinedInitialDataOptions,
-  DefinedUseQueryResult,
-  MutationFunction,
-  QueryClient,
-  QueryFunction,
-  QueryKey,
-  UndefinedInitialDataOptions,
-  UseMutationOptions,
-  UseMutationResult,
-  UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query"
+  PostMediaPresign403
+} from '../model';
 
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { customInstance } from '.././mutator/custom-instance';
+import type { ErrorType } from '.././mutator/custom-instance';
 
-import { customInstance } from ".././mutator/custom-instance"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * @summary List media by model
@@ -63,131 +69,118 @@ export type getMediaResponse401 = {
   status: 401
 }
 
-export type getMediaResponseSuccess = getMediaResponse200 & {
-  headers: Headers
-}
+export type getMediaResponseSuccess = (getMediaResponse200) & {
+  headers: Headers;
+};
 export type getMediaResponseError = (getMediaResponse400 | getMediaResponse401) & {
-  headers: Headers
-}
+  headers: Headers;
+};
 
-export type getMediaResponse = getMediaResponseSuccess | getMediaResponseError
+export type getMediaResponse = (getMediaResponseSuccess | getMediaResponseError)
 
-export const getGetMediaUrl = (params: GetMediaParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetMediaUrl = (params: GetMediaParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/media?${stringifiedParams}` : `/media`
 }
 
 export const getMedia = async (params: GetMediaParams, options?: RequestInit): Promise<getMediaResponse> => {
-  return customInstance<getMediaResponse>(getGetMediaUrl(params), {
+
+  return customInstance<getMediaResponse>(getGetMediaUrl(params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetMediaQueryKey = (params?: GetMediaParams) => {
-  return [`/media`, ...(params ? [params] : [])] as const
-}
 
-export const getGetMediaQueryOptions = <
-  TData = Awaited<ReturnType<typeof getMedia>>,
-  TError = ErrorType<GetMedia400 | GetMedia401>,
->(
-  params: GetMediaParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMedia>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetMediaQueryKey = (params?: GetMediaParams,) => {
+    return [
+    `/media`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetMediaQueryOptions = <TData = Awaited<ReturnType<typeof getMedia>>, TError = ErrorType<GetMedia400 | GetMedia401>>(params: GetMediaParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMedia>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetMediaQueryKey(params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMedia>>> = ({ signal }) =>
-    getMedia(params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetMediaQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getMedia>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMedia>>> = ({ signal }) => getMedia(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMedia>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetMediaQueryResult = NonNullable<Awaited<ReturnType<typeof getMedia>>>
 export type GetMediaQueryError = ErrorType<GetMedia400 | GetMedia401>
 
-export function useGetMedia<
-  TData = Awaited<ReturnType<typeof getMedia>>,
-  TError = ErrorType<GetMedia400 | GetMedia401>,
->(
-  params: GetMediaParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMedia>>, TError, TData>> &
-      Pick<
-        DefinedInitialDataOptions<Awaited<ReturnType<typeof getMedia>>, TError, Awaited<ReturnType<typeof getMedia>>>,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMedia<
-  TData = Awaited<ReturnType<typeof getMedia>>,
-  TError = ErrorType<GetMedia400 | GetMedia401>,
->(
-  params: GetMediaParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMedia>>, TError, TData>> &
-      Pick<
-        UndefinedInitialDataOptions<Awaited<ReturnType<typeof getMedia>>, TError, Awaited<ReturnType<typeof getMedia>>>,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMedia<
-  TData = Awaited<ReturnType<typeof getMedia>>,
-  TError = ErrorType<GetMedia400 | GetMedia401>,
->(
-  params: GetMediaParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMedia>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetMedia<TData = Awaited<ReturnType<typeof getMedia>>, TError = ErrorType<GetMedia400 | GetMedia401>>(
+ params: GetMediaParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMedia>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMedia>>,
+          TError,
+          Awaited<ReturnType<typeof getMedia>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMedia<TData = Awaited<ReturnType<typeof getMedia>>, TError = ErrorType<GetMedia400 | GetMedia401>>(
+ params: GetMediaParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMedia>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMedia>>,
+          TError,
+          Awaited<ReturnType<typeof getMedia>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMedia<TData = Awaited<ReturnType<typeof getMedia>>, TError = ErrorType<GetMedia400 | GetMedia401>>(
+ params: GetMediaParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMedia>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List media by model
  */
 
-export function useGetMedia<
-  TData = Awaited<ReturnType<typeof getMedia>>,
-  TError = ErrorType<GetMedia400 | GetMedia401>,
->(
-  params: GetMediaParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMedia>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetMediaQueryOptions(params, options)
+export function useGetMedia<TData = Awaited<ReturnType<typeof getMedia>>, TError = ErrorType<GetMedia400 | GetMedia401>>(
+ params: GetMediaParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMedia>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetMediaQueryOptions(params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * Creates a media record and returns a presigned PUT URL for direct upload to S3/RustFS.
@@ -213,101 +206,83 @@ export type postMediaPresignResponse403 = {
   status: 403
 }
 
-export type postMediaPresignResponseSuccess = postMediaPresignResponse201 & {
-  headers: Headers
-}
-export type postMediaPresignResponseError = (
-  | postMediaPresignResponse400
-  | postMediaPresignResponse401
-  | postMediaPresignResponse403
-) & {
-  headers: Headers
-}
+export type postMediaPresignResponseSuccess = (postMediaPresignResponse201) & {
+  headers: Headers;
+};
+export type postMediaPresignResponseError = (postMediaPresignResponse400 | postMediaPresignResponse401 | postMediaPresignResponse403) & {
+  headers: Headers;
+};
 
-export type postMediaPresignResponse = postMediaPresignResponseSuccess | postMediaPresignResponseError
+export type postMediaPresignResponse = (postMediaPresignResponseSuccess | postMediaPresignResponseError)
 
 export const getPostMediaPresignUrl = () => {
+
+
+
+
   return `/media/presign`
 }
 
-export const postMediaPresign = async (
-  githubCom4H1RZooraInternalDomainPresignUploadDTO: GithubCom4H1RZooraInternalDomainPresignUploadDTO,
-  options?: RequestInit
-): Promise<postMediaPresignResponse> => {
-  return customInstance<postMediaPresignResponse>(getPostMediaPresignUrl(), {
+export const postMediaPresign = async (githubCom4H1RZooraInternalDomainPresignUploadDTO: GithubCom4H1RZooraInternalDomainPresignUploadDTO, options?: RequestInit): Promise<postMediaPresignResponse> => {
+
+  return customInstance<postMediaPresignResponse>(getPostMediaPresignUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainPresignUploadDTO),
-  })
-}
-
-export const getPostMediaPresignMutationOptions = <
-  TError = ErrorType<PostMediaPresign400 | PostMediaPresign401 | PostMediaPresign403>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postMediaPresign>>,
-    TError,
-    { data: GithubCom4H1RZooraInternalDomainPresignUploadDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postMediaPresign>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainPresignUploadDTO },
-  TContext
-> => {
-  const mutationKey = ["postMediaPresign"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postMediaPresign>>,
-    { data: GithubCom4H1RZooraInternalDomainPresignUploadDTO }
-  > = (props) => {
-    const { data } = props ?? {}
-
-    return postMediaPresign(data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainPresignUploadDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostMediaPresignMutationResult = NonNullable<Awaited<ReturnType<typeof postMediaPresign>>>
-export type PostMediaPresignMutationBody = GithubCom4H1RZooraInternalDomainPresignUploadDTO
-export type PostMediaPresignMutationError = ErrorType<PostMediaPresign400 | PostMediaPresign401 | PostMediaPresign403>
 
-/**
+
+export const getPostMediaPresignMutationOptions = <TError = ErrorType<PostMediaPresign400 | PostMediaPresign401 | PostMediaPresign403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postMediaPresign>>, TError,{data: GithubCom4H1RZooraInternalDomainPresignUploadDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postMediaPresign>>, TError,{data: GithubCom4H1RZooraInternalDomainPresignUploadDTO}, TContext> => {
+
+const mutationKey = ['postMediaPresign'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postMediaPresign>>, {data: GithubCom4H1RZooraInternalDomainPresignUploadDTO}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postMediaPresign(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostMediaPresignMutationResult = NonNullable<Awaited<ReturnType<typeof postMediaPresign>>>
+    export type PostMediaPresignMutationBody = GithubCom4H1RZooraInternalDomainPresignUploadDTO
+    export type PostMediaPresignMutationError = ErrorType<PostMediaPresign400 | PostMediaPresign401 | PostMediaPresign403>
+
+    /**
  * @summary Get presigned upload URL
  */
-export const usePostMediaPresign = <
-  TError = ErrorType<PostMediaPresign400 | PostMediaPresign401 | PostMediaPresign403>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postMediaPresign>>,
-      TError,
-      { data: GithubCom4H1RZooraInternalDomainPresignUploadDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postMediaPresign>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainPresignUploadDTO },
-  TContext
-> => {
-  return useMutation(getPostMediaPresignMutationOptions(options), queryClient)
-}
-/**
+export const usePostMediaPresign = <TError = ErrorType<PostMediaPresign400 | PostMediaPresign401 | PostMediaPresign403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postMediaPresign>>, TError,{data: GithubCom4H1RZooraInternalDomainPresignUploadDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postMediaPresign>>,
+        TError,
+        {data: GithubCom4H1RZooraInternalDomainPresignUploadDTO},
+        TContext
+      > => {
+      return useMutation(getPostMediaPresignMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get media
  */
 export type getMediaIdResponse200 = {
@@ -325,129 +300,111 @@ export type getMediaIdResponse404 = {
   status: 404
 }
 
-export type getMediaIdResponseSuccess = getMediaIdResponse200 & {
-  headers: Headers
-}
+export type getMediaIdResponseSuccess = (getMediaIdResponse200) & {
+  headers: Headers;
+};
 export type getMediaIdResponseError = (getMediaIdResponse401 | getMediaIdResponse404) & {
-  headers: Headers
-}
+  headers: Headers;
+};
 
-export type getMediaIdResponse = getMediaIdResponseSuccess | getMediaIdResponseError
+export type getMediaIdResponse = (getMediaIdResponseSuccess | getMediaIdResponseError)
 
-export const getGetMediaIdUrl = (id: string) => {
+export const getGetMediaIdUrl = (id: string,) => {
+
+
+
+
   return `/media/${id}`
 }
 
 export const getMediaId = async (id: string, options?: RequestInit): Promise<getMediaIdResponse> => {
-  return customInstance<getMediaIdResponse>(getGetMediaIdUrl(id), {
+
+  return customInstance<getMediaIdResponse>(getGetMediaIdUrl(id),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetMediaIdQueryKey = (id: string) => {
-  return [`/media/${id}`] as const
-}
 
-export const getGetMediaIdQueryOptions = <
-  TData = Awaited<ReturnType<typeof getMediaId>>,
-  TError = ErrorType<GetMediaId401 | GetMediaId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetMediaIdQueryKey = (id: string,) => {
+    return [
+    `/media/${id}`
+    ] as const;
+    }
+
+
+export const getGetMediaIdQueryOptions = <TData = Awaited<ReturnType<typeof getMediaId>>, TError = ErrorType<GetMediaId401 | GetMediaId404>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetMediaIdQueryKey(id)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMediaId>>> = ({ signal }) =>
-    getMediaId(id, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetMediaIdQueryKey(id);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getMediaId>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMediaId>>> = ({ signal }) => getMediaId(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMediaId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetMediaIdQueryResult = NonNullable<Awaited<ReturnType<typeof getMediaId>>>
 export type GetMediaIdQueryError = ErrorType<GetMediaId401 | GetMediaId404>
 
-export function useGetMediaId<
-  TData = Awaited<ReturnType<typeof getMediaId>>,
-  TError = ErrorType<GetMediaId401 | GetMediaId404>,
->(
-  id: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaId>>, TError, TData>> &
-      Pick<
+
+export function useGetMediaId<TData = Awaited<ReturnType<typeof getMediaId>>, TError = ErrorType<GetMediaId401 | GetMediaId404>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMediaId>>,
           TError,
           Awaited<ReturnType<typeof getMediaId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMediaId<
-  TData = Awaited<ReturnType<typeof getMediaId>>,
-  TError = ErrorType<GetMediaId401 | GetMediaId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaId>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMediaId<TData = Awaited<ReturnType<typeof getMediaId>>, TError = ErrorType<GetMediaId401 | GetMediaId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMediaId>>,
           TError,
           Awaited<ReturnType<typeof getMediaId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMediaId<
-  TData = Awaited<ReturnType<typeof getMediaId>>,
-  TError = ErrorType<GetMediaId401 | GetMediaId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMediaId<TData = Awaited<ReturnType<typeof getMediaId>>, TError = ErrorType<GetMediaId401 | GetMediaId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get media
  */
 
-export function useGetMediaId<
-  TData = Awaited<ReturnType<typeof getMediaId>>,
-  TError = ErrorType<GetMediaId401 | GetMediaId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetMediaIdQueryOptions(id, options)
+export function useGetMediaId<TData = Awaited<ReturnType<typeof getMediaId>>, TError = ErrorType<GetMediaId401 | GetMediaId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetMediaIdQueryOptions(id,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Delete media
@@ -472,69 +429,78 @@ export type deleteMediaIdResponse404 = {
   status: 404
 }
 
-export type deleteMediaIdResponseSuccess = deleteMediaIdResponse200 & {
-  headers: Headers
-}
-export type deleteMediaIdResponseError = (
-  | deleteMediaIdResponse401
-  | deleteMediaIdResponse403
-  | deleteMediaIdResponse404
-) & {
-  headers: Headers
-}
+export type deleteMediaIdResponseSuccess = (deleteMediaIdResponse200) & {
+  headers: Headers;
+};
+export type deleteMediaIdResponseError = (deleteMediaIdResponse401 | deleteMediaIdResponse403 | deleteMediaIdResponse404) & {
+  headers: Headers;
+};
 
-export type deleteMediaIdResponse = deleteMediaIdResponseSuccess | deleteMediaIdResponseError
+export type deleteMediaIdResponse = (deleteMediaIdResponseSuccess | deleteMediaIdResponseError)
 
-export const getDeleteMediaIdUrl = (id: string) => {
+export const getDeleteMediaIdUrl = (id: string,) => {
+
+
+
+
   return `/media/${id}`
 }
 
 export const deleteMediaId = async (id: string, options?: RequestInit): Promise<deleteMediaIdResponse> => {
-  return customInstance<deleteMediaIdResponse>(getDeleteMediaIdUrl(id), {
+
+  return customInstance<deleteMediaIdResponse>(getDeleteMediaIdUrl(id),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeleteMediaIdMutationOptions = <
-  TError = ErrorType<DeleteMediaId401 | DeleteMediaId403 | DeleteMediaId404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteMediaId>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof deleteMediaId>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["deleteMediaId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteMediaId>>, { id: string }> = (props) => {
-    const { id } = props ?? {}
-
-    return deleteMediaId(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteMediaIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteMediaId>>>
 
-export type DeleteMediaIdMutationError = ErrorType<DeleteMediaId401 | DeleteMediaId403 | DeleteMediaId404>
 
-/**
+export const getDeleteMediaIdMutationOptions = <TError = ErrorType<DeleteMediaId401 | DeleteMediaId403 | DeleteMediaId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMediaId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteMediaId>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteMediaId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteMediaId>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteMediaId(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteMediaIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteMediaId>>>
+
+    export type DeleteMediaIdMutationError = ErrorType<DeleteMediaId401 | DeleteMediaId403 | DeleteMediaId404>
+
+    /**
  * @summary Delete media
  */
-export const useDeleteMediaId = <
-  TError = ErrorType<DeleteMediaId401 | DeleteMediaId403 | DeleteMediaId404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteMediaId>>, TError, { id: string }, TContext>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof deleteMediaId>>, TError, { id: string }, TContext> => {
-  return useMutation(getDeleteMediaIdMutationOptions(options), queryClient)
-}
+export const useDeleteMediaId = <TError = ErrorType<DeleteMediaId401 | DeleteMediaId403 | DeleteMediaId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMediaId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteMediaId>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteMediaIdMutationOptions(options), queryClient);
+    }

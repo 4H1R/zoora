@@ -7,12 +7,13 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainCreateClassDTO {
-  description?: string
+  description?: string;
   /** @minLength 2 */
-  name: string
+  name: string;
   /**
-   * capacity; 0 = unlimited
-   * @minimum 0
-   */
-  total_users?: number
+     * capacity; 0 = unlimited
+     * @minimum 0
+     */
+  total_users?: number;
+  user_id?: string;
 }

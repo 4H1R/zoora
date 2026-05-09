@@ -8,5 +8,5 @@
 
 export interface GithubCom4H1RZooraInternalDomainAnswerPollDTO {
   /** @minItems 1 */
-  options: string[]
+  options: string[];
 }

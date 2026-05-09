@@ -5,7 +5,25 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { ErrorType } from ".././mutator/custom-instance"
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   DeleteUsersId401,
   DeleteUsersId403,
@@ -58,28 +76,16 @@ import type {
   PutUsersMe200,
   PutUsersMe400,
   PutUsersMe401,
-  PutUsersMe500,
-} from "../model"
-import type {
-  DataTag,
-  DefinedInitialDataOptions,
-  DefinedUseQueryResult,
-  MutationFunction,
-  QueryClient,
-  QueryFunction,
-  QueryKey,
-  UndefinedInitialDataOptions,
-  UseMutationOptions,
-  UseMutationResult,
-  UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query"
+  PutUsersMe500
+} from '../model';
 
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { customInstance } from '.././mutator/custom-instance';
+import type { ErrorType } from '.././mutator/custom-instance';
 
-import { customInstance } from ".././mutator/custom-instance"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * Returns users scoped by caller role. Search matches substrings of: username, name. Orderable fields: created_at, updated_at, username, name.
@@ -105,131 +111,118 @@ export type getUsersResponse500 = {
   status: 500
 }
 
-export type getUsersResponseSuccess = getUsersResponse200 & {
-  headers: Headers
-}
+export type getUsersResponseSuccess = (getUsersResponse200) & {
+  headers: Headers;
+};
 export type getUsersResponseError = (getUsersResponse401 | getUsersResponse403 | getUsersResponse500) & {
-  headers: Headers
-}
+  headers: Headers;
+};
 
-export type getUsersResponse = getUsersResponseSuccess | getUsersResponseError
+export type getUsersResponse = (getUsersResponseSuccess | getUsersResponseError)
 
-export const getGetUsersUrl = (params?: GetUsersParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetUsersUrl = (params?: GetUsersParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/users?${stringifiedParams}` : `/users`
 }
 
 export const getUsers = async (params?: GetUsersParams, options?: RequestInit): Promise<getUsersResponse> => {
-  return customInstance<getUsersResponse>(getGetUsersUrl(params), {
+
+  return customInstance<getUsersResponse>(getGetUsersUrl(params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetUsersQueryKey = (params?: GetUsersParams) => {
-  return [`/users`, ...(params ? [params] : [])] as const
-}
 
-export const getGetUsersQueryOptions = <
-  TData = Awaited<ReturnType<typeof getUsers>>,
-  TError = ErrorType<GetUsers401 | GetUsers403 | GetUsers500>,
->(
-  params?: GetUsersParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsers>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetUsersQueryKey = (params?: GetUsersParams,) => {
+    return [
+    `/users`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetUsersQueryOptions = <TData = Awaited<ReturnType<typeof getUsers>>, TError = ErrorType<GetUsers401 | GetUsers403 | GetUsers500>>(params?: GetUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetUsersQueryKey(params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getUsers>>> = ({ signal }) =>
-    getUsers(params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetUsersQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getUsers>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUsers>>> = ({ signal }) => getUsers(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUsers>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetUsersQueryResult = NonNullable<Awaited<ReturnType<typeof getUsers>>>
 export type GetUsersQueryError = ErrorType<GetUsers401 | GetUsers403 | GetUsers500>
 
-export function useGetUsers<
-  TData = Awaited<ReturnType<typeof getUsers>>,
-  TError = ErrorType<GetUsers401 | GetUsers403 | GetUsers500>,
->(
-  params: undefined | GetUsersParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsers>>, TError, TData>> &
-      Pick<
-        DefinedInitialDataOptions<Awaited<ReturnType<typeof getUsers>>, TError, Awaited<ReturnType<typeof getUsers>>>,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetUsers<
-  TData = Awaited<ReturnType<typeof getUsers>>,
-  TError = ErrorType<GetUsers401 | GetUsers403 | GetUsers500>,
->(
-  params?: GetUsersParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsers>>, TError, TData>> &
-      Pick<
-        UndefinedInitialDataOptions<Awaited<ReturnType<typeof getUsers>>, TError, Awaited<ReturnType<typeof getUsers>>>,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetUsers<
-  TData = Awaited<ReturnType<typeof getUsers>>,
-  TError = ErrorType<GetUsers401 | GetUsers403 | GetUsers500>,
->(
-  params?: GetUsersParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsers>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetUsers<TData = Awaited<ReturnType<typeof getUsers>>, TError = ErrorType<GetUsers401 | GetUsers403 | GetUsers500>>(
+ params: undefined |  GetUsersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsers>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUsers>>,
+          TError,
+          Awaited<ReturnType<typeof getUsers>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUsers<TData = Awaited<ReturnType<typeof getUsers>>, TError = ErrorType<GetUsers401 | GetUsers403 | GetUsers500>>(
+ params?: GetUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsers>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUsers>>,
+          TError,
+          Awaited<ReturnType<typeof getUsers>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUsers<TData = Awaited<ReturnType<typeof getUsers>>, TError = ErrorType<GetUsers401 | GetUsers403 | GetUsers500>>(
+ params?: GetUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List users
  */
 
-export function useGetUsers<
-  TData = Awaited<ReturnType<typeof getUsers>>,
-  TError = ErrorType<GetUsers401 | GetUsers403 | GetUsers500>,
->(
-  params?: GetUsersParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsers>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetUsersQueryOptions(params, options)
+export function useGetUsers<TData = Awaited<ReturnType<typeof getUsers>>, TError = ErrorType<GetUsers401 | GetUsers403 | GetUsers500>>(
+ params?: GetUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetUsersQueryOptions(params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Create user
@@ -259,102 +252,83 @@ export type postUsersResponse500 = {
   status: 500
 }
 
-export type postUsersResponseSuccess = postUsersResponse201 & {
-  headers: Headers
-}
-export type postUsersResponseError = (
-  | postUsersResponse400
-  | postUsersResponse401
-  | postUsersResponse403
-  | postUsersResponse500
-) & {
-  headers: Headers
-}
+export type postUsersResponseSuccess = (postUsersResponse201) & {
+  headers: Headers;
+};
+export type postUsersResponseError = (postUsersResponse400 | postUsersResponse401 | postUsersResponse403 | postUsersResponse500) & {
+  headers: Headers;
+};
 
-export type postUsersResponse = postUsersResponseSuccess | postUsersResponseError
+export type postUsersResponse = (postUsersResponseSuccess | postUsersResponseError)
 
 export const getPostUsersUrl = () => {
+
+
+
+
   return `/users`
 }
 
-export const postUsers = async (
-  githubCom4H1RZooraInternalDomainCreateUserDTO: GithubCom4H1RZooraInternalDomainCreateUserDTO,
-  options?: RequestInit
-): Promise<postUsersResponse> => {
-  return customInstance<postUsersResponse>(getPostUsersUrl(), {
+export const postUsers = async (githubCom4H1RZooraInternalDomainCreateUserDTO: GithubCom4H1RZooraInternalDomainCreateUserDTO, options?: RequestInit): Promise<postUsersResponse> => {
+
+  return customInstance<postUsersResponse>(getPostUsersUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainCreateUserDTO),
-  })
-}
-
-export const getPostUsersMutationOptions = <
-  TError = ErrorType<PostUsers400 | PostUsers401 | PostUsers403 | PostUsers500>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postUsers>>,
-    TError,
-    { data: GithubCom4H1RZooraInternalDomainCreateUserDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postUsers>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainCreateUserDTO },
-  TContext
-> => {
-  const mutationKey = ["postUsers"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postUsers>>,
-    { data: GithubCom4H1RZooraInternalDomainCreateUserDTO }
-  > = (props) => {
-    const { data } = props ?? {}
-
-    return postUsers(data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainCreateUserDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostUsersMutationResult = NonNullable<Awaited<ReturnType<typeof postUsers>>>
-export type PostUsersMutationBody = GithubCom4H1RZooraInternalDomainCreateUserDTO
-export type PostUsersMutationError = ErrorType<PostUsers400 | PostUsers401 | PostUsers403 | PostUsers500>
 
-/**
+
+export const getPostUsersMutationOptions = <TError = ErrorType<PostUsers400 | PostUsers401 | PostUsers403 | PostUsers500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postUsers>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateUserDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postUsers>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateUserDTO}, TContext> => {
+
+const mutationKey = ['postUsers'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postUsers>>, {data: GithubCom4H1RZooraInternalDomainCreateUserDTO}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postUsers(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostUsersMutationResult = NonNullable<Awaited<ReturnType<typeof postUsers>>>
+    export type PostUsersMutationBody = GithubCom4H1RZooraInternalDomainCreateUserDTO
+    export type PostUsersMutationError = ErrorType<PostUsers400 | PostUsers401 | PostUsers403 | PostUsers500>
+
+    /**
  * @summary Create user
  */
-export const usePostUsers = <
-  TError = ErrorType<PostUsers400 | PostUsers401 | PostUsers403 | PostUsers500>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postUsers>>,
-      TError,
-      { data: GithubCom4H1RZooraInternalDomainCreateUserDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postUsers>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainCreateUserDTO },
-  TContext
-> => {
-  return useMutation(getPostUsersMutationOptions(options), queryClient)
-}
-/**
+export const usePostUsers = <TError = ErrorType<PostUsers400 | PostUsers401 | PostUsers403 | PostUsers500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postUsers>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateUserDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postUsers>>,
+        TError,
+        {data: GithubCom4H1RZooraInternalDomainCreateUserDTO},
+        TContext
+      > => {
+      return useMutation(getPostUsersMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get my profile
  */
 export type getUsersMeResponse200 = {
@@ -372,122 +346,111 @@ export type getUsersMeResponse500 = {
   status: 500
 }
 
-export type getUsersMeResponseSuccess = getUsersMeResponse200 & {
-  headers: Headers
-}
+export type getUsersMeResponseSuccess = (getUsersMeResponse200) & {
+  headers: Headers;
+};
 export type getUsersMeResponseError = (getUsersMeResponse401 | getUsersMeResponse500) & {
-  headers: Headers
-}
+  headers: Headers;
+};
 
-export type getUsersMeResponse = getUsersMeResponseSuccess | getUsersMeResponseError
+export type getUsersMeResponse = (getUsersMeResponseSuccess | getUsersMeResponseError)
 
 export const getGetUsersMeUrl = () => {
+
+
+
+
   return `/users/me`
 }
 
-export const getUsersMe = async (options?: RequestInit): Promise<getUsersMeResponse> => {
-  return customInstance<getUsersMeResponse>(getGetUsersMeUrl(), {
+export const getUsersMe = async ( options?: RequestInit): Promise<getUsersMeResponse> => {
+
+  return customInstance<getUsersMeResponse>(getGetUsersMeUrl(),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
 
 export const getGetUsersMeQueryKey = () => {
-  return [`/users/me`] as const
-}
+    return [
+    `/users/me`
+    ] as const;
+    }
 
-export const getGetUsersMeQueryOptions = <
-  TData = Awaited<ReturnType<typeof getUsersMe>>,
-  TError = ErrorType<GetUsersMe401 | GetUsersMe500>,
->(options?: {
-  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersMe>>, TError, TData>>
-  request?: SecondParameter<typeof customInstance>
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetUsersMeQueryKey()
+export const getGetUsersMeQueryOptions = <TData = Awaited<ReturnType<typeof getUsersMe>>, TError = ErrorType<GetUsersMe401 | GetUsersMe500>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getUsersMe>>> = ({ signal }) =>
-    getUsersMe({ signal, ...requestOptions })
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getUsersMe>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+  const queryKey =  queryOptions?.queryKey ?? getGetUsersMeQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUsersMe>>> = ({ signal }) => getUsersMe({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUsersMe>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetUsersMeQueryResult = NonNullable<Awaited<ReturnType<typeof getUsersMe>>>
 export type GetUsersMeQueryError = ErrorType<GetUsersMe401 | GetUsersMe500>
 
-export function useGetUsersMe<
-  TData = Awaited<ReturnType<typeof getUsersMe>>,
-  TError = ErrorType<GetUsersMe401 | GetUsersMe500>,
->(
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersMe>>, TError, TData>> &
-      Pick<
+
+export function useGetUsersMe<TData = Awaited<ReturnType<typeof getUsersMe>>, TError = ErrorType<GetUsersMe401 | GetUsersMe500>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersMe>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getUsersMe>>,
           TError,
           Awaited<ReturnType<typeof getUsersMe>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetUsersMe<
-  TData = Awaited<ReturnType<typeof getUsersMe>>,
-  TError = ErrorType<GetUsersMe401 | GetUsersMe500>,
->(
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersMe>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUsersMe<TData = Awaited<ReturnType<typeof getUsersMe>>, TError = ErrorType<GetUsersMe401 | GetUsersMe500>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersMe>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getUsersMe>>,
           TError,
           Awaited<ReturnType<typeof getUsersMe>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetUsersMe<
-  TData = Awaited<ReturnType<typeof getUsersMe>>,
-  TError = ErrorType<GetUsersMe401 | GetUsersMe500>,
->(
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersMe>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUsersMe<TData = Awaited<ReturnType<typeof getUsersMe>>, TError = ErrorType<GetUsersMe401 | GetUsersMe500>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get my profile
  */
 
-export function useGetUsersMe<
-  TData = Awaited<ReturnType<typeof getUsersMe>>,
-  TError = ErrorType<GetUsersMe401 | GetUsersMe500>,
->(
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersMe>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useGetUsersMe<TData = Awaited<ReturnType<typeof getUsersMe>>, TError = ErrorType<GetUsersMe401 | GetUsersMe500>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
   const queryOptions = getGetUsersMeQueryOptions(options)
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Update my profile
@@ -512,94 +475,83 @@ export type putUsersMeResponse500 = {
   status: 500
 }
 
-export type putUsersMeResponseSuccess = putUsersMeResponse200 & {
-  headers: Headers
-}
+export type putUsersMeResponseSuccess = (putUsersMeResponse200) & {
+  headers: Headers;
+};
 export type putUsersMeResponseError = (putUsersMeResponse400 | putUsersMeResponse401 | putUsersMeResponse500) & {
-  headers: Headers
-}
+  headers: Headers;
+};
 
-export type putUsersMeResponse = putUsersMeResponseSuccess | putUsersMeResponseError
+export type putUsersMeResponse = (putUsersMeResponseSuccess | putUsersMeResponseError)
 
 export const getPutUsersMeUrl = () => {
+
+
+
+
   return `/users/me`
 }
 
-export const putUsersMe = async (
-  githubCom4H1RZooraInternalDomainUpdateProfileDTO: GithubCom4H1RZooraInternalDomainUpdateProfileDTO,
-  options?: RequestInit
-): Promise<putUsersMeResponse> => {
-  return customInstance<putUsersMeResponse>(getPutUsersMeUrl(), {
+export const putUsersMe = async (githubCom4H1RZooraInternalDomainUpdateProfileDTO: GithubCom4H1RZooraInternalDomainUpdateProfileDTO, options?: RequestInit): Promise<putUsersMeResponse> => {
+
+  return customInstance<putUsersMeResponse>(getPutUsersMeUrl(),
+  {
     ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainUpdateProfileDTO),
-  })
-}
-
-export const getPutUsersMeMutationOptions = <
-  TError = ErrorType<PutUsersMe400 | PutUsersMe401 | PutUsersMe500>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putUsersMe>>,
-    TError,
-    { data: GithubCom4H1RZooraInternalDomainUpdateProfileDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putUsersMe>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainUpdateProfileDTO },
-  TContext
-> => {
-  const mutationKey = ["putUsersMe"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putUsersMe>>,
-    { data: GithubCom4H1RZooraInternalDomainUpdateProfileDTO }
-  > = (props) => {
-    const { data } = props ?? {}
-
-    return putUsersMe(data, requestOptions)
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainUpdateProfileDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutUsersMeMutationResult = NonNullable<Awaited<ReturnType<typeof putUsersMe>>>
-export type PutUsersMeMutationBody = GithubCom4H1RZooraInternalDomainUpdateProfileDTO
-export type PutUsersMeMutationError = ErrorType<PutUsersMe400 | PutUsersMe401 | PutUsersMe500>
 
-/**
+
+export const getPutUsersMeMutationOptions = <TError = ErrorType<PutUsersMe400 | PutUsersMe401 | PutUsersMe500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putUsersMe>>, TError,{data: GithubCom4H1RZooraInternalDomainUpdateProfileDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putUsersMe>>, TError,{data: GithubCom4H1RZooraInternalDomainUpdateProfileDTO}, TContext> => {
+
+const mutationKey = ['putUsersMe'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putUsersMe>>, {data: GithubCom4H1RZooraInternalDomainUpdateProfileDTO}> = (props) => {
+          const {data} = props ?? {};
+
+          return  putUsersMe(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutUsersMeMutationResult = NonNullable<Awaited<ReturnType<typeof putUsersMe>>>
+    export type PutUsersMeMutationBody = GithubCom4H1RZooraInternalDomainUpdateProfileDTO
+    export type PutUsersMeMutationError = ErrorType<PutUsersMe400 | PutUsersMe401 | PutUsersMe500>
+
+    /**
  * @summary Update my profile
  */
-export const usePutUsersMe = <TError = ErrorType<PutUsersMe400 | PutUsersMe401 | PutUsersMe500>, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putUsersMe>>,
-      TError,
-      { data: GithubCom4H1RZooraInternalDomainUpdateProfileDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putUsersMe>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainUpdateProfileDTO },
-  TContext
-> => {
-  return useMutation(getPutUsersMeMutationOptions(options), queryClient)
-}
-/**
+export const usePutUsersMe = <TError = ErrorType<PutUsersMe400 | PutUsersMe401 | PutUsersMe500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putUsersMe>>, TError,{data: GithubCom4H1RZooraInternalDomainUpdateProfileDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putUsersMe>>,
+        TError,
+        {data: GithubCom4H1RZooraInternalDomainUpdateProfileDTO},
+        TContext
+      > => {
+      return useMutation(getPutUsersMeMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Change my password
  */
 export type postUsersMePasswordResponse200 = {
@@ -622,103 +574,83 @@ export type postUsersMePasswordResponse500 = {
   status: 500
 }
 
-export type postUsersMePasswordResponseSuccess = postUsersMePasswordResponse200 & {
-  headers: Headers
-}
-export type postUsersMePasswordResponseError = (
-  | postUsersMePasswordResponse400
-  | postUsersMePasswordResponse401
-  | postUsersMePasswordResponse500
-) & {
-  headers: Headers
-}
+export type postUsersMePasswordResponseSuccess = (postUsersMePasswordResponse200) & {
+  headers: Headers;
+};
+export type postUsersMePasswordResponseError = (postUsersMePasswordResponse400 | postUsersMePasswordResponse401 | postUsersMePasswordResponse500) & {
+  headers: Headers;
+};
 
-export type postUsersMePasswordResponse = postUsersMePasswordResponseSuccess | postUsersMePasswordResponseError
+export type postUsersMePasswordResponse = (postUsersMePasswordResponseSuccess | postUsersMePasswordResponseError)
 
 export const getPostUsersMePasswordUrl = () => {
+
+
+
+
   return `/users/me/password`
 }
 
-export const postUsersMePassword = async (
-  githubCom4H1RZooraInternalDomainChangePasswordDTO: GithubCom4H1RZooraInternalDomainChangePasswordDTO,
-  options?: RequestInit
-): Promise<postUsersMePasswordResponse> => {
-  return customInstance<postUsersMePasswordResponse>(getPostUsersMePasswordUrl(), {
+export const postUsersMePassword = async (githubCom4H1RZooraInternalDomainChangePasswordDTO: GithubCom4H1RZooraInternalDomainChangePasswordDTO, options?: RequestInit): Promise<postUsersMePasswordResponse> => {
+
+  return customInstance<postUsersMePasswordResponse>(getPostUsersMePasswordUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainChangePasswordDTO),
-  })
-}
-
-export const getPostUsersMePasswordMutationOptions = <
-  TError = ErrorType<PostUsersMePassword400 | PostUsersMePassword401 | PostUsersMePassword500>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postUsersMePassword>>,
-    TError,
-    { data: GithubCom4H1RZooraInternalDomainChangePasswordDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postUsersMePassword>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainChangePasswordDTO },
-  TContext
-> => {
-  const mutationKey = ["postUsersMePassword"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postUsersMePassword>>,
-    { data: GithubCom4H1RZooraInternalDomainChangePasswordDTO }
-  > = (props) => {
-    const { data } = props ?? {}
-
-    return postUsersMePassword(data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainChangePasswordDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostUsersMePasswordMutationResult = NonNullable<Awaited<ReturnType<typeof postUsersMePassword>>>
-export type PostUsersMePasswordMutationBody = GithubCom4H1RZooraInternalDomainChangePasswordDTO
-export type PostUsersMePasswordMutationError = ErrorType<
-  PostUsersMePassword400 | PostUsersMePassword401 | PostUsersMePassword500
->
 
-/**
+
+export const getPostUsersMePasswordMutationOptions = <TError = ErrorType<PostUsersMePassword400 | PostUsersMePassword401 | PostUsersMePassword500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postUsersMePassword>>, TError,{data: GithubCom4H1RZooraInternalDomainChangePasswordDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postUsersMePassword>>, TError,{data: GithubCom4H1RZooraInternalDomainChangePasswordDTO}, TContext> => {
+
+const mutationKey = ['postUsersMePassword'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postUsersMePassword>>, {data: GithubCom4H1RZooraInternalDomainChangePasswordDTO}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postUsersMePassword(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostUsersMePasswordMutationResult = NonNullable<Awaited<ReturnType<typeof postUsersMePassword>>>
+    export type PostUsersMePasswordMutationBody = GithubCom4H1RZooraInternalDomainChangePasswordDTO
+    export type PostUsersMePasswordMutationError = ErrorType<PostUsersMePassword400 | PostUsersMePassword401 | PostUsersMePassword500>
+
+    /**
  * @summary Change my password
  */
-export const usePostUsersMePassword = <
-  TError = ErrorType<PostUsersMePassword400 | PostUsersMePassword401 | PostUsersMePassword500>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postUsersMePassword>>,
-      TError,
-      { data: GithubCom4H1RZooraInternalDomainChangePasswordDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postUsersMePassword>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainChangePasswordDTO },
-  TContext
-> => {
-  return useMutation(getPostUsersMePasswordMutationOptions(options), queryClient)
-}
-/**
+export const usePostUsersMePassword = <TError = ErrorType<PostUsersMePassword400 | PostUsersMePassword401 | PostUsersMePassword500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postUsersMePassword>>, TError,{data: GithubCom4H1RZooraInternalDomainChangePasswordDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postUsersMePassword>>,
+        TError,
+        {data: GithubCom4H1RZooraInternalDomainChangePasswordDTO},
+        TContext
+      > => {
+      return useMutation(getPostUsersMePasswordMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get user by ID
  */
 export type getUsersIdResponse200 = {
@@ -746,134 +678,111 @@ export type getUsersIdResponse500 = {
   status: 500
 }
 
-export type getUsersIdResponseSuccess = getUsersIdResponse200 & {
-  headers: Headers
-}
-export type getUsersIdResponseError = (
-  | getUsersIdResponse401
-  | getUsersIdResponse403
-  | getUsersIdResponse404
-  | getUsersIdResponse500
-) & {
-  headers: Headers
-}
+export type getUsersIdResponseSuccess = (getUsersIdResponse200) & {
+  headers: Headers;
+};
+export type getUsersIdResponseError = (getUsersIdResponse401 | getUsersIdResponse403 | getUsersIdResponse404 | getUsersIdResponse500) & {
+  headers: Headers;
+};
 
-export type getUsersIdResponse = getUsersIdResponseSuccess | getUsersIdResponseError
+export type getUsersIdResponse = (getUsersIdResponseSuccess | getUsersIdResponseError)
 
-export const getGetUsersIdUrl = (id: string) => {
+export const getGetUsersIdUrl = (id: string,) => {
+
+
+
+
   return `/users/${id}`
 }
 
 export const getUsersId = async (id: string, options?: RequestInit): Promise<getUsersIdResponse> => {
-  return customInstance<getUsersIdResponse>(getGetUsersIdUrl(id), {
+
+  return customInstance<getUsersIdResponse>(getGetUsersIdUrl(id),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetUsersIdQueryKey = (id: string) => {
-  return [`/users/${id}`] as const
-}
 
-export const getGetUsersIdQueryOptions = <
-  TData = Awaited<ReturnType<typeof getUsersId>>,
-  TError = ErrorType<GetUsersId401 | GetUsersId403 | GetUsersId404 | GetUsersId500>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetUsersIdQueryKey = (id: string,) => {
+    return [
+    `/users/${id}`
+    ] as const;
+    }
+
+
+export const getGetUsersIdQueryOptions = <TData = Awaited<ReturnType<typeof getUsersId>>, TError = ErrorType<GetUsersId401 | GetUsersId403 | GetUsersId404 | GetUsersId500>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetUsersIdQueryKey(id)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getUsersId>>> = ({ signal }) =>
-    getUsersId(id, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetUsersIdQueryKey(id);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getUsersId>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUsersId>>> = ({ signal }) => getUsersId(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUsersId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetUsersIdQueryResult = NonNullable<Awaited<ReturnType<typeof getUsersId>>>
 export type GetUsersIdQueryError = ErrorType<GetUsersId401 | GetUsersId403 | GetUsersId404 | GetUsersId500>
 
-export function useGetUsersId<
-  TData = Awaited<ReturnType<typeof getUsersId>>,
-  TError = ErrorType<GetUsersId401 | GetUsersId403 | GetUsersId404 | GetUsersId500>,
->(
-  id: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersId>>, TError, TData>> &
-      Pick<
+
+export function useGetUsersId<TData = Awaited<ReturnType<typeof getUsersId>>, TError = ErrorType<GetUsersId401 | GetUsersId403 | GetUsersId404 | GetUsersId500>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getUsersId>>,
           TError,
           Awaited<ReturnType<typeof getUsersId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetUsersId<
-  TData = Awaited<ReturnType<typeof getUsersId>>,
-  TError = ErrorType<GetUsersId401 | GetUsersId403 | GetUsersId404 | GetUsersId500>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersId>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUsersId<TData = Awaited<ReturnType<typeof getUsersId>>, TError = ErrorType<GetUsersId401 | GetUsersId403 | GetUsersId404 | GetUsersId500>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getUsersId>>,
           TError,
           Awaited<ReturnType<typeof getUsersId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetUsersId<
-  TData = Awaited<ReturnType<typeof getUsersId>>,
-  TError = ErrorType<GetUsersId401 | GetUsersId403 | GetUsersId404 | GetUsersId500>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUsersId<TData = Awaited<ReturnType<typeof getUsersId>>, TError = ErrorType<GetUsersId401 | GetUsersId403 | GetUsersId404 | GetUsersId500>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get user by ID
  */
 
-export function useGetUsersId<
-  TData = Awaited<ReturnType<typeof getUsersId>>,
-  TError = ErrorType<GetUsersId401 | GetUsersId403 | GetUsersId404 | GetUsersId500>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetUsersIdQueryOptions(id, options)
+export function useGetUsersId<TData = Awaited<ReturnType<typeof getUsersId>>, TError = ErrorType<GetUsersId401 | GetUsersId403 | GetUsersId404 | GetUsersId500>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetUsersIdQueryOptions(id,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Update user
@@ -908,106 +817,84 @@ export type putUsersIdResponse500 = {
   status: 500
 }
 
-export type putUsersIdResponseSuccess = putUsersIdResponse200 & {
-  headers: Headers
-}
-export type putUsersIdResponseError = (
-  | putUsersIdResponse400
-  | putUsersIdResponse401
-  | putUsersIdResponse403
-  | putUsersIdResponse404
-  | putUsersIdResponse500
-) & {
-  headers: Headers
-}
+export type putUsersIdResponseSuccess = (putUsersIdResponse200) & {
+  headers: Headers;
+};
+export type putUsersIdResponseError = (putUsersIdResponse400 | putUsersIdResponse401 | putUsersIdResponse403 | putUsersIdResponse404 | putUsersIdResponse500) & {
+  headers: Headers;
+};
 
-export type putUsersIdResponse = putUsersIdResponseSuccess | putUsersIdResponseError
+export type putUsersIdResponse = (putUsersIdResponseSuccess | putUsersIdResponseError)
 
-export const getPutUsersIdUrl = (id: string) => {
+export const getPutUsersIdUrl = (id: string,) => {
+
+
+
+
   return `/users/${id}`
 }
 
-export const putUsersId = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainUpdateUserDTO: GithubCom4H1RZooraInternalDomainUpdateUserDTO,
-  options?: RequestInit
-): Promise<putUsersIdResponse> => {
-  return customInstance<putUsersIdResponse>(getPutUsersIdUrl(id), {
+export const putUsersId = async (id: string,
+    githubCom4H1RZooraInternalDomainUpdateUserDTO: GithubCom4H1RZooraInternalDomainUpdateUserDTO, options?: RequestInit): Promise<putUsersIdResponse> => {
+
+  return customInstance<putUsersIdResponse>(getPutUsersIdUrl(id),
+  {
     ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainUpdateUserDTO),
-  })
-}
-
-export const getPutUsersIdMutationOptions = <
-  TError = ErrorType<PutUsersId400 | PutUsersId401 | PutUsersId403 | PutUsersId404 | PutUsersId500>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putUsersId>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainUpdateUserDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putUsersId>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainUpdateUserDTO },
-  TContext
-> => {
-  const mutationKey = ["putUsersId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putUsersId>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainUpdateUserDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return putUsersId(id, data, requestOptions)
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainUpdateUserDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutUsersIdMutationResult = NonNullable<Awaited<ReturnType<typeof putUsersId>>>
-export type PutUsersIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateUserDTO
-export type PutUsersIdMutationError = ErrorType<
-  PutUsersId400 | PutUsersId401 | PutUsersId403 | PutUsersId404 | PutUsersId500
->
 
-/**
+
+export const getPutUsersIdMutationOptions = <TError = ErrorType<PutUsersId400 | PutUsersId401 | PutUsersId403 | PutUsersId404 | PutUsersId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putUsersId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateUserDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putUsersId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateUserDTO}, TContext> => {
+
+const mutationKey = ['putUsersId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putUsersId>>, {id: string;data: GithubCom4H1RZooraInternalDomainUpdateUserDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  putUsersId(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutUsersIdMutationResult = NonNullable<Awaited<ReturnType<typeof putUsersId>>>
+    export type PutUsersIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateUserDTO
+    export type PutUsersIdMutationError = ErrorType<PutUsersId400 | PutUsersId401 | PutUsersId403 | PutUsersId404 | PutUsersId500>
+
+    /**
  * @summary Update user
  */
-export const usePutUsersId = <
-  TError = ErrorType<PutUsersId400 | PutUsersId401 | PutUsersId403 | PutUsersId404 | PutUsersId500>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putUsersId>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainUpdateUserDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putUsersId>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainUpdateUserDTO },
-  TContext
-> => {
-  return useMutation(getPutUsersIdMutationOptions(options), queryClient)
-}
-/**
+export const usePutUsersId = <TError = ErrorType<PutUsersId400 | PutUsersId401 | PutUsersId403 | PutUsersId404 | PutUsersId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putUsersId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateUserDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putUsersId>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainUpdateUserDTO},
+        TContext
+      > => {
+      return useMutation(getPutUsersIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Delete user
  */
 export type deleteUsersIdResponse200 = {
@@ -1035,76 +922,82 @@ export type deleteUsersIdResponse500 = {
   status: 500
 }
 
-export type deleteUsersIdResponseSuccess = deleteUsersIdResponse200 & {
-  headers: Headers
-}
-export type deleteUsersIdResponseError = (
-  | deleteUsersIdResponse401
-  | deleteUsersIdResponse403
-  | deleteUsersIdResponse404
-  | deleteUsersIdResponse500
-) & {
-  headers: Headers
-}
+export type deleteUsersIdResponseSuccess = (deleteUsersIdResponse200) & {
+  headers: Headers;
+};
+export type deleteUsersIdResponseError = (deleteUsersIdResponse401 | deleteUsersIdResponse403 | deleteUsersIdResponse404 | deleteUsersIdResponse500) & {
+  headers: Headers;
+};
 
-export type deleteUsersIdResponse = deleteUsersIdResponseSuccess | deleteUsersIdResponseError
+export type deleteUsersIdResponse = (deleteUsersIdResponseSuccess | deleteUsersIdResponseError)
 
-export const getDeleteUsersIdUrl = (id: string) => {
+export const getDeleteUsersIdUrl = (id: string,) => {
+
+
+
+
   return `/users/${id}`
 }
 
 export const deleteUsersId = async (id: string, options?: RequestInit): Promise<deleteUsersIdResponse> => {
-  return customInstance<deleteUsersIdResponse>(getDeleteUsersIdUrl(id), {
+
+  return customInstance<deleteUsersIdResponse>(getDeleteUsersIdUrl(id),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeleteUsersIdMutationOptions = <
-  TError = ErrorType<DeleteUsersId401 | DeleteUsersId403 | DeleteUsersId404 | DeleteUsersId500>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteUsersId>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof deleteUsersId>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["deleteUsersId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUsersId>>, { id: string }> = (props) => {
-    const { id } = props ?? {}
-
-    return deleteUsersId(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteUsersIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteUsersId>>>
 
-export type DeleteUsersIdMutationError = ErrorType<
-  DeleteUsersId401 | DeleteUsersId403 | DeleteUsersId404 | DeleteUsersId500
->
 
-/**
+export const getDeleteUsersIdMutationOptions = <TError = ErrorType<DeleteUsersId401 | DeleteUsersId403 | DeleteUsersId404 | DeleteUsersId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUsersId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteUsersId>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteUsersId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUsersId>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteUsersId(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteUsersIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteUsersId>>>
+
+    export type DeleteUsersIdMutationError = ErrorType<DeleteUsersId401 | DeleteUsersId403 | DeleteUsersId404 | DeleteUsersId500>
+
+    /**
  * @summary Delete user
  */
-export const useDeleteUsersId = <
-  TError = ErrorType<DeleteUsersId401 | DeleteUsersId403 | DeleteUsersId404 | DeleteUsersId500>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteUsersId>>, TError, { id: string }, TContext>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof deleteUsersId>>, TError, { id: string }, TContext> => {
-  return useMutation(getDeleteUsersIdMutationOptions(options), queryClient)
-}
-/**
+export const useDeleteUsersId = <TError = ErrorType<DeleteUsersId401 | DeleteUsersId403 | DeleteUsersId404 | DeleteUsersId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUsersId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteUsersId>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteUsersIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Assign role to user
  */
 export type putUsersIdRoleResponse200 = {
@@ -1137,106 +1030,84 @@ export type putUsersIdRoleResponse500 = {
   status: 500
 }
 
-export type putUsersIdRoleResponseSuccess = putUsersIdRoleResponse200 & {
-  headers: Headers
-}
-export type putUsersIdRoleResponseError = (
-  | putUsersIdRoleResponse400
-  | putUsersIdRoleResponse401
-  | putUsersIdRoleResponse403
-  | putUsersIdRoleResponse404
-  | putUsersIdRoleResponse500
-) & {
-  headers: Headers
-}
+export type putUsersIdRoleResponseSuccess = (putUsersIdRoleResponse200) & {
+  headers: Headers;
+};
+export type putUsersIdRoleResponseError = (putUsersIdRoleResponse400 | putUsersIdRoleResponse401 | putUsersIdRoleResponse403 | putUsersIdRoleResponse404 | putUsersIdRoleResponse500) & {
+  headers: Headers;
+};
 
-export type putUsersIdRoleResponse = putUsersIdRoleResponseSuccess | putUsersIdRoleResponseError
+export type putUsersIdRoleResponse = (putUsersIdRoleResponseSuccess | putUsersIdRoleResponseError)
 
-export const getPutUsersIdRoleUrl = (id: string) => {
+export const getPutUsersIdRoleUrl = (id: string,) => {
+
+
+
+
   return `/users/${id}/role`
 }
 
-export const putUsersIdRole = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainAssignRoleDTO: GithubCom4H1RZooraInternalDomainAssignRoleDTO,
-  options?: RequestInit
-): Promise<putUsersIdRoleResponse> => {
-  return customInstance<putUsersIdRoleResponse>(getPutUsersIdRoleUrl(id), {
+export const putUsersIdRole = async (id: string,
+    githubCom4H1RZooraInternalDomainAssignRoleDTO: GithubCom4H1RZooraInternalDomainAssignRoleDTO, options?: RequestInit): Promise<putUsersIdRoleResponse> => {
+
+  return customInstance<putUsersIdRoleResponse>(getPutUsersIdRoleUrl(id),
+  {
     ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainAssignRoleDTO),
-  })
-}
-
-export const getPutUsersIdRoleMutationOptions = <
-  TError = ErrorType<PutUsersIdRole400 | PutUsersIdRole401 | PutUsersIdRole403 | PutUsersIdRole404 | PutUsersIdRole500>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putUsersIdRole>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainAssignRoleDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putUsersIdRole>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainAssignRoleDTO },
-  TContext
-> => {
-  const mutationKey = ["putUsersIdRole"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putUsersIdRole>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainAssignRoleDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return putUsersIdRole(id, data, requestOptions)
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainAssignRoleDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutUsersIdRoleMutationResult = NonNullable<Awaited<ReturnType<typeof putUsersIdRole>>>
-export type PutUsersIdRoleMutationBody = GithubCom4H1RZooraInternalDomainAssignRoleDTO
-export type PutUsersIdRoleMutationError = ErrorType<
-  PutUsersIdRole400 | PutUsersIdRole401 | PutUsersIdRole403 | PutUsersIdRole404 | PutUsersIdRole500
->
 
-/**
+
+export const getPutUsersIdRoleMutationOptions = <TError = ErrorType<PutUsersIdRole400 | PutUsersIdRole401 | PutUsersIdRole403 | PutUsersIdRole404 | PutUsersIdRole500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putUsersIdRole>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainAssignRoleDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putUsersIdRole>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainAssignRoleDTO}, TContext> => {
+
+const mutationKey = ['putUsersIdRole'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putUsersIdRole>>, {id: string;data: GithubCom4H1RZooraInternalDomainAssignRoleDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  putUsersIdRole(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutUsersIdRoleMutationResult = NonNullable<Awaited<ReturnType<typeof putUsersIdRole>>>
+    export type PutUsersIdRoleMutationBody = GithubCom4H1RZooraInternalDomainAssignRoleDTO
+    export type PutUsersIdRoleMutationError = ErrorType<PutUsersIdRole400 | PutUsersIdRole401 | PutUsersIdRole403 | PutUsersIdRole404 | PutUsersIdRole500>
+
+    /**
  * @summary Assign role to user
  */
-export const usePutUsersIdRole = <
-  TError = ErrorType<PutUsersIdRole400 | PutUsersIdRole401 | PutUsersIdRole403 | PutUsersIdRole404 | PutUsersIdRole500>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putUsersIdRole>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainAssignRoleDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putUsersIdRole>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainAssignRoleDTO },
-  TContext
-> => {
-  return useMutation(getPutUsersIdRoleMutationOptions(options), queryClient)
-}
-/**
+export const usePutUsersIdRole = <TError = ErrorType<PutUsersIdRole400 | PutUsersIdRole401 | PutUsersIdRole403 | PutUsersIdRole404 | PutUsersIdRole500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putUsersIdRole>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainAssignRoleDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putUsersIdRole>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainAssignRoleDTO},
+        TContext
+      > => {
+      return useMutation(getPutUsersIdRoleMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Remove role from user
  */
 export type deleteUsersIdRoleResponse200 = {
@@ -1264,72 +1135,78 @@ export type deleteUsersIdRoleResponse500 = {
   status: 500
 }
 
-export type deleteUsersIdRoleResponseSuccess = deleteUsersIdRoleResponse200 & {
-  headers: Headers
-}
-export type deleteUsersIdRoleResponseError = (
-  | deleteUsersIdRoleResponse401
-  | deleteUsersIdRoleResponse403
-  | deleteUsersIdRoleResponse404
-  | deleteUsersIdRoleResponse500
-) & {
-  headers: Headers
-}
+export type deleteUsersIdRoleResponseSuccess = (deleteUsersIdRoleResponse200) & {
+  headers: Headers;
+};
+export type deleteUsersIdRoleResponseError = (deleteUsersIdRoleResponse401 | deleteUsersIdRoleResponse403 | deleteUsersIdRoleResponse404 | deleteUsersIdRoleResponse500) & {
+  headers: Headers;
+};
 
-export type deleteUsersIdRoleResponse = deleteUsersIdRoleResponseSuccess | deleteUsersIdRoleResponseError
+export type deleteUsersIdRoleResponse = (deleteUsersIdRoleResponseSuccess | deleteUsersIdRoleResponseError)
 
-export const getDeleteUsersIdRoleUrl = (id: string) => {
+export const getDeleteUsersIdRoleUrl = (id: string,) => {
+
+
+
+
   return `/users/${id}/role`
 }
 
 export const deleteUsersIdRole = async (id: string, options?: RequestInit): Promise<deleteUsersIdRoleResponse> => {
-  return customInstance<deleteUsersIdRoleResponse>(getDeleteUsersIdRoleUrl(id), {
+
+  return customInstance<deleteUsersIdRoleResponse>(getDeleteUsersIdRoleUrl(id),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeleteUsersIdRoleMutationOptions = <
-  TError = ErrorType<DeleteUsersIdRole401 | DeleteUsersIdRole403 | DeleteUsersIdRole404 | DeleteUsersIdRole500>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteUsersIdRole>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof deleteUsersIdRole>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["deleteUsersIdRole"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUsersIdRole>>, { id: string }> = (props) => {
-    const { id } = props ?? {}
-
-    return deleteUsersIdRole(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteUsersIdRoleMutationResult = NonNullable<Awaited<ReturnType<typeof deleteUsersIdRole>>>
 
-export type DeleteUsersIdRoleMutationError = ErrorType<
-  DeleteUsersIdRole401 | DeleteUsersIdRole403 | DeleteUsersIdRole404 | DeleteUsersIdRole500
->
 
-/**
+export const getDeleteUsersIdRoleMutationOptions = <TError = ErrorType<DeleteUsersIdRole401 | DeleteUsersIdRole403 | DeleteUsersIdRole404 | DeleteUsersIdRole500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUsersIdRole>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteUsersIdRole>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteUsersIdRole'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUsersIdRole>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteUsersIdRole(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteUsersIdRoleMutationResult = NonNullable<Awaited<ReturnType<typeof deleteUsersIdRole>>>
+
+    export type DeleteUsersIdRoleMutationError = ErrorType<DeleteUsersIdRole401 | DeleteUsersIdRole403 | DeleteUsersIdRole404 | DeleteUsersIdRole500>
+
+    /**
  * @summary Remove role from user
  */
-export const useDeleteUsersIdRole = <
-  TError = ErrorType<DeleteUsersIdRole401 | DeleteUsersIdRole403 | DeleteUsersIdRole404 | DeleteUsersIdRole500>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteUsersIdRole>>, TError, { id: string }, TContext>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof deleteUsersIdRole>>, TError, { id: string }, TContext> => {
-  return useMutation(getDeleteUsersIdRoleMutationOptions(options), queryClient)
-}
+export const useDeleteUsersIdRole = <TError = ErrorType<DeleteUsersIdRole401 | DeleteUsersIdRole403 | DeleteUsersIdRole404 | DeleteUsersIdRole500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUsersIdRole>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteUsersIdRole>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteUsersIdRoleMutationOptions(options), queryClient);
+    }

@@ -5,7 +5,25 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { ErrorType } from ".././mutator/custom-instance"
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   DeleteAttendanceAttendanceId401,
   DeleteAttendanceAttendanceId403,
@@ -45,28 +63,16 @@ import type {
   PutAttendanceAttendanceId400,
   PutAttendanceAttendanceId401,
   PutAttendanceAttendanceId403,
-  PutAttendanceAttendanceId404,
-} from "../model"
-import type {
-  DataTag,
-  DefinedInitialDataOptions,
-  DefinedUseQueryResult,
-  MutationFunction,
-  QueryClient,
-  QueryFunction,
-  QueryKey,
-  UndefinedInitialDataOptions,
-  UseMutationOptions,
-  UseMutationResult,
-  UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query"
+  PutAttendanceAttendanceId404
+} from '../model';
 
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { customInstance } from '.././mutator/custom-instance';
+import type { ErrorType } from '.././mutator/custom-instance';
 
-import { customInstance } from ".././mutator/custom-instance"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * @summary Update attendance
@@ -96,120 +102,84 @@ export type putAttendanceAttendanceIdResponse404 = {
   status: 404
 }
 
-export type putAttendanceAttendanceIdResponseSuccess = putAttendanceAttendanceIdResponse200 & {
-  headers: Headers
-}
-export type putAttendanceAttendanceIdResponseError = (
-  | putAttendanceAttendanceIdResponse400
-  | putAttendanceAttendanceIdResponse401
-  | putAttendanceAttendanceIdResponse403
-  | putAttendanceAttendanceIdResponse404
-) & {
-  headers: Headers
-}
+export type putAttendanceAttendanceIdResponseSuccess = (putAttendanceAttendanceIdResponse200) & {
+  headers: Headers;
+};
+export type putAttendanceAttendanceIdResponseError = (putAttendanceAttendanceIdResponse400 | putAttendanceAttendanceIdResponse401 | putAttendanceAttendanceIdResponse403 | putAttendanceAttendanceIdResponse404) & {
+  headers: Headers;
+};
 
-export type putAttendanceAttendanceIdResponse =
-  | putAttendanceAttendanceIdResponseSuccess
-  | putAttendanceAttendanceIdResponseError
+export type putAttendanceAttendanceIdResponse = (putAttendanceAttendanceIdResponseSuccess | putAttendanceAttendanceIdResponseError)
 
-export const getPutAttendanceAttendanceIdUrl = (attendanceId: string) => {
+export const getPutAttendanceAttendanceIdUrl = (attendanceId: string,) => {
+
+
+
+
   return `/attendance/${attendanceId}`
 }
 
-export const putAttendanceAttendanceId = async (
-  attendanceId: string,
-  githubCom4H1RZooraInternalDomainUpdateAttendanceDTO: GithubCom4H1RZooraInternalDomainUpdateAttendanceDTO,
-  options?: RequestInit
-): Promise<putAttendanceAttendanceIdResponse> => {
-  return customInstance<putAttendanceAttendanceIdResponse>(getPutAttendanceAttendanceIdUrl(attendanceId), {
+export const putAttendanceAttendanceId = async (attendanceId: string,
+    githubCom4H1RZooraInternalDomainUpdateAttendanceDTO: GithubCom4H1RZooraInternalDomainUpdateAttendanceDTO, options?: RequestInit): Promise<putAttendanceAttendanceIdResponse> => {
+
+  return customInstance<putAttendanceAttendanceIdResponse>(getPutAttendanceAttendanceIdUrl(attendanceId),
+  {
     ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainUpdateAttendanceDTO),
-  })
-}
-
-export const getPutAttendanceAttendanceIdMutationOptions = <
-  TError = ErrorType<
-    | PutAttendanceAttendanceId400
-    | PutAttendanceAttendanceId401
-    | PutAttendanceAttendanceId403
-    | PutAttendanceAttendanceId404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putAttendanceAttendanceId>>,
-    TError,
-    { attendanceId: string; data: GithubCom4H1RZooraInternalDomainUpdateAttendanceDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putAttendanceAttendanceId>>,
-  TError,
-  { attendanceId: string; data: GithubCom4H1RZooraInternalDomainUpdateAttendanceDTO },
-  TContext
-> => {
-  const mutationKey = ["putAttendanceAttendanceId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putAttendanceAttendanceId>>,
-    { attendanceId: string; data: GithubCom4H1RZooraInternalDomainUpdateAttendanceDTO }
-  > = (props) => {
-    const { attendanceId, data } = props ?? {}
-
-    return putAttendanceAttendanceId(attendanceId, data, requestOptions)
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainUpdateAttendanceDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutAttendanceAttendanceIdMutationResult = NonNullable<Awaited<ReturnType<typeof putAttendanceAttendanceId>>>
-export type PutAttendanceAttendanceIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateAttendanceDTO
-export type PutAttendanceAttendanceIdMutationError = ErrorType<
-  | PutAttendanceAttendanceId400
-  | PutAttendanceAttendanceId401
-  | PutAttendanceAttendanceId403
-  | PutAttendanceAttendanceId404
->
 
-/**
+
+export const getPutAttendanceAttendanceIdMutationOptions = <TError = ErrorType<PutAttendanceAttendanceId400 | PutAttendanceAttendanceId401 | PutAttendanceAttendanceId403 | PutAttendanceAttendanceId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putAttendanceAttendanceId>>, TError,{attendanceId: string;data: GithubCom4H1RZooraInternalDomainUpdateAttendanceDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putAttendanceAttendanceId>>, TError,{attendanceId: string;data: GithubCom4H1RZooraInternalDomainUpdateAttendanceDTO}, TContext> => {
+
+const mutationKey = ['putAttendanceAttendanceId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putAttendanceAttendanceId>>, {attendanceId: string;data: GithubCom4H1RZooraInternalDomainUpdateAttendanceDTO}> = (props) => {
+          const {attendanceId,data} = props ?? {};
+
+          return  putAttendanceAttendanceId(attendanceId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutAttendanceAttendanceIdMutationResult = NonNullable<Awaited<ReturnType<typeof putAttendanceAttendanceId>>>
+    export type PutAttendanceAttendanceIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateAttendanceDTO
+    export type PutAttendanceAttendanceIdMutationError = ErrorType<PutAttendanceAttendanceId400 | PutAttendanceAttendanceId401 | PutAttendanceAttendanceId403 | PutAttendanceAttendanceId404>
+
+    /**
  * @summary Update attendance
  */
-export const usePutAttendanceAttendanceId = <
-  TError = ErrorType<
-    | PutAttendanceAttendanceId400
-    | PutAttendanceAttendanceId401
-    | PutAttendanceAttendanceId403
-    | PutAttendanceAttendanceId404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putAttendanceAttendanceId>>,
-      TError,
-      { attendanceId: string; data: GithubCom4H1RZooraInternalDomainUpdateAttendanceDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putAttendanceAttendanceId>>,
-  TError,
-  { attendanceId: string; data: GithubCom4H1RZooraInternalDomainUpdateAttendanceDTO },
-  TContext
-> => {
-  return useMutation(getPutAttendanceAttendanceIdMutationOptions(options), queryClient)
-}
-/**
+export const usePutAttendanceAttendanceId = <TError = ErrorType<PutAttendanceAttendanceId400 | PutAttendanceAttendanceId401 | PutAttendanceAttendanceId403 | PutAttendanceAttendanceId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putAttendanceAttendanceId>>, TError,{attendanceId: string;data: GithubCom4H1RZooraInternalDomainUpdateAttendanceDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putAttendanceAttendanceId>>,
+        TError,
+        {attendanceId: string;data: GithubCom4H1RZooraInternalDomainUpdateAttendanceDTO},
+        TContext
+      > => {
+      return useMutation(getPutAttendanceAttendanceIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Delete attendance
  */
 export type deleteAttendanceAttendanceIdResponse200 = {
@@ -232,109 +202,82 @@ export type deleteAttendanceAttendanceIdResponse404 = {
   status: 404
 }
 
-export type deleteAttendanceAttendanceIdResponseSuccess = deleteAttendanceAttendanceIdResponse200 & {
-  headers: Headers
-}
-export type deleteAttendanceAttendanceIdResponseError = (
-  | deleteAttendanceAttendanceIdResponse401
-  | deleteAttendanceAttendanceIdResponse403
-  | deleteAttendanceAttendanceIdResponse404
-) & {
-  headers: Headers
-}
+export type deleteAttendanceAttendanceIdResponseSuccess = (deleteAttendanceAttendanceIdResponse200) & {
+  headers: Headers;
+};
+export type deleteAttendanceAttendanceIdResponseError = (deleteAttendanceAttendanceIdResponse401 | deleteAttendanceAttendanceIdResponse403 | deleteAttendanceAttendanceIdResponse404) & {
+  headers: Headers;
+};
 
-export type deleteAttendanceAttendanceIdResponse =
-  | deleteAttendanceAttendanceIdResponseSuccess
-  | deleteAttendanceAttendanceIdResponseError
+export type deleteAttendanceAttendanceIdResponse = (deleteAttendanceAttendanceIdResponseSuccess | deleteAttendanceAttendanceIdResponseError)
 
-export const getDeleteAttendanceAttendanceIdUrl = (attendanceId: string) => {
+export const getDeleteAttendanceAttendanceIdUrl = (attendanceId: string,) => {
+
+
+
+
   return `/attendance/${attendanceId}`
 }
 
-export const deleteAttendanceAttendanceId = async (
-  attendanceId: string,
-  options?: RequestInit
-): Promise<deleteAttendanceAttendanceIdResponse> => {
-  return customInstance<deleteAttendanceAttendanceIdResponse>(getDeleteAttendanceAttendanceIdUrl(attendanceId), {
+export const deleteAttendanceAttendanceId = async (attendanceId: string, options?: RequestInit): Promise<deleteAttendanceAttendanceIdResponse> => {
+
+  return customInstance<deleteAttendanceAttendanceIdResponse>(getDeleteAttendanceAttendanceIdUrl(attendanceId),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeleteAttendanceAttendanceIdMutationOptions = <
-  TError = ErrorType<
-    DeleteAttendanceAttendanceId401 | DeleteAttendanceAttendanceId403 | DeleteAttendanceAttendanceId404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteAttendanceAttendanceId>>,
-    TError,
-    { attendanceId: string },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteAttendanceAttendanceId>>,
-  TError,
-  { attendanceId: string },
-  TContext
-> => {
-  const mutationKey = ["deleteAttendanceAttendanceId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteAttendanceAttendanceId>>,
-    { attendanceId: string }
-  > = (props) => {
-    const { attendanceId } = props ?? {}
-
-    return deleteAttendanceAttendanceId(attendanceId, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteAttendanceAttendanceIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteAttendanceAttendanceId>>
->
 
-export type DeleteAttendanceAttendanceIdMutationError = ErrorType<
-  DeleteAttendanceAttendanceId401 | DeleteAttendanceAttendanceId403 | DeleteAttendanceAttendanceId404
->
 
-/**
+export const getDeleteAttendanceAttendanceIdMutationOptions = <TError = ErrorType<DeleteAttendanceAttendanceId401 | DeleteAttendanceAttendanceId403 | DeleteAttendanceAttendanceId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAttendanceAttendanceId>>, TError,{attendanceId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAttendanceAttendanceId>>, TError,{attendanceId: string}, TContext> => {
+
+const mutationKey = ['deleteAttendanceAttendanceId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAttendanceAttendanceId>>, {attendanceId: string}> = (props) => {
+          const {attendanceId} = props ?? {};
+
+          return  deleteAttendanceAttendanceId(attendanceId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAttendanceAttendanceIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAttendanceAttendanceId>>>
+
+    export type DeleteAttendanceAttendanceIdMutationError = ErrorType<DeleteAttendanceAttendanceId401 | DeleteAttendanceAttendanceId403 | DeleteAttendanceAttendanceId404>
+
+    /**
  * @summary Delete attendance
  */
-export const useDeleteAttendanceAttendanceId = <
-  TError = ErrorType<
-    DeleteAttendanceAttendanceId401 | DeleteAttendanceAttendanceId403 | DeleteAttendanceAttendanceId404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteAttendanceAttendanceId>>,
-      TError,
-      { attendanceId: string },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteAttendanceAttendanceId>>,
-  TError,
-  { attendanceId: string },
-  TContext
-> => {
-  return useMutation(getDeleteAttendanceAttendanceIdMutationOptions(options), queryClient)
-}
-/**
+export const useDeleteAttendanceAttendanceId = <TError = ErrorType<DeleteAttendanceAttendanceId401 | DeleteAttendanceAttendanceId403 | DeleteAttendanceAttendanceId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAttendanceAttendanceId>>, TError,{attendanceId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAttendanceAttendanceId>>,
+        TError,
+        {attendanceId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteAttendanceAttendanceIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get attendance record
  */
 export type getAttendanceIdResponse200 = {
@@ -357,133 +300,111 @@ export type getAttendanceIdResponse404 = {
   status: 404
 }
 
-export type getAttendanceIdResponseSuccess = getAttendanceIdResponse200 & {
-  headers: Headers
-}
-export type getAttendanceIdResponseError = (
-  | getAttendanceIdResponse401
-  | getAttendanceIdResponse403
-  | getAttendanceIdResponse404
-) & {
-  headers: Headers
-}
+export type getAttendanceIdResponseSuccess = (getAttendanceIdResponse200) & {
+  headers: Headers;
+};
+export type getAttendanceIdResponseError = (getAttendanceIdResponse401 | getAttendanceIdResponse403 | getAttendanceIdResponse404) & {
+  headers: Headers;
+};
 
-export type getAttendanceIdResponse = getAttendanceIdResponseSuccess | getAttendanceIdResponseError
+export type getAttendanceIdResponse = (getAttendanceIdResponseSuccess | getAttendanceIdResponseError)
 
-export const getGetAttendanceIdUrl = (id: string) => {
+export const getGetAttendanceIdUrl = (id: string,) => {
+
+
+
+
   return `/attendance/${id}`
 }
 
 export const getAttendanceId = async (id: string, options?: RequestInit): Promise<getAttendanceIdResponse> => {
-  return customInstance<getAttendanceIdResponse>(getGetAttendanceIdUrl(id), {
+
+  return customInstance<getAttendanceIdResponse>(getGetAttendanceIdUrl(id),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetAttendanceIdQueryKey = (id: string) => {
-  return [`/attendance/${id}`] as const
-}
 
-export const getGetAttendanceIdQueryOptions = <
-  TData = Awaited<ReturnType<typeof getAttendanceId>>,
-  TError = ErrorType<GetAttendanceId401 | GetAttendanceId403 | GetAttendanceId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendanceId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetAttendanceIdQueryKey = (id: string,) => {
+    return [
+    `/attendance/${id}`
+    ] as const;
+    }
+
+
+export const getGetAttendanceIdQueryOptions = <TData = Awaited<ReturnType<typeof getAttendanceId>>, TError = ErrorType<GetAttendanceId401 | GetAttendanceId403 | GetAttendanceId404>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendanceId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetAttendanceIdQueryKey(id)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAttendanceId>>> = ({ signal }) =>
-    getAttendanceId(id, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetAttendanceIdQueryKey(id);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getAttendanceId>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAttendanceId>>> = ({ signal }) => getAttendanceId(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAttendanceId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetAttendanceIdQueryResult = NonNullable<Awaited<ReturnType<typeof getAttendanceId>>>
 export type GetAttendanceIdQueryError = ErrorType<GetAttendanceId401 | GetAttendanceId403 | GetAttendanceId404>
 
-export function useGetAttendanceId<
-  TData = Awaited<ReturnType<typeof getAttendanceId>>,
-  TError = ErrorType<GetAttendanceId401 | GetAttendanceId403 | GetAttendanceId404>,
->(
-  id: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendanceId>>, TError, TData>> &
-      Pick<
+
+export function useGetAttendanceId<TData = Awaited<ReturnType<typeof getAttendanceId>>, TError = ErrorType<GetAttendanceId401 | GetAttendanceId403 | GetAttendanceId404>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendanceId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAttendanceId>>,
           TError,
           Awaited<ReturnType<typeof getAttendanceId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAttendanceId<
-  TData = Awaited<ReturnType<typeof getAttendanceId>>,
-  TError = ErrorType<GetAttendanceId401 | GetAttendanceId403 | GetAttendanceId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendanceId>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAttendanceId<TData = Awaited<ReturnType<typeof getAttendanceId>>, TError = ErrorType<GetAttendanceId401 | GetAttendanceId403 | GetAttendanceId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendanceId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAttendanceId>>,
           TError,
           Awaited<ReturnType<typeof getAttendanceId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAttendanceId<
-  TData = Awaited<ReturnType<typeof getAttendanceId>>,
-  TError = ErrorType<GetAttendanceId401 | GetAttendanceId403 | GetAttendanceId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendanceId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAttendanceId<TData = Awaited<ReturnType<typeof getAttendanceId>>, TError = ErrorType<GetAttendanceId401 | GetAttendanceId403 | GetAttendanceId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendanceId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get attendance record
  */
 
-export function useGetAttendanceId<
-  TData = Awaited<ReturnType<typeof getAttendanceId>>,
-  TError = ErrorType<GetAttendanceId401 | GetAttendanceId403 | GetAttendanceId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendanceId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetAttendanceIdQueryOptions(id, options)
+export function useGetAttendanceId<TData = Awaited<ReturnType<typeof getAttendanceId>>, TError = ErrorType<GetAttendanceId401 | GetAttendanceId403 | GetAttendanceId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendanceId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetAttendanceIdQueryOptions(id,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * Returns attendance records for a class session. Teachers/admins see all; students see only their own record. Filterable by status and user_id. Orderable: created_at, updated_at, status.
@@ -509,204 +430,134 @@ export type getClassesIdSessionsSessionIdAttendanceResponse404 = {
   status: 404
 }
 
-export type getClassesIdSessionsSessionIdAttendanceResponseSuccess =
-  getClassesIdSessionsSessionIdAttendanceResponse200 & {
-    headers: Headers
-  }
-export type getClassesIdSessionsSessionIdAttendanceResponseError = (
-  | getClassesIdSessionsSessionIdAttendanceResponse401
-  | getClassesIdSessionsSessionIdAttendanceResponse403
-  | getClassesIdSessionsSessionIdAttendanceResponse404
-) & {
-  headers: Headers
-}
+export type getClassesIdSessionsSessionIdAttendanceResponseSuccess = (getClassesIdSessionsSessionIdAttendanceResponse200) & {
+  headers: Headers;
+};
+export type getClassesIdSessionsSessionIdAttendanceResponseError = (getClassesIdSessionsSessionIdAttendanceResponse401 | getClassesIdSessionsSessionIdAttendanceResponse403 | getClassesIdSessionsSessionIdAttendanceResponse404) & {
+  headers: Headers;
+};
 
-export type getClassesIdSessionsSessionIdAttendanceResponse =
-  | getClassesIdSessionsSessionIdAttendanceResponseSuccess
-  | getClassesIdSessionsSessionIdAttendanceResponseError
+export type getClassesIdSessionsSessionIdAttendanceResponse = (getClassesIdSessionsSessionIdAttendanceResponseSuccess | getClassesIdSessionsSessionIdAttendanceResponseError)
 
-export const getGetClassesIdSessionsSessionIdAttendanceUrl = (
-  id: string,
-  sessionId: string,
-  params?: GetClassesIdSessionsSessionIdAttendanceParams
-) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetClassesIdSessionsSessionIdAttendanceUrl = (id: string,
+    sessionId: string,
+    params?: GetClassesIdSessionsSessionIdAttendanceParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
     }
-  })
+  });
 
-  const stringifiedParams = normalizedParams.toString()
+  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0
-    ? `/classes/${id}/sessions/${sessionId}/attendance?${stringifiedParams}`
-    : `/classes/${id}/sessions/${sessionId}/attendance`
+  return stringifiedParams.length > 0 ? `/classes/${id}/sessions/${sessionId}/attendance?${stringifiedParams}` : `/classes/${id}/sessions/${sessionId}/attendance`
 }
 
-export const getClassesIdSessionsSessionIdAttendance = async (
-  id: string,
-  sessionId: string,
-  params?: GetClassesIdSessionsSessionIdAttendanceParams,
-  options?: RequestInit
-): Promise<getClassesIdSessionsSessionIdAttendanceResponse> => {
-  return customInstance<getClassesIdSessionsSessionIdAttendanceResponse>(
-    getGetClassesIdSessionsSessionIdAttendanceUrl(id, sessionId, params),
-    {
-      ...options,
-      method: "GET",
-    }
-  )
-}
+export const getClassesIdSessionsSessionIdAttendance = async (id: string,
+    sessionId: string,
+    params?: GetClassesIdSessionsSessionIdAttendanceParams, options?: RequestInit): Promise<getClassesIdSessionsSessionIdAttendanceResponse> => {
 
-export const getGetClassesIdSessionsSessionIdAttendanceQueryKey = (
-  id: string,
-  sessionId: string,
-  params?: GetClassesIdSessionsSessionIdAttendanceParams
-) => {
-  return [`/classes/${id}/sessions/${sessionId}/attendance`, ...(params ? [params] : [])] as const
-}
+  return customInstance<getClassesIdSessionsSessionIdAttendanceResponse>(getGetClassesIdSessionsSessionIdAttendanceUrl(id,sessionId,params),
+  {
+    ...options,
+    method: 'GET'
 
-export const getGetClassesIdSessionsSessionIdAttendanceQueryOptions = <
-  TData = Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>,
-  TError = ErrorType<
-    | GetClassesIdSessionsSessionIdAttendance401
-    | GetClassesIdSessionsSessionIdAttendance403
-    | GetClassesIdSessionsSessionIdAttendance404
-  >,
->(
-  id: string,
-  sessionId: string,
-  params?: GetClassesIdSessionsSessionIdAttendanceParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
+
   }
+);}
+
+
+
+
+
+export const getGetClassesIdSessionsSessionIdAttendanceQueryKey = (id: string,
+    sessionId: string,
+    params?: GetClassesIdSessionsSessionIdAttendanceParams,) => {
+    return [
+    `/classes/${id}/sessions/${sessionId}/attendance`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetClassesIdSessionsSessionIdAttendanceQueryOptions = <TData = Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>, TError = ErrorType<GetClassesIdSessionsSessionIdAttendance401 | GetClassesIdSessionsSessionIdAttendance403 | GetClassesIdSessionsSessionIdAttendance404>>(id: string,
+    sessionId: string,
+    params?: GetClassesIdSessionsSessionIdAttendanceParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetClassesIdSessionsSessionIdAttendanceQueryKey(id, sessionId, params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>> = ({ signal }) =>
-    getClassesIdSessionsSessionIdAttendance(id, sessionId, params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetClassesIdSessionsSessionIdAttendanceQueryKey(id,sessionId,params);
 
-  return { queryKey, queryFn, enabled: !!(id && sessionId), ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>> = ({ signal }) => getClassesIdSessionsSessionIdAttendance(id,sessionId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id && sessionId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetClassesIdSessionsSessionIdAttendanceQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>
->
-export type GetClassesIdSessionsSessionIdAttendanceQueryError = ErrorType<
-  | GetClassesIdSessionsSessionIdAttendance401
-  | GetClassesIdSessionsSessionIdAttendance403
-  | GetClassesIdSessionsSessionIdAttendance404
->
+export type GetClassesIdSessionsSessionIdAttendanceQueryResult = NonNullable<Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>>
+export type GetClassesIdSessionsSessionIdAttendanceQueryError = ErrorType<GetClassesIdSessionsSessionIdAttendance401 | GetClassesIdSessionsSessionIdAttendance403 | GetClassesIdSessionsSessionIdAttendance404>
 
-export function useGetClassesIdSessionsSessionIdAttendance<
-  TData = Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>,
-  TError = ErrorType<
-    | GetClassesIdSessionsSessionIdAttendance401
-    | GetClassesIdSessionsSessionIdAttendance403
-    | GetClassesIdSessionsSessionIdAttendance404
-  >,
->(
-  id: string,
-  sessionId: string,
-  params: undefined | GetClassesIdSessionsSessionIdAttendanceParams,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>, TError, TData>
-    > &
-      Pick<
+
+export function useGetClassesIdSessionsSessionIdAttendance<TData = Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>, TError = ErrorType<GetClassesIdSessionsSessionIdAttendance401 | GetClassesIdSessionsSessionIdAttendance403 | GetClassesIdSessionsSessionIdAttendance404>>(
+ id: string,
+    sessionId: string,
+    params: undefined |  GetClassesIdSessionsSessionIdAttendanceParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>,
           TError,
           Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetClassesIdSessionsSessionIdAttendance<
-  TData = Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>,
-  TError = ErrorType<
-    | GetClassesIdSessionsSessionIdAttendance401
-    | GetClassesIdSessionsSessionIdAttendance403
-    | GetClassesIdSessionsSessionIdAttendance404
-  >,
->(
-  id: string,
-  sessionId: string,
-  params?: GetClassesIdSessionsSessionIdAttendanceParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>, TError, TData>
-    > &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClassesIdSessionsSessionIdAttendance<TData = Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>, TError = ErrorType<GetClassesIdSessionsSessionIdAttendance401 | GetClassesIdSessionsSessionIdAttendance403 | GetClassesIdSessionsSessionIdAttendance404>>(
+ id: string,
+    sessionId: string,
+    params?: GetClassesIdSessionsSessionIdAttendanceParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>,
           TError,
           Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetClassesIdSessionsSessionIdAttendance<
-  TData = Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>,
-  TError = ErrorType<
-    | GetClassesIdSessionsSessionIdAttendance401
-    | GetClassesIdSessionsSessionIdAttendance403
-    | GetClassesIdSessionsSessionIdAttendance404
-  >,
->(
-  id: string,
-  sessionId: string,
-  params?: GetClassesIdSessionsSessionIdAttendanceParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClassesIdSessionsSessionIdAttendance<TData = Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>, TError = ErrorType<GetClassesIdSessionsSessionIdAttendance401 | GetClassesIdSessionsSessionIdAttendance403 | GetClassesIdSessionsSessionIdAttendance404>>(
+ id: string,
+    sessionId: string,
+    params?: GetClassesIdSessionsSessionIdAttendanceParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List attendance by session
  */
 
-export function useGetClassesIdSessionsSessionIdAttendance<
-  TData = Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>,
-  TError = ErrorType<
-    | GetClassesIdSessionsSessionIdAttendance401
-    | GetClassesIdSessionsSessionIdAttendance403
-    | GetClassesIdSessionsSessionIdAttendance404
-  >,
->(
-  id: string,
-  sessionId: string,
-  params?: GetClassesIdSessionsSessionIdAttendanceParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetClassesIdSessionsSessionIdAttendanceQueryOptions(id, sessionId, params, options)
+export function useGetClassesIdSessionsSessionIdAttendance<TData = Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>, TError = ErrorType<GetClassesIdSessionsSessionIdAttendance401 | GetClassesIdSessionsSessionIdAttendance403 | GetClassesIdSessionsSessionIdAttendance404>>(
+ id: string,
+    sessionId: string,
+    params?: GetClassesIdSessionsSessionIdAttendanceParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessionsSessionIdAttendance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetClassesIdSessionsSessionIdAttendanceQueryOptions(id,sessionId,params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Mark attendance
@@ -741,131 +592,86 @@ export type postClassesIdSessionsSessionIdAttendanceResponse409 = {
   status: 409
 }
 
-export type postClassesIdSessionsSessionIdAttendanceResponseSuccess =
-  postClassesIdSessionsSessionIdAttendanceResponse201 & {
-    headers: Headers
-  }
-export type postClassesIdSessionsSessionIdAttendanceResponseError = (
-  | postClassesIdSessionsSessionIdAttendanceResponse400
-  | postClassesIdSessionsSessionIdAttendanceResponse401
-  | postClassesIdSessionsSessionIdAttendanceResponse403
-  | postClassesIdSessionsSessionIdAttendanceResponse404
-  | postClassesIdSessionsSessionIdAttendanceResponse409
-) & {
-  headers: Headers
-}
+export type postClassesIdSessionsSessionIdAttendanceResponseSuccess = (postClassesIdSessionsSessionIdAttendanceResponse201) & {
+  headers: Headers;
+};
+export type postClassesIdSessionsSessionIdAttendanceResponseError = (postClassesIdSessionsSessionIdAttendanceResponse400 | postClassesIdSessionsSessionIdAttendanceResponse401 | postClassesIdSessionsSessionIdAttendanceResponse403 | postClassesIdSessionsSessionIdAttendanceResponse404 | postClassesIdSessionsSessionIdAttendanceResponse409) & {
+  headers: Headers;
+};
 
-export type postClassesIdSessionsSessionIdAttendanceResponse =
-  | postClassesIdSessionsSessionIdAttendanceResponseSuccess
-  | postClassesIdSessionsSessionIdAttendanceResponseError
+export type postClassesIdSessionsSessionIdAttendanceResponse = (postClassesIdSessionsSessionIdAttendanceResponseSuccess | postClassesIdSessionsSessionIdAttendanceResponseError)
 
-export const getPostClassesIdSessionsSessionIdAttendanceUrl = (id: string, sessionId: string) => {
+export const getPostClassesIdSessionsSessionIdAttendanceUrl = (id: string,
+    sessionId: string,) => {
+
+
+
+
   return `/classes/${id}/sessions/${sessionId}/attendance`
 }
 
-export const postClassesIdSessionsSessionIdAttendance = async (
-  id: string,
-  sessionId: string,
-  githubCom4H1RZooraInternalDomainCreateAttendanceDTO: GithubCom4H1RZooraInternalDomainCreateAttendanceDTO,
-  options?: RequestInit
-): Promise<postClassesIdSessionsSessionIdAttendanceResponse> => {
-  return customInstance<postClassesIdSessionsSessionIdAttendanceResponse>(
-    getPostClassesIdSessionsSessionIdAttendanceUrl(id, sessionId),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(githubCom4H1RZooraInternalDomainCreateAttendanceDTO),
-    }
-  )
-}
+export const postClassesIdSessionsSessionIdAttendance = async (id: string,
+    sessionId: string,
+    githubCom4H1RZooraInternalDomainCreateAttendanceDTO: GithubCom4H1RZooraInternalDomainCreateAttendanceDTO, options?: RequestInit): Promise<postClassesIdSessionsSessionIdAttendanceResponse> => {
 
-export const getPostClassesIdSessionsSessionIdAttendanceMutationOptions = <
-  TError = ErrorType<
-    | PostClassesIdSessionsSessionIdAttendance400
-    | PostClassesIdSessionsSessionIdAttendance401
-    | PostClassesIdSessionsSessionIdAttendance403
-    | PostClassesIdSessionsSessionIdAttendance404
-    | PostClassesIdSessionsSessionIdAttendance409
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendance>>,
-    TError,
-    { id: string; sessionId: string; data: GithubCom4H1RZooraInternalDomainCreateAttendanceDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendance>>,
-  TError,
-  { id: string; sessionId: string; data: GithubCom4H1RZooraInternalDomainCreateAttendanceDTO },
-  TContext
-> => {
-  const mutationKey = ["postClassesIdSessionsSessionIdAttendance"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendance>>,
-    { id: string; sessionId: string; data: GithubCom4H1RZooraInternalDomainCreateAttendanceDTO }
-  > = (props) => {
-    const { id, sessionId, data } = props ?? {}
-
-    return postClassesIdSessionsSessionIdAttendance(id, sessionId, data, requestOptions)
+  return customInstance<postClassesIdSessionsSessionIdAttendanceResponse>(getPostClassesIdSessionsSessionIdAttendanceUrl(id,sessionId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainCreateAttendanceDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostClassesIdSessionsSessionIdAttendanceMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendance>>
->
-export type PostClassesIdSessionsSessionIdAttendanceMutationBody = GithubCom4H1RZooraInternalDomainCreateAttendanceDTO
-export type PostClassesIdSessionsSessionIdAttendanceMutationError = ErrorType<
-  | PostClassesIdSessionsSessionIdAttendance400
-  | PostClassesIdSessionsSessionIdAttendance401
-  | PostClassesIdSessionsSessionIdAttendance403
-  | PostClassesIdSessionsSessionIdAttendance404
-  | PostClassesIdSessionsSessionIdAttendance409
->
 
-/**
+
+export const getPostClassesIdSessionsSessionIdAttendanceMutationOptions = <TError = ErrorType<PostClassesIdSessionsSessionIdAttendance400 | PostClassesIdSessionsSessionIdAttendance401 | PostClassesIdSessionsSessionIdAttendance403 | PostClassesIdSessionsSessionIdAttendance404 | PostClassesIdSessionsSessionIdAttendance409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendance>>, TError,{id: string;sessionId: string;data: GithubCom4H1RZooraInternalDomainCreateAttendanceDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendance>>, TError,{id: string;sessionId: string;data: GithubCom4H1RZooraInternalDomainCreateAttendanceDTO}, TContext> => {
+
+const mutationKey = ['postClassesIdSessionsSessionIdAttendance'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendance>>, {id: string;sessionId: string;data: GithubCom4H1RZooraInternalDomainCreateAttendanceDTO}> = (props) => {
+          const {id,sessionId,data} = props ?? {};
+
+          return  postClassesIdSessionsSessionIdAttendance(id,sessionId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostClassesIdSessionsSessionIdAttendanceMutationResult = NonNullable<Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendance>>>
+    export type PostClassesIdSessionsSessionIdAttendanceMutationBody = GithubCom4H1RZooraInternalDomainCreateAttendanceDTO
+    export type PostClassesIdSessionsSessionIdAttendanceMutationError = ErrorType<PostClassesIdSessionsSessionIdAttendance400 | PostClassesIdSessionsSessionIdAttendance401 | PostClassesIdSessionsSessionIdAttendance403 | PostClassesIdSessionsSessionIdAttendance404 | PostClassesIdSessionsSessionIdAttendance409>
+
+    /**
  * @summary Mark attendance
  */
-export const usePostClassesIdSessionsSessionIdAttendance = <
-  TError = ErrorType<
-    | PostClassesIdSessionsSessionIdAttendance400
-    | PostClassesIdSessionsSessionIdAttendance401
-    | PostClassesIdSessionsSessionIdAttendance403
-    | PostClassesIdSessionsSessionIdAttendance404
-    | PostClassesIdSessionsSessionIdAttendance409
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendance>>,
-      TError,
-      { id: string; sessionId: string; data: GithubCom4H1RZooraInternalDomainCreateAttendanceDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendance>>,
-  TError,
-  { id: string; sessionId: string; data: GithubCom4H1RZooraInternalDomainCreateAttendanceDTO },
-  TContext
-> => {
-  return useMutation(getPostClassesIdSessionsSessionIdAttendanceMutationOptions(options), queryClient)
-}
-/**
+export const usePostClassesIdSessionsSessionIdAttendance = <TError = ErrorType<PostClassesIdSessionsSessionIdAttendance400 | PostClassesIdSessionsSessionIdAttendance401 | PostClassesIdSessionsSessionIdAttendance403 | PostClassesIdSessionsSessionIdAttendance404 | PostClassesIdSessionsSessionIdAttendance409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendance>>, TError,{id: string;sessionId: string;data: GithubCom4H1RZooraInternalDomainCreateAttendanceDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendance>>,
+        TError,
+        {id: string;sessionId: string;data: GithubCom4H1RZooraInternalDomainCreateAttendanceDTO},
+        TContext
+      > => {
+      return useMutation(getPostClassesIdSessionsSessionIdAttendanceMutationOptions(options), queryClient);
+    }
+    /**
  * Teacher triggers auto-marking. For live rooms: students with total_duration >= min_duration_seconds are marked present. For offline rooms: students who viewed the content are marked present. Students already marked are skipped.
  * @summary Auto-mark attendance from room activity
  */
@@ -894,128 +700,86 @@ export type postClassesIdSessionsSessionIdAttendanceAutoMarkResponse404 = {
   status: 404
 }
 
-export type postClassesIdSessionsSessionIdAttendanceAutoMarkResponseSuccess =
-  postClassesIdSessionsSessionIdAttendanceAutoMarkResponse200 & {
-    headers: Headers
-  }
-export type postClassesIdSessionsSessionIdAttendanceAutoMarkResponseError = (
-  | postClassesIdSessionsSessionIdAttendanceAutoMarkResponse400
-  | postClassesIdSessionsSessionIdAttendanceAutoMarkResponse401
-  | postClassesIdSessionsSessionIdAttendanceAutoMarkResponse403
-  | postClassesIdSessionsSessionIdAttendanceAutoMarkResponse404
-) & {
-  headers: Headers
-}
+export type postClassesIdSessionsSessionIdAttendanceAutoMarkResponseSuccess = (postClassesIdSessionsSessionIdAttendanceAutoMarkResponse200) & {
+  headers: Headers;
+};
+export type postClassesIdSessionsSessionIdAttendanceAutoMarkResponseError = (postClassesIdSessionsSessionIdAttendanceAutoMarkResponse400 | postClassesIdSessionsSessionIdAttendanceAutoMarkResponse401 | postClassesIdSessionsSessionIdAttendanceAutoMarkResponse403 | postClassesIdSessionsSessionIdAttendanceAutoMarkResponse404) & {
+  headers: Headers;
+};
 
-export type postClassesIdSessionsSessionIdAttendanceAutoMarkResponse =
-  | postClassesIdSessionsSessionIdAttendanceAutoMarkResponseSuccess
-  | postClassesIdSessionsSessionIdAttendanceAutoMarkResponseError
+export type postClassesIdSessionsSessionIdAttendanceAutoMarkResponse = (postClassesIdSessionsSessionIdAttendanceAutoMarkResponseSuccess | postClassesIdSessionsSessionIdAttendanceAutoMarkResponseError)
 
-export const getPostClassesIdSessionsSessionIdAttendanceAutoMarkUrl = (id: string, sessionId: string) => {
+export const getPostClassesIdSessionsSessionIdAttendanceAutoMarkUrl = (id: string,
+    sessionId: string,) => {
+
+
+
+
   return `/classes/${id}/sessions/${sessionId}/attendance/auto-mark`
 }
 
-export const postClassesIdSessionsSessionIdAttendanceAutoMark = async (
-  id: string,
-  sessionId: string,
-  githubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO: GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO,
-  options?: RequestInit
-): Promise<postClassesIdSessionsSessionIdAttendanceAutoMarkResponse> => {
-  return customInstance<postClassesIdSessionsSessionIdAttendanceAutoMarkResponse>(
-    getPostClassesIdSessionsSessionIdAttendanceAutoMarkUrl(id, sessionId),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(githubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO),
-    }
-  )
-}
+export const postClassesIdSessionsSessionIdAttendanceAutoMark = async (id: string,
+    sessionId: string,
+    githubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO: GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO, options?: RequestInit): Promise<postClassesIdSessionsSessionIdAttendanceAutoMarkResponse> => {
 
-export const getPostClassesIdSessionsSessionIdAttendanceAutoMarkMutationOptions = <
-  TError = ErrorType<
-    | PostClassesIdSessionsSessionIdAttendanceAutoMark400
-    | PostClassesIdSessionsSessionIdAttendanceAutoMark401
-    | PostClassesIdSessionsSessionIdAttendanceAutoMark403
-    | PostClassesIdSessionsSessionIdAttendanceAutoMark404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceAutoMark>>,
-    TError,
-    { id: string; sessionId: string; data: GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceAutoMark>>,
-  TError,
-  { id: string; sessionId: string; data: GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO },
-  TContext
-> => {
-  const mutationKey = ["postClassesIdSessionsSessionIdAttendanceAutoMark"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceAutoMark>>,
-    { id: string; sessionId: string; data: GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO }
-  > = (props) => {
-    const { id, sessionId, data } = props ?? {}
-
-    return postClassesIdSessionsSessionIdAttendanceAutoMark(id, sessionId, data, requestOptions)
+  return customInstance<postClassesIdSessionsSessionIdAttendanceAutoMarkResponse>(getPostClassesIdSessionsSessionIdAttendanceAutoMarkUrl(id,sessionId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostClassesIdSessionsSessionIdAttendanceAutoMarkMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceAutoMark>>
->
-export type PostClassesIdSessionsSessionIdAttendanceAutoMarkMutationBody =
-  GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO
-export type PostClassesIdSessionsSessionIdAttendanceAutoMarkMutationError = ErrorType<
-  | PostClassesIdSessionsSessionIdAttendanceAutoMark400
-  | PostClassesIdSessionsSessionIdAttendanceAutoMark401
-  | PostClassesIdSessionsSessionIdAttendanceAutoMark403
-  | PostClassesIdSessionsSessionIdAttendanceAutoMark404
->
 
-/**
+
+export const getPostClassesIdSessionsSessionIdAttendanceAutoMarkMutationOptions = <TError = ErrorType<PostClassesIdSessionsSessionIdAttendanceAutoMark400 | PostClassesIdSessionsSessionIdAttendanceAutoMark401 | PostClassesIdSessionsSessionIdAttendanceAutoMark403 | PostClassesIdSessionsSessionIdAttendanceAutoMark404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceAutoMark>>, TError,{id: string;sessionId: string;data: GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceAutoMark>>, TError,{id: string;sessionId: string;data: GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO}, TContext> => {
+
+const mutationKey = ['postClassesIdSessionsSessionIdAttendanceAutoMark'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceAutoMark>>, {id: string;sessionId: string;data: GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO}> = (props) => {
+          const {id,sessionId,data} = props ?? {};
+
+          return  postClassesIdSessionsSessionIdAttendanceAutoMark(id,sessionId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostClassesIdSessionsSessionIdAttendanceAutoMarkMutationResult = NonNullable<Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceAutoMark>>>
+    export type PostClassesIdSessionsSessionIdAttendanceAutoMarkMutationBody = GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO
+    export type PostClassesIdSessionsSessionIdAttendanceAutoMarkMutationError = ErrorType<PostClassesIdSessionsSessionIdAttendanceAutoMark400 | PostClassesIdSessionsSessionIdAttendanceAutoMark401 | PostClassesIdSessionsSessionIdAttendanceAutoMark403 | PostClassesIdSessionsSessionIdAttendanceAutoMark404>
+
+    /**
  * @summary Auto-mark attendance from room activity
  */
-export const usePostClassesIdSessionsSessionIdAttendanceAutoMark = <
-  TError = ErrorType<
-    | PostClassesIdSessionsSessionIdAttendanceAutoMark400
-    | PostClassesIdSessionsSessionIdAttendanceAutoMark401
-    | PostClassesIdSessionsSessionIdAttendanceAutoMark403
-    | PostClassesIdSessionsSessionIdAttendanceAutoMark404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceAutoMark>>,
-      TError,
-      { id: string; sessionId: string; data: GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceAutoMark>>,
-  TError,
-  { id: string; sessionId: string; data: GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO },
-  TContext
-> => {
-  return useMutation(getPostClassesIdSessionsSessionIdAttendanceAutoMarkMutationOptions(options), queryClient)
-}
-/**
+export const usePostClassesIdSessionsSessionIdAttendanceAutoMark = <TError = ErrorType<PostClassesIdSessionsSessionIdAttendanceAutoMark400 | PostClassesIdSessionsSessionIdAttendanceAutoMark401 | PostClassesIdSessionsSessionIdAttendanceAutoMark403 | PostClassesIdSessionsSessionIdAttendanceAutoMark404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceAutoMark>>, TError,{id: string;sessionId: string;data: GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceAutoMark>>,
+        TError,
+        {id: string;sessionId: string;data: GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO},
+        TContext
+      > => {
+      return useMutation(getPostClassesIdSessionsSessionIdAttendanceAutoMarkMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Bulk mark attendance
  */
 export type postClassesIdSessionsSessionIdAttendanceBulkResponse201 = {
@@ -1048,128 +812,82 @@ export type postClassesIdSessionsSessionIdAttendanceBulkResponse409 = {
   status: 409
 }
 
-export type postClassesIdSessionsSessionIdAttendanceBulkResponseSuccess =
-  postClassesIdSessionsSessionIdAttendanceBulkResponse201 & {
-    headers: Headers
-  }
-export type postClassesIdSessionsSessionIdAttendanceBulkResponseError = (
-  | postClassesIdSessionsSessionIdAttendanceBulkResponse400
-  | postClassesIdSessionsSessionIdAttendanceBulkResponse401
-  | postClassesIdSessionsSessionIdAttendanceBulkResponse403
-  | postClassesIdSessionsSessionIdAttendanceBulkResponse404
-  | postClassesIdSessionsSessionIdAttendanceBulkResponse409
-) & {
-  headers: Headers
-}
+export type postClassesIdSessionsSessionIdAttendanceBulkResponseSuccess = (postClassesIdSessionsSessionIdAttendanceBulkResponse201) & {
+  headers: Headers;
+};
+export type postClassesIdSessionsSessionIdAttendanceBulkResponseError = (postClassesIdSessionsSessionIdAttendanceBulkResponse400 | postClassesIdSessionsSessionIdAttendanceBulkResponse401 | postClassesIdSessionsSessionIdAttendanceBulkResponse403 | postClassesIdSessionsSessionIdAttendanceBulkResponse404 | postClassesIdSessionsSessionIdAttendanceBulkResponse409) & {
+  headers: Headers;
+};
 
-export type postClassesIdSessionsSessionIdAttendanceBulkResponse =
-  | postClassesIdSessionsSessionIdAttendanceBulkResponseSuccess
-  | postClassesIdSessionsSessionIdAttendanceBulkResponseError
+export type postClassesIdSessionsSessionIdAttendanceBulkResponse = (postClassesIdSessionsSessionIdAttendanceBulkResponseSuccess | postClassesIdSessionsSessionIdAttendanceBulkResponseError)
 
-export const getPostClassesIdSessionsSessionIdAttendanceBulkUrl = (id: string, sessionId: string) => {
+export const getPostClassesIdSessionsSessionIdAttendanceBulkUrl = (id: string,
+    sessionId: string,) => {
+
+
+
+
   return `/classes/${id}/sessions/${sessionId}/attendance/bulk`
 }
 
-export const postClassesIdSessionsSessionIdAttendanceBulk = async (
-  id: string,
-  sessionId: string,
-  githubCom4H1RZooraInternalDomainBulkCreateAttendanceDTO: GithubCom4H1RZooraInternalDomainBulkCreateAttendanceDTO,
-  options?: RequestInit
-): Promise<postClassesIdSessionsSessionIdAttendanceBulkResponse> => {
-  return customInstance<postClassesIdSessionsSessionIdAttendanceBulkResponse>(
-    getPostClassesIdSessionsSessionIdAttendanceBulkUrl(id, sessionId),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(githubCom4H1RZooraInternalDomainBulkCreateAttendanceDTO),
-    }
-  )
-}
+export const postClassesIdSessionsSessionIdAttendanceBulk = async (id: string,
+    sessionId: string,
+    githubCom4H1RZooraInternalDomainBulkCreateAttendanceDTO: GithubCom4H1RZooraInternalDomainBulkCreateAttendanceDTO, options?: RequestInit): Promise<postClassesIdSessionsSessionIdAttendanceBulkResponse> => {
 
-export const getPostClassesIdSessionsSessionIdAttendanceBulkMutationOptions = <
-  TError = ErrorType<
-    | PostClassesIdSessionsSessionIdAttendanceBulk400
-    | PostClassesIdSessionsSessionIdAttendanceBulk401
-    | PostClassesIdSessionsSessionIdAttendanceBulk403
-    | PostClassesIdSessionsSessionIdAttendanceBulk404
-    | PostClassesIdSessionsSessionIdAttendanceBulk409
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceBulk>>,
-    TError,
-    { id: string; sessionId: string; data: GithubCom4H1RZooraInternalDomainBulkCreateAttendanceDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceBulk>>,
-  TError,
-  { id: string; sessionId: string; data: GithubCom4H1RZooraInternalDomainBulkCreateAttendanceDTO },
-  TContext
-> => {
-  const mutationKey = ["postClassesIdSessionsSessionIdAttendanceBulk"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceBulk>>,
-    { id: string; sessionId: string; data: GithubCom4H1RZooraInternalDomainBulkCreateAttendanceDTO }
-  > = (props) => {
-    const { id, sessionId, data } = props ?? {}
-
-    return postClassesIdSessionsSessionIdAttendanceBulk(id, sessionId, data, requestOptions)
+  return customInstance<postClassesIdSessionsSessionIdAttendanceBulkResponse>(getPostClassesIdSessionsSessionIdAttendanceBulkUrl(id,sessionId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainBulkCreateAttendanceDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostClassesIdSessionsSessionIdAttendanceBulkMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceBulk>>
->
-export type PostClassesIdSessionsSessionIdAttendanceBulkMutationBody =
-  GithubCom4H1RZooraInternalDomainBulkCreateAttendanceDTO
-export type PostClassesIdSessionsSessionIdAttendanceBulkMutationError = ErrorType<
-  | PostClassesIdSessionsSessionIdAttendanceBulk400
-  | PostClassesIdSessionsSessionIdAttendanceBulk401
-  | PostClassesIdSessionsSessionIdAttendanceBulk403
-  | PostClassesIdSessionsSessionIdAttendanceBulk404
-  | PostClassesIdSessionsSessionIdAttendanceBulk409
->
 
-/**
+
+export const getPostClassesIdSessionsSessionIdAttendanceBulkMutationOptions = <TError = ErrorType<PostClassesIdSessionsSessionIdAttendanceBulk400 | PostClassesIdSessionsSessionIdAttendanceBulk401 | PostClassesIdSessionsSessionIdAttendanceBulk403 | PostClassesIdSessionsSessionIdAttendanceBulk404 | PostClassesIdSessionsSessionIdAttendanceBulk409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceBulk>>, TError,{id: string;sessionId: string;data: GithubCom4H1RZooraInternalDomainBulkCreateAttendanceDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceBulk>>, TError,{id: string;sessionId: string;data: GithubCom4H1RZooraInternalDomainBulkCreateAttendanceDTO}, TContext> => {
+
+const mutationKey = ['postClassesIdSessionsSessionIdAttendanceBulk'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceBulk>>, {id: string;sessionId: string;data: GithubCom4H1RZooraInternalDomainBulkCreateAttendanceDTO}> = (props) => {
+          const {id,sessionId,data} = props ?? {};
+
+          return  postClassesIdSessionsSessionIdAttendanceBulk(id,sessionId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostClassesIdSessionsSessionIdAttendanceBulkMutationResult = NonNullable<Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceBulk>>>
+    export type PostClassesIdSessionsSessionIdAttendanceBulkMutationBody = GithubCom4H1RZooraInternalDomainBulkCreateAttendanceDTO
+    export type PostClassesIdSessionsSessionIdAttendanceBulkMutationError = ErrorType<PostClassesIdSessionsSessionIdAttendanceBulk400 | PostClassesIdSessionsSessionIdAttendanceBulk401 | PostClassesIdSessionsSessionIdAttendanceBulk403 | PostClassesIdSessionsSessionIdAttendanceBulk404 | PostClassesIdSessionsSessionIdAttendanceBulk409>
+
+    /**
  * @summary Bulk mark attendance
  */
-export const usePostClassesIdSessionsSessionIdAttendanceBulk = <
-  TError = ErrorType<
-    | PostClassesIdSessionsSessionIdAttendanceBulk400
-    | PostClassesIdSessionsSessionIdAttendanceBulk401
-    | PostClassesIdSessionsSessionIdAttendanceBulk403
-    | PostClassesIdSessionsSessionIdAttendanceBulk404
-    | PostClassesIdSessionsSessionIdAttendanceBulk409
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceBulk>>,
-      TError,
-      { id: string; sessionId: string; data: GithubCom4H1RZooraInternalDomainBulkCreateAttendanceDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceBulk>>,
-  TError,
-  { id: string; sessionId: string; data: GithubCom4H1RZooraInternalDomainBulkCreateAttendanceDTO },
-  TContext
-> => {
-  return useMutation(getPostClassesIdSessionsSessionIdAttendanceBulkMutationOptions(options), queryClient)
-}
+export const usePostClassesIdSessionsSessionIdAttendanceBulk = <TError = ErrorType<PostClassesIdSessionsSessionIdAttendanceBulk400 | PostClassesIdSessionsSessionIdAttendanceBulk401 | PostClassesIdSessionsSessionIdAttendanceBulk403 | PostClassesIdSessionsSessionIdAttendanceBulk404 | PostClassesIdSessionsSessionIdAttendanceBulk409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceBulk>>, TError,{id: string;sessionId: string;data: GithubCom4H1RZooraInternalDomainBulkCreateAttendanceDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postClassesIdSessionsSessionIdAttendanceBulk>>,
+        TError,
+        {id: string;sessionId: string;data: GithubCom4H1RZooraInternalDomainBulkCreateAttendanceDTO},
+        TContext
+      > => {
+      return useMutation(getPostClassesIdSessionsSessionIdAttendanceBulkMutationOptions(options), queryClient);
+    }

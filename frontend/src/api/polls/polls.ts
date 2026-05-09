@@ -5,7 +5,25 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { ErrorType } from ".././mutator/custom-instance"
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   DeletePollsId401,
   DeletePollsId403,
@@ -39,28 +57,16 @@ import type {
   PutPollsId400,
   PutPollsId401,
   PutPollsId403,
-  PutPollsId404,
-} from "../model"
-import type {
-  DataTag,
-  DefinedInitialDataOptions,
-  DefinedUseQueryResult,
-  MutationFunction,
-  QueryClient,
-  QueryFunction,
-  QueryKey,
-  UndefinedInitialDataOptions,
-  UseMutationOptions,
-  UseMutationResult,
-  UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query"
+  PutPollsId404
+} from '../model';
 
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { customInstance } from '.././mutator/custom-instance';
+import type { ErrorType } from '.././mutator/custom-instance';
 
-import { customInstance } from ".././mutator/custom-instance"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * Returns polls filtered by caller role. Search matches substrings of: name. Orderable fields: created_at, updated_at, name.
@@ -86,131 +92,118 @@ export type getPollsResponse500 = {
   status: 500
 }
 
-export type getPollsResponseSuccess = getPollsResponse200 & {
-  headers: Headers
-}
+export type getPollsResponseSuccess = (getPollsResponse200) & {
+  headers: Headers;
+};
 export type getPollsResponseError = (getPollsResponse401 | getPollsResponse403 | getPollsResponse500) & {
-  headers: Headers
-}
+  headers: Headers;
+};
 
-export type getPollsResponse = getPollsResponseSuccess | getPollsResponseError
+export type getPollsResponse = (getPollsResponseSuccess | getPollsResponseError)
 
-export const getGetPollsUrl = (params?: GetPollsParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetPollsUrl = (params?: GetPollsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/polls?${stringifiedParams}` : `/polls`
 }
 
 export const getPolls = async (params?: GetPollsParams, options?: RequestInit): Promise<getPollsResponse> => {
-  return customInstance<getPollsResponse>(getGetPollsUrl(params), {
+
+  return customInstance<getPollsResponse>(getGetPollsUrl(params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetPollsQueryKey = (params?: GetPollsParams) => {
-  return [`/polls`, ...(params ? [params] : [])] as const
-}
 
-export const getGetPollsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getPolls>>,
-  TError = ErrorType<GetPolls401 | GetPolls403 | GetPolls500>,
->(
-  params?: GetPollsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolls>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetPollsQueryKey = (params?: GetPollsParams,) => {
+    return [
+    `/polls`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPollsQueryOptions = <TData = Awaited<ReturnType<typeof getPolls>>, TError = ErrorType<GetPolls401 | GetPolls403 | GetPolls500>>(params?: GetPollsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolls>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetPollsQueryKey(params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPolls>>> = ({ signal }) =>
-    getPolls(params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetPollsQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getPolls>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPolls>>> = ({ signal }) => getPolls(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPolls>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetPollsQueryResult = NonNullable<Awaited<ReturnType<typeof getPolls>>>
 export type GetPollsQueryError = ErrorType<GetPolls401 | GetPolls403 | GetPolls500>
 
-export function useGetPolls<
-  TData = Awaited<ReturnType<typeof getPolls>>,
-  TError = ErrorType<GetPolls401 | GetPolls403 | GetPolls500>,
->(
-  params: undefined | GetPollsParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolls>>, TError, TData>> &
-      Pick<
-        DefinedInitialDataOptions<Awaited<ReturnType<typeof getPolls>>, TError, Awaited<ReturnType<typeof getPolls>>>,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPolls<
-  TData = Awaited<ReturnType<typeof getPolls>>,
-  TError = ErrorType<GetPolls401 | GetPolls403 | GetPolls500>,
->(
-  params?: GetPollsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolls>>, TError, TData>> &
-      Pick<
-        UndefinedInitialDataOptions<Awaited<ReturnType<typeof getPolls>>, TError, Awaited<ReturnType<typeof getPolls>>>,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPolls<
-  TData = Awaited<ReturnType<typeof getPolls>>,
-  TError = ErrorType<GetPolls401 | GetPolls403 | GetPolls500>,
->(
-  params?: GetPollsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolls>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetPolls<TData = Awaited<ReturnType<typeof getPolls>>, TError = ErrorType<GetPolls401 | GetPolls403 | GetPolls500>>(
+ params: undefined |  GetPollsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolls>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPolls>>,
+          TError,
+          Awaited<ReturnType<typeof getPolls>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPolls<TData = Awaited<ReturnType<typeof getPolls>>, TError = ErrorType<GetPolls401 | GetPolls403 | GetPolls500>>(
+ params?: GetPollsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolls>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPolls>>,
+          TError,
+          Awaited<ReturnType<typeof getPolls>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPolls<TData = Awaited<ReturnType<typeof getPolls>>, TError = ErrorType<GetPolls401 | GetPolls403 | GetPolls500>>(
+ params?: GetPollsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolls>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List polls (scoped by RBAC)
  */
 
-export function useGetPolls<
-  TData = Awaited<ReturnType<typeof getPolls>>,
-  TError = ErrorType<GetPolls401 | GetPolls403 | GetPolls500>,
->(
-  params?: GetPollsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolls>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetPollsQueryOptions(params, options)
+export function useGetPolls<TData = Awaited<ReturnType<typeof getPolls>>, TError = ErrorType<GetPolls401 | GetPolls403 | GetPolls500>>(
+ params?: GetPollsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPolls>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetPollsQueryOptions(params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Create poll
@@ -235,94 +228,83 @@ export type postPollsResponse403 = {
   status: 403
 }
 
-export type postPollsResponseSuccess = postPollsResponse201 & {
-  headers: Headers
-}
+export type postPollsResponseSuccess = (postPollsResponse201) & {
+  headers: Headers;
+};
 export type postPollsResponseError = (postPollsResponse400 | postPollsResponse401 | postPollsResponse403) & {
-  headers: Headers
-}
+  headers: Headers;
+};
 
-export type postPollsResponse = postPollsResponseSuccess | postPollsResponseError
+export type postPollsResponse = (postPollsResponseSuccess | postPollsResponseError)
 
 export const getPostPollsUrl = () => {
+
+
+
+
   return `/polls`
 }
 
-export const postPolls = async (
-  githubCom4H1RZooraInternalDomainCreatePollDTO: GithubCom4H1RZooraInternalDomainCreatePollDTO,
-  options?: RequestInit
-): Promise<postPollsResponse> => {
-  return customInstance<postPollsResponse>(getPostPollsUrl(), {
+export const postPolls = async (githubCom4H1RZooraInternalDomainCreatePollDTO: GithubCom4H1RZooraInternalDomainCreatePollDTO, options?: RequestInit): Promise<postPollsResponse> => {
+
+  return customInstance<postPollsResponse>(getPostPollsUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainCreatePollDTO),
-  })
-}
-
-export const getPostPollsMutationOptions = <
-  TError = ErrorType<PostPolls400 | PostPolls401 | PostPolls403>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postPolls>>,
-    TError,
-    { data: GithubCom4H1RZooraInternalDomainCreatePollDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postPolls>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainCreatePollDTO },
-  TContext
-> => {
-  const mutationKey = ["postPolls"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postPolls>>,
-    { data: GithubCom4H1RZooraInternalDomainCreatePollDTO }
-  > = (props) => {
-    const { data } = props ?? {}
-
-    return postPolls(data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainCreatePollDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostPollsMutationResult = NonNullable<Awaited<ReturnType<typeof postPolls>>>
-export type PostPollsMutationBody = GithubCom4H1RZooraInternalDomainCreatePollDTO
-export type PostPollsMutationError = ErrorType<PostPolls400 | PostPolls401 | PostPolls403>
 
-/**
+
+export const getPostPollsMutationOptions = <TError = ErrorType<PostPolls400 | PostPolls401 | PostPolls403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postPolls>>, TError,{data: GithubCom4H1RZooraInternalDomainCreatePollDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postPolls>>, TError,{data: GithubCom4H1RZooraInternalDomainCreatePollDTO}, TContext> => {
+
+const mutationKey = ['postPolls'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postPolls>>, {data: GithubCom4H1RZooraInternalDomainCreatePollDTO}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postPolls(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostPollsMutationResult = NonNullable<Awaited<ReturnType<typeof postPolls>>>
+    export type PostPollsMutationBody = GithubCom4H1RZooraInternalDomainCreatePollDTO
+    export type PostPollsMutationError = ErrorType<PostPolls400 | PostPolls401 | PostPolls403>
+
+    /**
  * @summary Create poll
  */
-export const usePostPolls = <TError = ErrorType<PostPolls400 | PostPolls401 | PostPolls403>, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postPolls>>,
-      TError,
-      { data: GithubCom4H1RZooraInternalDomainCreatePollDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postPolls>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainCreatePollDTO },
-  TContext
-> => {
-  return useMutation(getPostPollsMutationOptions(options), queryClient)
-}
-/**
+export const usePostPolls = <TError = ErrorType<PostPolls400 | PostPolls401 | PostPolls403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postPolls>>, TError,{data: GithubCom4H1RZooraInternalDomainCreatePollDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postPolls>>,
+        TError,
+        {data: GithubCom4H1RZooraInternalDomainCreatePollDTO},
+        TContext
+      > => {
+      return useMutation(getPostPollsMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get poll
  */
 export type getPollsIdResponse200 = {
@@ -345,129 +327,111 @@ export type getPollsIdResponse404 = {
   status: 404
 }
 
-export type getPollsIdResponseSuccess = getPollsIdResponse200 & {
-  headers: Headers
-}
+export type getPollsIdResponseSuccess = (getPollsIdResponse200) & {
+  headers: Headers;
+};
 export type getPollsIdResponseError = (getPollsIdResponse401 | getPollsIdResponse403 | getPollsIdResponse404) & {
-  headers: Headers
-}
+  headers: Headers;
+};
 
-export type getPollsIdResponse = getPollsIdResponseSuccess | getPollsIdResponseError
+export type getPollsIdResponse = (getPollsIdResponseSuccess | getPollsIdResponseError)
 
-export const getGetPollsIdUrl = (id: string) => {
+export const getGetPollsIdUrl = (id: string,) => {
+
+
+
+
   return `/polls/${id}`
 }
 
 export const getPollsId = async (id: string, options?: RequestInit): Promise<getPollsIdResponse> => {
-  return customInstance<getPollsIdResponse>(getGetPollsIdUrl(id), {
+
+  return customInstance<getPollsIdResponse>(getGetPollsIdUrl(id),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetPollsIdQueryKey = (id: string) => {
-  return [`/polls/${id}`] as const
-}
 
-export const getGetPollsIdQueryOptions = <
-  TData = Awaited<ReturnType<typeof getPollsId>>,
-  TError = ErrorType<GetPollsId401 | GetPollsId403 | GetPollsId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetPollsIdQueryKey = (id: string,) => {
+    return [
+    `/polls/${id}`
+    ] as const;
+    }
+
+
+export const getGetPollsIdQueryOptions = <TData = Awaited<ReturnType<typeof getPollsId>>, TError = ErrorType<GetPollsId401 | GetPollsId403 | GetPollsId404>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetPollsIdQueryKey(id)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPollsId>>> = ({ signal }) =>
-    getPollsId(id, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetPollsIdQueryKey(id);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getPollsId>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPollsId>>> = ({ signal }) => getPollsId(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPollsId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetPollsIdQueryResult = NonNullable<Awaited<ReturnType<typeof getPollsId>>>
 export type GetPollsIdQueryError = ErrorType<GetPollsId401 | GetPollsId403 | GetPollsId404>
 
-export function useGetPollsId<
-  TData = Awaited<ReturnType<typeof getPollsId>>,
-  TError = ErrorType<GetPollsId401 | GetPollsId403 | GetPollsId404>,
->(
-  id: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsId>>, TError, TData>> &
-      Pick<
+
+export function useGetPollsId<TData = Awaited<ReturnType<typeof getPollsId>>, TError = ErrorType<GetPollsId401 | GetPollsId403 | GetPollsId404>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPollsId>>,
           TError,
           Awaited<ReturnType<typeof getPollsId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPollsId<
-  TData = Awaited<ReturnType<typeof getPollsId>>,
-  TError = ErrorType<GetPollsId401 | GetPollsId403 | GetPollsId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsId>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPollsId<TData = Awaited<ReturnType<typeof getPollsId>>, TError = ErrorType<GetPollsId401 | GetPollsId403 | GetPollsId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPollsId>>,
           TError,
           Awaited<ReturnType<typeof getPollsId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPollsId<
-  TData = Awaited<ReturnType<typeof getPollsId>>,
-  TError = ErrorType<GetPollsId401 | GetPollsId403 | GetPollsId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPollsId<TData = Awaited<ReturnType<typeof getPollsId>>, TError = ErrorType<GetPollsId401 | GetPollsId403 | GetPollsId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get poll
  */
 
-export function useGetPollsId<
-  TData = Awaited<ReturnType<typeof getPollsId>>,
-  TError = ErrorType<GetPollsId401 | GetPollsId403 | GetPollsId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetPollsIdQueryOptions(id, options)
+export function useGetPollsId<TData = Awaited<ReturnType<typeof getPollsId>>, TError = ErrorType<GetPollsId401 | GetPollsId403 | GetPollsId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetPollsIdQueryOptions(id,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Update poll
@@ -497,103 +461,84 @@ export type putPollsIdResponse404 = {
   status: 404
 }
 
-export type putPollsIdResponseSuccess = putPollsIdResponse200 & {
-  headers: Headers
-}
-export type putPollsIdResponseError = (
-  | putPollsIdResponse400
-  | putPollsIdResponse401
-  | putPollsIdResponse403
-  | putPollsIdResponse404
-) & {
-  headers: Headers
-}
+export type putPollsIdResponseSuccess = (putPollsIdResponse200) & {
+  headers: Headers;
+};
+export type putPollsIdResponseError = (putPollsIdResponse400 | putPollsIdResponse401 | putPollsIdResponse403 | putPollsIdResponse404) & {
+  headers: Headers;
+};
 
-export type putPollsIdResponse = putPollsIdResponseSuccess | putPollsIdResponseError
+export type putPollsIdResponse = (putPollsIdResponseSuccess | putPollsIdResponseError)
 
-export const getPutPollsIdUrl = (id: string) => {
+export const getPutPollsIdUrl = (id: string,) => {
+
+
+
+
   return `/polls/${id}`
 }
 
-export const putPollsId = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainUpdatePollDTO: GithubCom4H1RZooraInternalDomainUpdatePollDTO,
-  options?: RequestInit
-): Promise<putPollsIdResponse> => {
-  return customInstance<putPollsIdResponse>(getPutPollsIdUrl(id), {
+export const putPollsId = async (id: string,
+    githubCom4H1RZooraInternalDomainUpdatePollDTO: GithubCom4H1RZooraInternalDomainUpdatePollDTO, options?: RequestInit): Promise<putPollsIdResponse> => {
+
+  return customInstance<putPollsIdResponse>(getPutPollsIdUrl(id),
+  {
     ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainUpdatePollDTO),
-  })
-}
-
-export const getPutPollsIdMutationOptions = <
-  TError = ErrorType<PutPollsId400 | PutPollsId401 | PutPollsId403 | PutPollsId404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putPollsId>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainUpdatePollDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putPollsId>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainUpdatePollDTO },
-  TContext
-> => {
-  const mutationKey = ["putPollsId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putPollsId>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainUpdatePollDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return putPollsId(id, data, requestOptions)
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainUpdatePollDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutPollsIdMutationResult = NonNullable<Awaited<ReturnType<typeof putPollsId>>>
-export type PutPollsIdMutationBody = GithubCom4H1RZooraInternalDomainUpdatePollDTO
-export type PutPollsIdMutationError = ErrorType<PutPollsId400 | PutPollsId401 | PutPollsId403 | PutPollsId404>
 
-/**
+
+export const getPutPollsIdMutationOptions = <TError = ErrorType<PutPollsId400 | PutPollsId401 | PutPollsId403 | PutPollsId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putPollsId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdatePollDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putPollsId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdatePollDTO}, TContext> => {
+
+const mutationKey = ['putPollsId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putPollsId>>, {id: string;data: GithubCom4H1RZooraInternalDomainUpdatePollDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  putPollsId(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutPollsIdMutationResult = NonNullable<Awaited<ReturnType<typeof putPollsId>>>
+    export type PutPollsIdMutationBody = GithubCom4H1RZooraInternalDomainUpdatePollDTO
+    export type PutPollsIdMutationError = ErrorType<PutPollsId400 | PutPollsId401 | PutPollsId403 | PutPollsId404>
+
+    /**
  * @summary Update poll
  */
-export const usePutPollsId = <
-  TError = ErrorType<PutPollsId400 | PutPollsId401 | PutPollsId403 | PutPollsId404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putPollsId>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainUpdatePollDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putPollsId>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainUpdatePollDTO },
-  TContext
-> => {
-  return useMutation(getPutPollsIdMutationOptions(options), queryClient)
-}
-/**
+export const usePutPollsId = <TError = ErrorType<PutPollsId400 | PutPollsId401 | PutPollsId403 | PutPollsId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putPollsId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdatePollDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putPollsId>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainUpdatePollDTO},
+        TContext
+      > => {
+      return useMutation(getPutPollsIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Delete poll
  */
 export type deletePollsIdResponse200 = {
@@ -616,73 +561,82 @@ export type deletePollsIdResponse404 = {
   status: 404
 }
 
-export type deletePollsIdResponseSuccess = deletePollsIdResponse200 & {
-  headers: Headers
-}
-export type deletePollsIdResponseError = (
-  | deletePollsIdResponse401
-  | deletePollsIdResponse403
-  | deletePollsIdResponse404
-) & {
-  headers: Headers
-}
+export type deletePollsIdResponseSuccess = (deletePollsIdResponse200) & {
+  headers: Headers;
+};
+export type deletePollsIdResponseError = (deletePollsIdResponse401 | deletePollsIdResponse403 | deletePollsIdResponse404) & {
+  headers: Headers;
+};
 
-export type deletePollsIdResponse = deletePollsIdResponseSuccess | deletePollsIdResponseError
+export type deletePollsIdResponse = (deletePollsIdResponseSuccess | deletePollsIdResponseError)
 
-export const getDeletePollsIdUrl = (id: string) => {
+export const getDeletePollsIdUrl = (id: string,) => {
+
+
+
+
   return `/polls/${id}`
 }
 
 export const deletePollsId = async (id: string, options?: RequestInit): Promise<deletePollsIdResponse> => {
-  return customInstance<deletePollsIdResponse>(getDeletePollsIdUrl(id), {
+
+  return customInstance<deletePollsIdResponse>(getDeletePollsIdUrl(id),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeletePollsIdMutationOptions = <
-  TError = ErrorType<DeletePollsId401 | DeletePollsId403 | DeletePollsId404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof deletePollsId>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof deletePollsId>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["deletePollsId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePollsId>>, { id: string }> = (props) => {
-    const { id } = props ?? {}
-
-    return deletePollsId(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeletePollsIdMutationResult = NonNullable<Awaited<ReturnType<typeof deletePollsId>>>
 
-export type DeletePollsIdMutationError = ErrorType<DeletePollsId401 | DeletePollsId403 | DeletePollsId404>
 
-/**
+export const getDeletePollsIdMutationOptions = <TError = ErrorType<DeletePollsId401 | DeletePollsId403 | DeletePollsId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePollsId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deletePollsId>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deletePollsId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePollsId>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deletePollsId(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePollsIdMutationResult = NonNullable<Awaited<ReturnType<typeof deletePollsId>>>
+
+    export type DeletePollsIdMutationError = ErrorType<DeletePollsId401 | DeletePollsId403 | DeletePollsId404>
+
+    /**
  * @summary Delete poll
  */
-export const useDeletePollsId = <
-  TError = ErrorType<DeletePollsId401 | DeletePollsId403 | DeletePollsId404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof deletePollsId>>, TError, { id: string }, TContext>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof deletePollsId>>, TError, { id: string }, TContext> => {
-  return useMutation(getDeletePollsIdMutationOptions(options), queryClient)
-}
-/**
+export const useDeletePollsId = <TError = ErrorType<DeletePollsId401 | DeletePollsId403 | DeletePollsId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePollsId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deletePollsId>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeletePollsIdMutationOptions(options), queryClient);
+    }
+    /**
  * Submit answers (options) for a poll. Replaces any previous answers by this user.
  * @summary Answer poll
  */
@@ -706,104 +660,84 @@ export type postPollsIdAnswerResponse404 = {
   status: 404
 }
 
-export type postPollsIdAnswerResponseSuccess = postPollsIdAnswerResponse201 & {
-  headers: Headers
-}
-export type postPollsIdAnswerResponseError = (
-  | postPollsIdAnswerResponse400
-  | postPollsIdAnswerResponse401
-  | postPollsIdAnswerResponse404
-) & {
-  headers: Headers
-}
+export type postPollsIdAnswerResponseSuccess = (postPollsIdAnswerResponse201) & {
+  headers: Headers;
+};
+export type postPollsIdAnswerResponseError = (postPollsIdAnswerResponse400 | postPollsIdAnswerResponse401 | postPollsIdAnswerResponse404) & {
+  headers: Headers;
+};
 
-export type postPollsIdAnswerResponse = postPollsIdAnswerResponseSuccess | postPollsIdAnswerResponseError
+export type postPollsIdAnswerResponse = (postPollsIdAnswerResponseSuccess | postPollsIdAnswerResponseError)
 
-export const getPostPollsIdAnswerUrl = (id: string) => {
+export const getPostPollsIdAnswerUrl = (id: string,) => {
+
+
+
+
   return `/polls/${id}/answer`
 }
 
-export const postPollsIdAnswer = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainAnswerPollDTO: GithubCom4H1RZooraInternalDomainAnswerPollDTO,
-  options?: RequestInit
-): Promise<postPollsIdAnswerResponse> => {
-  return customInstance<postPollsIdAnswerResponse>(getPostPollsIdAnswerUrl(id), {
+export const postPollsIdAnswer = async (id: string,
+    githubCom4H1RZooraInternalDomainAnswerPollDTO: GithubCom4H1RZooraInternalDomainAnswerPollDTO, options?: RequestInit): Promise<postPollsIdAnswerResponse> => {
+
+  return customInstance<postPollsIdAnswerResponse>(getPostPollsIdAnswerUrl(id),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainAnswerPollDTO),
-  })
-}
-
-export const getPostPollsIdAnswerMutationOptions = <
-  TError = ErrorType<PostPollsIdAnswer400 | PostPollsIdAnswer401 | PostPollsIdAnswer404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postPollsIdAnswer>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainAnswerPollDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postPollsIdAnswer>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainAnswerPollDTO },
-  TContext
-> => {
-  const mutationKey = ["postPollsIdAnswer"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postPollsIdAnswer>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainAnswerPollDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return postPollsIdAnswer(id, data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainAnswerPollDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostPollsIdAnswerMutationResult = NonNullable<Awaited<ReturnType<typeof postPollsIdAnswer>>>
-export type PostPollsIdAnswerMutationBody = GithubCom4H1RZooraInternalDomainAnswerPollDTO
-export type PostPollsIdAnswerMutationError = ErrorType<
-  PostPollsIdAnswer400 | PostPollsIdAnswer401 | PostPollsIdAnswer404
->
 
-/**
+
+export const getPostPollsIdAnswerMutationOptions = <TError = ErrorType<PostPollsIdAnswer400 | PostPollsIdAnswer401 | PostPollsIdAnswer404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postPollsIdAnswer>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainAnswerPollDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postPollsIdAnswer>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainAnswerPollDTO}, TContext> => {
+
+const mutationKey = ['postPollsIdAnswer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postPollsIdAnswer>>, {id: string;data: GithubCom4H1RZooraInternalDomainAnswerPollDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postPollsIdAnswer(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostPollsIdAnswerMutationResult = NonNullable<Awaited<ReturnType<typeof postPollsIdAnswer>>>
+    export type PostPollsIdAnswerMutationBody = GithubCom4H1RZooraInternalDomainAnswerPollDTO
+    export type PostPollsIdAnswerMutationError = ErrorType<PostPollsIdAnswer400 | PostPollsIdAnswer401 | PostPollsIdAnswer404>
+
+    /**
  * @summary Answer poll
  */
-export const usePostPollsIdAnswer = <
-  TError = ErrorType<PostPollsIdAnswer400 | PostPollsIdAnswer401 | PostPollsIdAnswer404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postPollsIdAnswer>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainAnswerPollDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postPollsIdAnswer>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainAnswerPollDTO },
-  TContext
-> => {
-  return useMutation(getPostPollsIdAnswerMutationOptions(options), queryClient)
-}
-/**
+export const usePostPollsIdAnswer = <TError = ErrorType<PostPollsIdAnswer400 | PostPollsIdAnswer401 | PostPollsIdAnswer404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postPollsIdAnswer>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainAnswerPollDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postPollsIdAnswer>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainAnswerPollDTO},
+        TContext
+      > => {
+      return useMutation(getPostPollsIdAnswerMutationOptions(options), queryClient);
+    }
+    /**
  * @summary List poll answers
  */
 export type getPollsIdAnswersResponse200 = {
@@ -821,145 +755,124 @@ export type getPollsIdAnswersResponse403 = {
   status: 403
 }
 
-export type getPollsIdAnswersResponseSuccess = getPollsIdAnswersResponse200 & {
-  headers: Headers
-}
+export type getPollsIdAnswersResponseSuccess = (getPollsIdAnswersResponse200) & {
+  headers: Headers;
+};
 export type getPollsIdAnswersResponseError = (getPollsIdAnswersResponse401 | getPollsIdAnswersResponse403) & {
-  headers: Headers
-}
+  headers: Headers;
+};
 
-export type getPollsIdAnswersResponse = getPollsIdAnswersResponseSuccess | getPollsIdAnswersResponseError
+export type getPollsIdAnswersResponse = (getPollsIdAnswersResponseSuccess | getPollsIdAnswersResponseError)
 
-export const getGetPollsIdAnswersUrl = (id: string, params?: GetPollsIdAnswersParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetPollsIdAnswersUrl = (id: string,
+    params?: GetPollsIdAnswersParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/polls/${id}/answers?${stringifiedParams}` : `/polls/${id}/answers`
 }
 
-export const getPollsIdAnswers = async (
-  id: string,
-  params?: GetPollsIdAnswersParams,
-  options?: RequestInit
-): Promise<getPollsIdAnswersResponse> => {
-  return customInstance<getPollsIdAnswersResponse>(getGetPollsIdAnswersUrl(id, params), {
+export const getPollsIdAnswers = async (id: string,
+    params?: GetPollsIdAnswersParams, options?: RequestInit): Promise<getPollsIdAnswersResponse> => {
+
+  return customInstance<getPollsIdAnswersResponse>(getGetPollsIdAnswersUrl(id,params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetPollsIdAnswersQueryKey = (id: string, params?: GetPollsIdAnswersParams) => {
-  return [`/polls/${id}/answers`, ...(params ? [params] : [])] as const
-}
 
-export const getGetPollsIdAnswersQueryOptions = <
-  TData = Awaited<ReturnType<typeof getPollsIdAnswers>>,
-  TError = ErrorType<GetPollsIdAnswers401 | GetPollsIdAnswers403>,
->(
-  id: string,
-  params?: GetPollsIdAnswersParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsIdAnswers>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetPollsIdAnswersQueryKey = (id: string,
+    params?: GetPollsIdAnswersParams,) => {
+    return [
+    `/polls/${id}/answers`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPollsIdAnswersQueryOptions = <TData = Awaited<ReturnType<typeof getPollsIdAnswers>>, TError = ErrorType<GetPollsIdAnswers401 | GetPollsIdAnswers403>>(id: string,
+    params?: GetPollsIdAnswersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsIdAnswers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetPollsIdAnswersQueryKey(id, params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPollsIdAnswers>>> = ({ signal }) =>
-    getPollsIdAnswers(id, params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetPollsIdAnswersQueryKey(id,params);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getPollsIdAnswers>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPollsIdAnswers>>> = ({ signal }) => getPollsIdAnswers(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPollsIdAnswers>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetPollsIdAnswersQueryResult = NonNullable<Awaited<ReturnType<typeof getPollsIdAnswers>>>
 export type GetPollsIdAnswersQueryError = ErrorType<GetPollsIdAnswers401 | GetPollsIdAnswers403>
 
-export function useGetPollsIdAnswers<
-  TData = Awaited<ReturnType<typeof getPollsIdAnswers>>,
-  TError = ErrorType<GetPollsIdAnswers401 | GetPollsIdAnswers403>,
->(
-  id: string,
-  params: undefined | GetPollsIdAnswersParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsIdAnswers>>, TError, TData>> &
-      Pick<
+
+export function useGetPollsIdAnswers<TData = Awaited<ReturnType<typeof getPollsIdAnswers>>, TError = ErrorType<GetPollsIdAnswers401 | GetPollsIdAnswers403>>(
+ id: string,
+    params: undefined |  GetPollsIdAnswersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsIdAnswers>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPollsIdAnswers>>,
           TError,
           Awaited<ReturnType<typeof getPollsIdAnswers>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPollsIdAnswers<
-  TData = Awaited<ReturnType<typeof getPollsIdAnswers>>,
-  TError = ErrorType<GetPollsIdAnswers401 | GetPollsIdAnswers403>,
->(
-  id: string,
-  params?: GetPollsIdAnswersParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsIdAnswers>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPollsIdAnswers<TData = Awaited<ReturnType<typeof getPollsIdAnswers>>, TError = ErrorType<GetPollsIdAnswers401 | GetPollsIdAnswers403>>(
+ id: string,
+    params?: GetPollsIdAnswersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsIdAnswers>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPollsIdAnswers>>,
           TError,
           Awaited<ReturnType<typeof getPollsIdAnswers>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPollsIdAnswers<
-  TData = Awaited<ReturnType<typeof getPollsIdAnswers>>,
-  TError = ErrorType<GetPollsIdAnswers401 | GetPollsIdAnswers403>,
->(
-  id: string,
-  params?: GetPollsIdAnswersParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsIdAnswers>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPollsIdAnswers<TData = Awaited<ReturnType<typeof getPollsIdAnswers>>, TError = ErrorType<GetPollsIdAnswers401 | GetPollsIdAnswers403>>(
+ id: string,
+    params?: GetPollsIdAnswersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsIdAnswers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List poll answers
  */
 
-export function useGetPollsIdAnswers<
-  TData = Awaited<ReturnType<typeof getPollsIdAnswers>>,
-  TError = ErrorType<GetPollsIdAnswers401 | GetPollsIdAnswers403>,
->(
-  id: string,
-  params?: GetPollsIdAnswersParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsIdAnswers>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetPollsIdAnswersQueryOptions(id, params, options)
+export function useGetPollsIdAnswers<TData = Awaited<ReturnType<typeof getPollsIdAnswers>>, TError = ErrorType<GetPollsIdAnswers401 | GetPollsIdAnswers403>>(
+ id: string,
+    params?: GetPollsIdAnswersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsIdAnswers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetPollsIdAnswersQueryOptions(id,params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
+

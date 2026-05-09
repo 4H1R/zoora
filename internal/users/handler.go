@@ -103,7 +103,6 @@ func (h *Handler) GetUserByID(c *gin.Context) {
 // @Tags Users
 // @Produce json
 // @Security BearerAuth
-// @Param organization_id query string false "Filter by organization UUID"
 // @Param search query string false "Substring match on username/name"
 // @Param order_by query string false "One of: created_at, updated_at, username, name"
 // @Param order_dir query string false "asc or desc"

@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { getEntityColor, getInitials, useFormatDate } from "@/lib/data-table"
+import { useRoleName } from "@/lib/permissions"
 import { cn } from "@/lib/utils"
 
 interface RoleRowActionsProps {
@@ -77,6 +78,7 @@ interface UseRoleColumnsOptions {
 export function useRoleColumns({ onEdit, onDelete }: UseRoleColumnsOptions): ColumnDef<Role>[] {
   const { t } = useTranslation()
   const formatDate = useFormatDate()
+  const roleName = useRoleName()
 
   return [
     {
@@ -93,7 +95,7 @@ export function useRoleColumns({ onEdit, onDelete }: UseRoleColumnsOptions): Col
             {getInitials(row.original.name ?? "")}
           </div>
           <div className="min-w-0">
-            <div className="truncate text-sm font-medium">{row.original.name}</div>
+            <div className="truncate text-sm font-medium">{row.original.name ? roleName(row.original.name) : ""}</div>
           </div>
         </div>
       ),

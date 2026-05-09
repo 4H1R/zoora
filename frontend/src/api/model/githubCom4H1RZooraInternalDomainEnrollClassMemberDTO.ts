@@ -7,5 +7,5 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainEnrollClassMemberDTO {
-  user_id: string
+  user_id: string;
 }

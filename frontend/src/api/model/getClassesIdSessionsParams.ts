@@ -7,24 +7,24 @@
  */
 
 export type GetClassesIdSessionsParams = {
-  /**
-   * Filter by type: live|quiz|practice
-   */
-  type?: string
-  /**
-   * Substring match on name/description
-   */
-  search?: string
-  /**
-   * One of: created_at, updated_at, name, start_time
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-}
+/**
+ * Filter by type: live|quiz|practice
+ */
+type?: string;
+/**
+ * Substring match on name/description
+ */
+search?: string;
+/**
+ * One of: created_at, updated_at, name, start_time
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+};

@@ -5,24 +5,24 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainClass } from "./githubCom4H1RZooraInternalDomainClass"
-import type { GithubCom4H1RZooraInternalDomainClassSession } from "./githubCom4H1RZooraInternalDomainClassSession"
-import type { GithubCom4H1RZooraInternalDomainUser } from "./githubCom4H1RZooraInternalDomainUser"
+import type { GithubCom4H1RZooraInternalDomainClass } from './githubCom4H1RZooraInternalDomainClass';
+import type { GithubCom4H1RZooraInternalDomainClassSession } from './githubCom4H1RZooraInternalDomainClassSession';
+import type { GithubCom4H1RZooraInternalDomainUser } from './githubCom4H1RZooraInternalDomainUser';
 
 export interface GithubCom4H1RZooraInternalDomainPracticeRoom {
-  class?: GithubCom4H1RZooraInternalDomainClass
-  class_id?: string
-  class_session?: GithubCom4H1RZooraInternalDomainClassSession
-  class_session_id?: string
-  content?: string
-  created_at?: string
-  end_time?: string
-  id?: string
-  max_score?: number
-  organization_id?: string
-  start_time?: string
-  title?: string
-  updated_at?: string
-  user?: GithubCom4H1RZooraInternalDomainUser
-  user_id?: string
+  class?: GithubCom4H1RZooraInternalDomainClass;
+  class_id?: string;
+  class_session?: GithubCom4H1RZooraInternalDomainClassSession;
+  class_session_id?: string;
+  content?: string;
+  created_at?: string;
+  end_time?: string;
+  id?: string;
+  max_score?: number;
+  organization_id?: string;
+  start_time?: string;
+  title?: string;
+  updated_at?: string;
+  user?: GithubCom4H1RZooraInternalDomainUser;
+  user_id?: string;
 }

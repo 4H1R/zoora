@@ -5,15 +5,15 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainChatStatus } from "./githubCom4H1RZooraInternalDomainChatStatus"
+import type { GithubCom4H1RZooraInternalDomainChatStatus } from './githubCom4H1RZooraInternalDomainChatStatus';
 
 export interface GithubCom4H1RZooraInternalDomainUpdateChatDTO {
   /** @maxLength 1000 */
-  description?: string
+  description?: string;
   /**
-   * @minLength 1
-   * @maxLength 255
-   */
-  name?: string
-  status?: GithubCom4H1RZooraInternalDomainChatStatus
+     * @minLength 1
+     * @maxLength 255
+     */
+  name?: string;
+  status?: GithubCom4H1RZooraInternalDomainChatStatus;
 }

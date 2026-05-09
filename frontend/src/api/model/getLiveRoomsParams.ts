@@ -7,16 +7,16 @@
  */
 
 export type GetLiveRoomsParams = {
-  /**
-   * One of: created_at, updated_at, status
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-}
+/**
+ * One of: created_at, updated_at, status
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+};

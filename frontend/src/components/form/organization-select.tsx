@@ -7,6 +7,8 @@ import { useGetAdminOrganizations } from "@/api/admin-organizations/admin-organi
 import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { getInitials } from "@/components/user-avatar"
+import { getEntityColor } from "@/lib/data-table"
 import { cn } from "@/lib/utils"
 
 interface OrganizationSelectProps {
@@ -36,7 +38,17 @@ export function OrganizationSelect({ value, onChange, placeholder, className }: 
         }
       >
         {selected ? (
-          <span className="truncate">{selected.name}</span>
+          <div className="flex min-w-0 items-center gap-2">
+            <div
+              className={cn(
+                "flex size-5 shrink-0 items-center justify-center rounded-[5px] text-[10px] font-semibold text-white",
+                getEntityColor(selected.name)
+              )}
+            >
+              {getInitials(selected.name)}
+            </div>
+            <span className="truncate">{selected.name}</span>
+          </div>
         ) : (
           <span className="text-muted-foreground">{placeholder ?? t("admin.orgs.switcher.search")}</span>
         )}
@@ -60,7 +72,15 @@ export function OrganizationSelect({ value, onChange, placeholder, className }: 
                     }
                   }}
                 >
-                  <CheckIcon className={cn("me-2 size-4", value === org.id ? "opacity-100" : "opacity-0")} />
+                  <CheckIcon className={cn("me-2 size-4 shrink-0", value === org.id ? "opacity-100" : "opacity-0")} />
+                  <div
+                    className={cn(
+                      "me-2 flex size-5 shrink-0 items-center justify-center rounded-[5px] text-[10px] font-semibold text-white",
+                      getEntityColor(org.name)
+                    )}
+                  >
+                    {getInitials(org.name)}
+                  </div>
                   <span className="text-sm">{org.name}</span>
                 </CommandItem>
               ))}

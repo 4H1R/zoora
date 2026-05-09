@@ -5,10 +5,10 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainErrorBodyFields } from "./githubCom4H1RZooraInternalDomainErrorBodyFields"
+import type { GithubCom4H1RZooraInternalDomainErrorBodyFields } from './githubCom4H1RZooraInternalDomainErrorBodyFields';
 
 export interface GithubCom4H1RZooraInternalDomainErrorBody {
-  code?: string
-  fields?: GithubCom4H1RZooraInternalDomainErrorBodyFields
-  message?: string
+  code?: string;
+  fields?: GithubCom4H1RZooraInternalDomainErrorBodyFields;
+  message?: string;
 }

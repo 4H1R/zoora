@@ -5,19 +5,10 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { ErrorType } from ".././mutator/custom-instance"
-import type {
-  DeleteAdminPracticesId401,
-  DeleteAdminPracticesId403,
-  DeleteAdminPracticesId404,
-  DeleteAdminPracticesId500,
-  GetAdminPractices200,
-  GetAdminPractices401,
-  GetAdminPractices403,
-  GetAdminPractices500,
-  GetAdminPracticesParams,
-  GithubCom4H1RZooraInternalDomainResponse,
-} from "../model"
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -30,14 +21,29 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query"
+  UseQueryResult
+} from '@tanstack/react-query';
 
-import { useMutation, useQuery } from "@tanstack/react-query"
+import type {
+  DeleteAdminPracticesId401,
+  DeleteAdminPracticesId403,
+  DeleteAdminPracticesId404,
+  DeleteAdminPracticesId500,
+  GetAdminPractices200,
+  GetAdminPractices401,
+  GetAdminPractices403,
+  GetAdminPractices500,
+  GetAdminPracticesParams,
+  GithubCom4H1RZooraInternalDomainResponse
+} from '../model';
 
-import { customInstance } from ".././mutator/custom-instance"
+import { customInstance } from '.././mutator/custom-instance';
+import type { ErrorType } from '.././mutator/custom-instance';
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * Cross-org list. Search matches: title, content. Orderable: created_at, updated_at, start_time, end_time, title. Filters: class_id, class_session_id, user_id, include_deleted.
@@ -63,146 +69,118 @@ export type getAdminPracticesResponse500 = {
   status: 500
 }
 
-export type getAdminPracticesResponseSuccess = getAdminPracticesResponse200 & {
-  headers: Headers
-}
-export type getAdminPracticesResponseError = (
-  | getAdminPracticesResponse401
-  | getAdminPracticesResponse403
-  | getAdminPracticesResponse500
-) & {
-  headers: Headers
-}
+export type getAdminPracticesResponseSuccess = (getAdminPracticesResponse200) & {
+  headers: Headers;
+};
+export type getAdminPracticesResponseError = (getAdminPracticesResponse401 | getAdminPracticesResponse403 | getAdminPracticesResponse500) & {
+  headers: Headers;
+};
 
-export type getAdminPracticesResponse = getAdminPracticesResponseSuccess | getAdminPracticesResponseError
+export type getAdminPracticesResponse = (getAdminPracticesResponseSuccess | getAdminPracticesResponseError)
 
-export const getGetAdminPracticesUrl = (params?: GetAdminPracticesParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetAdminPracticesUrl = (params?: GetAdminPracticesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/admin/practices?${stringifiedParams}` : `/admin/practices`
 }
 
-export const getAdminPractices = async (
-  params?: GetAdminPracticesParams,
-  options?: RequestInit
-): Promise<getAdminPracticesResponse> => {
-  return customInstance<getAdminPracticesResponse>(getGetAdminPracticesUrl(params), {
+export const getAdminPractices = async (params?: GetAdminPracticesParams, options?: RequestInit): Promise<getAdminPracticesResponse> => {
+
+  return customInstance<getAdminPracticesResponse>(getGetAdminPracticesUrl(params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetAdminPracticesQueryKey = (params?: GetAdminPracticesParams) => {
-  return [`/admin/practices`, ...(params ? [params] : [])] as const
-}
 
-export const getGetAdminPracticesQueryOptions = <
-  TData = Awaited<ReturnType<typeof getAdminPractices>>,
-  TError = ErrorType<GetAdminPractices401 | GetAdminPractices403 | GetAdminPractices500>,
->(
-  params?: GetAdminPracticesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPractices>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetAdminPracticesQueryKey = (params?: GetAdminPracticesParams,) => {
+    return [
+    `/admin/practices`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminPracticesQueryOptions = <TData = Awaited<ReturnType<typeof getAdminPractices>>, TError = ErrorType<GetAdminPractices401 | GetAdminPractices403 | GetAdminPractices500>>(params?: GetAdminPracticesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPractices>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetAdminPracticesQueryKey(params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminPractices>>> = ({ signal }) =>
-    getAdminPractices(params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminPracticesQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getAdminPractices>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminPractices>>> = ({ signal }) => getAdminPractices(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminPractices>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetAdminPracticesQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminPractices>>>
 export type GetAdminPracticesQueryError = ErrorType<GetAdminPractices401 | GetAdminPractices403 | GetAdminPractices500>
 
-export function useGetAdminPractices<
-  TData = Awaited<ReturnType<typeof getAdminPractices>>,
-  TError = ErrorType<GetAdminPractices401 | GetAdminPractices403 | GetAdminPractices500>,
->(
-  params: undefined | GetAdminPracticesParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPractices>>, TError, TData>> &
-      Pick<
+
+export function useGetAdminPractices<TData = Awaited<ReturnType<typeof getAdminPractices>>, TError = ErrorType<GetAdminPractices401 | GetAdminPractices403 | GetAdminPractices500>>(
+ params: undefined |  GetAdminPracticesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPractices>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAdminPractices>>,
           TError,
           Awaited<ReturnType<typeof getAdminPractices>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAdminPractices<
-  TData = Awaited<ReturnType<typeof getAdminPractices>>,
-  TError = ErrorType<GetAdminPractices401 | GetAdminPractices403 | GetAdminPractices500>,
->(
-  params?: GetAdminPracticesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPractices>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminPractices<TData = Awaited<ReturnType<typeof getAdminPractices>>, TError = ErrorType<GetAdminPractices401 | GetAdminPractices403 | GetAdminPractices500>>(
+ params?: GetAdminPracticesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPractices>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAdminPractices>>,
           TError,
           Awaited<ReturnType<typeof getAdminPractices>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAdminPractices<
-  TData = Awaited<ReturnType<typeof getAdminPractices>>,
-  TError = ErrorType<GetAdminPractices401 | GetAdminPractices403 | GetAdminPractices500>,
->(
-  params?: GetAdminPracticesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPractices>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminPractices<TData = Awaited<ReturnType<typeof getAdminPractices>>, TError = ErrorType<GetAdminPractices401 | GetAdminPractices403 | GetAdminPractices500>>(
+ params?: GetAdminPracticesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPractices>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary [Admin] List practice rooms
  */
 
-export function useGetAdminPractices<
-  TData = Awaited<ReturnType<typeof getAdminPractices>>,
-  TError = ErrorType<GetAdminPractices401 | GetAdminPractices403 | GetAdminPractices500>,
->(
-  params?: GetAdminPracticesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPractices>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetAdminPracticesQueryOptions(params, options)
+export function useGetAdminPractices<TData = Awaited<ReturnType<typeof getAdminPractices>>, TError = ErrorType<GetAdminPractices401 | GetAdminPractices403 | GetAdminPractices500>>(
+ params?: GetAdminPracticesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPractices>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetAdminPracticesQueryOptions(params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary [Admin] Hard-delete practice room
@@ -232,79 +210,78 @@ export type deleteAdminPracticesIdResponse500 = {
   status: 500
 }
 
-export type deleteAdminPracticesIdResponseSuccess = deleteAdminPracticesIdResponse200 & {
-  headers: Headers
-}
-export type deleteAdminPracticesIdResponseError = (
-  | deleteAdminPracticesIdResponse401
-  | deleteAdminPracticesIdResponse403
-  | deleteAdminPracticesIdResponse404
-  | deleteAdminPracticesIdResponse500
-) & {
-  headers: Headers
-}
+export type deleteAdminPracticesIdResponseSuccess = (deleteAdminPracticesIdResponse200) & {
+  headers: Headers;
+};
+export type deleteAdminPracticesIdResponseError = (deleteAdminPracticesIdResponse401 | deleteAdminPracticesIdResponse403 | deleteAdminPracticesIdResponse404 | deleteAdminPracticesIdResponse500) & {
+  headers: Headers;
+};
 
-export type deleteAdminPracticesIdResponse = deleteAdminPracticesIdResponseSuccess | deleteAdminPracticesIdResponseError
+export type deleteAdminPracticesIdResponse = (deleteAdminPracticesIdResponseSuccess | deleteAdminPracticesIdResponseError)
 
-export const getDeleteAdminPracticesIdUrl = (id: string) => {
+export const getDeleteAdminPracticesIdUrl = (id: string,) => {
+
+
+
+
   return `/admin/practices/${id}`
 }
 
-export const deleteAdminPracticesId = async (
-  id: string,
-  options?: RequestInit
-): Promise<deleteAdminPracticesIdResponse> => {
-  return customInstance<deleteAdminPracticesIdResponse>(getDeleteAdminPracticesIdUrl(id), {
+export const deleteAdminPracticesId = async (id: string, options?: RequestInit): Promise<deleteAdminPracticesIdResponse> => {
+
+  return customInstance<deleteAdminPracticesIdResponse>(getDeleteAdminPracticesIdUrl(id),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeleteAdminPracticesIdMutationOptions = <
-  TError = ErrorType<
-    DeleteAdminPracticesId401 | DeleteAdminPracticesId403 | DeleteAdminPracticesId404 | DeleteAdminPracticesId500
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteAdminPracticesId>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminPracticesId>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["deleteAdminPracticesId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminPracticesId>>, { id: string }> = (props) => {
-    const { id } = props ?? {}
-
-    return deleteAdminPracticesId(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteAdminPracticesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminPracticesId>>>
 
-export type DeleteAdminPracticesIdMutationError = ErrorType<
-  DeleteAdminPracticesId401 | DeleteAdminPracticesId403 | DeleteAdminPracticesId404 | DeleteAdminPracticesId500
->
 
-/**
+export const getDeleteAdminPracticesIdMutationOptions = <TError = ErrorType<DeleteAdminPracticesId401 | DeleteAdminPracticesId403 | DeleteAdminPracticesId404 | DeleteAdminPracticesId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminPracticesId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminPracticesId>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteAdminPracticesId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminPracticesId>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteAdminPracticesId(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminPracticesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminPracticesId>>>
+
+    export type DeleteAdminPracticesIdMutationError = ErrorType<DeleteAdminPracticesId401 | DeleteAdminPracticesId403 | DeleteAdminPracticesId404 | DeleteAdminPracticesId500>
+
+    /**
  * @summary [Admin] Hard-delete practice room
  */
-export const useDeleteAdminPracticesId = <
-  TError = ErrorType<
-    DeleteAdminPracticesId401 | DeleteAdminPracticesId403 | DeleteAdminPracticesId404 | DeleteAdminPracticesId500
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteAdminPracticesId>>, TError, { id: string }, TContext>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof deleteAdminPracticesId>>, TError, { id: string }, TContext> => {
-  return useMutation(getDeleteAdminPracticesIdMutationOptions(options), queryClient)
-}
+export const useDeleteAdminPracticesId = <TError = ErrorType<DeleteAdminPracticesId401 | DeleteAdminPracticesId403 | DeleteAdminPracticesId404 | DeleteAdminPracticesId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminPracticesId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminPracticesId>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteAdminPracticesIdMutationOptions(options), queryClient);
+    }

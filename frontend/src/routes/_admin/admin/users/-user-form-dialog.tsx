@@ -14,7 +14,7 @@ import { toast } from "sonner"
 import { z } from "zod"
 
 import { getGetAdminUsersQueryKey, usePostAdminUsers, usePutAdminUsersId } from "@/api/admin-users/admin-users"
-import { useGetRoles } from "@/api/roles/roles"
+import { useGetAdminRoles } from "@/api/admin-roles/admin-roles"
 import { OrganizationSelect } from "@/components/form/organization-select"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
 import { Button } from "@/components/ui/button"
@@ -23,6 +23,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useRoleName } from "@/lib/permissions"
 import { cn } from "@/lib/utils"
 import { useAdminStore } from "@/stores/admin"
 
@@ -133,8 +134,9 @@ export function UserFormDialog({ open, onOpenChange, user }: UserFormDialogProps
   const selectedRoleId = watch("role_id")
 
   const orgIdForRoles = isEdit ? user?.organization_id : selectedOrgId
-  const { data: rolesData } = useGetRoles(orgIdForRoles ? { organization_id: orgIdForRoles } : undefined)
-  const roles = (rolesData?.data?.data as Role[] | undefined) ?? []
+  const { data: rolesData } = useGetAdminRoles(orgIdForRoles ? { organization_id: orgIdForRoles } : undefined)
+  const rolesPage = rolesData?.data?.data as { items?: Role[] } | undefined
+  const roles = rolesPage?.items ?? []
 
   return (
     <ResourceFormDialog
@@ -223,6 +225,7 @@ interface RoleSelectProps {
 
 function RoleSelect({ roles, value, onChange, placeholder }: RoleSelectProps) {
   const { t } = useTranslation()
+  const roleName = useRoleName()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState("")
 
@@ -234,7 +237,7 @@ function RoleSelect({ roles, value, onChange, placeholder }: RoleSelectProps) {
         render={<Button variant="outline" role="combobox" className="w-full justify-between font-normal" />}
       >
         {selected ? (
-          <span className="truncate">{selected.name}</span>
+          <span className="truncate">{selected.name ? roleName(selected.name) : ""}</span>
         ) : (
           <span className="text-muted-foreground">{placeholder ?? t("admin.users.form.rolePlaceholder")}</span>
         )}
@@ -249,7 +252,7 @@ function RoleSelect({ roles, value, onChange, placeholder }: RoleSelectProps) {
               {roles.map((r) => (
                 <CommandItem
                   key={r.id}
-                  value={r.name}
+                  value={r.name ? roleName(r.name) : r.name}
                   onSelect={() => {
                     if (r.id) {
                       onChange(r.id)
@@ -259,7 +262,7 @@ function RoleSelect({ roles, value, onChange, placeholder }: RoleSelectProps) {
                   }}
                 >
                   <CheckIcon className={cn("me-2 size-4", value === r.id ? "opacity-100" : "opacity-0")} />
-                  <span className="text-sm">{r.name}</span>
+                  <span className="text-sm">{r.name ? roleName(r.name) : ""}</span>
                 </CommandItem>
               ))}
             </CommandGroup>

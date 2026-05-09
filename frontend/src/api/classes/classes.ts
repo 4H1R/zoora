@@ -5,7 +5,25 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { ErrorType } from ".././mutator/custom-instance"
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   DeleteClassesId401,
   DeleteClassesId403,
@@ -69,28 +87,16 @@ import type {
   PutClassesSessionsSessionId400,
   PutClassesSessionsSessionId401,
   PutClassesSessionsSessionId403,
-  PutClassesSessionsSessionId404,
-} from "../model"
-import type {
-  DataTag,
-  DefinedInitialDataOptions,
-  DefinedUseQueryResult,
-  MutationFunction,
-  QueryClient,
-  QueryFunction,
-  QueryKey,
-  UndefinedInitialDataOptions,
-  UseMutationOptions,
-  UseMutationResult,
-  UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query"
+  PutClassesSessionsSessionId404
+} from '../model';
 
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { customInstance } from '.././mutator/custom-instance';
+import type { ErrorType } from '.././mutator/custom-instance';
 
-import { customInstance } from ".././mutator/custom-instance"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * Returns classes filtered by caller role: super-admins see all, org-admins see their organization, teachers see their own classes, students see classes they are enrolled in. Search matches substrings of: name, description. Orderable fields: created_at, updated_at, name.
@@ -116,139 +122,118 @@ export type getClassesResponse500 = {
   status: 500
 }
 
-export type getClassesResponseSuccess = getClassesResponse200 & {
-  headers: Headers
-}
+export type getClassesResponseSuccess = (getClassesResponse200) & {
+  headers: Headers;
+};
 export type getClassesResponseError = (getClassesResponse401 | getClassesResponse403 | getClassesResponse500) & {
-  headers: Headers
-}
+  headers: Headers;
+};
 
-export type getClassesResponse = getClassesResponseSuccess | getClassesResponseError
+export type getClassesResponse = (getClassesResponseSuccess | getClassesResponseError)
 
-export const getGetClassesUrl = (params?: GetClassesParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetClassesUrl = (params?: GetClassesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/classes?${stringifiedParams}` : `/classes`
 }
 
 export const getClasses = async (params?: GetClassesParams, options?: RequestInit): Promise<getClassesResponse> => {
-  return customInstance<getClassesResponse>(getGetClassesUrl(params), {
+
+  return customInstance<getClassesResponse>(getGetClassesUrl(params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetClassesQueryKey = (params?: GetClassesParams) => {
-  return [`/classes`, ...(params ? [params] : [])] as const
-}
 
-export const getGetClassesQueryOptions = <
-  TData = Awaited<ReturnType<typeof getClasses>>,
-  TError = ErrorType<GetClasses401 | GetClasses403 | GetClasses500>,
->(
-  params?: GetClassesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClasses>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetClassesQueryKey = (params?: GetClassesParams,) => {
+    return [
+    `/classes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetClassesQueryOptions = <TData = Awaited<ReturnType<typeof getClasses>>, TError = ErrorType<GetClasses401 | GetClasses403 | GetClasses500>>(params?: GetClassesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClasses>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetClassesQueryKey(params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getClasses>>> = ({ signal }) =>
-    getClasses(params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetClassesQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getClasses>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClasses>>> = ({ signal }) => getClasses(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClasses>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetClassesQueryResult = NonNullable<Awaited<ReturnType<typeof getClasses>>>
 export type GetClassesQueryError = ErrorType<GetClasses401 | GetClasses403 | GetClasses500>
 
-export function useGetClasses<
-  TData = Awaited<ReturnType<typeof getClasses>>,
-  TError = ErrorType<GetClasses401 | GetClasses403 | GetClasses500>,
->(
-  params: undefined | GetClassesParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClasses>>, TError, TData>> &
-      Pick<
+
+export function useGetClasses<TData = Awaited<ReturnType<typeof getClasses>>, TError = ErrorType<GetClasses401 | GetClasses403 | GetClasses500>>(
+ params: undefined |  GetClassesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClasses>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getClasses>>,
           TError,
           Awaited<ReturnType<typeof getClasses>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetClasses<
-  TData = Awaited<ReturnType<typeof getClasses>>,
-  TError = ErrorType<GetClasses401 | GetClasses403 | GetClasses500>,
->(
-  params?: GetClassesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClasses>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClasses<TData = Awaited<ReturnType<typeof getClasses>>, TError = ErrorType<GetClasses401 | GetClasses403 | GetClasses500>>(
+ params?: GetClassesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClasses>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getClasses>>,
           TError,
           Awaited<ReturnType<typeof getClasses>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetClasses<
-  TData = Awaited<ReturnType<typeof getClasses>>,
-  TError = ErrorType<GetClasses401 | GetClasses403 | GetClasses500>,
->(
-  params?: GetClassesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClasses>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClasses<TData = Awaited<ReturnType<typeof getClasses>>, TError = ErrorType<GetClasses401 | GetClasses403 | GetClasses500>>(
+ params?: GetClassesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClasses>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List classes (scoped by RBAC)
  */
 
-export function useGetClasses<
-  TData = Awaited<ReturnType<typeof getClasses>>,
-  TError = ErrorType<GetClasses401 | GetClasses403 | GetClasses500>,
->(
-  params?: GetClassesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClasses>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetClassesQueryOptions(params, options)
+export function useGetClasses<TData = Awaited<ReturnType<typeof getClasses>>, TError = ErrorType<GetClasses401 | GetClasses403 | GetClasses500>>(
+ params?: GetClassesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClasses>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetClassesQueryOptions(params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Create class
@@ -273,97 +258,83 @@ export type postClassesResponse403 = {
   status: 403
 }
 
-export type postClassesResponseSuccess = postClassesResponse201 & {
-  headers: Headers
-}
+export type postClassesResponseSuccess = (postClassesResponse201) & {
+  headers: Headers;
+};
 export type postClassesResponseError = (postClassesResponse400 | postClassesResponse401 | postClassesResponse403) & {
-  headers: Headers
-}
+  headers: Headers;
+};
 
-export type postClassesResponse = postClassesResponseSuccess | postClassesResponseError
+export type postClassesResponse = (postClassesResponseSuccess | postClassesResponseError)
 
 export const getPostClassesUrl = () => {
+
+
+
+
   return `/classes`
 }
 
-export const postClasses = async (
-  githubCom4H1RZooraInternalDomainCreateClassDTO: GithubCom4H1RZooraInternalDomainCreateClassDTO,
-  options?: RequestInit
-): Promise<postClassesResponse> => {
-  return customInstance<postClassesResponse>(getPostClassesUrl(), {
+export const postClasses = async (githubCom4H1RZooraInternalDomainCreateClassDTO: GithubCom4H1RZooraInternalDomainCreateClassDTO, options?: RequestInit): Promise<postClassesResponse> => {
+
+  return customInstance<postClassesResponse>(getPostClassesUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainCreateClassDTO),
-  })
-}
-
-export const getPostClassesMutationOptions = <
-  TError = ErrorType<PostClasses400 | PostClasses401 | PostClasses403>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postClasses>>,
-    TError,
-    { data: GithubCom4H1RZooraInternalDomainCreateClassDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postClasses>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainCreateClassDTO },
-  TContext
-> => {
-  const mutationKey = ["postClasses"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postClasses>>,
-    { data: GithubCom4H1RZooraInternalDomainCreateClassDTO }
-  > = (props) => {
-    const { data } = props ?? {}
-
-    return postClasses(data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainCreateClassDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostClassesMutationResult = NonNullable<Awaited<ReturnType<typeof postClasses>>>
-export type PostClassesMutationBody = GithubCom4H1RZooraInternalDomainCreateClassDTO
-export type PostClassesMutationError = ErrorType<PostClasses400 | PostClasses401 | PostClasses403>
 
-/**
+
+export const getPostClassesMutationOptions = <TError = ErrorType<PostClasses400 | PostClasses401 | PostClasses403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postClasses>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateClassDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postClasses>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateClassDTO}, TContext> => {
+
+const mutationKey = ['postClasses'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postClasses>>, {data: GithubCom4H1RZooraInternalDomainCreateClassDTO}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postClasses(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostClassesMutationResult = NonNullable<Awaited<ReturnType<typeof postClasses>>>
+    export type PostClassesMutationBody = GithubCom4H1RZooraInternalDomainCreateClassDTO
+    export type PostClassesMutationError = ErrorType<PostClasses400 | PostClasses401 | PostClasses403>
+
+    /**
  * @summary Create class
  */
-export const usePostClasses = <
-  TError = ErrorType<PostClasses400 | PostClasses401 | PostClasses403>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postClasses>>,
-      TError,
-      { data: GithubCom4H1RZooraInternalDomainCreateClassDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postClasses>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainCreateClassDTO },
-  TContext
-> => {
-  return useMutation(getPostClassesMutationOptions(options), queryClient)
-}
-/**
+export const usePostClasses = <TError = ErrorType<PostClasses400 | PostClasses401 | PostClasses403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postClasses>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateClassDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postClasses>>,
+        TError,
+        {data: GithubCom4H1RZooraInternalDomainCreateClassDTO},
+        TContext
+      > => {
+      return useMutation(getPostClassesMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get class session
  */
 export type getClassesSessionsSessionIdResponse200 = {
@@ -386,142 +357,111 @@ export type getClassesSessionsSessionIdResponse404 = {
   status: 404
 }
 
-export type getClassesSessionsSessionIdResponseSuccess = getClassesSessionsSessionIdResponse200 & {
-  headers: Headers
-}
-export type getClassesSessionsSessionIdResponseError = (
-  | getClassesSessionsSessionIdResponse401
-  | getClassesSessionsSessionIdResponse403
-  | getClassesSessionsSessionIdResponse404
-) & {
-  headers: Headers
-}
+export type getClassesSessionsSessionIdResponseSuccess = (getClassesSessionsSessionIdResponse200) & {
+  headers: Headers;
+};
+export type getClassesSessionsSessionIdResponseError = (getClassesSessionsSessionIdResponse401 | getClassesSessionsSessionIdResponse403 | getClassesSessionsSessionIdResponse404) & {
+  headers: Headers;
+};
 
-export type getClassesSessionsSessionIdResponse =
-  | getClassesSessionsSessionIdResponseSuccess
-  | getClassesSessionsSessionIdResponseError
+export type getClassesSessionsSessionIdResponse = (getClassesSessionsSessionIdResponseSuccess | getClassesSessionsSessionIdResponseError)
 
-export const getGetClassesSessionsSessionIdUrl = (sessionId: string) => {
+export const getGetClassesSessionsSessionIdUrl = (sessionId: string,) => {
+
+
+
+
   return `/classes/sessions/${sessionId}`
 }
 
-export const getClassesSessionsSessionId = async (
-  sessionId: string,
-  options?: RequestInit
-): Promise<getClassesSessionsSessionIdResponse> => {
-  return customInstance<getClassesSessionsSessionIdResponse>(getGetClassesSessionsSessionIdUrl(sessionId), {
+export const getClassesSessionsSessionId = async (sessionId: string, options?: RequestInit): Promise<getClassesSessionsSessionIdResponse> => {
+
+  return customInstance<getClassesSessionsSessionIdResponse>(getGetClassesSessionsSessionIdUrl(sessionId),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetClassesSessionsSessionIdQueryKey = (sessionId: string) => {
-  return [`/classes/sessions/${sessionId}`] as const
-}
 
-export const getGetClassesSessionsSessionIdQueryOptions = <
-  TData = Awaited<ReturnType<typeof getClassesSessionsSessionId>>,
-  TError = ErrorType<GetClassesSessionsSessionId401 | GetClassesSessionsSessionId403 | GetClassesSessionsSessionId404>,
->(
-  sessionId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesSessionsSessionId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetClassesSessionsSessionIdQueryKey = (sessionId: string,) => {
+    return [
+    `/classes/sessions/${sessionId}`
+    ] as const;
+    }
+
+
+export const getGetClassesSessionsSessionIdQueryOptions = <TData = Awaited<ReturnType<typeof getClassesSessionsSessionId>>, TError = ErrorType<GetClassesSessionsSessionId401 | GetClassesSessionsSessionId403 | GetClassesSessionsSessionId404>>(sessionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesSessionsSessionId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetClassesSessionsSessionIdQueryKey(sessionId)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getClassesSessionsSessionId>>> = ({ signal }) =>
-    getClassesSessionsSessionId(sessionId, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetClassesSessionsSessionIdQueryKey(sessionId);
 
-  return { queryKey, queryFn, enabled: !!sessionId, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getClassesSessionsSessionId>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClassesSessionsSessionId>>> = ({ signal }) => getClassesSessionsSessionId(sessionId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(sessionId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClassesSessionsSessionId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetClassesSessionsSessionIdQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getClassesSessionsSessionId>>
->
-export type GetClassesSessionsSessionIdQueryError = ErrorType<
-  GetClassesSessionsSessionId401 | GetClassesSessionsSessionId403 | GetClassesSessionsSessionId404
->
+export type GetClassesSessionsSessionIdQueryResult = NonNullable<Awaited<ReturnType<typeof getClassesSessionsSessionId>>>
+export type GetClassesSessionsSessionIdQueryError = ErrorType<GetClassesSessionsSessionId401 | GetClassesSessionsSessionId403 | GetClassesSessionsSessionId404>
 
-export function useGetClassesSessionsSessionId<
-  TData = Awaited<ReturnType<typeof getClassesSessionsSessionId>>,
-  TError = ErrorType<GetClassesSessionsSessionId401 | GetClassesSessionsSessionId403 | GetClassesSessionsSessionId404>,
->(
-  sessionId: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesSessionsSessionId>>, TError, TData>> &
-      Pick<
+
+export function useGetClassesSessionsSessionId<TData = Awaited<ReturnType<typeof getClassesSessionsSessionId>>, TError = ErrorType<GetClassesSessionsSessionId401 | GetClassesSessionsSessionId403 | GetClassesSessionsSessionId404>>(
+ sessionId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesSessionsSessionId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getClassesSessionsSessionId>>,
           TError,
           Awaited<ReturnType<typeof getClassesSessionsSessionId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetClassesSessionsSessionId<
-  TData = Awaited<ReturnType<typeof getClassesSessionsSessionId>>,
-  TError = ErrorType<GetClassesSessionsSessionId401 | GetClassesSessionsSessionId403 | GetClassesSessionsSessionId404>,
->(
-  sessionId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesSessionsSessionId>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClassesSessionsSessionId<TData = Awaited<ReturnType<typeof getClassesSessionsSessionId>>, TError = ErrorType<GetClassesSessionsSessionId401 | GetClassesSessionsSessionId403 | GetClassesSessionsSessionId404>>(
+ sessionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesSessionsSessionId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getClassesSessionsSessionId>>,
           TError,
           Awaited<ReturnType<typeof getClassesSessionsSessionId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetClassesSessionsSessionId<
-  TData = Awaited<ReturnType<typeof getClassesSessionsSessionId>>,
-  TError = ErrorType<GetClassesSessionsSessionId401 | GetClassesSessionsSessionId403 | GetClassesSessionsSessionId404>,
->(
-  sessionId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesSessionsSessionId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClassesSessionsSessionId<TData = Awaited<ReturnType<typeof getClassesSessionsSessionId>>, TError = ErrorType<GetClassesSessionsSessionId401 | GetClassesSessionsSessionId403 | GetClassesSessionsSessionId404>>(
+ sessionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesSessionsSessionId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get class session
  */
 
-export function useGetClassesSessionsSessionId<
-  TData = Awaited<ReturnType<typeof getClassesSessionsSessionId>>,
-  TError = ErrorType<GetClassesSessionsSessionId401 | GetClassesSessionsSessionId403 | GetClassesSessionsSessionId404>,
->(
-  sessionId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesSessionsSessionId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetClassesSessionsSessionIdQueryOptions(sessionId, options)
+export function useGetClassesSessionsSessionId<TData = Awaited<ReturnType<typeof getClassesSessionsSessionId>>, TError = ErrorType<GetClassesSessionsSessionId401 | GetClassesSessionsSessionId403 | GetClassesSessionsSessionId404>>(
+ sessionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesSessionsSessionId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetClassesSessionsSessionIdQueryOptions(sessionId,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Update class session
@@ -551,122 +491,84 @@ export type putClassesSessionsSessionIdResponse404 = {
   status: 404
 }
 
-export type putClassesSessionsSessionIdResponseSuccess = putClassesSessionsSessionIdResponse200 & {
-  headers: Headers
-}
-export type putClassesSessionsSessionIdResponseError = (
-  | putClassesSessionsSessionIdResponse400
-  | putClassesSessionsSessionIdResponse401
-  | putClassesSessionsSessionIdResponse403
-  | putClassesSessionsSessionIdResponse404
-) & {
-  headers: Headers
-}
+export type putClassesSessionsSessionIdResponseSuccess = (putClassesSessionsSessionIdResponse200) & {
+  headers: Headers;
+};
+export type putClassesSessionsSessionIdResponseError = (putClassesSessionsSessionIdResponse400 | putClassesSessionsSessionIdResponse401 | putClassesSessionsSessionIdResponse403 | putClassesSessionsSessionIdResponse404) & {
+  headers: Headers;
+};
 
-export type putClassesSessionsSessionIdResponse =
-  | putClassesSessionsSessionIdResponseSuccess
-  | putClassesSessionsSessionIdResponseError
+export type putClassesSessionsSessionIdResponse = (putClassesSessionsSessionIdResponseSuccess | putClassesSessionsSessionIdResponseError)
 
-export const getPutClassesSessionsSessionIdUrl = (sessionId: string) => {
+export const getPutClassesSessionsSessionIdUrl = (sessionId: string,) => {
+
+
+
+
   return `/classes/sessions/${sessionId}`
 }
 
-export const putClassesSessionsSessionId = async (
-  sessionId: string,
-  githubCom4H1RZooraInternalDomainUpdateClassSessionDTO: GithubCom4H1RZooraInternalDomainUpdateClassSessionDTO,
-  options?: RequestInit
-): Promise<putClassesSessionsSessionIdResponse> => {
-  return customInstance<putClassesSessionsSessionIdResponse>(getPutClassesSessionsSessionIdUrl(sessionId), {
+export const putClassesSessionsSessionId = async (sessionId: string,
+    githubCom4H1RZooraInternalDomainUpdateClassSessionDTO: GithubCom4H1RZooraInternalDomainUpdateClassSessionDTO, options?: RequestInit): Promise<putClassesSessionsSessionIdResponse> => {
+
+  return customInstance<putClassesSessionsSessionIdResponse>(getPutClassesSessionsSessionIdUrl(sessionId),
+  {
     ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainUpdateClassSessionDTO),
-  })
-}
-
-export const getPutClassesSessionsSessionIdMutationOptions = <
-  TError = ErrorType<
-    | PutClassesSessionsSessionId400
-    | PutClassesSessionsSessionId401
-    | PutClassesSessionsSessionId403
-    | PutClassesSessionsSessionId404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putClassesSessionsSessionId>>,
-    TError,
-    { sessionId: string; data: GithubCom4H1RZooraInternalDomainUpdateClassSessionDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putClassesSessionsSessionId>>,
-  TError,
-  { sessionId: string; data: GithubCom4H1RZooraInternalDomainUpdateClassSessionDTO },
-  TContext
-> => {
-  const mutationKey = ["putClassesSessionsSessionId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putClassesSessionsSessionId>>,
-    { sessionId: string; data: GithubCom4H1RZooraInternalDomainUpdateClassSessionDTO }
-  > = (props) => {
-    const { sessionId, data } = props ?? {}
-
-    return putClassesSessionsSessionId(sessionId, data, requestOptions)
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainUpdateClassSessionDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutClassesSessionsSessionIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof putClassesSessionsSessionId>>
->
-export type PutClassesSessionsSessionIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateClassSessionDTO
-export type PutClassesSessionsSessionIdMutationError = ErrorType<
-  | PutClassesSessionsSessionId400
-  | PutClassesSessionsSessionId401
-  | PutClassesSessionsSessionId403
-  | PutClassesSessionsSessionId404
->
 
-/**
+
+export const getPutClassesSessionsSessionIdMutationOptions = <TError = ErrorType<PutClassesSessionsSessionId400 | PutClassesSessionsSessionId401 | PutClassesSessionsSessionId403 | PutClassesSessionsSessionId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putClassesSessionsSessionId>>, TError,{sessionId: string;data: GithubCom4H1RZooraInternalDomainUpdateClassSessionDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putClassesSessionsSessionId>>, TError,{sessionId: string;data: GithubCom4H1RZooraInternalDomainUpdateClassSessionDTO}, TContext> => {
+
+const mutationKey = ['putClassesSessionsSessionId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putClassesSessionsSessionId>>, {sessionId: string;data: GithubCom4H1RZooraInternalDomainUpdateClassSessionDTO}> = (props) => {
+          const {sessionId,data} = props ?? {};
+
+          return  putClassesSessionsSessionId(sessionId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutClassesSessionsSessionIdMutationResult = NonNullable<Awaited<ReturnType<typeof putClassesSessionsSessionId>>>
+    export type PutClassesSessionsSessionIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateClassSessionDTO
+    export type PutClassesSessionsSessionIdMutationError = ErrorType<PutClassesSessionsSessionId400 | PutClassesSessionsSessionId401 | PutClassesSessionsSessionId403 | PutClassesSessionsSessionId404>
+
+    /**
  * @summary Update class session
  */
-export const usePutClassesSessionsSessionId = <
-  TError = ErrorType<
-    | PutClassesSessionsSessionId400
-    | PutClassesSessionsSessionId401
-    | PutClassesSessionsSessionId403
-    | PutClassesSessionsSessionId404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putClassesSessionsSessionId>>,
-      TError,
-      { sessionId: string; data: GithubCom4H1RZooraInternalDomainUpdateClassSessionDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putClassesSessionsSessionId>>,
-  TError,
-  { sessionId: string; data: GithubCom4H1RZooraInternalDomainUpdateClassSessionDTO },
-  TContext
-> => {
-  return useMutation(getPutClassesSessionsSessionIdMutationOptions(options), queryClient)
-}
-/**
+export const usePutClassesSessionsSessionId = <TError = ErrorType<PutClassesSessionsSessionId400 | PutClassesSessionsSessionId401 | PutClassesSessionsSessionId403 | PutClassesSessionsSessionId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putClassesSessionsSessionId>>, TError,{sessionId: string;data: GithubCom4H1RZooraInternalDomainUpdateClassSessionDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putClassesSessionsSessionId>>,
+        TError,
+        {sessionId: string;data: GithubCom4H1RZooraInternalDomainUpdateClassSessionDTO},
+        TContext
+      > => {
+      return useMutation(getPutClassesSessionsSessionIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Delete class session
  */
 export type deleteClassesSessionsSessionIdResponse200 = {
@@ -689,109 +591,82 @@ export type deleteClassesSessionsSessionIdResponse404 = {
   status: 404
 }
 
-export type deleteClassesSessionsSessionIdResponseSuccess = deleteClassesSessionsSessionIdResponse200 & {
-  headers: Headers
-}
-export type deleteClassesSessionsSessionIdResponseError = (
-  | deleteClassesSessionsSessionIdResponse401
-  | deleteClassesSessionsSessionIdResponse403
-  | deleteClassesSessionsSessionIdResponse404
-) & {
-  headers: Headers
-}
+export type deleteClassesSessionsSessionIdResponseSuccess = (deleteClassesSessionsSessionIdResponse200) & {
+  headers: Headers;
+};
+export type deleteClassesSessionsSessionIdResponseError = (deleteClassesSessionsSessionIdResponse401 | deleteClassesSessionsSessionIdResponse403 | deleteClassesSessionsSessionIdResponse404) & {
+  headers: Headers;
+};
 
-export type deleteClassesSessionsSessionIdResponse =
-  | deleteClassesSessionsSessionIdResponseSuccess
-  | deleteClassesSessionsSessionIdResponseError
+export type deleteClassesSessionsSessionIdResponse = (deleteClassesSessionsSessionIdResponseSuccess | deleteClassesSessionsSessionIdResponseError)
 
-export const getDeleteClassesSessionsSessionIdUrl = (sessionId: string) => {
+export const getDeleteClassesSessionsSessionIdUrl = (sessionId: string,) => {
+
+
+
+
   return `/classes/sessions/${sessionId}`
 }
 
-export const deleteClassesSessionsSessionId = async (
-  sessionId: string,
-  options?: RequestInit
-): Promise<deleteClassesSessionsSessionIdResponse> => {
-  return customInstance<deleteClassesSessionsSessionIdResponse>(getDeleteClassesSessionsSessionIdUrl(sessionId), {
+export const deleteClassesSessionsSessionId = async (sessionId: string, options?: RequestInit): Promise<deleteClassesSessionsSessionIdResponse> => {
+
+  return customInstance<deleteClassesSessionsSessionIdResponse>(getDeleteClassesSessionsSessionIdUrl(sessionId),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeleteClassesSessionsSessionIdMutationOptions = <
-  TError = ErrorType<
-    DeleteClassesSessionsSessionId401 | DeleteClassesSessionsSessionId403 | DeleteClassesSessionsSessionId404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteClassesSessionsSessionId>>,
-    TError,
-    { sessionId: string },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteClassesSessionsSessionId>>,
-  TError,
-  { sessionId: string },
-  TContext
-> => {
-  const mutationKey = ["deleteClassesSessionsSessionId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteClassesSessionsSessionId>>,
-    { sessionId: string }
-  > = (props) => {
-    const { sessionId } = props ?? {}
-
-    return deleteClassesSessionsSessionId(sessionId, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteClassesSessionsSessionIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteClassesSessionsSessionId>>
->
 
-export type DeleteClassesSessionsSessionIdMutationError = ErrorType<
-  DeleteClassesSessionsSessionId401 | DeleteClassesSessionsSessionId403 | DeleteClassesSessionsSessionId404
->
 
-/**
+export const getDeleteClassesSessionsSessionIdMutationOptions = <TError = ErrorType<DeleteClassesSessionsSessionId401 | DeleteClassesSessionsSessionId403 | DeleteClassesSessionsSessionId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteClassesSessionsSessionId>>, TError,{sessionId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteClassesSessionsSessionId>>, TError,{sessionId: string}, TContext> => {
+
+const mutationKey = ['deleteClassesSessionsSessionId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteClassesSessionsSessionId>>, {sessionId: string}> = (props) => {
+          const {sessionId} = props ?? {};
+
+          return  deleteClassesSessionsSessionId(sessionId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteClassesSessionsSessionIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteClassesSessionsSessionId>>>
+
+    export type DeleteClassesSessionsSessionIdMutationError = ErrorType<DeleteClassesSessionsSessionId401 | DeleteClassesSessionsSessionId403 | DeleteClassesSessionsSessionId404>
+
+    /**
  * @summary Delete class session
  */
-export const useDeleteClassesSessionsSessionId = <
-  TError = ErrorType<
-    DeleteClassesSessionsSessionId401 | DeleteClassesSessionsSessionId403 | DeleteClassesSessionsSessionId404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteClassesSessionsSessionId>>,
-      TError,
-      { sessionId: string },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteClassesSessionsSessionId>>,
-  TError,
-  { sessionId: string },
-  TContext
-> => {
-  return useMutation(getDeleteClassesSessionsSessionIdMutationOptions(options), queryClient)
-}
-/**
+export const useDeleteClassesSessionsSessionId = <TError = ErrorType<DeleteClassesSessionsSessionId401 | DeleteClassesSessionsSessionId403 | DeleteClassesSessionsSessionId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteClassesSessionsSessionId>>, TError,{sessionId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteClassesSessionsSessionId>>,
+        TError,
+        {sessionId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteClassesSessionsSessionIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get class
  */
 export type getClassesIdResponse200 = {
@@ -814,133 +689,111 @@ export type getClassesIdResponse404 = {
   status: 404
 }
 
-export type getClassesIdResponseSuccess = getClassesIdResponse200 & {
-  headers: Headers
-}
-export type getClassesIdResponseError = (
-  | getClassesIdResponse401
-  | getClassesIdResponse403
-  | getClassesIdResponse404
-) & {
-  headers: Headers
-}
+export type getClassesIdResponseSuccess = (getClassesIdResponse200) & {
+  headers: Headers;
+};
+export type getClassesIdResponseError = (getClassesIdResponse401 | getClassesIdResponse403 | getClassesIdResponse404) & {
+  headers: Headers;
+};
 
-export type getClassesIdResponse = getClassesIdResponseSuccess | getClassesIdResponseError
+export type getClassesIdResponse = (getClassesIdResponseSuccess | getClassesIdResponseError)
 
-export const getGetClassesIdUrl = (id: string) => {
+export const getGetClassesIdUrl = (id: string,) => {
+
+
+
+
   return `/classes/${id}`
 }
 
 export const getClassesId = async (id: string, options?: RequestInit): Promise<getClassesIdResponse> => {
-  return customInstance<getClassesIdResponse>(getGetClassesIdUrl(id), {
+
+  return customInstance<getClassesIdResponse>(getGetClassesIdUrl(id),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetClassesIdQueryKey = (id: string) => {
-  return [`/classes/${id}`] as const
-}
 
-export const getGetClassesIdQueryOptions = <
-  TData = Awaited<ReturnType<typeof getClassesId>>,
-  TError = ErrorType<GetClassesId401 | GetClassesId403 | GetClassesId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetClassesIdQueryKey = (id: string,) => {
+    return [
+    `/classes/${id}`
+    ] as const;
+    }
+
+
+export const getGetClassesIdQueryOptions = <TData = Awaited<ReturnType<typeof getClassesId>>, TError = ErrorType<GetClassesId401 | GetClassesId403 | GetClassesId404>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetClassesIdQueryKey(id)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getClassesId>>> = ({ signal }) =>
-    getClassesId(id, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetClassesIdQueryKey(id);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getClassesId>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClassesId>>> = ({ signal }) => getClassesId(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClassesId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetClassesIdQueryResult = NonNullable<Awaited<ReturnType<typeof getClassesId>>>
 export type GetClassesIdQueryError = ErrorType<GetClassesId401 | GetClassesId403 | GetClassesId404>
 
-export function useGetClassesId<
-  TData = Awaited<ReturnType<typeof getClassesId>>,
-  TError = ErrorType<GetClassesId401 | GetClassesId403 | GetClassesId404>,
->(
-  id: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesId>>, TError, TData>> &
-      Pick<
+
+export function useGetClassesId<TData = Awaited<ReturnType<typeof getClassesId>>, TError = ErrorType<GetClassesId401 | GetClassesId403 | GetClassesId404>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getClassesId>>,
           TError,
           Awaited<ReturnType<typeof getClassesId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetClassesId<
-  TData = Awaited<ReturnType<typeof getClassesId>>,
-  TError = ErrorType<GetClassesId401 | GetClassesId403 | GetClassesId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesId>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClassesId<TData = Awaited<ReturnType<typeof getClassesId>>, TError = ErrorType<GetClassesId401 | GetClassesId403 | GetClassesId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getClassesId>>,
           TError,
           Awaited<ReturnType<typeof getClassesId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetClassesId<
-  TData = Awaited<ReturnType<typeof getClassesId>>,
-  TError = ErrorType<GetClassesId401 | GetClassesId403 | GetClassesId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClassesId<TData = Awaited<ReturnType<typeof getClassesId>>, TError = ErrorType<GetClassesId401 | GetClassesId403 | GetClassesId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get class
  */
 
-export function useGetClassesId<
-  TData = Awaited<ReturnType<typeof getClassesId>>,
-  TError = ErrorType<GetClassesId401 | GetClassesId403 | GetClassesId404>,
->(
-  id: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetClassesIdQueryOptions(id, options)
+export function useGetClassesId<TData = Awaited<ReturnType<typeof getClassesId>>, TError = ErrorType<GetClassesId401 | GetClassesId403 | GetClassesId404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetClassesIdQueryOptions(id,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Update class
@@ -970,103 +823,84 @@ export type putClassesIdResponse404 = {
   status: 404
 }
 
-export type putClassesIdResponseSuccess = putClassesIdResponse200 & {
-  headers: Headers
-}
-export type putClassesIdResponseError = (
-  | putClassesIdResponse400
-  | putClassesIdResponse401
-  | putClassesIdResponse403
-  | putClassesIdResponse404
-) & {
-  headers: Headers
-}
+export type putClassesIdResponseSuccess = (putClassesIdResponse200) & {
+  headers: Headers;
+};
+export type putClassesIdResponseError = (putClassesIdResponse400 | putClassesIdResponse401 | putClassesIdResponse403 | putClassesIdResponse404) & {
+  headers: Headers;
+};
 
-export type putClassesIdResponse = putClassesIdResponseSuccess | putClassesIdResponseError
+export type putClassesIdResponse = (putClassesIdResponseSuccess | putClassesIdResponseError)
 
-export const getPutClassesIdUrl = (id: string) => {
+export const getPutClassesIdUrl = (id: string,) => {
+
+
+
+
   return `/classes/${id}`
 }
 
-export const putClassesId = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainUpdateClassDTO: GithubCom4H1RZooraInternalDomainUpdateClassDTO,
-  options?: RequestInit
-): Promise<putClassesIdResponse> => {
-  return customInstance<putClassesIdResponse>(getPutClassesIdUrl(id), {
+export const putClassesId = async (id: string,
+    githubCom4H1RZooraInternalDomainUpdateClassDTO: GithubCom4H1RZooraInternalDomainUpdateClassDTO, options?: RequestInit): Promise<putClassesIdResponse> => {
+
+  return customInstance<putClassesIdResponse>(getPutClassesIdUrl(id),
+  {
     ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainUpdateClassDTO),
-  })
-}
-
-export const getPutClassesIdMutationOptions = <
-  TError = ErrorType<PutClassesId400 | PutClassesId401 | PutClassesId403 | PutClassesId404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putClassesId>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainUpdateClassDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putClassesId>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainUpdateClassDTO },
-  TContext
-> => {
-  const mutationKey = ["putClassesId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putClassesId>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainUpdateClassDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return putClassesId(id, data, requestOptions)
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainUpdateClassDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutClassesIdMutationResult = NonNullable<Awaited<ReturnType<typeof putClassesId>>>
-export type PutClassesIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateClassDTO
-export type PutClassesIdMutationError = ErrorType<PutClassesId400 | PutClassesId401 | PutClassesId403 | PutClassesId404>
 
-/**
+
+export const getPutClassesIdMutationOptions = <TError = ErrorType<PutClassesId400 | PutClassesId401 | PutClassesId403 | PutClassesId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putClassesId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateClassDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putClassesId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateClassDTO}, TContext> => {
+
+const mutationKey = ['putClassesId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putClassesId>>, {id: string;data: GithubCom4H1RZooraInternalDomainUpdateClassDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  putClassesId(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutClassesIdMutationResult = NonNullable<Awaited<ReturnType<typeof putClassesId>>>
+    export type PutClassesIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateClassDTO
+    export type PutClassesIdMutationError = ErrorType<PutClassesId400 | PutClassesId401 | PutClassesId403 | PutClassesId404>
+
+    /**
  * @summary Update class
  */
-export const usePutClassesId = <
-  TError = ErrorType<PutClassesId400 | PutClassesId401 | PutClassesId403 | PutClassesId404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putClassesId>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainUpdateClassDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putClassesId>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainUpdateClassDTO },
-  TContext
-> => {
-  return useMutation(getPutClassesIdMutationOptions(options), queryClient)
-}
-/**
+export const usePutClassesId = <TError = ErrorType<PutClassesId400 | PutClassesId401 | PutClassesId403 | PutClassesId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putClassesId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateClassDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putClassesId>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainUpdateClassDTO},
+        TContext
+      > => {
+      return useMutation(getPutClassesIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Delete class
  */
 export type deleteClassesIdResponse200 = {
@@ -1089,73 +923,82 @@ export type deleteClassesIdResponse404 = {
   status: 404
 }
 
-export type deleteClassesIdResponseSuccess = deleteClassesIdResponse200 & {
-  headers: Headers
-}
-export type deleteClassesIdResponseError = (
-  | deleteClassesIdResponse401
-  | deleteClassesIdResponse403
-  | deleteClassesIdResponse404
-) & {
-  headers: Headers
-}
+export type deleteClassesIdResponseSuccess = (deleteClassesIdResponse200) & {
+  headers: Headers;
+};
+export type deleteClassesIdResponseError = (deleteClassesIdResponse401 | deleteClassesIdResponse403 | deleteClassesIdResponse404) & {
+  headers: Headers;
+};
 
-export type deleteClassesIdResponse = deleteClassesIdResponseSuccess | deleteClassesIdResponseError
+export type deleteClassesIdResponse = (deleteClassesIdResponseSuccess | deleteClassesIdResponseError)
 
-export const getDeleteClassesIdUrl = (id: string) => {
+export const getDeleteClassesIdUrl = (id: string,) => {
+
+
+
+
   return `/classes/${id}`
 }
 
 export const deleteClassesId = async (id: string, options?: RequestInit): Promise<deleteClassesIdResponse> => {
-  return customInstance<deleteClassesIdResponse>(getDeleteClassesIdUrl(id), {
+
+  return customInstance<deleteClassesIdResponse>(getDeleteClassesIdUrl(id),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeleteClassesIdMutationOptions = <
-  TError = ErrorType<DeleteClassesId401 | DeleteClassesId403 | DeleteClassesId404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteClassesId>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof deleteClassesId>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["deleteClassesId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteClassesId>>, { id: string }> = (props) => {
-    const { id } = props ?? {}
-
-    return deleteClassesId(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteClassesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteClassesId>>>
 
-export type DeleteClassesIdMutationError = ErrorType<DeleteClassesId401 | DeleteClassesId403 | DeleteClassesId404>
 
-/**
+export const getDeleteClassesIdMutationOptions = <TError = ErrorType<DeleteClassesId401 | DeleteClassesId403 | DeleteClassesId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteClassesId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteClassesId>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteClassesId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteClassesId>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteClassesId(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteClassesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteClassesId>>>
+
+    export type DeleteClassesIdMutationError = ErrorType<DeleteClassesId401 | DeleteClassesId403 | DeleteClassesId404>
+
+    /**
  * @summary Delete class
  */
-export const useDeleteClassesId = <
-  TError = ErrorType<DeleteClassesId401 | DeleteClassesId403 | DeleteClassesId404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteClassesId>>, TError, { id: string }, TContext>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof deleteClassesId>>, TError, { id: string }, TContext> => {
-  return useMutation(getDeleteClassesIdMutationOptions(options), queryClient)
-}
-/**
+export const useDeleteClassesId = <TError = ErrorType<DeleteClassesId401 | DeleteClassesId403 | DeleteClassesId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteClassesId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteClassesId>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteClassesIdMutationOptions(options), queryClient);
+    }
+    /**
  * Orderable fields: created_at. Only class managers (teacher, org-admin, super-admin) may view the roster.
  * @summary List class members
  */
@@ -1179,154 +1022,126 @@ export type getClassesIdMembersResponse404 = {
   status: 404
 }
 
-export type getClassesIdMembersResponseSuccess = getClassesIdMembersResponse200 & {
-  headers: Headers
-}
-export type getClassesIdMembersResponseError = (
-  | getClassesIdMembersResponse401
-  | getClassesIdMembersResponse403
-  | getClassesIdMembersResponse404
-) & {
-  headers: Headers
-}
+export type getClassesIdMembersResponseSuccess = (getClassesIdMembersResponse200) & {
+  headers: Headers;
+};
+export type getClassesIdMembersResponseError = (getClassesIdMembersResponse401 | getClassesIdMembersResponse403 | getClassesIdMembersResponse404) & {
+  headers: Headers;
+};
 
-export type getClassesIdMembersResponse = getClassesIdMembersResponseSuccess | getClassesIdMembersResponseError
+export type getClassesIdMembersResponse = (getClassesIdMembersResponseSuccess | getClassesIdMembersResponseError)
 
-export const getGetClassesIdMembersUrl = (id: string, params?: GetClassesIdMembersParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetClassesIdMembersUrl = (id: string,
+    params?: GetClassesIdMembersParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/classes/${id}/members?${stringifiedParams}` : `/classes/${id}/members`
 }
 
-export const getClassesIdMembers = async (
-  id: string,
-  params?: GetClassesIdMembersParams,
-  options?: RequestInit
-): Promise<getClassesIdMembersResponse> => {
-  return customInstance<getClassesIdMembersResponse>(getGetClassesIdMembersUrl(id, params), {
+export const getClassesIdMembers = async (id: string,
+    params?: GetClassesIdMembersParams, options?: RequestInit): Promise<getClassesIdMembersResponse> => {
+
+  return customInstance<getClassesIdMembersResponse>(getGetClassesIdMembersUrl(id,params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetClassesIdMembersQueryKey = (id: string, params?: GetClassesIdMembersParams) => {
-  return [`/classes/${id}/members`, ...(params ? [params] : [])] as const
-}
 
-export const getGetClassesIdMembersQueryOptions = <
-  TData = Awaited<ReturnType<typeof getClassesIdMembers>>,
-  TError = ErrorType<GetClassesIdMembers401 | GetClassesIdMembers403 | GetClassesIdMembers404>,
->(
-  id: string,
-  params?: GetClassesIdMembersParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdMembers>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetClassesIdMembersQueryKey = (id: string,
+    params?: GetClassesIdMembersParams,) => {
+    return [
+    `/classes/${id}/members`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetClassesIdMembersQueryOptions = <TData = Awaited<ReturnType<typeof getClassesIdMembers>>, TError = ErrorType<GetClassesIdMembers401 | GetClassesIdMembers403 | GetClassesIdMembers404>>(id: string,
+    params?: GetClassesIdMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdMembers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetClassesIdMembersQueryKey(id, params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getClassesIdMembers>>> = ({ signal }) =>
-    getClassesIdMembers(id, params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetClassesIdMembersQueryKey(id,params);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getClassesIdMembers>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClassesIdMembers>>> = ({ signal }) => getClassesIdMembers(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClassesIdMembers>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetClassesIdMembersQueryResult = NonNullable<Awaited<ReturnType<typeof getClassesIdMembers>>>
-export type GetClassesIdMembersQueryError = ErrorType<
-  GetClassesIdMembers401 | GetClassesIdMembers403 | GetClassesIdMembers404
->
+export type GetClassesIdMembersQueryError = ErrorType<GetClassesIdMembers401 | GetClassesIdMembers403 | GetClassesIdMembers404>
 
-export function useGetClassesIdMembers<
-  TData = Awaited<ReturnType<typeof getClassesIdMembers>>,
-  TError = ErrorType<GetClassesIdMembers401 | GetClassesIdMembers403 | GetClassesIdMembers404>,
->(
-  id: string,
-  params: undefined | GetClassesIdMembersParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdMembers>>, TError, TData>> &
-      Pick<
+
+export function useGetClassesIdMembers<TData = Awaited<ReturnType<typeof getClassesIdMembers>>, TError = ErrorType<GetClassesIdMembers401 | GetClassesIdMembers403 | GetClassesIdMembers404>>(
+ id: string,
+    params: undefined |  GetClassesIdMembersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdMembers>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getClassesIdMembers>>,
           TError,
           Awaited<ReturnType<typeof getClassesIdMembers>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetClassesIdMembers<
-  TData = Awaited<ReturnType<typeof getClassesIdMembers>>,
-  TError = ErrorType<GetClassesIdMembers401 | GetClassesIdMembers403 | GetClassesIdMembers404>,
->(
-  id: string,
-  params?: GetClassesIdMembersParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdMembers>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClassesIdMembers<TData = Awaited<ReturnType<typeof getClassesIdMembers>>, TError = ErrorType<GetClassesIdMembers401 | GetClassesIdMembers403 | GetClassesIdMembers404>>(
+ id: string,
+    params?: GetClassesIdMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdMembers>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getClassesIdMembers>>,
           TError,
           Awaited<ReturnType<typeof getClassesIdMembers>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetClassesIdMembers<
-  TData = Awaited<ReturnType<typeof getClassesIdMembers>>,
-  TError = ErrorType<GetClassesIdMembers401 | GetClassesIdMembers403 | GetClassesIdMembers404>,
->(
-  id: string,
-  params?: GetClassesIdMembersParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdMembers>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClassesIdMembers<TData = Awaited<ReturnType<typeof getClassesIdMembers>>, TError = ErrorType<GetClassesIdMembers401 | GetClassesIdMembers403 | GetClassesIdMembers404>>(
+ id: string,
+    params?: GetClassesIdMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdMembers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List class members
  */
 
-export function useGetClassesIdMembers<
-  TData = Awaited<ReturnType<typeof getClassesIdMembers>>,
-  TError = ErrorType<GetClassesIdMembers401 | GetClassesIdMembers403 | GetClassesIdMembers404>,
->(
-  id: string,
-  params?: GetClassesIdMembersParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdMembers>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetClassesIdMembersQueryOptions(id, params, options)
+export function useGetClassesIdMembers<TData = Awaited<ReturnType<typeof getClassesIdMembers>>, TError = ErrorType<GetClassesIdMembers401 | GetClassesIdMembers403 | GetClassesIdMembers404>>(
+ id: string,
+    params?: GetClassesIdMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdMembers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetClassesIdMembersQueryOptions(id,params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Enroll user in class
@@ -1361,122 +1176,84 @@ export type postClassesIdMembersResponse409 = {
   status: 409
 }
 
-export type postClassesIdMembersResponseSuccess = postClassesIdMembersResponse201 & {
-  headers: Headers
-}
-export type postClassesIdMembersResponseError = (
-  | postClassesIdMembersResponse400
-  | postClassesIdMembersResponse401
-  | postClassesIdMembersResponse403
-  | postClassesIdMembersResponse404
-  | postClassesIdMembersResponse409
-) & {
-  headers: Headers
-}
+export type postClassesIdMembersResponseSuccess = (postClassesIdMembersResponse201) & {
+  headers: Headers;
+};
+export type postClassesIdMembersResponseError = (postClassesIdMembersResponse400 | postClassesIdMembersResponse401 | postClassesIdMembersResponse403 | postClassesIdMembersResponse404 | postClassesIdMembersResponse409) & {
+  headers: Headers;
+};
 
-export type postClassesIdMembersResponse = postClassesIdMembersResponseSuccess | postClassesIdMembersResponseError
+export type postClassesIdMembersResponse = (postClassesIdMembersResponseSuccess | postClassesIdMembersResponseError)
 
-export const getPostClassesIdMembersUrl = (id: string) => {
+export const getPostClassesIdMembersUrl = (id: string,) => {
+
+
+
+
   return `/classes/${id}/members`
 }
 
-export const postClassesIdMembers = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainEnrollClassMemberDTO: GithubCom4H1RZooraInternalDomainEnrollClassMemberDTO,
-  options?: RequestInit
-): Promise<postClassesIdMembersResponse> => {
-  return customInstance<postClassesIdMembersResponse>(getPostClassesIdMembersUrl(id), {
+export const postClassesIdMembers = async (id: string,
+    githubCom4H1RZooraInternalDomainEnrollClassMemberDTO: GithubCom4H1RZooraInternalDomainEnrollClassMemberDTO, options?: RequestInit): Promise<postClassesIdMembersResponse> => {
+
+  return customInstance<postClassesIdMembersResponse>(getPostClassesIdMembersUrl(id),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainEnrollClassMemberDTO),
-  })
-}
-
-export const getPostClassesIdMembersMutationOptions = <
-  TError = ErrorType<
-    | PostClassesIdMembers400
-    | PostClassesIdMembers401
-    | PostClassesIdMembers403
-    | PostClassesIdMembers404
-    | PostClassesIdMembers409
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postClassesIdMembers>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainEnrollClassMemberDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postClassesIdMembers>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainEnrollClassMemberDTO },
-  TContext
-> => {
-  const mutationKey = ["postClassesIdMembers"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postClassesIdMembers>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainEnrollClassMemberDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return postClassesIdMembers(id, data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainEnrollClassMemberDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostClassesIdMembersMutationResult = NonNullable<Awaited<ReturnType<typeof postClassesIdMembers>>>
-export type PostClassesIdMembersMutationBody = GithubCom4H1RZooraInternalDomainEnrollClassMemberDTO
-export type PostClassesIdMembersMutationError = ErrorType<
-  | PostClassesIdMembers400
-  | PostClassesIdMembers401
-  | PostClassesIdMembers403
-  | PostClassesIdMembers404
-  | PostClassesIdMembers409
->
 
-/**
+
+export const getPostClassesIdMembersMutationOptions = <TError = ErrorType<PostClassesIdMembers400 | PostClassesIdMembers401 | PostClassesIdMembers403 | PostClassesIdMembers404 | PostClassesIdMembers409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postClassesIdMembers>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainEnrollClassMemberDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postClassesIdMembers>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainEnrollClassMemberDTO}, TContext> => {
+
+const mutationKey = ['postClassesIdMembers'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postClassesIdMembers>>, {id: string;data: GithubCom4H1RZooraInternalDomainEnrollClassMemberDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postClassesIdMembers(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostClassesIdMembersMutationResult = NonNullable<Awaited<ReturnType<typeof postClassesIdMembers>>>
+    export type PostClassesIdMembersMutationBody = GithubCom4H1RZooraInternalDomainEnrollClassMemberDTO
+    export type PostClassesIdMembersMutationError = ErrorType<PostClassesIdMembers400 | PostClassesIdMembers401 | PostClassesIdMembers403 | PostClassesIdMembers404 | PostClassesIdMembers409>
+
+    /**
  * @summary Enroll user in class
  */
-export const usePostClassesIdMembers = <
-  TError = ErrorType<
-    | PostClassesIdMembers400
-    | PostClassesIdMembers401
-    | PostClassesIdMembers403
-    | PostClassesIdMembers404
-    | PostClassesIdMembers409
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postClassesIdMembers>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainEnrollClassMemberDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postClassesIdMembers>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainEnrollClassMemberDTO },
-  TContext
-> => {
-  return useMutation(getPostClassesIdMembersMutationOptions(options), queryClient)
-}
-/**
+export const usePostClassesIdMembers = <TError = ErrorType<PostClassesIdMembers400 | PostClassesIdMembers401 | PostClassesIdMembers403 | PostClassesIdMembers404 | PostClassesIdMembers409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postClassesIdMembers>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainEnrollClassMemberDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postClassesIdMembers>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainEnrollClassMemberDTO},
+        TContext
+      > => {
+      return useMutation(getPostClassesIdMembersMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Remove user from class
  */
 export type deleteClassesIdMembersUserIdResponse200 = {
@@ -1499,110 +1276,84 @@ export type deleteClassesIdMembersUserIdResponse404 = {
   status: 404
 }
 
-export type deleteClassesIdMembersUserIdResponseSuccess = deleteClassesIdMembersUserIdResponse200 & {
-  headers: Headers
-}
-export type deleteClassesIdMembersUserIdResponseError = (
-  | deleteClassesIdMembersUserIdResponse401
-  | deleteClassesIdMembersUserIdResponse403
-  | deleteClassesIdMembersUserIdResponse404
-) & {
-  headers: Headers
-}
+export type deleteClassesIdMembersUserIdResponseSuccess = (deleteClassesIdMembersUserIdResponse200) & {
+  headers: Headers;
+};
+export type deleteClassesIdMembersUserIdResponseError = (deleteClassesIdMembersUserIdResponse401 | deleteClassesIdMembersUserIdResponse403 | deleteClassesIdMembersUserIdResponse404) & {
+  headers: Headers;
+};
 
-export type deleteClassesIdMembersUserIdResponse =
-  | deleteClassesIdMembersUserIdResponseSuccess
-  | deleteClassesIdMembersUserIdResponseError
+export type deleteClassesIdMembersUserIdResponse = (deleteClassesIdMembersUserIdResponseSuccess | deleteClassesIdMembersUserIdResponseError)
 
-export const getDeleteClassesIdMembersUserIdUrl = (id: string, userId: string) => {
+export const getDeleteClassesIdMembersUserIdUrl = (id: string,
+    userId: string,) => {
+
+
+
+
   return `/classes/${id}/members/${userId}`
 }
 
-export const deleteClassesIdMembersUserId = async (
-  id: string,
-  userId: string,
-  options?: RequestInit
-): Promise<deleteClassesIdMembersUserIdResponse> => {
-  return customInstance<deleteClassesIdMembersUserIdResponse>(getDeleteClassesIdMembersUserIdUrl(id, userId), {
+export const deleteClassesIdMembersUserId = async (id: string,
+    userId: string, options?: RequestInit): Promise<deleteClassesIdMembersUserIdResponse> => {
+
+  return customInstance<deleteClassesIdMembersUserIdResponse>(getDeleteClassesIdMembersUserIdUrl(id,userId),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeleteClassesIdMembersUserIdMutationOptions = <
-  TError = ErrorType<
-    DeleteClassesIdMembersUserId401 | DeleteClassesIdMembersUserId403 | DeleteClassesIdMembersUserId404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteClassesIdMembersUserId>>,
-    TError,
-    { id: string; userId: string },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteClassesIdMembersUserId>>,
-  TError,
-  { id: string; userId: string },
-  TContext
-> => {
-  const mutationKey = ["deleteClassesIdMembersUserId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteClassesIdMembersUserId>>,
-    { id: string; userId: string }
-  > = (props) => {
-    const { id, userId } = props ?? {}
-
-    return deleteClassesIdMembersUserId(id, userId, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteClassesIdMembersUserIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteClassesIdMembersUserId>>
->
 
-export type DeleteClassesIdMembersUserIdMutationError = ErrorType<
-  DeleteClassesIdMembersUserId401 | DeleteClassesIdMembersUserId403 | DeleteClassesIdMembersUserId404
->
 
-/**
+export const getDeleteClassesIdMembersUserIdMutationOptions = <TError = ErrorType<DeleteClassesIdMembersUserId401 | DeleteClassesIdMembersUserId403 | DeleteClassesIdMembersUserId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteClassesIdMembersUserId>>, TError,{id: string;userId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteClassesIdMembersUserId>>, TError,{id: string;userId: string}, TContext> => {
+
+const mutationKey = ['deleteClassesIdMembersUserId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteClassesIdMembersUserId>>, {id: string;userId: string}> = (props) => {
+          const {id,userId} = props ?? {};
+
+          return  deleteClassesIdMembersUserId(id,userId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteClassesIdMembersUserIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteClassesIdMembersUserId>>>
+
+    export type DeleteClassesIdMembersUserIdMutationError = ErrorType<DeleteClassesIdMembersUserId401 | DeleteClassesIdMembersUserId403 | DeleteClassesIdMembersUserId404>
+
+    /**
  * @summary Remove user from class
  */
-export const useDeleteClassesIdMembersUserId = <
-  TError = ErrorType<
-    DeleteClassesIdMembersUserId401 | DeleteClassesIdMembersUserId403 | DeleteClassesIdMembersUserId404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteClassesIdMembersUserId>>,
-      TError,
-      { id: string; userId: string },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteClassesIdMembersUserId>>,
-  TError,
-  { id: string; userId: string },
-  TContext
-> => {
-  return useMutation(getDeleteClassesIdMembersUserIdMutationOptions(options), queryClient)
-}
-/**
+export const useDeleteClassesIdMembersUserId = <TError = ErrorType<DeleteClassesIdMembersUserId401 | DeleteClassesIdMembersUserId403 | DeleteClassesIdMembersUserId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteClassesIdMembersUserId>>, TError,{id: string;userId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteClassesIdMembersUserId>>,
+        TError,
+        {id: string;userId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteClassesIdMembersUserIdMutationOptions(options), queryClient);
+    }
+    /**
  * Search matches substrings of: name, description. Orderable fields: created_at, updated_at, name, start_time. Filter by session type: live|quiz|practice.
  * @summary List class sessions
  */
@@ -1626,154 +1377,126 @@ export type getClassesIdSessionsResponse404 = {
   status: 404
 }
 
-export type getClassesIdSessionsResponseSuccess = getClassesIdSessionsResponse200 & {
-  headers: Headers
-}
-export type getClassesIdSessionsResponseError = (
-  | getClassesIdSessionsResponse401
-  | getClassesIdSessionsResponse403
-  | getClassesIdSessionsResponse404
-) & {
-  headers: Headers
-}
+export type getClassesIdSessionsResponseSuccess = (getClassesIdSessionsResponse200) & {
+  headers: Headers;
+};
+export type getClassesIdSessionsResponseError = (getClassesIdSessionsResponse401 | getClassesIdSessionsResponse403 | getClassesIdSessionsResponse404) & {
+  headers: Headers;
+};
 
-export type getClassesIdSessionsResponse = getClassesIdSessionsResponseSuccess | getClassesIdSessionsResponseError
+export type getClassesIdSessionsResponse = (getClassesIdSessionsResponseSuccess | getClassesIdSessionsResponseError)
 
-export const getGetClassesIdSessionsUrl = (id: string, params?: GetClassesIdSessionsParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetClassesIdSessionsUrl = (id: string,
+    params?: GetClassesIdSessionsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/classes/${id}/sessions?${stringifiedParams}` : `/classes/${id}/sessions`
 }
 
-export const getClassesIdSessions = async (
-  id: string,
-  params?: GetClassesIdSessionsParams,
-  options?: RequestInit
-): Promise<getClassesIdSessionsResponse> => {
-  return customInstance<getClassesIdSessionsResponse>(getGetClassesIdSessionsUrl(id, params), {
+export const getClassesIdSessions = async (id: string,
+    params?: GetClassesIdSessionsParams, options?: RequestInit): Promise<getClassesIdSessionsResponse> => {
+
+  return customInstance<getClassesIdSessionsResponse>(getGetClassesIdSessionsUrl(id,params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetClassesIdSessionsQueryKey = (id: string, params?: GetClassesIdSessionsParams) => {
-  return [`/classes/${id}/sessions`, ...(params ? [params] : [])] as const
-}
 
-export const getGetClassesIdSessionsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getClassesIdSessions>>,
-  TError = ErrorType<GetClassesIdSessions401 | GetClassesIdSessions403 | GetClassesIdSessions404>,
->(
-  id: string,
-  params?: GetClassesIdSessionsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessions>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetClassesIdSessionsQueryKey = (id: string,
+    params?: GetClassesIdSessionsParams,) => {
+    return [
+    `/classes/${id}/sessions`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetClassesIdSessionsQueryOptions = <TData = Awaited<ReturnType<typeof getClassesIdSessions>>, TError = ErrorType<GetClassesIdSessions401 | GetClassesIdSessions403 | GetClassesIdSessions404>>(id: string,
+    params?: GetClassesIdSessionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetClassesIdSessionsQueryKey(id, params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getClassesIdSessions>>> = ({ signal }) =>
-    getClassesIdSessions(id, params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetClassesIdSessionsQueryKey(id,params);
 
-  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getClassesIdSessions>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClassesIdSessions>>> = ({ signal }) => getClassesIdSessions(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetClassesIdSessionsQueryResult = NonNullable<Awaited<ReturnType<typeof getClassesIdSessions>>>
-export type GetClassesIdSessionsQueryError = ErrorType<
-  GetClassesIdSessions401 | GetClassesIdSessions403 | GetClassesIdSessions404
->
+export type GetClassesIdSessionsQueryError = ErrorType<GetClassesIdSessions401 | GetClassesIdSessions403 | GetClassesIdSessions404>
 
-export function useGetClassesIdSessions<
-  TData = Awaited<ReturnType<typeof getClassesIdSessions>>,
-  TError = ErrorType<GetClassesIdSessions401 | GetClassesIdSessions403 | GetClassesIdSessions404>,
->(
-  id: string,
-  params: undefined | GetClassesIdSessionsParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessions>>, TError, TData>> &
-      Pick<
+
+export function useGetClassesIdSessions<TData = Awaited<ReturnType<typeof getClassesIdSessions>>, TError = ErrorType<GetClassesIdSessions401 | GetClassesIdSessions403 | GetClassesIdSessions404>>(
+ id: string,
+    params: undefined |  GetClassesIdSessionsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessions>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getClassesIdSessions>>,
           TError,
           Awaited<ReturnType<typeof getClassesIdSessions>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetClassesIdSessions<
-  TData = Awaited<ReturnType<typeof getClassesIdSessions>>,
-  TError = ErrorType<GetClassesIdSessions401 | GetClassesIdSessions403 | GetClassesIdSessions404>,
->(
-  id: string,
-  params?: GetClassesIdSessionsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessions>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClassesIdSessions<TData = Awaited<ReturnType<typeof getClassesIdSessions>>, TError = ErrorType<GetClassesIdSessions401 | GetClassesIdSessions403 | GetClassesIdSessions404>>(
+ id: string,
+    params?: GetClassesIdSessionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessions>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getClassesIdSessions>>,
           TError,
           Awaited<ReturnType<typeof getClassesIdSessions>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetClassesIdSessions<
-  TData = Awaited<ReturnType<typeof getClassesIdSessions>>,
-  TError = ErrorType<GetClassesIdSessions401 | GetClassesIdSessions403 | GetClassesIdSessions404>,
->(
-  id: string,
-  params?: GetClassesIdSessionsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessions>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClassesIdSessions<TData = Awaited<ReturnType<typeof getClassesIdSessions>>, TError = ErrorType<GetClassesIdSessions401 | GetClassesIdSessions403 | GetClassesIdSessions404>>(
+ id: string,
+    params?: GetClassesIdSessionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List class sessions
  */
 
-export function useGetClassesIdSessions<
-  TData = Awaited<ReturnType<typeof getClassesIdSessions>>,
-  TError = ErrorType<GetClassesIdSessions401 | GetClassesIdSessions403 | GetClassesIdSessions404>,
->(
-  id: string,
-  params?: GetClassesIdSessionsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessions>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetClassesIdSessionsQueryOptions(id, params, options)
+export function useGetClassesIdSessions<TData = Awaited<ReturnType<typeof getClassesIdSessions>>, TError = ErrorType<GetClassesIdSessions401 | GetClassesIdSessions403 | GetClassesIdSessions404>>(
+ id: string,
+    params?: GetClassesIdSessionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdSessions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetClassesIdSessionsQueryOptions(id,params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Create class session
@@ -1803,105 +1526,80 @@ export type postClassesIdSessionsResponse404 = {
   status: 404
 }
 
-export type postClassesIdSessionsResponseSuccess = postClassesIdSessionsResponse201 & {
-  headers: Headers
-}
-export type postClassesIdSessionsResponseError = (
-  | postClassesIdSessionsResponse400
-  | postClassesIdSessionsResponse401
-  | postClassesIdSessionsResponse403
-  | postClassesIdSessionsResponse404
-) & {
-  headers: Headers
-}
+export type postClassesIdSessionsResponseSuccess = (postClassesIdSessionsResponse201) & {
+  headers: Headers;
+};
+export type postClassesIdSessionsResponseError = (postClassesIdSessionsResponse400 | postClassesIdSessionsResponse401 | postClassesIdSessionsResponse403 | postClassesIdSessionsResponse404) & {
+  headers: Headers;
+};
 
-export type postClassesIdSessionsResponse = postClassesIdSessionsResponseSuccess | postClassesIdSessionsResponseError
+export type postClassesIdSessionsResponse = (postClassesIdSessionsResponseSuccess | postClassesIdSessionsResponseError)
 
-export const getPostClassesIdSessionsUrl = (id: string) => {
+export const getPostClassesIdSessionsUrl = (id: string,) => {
+
+
+
+
   return `/classes/${id}/sessions`
 }
 
-export const postClassesIdSessions = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainCreateClassSessionDTO: GithubCom4H1RZooraInternalDomainCreateClassSessionDTO,
-  options?: RequestInit
-): Promise<postClassesIdSessionsResponse> => {
-  return customInstance<postClassesIdSessionsResponse>(getPostClassesIdSessionsUrl(id), {
+export const postClassesIdSessions = async (id: string,
+    githubCom4H1RZooraInternalDomainCreateClassSessionDTO: GithubCom4H1RZooraInternalDomainCreateClassSessionDTO, options?: RequestInit): Promise<postClassesIdSessionsResponse> => {
+
+  return customInstance<postClassesIdSessionsResponse>(getPostClassesIdSessionsUrl(id),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainCreateClassSessionDTO),
-  })
-}
-
-export const getPostClassesIdSessionsMutationOptions = <
-  TError = ErrorType<
-    PostClassesIdSessions400 | PostClassesIdSessions401 | PostClassesIdSessions403 | PostClassesIdSessions404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postClassesIdSessions>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainCreateClassSessionDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postClassesIdSessions>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainCreateClassSessionDTO },
-  TContext
-> => {
-  const mutationKey = ["postClassesIdSessions"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postClassesIdSessions>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainCreateClassSessionDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return postClassesIdSessions(id, data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainCreateClassSessionDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostClassesIdSessionsMutationResult = NonNullable<Awaited<ReturnType<typeof postClassesIdSessions>>>
-export type PostClassesIdSessionsMutationBody = GithubCom4H1RZooraInternalDomainCreateClassSessionDTO
-export type PostClassesIdSessionsMutationError = ErrorType<
-  PostClassesIdSessions400 | PostClassesIdSessions401 | PostClassesIdSessions403 | PostClassesIdSessions404
->
 
-/**
+
+export const getPostClassesIdSessionsMutationOptions = <TError = ErrorType<PostClassesIdSessions400 | PostClassesIdSessions401 | PostClassesIdSessions403 | PostClassesIdSessions404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postClassesIdSessions>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainCreateClassSessionDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postClassesIdSessions>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainCreateClassSessionDTO}, TContext> => {
+
+const mutationKey = ['postClassesIdSessions'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postClassesIdSessions>>, {id: string;data: GithubCom4H1RZooraInternalDomainCreateClassSessionDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postClassesIdSessions(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostClassesIdSessionsMutationResult = NonNullable<Awaited<ReturnType<typeof postClassesIdSessions>>>
+    export type PostClassesIdSessionsMutationBody = GithubCom4H1RZooraInternalDomainCreateClassSessionDTO
+    export type PostClassesIdSessionsMutationError = ErrorType<PostClassesIdSessions400 | PostClassesIdSessions401 | PostClassesIdSessions403 | PostClassesIdSessions404>
+
+    /**
  * @summary Create class session
  */
-export const usePostClassesIdSessions = <
-  TError = ErrorType<
-    PostClassesIdSessions400 | PostClassesIdSessions401 | PostClassesIdSessions403 | PostClassesIdSessions404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postClassesIdSessions>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainCreateClassSessionDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postClassesIdSessions>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainCreateClassSessionDTO },
-  TContext
-> => {
-  return useMutation(getPostClassesIdSessionsMutationOptions(options), queryClient)
-}
+export const usePostClassesIdSessions = <TError = ErrorType<PostClassesIdSessions400 | PostClassesIdSessions401 | PostClassesIdSessions403 | PostClassesIdSessions404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postClassesIdSessions>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainCreateClassSessionDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postClassesIdSessions>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainCreateClassSessionDTO},
+        TContext
+      > => {
+      return useMutation(getPostClassesIdSessionsMutationOptions(options), queryClient);
+    }

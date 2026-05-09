@@ -6,11 +6,11 @@
  * OpenAPI spec version: 1.0
  */
 
-export type GithubCom4H1RZooraInternalDomainQuestionType =
-  (typeof GithubCom4H1RZooraInternalDomainQuestionType)[keyof typeof GithubCom4H1RZooraInternalDomainQuestionType]
+export type GithubCom4H1RZooraInternalDomainQuestionType = typeof GithubCom4H1RZooraInternalDomainQuestionType[keyof typeof GithubCom4H1RZooraInternalDomainQuestionType];
+
 
 export const GithubCom4H1RZooraInternalDomainQuestionType = {
-  QuestionTypeDescriptive: "descriptive",
-  QuestionTypeShortAnswer: "short_answer",
-  QuestionTypeChoice: "choice",
-} as const
+  QuestionTypeDescriptive: 'descriptive',
+  QuestionTypeShortAnswer: 'short_answer',
+  QuestionTypeChoice: 'choice',
+} as const;

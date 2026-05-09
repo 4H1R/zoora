@@ -7,11 +7,11 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainOrganizationStats {
-  active_count?: number
-  archived_count?: number
-  deleted_organizations?: number
-  suspended_count?: number
-  total_organizations?: number
-  total_users?: number
-  trial_count?: number
+  active_count?: number;
+  archived_count?: number;
+  deleted_organizations?: number;
+  suspended_count?: number;
+  total_organizations?: number;
+  total_users?: number;
+  trial_count?: number;
 }

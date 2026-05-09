@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0
  */
 
-export type GithubCom4H1RZooraInternalDomainQuizRuleType =
-  (typeof GithubCom4H1RZooraInternalDomainQuizRuleType)[keyof typeof GithubCom4H1RZooraInternalDomainQuizRuleType]
+export type GithubCom4H1RZooraInternalDomainQuizRuleType = typeof GithubCom4H1RZooraInternalDomainQuizRuleType[keyof typeof GithubCom4H1RZooraInternalDomainQuizRuleType];
+
 
 export const GithubCom4H1RZooraInternalDomainQuizRuleType = {
-  QuizRuleTypeManual: "manual",
-  QuizRuleTypeRandom: "random",
-} as const
+  QuizRuleTypeManual: 'manual',
+  QuizRuleTypeRandom: 'random',
+} as const;

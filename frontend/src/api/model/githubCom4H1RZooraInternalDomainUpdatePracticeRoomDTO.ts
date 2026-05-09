@@ -7,11 +7,11 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO {
-  content?: string
-  end_time?: string
+  content?: string;
+  end_time?: string;
   /** @minimum 0 */
-  max_score?: number
-  start_time?: string
+  max_score?: number;
+  start_time?: string;
   /** @minLength 2 */
-  title?: string
+  title?: string;
 }

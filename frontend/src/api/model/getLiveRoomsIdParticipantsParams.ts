@@ -7,16 +7,16 @@
  */
 
 export type GetLiveRoomsIdParticipantsParams = {
-  /**
-   * One of: joined_at, created_at
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-}
+/**
+ * One of: joined_at, created_at
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+};

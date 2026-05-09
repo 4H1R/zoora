@@ -34,12 +34,22 @@ func NewService(
 }
 
 // canManageClass returns true if caller can mutate the given class (update,
-// delete, add sessions, enroll others). Students never qualify here.
+// add sessions, enroll others). Students never qualify here.
 func canManageClass(caller domain.Caller, class *domain.Class) bool {
 	if caller.IsAdmin {
 		return true
 	}
-	if caller.HasPermission("classes:update_any") {
+	if caller.HasPermission(domain.PermClassesUpdateAny) {
+		return true
+	}
+	return caller.UserID == class.UserID
+}
+
+func canDeleteClass(caller domain.Caller, class *domain.Class) bool {
+	if caller.IsAdmin {
+		return true
+	}
+	if caller.HasPermission(domain.PermClassesDeleteAny) {
 		return true
 	}
 	return caller.UserID == class.UserID
@@ -49,6 +59,9 @@ func canManageClass(caller domain.Caller, class *domain.Class) bool {
 // bypass; teachers view own; students view classes they're enrolled in.
 func (s *service) canViewClass(ctx context.Context, caller domain.Caller, class *domain.Class) (bool, error) {
 	if canManageClass(caller, class) {
+		return true, nil
+	}
+	if caller.HasPermission(domain.PermClassesViewAny) {
 		return true, nil
 	}
 	ok, err := s.members.Exists(ctx, class.ID, caller.UserID)
@@ -63,15 +76,22 @@ func (s *service) Create(ctx context.Context, dto domain.CreateClassDTO) (*domai
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	// Only staff and super-admins may create classes.
-	if !caller.IsAdmin && !caller.HasPermission("classes:update_any") {
+	if !caller.IsAdmin && !caller.HasPermission(domain.PermClassesCreate) && !caller.HasPermission(domain.PermClassesCreateAny) {
 		return nil, domain.ErrForbidden
 	}
+	if caller.OrgID == nil {
+		return nil, domain.ErrForbidden
+	}
+	userID := caller.UserID
+	if dto.UserID != nil && (caller.IsAdmin || caller.HasPermission(domain.PermClassesCreateAny)) {
+		userID = *dto.UserID
+	}
 	class := &domain.Class{
-		UserID:      caller.UserID,
-		Name:        dto.Name,
-		Description: dto.Description,
-		TotalUsers:  dto.TotalUsers,
+		OrganizationID: *caller.OrgID,
+		UserID:         userID,
+		Name:           dto.Name,
+		Description:    dto.Description,
+		TotalUsers:     dto.TotalUsers,
 	}
 	if err := s.repo.Create(ctx, class); err != nil {
 		return nil, err
@@ -123,6 +143,9 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateCla
 	if dto.TotalUsers != nil {
 		class.TotalUsers = *dto.TotalUsers
 	}
+	if dto.UserID != nil && (caller.IsAdmin || caller.HasPermission(domain.PermClassesUpdateAny)) {
+		class.UserID = *dto.UserID
+	}
 	if err := s.repo.Update(ctx, class); err != nil {
 		return nil, err
 	}
@@ -138,7 +161,7 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if !canManageClass(caller, class) {
+	if !canDeleteClass(caller, class) {
 		return domain.ErrForbidden
 	}
 	if err := s.repo.Delete(ctx, id); err != nil {
@@ -167,8 +190,8 @@ func (s *service) resolveListScope(caller domain.Caller) domain.ClassListScope {
 	if caller.IsAdmin {
 		return domain.ClassListScope{All: true}
 	}
-	if caller.HasPermission("classes:update_any") {
-		return domain.ClassListScope{All: true}
+	if caller.HasPermission(domain.PermClassesViewAny) || caller.HasPermission(domain.PermClassesUpdateAny) {
+		return domain.ClassListScope{All: true, OrganizationID: caller.OrgID}
 	}
 	userID := caller.UserID
 	return domain.ClassListScope{
@@ -278,7 +301,7 @@ func (s *service) DeleteSession(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if !canManageClass(caller, class) {
+	if !canDeleteClass(caller, class) {
 		return domain.ErrForbidden
 	}
 	return s.sessions.Delete(ctx, id)

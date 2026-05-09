@@ -37,7 +37,7 @@ func (r *classRepository) Create(ctx context.Context, class *domain.Class) error
 
 func (r *classRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Class, error) {
 	var class domain.Class
-	if err := r.baseQuery(ctx).First(&class, "id = ?", id).Error; err != nil {
+	if err := r.baseQuery(ctx).Preload("User").First(&class, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}
@@ -75,9 +75,12 @@ func (r *classRepository) Delete(ctx context.Context, id uuid.UUID) error {
 // circuits all scoping. TeacherID and MemberUserID are OR'd when both are
 // set, so a teacher who is also enrolled elsewhere sees both sets in one query.
 func (r *classRepository) List(ctx context.Context, scope domain.ClassListScope, p domain.ListParams) ([]domain.Class, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.Class{})
+	base := database.DB(ctx, r.db).Model(&domain.Class{}).Preload("User")
 	if scope.IncludeDeleted {
 		base = base.Unscoped()
+	}
+	if scope.OrganizationID != nil {
+		base = base.Where("organization_id = ?", *scope.OrganizationID)
 	}
 	if !scope.All {
 		switch {
@@ -126,7 +129,7 @@ func (r *classRepository) FindByIDIncludingDeleted(ctx context.Context, id uuid.
 }
 
 func (r *classRepository) AdminList(ctx context.Context, q domain.AdminListClassesQuery) ([]domain.Class, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.Class{})
+	base := database.DB(ctx, r.db).Model(&domain.Class{}).Preload("User")
 	if q.IncludeDeleted {
 		base = base.Unscoped()
 	}

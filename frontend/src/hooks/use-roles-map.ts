@@ -1,7 +1,7 @@
 import { useGetRoles } from "@/api/roles/roles"
 
-export function useRolesMap(organizationId?: string) {
-  const query = useGetRoles({ organization_id: organizationId })
+export function useRolesMap() {
+  const query = useGetRoles()
 
   const rolesMap: Record<string, string> = {}
   const items = query.data?.status === 200 && query.data?.data?.data

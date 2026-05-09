@@ -7,11 +7,11 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainAdminUpdateUserDTO {
-  is_admin?: boolean
+  is_admin?: boolean;
   /** @minLength 2 */
-  name?: string
-  password?: string
-  role_id?: string
+  name?: string;
+  password?: string;
+  role_id?: string;
   /** @minLength 3 */
-  username?: string
+  username?: string;
 }

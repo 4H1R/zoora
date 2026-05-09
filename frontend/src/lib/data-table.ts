@@ -1,4 +1,4 @@
-import type { ColumnDef, SortingState, Table, VisibilityState } from "@tanstack/react-table"
+import type { ColumnDef, OnChangeFn, SortingState, Table, VisibilityState } from "@tanstack/react-table"
 
 import { useNavigate } from "@tanstack/react-router"
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table"
@@ -12,6 +12,8 @@ export type SearchUpdater = (prev: Record<string, unknown>) => Record<string, un
 export type NavFn = (opts: { search: SearchUpdater }) => void
 
 // ── color + initials ─────────────────────────────────────────────────────────
+
+export { getInitials } from "@/components/user-avatar"
 
 export const ENTITY_COLORS = [
   "bg-slate-600",
@@ -29,16 +31,6 @@ export function getEntityColor(name?: string) {
   let hash = 0
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
   return ENTITY_COLORS[Math.abs(hash) % ENTITY_COLORS.length]
-}
-
-export function getInitials(name?: string) {
-  if (!name) return "?"
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
 }
 
 // ── date formatting ──────────────────────────────────────────────────────────
@@ -66,6 +58,23 @@ export const adminSearchSchema = z.object({
   page_size: z.number().int().positive().optional().default(8),
 })
 
+// ── sorting helper ──────────────────────────────────────────────────────────
+
+export function createSortingHandler(navigate: NavFn, sorting: SortingState): OnChangeFn<SortingState> {
+  return (updater) => {
+    const next = typeof updater === "function" ? updater(sorting) : updater
+    const first = next[0]
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        order_by: first?.id,
+        order_dir: first ? (first.desc ? ("desc" as const) : ("asc" as const)) : undefined,
+        page: 1,
+      }),
+    })
+  }
+}
+
 // ── useAdminTable ────────────────────────────────────────────────────────────
 
 interface UseAdminTableOptions<TData> {
@@ -86,18 +95,7 @@ export function useAdminTable<TData>({ data, columns, rowCount, sorting }: UseAd
     rowCount,
     manualSorting: true,
     manualPagination: true,
-    onSortingChange: (updater) => {
-      const next = typeof updater === "function" ? updater(sorting) : updater
-      const first = next[0]
-      navigate({
-        search: (prev) => ({
-          ...prev,
-          order_by: first?.id,
-          order_dir: first ? (first.desc ? ("desc" as const) : ("asc" as const)) : undefined,
-          page: 1,
-        }),
-      })
-    },
+    onSortingChange: createSortingHandler(navigate, sorting),
     onColumnVisibilityChange: (updater) => {
       setColumnVisibility((prev) => (typeof updater === "function" ? updater(prev) : updater))
     },

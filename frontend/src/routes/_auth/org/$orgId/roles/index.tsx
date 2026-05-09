@@ -2,6 +2,8 @@ import type { GithubCom4H1RZooraInternalDomainRole as Role } from "@/api/model"
 
 import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
+
+import { orgHead } from "@/lib/org-head"
 import { KeyIcon, PlusIcon, ShieldIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -28,6 +30,7 @@ import { useRoleColumns } from "./-columns"
 import { RoleFormDialog } from "./-role-form-dialog"
 
 export const Route = createFileRoute("/_auth/org/$orgId/roles/")({
+  head: () => orgHead("org.nav.roles"),
   validateSearch: adminSearchSchema,
   component: RolesPage,
 })
@@ -56,13 +59,9 @@ function RolesPage() {
     setFormOpen(true)
   }
 
-  const { data, isLoading } = useGetRoles({
-    organization_id: orgId,
-  })
+  const { data, isLoading } = useGetRoles()
 
-  const { data: statsData, isLoading: statsLoading } = useGetRolesStats({
-    organization_id: orgId,
-  })
+  const { data: statsData, isLoading: statsLoading } = useGetRolesStats()
 
   const deleteMutation = useDeleteRolesId({
     mutation: {

@@ -7,32 +7,32 @@
  */
 
 export type GetAdminQuizzesParams = {
-  /**
-   * Filter by class UUID
-   */
-  class_id?: string
-  /**
-   * Filter by owner UUID
-   */
-  user_id?: string
-  /**
-   * Include soft-deleted rows
-   */
-  include_deleted?: boolean
-  /**
-   * Substring match on title/description
-   */
-  search?: string
-  /**
-   * One of: created_at, updated_at, title
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-}
+/**
+ * Filter by class UUID
+ */
+class_id?: string;
+/**
+ * Filter by owner UUID
+ */
+user_id?: string;
+/**
+ * Include soft-deleted rows
+ */
+include_deleted?: boolean;
+/**
+ * Substring match on title/description
+ */
+search?: string;
+/**
+ * One of: created_at, updated_at, title
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+};

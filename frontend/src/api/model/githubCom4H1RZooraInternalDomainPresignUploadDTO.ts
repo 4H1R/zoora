@@ -8,13 +8,13 @@
 
 export interface GithubCom4H1RZooraInternalDomainPresignUploadDTO {
   /** @maxLength 100 */
-  collection_name?: string
+  collection_name?: string;
   /** @maxLength 255 */
-  file_name: string
+  file_name: string;
   /** @maxLength 100 */
-  mime_type: string
-  model_id: string
+  mime_type: string;
+  model_id: string;
   /** @maxLength 100 */
-  model_type: string
-  size: number
+  model_type: string;
+  size: number;
 }

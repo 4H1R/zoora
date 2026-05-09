@@ -7,24 +7,24 @@
  */
 
 export type GetQuestionBanksIdQuestionsParams = {
-  /**
-   * Filter by question type (descriptive, short_answer, choice)
-   */
-  type?: string
-  /**
-   * Substring match on text
-   */
-  search?: string
-  /**
-   * One of: created_at, updated_at, type
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-}
+/**
+ * Filter by question type (descriptive, short_answer, choice)
+ */
+type?: string;
+/**
+ * Substring match on text
+ */
+search?: string;
+/**
+ * One of: created_at, updated_at, type
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+};

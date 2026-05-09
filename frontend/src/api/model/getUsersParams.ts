@@ -7,28 +7,24 @@
  */
 
 export type GetUsersParams = {
-  /**
-   * Filter by organization UUID
-   */
-  organization_id?: string
-  /**
-   * Substring match on username/name
-   */
-  search?: string
-  /**
-   * One of: created_at, updated_at, username, name
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-  /**
-   * Items per page (default 20)
-   */
-  page_size?: number
-}
+/**
+ * Substring match on username/name
+ */
+search?: string;
+/**
+ * One of: created_at, updated_at, username, name
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+/**
+ * Items per page (default 20)
+ */
+page_size?: number;
+};

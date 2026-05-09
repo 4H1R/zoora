@@ -7,36 +7,36 @@
  */
 
 export type GetAdminPollsParams = {
-  /**
-   * Filter by owner UUID
-   */
-  user_id?: string
-  /**
-   * Filter by model type
-   */
-  model_type?: string
-  /**
-   * Filter by model UUID
-   */
-  model_id?: string
-  /**
-   * Include soft-deleted rows
-   */
-  include_deleted?: boolean
-  /**
-   * Substring match on name
-   */
-  search?: string
-  /**
-   * One of: created_at, updated_at, name
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-}
+/**
+ * Filter by owner UUID
+ */
+user_id?: string;
+/**
+ * Filter by model type
+ */
+model_type?: string;
+/**
+ * Filter by model UUID
+ */
+model_id?: string;
+/**
+ * Include soft-deleted rows
+ */
+include_deleted?: boolean;
+/**
+ * Substring match on name
+ */
+search?: string;
+/**
+ * One of: created_at, updated_at, name
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+};

@@ -7,28 +7,28 @@
  */
 
 export type GetAdminRolesParams = {
-  /**
-   * Filter by organization UUID
-   */
-  organization_id?: string
-  /**
-   * Search by name
-   */
-  search?: string
-  /**
-   * One of: name, created_at, updated_at
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-  /**
-   * Items per page (default 20)
-   */
-  page_size?: number
-}
+/**
+ * Filter by organization UUID
+ */
+organization_id?: string;
+/**
+ * Search by name
+ */
+search?: string;
+/**
+ * One of: name, created_at, updated_at
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+/**
+ * Items per page (default 20)
+ */
+page_size?: number;
+};

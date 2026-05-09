@@ -7,20 +7,20 @@
  */
 
 export type GetPollsIdAnswersParams = {
-  /**
-   * Filter by user UUID
-   */
-  user_id?: string
-  /**
-   * One of: created_at
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-}
+/**
+ * Filter by user UUID
+ */
+user_id?: string;
+/**
+ * One of: created_at
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+};

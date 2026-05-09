@@ -92,20 +92,20 @@ func (s *service) canViewRoom(ctx context.Context, caller domain.Caller, class *
 }
 
 // loadRoomWithClass fetches room, its class session, and owning class.
-func (s *service) loadRoomWithClass(ctx context.Context, roomID uuid.UUID) (*domain.LiveRoom, *domain.Class, error) {
+func (s *service) loadRoomWithClass(ctx context.Context, roomID uuid.UUID) (*domain.LiveRoom, *domain.ClassSession, *domain.Class, error) {
 	room, err := s.rooms.FindByID(ctx, roomID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	session, err := s.sessions.FindByID(ctx, room.ClassSessionID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	class, err := s.classes.FindByID(ctx, session.ClassID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
-	return room, class, nil
+	return room, session, class, nil
 }
 
 func (s *service) resolveListScope(caller domain.Caller) domain.LiveRoomListScope {
@@ -180,7 +180,7 @@ func (s *service) GetRoom(ctx context.Context, id uuid.UUID) (*domain.LiveRoom, 
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	room, class, err := s.loadRoomWithClass(ctx, id)
+	room, session, class, err := s.loadRoomWithClass(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -191,6 +191,10 @@ func (s *service) GetRoom(ctx context.Context, id uuid.UUID) (*domain.LiveRoom, 
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
+
+	session.Class = class
+	room.ClassSession = session
+
 	return room, nil
 }
 
@@ -199,7 +203,7 @@ func (s *service) JoinRoom(ctx context.Context, roomID uuid.UUID) (*domain.JoinL
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	room, class, err := s.loadRoomWithClass(ctx, roomID)
+	room, _, class, err := s.loadRoomWithClass(ctx, roomID)
 	if err != nil {
 		return nil, err
 	}
@@ -285,7 +289,7 @@ func (s *service) StartRoom(ctx context.Context, roomID uuid.UUID) (*domain.Live
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	room, class, err := s.loadRoomWithClass(ctx, roomID)
+	room, _, class, err := s.loadRoomWithClass(ctx, roomID)
 	if err != nil {
 		return nil, err
 	}
@@ -369,7 +373,7 @@ func (s *service) EndRoom(ctx context.Context, roomID uuid.UUID) (*domain.LiveRo
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	room, class, err := s.loadRoomWithClass(ctx, roomID)
+	room, _, class, err := s.loadRoomWithClass(ctx, roomID)
 	if err != nil {
 		return nil, err
 	}
@@ -397,7 +401,7 @@ func (s *service) UpdateRoomConfig(ctx context.Context, roomID uuid.UUID, dto do
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	room, class, err := s.loadRoomWithClass(ctx, roomID)
+	room, _, class, err := s.loadRoomWithClass(ctx, roomID)
 	if err != nil {
 		return nil, err
 	}
@@ -419,7 +423,7 @@ func (s *service) Heartbeat(ctx context.Context, roomID uuid.UUID) error {
 	if !ok {
 		return domain.ErrForbidden
 	}
-	room, class, err := s.loadRoomWithClass(ctx, roomID)
+	room, _, class, err := s.loadRoomWithClass(ctx, roomID)
 	if err != nil {
 		return err
 	}
@@ -448,7 +452,7 @@ func (s *service) StartRecording(ctx context.Context, roomID uuid.UUID) (*domain
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	room, class, err := s.loadRoomWithClass(ctx, roomID)
+	room, _, class, err := s.loadRoomWithClass(ctx, roomID)
 	if err != nil {
 		return nil, err
 	}
@@ -487,7 +491,7 @@ func (s *service) StopRecording(ctx context.Context, recordingID uuid.UUID) (*do
 	if err != nil {
 		return nil, err
 	}
-	_, class, err := s.loadRoomWithClass(ctx, rec.LiveRoomID)
+	_, _, class, err := s.loadRoomWithClass(ctx, rec.LiveRoomID)
 	if err != nil {
 		return nil, err
 	}
@@ -517,7 +521,7 @@ func (s *service) ListRecordings(ctx context.Context, roomID uuid.UUID) ([]domai
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	_, class, err := s.loadRoomWithClass(ctx, roomID)
+	_, _, class, err := s.loadRoomWithClass(ctx, roomID)
 	if err != nil {
 		return nil, err
 	}
@@ -536,7 +540,7 @@ func (s *service) ListParticipants(ctx context.Context, roomID uuid.UUID, p doma
 	if !ok {
 		return nil, 0, domain.ErrForbidden
 	}
-	_, class, err := s.loadRoomWithClass(ctx, roomID)
+	_, _, class, err := s.loadRoomWithClass(ctx, roomID)
 	if err != nil {
 		return nil, 0, err
 	}

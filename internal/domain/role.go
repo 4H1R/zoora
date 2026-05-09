@@ -88,5 +88,6 @@ type RoleService interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, f RoleFilter) ([]Role, error)
 	AdminList(ctx context.Context, f AdminRoleFilter) ([]Role, int64, error)
-	Stats(ctx context.Context, orgID *uuid.UUID) (*RoleStats, error)
+	Stats(ctx context.Context) (*RoleStats, error)
+	AdminStats(ctx context.Context, orgID *uuid.UUID) (*RoleStats, error)
 }

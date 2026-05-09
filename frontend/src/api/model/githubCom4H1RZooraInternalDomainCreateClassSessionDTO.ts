@@ -5,13 +5,13 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainCreateClassSessionDTOType } from "./githubCom4H1RZooraInternalDomainCreateClassSessionDTOType"
+import type { GithubCom4H1RZooraInternalDomainCreateClassSessionDTOType } from './githubCom4H1RZooraInternalDomainCreateClassSessionDTOType';
 
 export interface GithubCom4H1RZooraInternalDomainCreateClassSessionDTO {
-  description?: string
-  is_recordable?: boolean
+  description?: string;
+  is_recordable?: boolean;
   /** @minLength 2 */
-  name: string
-  start_time: string
-  type: GithubCom4H1RZooraInternalDomainCreateClassSessionDTOType
+  name: string;
+  start_time: string;
+  type: GithubCom4H1RZooraInternalDomainCreateClassSessionDTOType;
 }

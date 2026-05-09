@@ -5,19 +5,10 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { ErrorType } from ".././mutator/custom-instance"
-import type {
-  DeleteAdminPollsId401,
-  DeleteAdminPollsId403,
-  DeleteAdminPollsId404,
-  DeleteAdminPollsId500,
-  GetAdminPolls200,
-  GetAdminPolls401,
-  GetAdminPolls403,
-  GetAdminPolls500,
-  GetAdminPollsParams,
-  GithubCom4H1RZooraInternalDomainResponse,
-} from "../model"
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -30,14 +21,29 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query"
+  UseQueryResult
+} from '@tanstack/react-query';
 
-import { useMutation, useQuery } from "@tanstack/react-query"
+import type {
+  DeleteAdminPollsId401,
+  DeleteAdminPollsId403,
+  DeleteAdminPollsId404,
+  DeleteAdminPollsId500,
+  GetAdminPolls200,
+  GetAdminPolls401,
+  GetAdminPolls403,
+  GetAdminPolls500,
+  GetAdminPollsParams,
+  GithubCom4H1RZooraInternalDomainResponse
+} from '../model';
 
-import { customInstance } from ".././mutator/custom-instance"
+import { customInstance } from '.././mutator/custom-instance';
+import type { ErrorType } from '.././mutator/custom-instance';
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * @summary [Admin] List polls
@@ -62,146 +68,118 @@ export type getAdminPollsResponse500 = {
   status: 500
 }
 
-export type getAdminPollsResponseSuccess = getAdminPollsResponse200 & {
-  headers: Headers
-}
-export type getAdminPollsResponseError = (
-  | getAdminPollsResponse401
-  | getAdminPollsResponse403
-  | getAdminPollsResponse500
-) & {
-  headers: Headers
-}
+export type getAdminPollsResponseSuccess = (getAdminPollsResponse200) & {
+  headers: Headers;
+};
+export type getAdminPollsResponseError = (getAdminPollsResponse401 | getAdminPollsResponse403 | getAdminPollsResponse500) & {
+  headers: Headers;
+};
 
-export type getAdminPollsResponse = getAdminPollsResponseSuccess | getAdminPollsResponseError
+export type getAdminPollsResponse = (getAdminPollsResponseSuccess | getAdminPollsResponseError)
 
-export const getGetAdminPollsUrl = (params?: GetAdminPollsParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetAdminPollsUrl = (params?: GetAdminPollsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/admin/polls?${stringifiedParams}` : `/admin/polls`
 }
 
-export const getAdminPolls = async (
-  params?: GetAdminPollsParams,
-  options?: RequestInit
-): Promise<getAdminPollsResponse> => {
-  return customInstance<getAdminPollsResponse>(getGetAdminPollsUrl(params), {
+export const getAdminPolls = async (params?: GetAdminPollsParams, options?: RequestInit): Promise<getAdminPollsResponse> => {
+
+  return customInstance<getAdminPollsResponse>(getGetAdminPollsUrl(params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetAdminPollsQueryKey = (params?: GetAdminPollsParams) => {
-  return [`/admin/polls`, ...(params ? [params] : [])] as const
-}
 
-export const getGetAdminPollsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getAdminPolls>>,
-  TError = ErrorType<GetAdminPolls401 | GetAdminPolls403 | GetAdminPolls500>,
->(
-  params?: GetAdminPollsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPolls>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetAdminPollsQueryKey = (params?: GetAdminPollsParams,) => {
+    return [
+    `/admin/polls`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminPollsQueryOptions = <TData = Awaited<ReturnType<typeof getAdminPolls>>, TError = ErrorType<GetAdminPolls401 | GetAdminPolls403 | GetAdminPolls500>>(params?: GetAdminPollsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPolls>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetAdminPollsQueryKey(params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminPolls>>> = ({ signal }) =>
-    getAdminPolls(params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminPollsQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getAdminPolls>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminPolls>>> = ({ signal }) => getAdminPolls(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminPolls>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetAdminPollsQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminPolls>>>
 export type GetAdminPollsQueryError = ErrorType<GetAdminPolls401 | GetAdminPolls403 | GetAdminPolls500>
 
-export function useGetAdminPolls<
-  TData = Awaited<ReturnType<typeof getAdminPolls>>,
-  TError = ErrorType<GetAdminPolls401 | GetAdminPolls403 | GetAdminPolls500>,
->(
-  params: undefined | GetAdminPollsParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPolls>>, TError, TData>> &
-      Pick<
+
+export function useGetAdminPolls<TData = Awaited<ReturnType<typeof getAdminPolls>>, TError = ErrorType<GetAdminPolls401 | GetAdminPolls403 | GetAdminPolls500>>(
+ params: undefined |  GetAdminPollsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPolls>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAdminPolls>>,
           TError,
           Awaited<ReturnType<typeof getAdminPolls>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAdminPolls<
-  TData = Awaited<ReturnType<typeof getAdminPolls>>,
-  TError = ErrorType<GetAdminPolls401 | GetAdminPolls403 | GetAdminPolls500>,
->(
-  params?: GetAdminPollsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPolls>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminPolls<TData = Awaited<ReturnType<typeof getAdminPolls>>, TError = ErrorType<GetAdminPolls401 | GetAdminPolls403 | GetAdminPolls500>>(
+ params?: GetAdminPollsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPolls>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAdminPolls>>,
           TError,
           Awaited<ReturnType<typeof getAdminPolls>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAdminPolls<
-  TData = Awaited<ReturnType<typeof getAdminPolls>>,
-  TError = ErrorType<GetAdminPolls401 | GetAdminPolls403 | GetAdminPolls500>,
->(
-  params?: GetAdminPollsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPolls>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminPolls<TData = Awaited<ReturnType<typeof getAdminPolls>>, TError = ErrorType<GetAdminPolls401 | GetAdminPolls403 | GetAdminPolls500>>(
+ params?: GetAdminPollsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPolls>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary [Admin] List polls
  */
 
-export function useGetAdminPolls<
-  TData = Awaited<ReturnType<typeof getAdminPolls>>,
-  TError = ErrorType<GetAdminPolls401 | GetAdminPolls403 | GetAdminPolls500>,
->(
-  params?: GetAdminPollsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPolls>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetAdminPollsQueryOptions(params, options)
+export function useGetAdminPolls<TData = Awaited<ReturnType<typeof getAdminPolls>>, TError = ErrorType<GetAdminPolls401 | GetAdminPolls403 | GetAdminPolls500>>(
+ params?: GetAdminPollsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPolls>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetAdminPollsQueryOptions(params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary [Admin] Hard-delete poll
@@ -231,72 +209,78 @@ export type deleteAdminPollsIdResponse500 = {
   status: 500
 }
 
-export type deleteAdminPollsIdResponseSuccess = deleteAdminPollsIdResponse200 & {
-  headers: Headers
-}
-export type deleteAdminPollsIdResponseError = (
-  | deleteAdminPollsIdResponse401
-  | deleteAdminPollsIdResponse403
-  | deleteAdminPollsIdResponse404
-  | deleteAdminPollsIdResponse500
-) & {
-  headers: Headers
-}
+export type deleteAdminPollsIdResponseSuccess = (deleteAdminPollsIdResponse200) & {
+  headers: Headers;
+};
+export type deleteAdminPollsIdResponseError = (deleteAdminPollsIdResponse401 | deleteAdminPollsIdResponse403 | deleteAdminPollsIdResponse404 | deleteAdminPollsIdResponse500) & {
+  headers: Headers;
+};
 
-export type deleteAdminPollsIdResponse = deleteAdminPollsIdResponseSuccess | deleteAdminPollsIdResponseError
+export type deleteAdminPollsIdResponse = (deleteAdminPollsIdResponseSuccess | deleteAdminPollsIdResponseError)
 
-export const getDeleteAdminPollsIdUrl = (id: string) => {
+export const getDeleteAdminPollsIdUrl = (id: string,) => {
+
+
+
+
   return `/admin/polls/${id}`
 }
 
 export const deleteAdminPollsId = async (id: string, options?: RequestInit): Promise<deleteAdminPollsIdResponse> => {
-  return customInstance<deleteAdminPollsIdResponse>(getDeleteAdminPollsIdUrl(id), {
+
+  return customInstance<deleteAdminPollsIdResponse>(getDeleteAdminPollsIdUrl(id),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeleteAdminPollsIdMutationOptions = <
-  TError = ErrorType<DeleteAdminPollsId401 | DeleteAdminPollsId403 | DeleteAdminPollsId404 | DeleteAdminPollsId500>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteAdminPollsId>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminPollsId>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["deleteAdminPollsId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminPollsId>>, { id: string }> = (props) => {
-    const { id } = props ?? {}
-
-    return deleteAdminPollsId(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteAdminPollsIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminPollsId>>>
 
-export type DeleteAdminPollsIdMutationError = ErrorType<
-  DeleteAdminPollsId401 | DeleteAdminPollsId403 | DeleteAdminPollsId404 | DeleteAdminPollsId500
->
 
-/**
+export const getDeleteAdminPollsIdMutationOptions = <TError = ErrorType<DeleteAdminPollsId401 | DeleteAdminPollsId403 | DeleteAdminPollsId404 | DeleteAdminPollsId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminPollsId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminPollsId>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteAdminPollsId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminPollsId>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteAdminPollsId(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminPollsIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminPollsId>>>
+
+    export type DeleteAdminPollsIdMutationError = ErrorType<DeleteAdminPollsId401 | DeleteAdminPollsId403 | DeleteAdminPollsId404 | DeleteAdminPollsId500>
+
+    /**
  * @summary [Admin] Hard-delete poll
  */
-export const useDeleteAdminPollsId = <
-  TError = ErrorType<DeleteAdminPollsId401 | DeleteAdminPollsId403 | DeleteAdminPollsId404 | DeleteAdminPollsId500>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteAdminPollsId>>, TError, { id: string }, TContext>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof deleteAdminPollsId>>, TError, { id: string }, TContext> => {
-  return useMutation(getDeleteAdminPollsIdMutationOptions(options), queryClient)
-}
+export const useDeleteAdminPollsId = <TError = ErrorType<DeleteAdminPollsId401 | DeleteAdminPollsId403 | DeleteAdminPollsId404 | DeleteAdminPollsId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminPollsId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminPollsId>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteAdminPollsIdMutationOptions(options), queryClient);
+    }

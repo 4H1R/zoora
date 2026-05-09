@@ -5,20 +5,20 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainQuestionBank } from "./githubCom4H1RZooraInternalDomainQuestionBank"
-import type { GithubCom4H1RZooraInternalDomainQuiz } from "./githubCom4H1RZooraInternalDomainQuiz"
-import type { GithubCom4H1RZooraInternalDomainQuizRuleType } from "./githubCom4H1RZooraInternalDomainQuizRuleType"
+import type { GithubCom4H1RZooraInternalDomainQuestionBank } from './githubCom4H1RZooraInternalDomainQuestionBank';
+import type { GithubCom4H1RZooraInternalDomainQuiz } from './githubCom4H1RZooraInternalDomainQuiz';
+import type { GithubCom4H1RZooraInternalDomainQuizRuleType } from './githubCom4H1RZooraInternalDomainQuizRuleType';
 
 export interface GithubCom4H1RZooraInternalDomainQuizRule {
-  bank?: GithubCom4H1RZooraInternalDomainQuestionBank
-  bank_id?: string
-  count?: number
-  created_at?: string
-  id?: string
-  is_dynamic?: boolean
-  question_ids?: string[]
-  quiz?: GithubCom4H1RZooraInternalDomainQuiz
-  quiz_id?: string
-  type?: GithubCom4H1RZooraInternalDomainQuizRuleType
-  updated_at?: string
+  bank?: GithubCom4H1RZooraInternalDomainQuestionBank;
+  bank_id?: string;
+  count?: number;
+  created_at?: string;
+  id?: string;
+  is_dynamic?: boolean;
+  question_ids?: string[];
+  quiz?: GithubCom4H1RZooraInternalDomainQuiz;
+  quiz_id?: string;
+  type?: GithubCom4H1RZooraInternalDomainQuizRuleType;
+  updated_at?: string;
 }

@@ -6,11 +6,11 @@
  * OpenAPI spec version: 1.0
  */
 
-export type GithubCom4H1RZooraInternalDomainChatMemberRole =
-  (typeof GithubCom4H1RZooraInternalDomainChatMemberRole)[keyof typeof GithubCom4H1RZooraInternalDomainChatMemberRole]
+export type GithubCom4H1RZooraInternalDomainChatMemberRole = typeof GithubCom4H1RZooraInternalDomainChatMemberRole[keyof typeof GithubCom4H1RZooraInternalDomainChatMemberRole];
+
 
 export const GithubCom4H1RZooraInternalDomainChatMemberRole = {
-  ChatMemberRoleAdmin: "admin",
-  ChatMemberRoleMember: "member",
-  ChatMemberRoleReadOnly: "read_only",
-} as const
+  ChatMemberRoleAdmin: 'admin',
+  ChatMemberRoleMember: 'member',
+  ChatMemberRoleReadOnly: 'read_only',
+} as const;

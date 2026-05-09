@@ -7,28 +7,28 @@
  */
 
 export type GetPracticesParams = {
-  /**
-   * Filter by class UUID
-   */
-  class_id?: string
-  /**
-   * Filter by class session UUID
-   */
-  class_session_id?: string
-  /**
-   * Substring match on title/content
-   */
-  search?: string
-  /**
-   * One of: created_at, updated_at, start_time, end_time, title
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-}
+/**
+ * Filter by class UUID
+ */
+class_id?: string;
+/**
+ * Filter by class session UUID
+ */
+class_session_id?: string;
+/**
+ * Substring match on title/content
+ */
+search?: string;
+/**
+ * One of: created_at, updated_at, start_time, end_time, title
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+};

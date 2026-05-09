@@ -8,6 +8,6 @@
 
 export interface GithubCom4H1RZooraInternalDomainGradeAnswerDTO {
   /** @minimum 0 */
-  earned_score?: number
-  question_id: string
+  earned_score?: number;
+  question_id: string;
 }

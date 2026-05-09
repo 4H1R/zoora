@@ -5,12 +5,12 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainQuestionOption } from "./githubCom4H1RZooraInternalDomainQuestionOption"
-import type { GithubCom4H1RZooraInternalDomainUpdateQuestionDTOType } from "./githubCom4H1RZooraInternalDomainUpdateQuestionDTOType"
+import type { GithubCom4H1RZooraInternalDomainQuestionOption } from './githubCom4H1RZooraInternalDomainQuestionOption';
+import type { GithubCom4H1RZooraInternalDomainUpdateQuestionDTOType } from './githubCom4H1RZooraInternalDomainUpdateQuestionDTOType';
 
 export interface GithubCom4H1RZooraInternalDomainUpdateQuestionDTO {
-  options?: GithubCom4H1RZooraInternalDomainQuestionOption[]
+  options?: GithubCom4H1RZooraInternalDomainQuestionOption[];
   /** @minLength 1 */
-  text?: string
-  type?: GithubCom4H1RZooraInternalDomainUpdateQuestionDTOType
+  text?: string;
+  type?: GithubCom4H1RZooraInternalDomainUpdateQuestionDTOType;
 }

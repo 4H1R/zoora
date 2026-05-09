@@ -8,8 +8,8 @@
 
 export interface GithubCom4H1RZooraInternalDomainToggleReactionDTO {
   /**
-   * @minLength 1
-   * @maxLength 32
-   */
-  emoji: string
+     * @minLength 1
+     * @maxLength 32
+     */
+  emoji: string;
 }

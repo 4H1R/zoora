@@ -7,5 +7,5 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO {
-  content?: string
+  content?: string;
 }

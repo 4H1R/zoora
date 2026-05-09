@@ -5,20 +5,20 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainLiveRecordingStatus } from "./githubCom4H1RZooraInternalDomainLiveRecordingStatus"
-import type { GithubCom4H1RZooraInternalDomainLiveRoom } from "./githubCom4H1RZooraInternalDomainLiveRoom"
+import type { GithubCom4H1RZooraInternalDomainLiveRecordingStatus } from './githubCom4H1RZooraInternalDomainLiveRecordingStatus';
+import type { GithubCom4H1RZooraInternalDomainLiveRoom } from './githubCom4H1RZooraInternalDomainLiveRoom';
 
 export interface GithubCom4H1RZooraInternalDomainLiveRecording {
-  created_at?: string
-  duration?: number
-  egress_id?: string
-  ended_at?: string
-  file_url?: string
-  id?: string
-  live_room?: GithubCom4H1RZooraInternalDomainLiveRoom
-  live_room_id?: string
-  size?: number
-  started_at?: string
-  status?: GithubCom4H1RZooraInternalDomainLiveRecordingStatus
-  updated_at?: string
+  created_at?: string;
+  duration?: number;
+  egress_id?: string;
+  ended_at?: string;
+  file_url?: string;
+  id?: string;
+  live_room?: GithubCom4H1RZooraInternalDomainLiveRoom;
+  live_room_id?: string;
+  size?: number;
+  started_at?: string;
+  status?: GithubCom4H1RZooraInternalDomainLiveRecordingStatus;
+  updated_at?: string;
 }

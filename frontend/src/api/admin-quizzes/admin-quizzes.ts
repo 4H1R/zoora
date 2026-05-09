@@ -5,19 +5,10 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { ErrorType } from ".././mutator/custom-instance"
-import type {
-  DeleteAdminQuizzesId401,
-  DeleteAdminQuizzesId403,
-  DeleteAdminQuizzesId404,
-  DeleteAdminQuizzesId500,
-  GetAdminQuizzes200,
-  GetAdminQuizzes401,
-  GetAdminQuizzes403,
-  GetAdminQuizzes500,
-  GetAdminQuizzesParams,
-  GithubCom4H1RZooraInternalDomainResponse,
-} from "../model"
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -30,14 +21,29 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query"
+  UseQueryResult
+} from '@tanstack/react-query';
 
-import { useMutation, useQuery } from "@tanstack/react-query"
+import type {
+  DeleteAdminQuizzesId401,
+  DeleteAdminQuizzesId403,
+  DeleteAdminQuizzesId404,
+  DeleteAdminQuizzesId500,
+  GetAdminQuizzes200,
+  GetAdminQuizzes401,
+  GetAdminQuizzes403,
+  GetAdminQuizzes500,
+  GetAdminQuizzesParams,
+  GithubCom4H1RZooraInternalDomainResponse
+} from '../model';
 
-import { customInstance } from ".././mutator/custom-instance"
+import { customInstance } from '.././mutator/custom-instance';
+import type { ErrorType } from '.././mutator/custom-instance';
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * @summary [Admin] List quizzes
@@ -62,146 +68,118 @@ export type getAdminQuizzesResponse500 = {
   status: 500
 }
 
-export type getAdminQuizzesResponseSuccess = getAdminQuizzesResponse200 & {
-  headers: Headers
-}
-export type getAdminQuizzesResponseError = (
-  | getAdminQuizzesResponse401
-  | getAdminQuizzesResponse403
-  | getAdminQuizzesResponse500
-) & {
-  headers: Headers
-}
+export type getAdminQuizzesResponseSuccess = (getAdminQuizzesResponse200) & {
+  headers: Headers;
+};
+export type getAdminQuizzesResponseError = (getAdminQuizzesResponse401 | getAdminQuizzesResponse403 | getAdminQuizzesResponse500) & {
+  headers: Headers;
+};
 
-export type getAdminQuizzesResponse = getAdminQuizzesResponseSuccess | getAdminQuizzesResponseError
+export type getAdminQuizzesResponse = (getAdminQuizzesResponseSuccess | getAdminQuizzesResponseError)
 
-export const getGetAdminQuizzesUrl = (params?: GetAdminQuizzesParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetAdminQuizzesUrl = (params?: GetAdminQuizzesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/admin/quizzes?${stringifiedParams}` : `/admin/quizzes`
 }
 
-export const getAdminQuizzes = async (
-  params?: GetAdminQuizzesParams,
-  options?: RequestInit
-): Promise<getAdminQuizzesResponse> => {
-  return customInstance<getAdminQuizzesResponse>(getGetAdminQuizzesUrl(params), {
+export const getAdminQuizzes = async (params?: GetAdminQuizzesParams, options?: RequestInit): Promise<getAdminQuizzesResponse> => {
+
+  return customInstance<getAdminQuizzesResponse>(getGetAdminQuizzesUrl(params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetAdminQuizzesQueryKey = (params?: GetAdminQuizzesParams) => {
-  return [`/admin/quizzes`, ...(params ? [params] : [])] as const
-}
 
-export const getGetAdminQuizzesQueryOptions = <
-  TData = Awaited<ReturnType<typeof getAdminQuizzes>>,
-  TError = ErrorType<GetAdminQuizzes401 | GetAdminQuizzes403 | GetAdminQuizzes500>,
->(
-  params?: GetAdminQuizzesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuizzes>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetAdminQuizzesQueryKey = (params?: GetAdminQuizzesParams,) => {
+    return [
+    `/admin/quizzes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminQuizzesQueryOptions = <TData = Awaited<ReturnType<typeof getAdminQuizzes>>, TError = ErrorType<GetAdminQuizzes401 | GetAdminQuizzes403 | GetAdminQuizzes500>>(params?: GetAdminQuizzesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuizzes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetAdminQuizzesQueryKey(params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminQuizzes>>> = ({ signal }) =>
-    getAdminQuizzes(params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminQuizzesQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getAdminQuizzes>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminQuizzes>>> = ({ signal }) => getAdminQuizzes(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminQuizzes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetAdminQuizzesQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminQuizzes>>>
 export type GetAdminQuizzesQueryError = ErrorType<GetAdminQuizzes401 | GetAdminQuizzes403 | GetAdminQuizzes500>
 
-export function useGetAdminQuizzes<
-  TData = Awaited<ReturnType<typeof getAdminQuizzes>>,
-  TError = ErrorType<GetAdminQuizzes401 | GetAdminQuizzes403 | GetAdminQuizzes500>,
->(
-  params: undefined | GetAdminQuizzesParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuizzes>>, TError, TData>> &
-      Pick<
+
+export function useGetAdminQuizzes<TData = Awaited<ReturnType<typeof getAdminQuizzes>>, TError = ErrorType<GetAdminQuizzes401 | GetAdminQuizzes403 | GetAdminQuizzes500>>(
+ params: undefined |  GetAdminQuizzesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuizzes>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAdminQuizzes>>,
           TError,
           Awaited<ReturnType<typeof getAdminQuizzes>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAdminQuizzes<
-  TData = Awaited<ReturnType<typeof getAdminQuizzes>>,
-  TError = ErrorType<GetAdminQuizzes401 | GetAdminQuizzes403 | GetAdminQuizzes500>,
->(
-  params?: GetAdminQuizzesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuizzes>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminQuizzes<TData = Awaited<ReturnType<typeof getAdminQuizzes>>, TError = ErrorType<GetAdminQuizzes401 | GetAdminQuizzes403 | GetAdminQuizzes500>>(
+ params?: GetAdminQuizzesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuizzes>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAdminQuizzes>>,
           TError,
           Awaited<ReturnType<typeof getAdminQuizzes>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAdminQuizzes<
-  TData = Awaited<ReturnType<typeof getAdminQuizzes>>,
-  TError = ErrorType<GetAdminQuizzes401 | GetAdminQuizzes403 | GetAdminQuizzes500>,
->(
-  params?: GetAdminQuizzesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuizzes>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminQuizzes<TData = Awaited<ReturnType<typeof getAdminQuizzes>>, TError = ErrorType<GetAdminQuizzes401 | GetAdminQuizzes403 | GetAdminQuizzes500>>(
+ params?: GetAdminQuizzesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuizzes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary [Admin] List quizzes
  */
 
-export function useGetAdminQuizzes<
-  TData = Awaited<ReturnType<typeof getAdminQuizzes>>,
-  TError = ErrorType<GetAdminQuizzes401 | GetAdminQuizzes403 | GetAdminQuizzes500>,
->(
-  params?: GetAdminQuizzesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuizzes>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetAdminQuizzesQueryOptions(params, options)
+export function useGetAdminQuizzes<TData = Awaited<ReturnType<typeof getAdminQuizzes>>, TError = ErrorType<GetAdminQuizzes401 | GetAdminQuizzes403 | GetAdminQuizzes500>>(
+ params?: GetAdminQuizzesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuizzes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetAdminQuizzesQueryOptions(params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary [Admin] Hard-delete quiz
@@ -231,79 +209,78 @@ export type deleteAdminQuizzesIdResponse500 = {
   status: 500
 }
 
-export type deleteAdminQuizzesIdResponseSuccess = deleteAdminQuizzesIdResponse200 & {
-  headers: Headers
-}
-export type deleteAdminQuizzesIdResponseError = (
-  | deleteAdminQuizzesIdResponse401
-  | deleteAdminQuizzesIdResponse403
-  | deleteAdminQuizzesIdResponse404
-  | deleteAdminQuizzesIdResponse500
-) & {
-  headers: Headers
-}
+export type deleteAdminQuizzesIdResponseSuccess = (deleteAdminQuizzesIdResponse200) & {
+  headers: Headers;
+};
+export type deleteAdminQuizzesIdResponseError = (deleteAdminQuizzesIdResponse401 | deleteAdminQuizzesIdResponse403 | deleteAdminQuizzesIdResponse404 | deleteAdminQuizzesIdResponse500) & {
+  headers: Headers;
+};
 
-export type deleteAdminQuizzesIdResponse = deleteAdminQuizzesIdResponseSuccess | deleteAdminQuizzesIdResponseError
+export type deleteAdminQuizzesIdResponse = (deleteAdminQuizzesIdResponseSuccess | deleteAdminQuizzesIdResponseError)
 
-export const getDeleteAdminQuizzesIdUrl = (id: string) => {
+export const getDeleteAdminQuizzesIdUrl = (id: string,) => {
+
+
+
+
   return `/admin/quizzes/${id}`
 }
 
-export const deleteAdminQuizzesId = async (
-  id: string,
-  options?: RequestInit
-): Promise<deleteAdminQuizzesIdResponse> => {
-  return customInstance<deleteAdminQuizzesIdResponse>(getDeleteAdminQuizzesIdUrl(id), {
+export const deleteAdminQuizzesId = async (id: string, options?: RequestInit): Promise<deleteAdminQuizzesIdResponse> => {
+
+  return customInstance<deleteAdminQuizzesIdResponse>(getDeleteAdminQuizzesIdUrl(id),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeleteAdminQuizzesIdMutationOptions = <
-  TError = ErrorType<
-    DeleteAdminQuizzesId401 | DeleteAdminQuizzesId403 | DeleteAdminQuizzesId404 | DeleteAdminQuizzesId500
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteAdminQuizzesId>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminQuizzesId>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["deleteAdminQuizzesId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminQuizzesId>>, { id: string }> = (props) => {
-    const { id } = props ?? {}
-
-    return deleteAdminQuizzesId(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteAdminQuizzesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminQuizzesId>>>
 
-export type DeleteAdminQuizzesIdMutationError = ErrorType<
-  DeleteAdminQuizzesId401 | DeleteAdminQuizzesId403 | DeleteAdminQuizzesId404 | DeleteAdminQuizzesId500
->
 
-/**
+export const getDeleteAdminQuizzesIdMutationOptions = <TError = ErrorType<DeleteAdminQuizzesId401 | DeleteAdminQuizzesId403 | DeleteAdminQuizzesId404 | DeleteAdminQuizzesId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminQuizzesId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminQuizzesId>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteAdminQuizzesId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminQuizzesId>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteAdminQuizzesId(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminQuizzesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminQuizzesId>>>
+
+    export type DeleteAdminQuizzesIdMutationError = ErrorType<DeleteAdminQuizzesId401 | DeleteAdminQuizzesId403 | DeleteAdminQuizzesId404 | DeleteAdminQuizzesId500>
+
+    /**
  * @summary [Admin] Hard-delete quiz
  */
-export const useDeleteAdminQuizzesId = <
-  TError = ErrorType<
-    DeleteAdminQuizzesId401 | DeleteAdminQuizzesId403 | DeleteAdminQuizzesId404 | DeleteAdminQuizzesId500
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteAdminQuizzesId>>, TError, { id: string }, TContext>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof deleteAdminQuizzesId>>, TError, { id: string }, TContext> => {
-  return useMutation(getDeleteAdminQuizzesIdMutationOptions(options), queryClient)
-}
+export const useDeleteAdminQuizzesId = <TError = ErrorType<DeleteAdminQuizzesId401 | DeleteAdminQuizzesId403 | DeleteAdminQuizzesId404 | DeleteAdminQuizzesId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminQuizzesId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminQuizzesId>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteAdminQuizzesIdMutationOptions(options), queryClient);
+    }

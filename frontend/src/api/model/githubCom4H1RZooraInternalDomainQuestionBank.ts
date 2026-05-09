@@ -7,10 +7,10 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainQuestionBank {
-  created_at?: string
-  description?: string
-  id?: string
-  name?: string
-  organization_id?: string
-  updated_at?: string
+  created_at?: string;
+  description?: string;
+  id?: string;
+  name?: string;
+  organization_id?: string;
+  updated_at?: string;
 }

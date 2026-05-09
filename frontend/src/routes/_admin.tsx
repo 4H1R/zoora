@@ -3,6 +3,7 @@ import { useEffect } from "react"
 
 import { useGetUsersMe } from "@/api/users/users"
 import { AdminBreadcrumb } from "@/components/admin/layout/admin-breadcrumb"
+import { SplashScreen } from "@/components/splash-screen"
 import { AppSidebar } from "@/components/admin/layout/app-sidebar"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -27,6 +28,8 @@ function RouteComponent() {
 
   const user = (data?.status === 200 && data.data.data) || undefined
 
+  if (isLoading || isFetching) return <SplashScreen />
+
   return (
     <SidebarProvider>
       <AppSidebar user={user} side={sidebarSide} />
@@ -39,7 +42,7 @@ function RouteComponent() {
             <ThemeToggle />
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 px-4 py-4 lg:px-8">
+        <div className="container flex flex-1 flex-col gap-4 py-4">
           <Outlet />
         </div>
       </SidebarInset>

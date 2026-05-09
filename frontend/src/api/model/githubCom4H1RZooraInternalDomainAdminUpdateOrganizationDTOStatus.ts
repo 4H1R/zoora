@@ -6,12 +6,12 @@
  * OpenAPI spec version: 1.0
  */
 
-export type GithubCom4H1RZooraInternalDomainAdminUpdateOrganizationDTOStatus =
-  (typeof GithubCom4H1RZooraInternalDomainAdminUpdateOrganizationDTOStatus)[keyof typeof GithubCom4H1RZooraInternalDomainAdminUpdateOrganizationDTOStatus]
+export type GithubCom4H1RZooraInternalDomainAdminUpdateOrganizationDTOStatus = typeof GithubCom4H1RZooraInternalDomainAdminUpdateOrganizationDTOStatus[keyof typeof GithubCom4H1RZooraInternalDomainAdminUpdateOrganizationDTOStatus];
+
 
 export const GithubCom4H1RZooraInternalDomainAdminUpdateOrganizationDTOStatus = {
-  active: "active",
-  trial: "trial",
-  suspended: "suspended",
-  archived: "archived",
-} as const
+  active: 'active',
+  trial: 'trial',
+  suspended: 'suspended',
+  archived: 'archived',
+} as const;

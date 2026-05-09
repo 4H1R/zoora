@@ -7,9 +7,9 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainLiveRoomConfig {
-  allow_camera_default?: boolean
-  allow_mic_default?: boolean
-  allow_screen_share_default?: boolean
-  auto_record?: boolean
-  max_participants?: number
+  allow_camera_default?: boolean;
+  allow_mic_default?: boolean;
+  allow_screen_share_default?: boolean;
+  auto_record?: boolean;
+  max_participants?: number;
 }

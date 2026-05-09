@@ -5,7 +5,25 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { ErrorType } from ".././mutator/custom-instance"
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   DeleteAdminClassesId401,
   DeleteAdminClassesId403,
@@ -35,28 +53,16 @@ import type {
   PutAdminClassesId403,
   PutAdminClassesId404,
   PutAdminClassesId409,
-  PutAdminClassesId500,
-} from "../model"
-import type {
-  DataTag,
-  DefinedInitialDataOptions,
-  DefinedUseQueryResult,
-  MutationFunction,
-  QueryClient,
-  QueryFunction,
-  QueryKey,
-  UndefinedInitialDataOptions,
-  UseMutationOptions,
-  UseMutationResult,
-  UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query"
+  PutAdminClassesId500
+} from '../model';
 
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { customInstance } from '.././mutator/custom-instance';
+import type { ErrorType } from '.././mutator/custom-instance';
 
-import { customInstance } from ".././mutator/custom-instance"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * Cross-org list. Search matches substrings of: name, description. Orderable fields: created_at, updated_at, name. Filters: user_id (teacher), include_deleted.
@@ -82,146 +88,118 @@ export type getAdminClassesResponse500 = {
   status: 500
 }
 
-export type getAdminClassesResponseSuccess = getAdminClassesResponse200 & {
-  headers: Headers
-}
-export type getAdminClassesResponseError = (
-  | getAdminClassesResponse401
-  | getAdminClassesResponse403
-  | getAdminClassesResponse500
-) & {
-  headers: Headers
-}
+export type getAdminClassesResponseSuccess = (getAdminClassesResponse200) & {
+  headers: Headers;
+};
+export type getAdminClassesResponseError = (getAdminClassesResponse401 | getAdminClassesResponse403 | getAdminClassesResponse500) & {
+  headers: Headers;
+};
 
-export type getAdminClassesResponse = getAdminClassesResponseSuccess | getAdminClassesResponseError
+export type getAdminClassesResponse = (getAdminClassesResponseSuccess | getAdminClassesResponseError)
 
-export const getGetAdminClassesUrl = (params?: GetAdminClassesParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetAdminClassesUrl = (params?: GetAdminClassesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/admin/classes?${stringifiedParams}` : `/admin/classes`
 }
 
-export const getAdminClasses = async (
-  params?: GetAdminClassesParams,
-  options?: RequestInit
-): Promise<getAdminClassesResponse> => {
-  return customInstance<getAdminClassesResponse>(getGetAdminClassesUrl(params), {
+export const getAdminClasses = async (params?: GetAdminClassesParams, options?: RequestInit): Promise<getAdminClassesResponse> => {
+
+  return customInstance<getAdminClassesResponse>(getGetAdminClassesUrl(params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetAdminClassesQueryKey = (params?: GetAdminClassesParams) => {
-  return [`/admin/classes`, ...(params ? [params] : [])] as const
-}
 
-export const getGetAdminClassesQueryOptions = <
-  TData = Awaited<ReturnType<typeof getAdminClasses>>,
-  TError = ErrorType<GetAdminClasses401 | GetAdminClasses403 | GetAdminClasses500>,
->(
-  params?: GetAdminClassesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminClasses>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetAdminClassesQueryKey = (params?: GetAdminClassesParams,) => {
+    return [
+    `/admin/classes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminClassesQueryOptions = <TData = Awaited<ReturnType<typeof getAdminClasses>>, TError = ErrorType<GetAdminClasses401 | GetAdminClasses403 | GetAdminClasses500>>(params?: GetAdminClassesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminClasses>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetAdminClassesQueryKey(params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminClasses>>> = ({ signal }) =>
-    getAdminClasses(params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminClassesQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getAdminClasses>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminClasses>>> = ({ signal }) => getAdminClasses(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminClasses>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetAdminClassesQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminClasses>>>
 export type GetAdminClassesQueryError = ErrorType<GetAdminClasses401 | GetAdminClasses403 | GetAdminClasses500>
 
-export function useGetAdminClasses<
-  TData = Awaited<ReturnType<typeof getAdminClasses>>,
-  TError = ErrorType<GetAdminClasses401 | GetAdminClasses403 | GetAdminClasses500>,
->(
-  params: undefined | GetAdminClassesParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminClasses>>, TError, TData>> &
-      Pick<
+
+export function useGetAdminClasses<TData = Awaited<ReturnType<typeof getAdminClasses>>, TError = ErrorType<GetAdminClasses401 | GetAdminClasses403 | GetAdminClasses500>>(
+ params: undefined |  GetAdminClassesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminClasses>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAdminClasses>>,
           TError,
           Awaited<ReturnType<typeof getAdminClasses>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAdminClasses<
-  TData = Awaited<ReturnType<typeof getAdminClasses>>,
-  TError = ErrorType<GetAdminClasses401 | GetAdminClasses403 | GetAdminClasses500>,
->(
-  params?: GetAdminClassesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminClasses>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminClasses<TData = Awaited<ReturnType<typeof getAdminClasses>>, TError = ErrorType<GetAdminClasses401 | GetAdminClasses403 | GetAdminClasses500>>(
+ params?: GetAdminClassesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminClasses>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAdminClasses>>,
           TError,
           Awaited<ReturnType<typeof getAdminClasses>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAdminClasses<
-  TData = Awaited<ReturnType<typeof getAdminClasses>>,
-  TError = ErrorType<GetAdminClasses401 | GetAdminClasses403 | GetAdminClasses500>,
->(
-  params?: GetAdminClassesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminClasses>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminClasses<TData = Awaited<ReturnType<typeof getAdminClasses>>, TError = ErrorType<GetAdminClasses401 | GetAdminClasses403 | GetAdminClasses500>>(
+ params?: GetAdminClassesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminClasses>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary [Admin] List classes
  */
 
-export function useGetAdminClasses<
-  TData = Awaited<ReturnType<typeof getAdminClasses>>,
-  TError = ErrorType<GetAdminClasses401 | GetAdminClasses403 | GetAdminClasses500>,
->(
-  params?: GetAdminClassesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminClasses>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetAdminClassesQueryOptions(params, options)
+export function useGetAdminClasses<TData = Awaited<ReturnType<typeof getAdminClasses>>, TError = ErrorType<GetAdminClasses401 | GetAdminClasses403 | GetAdminClasses500>>(
+ params?: GetAdminClassesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminClasses>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetAdminClassesQueryOptions(params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary [Admin] Create class
@@ -256,109 +234,83 @@ export type postAdminClassesResponse500 = {
   status: 500
 }
 
-export type postAdminClassesResponseSuccess = postAdminClassesResponse201 & {
-  headers: Headers
-}
-export type postAdminClassesResponseError = (
-  | postAdminClassesResponse400
-  | postAdminClassesResponse401
-  | postAdminClassesResponse403
-  | postAdminClassesResponse409
-  | postAdminClassesResponse500
-) & {
-  headers: Headers
-}
+export type postAdminClassesResponseSuccess = (postAdminClassesResponse201) & {
+  headers: Headers;
+};
+export type postAdminClassesResponseError = (postAdminClassesResponse400 | postAdminClassesResponse401 | postAdminClassesResponse403 | postAdminClassesResponse409 | postAdminClassesResponse500) & {
+  headers: Headers;
+};
 
-export type postAdminClassesResponse = postAdminClassesResponseSuccess | postAdminClassesResponseError
+export type postAdminClassesResponse = (postAdminClassesResponseSuccess | postAdminClassesResponseError)
 
 export const getPostAdminClassesUrl = () => {
+
+
+
+
   return `/admin/classes`
 }
 
-export const postAdminClasses = async (
-  githubCom4H1RZooraInternalDomainAdminCreateClassDTO: GithubCom4H1RZooraInternalDomainAdminCreateClassDTO,
-  options?: RequestInit
-): Promise<postAdminClassesResponse> => {
-  return customInstance<postAdminClassesResponse>(getPostAdminClassesUrl(), {
+export const postAdminClasses = async (githubCom4H1RZooraInternalDomainAdminCreateClassDTO: GithubCom4H1RZooraInternalDomainAdminCreateClassDTO, options?: RequestInit): Promise<postAdminClassesResponse> => {
+
+  return customInstance<postAdminClassesResponse>(getPostAdminClassesUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainAdminCreateClassDTO),
-  })
-}
-
-export const getPostAdminClassesMutationOptions = <
-  TError = ErrorType<
-    PostAdminClasses400 | PostAdminClasses401 | PostAdminClasses403 | PostAdminClasses409 | PostAdminClasses500
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postAdminClasses>>,
-    TError,
-    { data: GithubCom4H1RZooraInternalDomainAdminCreateClassDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postAdminClasses>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainAdminCreateClassDTO },
-  TContext
-> => {
-  const mutationKey = ["postAdminClasses"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postAdminClasses>>,
-    { data: GithubCom4H1RZooraInternalDomainAdminCreateClassDTO }
-  > = (props) => {
-    const { data } = props ?? {}
-
-    return postAdminClasses(data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainAdminCreateClassDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostAdminClassesMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminClasses>>>
-export type PostAdminClassesMutationBody = GithubCom4H1RZooraInternalDomainAdminCreateClassDTO
-export type PostAdminClassesMutationError = ErrorType<
-  PostAdminClasses400 | PostAdminClasses401 | PostAdminClasses403 | PostAdminClasses409 | PostAdminClasses500
->
 
-/**
+
+export const getPostAdminClassesMutationOptions = <TError = ErrorType<PostAdminClasses400 | PostAdminClasses401 | PostAdminClasses403 | PostAdminClasses409 | PostAdminClasses500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminClasses>>, TError,{data: GithubCom4H1RZooraInternalDomainAdminCreateClassDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAdminClasses>>, TError,{data: GithubCom4H1RZooraInternalDomainAdminCreateClassDTO}, TContext> => {
+
+const mutationKey = ['postAdminClasses'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAdminClasses>>, {data: GithubCom4H1RZooraInternalDomainAdminCreateClassDTO}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAdminClasses(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAdminClassesMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminClasses>>>
+    export type PostAdminClassesMutationBody = GithubCom4H1RZooraInternalDomainAdminCreateClassDTO
+    export type PostAdminClassesMutationError = ErrorType<PostAdminClasses400 | PostAdminClasses401 | PostAdminClasses403 | PostAdminClasses409 | PostAdminClasses500>
+
+    /**
  * @summary [Admin] Create class
  */
-export const usePostAdminClasses = <
-  TError = ErrorType<
-    PostAdminClasses400 | PostAdminClasses401 | PostAdminClasses403 | PostAdminClasses409 | PostAdminClasses500
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postAdminClasses>>,
-      TError,
-      { data: GithubCom4H1RZooraInternalDomainAdminCreateClassDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postAdminClasses>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainAdminCreateClassDTO },
-  TContext
-> => {
-  return useMutation(getPostAdminClassesMutationOptions(options), queryClient)
-}
-/**
+export const usePostAdminClasses = <TError = ErrorType<PostAdminClasses400 | PostAdminClasses401 | PostAdminClasses403 | PostAdminClasses409 | PostAdminClasses500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminClasses>>, TError,{data: GithubCom4H1RZooraInternalDomainAdminCreateClassDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAdminClasses>>,
+        TError,
+        {data: GithubCom4H1RZooraInternalDomainAdminCreateClassDTO},
+        TContext
+      > => {
+      return useMutation(getPostAdminClassesMutationOptions(options), queryClient);
+    }
+    /**
  * @summary [Admin] Hard-delete class session
  */
 export type deleteAdminClassesSessionsSessionIdResponse200 = {
@@ -386,122 +338,82 @@ export type deleteAdminClassesSessionsSessionIdResponse500 = {
   status: 500
 }
 
-export type deleteAdminClassesSessionsSessionIdResponseSuccess = deleteAdminClassesSessionsSessionIdResponse200 & {
-  headers: Headers
-}
-export type deleteAdminClassesSessionsSessionIdResponseError = (
-  | deleteAdminClassesSessionsSessionIdResponse401
-  | deleteAdminClassesSessionsSessionIdResponse403
-  | deleteAdminClassesSessionsSessionIdResponse404
-  | deleteAdminClassesSessionsSessionIdResponse500
-) & {
-  headers: Headers
-}
+export type deleteAdminClassesSessionsSessionIdResponseSuccess = (deleteAdminClassesSessionsSessionIdResponse200) & {
+  headers: Headers;
+};
+export type deleteAdminClassesSessionsSessionIdResponseError = (deleteAdminClassesSessionsSessionIdResponse401 | deleteAdminClassesSessionsSessionIdResponse403 | deleteAdminClassesSessionsSessionIdResponse404 | deleteAdminClassesSessionsSessionIdResponse500) & {
+  headers: Headers;
+};
 
-export type deleteAdminClassesSessionsSessionIdResponse =
-  | deleteAdminClassesSessionsSessionIdResponseSuccess
-  | deleteAdminClassesSessionsSessionIdResponseError
+export type deleteAdminClassesSessionsSessionIdResponse = (deleteAdminClassesSessionsSessionIdResponseSuccess | deleteAdminClassesSessionsSessionIdResponseError)
 
-export const getDeleteAdminClassesSessionsSessionIdUrl = (sessionId: string) => {
+export const getDeleteAdminClassesSessionsSessionIdUrl = (sessionId: string,) => {
+
+
+
+
   return `/admin/classes/sessions/${sessionId}`
 }
 
-export const deleteAdminClassesSessionsSessionId = async (
-  sessionId: string,
-  options?: RequestInit
-): Promise<deleteAdminClassesSessionsSessionIdResponse> => {
-  return customInstance<deleteAdminClassesSessionsSessionIdResponse>(
-    getDeleteAdminClassesSessionsSessionIdUrl(sessionId),
-    {
-      ...options,
-      method: "DELETE",
-    }
-  )
-}
+export const deleteAdminClassesSessionsSessionId = async (sessionId: string, options?: RequestInit): Promise<deleteAdminClassesSessionsSessionIdResponse> => {
 
-export const getDeleteAdminClassesSessionsSessionIdMutationOptions = <
-  TError = ErrorType<
-    | DeleteAdminClassesSessionsSessionId401
-    | DeleteAdminClassesSessionsSessionId403
-    | DeleteAdminClassesSessionsSessionId404
-    | DeleteAdminClassesSessionsSessionId500
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteAdminClassesSessionsSessionId>>,
-    TError,
-    { sessionId: string },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteAdminClassesSessionsSessionId>>,
-  TError,
-  { sessionId: string },
-  TContext
-> => {
-  const mutationKey = ["deleteAdminClassesSessionsSessionId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
+  return customInstance<deleteAdminClassesSessionsSessionIdResponse>(getDeleteAdminClassesSessionsSessionIdUrl(sessionId),
+  {
+    ...options,
+    method: 'DELETE'
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteAdminClassesSessionsSessionId>>,
-    { sessionId: string }
-  > = (props) => {
-    const { sessionId } = props ?? {}
 
-    return deleteAdminClassesSessionsSessionId(sessionId, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteAdminClassesSessionsSessionIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteAdminClassesSessionsSessionId>>
->
 
-export type DeleteAdminClassesSessionsSessionIdMutationError = ErrorType<
-  | DeleteAdminClassesSessionsSessionId401
-  | DeleteAdminClassesSessionsSessionId403
-  | DeleteAdminClassesSessionsSessionId404
-  | DeleteAdminClassesSessionsSessionId500
->
 
-/**
+export const getDeleteAdminClassesSessionsSessionIdMutationOptions = <TError = ErrorType<DeleteAdminClassesSessionsSessionId401 | DeleteAdminClassesSessionsSessionId403 | DeleteAdminClassesSessionsSessionId404 | DeleteAdminClassesSessionsSessionId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminClassesSessionsSessionId>>, TError,{sessionId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminClassesSessionsSessionId>>, TError,{sessionId: string}, TContext> => {
+
+const mutationKey = ['deleteAdminClassesSessionsSessionId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminClassesSessionsSessionId>>, {sessionId: string}> = (props) => {
+          const {sessionId} = props ?? {};
+
+          return  deleteAdminClassesSessionsSessionId(sessionId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminClassesSessionsSessionIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminClassesSessionsSessionId>>>
+
+    export type DeleteAdminClassesSessionsSessionIdMutationError = ErrorType<DeleteAdminClassesSessionsSessionId401 | DeleteAdminClassesSessionsSessionId403 | DeleteAdminClassesSessionsSessionId404 | DeleteAdminClassesSessionsSessionId500>
+
+    /**
  * @summary [Admin] Hard-delete class session
  */
-export const useDeleteAdminClassesSessionsSessionId = <
-  TError = ErrorType<
-    | DeleteAdminClassesSessionsSessionId401
-    | DeleteAdminClassesSessionsSessionId403
-    | DeleteAdminClassesSessionsSessionId404
-    | DeleteAdminClassesSessionsSessionId500
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteAdminClassesSessionsSessionId>>,
-      TError,
-      { sessionId: string },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteAdminClassesSessionsSessionId>>,
-  TError,
-  { sessionId: string },
-  TContext
-> => {
-  return useMutation(getDeleteAdminClassesSessionsSessionIdMutationOptions(options), queryClient)
-}
-/**
+export const useDeleteAdminClassesSessionsSessionId = <TError = ErrorType<DeleteAdminClassesSessionsSessionId401 | DeleteAdminClassesSessionsSessionId403 | DeleteAdminClassesSessionsSessionId404 | DeleteAdminClassesSessionsSessionId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminClassesSessionsSessionId>>, TError,{sessionId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminClassesSessionsSessionId>>,
+        TError,
+        {sessionId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteAdminClassesSessionsSessionIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary [Admin] Update class
  */
 export type putAdminClassesIdResponse200 = {
@@ -539,126 +451,84 @@ export type putAdminClassesIdResponse500 = {
   status: 500
 }
 
-export type putAdminClassesIdResponseSuccess = putAdminClassesIdResponse200 & {
-  headers: Headers
-}
-export type putAdminClassesIdResponseError = (
-  | putAdminClassesIdResponse400
-  | putAdminClassesIdResponse401
-  | putAdminClassesIdResponse403
-  | putAdminClassesIdResponse404
-  | putAdminClassesIdResponse409
-  | putAdminClassesIdResponse500
-) & {
-  headers: Headers
-}
+export type putAdminClassesIdResponseSuccess = (putAdminClassesIdResponse200) & {
+  headers: Headers;
+};
+export type putAdminClassesIdResponseError = (putAdminClassesIdResponse400 | putAdminClassesIdResponse401 | putAdminClassesIdResponse403 | putAdminClassesIdResponse404 | putAdminClassesIdResponse409 | putAdminClassesIdResponse500) & {
+  headers: Headers;
+};
 
-export type putAdminClassesIdResponse = putAdminClassesIdResponseSuccess | putAdminClassesIdResponseError
+export type putAdminClassesIdResponse = (putAdminClassesIdResponseSuccess | putAdminClassesIdResponseError)
 
-export const getPutAdminClassesIdUrl = (id: string) => {
+export const getPutAdminClassesIdUrl = (id: string,) => {
+
+
+
+
   return `/admin/classes/${id}`
 }
 
-export const putAdminClassesId = async (
-  id: string,
-  githubCom4H1RZooraInternalDomainAdminUpdateClassDTO: GithubCom4H1RZooraInternalDomainAdminUpdateClassDTO,
-  options?: RequestInit
-): Promise<putAdminClassesIdResponse> => {
-  return customInstance<putAdminClassesIdResponse>(getPutAdminClassesIdUrl(id), {
+export const putAdminClassesId = async (id: string,
+    githubCom4H1RZooraInternalDomainAdminUpdateClassDTO: GithubCom4H1RZooraInternalDomainAdminUpdateClassDTO, options?: RequestInit): Promise<putAdminClassesIdResponse> => {
+
+  return customInstance<putAdminClassesIdResponse>(getPutAdminClassesIdUrl(id),
+  {
     ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainAdminUpdateClassDTO),
-  })
-}
-
-export const getPutAdminClassesIdMutationOptions = <
-  TError = ErrorType<
-    | PutAdminClassesId400
-    | PutAdminClassesId401
-    | PutAdminClassesId403
-    | PutAdminClassesId404
-    | PutAdminClassesId409
-    | PutAdminClassesId500
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putAdminClassesId>>,
-    TError,
-    { id: string; data: GithubCom4H1RZooraInternalDomainAdminUpdateClassDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putAdminClassesId>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainAdminUpdateClassDTO },
-  TContext
-> => {
-  const mutationKey = ["putAdminClassesId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putAdminClassesId>>,
-    { id: string; data: GithubCom4H1RZooraInternalDomainAdminUpdateClassDTO }
-  > = (props) => {
-    const { id, data } = props ?? {}
-
-    return putAdminClassesId(id, data, requestOptions)
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainAdminUpdateClassDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutAdminClassesIdMutationResult = NonNullable<Awaited<ReturnType<typeof putAdminClassesId>>>
-export type PutAdminClassesIdMutationBody = GithubCom4H1RZooraInternalDomainAdminUpdateClassDTO
-export type PutAdminClassesIdMutationError = ErrorType<
-  | PutAdminClassesId400
-  | PutAdminClassesId401
-  | PutAdminClassesId403
-  | PutAdminClassesId404
-  | PutAdminClassesId409
-  | PutAdminClassesId500
->
 
-/**
+
+export const getPutAdminClassesIdMutationOptions = <TError = ErrorType<PutAdminClassesId400 | PutAdminClassesId401 | PutAdminClassesId403 | PutAdminClassesId404 | PutAdminClassesId409 | PutAdminClassesId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putAdminClassesId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainAdminUpdateClassDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putAdminClassesId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainAdminUpdateClassDTO}, TContext> => {
+
+const mutationKey = ['putAdminClassesId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putAdminClassesId>>, {id: string;data: GithubCom4H1RZooraInternalDomainAdminUpdateClassDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  putAdminClassesId(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutAdminClassesIdMutationResult = NonNullable<Awaited<ReturnType<typeof putAdminClassesId>>>
+    export type PutAdminClassesIdMutationBody = GithubCom4H1RZooraInternalDomainAdminUpdateClassDTO
+    export type PutAdminClassesIdMutationError = ErrorType<PutAdminClassesId400 | PutAdminClassesId401 | PutAdminClassesId403 | PutAdminClassesId404 | PutAdminClassesId409 | PutAdminClassesId500>
+
+    /**
  * @summary [Admin] Update class
  */
-export const usePutAdminClassesId = <
-  TError = ErrorType<
-    | PutAdminClassesId400
-    | PutAdminClassesId401
-    | PutAdminClassesId403
-    | PutAdminClassesId404
-    | PutAdminClassesId409
-    | PutAdminClassesId500
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putAdminClassesId>>,
-      TError,
-      { id: string; data: GithubCom4H1RZooraInternalDomainAdminUpdateClassDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putAdminClassesId>>,
-  TError,
-  { id: string; data: GithubCom4H1RZooraInternalDomainAdminUpdateClassDTO },
-  TContext
-> => {
-  return useMutation(getPutAdminClassesIdMutationOptions(options), queryClient)
-}
-/**
+export const usePutAdminClassesId = <TError = ErrorType<PutAdminClassesId400 | PutAdminClassesId401 | PutAdminClassesId403 | PutAdminClassesId404 | PutAdminClassesId409 | PutAdminClassesId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putAdminClassesId>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainAdminUpdateClassDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putAdminClassesId>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainAdminUpdateClassDTO},
+        TContext
+      > => {
+      return useMutation(getPutAdminClassesIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary [Admin] Hard-delete class
  */
 export type deleteAdminClassesIdResponse200 = {
@@ -686,79 +556,78 @@ export type deleteAdminClassesIdResponse500 = {
   status: 500
 }
 
-export type deleteAdminClassesIdResponseSuccess = deleteAdminClassesIdResponse200 & {
-  headers: Headers
-}
-export type deleteAdminClassesIdResponseError = (
-  | deleteAdminClassesIdResponse401
-  | deleteAdminClassesIdResponse403
-  | deleteAdminClassesIdResponse404
-  | deleteAdminClassesIdResponse500
-) & {
-  headers: Headers
-}
+export type deleteAdminClassesIdResponseSuccess = (deleteAdminClassesIdResponse200) & {
+  headers: Headers;
+};
+export type deleteAdminClassesIdResponseError = (deleteAdminClassesIdResponse401 | deleteAdminClassesIdResponse403 | deleteAdminClassesIdResponse404 | deleteAdminClassesIdResponse500) & {
+  headers: Headers;
+};
 
-export type deleteAdminClassesIdResponse = deleteAdminClassesIdResponseSuccess | deleteAdminClassesIdResponseError
+export type deleteAdminClassesIdResponse = (deleteAdminClassesIdResponseSuccess | deleteAdminClassesIdResponseError)
 
-export const getDeleteAdminClassesIdUrl = (id: string) => {
+export const getDeleteAdminClassesIdUrl = (id: string,) => {
+
+
+
+
   return `/admin/classes/${id}`
 }
 
-export const deleteAdminClassesId = async (
-  id: string,
-  options?: RequestInit
-): Promise<deleteAdminClassesIdResponse> => {
-  return customInstance<deleteAdminClassesIdResponse>(getDeleteAdminClassesIdUrl(id), {
+export const deleteAdminClassesId = async (id: string, options?: RequestInit): Promise<deleteAdminClassesIdResponse> => {
+
+  return customInstance<deleteAdminClassesIdResponse>(getDeleteAdminClassesIdUrl(id),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeleteAdminClassesIdMutationOptions = <
-  TError = ErrorType<
-    DeleteAdminClassesId401 | DeleteAdminClassesId403 | DeleteAdminClassesId404 | DeleteAdminClassesId500
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteAdminClassesId>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminClassesId>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["deleteAdminClassesId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminClassesId>>, { id: string }> = (props) => {
-    const { id } = props ?? {}
-
-    return deleteAdminClassesId(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteAdminClassesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminClassesId>>>
 
-export type DeleteAdminClassesIdMutationError = ErrorType<
-  DeleteAdminClassesId401 | DeleteAdminClassesId403 | DeleteAdminClassesId404 | DeleteAdminClassesId500
->
 
-/**
+export const getDeleteAdminClassesIdMutationOptions = <TError = ErrorType<DeleteAdminClassesId401 | DeleteAdminClassesId403 | DeleteAdminClassesId404 | DeleteAdminClassesId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminClassesId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminClassesId>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteAdminClassesId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminClassesId>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteAdminClassesId(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminClassesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminClassesId>>>
+
+    export type DeleteAdminClassesIdMutationError = ErrorType<DeleteAdminClassesId401 | DeleteAdminClassesId403 | DeleteAdminClassesId404 | DeleteAdminClassesId500>
+
+    /**
  * @summary [Admin] Hard-delete class
  */
-export const useDeleteAdminClassesId = <
-  TError = ErrorType<
-    DeleteAdminClassesId401 | DeleteAdminClassesId403 | DeleteAdminClassesId404 | DeleteAdminClassesId500
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteAdminClassesId>>, TError, { id: string }, TContext>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof deleteAdminClassesId>>, TError, { id: string }, TContext> => {
-  return useMutation(getDeleteAdminClassesIdMutationOptions(options), queryClient)
-}
+export const useDeleteAdminClassesId = <TError = ErrorType<DeleteAdminClassesId401 | DeleteAdminClassesId403 | DeleteAdminClassesId404 | DeleteAdminClassesId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminClassesId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminClassesId>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteAdminClassesIdMutationOptions(options), queryClient);
+    }

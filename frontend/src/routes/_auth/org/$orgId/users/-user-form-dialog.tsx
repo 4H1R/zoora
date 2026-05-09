@@ -21,6 +21,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useRoleName } from "@/lib/permissions"
 import { cn } from "@/lib/utils"
 
 const baseSchema = z.object({
@@ -70,7 +71,7 @@ export function UserFormDialog({ open, onOpenChange, user, organizationId }: Use
     }
   }, [open, user, reset])
 
-  const { data: rolesData } = useGetRoles({ organization_id: organizationId })
+  const { data: rolesData } = useGetRoles()
   const allRoles = (rolesData?.data?.data as Role[] | undefined) ?? []
   const roles = allRoles.filter((r) => !(r.is_preset && r.name === "Staff"))
 
@@ -179,6 +180,7 @@ interface RoleSelectProps {
 
 function RoleSelect({ roles, value, onChange, placeholder }: RoleSelectProps) {
   const { t } = useTranslation()
+  const roleName = useRoleName()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState("")
 
@@ -190,7 +192,7 @@ function RoleSelect({ roles, value, onChange, placeholder }: RoleSelectProps) {
         render={<Button variant="outline" role="combobox" className="w-full justify-between font-normal" />}
       >
         {selected ? (
-          <span className="truncate">{selected.name}</span>
+          <span className="truncate">{selected.name ? roleName(selected.name) : ""}</span>
         ) : (
           <span className="text-muted-foreground">{placeholder ?? t("org.users.form.rolePlaceholder")}</span>
         )}
@@ -216,7 +218,7 @@ function RoleSelect({ roles, value, onChange, placeholder }: RoleSelectProps) {
               {roles.map((role) => (
                 <CommandItem
                   key={role.id}
-                  value={role.name}
+                  value={role.name ? roleName(role.name) : role.name}
                   onSelect={() => {
                     if (role.id) {
                       onChange(role.id)
@@ -226,7 +228,7 @@ function RoleSelect({ roles, value, onChange, placeholder }: RoleSelectProps) {
                   }}
                 >
                   <CheckIcon className={cn("me-2 size-4", value === role.id ? "opacity-100" : "opacity-0")} />
-                  <span className="text-sm">{role.name}</span>
+                  <span className="text-sm">{role.name ? roleName(role.name) : ""}</span>
                 </CommandItem>
               ))}
             </CommandGroup>

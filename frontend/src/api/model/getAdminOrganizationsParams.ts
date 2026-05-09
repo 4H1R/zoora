@@ -7,32 +7,32 @@
  */
 
 export type GetAdminOrganizationsParams = {
-  /**
-   * Filter by status (active, trial, suspended, archived)
-   */
-  status?: string
-  /**
-   * Include soft-deleted organizations
-   */
-  include_deleted?: boolean
-  /**
-   * Substring match on name/description
-   */
-  search?: string
-  /**
-   * One of: created_at, updated_at, name
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-  /**
-   * Items per page (default 20)
-   */
-  page_size?: number
-}
+/**
+ * Filter by status (active, trial, suspended, archived)
+ */
+status?: string;
+/**
+ * Include soft-deleted organizations
+ */
+include_deleted?: boolean;
+/**
+ * Substring match on name/description
+ */
+search?: string;
+/**
+ * One of: created_at, updated_at, name
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+/**
+ * Items per page (default 20)
+ */
+page_size?: number;
+};

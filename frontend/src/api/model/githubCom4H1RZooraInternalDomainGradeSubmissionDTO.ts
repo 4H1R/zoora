@@ -5,8 +5,8 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainGradeAnswerDTO } from "./githubCom4H1RZooraInternalDomainGradeAnswerDTO"
+import type { GithubCom4H1RZooraInternalDomainGradeAnswerDTO } from './githubCom4H1RZooraInternalDomainGradeAnswerDTO';
 
 export interface GithubCom4H1RZooraInternalDomainGradeSubmissionDTO {
-  grades: GithubCom4H1RZooraInternalDomainGradeAnswerDTO[]
+  grades: GithubCom4H1RZooraInternalDomainGradeAnswerDTO[];
 }

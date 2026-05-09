@@ -5,13 +5,13 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTOType } from "./githubCom4H1RZooraInternalDomainUpdateQuizRuleDTOType"
+import type { GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTOType } from './githubCom4H1RZooraInternalDomainUpdateQuizRuleDTOType';
 
 export interface GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTO {
-  bank_id?: string
+  bank_id?: string;
   /** @minimum 0 */
-  count?: number
-  is_dynamic?: boolean
-  question_ids?: string[]
-  type?: GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTOType
+  count?: number;
+  is_dynamic?: boolean;
+  question_ids?: string[];
+  type?: GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTOType;
 }

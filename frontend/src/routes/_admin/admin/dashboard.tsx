@@ -31,12 +31,14 @@ import { useGetAdminPolls } from "@/api/admin-polls/admin-polls"
 import { useGetAdminQuestionBanks } from "@/api/admin-questionbanks/admin-questionbanks"
 import { useGetAdminQuizzes } from "@/api/admin-quizzes/admin-quizzes"
 import { useGetAdminUsers } from "@/api/admin-users/admin-users"
+import { useGetUsersMe } from "@/api/users/users"
 import { StatCards } from "@/components/data-table/stat-cards"
 import { PageHeader } from "@/components/page-header"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { adminHead } from "@/lib/admin-head"
+import { useRoleName } from "@/lib/permissions"
 
 export const Route = createFileRoute("/_admin/admin/dashboard")({
   head: () => adminHead("admin.dashboard.title"),
@@ -54,6 +56,7 @@ function formatDate(dateStr?: string) {
 
 function RecentUsersCard({ users, loading }: { users: User[]; loading: boolean }) {
   const { t } = useTranslation()
+  const roleName = useRoleName()
 
   return (
     <Card className="gap-0 overflow-hidden p-0">
@@ -88,7 +91,7 @@ function RecentUsersCard({ users, loading }: { users: User[]; loading: boolean }
                 </div>
                 <div className="ms-3 flex shrink-0 flex-col items-end gap-1">
                   <Badge variant="outline" className="text-xs">
-                    {user.is_admin ? t("admin.roleAdmin") : (user.role?.name ?? t("admin.roleMember"))}
+                    {user.is_admin ? t("admin.roleAdmin") : (user.role?.name ? roleName(user.role.name) : t("admin.roleMember"))}
                   </Badge>
                   <span className="text-muted-foreground text-[11px]">{formatDate(user.created_at)}</span>
                 </div>

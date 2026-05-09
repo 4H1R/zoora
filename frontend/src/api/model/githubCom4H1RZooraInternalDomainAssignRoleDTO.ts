@@ -7,5 +7,5 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainAssignRoleDTO {
-  role_id: string
+  role_id: string;
 }

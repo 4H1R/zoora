@@ -5,11 +5,11 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainCreateAttendanceDTOStatus } from "./githubCom4H1RZooraInternalDomainCreateAttendanceDTOStatus"
+import type { GithubCom4H1RZooraInternalDomainCreateAttendanceDTOStatus } from './githubCom4H1RZooraInternalDomainCreateAttendanceDTOStatus';
 
 export interface GithubCom4H1RZooraInternalDomainCreateAttendanceDTO {
-  is_auto_marked?: boolean
-  remarks?: string
-  status: GithubCom4H1RZooraInternalDomainCreateAttendanceDTOStatus
-  user_id: string
+  is_auto_marked?: boolean;
+  remarks?: string;
+  status: GithubCom4H1RZooraInternalDomainCreateAttendanceDTOStatus;
+  user_id: string;
 }

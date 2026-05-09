@@ -5,9 +5,9 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainPaginatedData } from "./githubCom4H1RZooraInternalDomainPaginatedData"
-import type { GithubCom4H1RZooraInternalDomainQuestionBank } from "./githubCom4H1RZooraInternalDomainQuestionBank"
+import type { GithubCom4H1RZooraInternalDomainPaginatedData } from './githubCom4H1RZooraInternalDomainPaginatedData';
+import type { GithubCom4H1RZooraInternalDomainQuestionBank } from './githubCom4H1RZooraInternalDomainQuestionBank';
 
 export type GetQuestionBanks200Data = GithubCom4H1RZooraInternalDomainPaginatedData & {
-  items?: GithubCom4H1RZooraInternalDomainQuestionBank[]
-}
+  items?: GithubCom4H1RZooraInternalDomainQuestionBank[];
+};

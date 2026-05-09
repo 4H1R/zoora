@@ -7,24 +7,24 @@
  */
 
 export type GetQuizzesParams = {
-  /**
-   * Filter by class UUID
-   */
-  class_id?: string
-  /**
-   * Substring match on title/description
-   */
-  search?: string
-  /**
-   * One of: created_at, updated_at, title, duration_minutes
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-}
+/**
+ * Filter by class UUID
+ */
+class_id?: string;
+/**
+ * Substring match on title/description
+ */
+search?: string;
+/**
+ * One of: created_at, updated_at, title, duration_minutes
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+};

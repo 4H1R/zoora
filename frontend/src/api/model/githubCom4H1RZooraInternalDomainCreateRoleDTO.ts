@@ -7,10 +7,10 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainCreateRoleDTO {
-  is_preset?: boolean
+  is_preset?: boolean;
   /** @minLength 2 */
-  name: string
-  organization_id?: string
+  name: string;
+  organization_id?: string;
   /** @minItems 1 */
-  permission_ids: string[]
+  permission_ids: string[];
 }

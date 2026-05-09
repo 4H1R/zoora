@@ -7,28 +7,28 @@
  */
 
 export type GetAdminClassesParams = {
-  /**
-   * Filter by teacher UUID
-   */
-  user_id?: string
-  /**
-   * Include soft-deleted classes
-   */
-  include_deleted?: boolean
-  /**
-   * Substring match on name/description
-   */
-  search?: string
-  /**
-   * One of: created_at, updated_at, name
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-}
+/**
+ * Filter by teacher UUID
+ */
+user_id?: string;
+/**
+ * Include soft-deleted classes
+ */
+include_deleted?: boolean;
+/**
+ * Substring match on name/description
+ */
+search?: string;
+/**
+ * One of: created_at, updated_at, name
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+};

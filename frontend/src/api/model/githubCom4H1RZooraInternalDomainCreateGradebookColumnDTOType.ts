@@ -6,14 +6,14 @@
  * OpenAPI spec version: 1.0
  */
 
-export type GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTOType =
-  (typeof GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTOType)[keyof typeof GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTOType]
+export type GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTOType = typeof GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTOType[keyof typeof GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTOType];
+
 
 export const GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTOType = {
-  auto_attendance: "auto_attendance",
-  auto_practice: "auto_practice",
-  auto_quiz: "auto_quiz",
-  manual_grade: "manual_grade",
-  manual_attendance: "manual_attendance",
-  manual_text: "manual_text",
-} as const
+  auto_attendance: 'auto_attendance',
+  auto_practice: 'auto_practice',
+  auto_quiz: 'auto_quiz',
+  manual_grade: 'manual_grade',
+  manual_attendance: 'manual_attendance',
+  manual_text: 'manual_text',
+} as const;

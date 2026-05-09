@@ -7,5 +7,5 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainStartQuizSubmissionDTO {
-  quiz_room_id: string
+  quiz_room_id: string;
 }

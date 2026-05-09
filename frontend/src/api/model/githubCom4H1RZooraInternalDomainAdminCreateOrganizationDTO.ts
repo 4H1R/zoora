@@ -5,11 +5,11 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainAdminCreateOrganizationDTOStatus } from "./githubCom4H1RZooraInternalDomainAdminCreateOrganizationDTOStatus"
+import type { GithubCom4H1RZooraInternalDomainAdminCreateOrganizationDTOStatus } from './githubCom4H1RZooraInternalDomainAdminCreateOrganizationDTOStatus';
 
 export interface GithubCom4H1RZooraInternalDomainAdminCreateOrganizationDTO {
-  description?: string
+  description?: string;
   /** @minLength 2 */
-  name: string
-  status?: GithubCom4H1RZooraInternalDomainAdminCreateOrganizationDTOStatus
+  name: string;
+  status?: GithubCom4H1RZooraInternalDomainAdminCreateOrganizationDTOStatus;
 }

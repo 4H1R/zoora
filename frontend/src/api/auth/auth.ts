@@ -5,21 +5,31 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { ErrorType } from ".././mutator/custom-instance"
+import {
+  useMutation
+} from '@tanstack/react-query';
+import type {
+  MutationFunction,
+  QueryClient,
+  UseMutationOptions,
+  UseMutationResult
+} from '@tanstack/react-query';
+
 import type {
   GithubCom4H1RZooraInternalDomainLoginDTO,
   PostAuthLogin200,
   PostAuthLogin400,
   PostAuthLogin401,
-  PostAuthLogin500,
-} from "../model"
-import type { MutationFunction, QueryClient, UseMutationOptions, UseMutationResult } from "@tanstack/react-query"
+  PostAuthLogin500
+} from '../model';
 
-import { useMutation } from "@tanstack/react-query"
+import { customInstance } from '.././mutator/custom-instance';
+import type { ErrorType } from '.././mutator/custom-instance';
 
-import { customInstance } from ".././mutator/custom-instance"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * @summary Login
@@ -44,97 +54,79 @@ export type postAuthLoginResponse500 = {
   status: 500
 }
 
-export type postAuthLoginResponseSuccess = postAuthLoginResponse200 & {
-  headers: Headers
-}
-export type postAuthLoginResponseError = (
-  | postAuthLoginResponse400
-  | postAuthLoginResponse401
-  | postAuthLoginResponse500
-) & {
-  headers: Headers
-}
+export type postAuthLoginResponseSuccess = (postAuthLoginResponse200) & {
+  headers: Headers;
+};
+export type postAuthLoginResponseError = (postAuthLoginResponse400 | postAuthLoginResponse401 | postAuthLoginResponse500) & {
+  headers: Headers;
+};
 
-export type postAuthLoginResponse = postAuthLoginResponseSuccess | postAuthLoginResponseError
+export type postAuthLoginResponse = (postAuthLoginResponseSuccess | postAuthLoginResponseError)
 
 export const getPostAuthLoginUrl = () => {
+
+
+
+
   return `/auth/login`
 }
 
-export const postAuthLogin = async (
-  githubCom4H1RZooraInternalDomainLoginDTO: GithubCom4H1RZooraInternalDomainLoginDTO,
-  options?: RequestInit
-): Promise<postAuthLoginResponse> => {
-  return customInstance<postAuthLoginResponse>(getPostAuthLoginUrl(), {
+export const postAuthLogin = async (githubCom4H1RZooraInternalDomainLoginDTO: GithubCom4H1RZooraInternalDomainLoginDTO, options?: RequestInit): Promise<postAuthLoginResponse> => {
+
+  return customInstance<postAuthLoginResponse>(getPostAuthLoginUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainLoginDTO),
-  })
-}
-
-export const getPostAuthLoginMutationOptions = <
-  TError = ErrorType<PostAuthLogin400 | PostAuthLogin401 | PostAuthLogin500>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postAuthLogin>>,
-    TError,
-    { data: GithubCom4H1RZooraInternalDomainLoginDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postAuthLogin>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainLoginDTO },
-  TContext
-> => {
-  const mutationKey = ["postAuthLogin"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postAuthLogin>>,
-    { data: GithubCom4H1RZooraInternalDomainLoginDTO }
-  > = (props) => {
-    const { data } = props ?? {}
-
-    return postAuthLogin(data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainLoginDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostAuthLoginMutationResult = NonNullable<Awaited<ReturnType<typeof postAuthLogin>>>
-export type PostAuthLoginMutationBody = GithubCom4H1RZooraInternalDomainLoginDTO
-export type PostAuthLoginMutationError = ErrorType<PostAuthLogin400 | PostAuthLogin401 | PostAuthLogin500>
 
-/**
+
+export const getPostAuthLoginMutationOptions = <TError = ErrorType<PostAuthLogin400 | PostAuthLogin401 | PostAuthLogin500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAuthLogin>>, TError,{data: GithubCom4H1RZooraInternalDomainLoginDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAuthLogin>>, TError,{data: GithubCom4H1RZooraInternalDomainLoginDTO}, TContext> => {
+
+const mutationKey = ['postAuthLogin'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAuthLogin>>, {data: GithubCom4H1RZooraInternalDomainLoginDTO}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAuthLogin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAuthLoginMutationResult = NonNullable<Awaited<ReturnType<typeof postAuthLogin>>>
+    export type PostAuthLoginMutationBody = GithubCom4H1RZooraInternalDomainLoginDTO
+    export type PostAuthLoginMutationError = ErrorType<PostAuthLogin400 | PostAuthLogin401 | PostAuthLogin500>
+
+    /**
  * @summary Login
  */
-export const usePostAuthLogin = <
-  TError = ErrorType<PostAuthLogin400 | PostAuthLogin401 | PostAuthLogin500>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postAuthLogin>>,
-      TError,
-      { data: GithubCom4H1RZooraInternalDomainLoginDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postAuthLogin>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainLoginDTO },
-  TContext
-> => {
-  return useMutation(getPostAuthLoginMutationOptions(options), queryClient)
-}
+export const usePostAuthLogin = <TError = ErrorType<PostAuthLogin400 | PostAuthLogin401 | PostAuthLogin500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAuthLogin>>, TError,{data: GithubCom4H1RZooraInternalDomainLoginDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAuthLogin>>,
+        TError,
+        {data: GithubCom4H1RZooraInternalDomainLoginDTO},
+        TContext
+      > => {
+      return useMutation(getPostAuthLoginMutationOptions(options), queryClient);
+    }

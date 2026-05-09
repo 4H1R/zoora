@@ -7,24 +7,24 @@
  */
 
 export type GetAdminLiveRoomsParams = {
-  /**
-   * Filter by status: created|active|finished
-   */
-  status?: string
-  /**
-   * Include soft-deleted rooms
-   */
-  include_deleted?: boolean
-  /**
-   * One of: created_at, updated_at, status
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-}
+/**
+ * Filter by status: created|active|finished
+ */
+status?: string;
+/**
+ * Include soft-deleted rooms
+ */
+include_deleted?: boolean;
+/**
+ * One of: created_at, updated_at, status
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+};

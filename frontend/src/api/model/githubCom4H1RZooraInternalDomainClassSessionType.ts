@@ -6,11 +6,11 @@
  * OpenAPI spec version: 1.0
  */
 
-export type GithubCom4H1RZooraInternalDomainClassSessionType =
-  (typeof GithubCom4H1RZooraInternalDomainClassSessionType)[keyof typeof GithubCom4H1RZooraInternalDomainClassSessionType]
+export type GithubCom4H1RZooraInternalDomainClassSessionType = typeof GithubCom4H1RZooraInternalDomainClassSessionType[keyof typeof GithubCom4H1RZooraInternalDomainClassSessionType];
+
 
 export const GithubCom4H1RZooraInternalDomainClassSessionType = {
-  ClassSessionTypeLive: "live",
-  ClassSessionTypeQuiz: "quiz",
-  ClassSessionTypePractice: "practice",
-} as const
+  ClassSessionTypeLive: 'live',
+  ClassSessionTypeQuiz: 'quiz',
+  ClassSessionTypePractice: 'practice',
+} as const;

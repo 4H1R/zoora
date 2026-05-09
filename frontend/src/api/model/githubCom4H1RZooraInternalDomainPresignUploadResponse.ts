@@ -5,10 +5,10 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainMedia } from "./githubCom4H1RZooraInternalDomainMedia"
+import type { GithubCom4H1RZooraInternalDomainMedia } from './githubCom4H1RZooraInternalDomainMedia';
 
 export interface GithubCom4H1RZooraInternalDomainPresignUploadResponse {
-  key?: string
-  media?: GithubCom4H1RZooraInternalDomainMedia
-  upload_url?: string
+  key?: string;
+  media?: GithubCom4H1RZooraInternalDomainMedia;
+  upload_url?: string;
 }

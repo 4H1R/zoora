@@ -7,10 +7,10 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainPaginatedData {
-  items?: unknown
-  limit?: number
-  offset?: number
-  page?: number
-  page_size?: number
-  total?: number
+  items?: unknown;
+  limit?: number;
+  offset?: number;
+  page?: number;
+  page_size?: number;
+  total?: number;
 }

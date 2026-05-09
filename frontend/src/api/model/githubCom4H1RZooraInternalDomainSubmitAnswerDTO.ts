@@ -7,9 +7,9 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainSubmitAnswerDTO {
-  question_id: string
-  selected_option_ids?: string[]
+  question_id: string;
+  selected_option_ids?: string[];
   /** @minimum 0 */
-  spent_seconds?: number
-  value?: string
+  spent_seconds?: number;
+  value?: string;
 }

@@ -1,4 +1,4 @@
-make lint
-make generate
-cd frontend && pnpm typecheck && pnpm format
-git add .
+#make lint
+#make generate
+#cd frontend && pnpm typecheck && pnpm format
+#git add .

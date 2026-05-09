@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
-import { getEntityColor, getInitials } from "@/lib/data-table"
+import { getInitials } from "@/components/user-avatar"
+import { getEntityColor } from "@/lib/data-table"
 import { cn } from "@/lib/utils"
 
 type Organization = GithubCom4H1RZooraInternalDomainOrganization
@@ -77,7 +78,7 @@ export function OrgSwitcher({
   }
 
   const displayName = selected?.name ?? t("admin.orgs.switcher.all")
-  const initials = selected ? getInitials(selected.name) : "EC"
+  const initials = getInitials(selected?.name)
   const markColor = selected ? getEntityColor(selected.name) : ALL_MARK_CLASS
 
   const orgItem = (org: Organization) => (

@@ -7,16 +7,16 @@
  */
 
 export type GetQuizzesIdRulesParams = {
-  /**
-   * One of: created_at, type
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-}
+/**
+ * One of: created_at, type
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+};

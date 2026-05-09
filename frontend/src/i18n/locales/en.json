@@ -7,6 +7,7 @@
     "export": "Export",
     "viewAll": "View all",
     "manage": "Manage",
+    "continue": "Continue",
     "details": "Details",
     "save": "Save",
     "cancel": "Cancel",
@@ -549,12 +550,98 @@
       }
     }
   },
+  "classesPage": {
+    "title": "Classes",
+    "searchPlaceholder": "Search classes…",
+    "gridView": "Grid view",
+    "tableView": "Table view",
+    "newClass": "New class",
+    "noResults": "No classes found",
+    "noResultsHint": "Try adjusting your search or create a new class.",
+    "capacity": "Capacity",
+    "stats": {
+      "total": "Classes",
+      "students": "Students"
+    },
+    "table": {
+      "class": "Class",
+      "instructor": "Instructor",
+      "capacity": "Capacity"
+    },
+    "form": {
+      "createTitle": "New class",
+      "createDescription": "Create a new class in your organization.",
+      "name": "Name",
+      "namePlaceholder": "Class name",
+      "description": "Description",
+      "descriptionPlaceholder": "Optional description",
+      "capacity": "Capacity",
+      "capacityPlaceholder": "0 = unlimited",
+      "teacher": "Teacher",
+      "teacherPlaceholder": "Select teacher…",
+      "createSuccess": "Class created"
+    }
+  },
+  "roles": {
+    "presets": {
+      "Staff": "Staff",
+      "Teacher": "Teacher"
+    }
+  },
+  "permissions": {
+    "resources": {
+      "users": "Users",
+      "roles": "Roles",
+      "organizations": "Organizations",
+      "classes": "Classes",
+      "livesessions": "Live Sessions",
+      "recordings": "Recordings",
+      "question_banks": "Question Banks",
+      "quizzes": "Quizzes",
+      "polls": "Polls",
+      "chats": "Chats",
+      "media": "Media",
+      "practices": "Practices",
+      "gradebook": "Gradebook",
+      "offlines": "Offline Sessions",
+      "attendance": "Attendance"
+    },
+    "actions": {
+      "view": "View",
+      "view_any": "View Any",
+      "create": "Create",
+      "create_any": "Create Any",
+      "update": "Update",
+      "update_any": "Update Any",
+      "delete": "Delete",
+      "delete_any": "Delete Any",
+      "join": "Join",
+      "join_any": "Join Any",
+      "manage": "Manage",
+      "manage_any": "Manage Any",
+      "download": "Download",
+      "write": "Write",
+      "submit": "Submit",
+      "grade": "Grade"
+    }
+  },
   "liveRoom": {
     "session": "Live Session",
     "joinSession": "Join Session",
     "joinError": "Failed to join session. Please try again.",
     "sessionEnded": "Session Ended",
     "leave": "Leave",
-    "maxParticipants": "Max {{count}} participants"
+    "maxParticipants": "Max {{count}} participants",
+    "backToDashboard": "Back to dashboard",
+    "classStarted": "Class has started",
+    "instructor": "Instructor",
+    "startTime": "Start time",
+    "participants": "Participants",
+    "capacity": "capacity",
+    "recordingEnabled": "Enabled",
+    "recordingNotice": "This session is being recorded. By joining, you agree to the recording and privacy terms.",
+    "back": "Back",
+    "secureEntry": "Secure entry",
+    "avSettingsNote": "Mic and camera are configured inside the class"
   }
 }

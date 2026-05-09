@@ -7,8 +7,8 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainUpdateOfflineRoomDTO {
-  description?: string
-  published_at?: string
+  description?: string;
+  published_at?: string;
   /** @minLength 2 */
-  title?: string
+  title?: string;
 }

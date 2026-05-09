@@ -8,8 +8,8 @@
 
 export interface GithubCom4H1RZooraInternalDomainUpdateMessageDTO {
   /**
-   * @minLength 1
-   * @maxLength 10000
-   */
-  content: string
+     * @minLength 1
+     * @maxLength 10000
+     */
+  content: string;
 }

@@ -5,9 +5,9 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainErrorBody } from "./githubCom4H1RZooraInternalDomainErrorBody"
-import type { GithubCom4H1RZooraInternalDomainResponse } from "./githubCom4H1RZooraInternalDomainResponse"
+import type { GithubCom4H1RZooraInternalDomainErrorBody } from './githubCom4H1RZooraInternalDomainErrorBody';
+import type { GithubCom4H1RZooraInternalDomainResponse } from './githubCom4H1RZooraInternalDomainResponse';
 
 export type PostQuizzesSubmissionsSubmissionIdGrade401 = GithubCom4H1RZooraInternalDomainResponse & {
-  error?: GithubCom4H1RZooraInternalDomainErrorBody
-}
+  error?: GithubCom4H1RZooraInternalDomainErrorBody;
+};

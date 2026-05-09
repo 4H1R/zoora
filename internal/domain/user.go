@@ -79,7 +79,7 @@ type AdminListUsersQuery struct {
 }
 
 type ListUsersQuery struct {
-	OrganizationID string `form:"organization_id"`
+	OrganizationID string     `form:"-"`
 	ListParams     ListParams `form:"-"`
 }
 

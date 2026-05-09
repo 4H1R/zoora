@@ -7,24 +7,24 @@
  */
 
 export type GetAdminQuestionBanksParams = {
-  /**
-   * Include soft-deleted rows
-   */
-  include_deleted?: boolean
-  /**
-   * Substring match on name/description
-   */
-  search?: string
-  /**
-   * One of: created_at, updated_at, name
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-}
+/**
+ * Include soft-deleted rows
+ */
+include_deleted?: boolean;
+/**
+ * Substring match on name/description
+ */
+search?: string;
+/**
+ * One of: created_at, updated_at, name
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+};

@@ -5,7 +5,25 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { ErrorType } from ".././mutator/custom-instance"
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   DeleteChatsChatId401,
   DeleteChatsChatId403,
@@ -69,28 +87,16 @@ import type {
   PutChatsChatIdMessagesMessageId400,
   PutChatsChatIdMessagesMessageId401,
   PutChatsChatIdMessagesMessageId403,
-  PutChatsChatIdMessagesMessageId404,
-} from "../model"
-import type {
-  DataTag,
-  DefinedInitialDataOptions,
-  DefinedUseQueryResult,
-  MutationFunction,
-  QueryClient,
-  QueryFunction,
-  QueryKey,
-  UndefinedInitialDataOptions,
-  UseMutationOptions,
-  UseMutationResult,
-  UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query"
+  PutChatsChatIdMessagesMessageId404
+} from '../model';
 
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { customInstance } from '.././mutator/custom-instance';
+import type { ErrorType } from '.././mutator/custom-instance';
 
-import { customInstance } from ".././mutator/custom-instance"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * @summary List chats
@@ -105,116 +111,118 @@ export type getChatsResponse401 = {
   status: 401
 }
 
-export type getChatsResponseSuccess = getChatsResponse200 & {
-  headers: Headers
-}
-export type getChatsResponseError = getChatsResponse401 & {
-  headers: Headers
-}
+export type getChatsResponseSuccess = (getChatsResponse200) & {
+  headers: Headers;
+};
+export type getChatsResponseError = (getChatsResponse401) & {
+  headers: Headers;
+};
 
-export type getChatsResponse = getChatsResponseSuccess | getChatsResponseError
+export type getChatsResponse = (getChatsResponseSuccess | getChatsResponseError)
 
-export const getGetChatsUrl = (params?: GetChatsParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetChatsUrl = (params?: GetChatsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/chats?${stringifiedParams}` : `/chats`
 }
 
 export const getChats = async (params?: GetChatsParams, options?: RequestInit): Promise<getChatsResponse> => {
-  return customInstance<getChatsResponse>(getGetChatsUrl(params), {
+
+  return customInstance<getChatsResponse>(getGetChatsUrl(params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetChatsQueryKey = (params?: GetChatsParams) => {
-  return [`/chats`, ...(params ? [params] : [])] as const
-}
 
-export const getGetChatsQueryOptions = <TData = Awaited<ReturnType<typeof getChats>>, TError = ErrorType<GetChats401>>(
-  params?: GetChatsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChats>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetChatsQueryKey = (params?: GetChatsParams,) => {
+    return [
+    `/chats`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetChatsQueryOptions = <TData = Awaited<ReturnType<typeof getChats>>, TError = ErrorType<GetChats401>>(params?: GetChatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetChatsQueryKey(params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getChats>>> = ({ signal }) =>
-    getChats(params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetChatsQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getChats>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getChats>>> = ({ signal }) => getChats(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getChats>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetChatsQueryResult = NonNullable<Awaited<ReturnType<typeof getChats>>>
 export type GetChatsQueryError = ErrorType<GetChats401>
 
+
 export function useGetChats<TData = Awaited<ReturnType<typeof getChats>>, TError = ErrorType<GetChats401>>(
-  params: undefined | GetChatsParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChats>>, TError, TData>> &
-      Pick<
-        DefinedInitialDataOptions<Awaited<ReturnType<typeof getChats>>, TError, Awaited<ReturnType<typeof getChats>>>,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+ params: undefined |  GetChatsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChats>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getChats>>,
+          TError,
+          Awaited<ReturnType<typeof getChats>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetChats<TData = Awaited<ReturnType<typeof getChats>>, TError = ErrorType<GetChats401>>(
-  params?: GetChatsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChats>>, TError, TData>> &
-      Pick<
-        UndefinedInitialDataOptions<Awaited<ReturnType<typeof getChats>>, TError, Awaited<ReturnType<typeof getChats>>>,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+ params?: GetChatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChats>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getChats>>,
+          TError,
+          Awaited<ReturnType<typeof getChats>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetChats<TData = Awaited<ReturnType<typeof getChats>>, TError = ErrorType<GetChats401>>(
-  params?: GetChatsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChats>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+ params?: GetChatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List chats
  */
 
 export function useGetChats<TData = Awaited<ReturnType<typeof getChats>>, TError = ErrorType<GetChats401>>(
-  params?: GetChatsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChats>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetChatsQueryOptions(params, options)
+ params?: GetChatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetChatsQueryOptions(params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Create chat
@@ -239,94 +247,83 @@ export type postChatsResponse403 = {
   status: 403
 }
 
-export type postChatsResponseSuccess = postChatsResponse201 & {
-  headers: Headers
-}
+export type postChatsResponseSuccess = (postChatsResponse201) & {
+  headers: Headers;
+};
 export type postChatsResponseError = (postChatsResponse400 | postChatsResponse401 | postChatsResponse403) & {
-  headers: Headers
-}
+  headers: Headers;
+};
 
-export type postChatsResponse = postChatsResponseSuccess | postChatsResponseError
+export type postChatsResponse = (postChatsResponseSuccess | postChatsResponseError)
 
 export const getPostChatsUrl = () => {
+
+
+
+
   return `/chats`
 }
 
-export const postChats = async (
-  githubCom4H1RZooraInternalDomainCreateChatDTO: GithubCom4H1RZooraInternalDomainCreateChatDTO,
-  options?: RequestInit
-): Promise<postChatsResponse> => {
-  return customInstance<postChatsResponse>(getPostChatsUrl(), {
+export const postChats = async (githubCom4H1RZooraInternalDomainCreateChatDTO: GithubCom4H1RZooraInternalDomainCreateChatDTO, options?: RequestInit): Promise<postChatsResponse> => {
+
+  return customInstance<postChatsResponse>(getPostChatsUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainCreateChatDTO),
-  })
-}
-
-export const getPostChatsMutationOptions = <
-  TError = ErrorType<PostChats400 | PostChats401 | PostChats403>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postChats>>,
-    TError,
-    { data: GithubCom4H1RZooraInternalDomainCreateChatDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postChats>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainCreateChatDTO },
-  TContext
-> => {
-  const mutationKey = ["postChats"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postChats>>,
-    { data: GithubCom4H1RZooraInternalDomainCreateChatDTO }
-  > = (props) => {
-    const { data } = props ?? {}
-
-    return postChats(data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainCreateChatDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostChatsMutationResult = NonNullable<Awaited<ReturnType<typeof postChats>>>
-export type PostChatsMutationBody = GithubCom4H1RZooraInternalDomainCreateChatDTO
-export type PostChatsMutationError = ErrorType<PostChats400 | PostChats401 | PostChats403>
 
-/**
+
+export const getPostChatsMutationOptions = <TError = ErrorType<PostChats400 | PostChats401 | PostChats403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postChats>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateChatDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postChats>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateChatDTO}, TContext> => {
+
+const mutationKey = ['postChats'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postChats>>, {data: GithubCom4H1RZooraInternalDomainCreateChatDTO}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postChats(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostChatsMutationResult = NonNullable<Awaited<ReturnType<typeof postChats>>>
+    export type PostChatsMutationBody = GithubCom4H1RZooraInternalDomainCreateChatDTO
+    export type PostChatsMutationError = ErrorType<PostChats400 | PostChats401 | PostChats403>
+
+    /**
  * @summary Create chat
  */
-export const usePostChats = <TError = ErrorType<PostChats400 | PostChats401 | PostChats403>, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postChats>>,
-      TError,
-      { data: GithubCom4H1RZooraInternalDomainCreateChatDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postChats>>,
-  TError,
-  { data: GithubCom4H1RZooraInternalDomainCreateChatDTO },
-  TContext
-> => {
-  return useMutation(getPostChatsMutationOptions(options), queryClient)
-}
-/**
+export const usePostChats = <TError = ErrorType<PostChats400 | PostChats401 | PostChats403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postChats>>, TError,{data: GithubCom4H1RZooraInternalDomainCreateChatDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postChats>>,
+        TError,
+        {data: GithubCom4H1RZooraInternalDomainCreateChatDTO},
+        TContext
+      > => {
+      return useMutation(getPostChatsMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get chat
  */
 export type getChatsChatIdResponse200 = {
@@ -349,133 +346,111 @@ export type getChatsChatIdResponse404 = {
   status: 404
 }
 
-export type getChatsChatIdResponseSuccess = getChatsChatIdResponse200 & {
-  headers: Headers
-}
-export type getChatsChatIdResponseError = (
-  | getChatsChatIdResponse401
-  | getChatsChatIdResponse403
-  | getChatsChatIdResponse404
-) & {
-  headers: Headers
-}
+export type getChatsChatIdResponseSuccess = (getChatsChatIdResponse200) & {
+  headers: Headers;
+};
+export type getChatsChatIdResponseError = (getChatsChatIdResponse401 | getChatsChatIdResponse403 | getChatsChatIdResponse404) & {
+  headers: Headers;
+};
 
-export type getChatsChatIdResponse = getChatsChatIdResponseSuccess | getChatsChatIdResponseError
+export type getChatsChatIdResponse = (getChatsChatIdResponseSuccess | getChatsChatIdResponseError)
 
-export const getGetChatsChatIdUrl = (chatId: string) => {
+export const getGetChatsChatIdUrl = (chatId: string,) => {
+
+
+
+
   return `/chats/${chatId}`
 }
 
 export const getChatsChatId = async (chatId: string, options?: RequestInit): Promise<getChatsChatIdResponse> => {
-  return customInstance<getChatsChatIdResponse>(getGetChatsChatIdUrl(chatId), {
+
+  return customInstance<getChatsChatIdResponse>(getGetChatsChatIdUrl(chatId),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetChatsChatIdQueryKey = (chatId: string) => {
-  return [`/chats/${chatId}`] as const
-}
 
-export const getGetChatsChatIdQueryOptions = <
-  TData = Awaited<ReturnType<typeof getChatsChatId>>,
-  TError = ErrorType<GetChatsChatId401 | GetChatsChatId403 | GetChatsChatId404>,
->(
-  chatId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetChatsChatIdQueryKey = (chatId: string,) => {
+    return [
+    `/chats/${chatId}`
+    ] as const;
+    }
+
+
+export const getGetChatsChatIdQueryOptions = <TData = Awaited<ReturnType<typeof getChatsChatId>>, TError = ErrorType<GetChatsChatId401 | GetChatsChatId403 | GetChatsChatId404>>(chatId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetChatsChatIdQueryKey(chatId)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getChatsChatId>>> = ({ signal }) =>
-    getChatsChatId(chatId, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetChatsChatIdQueryKey(chatId);
 
-  return { queryKey, queryFn, enabled: !!chatId, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getChatsChatId>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getChatsChatId>>> = ({ signal }) => getChatsChatId(chatId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(chatId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getChatsChatId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetChatsChatIdQueryResult = NonNullable<Awaited<ReturnType<typeof getChatsChatId>>>
 export type GetChatsChatIdQueryError = ErrorType<GetChatsChatId401 | GetChatsChatId403 | GetChatsChatId404>
 
-export function useGetChatsChatId<
-  TData = Awaited<ReturnType<typeof getChatsChatId>>,
-  TError = ErrorType<GetChatsChatId401 | GetChatsChatId403 | GetChatsChatId404>,
->(
-  chatId: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatId>>, TError, TData>> &
-      Pick<
+
+export function useGetChatsChatId<TData = Awaited<ReturnType<typeof getChatsChatId>>, TError = ErrorType<GetChatsChatId401 | GetChatsChatId403 | GetChatsChatId404>>(
+ chatId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getChatsChatId>>,
           TError,
           Awaited<ReturnType<typeof getChatsChatId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetChatsChatId<
-  TData = Awaited<ReturnType<typeof getChatsChatId>>,
-  TError = ErrorType<GetChatsChatId401 | GetChatsChatId403 | GetChatsChatId404>,
->(
-  chatId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatId>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetChatsChatId<TData = Awaited<ReturnType<typeof getChatsChatId>>, TError = ErrorType<GetChatsChatId401 | GetChatsChatId403 | GetChatsChatId404>>(
+ chatId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getChatsChatId>>,
           TError,
           Awaited<ReturnType<typeof getChatsChatId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetChatsChatId<
-  TData = Awaited<ReturnType<typeof getChatsChatId>>,
-  TError = ErrorType<GetChatsChatId401 | GetChatsChatId403 | GetChatsChatId404>,
->(
-  chatId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetChatsChatId<TData = Awaited<ReturnType<typeof getChatsChatId>>, TError = ErrorType<GetChatsChatId401 | GetChatsChatId403 | GetChatsChatId404>>(
+ chatId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get chat
  */
 
-export function useGetChatsChatId<
-  TData = Awaited<ReturnType<typeof getChatsChatId>>,
-  TError = ErrorType<GetChatsChatId401 | GetChatsChatId403 | GetChatsChatId404>,
->(
-  chatId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetChatsChatIdQueryOptions(chatId, options)
+export function useGetChatsChatId<TData = Awaited<ReturnType<typeof getChatsChatId>>, TError = ErrorType<GetChatsChatId401 | GetChatsChatId403 | GetChatsChatId404>>(
+ chatId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetChatsChatIdQueryOptions(chatId,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Update chat
@@ -505,105 +480,84 @@ export type putChatsChatIdResponse404 = {
   status: 404
 }
 
-export type putChatsChatIdResponseSuccess = putChatsChatIdResponse200 & {
-  headers: Headers
-}
-export type putChatsChatIdResponseError = (
-  | putChatsChatIdResponse400
-  | putChatsChatIdResponse401
-  | putChatsChatIdResponse403
-  | putChatsChatIdResponse404
-) & {
-  headers: Headers
-}
+export type putChatsChatIdResponseSuccess = (putChatsChatIdResponse200) & {
+  headers: Headers;
+};
+export type putChatsChatIdResponseError = (putChatsChatIdResponse400 | putChatsChatIdResponse401 | putChatsChatIdResponse403 | putChatsChatIdResponse404) & {
+  headers: Headers;
+};
 
-export type putChatsChatIdResponse = putChatsChatIdResponseSuccess | putChatsChatIdResponseError
+export type putChatsChatIdResponse = (putChatsChatIdResponseSuccess | putChatsChatIdResponseError)
 
-export const getPutChatsChatIdUrl = (chatId: string) => {
+export const getPutChatsChatIdUrl = (chatId: string,) => {
+
+
+
+
   return `/chats/${chatId}`
 }
 
-export const putChatsChatId = async (
-  chatId: string,
-  githubCom4H1RZooraInternalDomainUpdateChatDTO: GithubCom4H1RZooraInternalDomainUpdateChatDTO,
-  options?: RequestInit
-): Promise<putChatsChatIdResponse> => {
-  return customInstance<putChatsChatIdResponse>(getPutChatsChatIdUrl(chatId), {
+export const putChatsChatId = async (chatId: string,
+    githubCom4H1RZooraInternalDomainUpdateChatDTO: GithubCom4H1RZooraInternalDomainUpdateChatDTO, options?: RequestInit): Promise<putChatsChatIdResponse> => {
+
+  return customInstance<putChatsChatIdResponse>(getPutChatsChatIdUrl(chatId),
+  {
     ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainUpdateChatDTO),
-  })
-}
-
-export const getPutChatsChatIdMutationOptions = <
-  TError = ErrorType<PutChatsChatId400 | PutChatsChatId401 | PutChatsChatId403 | PutChatsChatId404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putChatsChatId>>,
-    TError,
-    { chatId: string; data: GithubCom4H1RZooraInternalDomainUpdateChatDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putChatsChatId>>,
-  TError,
-  { chatId: string; data: GithubCom4H1RZooraInternalDomainUpdateChatDTO },
-  TContext
-> => {
-  const mutationKey = ["putChatsChatId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putChatsChatId>>,
-    { chatId: string; data: GithubCom4H1RZooraInternalDomainUpdateChatDTO }
-  > = (props) => {
-    const { chatId, data } = props ?? {}
-
-    return putChatsChatId(chatId, data, requestOptions)
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainUpdateChatDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutChatsChatIdMutationResult = NonNullable<Awaited<ReturnType<typeof putChatsChatId>>>
-export type PutChatsChatIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateChatDTO
-export type PutChatsChatIdMutationError = ErrorType<
-  PutChatsChatId400 | PutChatsChatId401 | PutChatsChatId403 | PutChatsChatId404
->
 
-/**
+
+export const getPutChatsChatIdMutationOptions = <TError = ErrorType<PutChatsChatId400 | PutChatsChatId401 | PutChatsChatId403 | PutChatsChatId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putChatsChatId>>, TError,{chatId: string;data: GithubCom4H1RZooraInternalDomainUpdateChatDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putChatsChatId>>, TError,{chatId: string;data: GithubCom4H1RZooraInternalDomainUpdateChatDTO}, TContext> => {
+
+const mutationKey = ['putChatsChatId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putChatsChatId>>, {chatId: string;data: GithubCom4H1RZooraInternalDomainUpdateChatDTO}> = (props) => {
+          const {chatId,data} = props ?? {};
+
+          return  putChatsChatId(chatId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutChatsChatIdMutationResult = NonNullable<Awaited<ReturnType<typeof putChatsChatId>>>
+    export type PutChatsChatIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateChatDTO
+    export type PutChatsChatIdMutationError = ErrorType<PutChatsChatId400 | PutChatsChatId401 | PutChatsChatId403 | PutChatsChatId404>
+
+    /**
  * @summary Update chat
  */
-export const usePutChatsChatId = <
-  TError = ErrorType<PutChatsChatId400 | PutChatsChatId401 | PutChatsChatId403 | PutChatsChatId404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putChatsChatId>>,
-      TError,
-      { chatId: string; data: GithubCom4H1RZooraInternalDomainUpdateChatDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putChatsChatId>>,
-  TError,
-  { chatId: string; data: GithubCom4H1RZooraInternalDomainUpdateChatDTO },
-  TContext
-> => {
-  return useMutation(getPutChatsChatIdMutationOptions(options), queryClient)
-}
-/**
+export const usePutChatsChatId = <TError = ErrorType<PutChatsChatId400 | PutChatsChatId401 | PutChatsChatId403 | PutChatsChatId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putChatsChatId>>, TError,{chatId: string;data: GithubCom4H1RZooraInternalDomainUpdateChatDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putChatsChatId>>,
+        TError,
+        {chatId: string;data: GithubCom4H1RZooraInternalDomainUpdateChatDTO},
+        TContext
+      > => {
+      return useMutation(getPutChatsChatIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Delete chat
  */
 export type deleteChatsChatIdResponse200 = {
@@ -626,75 +580,82 @@ export type deleteChatsChatIdResponse404 = {
   status: 404
 }
 
-export type deleteChatsChatIdResponseSuccess = deleteChatsChatIdResponse200 & {
-  headers: Headers
-}
-export type deleteChatsChatIdResponseError = (
-  | deleteChatsChatIdResponse401
-  | deleteChatsChatIdResponse403
-  | deleteChatsChatIdResponse404
-) & {
-  headers: Headers
-}
+export type deleteChatsChatIdResponseSuccess = (deleteChatsChatIdResponse200) & {
+  headers: Headers;
+};
+export type deleteChatsChatIdResponseError = (deleteChatsChatIdResponse401 | deleteChatsChatIdResponse403 | deleteChatsChatIdResponse404) & {
+  headers: Headers;
+};
 
-export type deleteChatsChatIdResponse = deleteChatsChatIdResponseSuccess | deleteChatsChatIdResponseError
+export type deleteChatsChatIdResponse = (deleteChatsChatIdResponseSuccess | deleteChatsChatIdResponseError)
 
-export const getDeleteChatsChatIdUrl = (chatId: string) => {
+export const getDeleteChatsChatIdUrl = (chatId: string,) => {
+
+
+
+
   return `/chats/${chatId}`
 }
 
 export const deleteChatsChatId = async (chatId: string, options?: RequestInit): Promise<deleteChatsChatIdResponse> => {
-  return customInstance<deleteChatsChatIdResponse>(getDeleteChatsChatIdUrl(chatId), {
+
+  return customInstance<deleteChatsChatIdResponse>(getDeleteChatsChatIdUrl(chatId),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeleteChatsChatIdMutationOptions = <
-  TError = ErrorType<DeleteChatsChatId401 | DeleteChatsChatId403 | DeleteChatsChatId404>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteChatsChatId>>, TError, { chatId: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof deleteChatsChatId>>, TError, { chatId: string }, TContext> => {
-  const mutationKey = ["deleteChatsChatId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteChatsChatId>>, { chatId: string }> = (props) => {
-    const { chatId } = props ?? {}
-
-    return deleteChatsChatId(chatId, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteChatsChatIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteChatsChatId>>>
 
-export type DeleteChatsChatIdMutationError = ErrorType<
-  DeleteChatsChatId401 | DeleteChatsChatId403 | DeleteChatsChatId404
->
 
-/**
+export const getDeleteChatsChatIdMutationOptions = <TError = ErrorType<DeleteChatsChatId401 | DeleteChatsChatId403 | DeleteChatsChatId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteChatsChatId>>, TError,{chatId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteChatsChatId>>, TError,{chatId: string}, TContext> => {
+
+const mutationKey = ['deleteChatsChatId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteChatsChatId>>, {chatId: string}> = (props) => {
+          const {chatId} = props ?? {};
+
+          return  deleteChatsChatId(chatId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteChatsChatIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteChatsChatId>>>
+
+    export type DeleteChatsChatIdMutationError = ErrorType<DeleteChatsChatId401 | DeleteChatsChatId403 | DeleteChatsChatId404>
+
+    /**
  * @summary Delete chat
  */
-export const useDeleteChatsChatId = <
-  TError = ErrorType<DeleteChatsChatId401 | DeleteChatsChatId403 | DeleteChatsChatId404>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteChatsChatId>>, TError, { chatId: string }, TContext>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof deleteChatsChatId>>, TError, { chatId: string }, TContext> => {
-  return useMutation(getDeleteChatsChatIdMutationOptions(options), queryClient)
-}
-/**
+export const useDeleteChatsChatId = <TError = ErrorType<DeleteChatsChatId401 | DeleteChatsChatId403 | DeleteChatsChatId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteChatsChatId>>, TError,{chatId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteChatsChatId>>,
+        TError,
+        {chatId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteChatsChatIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary List chat members
  */
 export type getChatsChatIdMembersResponse200 = {
@@ -717,138 +678,111 @@ export type getChatsChatIdMembersResponse404 = {
   status: 404
 }
 
-export type getChatsChatIdMembersResponseSuccess = getChatsChatIdMembersResponse200 & {
-  headers: Headers
-}
-export type getChatsChatIdMembersResponseError = (
-  | getChatsChatIdMembersResponse401
-  | getChatsChatIdMembersResponse403
-  | getChatsChatIdMembersResponse404
-) & {
-  headers: Headers
-}
+export type getChatsChatIdMembersResponseSuccess = (getChatsChatIdMembersResponse200) & {
+  headers: Headers;
+};
+export type getChatsChatIdMembersResponseError = (getChatsChatIdMembersResponse401 | getChatsChatIdMembersResponse403 | getChatsChatIdMembersResponse404) & {
+  headers: Headers;
+};
 
-export type getChatsChatIdMembersResponse = getChatsChatIdMembersResponseSuccess | getChatsChatIdMembersResponseError
+export type getChatsChatIdMembersResponse = (getChatsChatIdMembersResponseSuccess | getChatsChatIdMembersResponseError)
 
-export const getGetChatsChatIdMembersUrl = (chatId: string) => {
+export const getGetChatsChatIdMembersUrl = (chatId: string,) => {
+
+
+
+
   return `/chats/${chatId}/members`
 }
 
-export const getChatsChatIdMembers = async (
-  chatId: string,
-  options?: RequestInit
-): Promise<getChatsChatIdMembersResponse> => {
-  return customInstance<getChatsChatIdMembersResponse>(getGetChatsChatIdMembersUrl(chatId), {
+export const getChatsChatIdMembers = async (chatId: string, options?: RequestInit): Promise<getChatsChatIdMembersResponse> => {
+
+  return customInstance<getChatsChatIdMembersResponse>(getGetChatsChatIdMembersUrl(chatId),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetChatsChatIdMembersQueryKey = (chatId: string) => {
-  return [`/chats/${chatId}/members`] as const
-}
 
-export const getGetChatsChatIdMembersQueryOptions = <
-  TData = Awaited<ReturnType<typeof getChatsChatIdMembers>>,
-  TError = ErrorType<GetChatsChatIdMembers401 | GetChatsChatIdMembers403 | GetChatsChatIdMembers404>,
->(
-  chatId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMembers>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetChatsChatIdMembersQueryKey = (chatId: string,) => {
+    return [
+    `/chats/${chatId}/members`
+    ] as const;
+    }
+
+
+export const getGetChatsChatIdMembersQueryOptions = <TData = Awaited<ReturnType<typeof getChatsChatIdMembers>>, TError = ErrorType<GetChatsChatIdMembers401 | GetChatsChatIdMembers403 | GetChatsChatIdMembers404>>(chatId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMembers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetChatsChatIdMembersQueryKey(chatId)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getChatsChatIdMembers>>> = ({ signal }) =>
-    getChatsChatIdMembers(chatId, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetChatsChatIdMembersQueryKey(chatId);
 
-  return { queryKey, queryFn, enabled: !!chatId, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getChatsChatIdMembers>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getChatsChatIdMembers>>> = ({ signal }) => getChatsChatIdMembers(chatId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(chatId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMembers>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetChatsChatIdMembersQueryResult = NonNullable<Awaited<ReturnType<typeof getChatsChatIdMembers>>>
-export type GetChatsChatIdMembersQueryError = ErrorType<
-  GetChatsChatIdMembers401 | GetChatsChatIdMembers403 | GetChatsChatIdMembers404
->
+export type GetChatsChatIdMembersQueryError = ErrorType<GetChatsChatIdMembers401 | GetChatsChatIdMembers403 | GetChatsChatIdMembers404>
 
-export function useGetChatsChatIdMembers<
-  TData = Awaited<ReturnType<typeof getChatsChatIdMembers>>,
-  TError = ErrorType<GetChatsChatIdMembers401 | GetChatsChatIdMembers403 | GetChatsChatIdMembers404>,
->(
-  chatId: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMembers>>, TError, TData>> &
-      Pick<
+
+export function useGetChatsChatIdMembers<TData = Awaited<ReturnType<typeof getChatsChatIdMembers>>, TError = ErrorType<GetChatsChatIdMembers401 | GetChatsChatIdMembers403 | GetChatsChatIdMembers404>>(
+ chatId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMembers>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getChatsChatIdMembers>>,
           TError,
           Awaited<ReturnType<typeof getChatsChatIdMembers>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetChatsChatIdMembers<
-  TData = Awaited<ReturnType<typeof getChatsChatIdMembers>>,
-  TError = ErrorType<GetChatsChatIdMembers401 | GetChatsChatIdMembers403 | GetChatsChatIdMembers404>,
->(
-  chatId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMembers>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetChatsChatIdMembers<TData = Awaited<ReturnType<typeof getChatsChatIdMembers>>, TError = ErrorType<GetChatsChatIdMembers401 | GetChatsChatIdMembers403 | GetChatsChatIdMembers404>>(
+ chatId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMembers>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getChatsChatIdMembers>>,
           TError,
           Awaited<ReturnType<typeof getChatsChatIdMembers>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetChatsChatIdMembers<
-  TData = Awaited<ReturnType<typeof getChatsChatIdMembers>>,
-  TError = ErrorType<GetChatsChatIdMembers401 | GetChatsChatIdMembers403 | GetChatsChatIdMembers404>,
->(
-  chatId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMembers>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetChatsChatIdMembers<TData = Awaited<ReturnType<typeof getChatsChatIdMembers>>, TError = ErrorType<GetChatsChatIdMembers401 | GetChatsChatIdMembers403 | GetChatsChatIdMembers404>>(
+ chatId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMembers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List chat members
  */
 
-export function useGetChatsChatIdMembers<
-  TData = Awaited<ReturnType<typeof getChatsChatIdMembers>>,
-  TError = ErrorType<GetChatsChatIdMembers401 | GetChatsChatIdMembers403 | GetChatsChatIdMembers404>,
->(
-  chatId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMembers>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetChatsChatIdMembersQueryOptions(chatId, options)
+export function useGetChatsChatIdMembers<TData = Awaited<ReturnType<typeof getChatsChatIdMembers>>, TError = ErrorType<GetChatsChatIdMembers401 | GetChatsChatIdMembers403 | GetChatsChatIdMembers404>>(
+ chatId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMembers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetChatsChatIdMembersQueryOptions(chatId,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Add chat member
@@ -878,109 +812,84 @@ export type postChatsChatIdMembersResponse409 = {
   status: 409
 }
 
-export type postChatsChatIdMembersResponseSuccess = postChatsChatIdMembersResponse201 & {
-  headers: Headers
-}
-export type postChatsChatIdMembersResponseError = (
-  | postChatsChatIdMembersResponse400
-  | postChatsChatIdMembersResponse401
-  | postChatsChatIdMembersResponse403
-  | postChatsChatIdMembersResponse409
-) & {
-  headers: Headers
-}
+export type postChatsChatIdMembersResponseSuccess = (postChatsChatIdMembersResponse201) & {
+  headers: Headers;
+};
+export type postChatsChatIdMembersResponseError = (postChatsChatIdMembersResponse400 | postChatsChatIdMembersResponse401 | postChatsChatIdMembersResponse403 | postChatsChatIdMembersResponse409) & {
+  headers: Headers;
+};
 
-export type postChatsChatIdMembersResponse = postChatsChatIdMembersResponseSuccess | postChatsChatIdMembersResponseError
+export type postChatsChatIdMembersResponse = (postChatsChatIdMembersResponseSuccess | postChatsChatIdMembersResponseError)
 
-export const getPostChatsChatIdMembersUrl = (chatId: string) => {
+export const getPostChatsChatIdMembersUrl = (chatId: string,) => {
+
+
+
+
   return `/chats/${chatId}/members`
 }
 
-export const postChatsChatIdMembers = async (
-  chatId: string,
-  githubCom4H1RZooraInternalDomainAddChatMemberDTO: GithubCom4H1RZooraInternalDomainAddChatMemberDTO,
-  options?: RequestInit
-): Promise<postChatsChatIdMembersResponse> => {
-  return customInstance<postChatsChatIdMembersResponse>(getPostChatsChatIdMembersUrl(chatId), {
+export const postChatsChatIdMembers = async (chatId: string,
+    githubCom4H1RZooraInternalDomainAddChatMemberDTO: GithubCom4H1RZooraInternalDomainAddChatMemberDTO, options?: RequestInit): Promise<postChatsChatIdMembersResponse> => {
+
+  return customInstance<postChatsChatIdMembersResponse>(getPostChatsChatIdMembersUrl(chatId),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainAddChatMemberDTO),
-  })
-}
-
-export const getPostChatsChatIdMembersMutationOptions = <
-  TError = ErrorType<
-    PostChatsChatIdMembers400 | PostChatsChatIdMembers401 | PostChatsChatIdMembers403 | PostChatsChatIdMembers409
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postChatsChatIdMembers>>,
-    TError,
-    { chatId: string; data: GithubCom4H1RZooraInternalDomainAddChatMemberDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postChatsChatIdMembers>>,
-  TError,
-  { chatId: string; data: GithubCom4H1RZooraInternalDomainAddChatMemberDTO },
-  TContext
-> => {
-  const mutationKey = ["postChatsChatIdMembers"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postChatsChatIdMembers>>,
-    { chatId: string; data: GithubCom4H1RZooraInternalDomainAddChatMemberDTO }
-  > = (props) => {
-    const { chatId, data } = props ?? {}
-
-    return postChatsChatIdMembers(chatId, data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainAddChatMemberDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostChatsChatIdMembersMutationResult = NonNullable<Awaited<ReturnType<typeof postChatsChatIdMembers>>>
-export type PostChatsChatIdMembersMutationBody = GithubCom4H1RZooraInternalDomainAddChatMemberDTO
-export type PostChatsChatIdMembersMutationError = ErrorType<
-  PostChatsChatIdMembers400 | PostChatsChatIdMembers401 | PostChatsChatIdMembers403 | PostChatsChatIdMembers409
->
 
-/**
+
+export const getPostChatsChatIdMembersMutationOptions = <TError = ErrorType<PostChatsChatIdMembers400 | PostChatsChatIdMembers401 | PostChatsChatIdMembers403 | PostChatsChatIdMembers409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postChatsChatIdMembers>>, TError,{chatId: string;data: GithubCom4H1RZooraInternalDomainAddChatMemberDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postChatsChatIdMembers>>, TError,{chatId: string;data: GithubCom4H1RZooraInternalDomainAddChatMemberDTO}, TContext> => {
+
+const mutationKey = ['postChatsChatIdMembers'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postChatsChatIdMembers>>, {chatId: string;data: GithubCom4H1RZooraInternalDomainAddChatMemberDTO}> = (props) => {
+          const {chatId,data} = props ?? {};
+
+          return  postChatsChatIdMembers(chatId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostChatsChatIdMembersMutationResult = NonNullable<Awaited<ReturnType<typeof postChatsChatIdMembers>>>
+    export type PostChatsChatIdMembersMutationBody = GithubCom4H1RZooraInternalDomainAddChatMemberDTO
+    export type PostChatsChatIdMembersMutationError = ErrorType<PostChatsChatIdMembers400 | PostChatsChatIdMembers401 | PostChatsChatIdMembers403 | PostChatsChatIdMembers409>
+
+    /**
  * @summary Add chat member
  */
-export const usePostChatsChatIdMembers = <
-  TError = ErrorType<
-    PostChatsChatIdMembers400 | PostChatsChatIdMembers401 | PostChatsChatIdMembers403 | PostChatsChatIdMembers409
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postChatsChatIdMembers>>,
-      TError,
-      { chatId: string; data: GithubCom4H1RZooraInternalDomainAddChatMemberDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postChatsChatIdMembers>>,
-  TError,
-  { chatId: string; data: GithubCom4H1RZooraInternalDomainAddChatMemberDTO },
-  TContext
-> => {
-  return useMutation(getPostChatsChatIdMembersMutationOptions(options), queryClient)
-}
-/**
+export const usePostChatsChatIdMembers = <TError = ErrorType<PostChatsChatIdMembers400 | PostChatsChatIdMembers401 | PostChatsChatIdMembers403 | PostChatsChatIdMembers409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postChatsChatIdMembers>>, TError,{chatId: string;data: GithubCom4H1RZooraInternalDomainAddChatMemberDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postChatsChatIdMembers>>,
+        TError,
+        {chatId: string;data: GithubCom4H1RZooraInternalDomainAddChatMemberDTO},
+        TContext
+      > => {
+      return useMutation(getPostChatsChatIdMembersMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Remove chat member
  */
 export type deleteChatsChatIdMembersUserIdResponse200 = {
@@ -1003,110 +912,84 @@ export type deleteChatsChatIdMembersUserIdResponse404 = {
   status: 404
 }
 
-export type deleteChatsChatIdMembersUserIdResponseSuccess = deleteChatsChatIdMembersUserIdResponse200 & {
-  headers: Headers
-}
-export type deleteChatsChatIdMembersUserIdResponseError = (
-  | deleteChatsChatIdMembersUserIdResponse401
-  | deleteChatsChatIdMembersUserIdResponse403
-  | deleteChatsChatIdMembersUserIdResponse404
-) & {
-  headers: Headers
-}
+export type deleteChatsChatIdMembersUserIdResponseSuccess = (deleteChatsChatIdMembersUserIdResponse200) & {
+  headers: Headers;
+};
+export type deleteChatsChatIdMembersUserIdResponseError = (deleteChatsChatIdMembersUserIdResponse401 | deleteChatsChatIdMembersUserIdResponse403 | deleteChatsChatIdMembersUserIdResponse404) & {
+  headers: Headers;
+};
 
-export type deleteChatsChatIdMembersUserIdResponse =
-  | deleteChatsChatIdMembersUserIdResponseSuccess
-  | deleteChatsChatIdMembersUserIdResponseError
+export type deleteChatsChatIdMembersUserIdResponse = (deleteChatsChatIdMembersUserIdResponseSuccess | deleteChatsChatIdMembersUserIdResponseError)
 
-export const getDeleteChatsChatIdMembersUserIdUrl = (chatId: string, userId: string) => {
+export const getDeleteChatsChatIdMembersUserIdUrl = (chatId: string,
+    userId: string,) => {
+
+
+
+
   return `/chats/${chatId}/members/${userId}`
 }
 
-export const deleteChatsChatIdMembersUserId = async (
-  chatId: string,
-  userId: string,
-  options?: RequestInit
-): Promise<deleteChatsChatIdMembersUserIdResponse> => {
-  return customInstance<deleteChatsChatIdMembersUserIdResponse>(getDeleteChatsChatIdMembersUserIdUrl(chatId, userId), {
+export const deleteChatsChatIdMembersUserId = async (chatId: string,
+    userId: string, options?: RequestInit): Promise<deleteChatsChatIdMembersUserIdResponse> => {
+
+  return customInstance<deleteChatsChatIdMembersUserIdResponse>(getDeleteChatsChatIdMembersUserIdUrl(chatId,userId),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeleteChatsChatIdMembersUserIdMutationOptions = <
-  TError = ErrorType<
-    DeleteChatsChatIdMembersUserId401 | DeleteChatsChatIdMembersUserId403 | DeleteChatsChatIdMembersUserId404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteChatsChatIdMembersUserId>>,
-    TError,
-    { chatId: string; userId: string },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteChatsChatIdMembersUserId>>,
-  TError,
-  { chatId: string; userId: string },
-  TContext
-> => {
-  const mutationKey = ["deleteChatsChatIdMembersUserId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteChatsChatIdMembersUserId>>,
-    { chatId: string; userId: string }
-  > = (props) => {
-    const { chatId, userId } = props ?? {}
-
-    return deleteChatsChatIdMembersUserId(chatId, userId, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteChatsChatIdMembersUserIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteChatsChatIdMembersUserId>>
->
 
-export type DeleteChatsChatIdMembersUserIdMutationError = ErrorType<
-  DeleteChatsChatIdMembersUserId401 | DeleteChatsChatIdMembersUserId403 | DeleteChatsChatIdMembersUserId404
->
 
-/**
+export const getDeleteChatsChatIdMembersUserIdMutationOptions = <TError = ErrorType<DeleteChatsChatIdMembersUserId401 | DeleteChatsChatIdMembersUserId403 | DeleteChatsChatIdMembersUserId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteChatsChatIdMembersUserId>>, TError,{chatId: string;userId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteChatsChatIdMembersUserId>>, TError,{chatId: string;userId: string}, TContext> => {
+
+const mutationKey = ['deleteChatsChatIdMembersUserId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteChatsChatIdMembersUserId>>, {chatId: string;userId: string}> = (props) => {
+          const {chatId,userId} = props ?? {};
+
+          return  deleteChatsChatIdMembersUserId(chatId,userId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteChatsChatIdMembersUserIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteChatsChatIdMembersUserId>>>
+
+    export type DeleteChatsChatIdMembersUserIdMutationError = ErrorType<DeleteChatsChatIdMembersUserId401 | DeleteChatsChatIdMembersUserId403 | DeleteChatsChatIdMembersUserId404>
+
+    /**
  * @summary Remove chat member
  */
-export const useDeleteChatsChatIdMembersUserId = <
-  TError = ErrorType<
-    DeleteChatsChatIdMembersUserId401 | DeleteChatsChatIdMembersUserId403 | DeleteChatsChatIdMembersUserId404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteChatsChatIdMembersUserId>>,
-      TError,
-      { chatId: string; userId: string },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteChatsChatIdMembersUserId>>,
-  TError,
-  { chatId: string; userId: string },
-  TContext
-> => {
-  return useMutation(getDeleteChatsChatIdMembersUserIdMutationOptions(options), queryClient)
-}
-/**
+export const useDeleteChatsChatIdMembersUserId = <TError = ErrorType<DeleteChatsChatIdMembersUserId401 | DeleteChatsChatIdMembersUserId403 | DeleteChatsChatIdMembersUserId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteChatsChatIdMembersUserId>>, TError,{chatId: string;userId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteChatsChatIdMembersUserId>>,
+        TError,
+        {chatId: string;userId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteChatsChatIdMembersUserIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary List messages
  */
 export type getChatsChatIdMessagesResponse200 = {
@@ -1124,151 +1007,126 @@ export type getChatsChatIdMessagesResponse403 = {
   status: 403
 }
 
-export type getChatsChatIdMessagesResponseSuccess = getChatsChatIdMessagesResponse200 & {
-  headers: Headers
-}
-export type getChatsChatIdMessagesResponseError = (
-  | getChatsChatIdMessagesResponse401
-  | getChatsChatIdMessagesResponse403
-) & {
-  headers: Headers
-}
+export type getChatsChatIdMessagesResponseSuccess = (getChatsChatIdMessagesResponse200) & {
+  headers: Headers;
+};
+export type getChatsChatIdMessagesResponseError = (getChatsChatIdMessagesResponse401 | getChatsChatIdMessagesResponse403) & {
+  headers: Headers;
+};
 
-export type getChatsChatIdMessagesResponse = getChatsChatIdMessagesResponseSuccess | getChatsChatIdMessagesResponseError
+export type getChatsChatIdMessagesResponse = (getChatsChatIdMessagesResponseSuccess | getChatsChatIdMessagesResponseError)
 
-export const getGetChatsChatIdMessagesUrl = (chatId: string, params?: GetChatsChatIdMessagesParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetChatsChatIdMessagesUrl = (chatId: string,
+    params?: GetChatsChatIdMessagesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/chats/${chatId}/messages?${stringifiedParams}` : `/chats/${chatId}/messages`
 }
 
-export const getChatsChatIdMessages = async (
-  chatId: string,
-  params?: GetChatsChatIdMessagesParams,
-  options?: RequestInit
-): Promise<getChatsChatIdMessagesResponse> => {
-  return customInstance<getChatsChatIdMessagesResponse>(getGetChatsChatIdMessagesUrl(chatId, params), {
+export const getChatsChatIdMessages = async (chatId: string,
+    params?: GetChatsChatIdMessagesParams, options?: RequestInit): Promise<getChatsChatIdMessagesResponse> => {
+
+  return customInstance<getChatsChatIdMessagesResponse>(getGetChatsChatIdMessagesUrl(chatId,params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetChatsChatIdMessagesQueryKey = (chatId: string, params?: GetChatsChatIdMessagesParams) => {
-  return [`/chats/${chatId}/messages`, ...(params ? [params] : [])] as const
-}
 
-export const getGetChatsChatIdMessagesQueryOptions = <
-  TData = Awaited<ReturnType<typeof getChatsChatIdMessages>>,
-  TError = ErrorType<GetChatsChatIdMessages401 | GetChatsChatIdMessages403>,
->(
-  chatId: string,
-  params?: GetChatsChatIdMessagesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessages>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetChatsChatIdMessagesQueryKey = (chatId: string,
+    params?: GetChatsChatIdMessagesParams,) => {
+    return [
+    `/chats/${chatId}/messages`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetChatsChatIdMessagesQueryOptions = <TData = Awaited<ReturnType<typeof getChatsChatIdMessages>>, TError = ErrorType<GetChatsChatIdMessages401 | GetChatsChatIdMessages403>>(chatId: string,
+    params?: GetChatsChatIdMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessages>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetChatsChatIdMessagesQueryKey(chatId, params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getChatsChatIdMessages>>> = ({ signal }) =>
-    getChatsChatIdMessages(chatId, params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetChatsChatIdMessagesQueryKey(chatId,params);
 
-  return { queryKey, queryFn, enabled: !!chatId, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getChatsChatIdMessages>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getChatsChatIdMessages>>> = ({ signal }) => getChatsChatIdMessages(chatId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(chatId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessages>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetChatsChatIdMessagesQueryResult = NonNullable<Awaited<ReturnType<typeof getChatsChatIdMessages>>>
 export type GetChatsChatIdMessagesQueryError = ErrorType<GetChatsChatIdMessages401 | GetChatsChatIdMessages403>
 
-export function useGetChatsChatIdMessages<
-  TData = Awaited<ReturnType<typeof getChatsChatIdMessages>>,
-  TError = ErrorType<GetChatsChatIdMessages401 | GetChatsChatIdMessages403>,
->(
-  chatId: string,
-  params: undefined | GetChatsChatIdMessagesParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessages>>, TError, TData>> &
-      Pick<
+
+export function useGetChatsChatIdMessages<TData = Awaited<ReturnType<typeof getChatsChatIdMessages>>, TError = ErrorType<GetChatsChatIdMessages401 | GetChatsChatIdMessages403>>(
+ chatId: string,
+    params: undefined |  GetChatsChatIdMessagesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessages>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getChatsChatIdMessages>>,
           TError,
           Awaited<ReturnType<typeof getChatsChatIdMessages>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetChatsChatIdMessages<
-  TData = Awaited<ReturnType<typeof getChatsChatIdMessages>>,
-  TError = ErrorType<GetChatsChatIdMessages401 | GetChatsChatIdMessages403>,
->(
-  chatId: string,
-  params?: GetChatsChatIdMessagesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessages>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetChatsChatIdMessages<TData = Awaited<ReturnType<typeof getChatsChatIdMessages>>, TError = ErrorType<GetChatsChatIdMessages401 | GetChatsChatIdMessages403>>(
+ chatId: string,
+    params?: GetChatsChatIdMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessages>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getChatsChatIdMessages>>,
           TError,
           Awaited<ReturnType<typeof getChatsChatIdMessages>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetChatsChatIdMessages<
-  TData = Awaited<ReturnType<typeof getChatsChatIdMessages>>,
-  TError = ErrorType<GetChatsChatIdMessages401 | GetChatsChatIdMessages403>,
->(
-  chatId: string,
-  params?: GetChatsChatIdMessagesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessages>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetChatsChatIdMessages<TData = Awaited<ReturnType<typeof getChatsChatIdMessages>>, TError = ErrorType<GetChatsChatIdMessages401 | GetChatsChatIdMessages403>>(
+ chatId: string,
+    params?: GetChatsChatIdMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessages>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary List messages
  */
 
-export function useGetChatsChatIdMessages<
-  TData = Awaited<ReturnType<typeof getChatsChatIdMessages>>,
-  TError = ErrorType<GetChatsChatIdMessages401 | GetChatsChatIdMessages403>,
->(
-  chatId: string,
-  params?: GetChatsChatIdMessagesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessages>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetChatsChatIdMessagesQueryOptions(chatId, params, options)
+export function useGetChatsChatIdMessages<TData = Awaited<ReturnType<typeof getChatsChatIdMessages>>, TError = ErrorType<GetChatsChatIdMessages401 | GetChatsChatIdMessages403>>(
+ chatId: string,
+    params?: GetChatsChatIdMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessages>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetChatsChatIdMessagesQueryOptions(chatId,params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Send message
@@ -1293,106 +1151,84 @@ export type postChatsChatIdMessagesResponse403 = {
   status: 403
 }
 
-export type postChatsChatIdMessagesResponseSuccess = postChatsChatIdMessagesResponse201 & {
-  headers: Headers
-}
-export type postChatsChatIdMessagesResponseError = (
-  | postChatsChatIdMessagesResponse400
-  | postChatsChatIdMessagesResponse401
-  | postChatsChatIdMessagesResponse403
-) & {
-  headers: Headers
-}
+export type postChatsChatIdMessagesResponseSuccess = (postChatsChatIdMessagesResponse201) & {
+  headers: Headers;
+};
+export type postChatsChatIdMessagesResponseError = (postChatsChatIdMessagesResponse400 | postChatsChatIdMessagesResponse401 | postChatsChatIdMessagesResponse403) & {
+  headers: Headers;
+};
 
-export type postChatsChatIdMessagesResponse =
-  | postChatsChatIdMessagesResponseSuccess
-  | postChatsChatIdMessagesResponseError
+export type postChatsChatIdMessagesResponse = (postChatsChatIdMessagesResponseSuccess | postChatsChatIdMessagesResponseError)
 
-export const getPostChatsChatIdMessagesUrl = (chatId: string) => {
+export const getPostChatsChatIdMessagesUrl = (chatId: string,) => {
+
+
+
+
   return `/chats/${chatId}/messages`
 }
 
-export const postChatsChatIdMessages = async (
-  chatId: string,
-  githubCom4H1RZooraInternalDomainSendMessageDTO: GithubCom4H1RZooraInternalDomainSendMessageDTO,
-  options?: RequestInit
-): Promise<postChatsChatIdMessagesResponse> => {
-  return customInstance<postChatsChatIdMessagesResponse>(getPostChatsChatIdMessagesUrl(chatId), {
+export const postChatsChatIdMessages = async (chatId: string,
+    githubCom4H1RZooraInternalDomainSendMessageDTO: GithubCom4H1RZooraInternalDomainSendMessageDTO, options?: RequestInit): Promise<postChatsChatIdMessagesResponse> => {
+
+  return customInstance<postChatsChatIdMessagesResponse>(getPostChatsChatIdMessagesUrl(chatId),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainSendMessageDTO),
-  })
-}
-
-export const getPostChatsChatIdMessagesMutationOptions = <
-  TError = ErrorType<PostChatsChatIdMessages400 | PostChatsChatIdMessages401 | PostChatsChatIdMessages403>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postChatsChatIdMessages>>,
-    TError,
-    { chatId: string; data: GithubCom4H1RZooraInternalDomainSendMessageDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postChatsChatIdMessages>>,
-  TError,
-  { chatId: string; data: GithubCom4H1RZooraInternalDomainSendMessageDTO },
-  TContext
-> => {
-  const mutationKey = ["postChatsChatIdMessages"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postChatsChatIdMessages>>,
-    { chatId: string; data: GithubCom4H1RZooraInternalDomainSendMessageDTO }
-  > = (props) => {
-    const { chatId, data } = props ?? {}
-
-    return postChatsChatIdMessages(chatId, data, requestOptions)
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainSendMessageDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostChatsChatIdMessagesMutationResult = NonNullable<Awaited<ReturnType<typeof postChatsChatIdMessages>>>
-export type PostChatsChatIdMessagesMutationBody = GithubCom4H1RZooraInternalDomainSendMessageDTO
-export type PostChatsChatIdMessagesMutationError = ErrorType<
-  PostChatsChatIdMessages400 | PostChatsChatIdMessages401 | PostChatsChatIdMessages403
->
 
-/**
+
+export const getPostChatsChatIdMessagesMutationOptions = <TError = ErrorType<PostChatsChatIdMessages400 | PostChatsChatIdMessages401 | PostChatsChatIdMessages403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postChatsChatIdMessages>>, TError,{chatId: string;data: GithubCom4H1RZooraInternalDomainSendMessageDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postChatsChatIdMessages>>, TError,{chatId: string;data: GithubCom4H1RZooraInternalDomainSendMessageDTO}, TContext> => {
+
+const mutationKey = ['postChatsChatIdMessages'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postChatsChatIdMessages>>, {chatId: string;data: GithubCom4H1RZooraInternalDomainSendMessageDTO}> = (props) => {
+          const {chatId,data} = props ?? {};
+
+          return  postChatsChatIdMessages(chatId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostChatsChatIdMessagesMutationResult = NonNullable<Awaited<ReturnType<typeof postChatsChatIdMessages>>>
+    export type PostChatsChatIdMessagesMutationBody = GithubCom4H1RZooraInternalDomainSendMessageDTO
+    export type PostChatsChatIdMessagesMutationError = ErrorType<PostChatsChatIdMessages400 | PostChatsChatIdMessages401 | PostChatsChatIdMessages403>
+
+    /**
  * @summary Send message
  */
-export const usePostChatsChatIdMessages = <
-  TError = ErrorType<PostChatsChatIdMessages400 | PostChatsChatIdMessages401 | PostChatsChatIdMessages403>,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postChatsChatIdMessages>>,
-      TError,
-      { chatId: string; data: GithubCom4H1RZooraInternalDomainSendMessageDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postChatsChatIdMessages>>,
-  TError,
-  { chatId: string; data: GithubCom4H1RZooraInternalDomainSendMessageDTO },
-  TContext
-> => {
-  return useMutation(getPostChatsChatIdMessagesMutationOptions(options), queryClient)
-}
-/**
+export const usePostChatsChatIdMessages = <TError = ErrorType<PostChatsChatIdMessages400 | PostChatsChatIdMessages401 | PostChatsChatIdMessages403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postChatsChatIdMessages>>, TError,{chatId: string;data: GithubCom4H1RZooraInternalDomainSendMessageDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postChatsChatIdMessages>>,
+        TError,
+        {chatId: string;data: GithubCom4H1RZooraInternalDomainSendMessageDTO},
+        TContext
+      > => {
+      return useMutation(getPostChatsChatIdMessagesMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get message
  */
 export type getChatsChatIdMessagesMessageIdResponse200 = {
@@ -1415,161 +1251,119 @@ export type getChatsChatIdMessagesMessageIdResponse404 = {
   status: 404
 }
 
-export type getChatsChatIdMessagesMessageIdResponseSuccess = getChatsChatIdMessagesMessageIdResponse200 & {
-  headers: Headers
-}
-export type getChatsChatIdMessagesMessageIdResponseError = (
-  | getChatsChatIdMessagesMessageIdResponse401
-  | getChatsChatIdMessagesMessageIdResponse403
-  | getChatsChatIdMessagesMessageIdResponse404
-) & {
-  headers: Headers
-}
+export type getChatsChatIdMessagesMessageIdResponseSuccess = (getChatsChatIdMessagesMessageIdResponse200) & {
+  headers: Headers;
+};
+export type getChatsChatIdMessagesMessageIdResponseError = (getChatsChatIdMessagesMessageIdResponse401 | getChatsChatIdMessagesMessageIdResponse403 | getChatsChatIdMessagesMessageIdResponse404) & {
+  headers: Headers;
+};
 
-export type getChatsChatIdMessagesMessageIdResponse =
-  | getChatsChatIdMessagesMessageIdResponseSuccess
-  | getChatsChatIdMessagesMessageIdResponseError
+export type getChatsChatIdMessagesMessageIdResponse = (getChatsChatIdMessagesMessageIdResponseSuccess | getChatsChatIdMessagesMessageIdResponseError)
 
-export const getGetChatsChatIdMessagesMessageIdUrl = (chatId: string, messageId: string) => {
+export const getGetChatsChatIdMessagesMessageIdUrl = (chatId: string,
+    messageId: string,) => {
+
+
+
+
   return `/chats/${chatId}/messages/${messageId}`
 }
 
-export const getChatsChatIdMessagesMessageId = async (
-  chatId: string,
-  messageId: string,
-  options?: RequestInit
-): Promise<getChatsChatIdMessagesMessageIdResponse> => {
-  return customInstance<getChatsChatIdMessagesMessageIdResponse>(
-    getGetChatsChatIdMessagesMessageIdUrl(chatId, messageId),
-    {
-      ...options,
-      method: "GET",
-    }
-  )
-}
+export const getChatsChatIdMessagesMessageId = async (chatId: string,
+    messageId: string, options?: RequestInit): Promise<getChatsChatIdMessagesMessageIdResponse> => {
 
-export const getGetChatsChatIdMessagesMessageIdQueryKey = (chatId: string, messageId: string) => {
-  return [`/chats/${chatId}/messages/${messageId}`] as const
-}
+  return customInstance<getChatsChatIdMessagesMessageIdResponse>(getGetChatsChatIdMessagesMessageIdUrl(chatId,messageId),
+  {
+    ...options,
+    method: 'GET'
 
-export const getGetChatsChatIdMessagesMessageIdQueryOptions = <
-  TData = Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>,
-  TError = ErrorType<
-    GetChatsChatIdMessagesMessageId401 | GetChatsChatIdMessagesMessageId403 | GetChatsChatIdMessagesMessageId404
-  >,
->(
-  chatId: string,
-  messageId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
+
   }
+);}
+
+
+
+
+
+export const getGetChatsChatIdMessagesMessageIdQueryKey = (chatId: string,
+    messageId: string,) => {
+    return [
+    `/chats/${chatId}/messages/${messageId}`
+    ] as const;
+    }
+
+
+export const getGetChatsChatIdMessagesMessageIdQueryOptions = <TData = Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>, TError = ErrorType<GetChatsChatIdMessagesMessageId401 | GetChatsChatIdMessagesMessageId403 | GetChatsChatIdMessagesMessageId404>>(chatId: string,
+    messageId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetChatsChatIdMessagesMessageIdQueryKey(chatId, messageId)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>> = ({ signal }) =>
-    getChatsChatIdMessagesMessageId(chatId, messageId, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetChatsChatIdMessagesMessageIdQueryKey(chatId,messageId);
 
-  return { queryKey, queryFn, enabled: !!(chatId && messageId), ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>> = ({ signal }) => getChatsChatIdMessagesMessageId(chatId,messageId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(chatId && messageId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetChatsChatIdMessagesMessageIdQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>
->
-export type GetChatsChatIdMessagesMessageIdQueryError = ErrorType<
-  GetChatsChatIdMessagesMessageId401 | GetChatsChatIdMessagesMessageId403 | GetChatsChatIdMessagesMessageId404
->
+export type GetChatsChatIdMessagesMessageIdQueryResult = NonNullable<Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>>
+export type GetChatsChatIdMessagesMessageIdQueryError = ErrorType<GetChatsChatIdMessagesMessageId401 | GetChatsChatIdMessagesMessageId403 | GetChatsChatIdMessagesMessageId404>
 
-export function useGetChatsChatIdMessagesMessageId<
-  TData = Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>,
-  TError = ErrorType<
-    GetChatsChatIdMessagesMessageId401 | GetChatsChatIdMessagesMessageId403 | GetChatsChatIdMessagesMessageId404
-  >,
->(
-  chatId: string,
-  messageId: string,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>, TError, TData>> &
-      Pick<
+
+export function useGetChatsChatIdMessagesMessageId<TData = Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>, TError = ErrorType<GetChatsChatIdMessagesMessageId401 | GetChatsChatIdMessagesMessageId403 | GetChatsChatIdMessagesMessageId404>>(
+ chatId: string,
+    messageId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>,
           TError,
           Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetChatsChatIdMessagesMessageId<
-  TData = Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>,
-  TError = ErrorType<
-    GetChatsChatIdMessagesMessageId401 | GetChatsChatIdMessagesMessageId403 | GetChatsChatIdMessagesMessageId404
-  >,
->(
-  chatId: string,
-  messageId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetChatsChatIdMessagesMessageId<TData = Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>, TError = ErrorType<GetChatsChatIdMessagesMessageId401 | GetChatsChatIdMessagesMessageId403 | GetChatsChatIdMessagesMessageId404>>(
+ chatId: string,
+    messageId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>,
           TError,
           Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetChatsChatIdMessagesMessageId<
-  TData = Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>,
-  TError = ErrorType<
-    GetChatsChatIdMessagesMessageId401 | GetChatsChatIdMessagesMessageId403 | GetChatsChatIdMessagesMessageId404
-  >,
->(
-  chatId: string,
-  messageId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetChatsChatIdMessagesMessageId<TData = Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>, TError = ErrorType<GetChatsChatIdMessagesMessageId401 | GetChatsChatIdMessagesMessageId403 | GetChatsChatIdMessagesMessageId404>>(
+ chatId: string,
+    messageId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get message
  */
 
-export function useGetChatsChatIdMessagesMessageId<
-  TData = Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>,
-  TError = ErrorType<
-    GetChatsChatIdMessagesMessageId401 | GetChatsChatIdMessagesMessageId403 | GetChatsChatIdMessagesMessageId404
-  >,
->(
-  chatId: string,
-  messageId: string,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetChatsChatIdMessagesMessageIdQueryOptions(chatId, messageId, options)
+export function useGetChatsChatIdMessagesMessageId<TData = Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>, TError = ErrorType<GetChatsChatIdMessagesMessageId401 | GetChatsChatIdMessagesMessageId403 | GetChatsChatIdMessagesMessageId404>>(
+ chatId: string,
+    messageId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChatsChatIdMessagesMessageId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetChatsChatIdMessagesMessageIdQueryOptions(chatId,messageId,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary Update message
@@ -1599,126 +1393,86 @@ export type putChatsChatIdMessagesMessageIdResponse404 = {
   status: 404
 }
 
-export type putChatsChatIdMessagesMessageIdResponseSuccess = putChatsChatIdMessagesMessageIdResponse200 & {
-  headers: Headers
-}
-export type putChatsChatIdMessagesMessageIdResponseError = (
-  | putChatsChatIdMessagesMessageIdResponse400
-  | putChatsChatIdMessagesMessageIdResponse401
-  | putChatsChatIdMessagesMessageIdResponse403
-  | putChatsChatIdMessagesMessageIdResponse404
-) & {
-  headers: Headers
-}
+export type putChatsChatIdMessagesMessageIdResponseSuccess = (putChatsChatIdMessagesMessageIdResponse200) & {
+  headers: Headers;
+};
+export type putChatsChatIdMessagesMessageIdResponseError = (putChatsChatIdMessagesMessageIdResponse400 | putChatsChatIdMessagesMessageIdResponse401 | putChatsChatIdMessagesMessageIdResponse403 | putChatsChatIdMessagesMessageIdResponse404) & {
+  headers: Headers;
+};
 
-export type putChatsChatIdMessagesMessageIdResponse =
-  | putChatsChatIdMessagesMessageIdResponseSuccess
-  | putChatsChatIdMessagesMessageIdResponseError
+export type putChatsChatIdMessagesMessageIdResponse = (putChatsChatIdMessagesMessageIdResponseSuccess | putChatsChatIdMessagesMessageIdResponseError)
 
-export const getPutChatsChatIdMessagesMessageIdUrl = (chatId: string, messageId: string) => {
+export const getPutChatsChatIdMessagesMessageIdUrl = (chatId: string,
+    messageId: string,) => {
+
+
+
+
   return `/chats/${chatId}/messages/${messageId}`
 }
 
-export const putChatsChatIdMessagesMessageId = async (
-  chatId: string,
-  messageId: string,
-  githubCom4H1RZooraInternalDomainUpdateMessageDTO: GithubCom4H1RZooraInternalDomainUpdateMessageDTO,
-  options?: RequestInit
-): Promise<putChatsChatIdMessagesMessageIdResponse> => {
-  return customInstance<putChatsChatIdMessagesMessageIdResponse>(
-    getPutChatsChatIdMessagesMessageIdUrl(chatId, messageId),
-    {
-      ...options,
-      method: "PUT",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(githubCom4H1RZooraInternalDomainUpdateMessageDTO),
-    }
-  )
-}
+export const putChatsChatIdMessagesMessageId = async (chatId: string,
+    messageId: string,
+    githubCom4H1RZooraInternalDomainUpdateMessageDTO: GithubCom4H1RZooraInternalDomainUpdateMessageDTO, options?: RequestInit): Promise<putChatsChatIdMessagesMessageIdResponse> => {
 
-export const getPutChatsChatIdMessagesMessageIdMutationOptions = <
-  TError = ErrorType<
-    | PutChatsChatIdMessagesMessageId400
-    | PutChatsChatIdMessagesMessageId401
-    | PutChatsChatIdMessagesMessageId403
-    | PutChatsChatIdMessagesMessageId404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof putChatsChatIdMessagesMessageId>>,
-    TError,
-    { chatId: string; messageId: string; data: GithubCom4H1RZooraInternalDomainUpdateMessageDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof putChatsChatIdMessagesMessageId>>,
-  TError,
-  { chatId: string; messageId: string; data: GithubCom4H1RZooraInternalDomainUpdateMessageDTO },
-  TContext
-> => {
-  const mutationKey = ["putChatsChatIdMessagesMessageId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof putChatsChatIdMessagesMessageId>>,
-    { chatId: string; messageId: string; data: GithubCom4H1RZooraInternalDomainUpdateMessageDTO }
-  > = (props) => {
-    const { chatId, messageId, data } = props ?? {}
-
-    return putChatsChatIdMessagesMessageId(chatId, messageId, data, requestOptions)
+  return customInstance<putChatsChatIdMessagesMessageIdResponse>(getPutChatsChatIdMessagesMessageIdUrl(chatId,messageId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainUpdateMessageDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PutChatsChatIdMessagesMessageIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof putChatsChatIdMessagesMessageId>>
->
-export type PutChatsChatIdMessagesMessageIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateMessageDTO
-export type PutChatsChatIdMessagesMessageIdMutationError = ErrorType<
-  | PutChatsChatIdMessagesMessageId400
-  | PutChatsChatIdMessagesMessageId401
-  | PutChatsChatIdMessagesMessageId403
-  | PutChatsChatIdMessagesMessageId404
->
 
-/**
+
+export const getPutChatsChatIdMessagesMessageIdMutationOptions = <TError = ErrorType<PutChatsChatIdMessagesMessageId400 | PutChatsChatIdMessagesMessageId401 | PutChatsChatIdMessagesMessageId403 | PutChatsChatIdMessagesMessageId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putChatsChatIdMessagesMessageId>>, TError,{chatId: string;messageId: string;data: GithubCom4H1RZooraInternalDomainUpdateMessageDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putChatsChatIdMessagesMessageId>>, TError,{chatId: string;messageId: string;data: GithubCom4H1RZooraInternalDomainUpdateMessageDTO}, TContext> => {
+
+const mutationKey = ['putChatsChatIdMessagesMessageId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putChatsChatIdMessagesMessageId>>, {chatId: string;messageId: string;data: GithubCom4H1RZooraInternalDomainUpdateMessageDTO}> = (props) => {
+          const {chatId,messageId,data} = props ?? {};
+
+          return  putChatsChatIdMessagesMessageId(chatId,messageId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutChatsChatIdMessagesMessageIdMutationResult = NonNullable<Awaited<ReturnType<typeof putChatsChatIdMessagesMessageId>>>
+    export type PutChatsChatIdMessagesMessageIdMutationBody = GithubCom4H1RZooraInternalDomainUpdateMessageDTO
+    export type PutChatsChatIdMessagesMessageIdMutationError = ErrorType<PutChatsChatIdMessagesMessageId400 | PutChatsChatIdMessagesMessageId401 | PutChatsChatIdMessagesMessageId403 | PutChatsChatIdMessagesMessageId404>
+
+    /**
  * @summary Update message
  */
-export const usePutChatsChatIdMessagesMessageId = <
-  TError = ErrorType<
-    | PutChatsChatIdMessagesMessageId400
-    | PutChatsChatIdMessagesMessageId401
-    | PutChatsChatIdMessagesMessageId403
-    | PutChatsChatIdMessagesMessageId404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof putChatsChatIdMessagesMessageId>>,
-      TError,
-      { chatId: string; messageId: string; data: GithubCom4H1RZooraInternalDomainUpdateMessageDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof putChatsChatIdMessagesMessageId>>,
-  TError,
-  { chatId: string; messageId: string; data: GithubCom4H1RZooraInternalDomainUpdateMessageDTO },
-  TContext
-> => {
-  return useMutation(getPutChatsChatIdMessagesMessageIdMutationOptions(options), queryClient)
-}
-/**
+export const usePutChatsChatIdMessagesMessageId = <TError = ErrorType<PutChatsChatIdMessagesMessageId400 | PutChatsChatIdMessagesMessageId401 | PutChatsChatIdMessagesMessageId403 | PutChatsChatIdMessagesMessageId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putChatsChatIdMessagesMessageId>>, TError,{chatId: string;messageId: string;data: GithubCom4H1RZooraInternalDomainUpdateMessageDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putChatsChatIdMessagesMessageId>>,
+        TError,
+        {chatId: string;messageId: string;data: GithubCom4H1RZooraInternalDomainUpdateMessageDTO},
+        TContext
+      > => {
+      return useMutation(getPutChatsChatIdMessagesMessageIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Delete message
  */
 export type deleteChatsChatIdMessagesMessageIdResponse200 = {
@@ -1741,117 +1495,84 @@ export type deleteChatsChatIdMessagesMessageIdResponse404 = {
   status: 404
 }
 
-export type deleteChatsChatIdMessagesMessageIdResponseSuccess = deleteChatsChatIdMessagesMessageIdResponse200 & {
-  headers: Headers
-}
-export type deleteChatsChatIdMessagesMessageIdResponseError = (
-  | deleteChatsChatIdMessagesMessageIdResponse401
-  | deleteChatsChatIdMessagesMessageIdResponse403
-  | deleteChatsChatIdMessagesMessageIdResponse404
-) & {
-  headers: Headers
-}
+export type deleteChatsChatIdMessagesMessageIdResponseSuccess = (deleteChatsChatIdMessagesMessageIdResponse200) & {
+  headers: Headers;
+};
+export type deleteChatsChatIdMessagesMessageIdResponseError = (deleteChatsChatIdMessagesMessageIdResponse401 | deleteChatsChatIdMessagesMessageIdResponse403 | deleteChatsChatIdMessagesMessageIdResponse404) & {
+  headers: Headers;
+};
 
-export type deleteChatsChatIdMessagesMessageIdResponse =
-  | deleteChatsChatIdMessagesMessageIdResponseSuccess
-  | deleteChatsChatIdMessagesMessageIdResponseError
+export type deleteChatsChatIdMessagesMessageIdResponse = (deleteChatsChatIdMessagesMessageIdResponseSuccess | deleteChatsChatIdMessagesMessageIdResponseError)
 
-export const getDeleteChatsChatIdMessagesMessageIdUrl = (chatId: string, messageId: string) => {
+export const getDeleteChatsChatIdMessagesMessageIdUrl = (chatId: string,
+    messageId: string,) => {
+
+
+
+
   return `/chats/${chatId}/messages/${messageId}`
 }
 
-export const deleteChatsChatIdMessagesMessageId = async (
-  chatId: string,
-  messageId: string,
-  options?: RequestInit
-): Promise<deleteChatsChatIdMessagesMessageIdResponse> => {
-  return customInstance<deleteChatsChatIdMessagesMessageIdResponse>(
-    getDeleteChatsChatIdMessagesMessageIdUrl(chatId, messageId),
-    {
-      ...options,
-      method: "DELETE",
-    }
-  )
-}
+export const deleteChatsChatIdMessagesMessageId = async (chatId: string,
+    messageId: string, options?: RequestInit): Promise<deleteChatsChatIdMessagesMessageIdResponse> => {
 
-export const getDeleteChatsChatIdMessagesMessageIdMutationOptions = <
-  TError = ErrorType<
-    | DeleteChatsChatIdMessagesMessageId401
-    | DeleteChatsChatIdMessagesMessageId403
-    | DeleteChatsChatIdMessagesMessageId404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteChatsChatIdMessagesMessageId>>,
-    TError,
-    { chatId: string; messageId: string },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteChatsChatIdMessagesMessageId>>,
-  TError,
-  { chatId: string; messageId: string },
-  TContext
-> => {
-  const mutationKey = ["deleteChatsChatIdMessagesMessageId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
+  return customInstance<deleteChatsChatIdMessagesMessageIdResponse>(getDeleteChatsChatIdMessagesMessageIdUrl(chatId,messageId),
+  {
+    ...options,
+    method: 'DELETE'
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteChatsChatIdMessagesMessageId>>,
-    { chatId: string; messageId: string }
-  > = (props) => {
-    const { chatId, messageId } = props ?? {}
 
-    return deleteChatsChatIdMessagesMessageId(chatId, messageId, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteChatsChatIdMessagesMessageIdMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteChatsChatIdMessagesMessageId>>
->
 
-export type DeleteChatsChatIdMessagesMessageIdMutationError = ErrorType<
-  DeleteChatsChatIdMessagesMessageId401 | DeleteChatsChatIdMessagesMessageId403 | DeleteChatsChatIdMessagesMessageId404
->
 
-/**
+export const getDeleteChatsChatIdMessagesMessageIdMutationOptions = <TError = ErrorType<DeleteChatsChatIdMessagesMessageId401 | DeleteChatsChatIdMessagesMessageId403 | DeleteChatsChatIdMessagesMessageId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteChatsChatIdMessagesMessageId>>, TError,{chatId: string;messageId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteChatsChatIdMessagesMessageId>>, TError,{chatId: string;messageId: string}, TContext> => {
+
+const mutationKey = ['deleteChatsChatIdMessagesMessageId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteChatsChatIdMessagesMessageId>>, {chatId: string;messageId: string}> = (props) => {
+          const {chatId,messageId} = props ?? {};
+
+          return  deleteChatsChatIdMessagesMessageId(chatId,messageId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteChatsChatIdMessagesMessageIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteChatsChatIdMessagesMessageId>>>
+
+    export type DeleteChatsChatIdMessagesMessageIdMutationError = ErrorType<DeleteChatsChatIdMessagesMessageId401 | DeleteChatsChatIdMessagesMessageId403 | DeleteChatsChatIdMessagesMessageId404>
+
+    /**
  * @summary Delete message
  */
-export const useDeleteChatsChatIdMessagesMessageId = <
-  TError = ErrorType<
-    | DeleteChatsChatIdMessagesMessageId401
-    | DeleteChatsChatIdMessagesMessageId403
-    | DeleteChatsChatIdMessagesMessageId404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteChatsChatIdMessagesMessageId>>,
-      TError,
-      { chatId: string; messageId: string },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteChatsChatIdMessagesMessageId>>,
-  TError,
-  { chatId: string; messageId: string },
-  TContext
-> => {
-  return useMutation(getDeleteChatsChatIdMessagesMessageIdMutationOptions(options), queryClient)
-}
-/**
+export const useDeleteChatsChatIdMessagesMessageId = <TError = ErrorType<DeleteChatsChatIdMessagesMessageId401 | DeleteChatsChatIdMessagesMessageId403 | DeleteChatsChatIdMessagesMessageId404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteChatsChatIdMessagesMessageId>>, TError,{chatId: string;messageId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteChatsChatIdMessagesMessageId>>,
+        TError,
+        {chatId: string;messageId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteChatsChatIdMessagesMessageIdMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Toggle reaction
  */
 export type postChatsChatIdMessagesMessageIdReactionsResponse200 = {
@@ -1879,123 +1600,82 @@ export type postChatsChatIdMessagesMessageIdReactionsResponse404 = {
   status: 404
 }
 
-export type postChatsChatIdMessagesMessageIdReactionsResponseSuccess =
-  postChatsChatIdMessagesMessageIdReactionsResponse200 & {
-    headers: Headers
-  }
-export type postChatsChatIdMessagesMessageIdReactionsResponseError = (
-  | postChatsChatIdMessagesMessageIdReactionsResponse400
-  | postChatsChatIdMessagesMessageIdReactionsResponse401
-  | postChatsChatIdMessagesMessageIdReactionsResponse403
-  | postChatsChatIdMessagesMessageIdReactionsResponse404
-) & {
-  headers: Headers
-}
+export type postChatsChatIdMessagesMessageIdReactionsResponseSuccess = (postChatsChatIdMessagesMessageIdReactionsResponse200) & {
+  headers: Headers;
+};
+export type postChatsChatIdMessagesMessageIdReactionsResponseError = (postChatsChatIdMessagesMessageIdReactionsResponse400 | postChatsChatIdMessagesMessageIdReactionsResponse401 | postChatsChatIdMessagesMessageIdReactionsResponse403 | postChatsChatIdMessagesMessageIdReactionsResponse404) & {
+  headers: Headers;
+};
 
-export type postChatsChatIdMessagesMessageIdReactionsResponse =
-  | postChatsChatIdMessagesMessageIdReactionsResponseSuccess
-  | postChatsChatIdMessagesMessageIdReactionsResponseError
+export type postChatsChatIdMessagesMessageIdReactionsResponse = (postChatsChatIdMessagesMessageIdReactionsResponseSuccess | postChatsChatIdMessagesMessageIdReactionsResponseError)
 
-export const getPostChatsChatIdMessagesMessageIdReactionsUrl = (chatId: string, messageId: string) => {
+export const getPostChatsChatIdMessagesMessageIdReactionsUrl = (chatId: string,
+    messageId: string,) => {
+
+
+
+
   return `/chats/${chatId}/messages/${messageId}/reactions`
 }
 
-export const postChatsChatIdMessagesMessageIdReactions = async (
-  chatId: string,
-  messageId: string,
-  githubCom4H1RZooraInternalDomainToggleReactionDTO: GithubCom4H1RZooraInternalDomainToggleReactionDTO,
-  options?: RequestInit
-): Promise<postChatsChatIdMessagesMessageIdReactionsResponse> => {
-  return customInstance<postChatsChatIdMessagesMessageIdReactionsResponse>(
-    getPostChatsChatIdMessagesMessageIdReactionsUrl(chatId, messageId),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(githubCom4H1RZooraInternalDomainToggleReactionDTO),
-    }
-  )
-}
+export const postChatsChatIdMessagesMessageIdReactions = async (chatId: string,
+    messageId: string,
+    githubCom4H1RZooraInternalDomainToggleReactionDTO: GithubCom4H1RZooraInternalDomainToggleReactionDTO, options?: RequestInit): Promise<postChatsChatIdMessagesMessageIdReactionsResponse> => {
 
-export const getPostChatsChatIdMessagesMessageIdReactionsMutationOptions = <
-  TError = ErrorType<
-    | PostChatsChatIdMessagesMessageIdReactions400
-    | PostChatsChatIdMessagesMessageIdReactions401
-    | PostChatsChatIdMessagesMessageIdReactions403
-    | PostChatsChatIdMessagesMessageIdReactions404
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof postChatsChatIdMessagesMessageIdReactions>>,
-    TError,
-    { chatId: string; messageId: string; data: GithubCom4H1RZooraInternalDomainToggleReactionDTO },
-    TContext
-  >
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof postChatsChatIdMessagesMessageIdReactions>>,
-  TError,
-  { chatId: string; messageId: string; data: GithubCom4H1RZooraInternalDomainToggleReactionDTO },
-  TContext
-> => {
-  const mutationKey = ["postChatsChatIdMessagesMessageIdReactions"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof postChatsChatIdMessagesMessageIdReactions>>,
-    { chatId: string; messageId: string; data: GithubCom4H1RZooraInternalDomainToggleReactionDTO }
-  > = (props) => {
-    const { chatId, messageId, data } = props ?? {}
-
-    return postChatsChatIdMessagesMessageIdReactions(chatId, messageId, data, requestOptions)
+  return customInstance<postChatsChatIdMessagesMessageIdReactionsResponse>(getPostChatsChatIdMessagesMessageIdReactionsUrl(chatId,messageId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainToggleReactionDTO,)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type PostChatsChatIdMessagesMessageIdReactionsMutationResult = NonNullable<
-  Awaited<ReturnType<typeof postChatsChatIdMessagesMessageIdReactions>>
->
-export type PostChatsChatIdMessagesMessageIdReactionsMutationBody = GithubCom4H1RZooraInternalDomainToggleReactionDTO
-export type PostChatsChatIdMessagesMessageIdReactionsMutationError = ErrorType<
-  | PostChatsChatIdMessagesMessageIdReactions400
-  | PostChatsChatIdMessagesMessageIdReactions401
-  | PostChatsChatIdMessagesMessageIdReactions403
-  | PostChatsChatIdMessagesMessageIdReactions404
->
 
-/**
+
+export const getPostChatsChatIdMessagesMessageIdReactionsMutationOptions = <TError = ErrorType<PostChatsChatIdMessagesMessageIdReactions400 | PostChatsChatIdMessagesMessageIdReactions401 | PostChatsChatIdMessagesMessageIdReactions403 | PostChatsChatIdMessagesMessageIdReactions404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postChatsChatIdMessagesMessageIdReactions>>, TError,{chatId: string;messageId: string;data: GithubCom4H1RZooraInternalDomainToggleReactionDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postChatsChatIdMessagesMessageIdReactions>>, TError,{chatId: string;messageId: string;data: GithubCom4H1RZooraInternalDomainToggleReactionDTO}, TContext> => {
+
+const mutationKey = ['postChatsChatIdMessagesMessageIdReactions'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postChatsChatIdMessagesMessageIdReactions>>, {chatId: string;messageId: string;data: GithubCom4H1RZooraInternalDomainToggleReactionDTO}> = (props) => {
+          const {chatId,messageId,data} = props ?? {};
+
+          return  postChatsChatIdMessagesMessageIdReactions(chatId,messageId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostChatsChatIdMessagesMessageIdReactionsMutationResult = NonNullable<Awaited<ReturnType<typeof postChatsChatIdMessagesMessageIdReactions>>>
+    export type PostChatsChatIdMessagesMessageIdReactionsMutationBody = GithubCom4H1RZooraInternalDomainToggleReactionDTO
+    export type PostChatsChatIdMessagesMessageIdReactionsMutationError = ErrorType<PostChatsChatIdMessagesMessageIdReactions400 | PostChatsChatIdMessagesMessageIdReactions401 | PostChatsChatIdMessagesMessageIdReactions403 | PostChatsChatIdMessagesMessageIdReactions404>
+
+    /**
  * @summary Toggle reaction
  */
-export const usePostChatsChatIdMessagesMessageIdReactions = <
-  TError = ErrorType<
-    | PostChatsChatIdMessagesMessageIdReactions400
-    | PostChatsChatIdMessagesMessageIdReactions401
-    | PostChatsChatIdMessagesMessageIdReactions403
-    | PostChatsChatIdMessagesMessageIdReactions404
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof postChatsChatIdMessagesMessageIdReactions>>,
-      TError,
-      { chatId: string; messageId: string; data: GithubCom4H1RZooraInternalDomainToggleReactionDTO },
-      TContext
-    >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof postChatsChatIdMessagesMessageIdReactions>>,
-  TError,
-  { chatId: string; messageId: string; data: GithubCom4H1RZooraInternalDomainToggleReactionDTO },
-  TContext
-> => {
-  return useMutation(getPostChatsChatIdMessagesMessageIdReactionsMutationOptions(options), queryClient)
-}
+export const usePostChatsChatIdMessagesMessageIdReactions = <TError = ErrorType<PostChatsChatIdMessagesMessageIdReactions400 | PostChatsChatIdMessagesMessageIdReactions401 | PostChatsChatIdMessagesMessageIdReactions403 | PostChatsChatIdMessagesMessageIdReactions404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postChatsChatIdMessagesMessageIdReactions>>, TError,{chatId: string;messageId: string;data: GithubCom4H1RZooraInternalDomainToggleReactionDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postChatsChatIdMessagesMessageIdReactions>>,
+        TError,
+        {chatId: string;messageId: string;data: GithubCom4H1RZooraInternalDomainToggleReactionDTO},
+        TContext
+      > => {
+      return useMutation(getPostChatsChatIdMessagesMessageIdReactionsMutationOptions(options), queryClient);
+    }

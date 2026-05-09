@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0
  */
 
-export type GithubCom4H1RZooraInternalDomainCreateQuizRuleDTOType =
-  (typeof GithubCom4H1RZooraInternalDomainCreateQuizRuleDTOType)[keyof typeof GithubCom4H1RZooraInternalDomainCreateQuizRuleDTOType]
+export type GithubCom4H1RZooraInternalDomainCreateQuizRuleDTOType = typeof GithubCom4H1RZooraInternalDomainCreateQuizRuleDTOType[keyof typeof GithubCom4H1RZooraInternalDomainCreateQuizRuleDTOType];
+
 
 export const GithubCom4H1RZooraInternalDomainCreateQuizRuleDTOType = {
-  manual: "manual",
-  random: "random",
-} as const
+  manual: 'manual',
+  random: 'random',
+} as const;

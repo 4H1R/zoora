@@ -5,19 +5,10 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { ErrorType } from ".././mutator/custom-instance"
-import type {
-  DeleteAdminOfflinesId401,
-  DeleteAdminOfflinesId403,
-  DeleteAdminOfflinesId404,
-  DeleteAdminOfflinesId500,
-  GetAdminOfflines200,
-  GetAdminOfflines401,
-  GetAdminOfflines403,
-  GetAdminOfflines500,
-  GetAdminOfflinesParams,
-  GithubCom4H1RZooraInternalDomainResponse,
-} from "../model"
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -30,14 +21,29 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query"
+  UseQueryResult
+} from '@tanstack/react-query';
 
-import { useMutation, useQuery } from "@tanstack/react-query"
+import type {
+  DeleteAdminOfflinesId401,
+  DeleteAdminOfflinesId403,
+  DeleteAdminOfflinesId404,
+  DeleteAdminOfflinesId500,
+  GetAdminOfflines200,
+  GetAdminOfflines401,
+  GetAdminOfflines403,
+  GetAdminOfflines500,
+  GetAdminOfflinesParams,
+  GithubCom4H1RZooraInternalDomainResponse
+} from '../model';
 
-import { customInstance } from ".././mutator/custom-instance"
+import { customInstance } from '.././mutator/custom-instance';
+import type { ErrorType } from '.././mutator/custom-instance';
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 /**
  * Cross-org list. Search matches: title, description. Orderable: created_at, updated_at, published_at, title, view_count. Filters: class_id, class_session_id, creator_id, include_deleted.
@@ -63,146 +69,118 @@ export type getAdminOfflinesResponse500 = {
   status: 500
 }
 
-export type getAdminOfflinesResponseSuccess = getAdminOfflinesResponse200 & {
-  headers: Headers
-}
-export type getAdminOfflinesResponseError = (
-  | getAdminOfflinesResponse401
-  | getAdminOfflinesResponse403
-  | getAdminOfflinesResponse500
-) & {
-  headers: Headers
-}
+export type getAdminOfflinesResponseSuccess = (getAdminOfflinesResponse200) & {
+  headers: Headers;
+};
+export type getAdminOfflinesResponseError = (getAdminOfflinesResponse401 | getAdminOfflinesResponse403 | getAdminOfflinesResponse500) & {
+  headers: Headers;
+};
 
-export type getAdminOfflinesResponse = getAdminOfflinesResponseSuccess | getAdminOfflinesResponseError
+export type getAdminOfflinesResponse = (getAdminOfflinesResponseSuccess | getAdminOfflinesResponseError)
 
-export const getGetAdminOfflinesUrl = (params?: GetAdminOfflinesParams) => {
-  const normalizedParams = new URLSearchParams()
+export const getGetAdminOfflinesUrl = (params?: GetAdminOfflinesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString())
-    }
-  })
 
-  const stringifiedParams = normalizedParams.toString()
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0 ? `/admin/offlines?${stringifiedParams}` : `/admin/offlines`
 }
 
-export const getAdminOfflines = async (
-  params?: GetAdminOfflinesParams,
-  options?: RequestInit
-): Promise<getAdminOfflinesResponse> => {
-  return customInstance<getAdminOfflinesResponse>(getGetAdminOfflinesUrl(params), {
+export const getAdminOfflines = async (params?: GetAdminOfflinesParams, options?: RequestInit): Promise<getAdminOfflinesResponse> => {
+
+  return customInstance<getAdminOfflinesResponse>(getGetAdminOfflinesUrl(params),
+  {
     ...options,
-    method: "GET",
-  })
-}
+    method: 'GET'
 
-export const getGetAdminOfflinesQueryKey = (params?: GetAdminOfflinesParams) => {
-  return [`/admin/offlines`, ...(params ? [params] : [])] as const
-}
 
-export const getGetAdminOfflinesQueryOptions = <
-  TData = Awaited<ReturnType<typeof getAdminOfflines>>,
-  TError = ErrorType<GetAdminOfflines401 | GetAdminOfflines403 | GetAdminOfflines500>,
->(
-  params?: GetAdminOfflinesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminOfflines>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
   }
+);}
+
+
+
+
+
+export const getGetAdminOfflinesQueryKey = (params?: GetAdminOfflinesParams,) => {
+    return [
+    `/admin/offlines`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminOfflinesQueryOptions = <TData = Awaited<ReturnType<typeof getAdminOfflines>>, TError = ErrorType<GetAdminOfflines401 | GetAdminOfflines403 | GetAdminOfflines500>>(params?: GetAdminOfflinesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminOfflines>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
 
-  const queryKey = queryOptions?.queryKey ?? getGetAdminOfflinesQueryKey(params)
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminOfflines>>> = ({ signal }) =>
-    getAdminOfflines(params, { signal, ...requestOptions })
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminOfflinesQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getAdminOfflines>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminOfflines>>> = ({ signal }) => getAdminOfflines(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminOfflines>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetAdminOfflinesQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminOfflines>>>
 export type GetAdminOfflinesQueryError = ErrorType<GetAdminOfflines401 | GetAdminOfflines403 | GetAdminOfflines500>
 
-export function useGetAdminOfflines<
-  TData = Awaited<ReturnType<typeof getAdminOfflines>>,
-  TError = ErrorType<GetAdminOfflines401 | GetAdminOfflines403 | GetAdminOfflines500>,
->(
-  params: undefined | GetAdminOfflinesParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminOfflines>>, TError, TData>> &
-      Pick<
+
+export function useGetAdminOfflines<TData = Awaited<ReturnType<typeof getAdminOfflines>>, TError = ErrorType<GetAdminOfflines401 | GetAdminOfflines403 | GetAdminOfflines500>>(
+ params: undefined |  GetAdminOfflinesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminOfflines>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAdminOfflines>>,
           TError,
           Awaited<ReturnType<typeof getAdminOfflines>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAdminOfflines<
-  TData = Awaited<ReturnType<typeof getAdminOfflines>>,
-  TError = ErrorType<GetAdminOfflines401 | GetAdminOfflines403 | GetAdminOfflines500>,
->(
-  params?: GetAdminOfflinesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminOfflines>>, TError, TData>> &
-      Pick<
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminOfflines<TData = Awaited<ReturnType<typeof getAdminOfflines>>, TError = ErrorType<GetAdminOfflines401 | GetAdminOfflines403 | GetAdminOfflines500>>(
+ params?: GetAdminOfflinesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminOfflines>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAdminOfflines>>,
           TError,
           Awaited<ReturnType<typeof getAdminOfflines>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAdminOfflines<
-  TData = Awaited<ReturnType<typeof getAdminOfflines>>,
-  TError = ErrorType<GetAdminOfflines401 | GetAdminOfflines403 | GetAdminOfflines500>,
->(
-  params?: GetAdminOfflinesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminOfflines>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminOfflines<TData = Awaited<ReturnType<typeof getAdminOfflines>>, TError = ErrorType<GetAdminOfflines401 | GetAdminOfflines403 | GetAdminOfflines500>>(
+ params?: GetAdminOfflinesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminOfflines>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary [Admin] List offline rooms
  */
 
-export function useGetAdminOfflines<
-  TData = Awaited<ReturnType<typeof getAdminOfflines>>,
-  TError = ErrorType<GetAdminOfflines401 | GetAdminOfflines403 | GetAdminOfflines500>,
->(
-  params?: GetAdminOfflinesParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminOfflines>>, TError, TData>>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetAdminOfflinesQueryOptions(params, options)
+export function useGetAdminOfflines<TData = Awaited<ReturnType<typeof getAdminOfflines>>, TError = ErrorType<GetAdminOfflines401 | GetAdminOfflines403 | GetAdminOfflines500>>(
+ params?: GetAdminOfflinesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminOfflines>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>
-  }
+  const queryOptions = getGetAdminOfflinesQueryOptions(params,options)
 
-  return { ...query, queryKey: queryOptions.queryKey }
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
 }
+
+
+
+
+
 
 /**
  * @summary [Admin] Hard-delete offline room
@@ -232,79 +210,78 @@ export type deleteAdminOfflinesIdResponse500 = {
   status: 500
 }
 
-export type deleteAdminOfflinesIdResponseSuccess = deleteAdminOfflinesIdResponse200 & {
-  headers: Headers
-}
-export type deleteAdminOfflinesIdResponseError = (
-  | deleteAdminOfflinesIdResponse401
-  | deleteAdminOfflinesIdResponse403
-  | deleteAdminOfflinesIdResponse404
-  | deleteAdminOfflinesIdResponse500
-) & {
-  headers: Headers
-}
+export type deleteAdminOfflinesIdResponseSuccess = (deleteAdminOfflinesIdResponse200) & {
+  headers: Headers;
+};
+export type deleteAdminOfflinesIdResponseError = (deleteAdminOfflinesIdResponse401 | deleteAdminOfflinesIdResponse403 | deleteAdminOfflinesIdResponse404 | deleteAdminOfflinesIdResponse500) & {
+  headers: Headers;
+};
 
-export type deleteAdminOfflinesIdResponse = deleteAdminOfflinesIdResponseSuccess | deleteAdminOfflinesIdResponseError
+export type deleteAdminOfflinesIdResponse = (deleteAdminOfflinesIdResponseSuccess | deleteAdminOfflinesIdResponseError)
 
-export const getDeleteAdminOfflinesIdUrl = (id: string) => {
+export const getDeleteAdminOfflinesIdUrl = (id: string,) => {
+
+
+
+
   return `/admin/offlines/${id}`
 }
 
-export const deleteAdminOfflinesId = async (
-  id: string,
-  options?: RequestInit
-): Promise<deleteAdminOfflinesIdResponse> => {
-  return customInstance<deleteAdminOfflinesIdResponse>(getDeleteAdminOfflinesIdUrl(id), {
+export const deleteAdminOfflinesId = async (id: string, options?: RequestInit): Promise<deleteAdminOfflinesIdResponse> => {
+
+  return customInstance<deleteAdminOfflinesIdResponse>(getDeleteAdminOfflinesIdUrl(id),
+  {
     ...options,
-    method: "DELETE",
-  })
-}
+    method: 'DELETE'
 
-export const getDeleteAdminOfflinesIdMutationOptions = <
-  TError = ErrorType<
-    DeleteAdminOfflinesId401 | DeleteAdminOfflinesId403 | DeleteAdminOfflinesId404 | DeleteAdminOfflinesId500
-  >,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteAdminOfflinesId>>, TError, { id: string }, TContext>
-  request?: SecondParameter<typeof customInstance>
-}): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminOfflinesId>>, TError, { id: string }, TContext> => {
-  const mutationKey = ["deleteAdminOfflinesId"]
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined }
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminOfflinesId>>, { id: string }> = (props) => {
-    const { id } = props ?? {}
-
-    return deleteAdminOfflinesId(id, requestOptions)
   }
+);}
 
-  return { mutationFn, ...mutationOptions }
-}
 
-export type DeleteAdminOfflinesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminOfflinesId>>>
 
-export type DeleteAdminOfflinesIdMutationError = ErrorType<
-  DeleteAdminOfflinesId401 | DeleteAdminOfflinesId403 | DeleteAdminOfflinesId404 | DeleteAdminOfflinesId500
->
 
-/**
+export const getDeleteAdminOfflinesIdMutationOptions = <TError = ErrorType<DeleteAdminOfflinesId401 | DeleteAdminOfflinesId403 | DeleteAdminOfflinesId404 | DeleteAdminOfflinesId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminOfflinesId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminOfflinesId>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteAdminOfflinesId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminOfflinesId>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteAdminOfflinesId(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminOfflinesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminOfflinesId>>>
+
+    export type DeleteAdminOfflinesIdMutationError = ErrorType<DeleteAdminOfflinesId401 | DeleteAdminOfflinesId403 | DeleteAdminOfflinesId404 | DeleteAdminOfflinesId500>
+
+    /**
  * @summary [Admin] Hard-delete offline room
  */
-export const useDeleteAdminOfflinesId = <
-  TError = ErrorType<
-    DeleteAdminOfflinesId401 | DeleteAdminOfflinesId403 | DeleteAdminOfflinesId404 | DeleteAdminOfflinesId500
-  >,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteAdminOfflinesId>>, TError, { id: string }, TContext>
-    request?: SecondParameter<typeof customInstance>
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof deleteAdminOfflinesId>>, TError, { id: string }, TContext> => {
-  return useMutation(getDeleteAdminOfflinesIdMutationOptions(options), queryClient)
-}
+export const useDeleteAdminOfflinesId = <TError = ErrorType<DeleteAdminOfflinesId401 | DeleteAdminOfflinesId403 | DeleteAdminOfflinesId404 | DeleteAdminOfflinesId500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminOfflinesId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminOfflinesId>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteAdminOfflinesIdMutationOptions(options), queryClient);
+    }

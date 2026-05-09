@@ -7,17 +7,17 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainMedia {
-  collection_name?: string
-  created_at?: string
-  custom_properties?: number[]
-  disk?: string
-  file_name?: string
-  id?: string
-  mime_type?: string
-  model_id?: string
-  model_type?: string
-  name?: string
-  order_column?: number
-  size?: number
-  updated_at?: string
+  collection_name?: string;
+  created_at?: string;
+  custom_properties?: number[];
+  disk?: string;
+  file_name?: string;
+  id?: string;
+  mime_type?: string;
+  model_id?: string;
+  model_type?: string;
+  name?: string;
+  order_column?: number;
+  size?: number;
+  updated_at?: string;
 }

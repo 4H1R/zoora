@@ -6,11 +6,11 @@
  * OpenAPI spec version: 1.0
  */
 
-export type GithubCom4H1RZooraInternalDomainCreateClassSessionDTOType =
-  (typeof GithubCom4H1RZooraInternalDomainCreateClassSessionDTOType)[keyof typeof GithubCom4H1RZooraInternalDomainCreateClassSessionDTOType]
+export type GithubCom4H1RZooraInternalDomainCreateClassSessionDTOType = typeof GithubCom4H1RZooraInternalDomainCreateClassSessionDTOType[keyof typeof GithubCom4H1RZooraInternalDomainCreateClassSessionDTOType];
+
 
 export const GithubCom4H1RZooraInternalDomainCreateClassSessionDTOType = {
-  live: "live",
-  quiz: "quiz",
-  practice: "practice",
-} as const
+  live: 'live',
+  quiz: 'quiz',
+  practice: 'practice',
+} as const;

@@ -7,9 +7,9 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainCreateOfflineRoomDTO {
-  class_session_id: string
-  description?: string
-  published_at?: string
+  class_session_id: string;
+  description?: string;
+  published_at?: string;
   /** @minLength 2 */
-  title: string
+  title: string;
 }

@@ -8,5 +8,5 @@
 
 export interface GithubCom4H1RZooraInternalDomainUpdateProfileDTO {
   /** @minLength 2 */
-  name?: string
+  name?: string;
 }

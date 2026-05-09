@@ -7,36 +7,36 @@
  */
 
 export type GetAdminOfflinesParams = {
-  /**
-   * Filter by class UUID
-   */
-  class_id?: string
-  /**
-   * Filter by class session UUID
-   */
-  class_session_id?: string
-  /**
-   * Filter by creator UUID
-   */
-  creator_id?: string
-  /**
-   * Include soft-deleted rooms
-   */
-  include_deleted?: boolean
-  /**
-   * Substring match on title/description
-   */
-  search?: string
-  /**
-   * One of: created_at, updated_at, published_at, title, view_count
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-}
+/**
+ * Filter by class UUID
+ */
+class_id?: string;
+/**
+ * Filter by class session UUID
+ */
+class_session_id?: string;
+/**
+ * Filter by creator UUID
+ */
+creator_id?: string;
+/**
+ * Include soft-deleted rooms
+ */
+include_deleted?: boolean;
+/**
+ * Substring match on title/description
+ */
+search?: string;
+/**
+ * One of: created_at, updated_at, published_at, title, view_count
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+};

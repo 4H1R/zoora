@@ -5,13 +5,13 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainPollOption } from "./githubCom4H1RZooraInternalDomainPollOption"
+import type { GithubCom4H1RZooraInternalDomainPollOption } from './githubCom4H1RZooraInternalDomainPollOption';
 
 export interface GithubCom4H1RZooraInternalDomainUpdatePollDTO {
   /** @minimum 1 */
-  allowed_answers_count?: number
+  allowed_answers_count?: number;
   /** @minLength 2 */
-  name?: string
+  name?: string;
   /** @minItems 2 */
-  options?: GithubCom4H1RZooraInternalDomainPollOption[]
+  options?: GithubCom4H1RZooraInternalDomainPollOption[];
 }

@@ -7,8 +7,8 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainUpdateQuizDTO {
-  description?: string
-  duration_minutes?: number
+  description?: string;
+  duration_minutes?: number;
   /** @minLength 2 */
-  title?: string
+  title?: string;
 }

@@ -5,9 +5,9 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GetAdminLiveRooms200Data } from "./getAdminLiveRooms200Data"
-import type { GithubCom4H1RZooraInternalDomainResponse } from "./githubCom4H1RZooraInternalDomainResponse"
+import type { GetAdminLiveRooms200Data } from './getAdminLiveRooms200Data';
+import type { GithubCom4H1RZooraInternalDomainResponse } from './githubCom4H1RZooraInternalDomainResponse';
 
 export type GetAdminLiveRooms200 = GithubCom4H1RZooraInternalDomainResponse & {
-  data?: GetAdminLiveRooms200Data
-}
+  data?: GetAdminLiveRooms200Data;
+};

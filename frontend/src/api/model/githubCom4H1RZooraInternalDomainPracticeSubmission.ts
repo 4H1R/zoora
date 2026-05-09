@@ -5,19 +5,19 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainPracticeRoom } from "./githubCom4H1RZooraInternalDomainPracticeRoom"
-import type { GithubCom4H1RZooraInternalDomainUser } from "./githubCom4H1RZooraInternalDomainUser"
+import type { GithubCom4H1RZooraInternalDomainPracticeRoom } from './githubCom4H1RZooraInternalDomainPracticeRoom';
+import type { GithubCom4H1RZooraInternalDomainUser } from './githubCom4H1RZooraInternalDomainUser';
 
 export interface GithubCom4H1RZooraInternalDomainPracticeSubmission {
-  content?: string
-  created_at?: string
-  id?: string
-  practice_room?: GithubCom4H1RZooraInternalDomainPracticeRoom
-  practice_room_id?: string
-  score?: number
-  submitted_at?: string
-  teacher_comment?: string
-  updated_at?: string
-  user?: GithubCom4H1RZooraInternalDomainUser
-  user_id?: string
+  content?: string;
+  created_at?: string;
+  id?: string;
+  practice_room?: GithubCom4H1RZooraInternalDomainPracticeRoom;
+  practice_room_id?: string;
+  score?: number;
+  submitted_at?: string;
+  teacher_comment?: string;
+  updated_at?: string;
+  user?: GithubCom4H1RZooraInternalDomainUser;
+  user_id?: string;
 }

@@ -7,16 +7,16 @@
  */
 
 export type GetQuizzesIdRoomsParams = {
-  /**
-   * One of: created_at, started_at, ended_at
-   */
-  order_by?: string
-  /**
-   * asc or desc
-   */
-  order_dir?: string
-  /**
-   * 1-based page number
-   */
-  page?: number
-}
+/**
+ * One of: created_at, started_at, ended_at
+ */
+order_by?: string;
+/**
+ * asc or desc
+ */
+order_dir?: string;
+/**
+ * 1-based page number
+ */
+page?: number;
+};

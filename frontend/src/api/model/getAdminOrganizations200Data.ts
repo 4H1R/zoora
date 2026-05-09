@@ -5,9 +5,9 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainOrganization } from "./githubCom4H1RZooraInternalDomainOrganization"
-import type { GithubCom4H1RZooraInternalDomainPaginatedData } from "./githubCom4H1RZooraInternalDomainPaginatedData"
+import type { GithubCom4H1RZooraInternalDomainOrganization } from './githubCom4H1RZooraInternalDomainOrganization';
+import type { GithubCom4H1RZooraInternalDomainPaginatedData } from './githubCom4H1RZooraInternalDomainPaginatedData';
 
 export type GetAdminOrganizations200Data = GithubCom4H1RZooraInternalDomainPaginatedData & {
-  items?: GithubCom4H1RZooraInternalDomainOrganization[]
-}
+  items?: GithubCom4H1RZooraInternalDomainOrganization[];
+};

@@ -5,9 +5,9 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GetPollsIdAnswers200Data } from "./getPollsIdAnswers200Data"
-import type { GithubCom4H1RZooraInternalDomainResponse } from "./githubCom4H1RZooraInternalDomainResponse"
+import type { GetPollsIdAnswers200Data } from './getPollsIdAnswers200Data';
+import type { GithubCom4H1RZooraInternalDomainResponse } from './githubCom4H1RZooraInternalDomainResponse';
 
 export type GetPollsIdAnswers200 = GithubCom4H1RZooraInternalDomainResponse & {
-  data?: GetPollsIdAnswers200Data
-}
+  data?: GetPollsIdAnswers200Data;
+};
