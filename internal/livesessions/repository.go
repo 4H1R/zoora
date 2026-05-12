@@ -86,58 +86,53 @@ func (r *roomRepository) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 func (r *roomRepository) List(ctx context.Context, scope domain.LiveRoomListScope, p domain.ListParams) ([]domain.LiveRoom, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.LiveRoom{}).
+	db := database.DB(ctx, r.db)
+	base := db.Model(&domain.LiveRoom{}).
 		Preload("ClassSession").
 		Preload("ClassSession.Class")
 	if scope.IncludeDeleted {
 		base = base.Unscoped()
 	}
 
-	joined := false
-	if !scope.All && (scope.TeacherID != nil || scope.MemberUserID != nil) {
-		joined = true
-	}
-	// ClassID filter is satisfied via class_sessions; force the join.
-	if scope.ClassID != nil {
-		joined = true
-	}
-	if joined {
-		base = base.
-			Joins("JOIN class_sessions cs ON cs.id = live_rooms.class_session_id").
-			Joins("JOIN classes c ON c.id = cs.class_id").
-			Distinct("live_rooms.*")
-	}
-
+	// RBAC + class filters resolve against class_sessions/classes. Use
+	// IN-subqueries instead of JOIN+DISTINCT — GORM's Count emits
+	// COUNT(DISTINCT live_rooms.*) which PostgreSQL rejects.
 	if !scope.All {
 		switch {
 		case scope.TeacherID != nil && scope.MemberUserID != nil:
-			base = base.Where(
-				"c.user_id = ? OR c.id IN (SELECT class_id FROM class_members WHERE user_id = ?)",
-				*scope.TeacherID, *scope.MemberUserID,
-			)
+			sub := db.Table("class_sessions cs").
+				Select("cs.id").
+				Joins("JOIN classes c ON c.id = cs.class_id").
+				Where(
+					"c.user_id = ? OR c.id IN (SELECT class_id FROM class_members WHERE user_id = ?)",
+					*scope.TeacherID, *scope.MemberUserID,
+				)
+			base = base.Where("live_rooms.class_session_id IN (?)", sub)
 		case scope.TeacherID != nil:
-			base = base.Where("c.user_id = ?", *scope.TeacherID)
+			sub := db.Table("class_sessions cs").
+				Select("cs.id").
+				Joins("JOIN classes c ON c.id = cs.class_id").
+				Where("c.user_id = ?", *scope.TeacherID)
+			base = base.Where("live_rooms.class_session_id IN (?)", sub)
 		case scope.MemberUserID != nil:
-			base = base.Where(
-				"c.id IN (SELECT class_id FROM class_members WHERE user_id = ?)",
-				*scope.MemberUserID,
-			)
+			sub := db.Table("class_sessions cs").
+				Select("cs.id").
+				Where("cs.class_id IN (SELECT class_id FROM class_members WHERE user_id = ?)", *scope.MemberUserID)
+			base = base.Where("live_rooms.class_session_id IN (?)", sub)
 		}
 	}
 
+	if scope.ClassID != nil {
+		sub := db.Table("class_sessions").
+			Select("id").
+			Where("class_id = ?", *scope.ClassID)
+		base = base.Where("live_rooms.class_session_id IN (?)", sub)
+	}
 	if scope.Status != nil {
 		base = base.Where("live_rooms.status = ?", *scope.Status)
 	}
 	if scope.ClassSessionID != nil {
 		base = base.Where("live_rooms.class_session_id = ?", *scope.ClassSessionID)
-	}
-	if scope.ClassID != nil {
-		base = base.Where("cs.class_id = ?", *scope.ClassID)
-	}
-
-	// When joined, qualify search/order with live_rooms. so SQL is unambiguous.
-	if joined {
-		p = qualifyLiveRoomListParams(p)
 	}
 
 	var rooms []domain.LiveRoom
@@ -146,22 +141,6 @@ func (r *roomRepository) List(ctx context.Context, scope domain.LiveRoomListScop
 		return nil, 0, fmt.Errorf("livesessions.roomRepository.List: %w", err)
 	}
 	return rooms, total, nil
-}
-
-// qualifyLiveRoomListParams prefixes search/order columns with `live_rooms.`
-// so they are unambiguous when class_sessions/classes are joined.
-func qualifyLiveRoomListParams(p domain.ListParams) domain.ListParams {
-	if p.OrderBy != "" {
-		p.OrderBy = "live_rooms." + p.OrderBy
-	}
-	if len(p.SearchFields) > 0 {
-		qualified := make([]string, len(p.SearchFields))
-		for i, f := range p.SearchFields {
-			qualified[i] = "live_rooms." + f
-		}
-		p.SearchFields = qualified
-	}
-	return p
 }
 
 func (r *roomRepository) FindActiveRoomsWithStaleHost(ctx context.Context, staleDuration time.Duration) ([]domain.LiveRoom, error) {
@@ -177,42 +156,39 @@ func (r *roomRepository) FindActiveRoomsWithStaleHost(ctx context.Context, stale
 }
 
 func (r *roomRepository) AdminList(ctx context.Context, q domain.AdminListLiveRoomsQuery) ([]domain.LiveRoom, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.LiveRoom{}).
+	db := database.DB(ctx, r.db)
+	base := db.Model(&domain.LiveRoom{}).
 		Preload("ClassSession").
 		Preload("ClassSession.Class")
 	if q.IncludeDeleted {
 		base = base.Unscoped()
 	}
 
-	// Joins are needed only when the caller filters by teacher (UserID) or class.
-	joined := q.UserID != nil || q.ClassID != nil
-	if joined {
-		base = base.
-			Joins("JOIN class_sessions cs ON cs.id = live_rooms.class_session_id").
-			Joins("JOIN classes c ON c.id = cs.class_id").
-			Distinct("live_rooms.*")
-	}
-
-	if q.Status != nil {
-		base = base.Where("live_rooms.status = ?", *q.Status)
-	}
+	// Class/teacher filters target class_sessions/classes. Use subqueries instead
+	// of JOIN+DISTINCT because GORM's Count emits COUNT(DISTINCT live_rooms.*)
+	// which PostgreSQL rejects.
 	if q.UserID != nil {
-		base = base.Where("c.user_id = ?", *q.UserID)
+		sub := db.Table("class_sessions cs").
+			Select("cs.id").
+			Joins("JOIN classes c ON c.id = cs.class_id").
+			Where("c.user_id = ?", *q.UserID)
+		base = base.Where("live_rooms.class_session_id IN (?)", sub)
 	}
 	if q.ClassID != nil {
-		base = base.Where("cs.class_id = ?", *q.ClassID)
+		sub := db.Table("class_sessions").
+			Select("id").
+			Where("class_id = ?", *q.ClassID)
+		base = base.Where("live_rooms.class_session_id IN (?)", sub)
+	}
+	if q.Status != nil {
+		base = base.Where("live_rooms.status = ?", *q.Status)
 	}
 	if q.ClassSessionID != nil {
 		base = base.Where("live_rooms.class_session_id = ?", *q.ClassSessionID)
 	}
 
-	p := q.ListParams
-	if joined {
-		p = qualifyLiveRoomListParams(p)
-	}
-
 	var rooms []domain.LiveRoom
-	total, err := listparams.Paginate(base, p, &rooms)
+	total, err := listparams.Paginate(base, q.ListParams, &rooms)
 	if err != nil {
 		return nil, 0, fmt.Errorf("livesessions.roomRepository.AdminList: %w", err)
 	}
