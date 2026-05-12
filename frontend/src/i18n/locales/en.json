@@ -193,7 +193,8 @@
       },
       "actions": {
         "edit": "Edit class",
-        "delete": "Delete"
+        "delete": "Delete",
+        "viewSessions": "View sessions"
       },
       "form": {
         "createTitle": "New class",
@@ -213,6 +214,57 @@
         "createSuccess": "Class created",
         "updateSuccess": "Class updated",
         "deleteSuccess": "Class deleted"
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
+    },
+    "sessions": {
+      "title": "Class Sessions",
+      "subtitle": "Manage sessions for this class.",
+      "searchPlaceholder": "Search sessions…",
+      "newSession": "New session",
+      "backToClasses": "Back to classes",
+      "name": "Session",
+      "type": "Type",
+      "startTime": "Start time",
+      "recordable": "Recordable",
+      "createdAt": "Created",
+      "yes": "Yes",
+      "no": "No",
+      "noResults": "No sessions found",
+      "noResultsHint": "Create the first session for this class.",
+      "stats": {
+        "total": "Total sessions"
+      },
+      "actions": {
+        "edit": "Edit session",
+        "delete": "Delete"
+      },
+      "types": {
+        "all": "All types",
+        "live": "Live",
+        "quiz": "Quiz",
+        "practice": "Practice"
+      },
+      "form": {
+        "createTitle": "New session",
+        "createDescription": "Add a session to this class.",
+        "editTitle": "Edit session",
+        "editDescription": "Update session details.",
+        "name": "Name",
+        "namePlaceholder": "Session name",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional description",
+        "startTime": "Start time",
+        "type": "Type",
+        "typePlaceholder": "Select type",
+        "isRecordable": "Recordable",
+        "createSuccess": "Session created",
+        "updateSuccess": "Session updated",
+        "deleteSuccess": "Session deleted"
       },
       "toolbar": {
         "sort": "Sort",

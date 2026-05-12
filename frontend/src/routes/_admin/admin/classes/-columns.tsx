@@ -1,7 +1,8 @@
 import type { GithubCom4H1RZooraInternalDomainClass as Class } from "@/api/model"
 import type { ColumnDef } from "@tanstack/react-table"
 
-import { EllipsisVerticalIcon, PencilIcon, Trash2Icon, UsersIcon } from "lucide-react"
+import { Link } from "@tanstack/react-router"
+import { CalendarClockIcon, EllipsisVerticalIcon, PencilIcon, Trash2Icon, UsersIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { useOrgColumn } from "@/components/data-table/org-column"
@@ -28,6 +29,17 @@ function ClassRowActions({ cls, onEdit, onDelete }: ClassRowActionsProps) {
 
   return (
     <div className="flex items-center justify-end gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+      {cls.id && (
+        <Link
+          to="/admin/classes/$classId/sessions"
+          params={{ classId: cls.id }}
+          aria-label={t("admin.classes.actions.viewSessions")}
+        >
+          <Button variant="ghost" size="icon-xs">
+            <CalendarClockIcon />
+          </Button>
+        </Link>
+      )}
       <Button variant="ghost" size="icon-xs" onClick={() => onEdit(cls)}>
         <PencilIcon />
       </Button>
@@ -49,6 +61,16 @@ function ClassRowActions({ cls, onEdit, onDelete }: ClassRowActionsProps) {
         />
         <DropdownMenuContent align="end" className="min-w-44">
           <DropdownMenuGroup>
+            {cls.id && (
+              <DropdownMenuItem
+                render={
+                  <Link to="/admin/classes/$classId/sessions" params={{ classId: cls.id }} />
+                }
+              >
+                <CalendarClockIcon data-icon="inline-start" />
+                {t("admin.classes.actions.viewSessions")}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={() => onEdit(cls)}>
               <PencilIcon data-icon="inline-start" />
               {t("admin.classes.actions.edit")}

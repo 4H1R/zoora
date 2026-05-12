@@ -193,7 +193,8 @@
       },
       "actions": {
         "edit": "ویرایش کلاس",
-        "delete": "حذف"
+        "delete": "حذف",
+        "viewSessions": "مشاهده جلسات"
       },
       "form": {
         "createTitle": "کلاس جدید",
@@ -213,6 +214,57 @@
         "createSuccess": "کلاس ایجاد شد",
         "updateSuccess": "کلاس به‌روز شد",
         "deleteSuccess": "کلاس حذف شد"
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش/پنهان ستون‌ها"
+      }
+    },
+    "sessions": {
+      "title": "جلسات کلاس",
+      "subtitle": "جلسات این کلاس را مدیریت کنید.",
+      "searchPlaceholder": "جستجوی جلسات…",
+      "newSession": "جلسه جدید",
+      "backToClasses": "بازگشت به کلاس‌ها",
+      "name": "جلسه",
+      "type": "نوع",
+      "startTime": "زمان شروع",
+      "recordable": "قابل ضبط",
+      "createdAt": "ایجاد شده",
+      "yes": "بله",
+      "no": "خیر",
+      "noResults": "جلسه‌ای یافت نشد",
+      "noResultsHint": "اولین جلسه را برای این کلاس ایجاد کنید.",
+      "stats": {
+        "total": "کل جلسات"
+      },
+      "actions": {
+        "edit": "ویرایش جلسه",
+        "delete": "حذف"
+      },
+      "types": {
+        "all": "همه انواع",
+        "live": "زنده",
+        "quiz": "آزمون",
+        "practice": "تمرین"
+      },
+      "form": {
+        "createTitle": "جلسه جدید",
+        "createDescription": "یک جلسه به این کلاس اضافه کنید.",
+        "editTitle": "ویرایش جلسه",
+        "editDescription": "اطلاعات جلسه را به‌روز کنید.",
+        "name": "نام",
+        "namePlaceholder": "نام جلسه",
+        "description": "توضیحات",
+        "descriptionPlaceholder": "توضیحات اختیاری",
+        "startTime": "زمان شروع",
+        "type": "نوع",
+        "typePlaceholder": "انتخاب نوع",
+        "isRecordable": "قابل ضبط",
+        "createSuccess": "جلسه ایجاد شد",
+        "updateSuccess": "جلسه به‌روز شد",
+        "deleteSuccess": "جلسه حذف شد"
       },
       "toolbar": {
         "sort": "مرتب‌سازی",
