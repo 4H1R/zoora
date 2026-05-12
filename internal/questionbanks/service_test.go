@@ -122,7 +122,8 @@ func newTestBankService(bankRepo *mockBankRepo, questionRepo *mockQuestionRepo) 
 }
 
 func TestBankService_Create_AsStaff(t *testing.T) {
-	ctx := staffCtx()
+	orgID := uuid.New()
+	ctx := staffCtx(orgID)
 	bankRepo := &mockBankRepo{}
 	qRepo := &mockQuestionRepo{}
 
@@ -133,6 +134,7 @@ func TestBankService_Create_AsStaff(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, "Physics", bank.Name)
+	assert.Equal(t, orgID, bank.OrganizationID)
 	bankRepo.AssertExpectations(t)
 }
 
@@ -150,11 +152,15 @@ func TestBankService_Create_NonStaff_Forbidden(t *testing.T) {
 }
 
 func TestBankService_GetByID_Success(t *testing.T) {
-	ctx := memberCtx()
+	orgID := uuid.New()
+	ctx := domain.WithCaller(context.Background(), domain.Caller{
+		UserID: uuid.New(),
+		OrgID:  &orgID,
+	})
 	bankRepo := &mockBankRepo{}
 	bankID := uuid.New()
 	bankRepo.On("FindByID", ctx, bankID).
-		Return(&domain.QuestionBank{ID: bankID, Name: "Physics"}, nil)
+		Return(&domain.QuestionBank{ID: bankID, OrganizationID: orgID, Name: "Physics"}, nil)
 
 	svc := newTestBankService(bankRepo, &mockQuestionRepo{})
 	bank, err := svc.GetByID(ctx, bankID)

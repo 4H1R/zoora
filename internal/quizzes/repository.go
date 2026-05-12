@@ -76,6 +76,9 @@ func (r *quizRepository) List(ctx context.Context, scope domain.QuizListScope, p
 	if scope.IncludeDeleted {
 		base = base.Unscoped()
 	}
+	if scope.OrganizationID != nil {
+		base = base.Where("organization_id = ?", *scope.OrganizationID)
+	}
 	if scope.ClassID != nil {
 		base = base.Where("class_id = ?", *scope.ClassID)
 	}

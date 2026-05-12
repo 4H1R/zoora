@@ -51,28 +51,28 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 
 	authed := rg.Group("", authMiddleware)
 	{
-		authed.GET("/quizzes", h.List)
+		authed.GET("/quizzes", perm(domain.PermQuizzesView), h.List)
 		authed.POST("/quizzes", perm(domain.PermQuizzesCreate), h.Create)
-		authed.GET("/quizzes/:id", idParam, h.Get)
+		authed.GET("/quizzes/:id", perm(domain.PermQuizzesView), idParam, h.Get)
 		authed.PUT("/quizzes/:id", perm(domain.PermQuizzesUpdate), idParam, h.Update)
 		authed.DELETE("/quizzes/:id", perm(domain.PermQuizzesDelete), idParam, h.Delete)
 
-		authed.GET("/quizzes/:id/rules", idParam, h.ListRules)
+		authed.GET("/quizzes/:id/rules", perm(domain.PermQuizzesView), idParam, h.ListRules)
 		authed.POST("/quizzes/:id/rules", perm(domain.PermQuizzesUpdate), idParam, h.CreateRule)
-		authed.GET("/quizzes/rules/:ruleId", ruleIDParam, h.GetRule)
+		authed.GET("/quizzes/rules/:ruleId", perm(domain.PermQuizzesView), ruleIDParam, h.GetRule)
 		authed.PUT("/quizzes/rules/:ruleId", perm(domain.PermQuizzesUpdate), ruleIDParam, h.UpdateRule)
 		authed.DELETE("/quizzes/rules/:ruleId", perm(domain.PermQuizzesDelete), ruleIDParam, h.DeleteRule)
 
-		authed.GET("/quizzes/:id/rooms", idParam, h.ListRooms)
+		authed.GET("/quizzes/:id/rooms", perm(domain.PermQuizzesView), idParam, h.ListRooms)
 		authed.POST("/quizzes/:id/rooms", perm(domain.PermQuizzesUpdate), idParam, h.CreateRoom)
-		authed.GET("/quizzes/rooms/:roomId", roomIDParam, h.GetRoom)
+		authed.GET("/quizzes/rooms/:roomId", perm(domain.PermQuizzesView), roomIDParam, h.GetRoom)
 		authed.POST("/quizzes/rooms/:roomId/start", perm(domain.PermQuizzesUpdate), roomIDParam, h.StartRoom)
 		authed.POST("/quizzes/rooms/:roomId/end", perm(domain.PermQuizzesUpdate), roomIDParam, h.EndRoom)
 
-		authed.POST("/quizzes/:id/submissions", idParam, h.StartSubmission)
-		authed.GET("/quizzes/:id/submissions", idParam, h.ListSubmissions)
-		authed.POST("/quizzes/submissions/:submissionId/submit", submissionIDParam, h.SubmitQuiz)
-		authed.GET("/quizzes/submissions/:submissionId", submissionIDParam, h.GetSubmission)
+		authed.POST("/quizzes/:id/submissions", perm(domain.PermQuizzesView), idParam, h.StartSubmission)
+		authed.GET("/quizzes/:id/submissions", perm(domain.PermQuizzesView), idParam, h.ListSubmissions)
+		authed.POST("/quizzes/submissions/:submissionId/submit", perm(domain.PermQuizzesView), submissionIDParam, h.SubmitQuiz)
+		authed.GET("/quizzes/submissions/:submissionId", perm(domain.PermQuizzesView), submissionIDParam, h.GetSubmission)
 		authed.POST("/quizzes/submissions/:submissionId/grade", perm(domain.PermQuizzesUpdate), submissionIDParam, h.GradeSubmission)
 	}
 }

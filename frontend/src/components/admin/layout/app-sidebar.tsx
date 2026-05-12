@@ -1,7 +1,7 @@
 import type { GithubCom4H1RZooraInternalDomainUser } from "@/api/model"
 import type { NavGroup } from "@/components/layout/nav-main"
 
-import { useRouterState } from "@tanstack/react-router"
+import { useParams, useRouterState } from "@tanstack/react-router"
 import {
   Building2Icon,
   CalendarIcon,
@@ -34,9 +34,10 @@ export function AppSidebar({
   const { t } = useTranslation()
   const { activeOrganization, setActiveOrganization } = useAdminStore()
   const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const params = useParams({ strict: false }) as { classId?: string }
 
   const classIdMatch = pathname.match(CLASS_ID_RE)
-  const activeClassId = classIdMatch?.[1]
+  const activeClassId = params.classId ?? classIdMatch?.[1]
 
   const navGroups: NavGroup[] = [
     {
@@ -44,9 +45,6 @@ export function AppSidebar({
       items: [
         { title: t("admin.dashboard.title"), url: "/admin/dashboard", icon: <LayoutDashboardIcon /> },
         { title: t("admin.nav.classes"), url: "/admin/classes", icon: <SchoolIcon /> },
-        { title: t("admin.nav.liveRooms"), url: "/admin/live-rooms", icon: <VideoIcon /> },
-        { title: t("admin.nav.offlines"), url: "/admin/offlines", icon: <FileVideoIcon /> },
-        { title: t("admin.nav.practices"), url: "/admin/practices", icon: <DumbbellIcon /> },
         { title: t("admin.organizations"), url: "/admin/organizations", icon: <Building2Icon /> },
       ],
     },
@@ -69,6 +67,21 @@ export function AppSidebar({
           title: t("admin.classManagement.sessions"),
           url: `/admin/classes/${activeClassId}/sessions`,
           icon: <CalendarIcon />,
+        },
+        {
+          title: t("admin.classManagement.offlines"),
+          url: `/admin/classes/${activeClassId}/offlines`,
+          icon: <FileVideoIcon />,
+        },
+        {
+          title: t("admin.classManagement.liveRooms"),
+          url: `/admin/classes/${activeClassId}/live-rooms`,
+          icon: <VideoIcon />,
+        },
+        {
+          title: t("admin.classManagement.practices"),
+          url: `/admin/classes/${activeClassId}/practices`,
+          icon: <DumbbellIcon />,
         },
         {
           title: t("admin.classManagement.gradebook"),

@@ -8,20 +8,12 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
 
-import { useGetAdminClasses } from "@/api/admin-classes/admin-classes"
 import { getGetAdminPracticesQueryKey } from "@/api/admin-practices/admin-practices"
-import { useGetClassesIdSessions } from "@/api/classes/classes"
 import { usePostPractices, usePutPracticesId } from "@/api/practices/practices"
+import { ClassPicker, SessionPicker } from "@/components/admin/forms/ClassSessionPicker"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 
 const createSchema = z
@@ -59,6 +51,8 @@ interface PracticeCreateModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   practice?: PracticeRoom | null
+  defaultClassId?: string
+  defaultSessionId?: string
 }
 
 function isoToLocalInput(iso?: string): string {
@@ -69,7 +63,13 @@ function isoToLocalInput(iso?: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-export function PracticeCreateModal({ open, onOpenChange, practice }: PracticeCreateModalProps) {
+export function PracticeCreateModal({
+  open,
+  onOpenChange,
+  practice,
+  defaultClassId,
+  defaultSessionId,
+}: PracticeCreateModalProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const isEdit = !!practice
@@ -110,8 +110,8 @@ export function PracticeCreateModal({ open, onOpenChange, practice }: PracticeCr
       })
     } else {
       createForm.reset({
-        class_id: "",
-        class_session_id: "",
+        class_id: defaultClassId ?? "",
+        class_session_id: defaultSessionId ?? "",
         title: "",
         content: "",
         max_score: 0,
@@ -119,7 +119,7 @@ export function PracticeCreateModal({ open, onOpenChange, practice }: PracticeCr
         end_time: "",
       })
     }
-  }, [open, practice, isEdit])
+  }, [open, practice, isEdit, defaultClassId, defaultSessionId])
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getGetAdminPracticesQueryKey() })
@@ -149,19 +149,6 @@ export function PracticeCreateModal({ open, onOpenChange, practice }: PracticeCr
 
   const selectedClassId = createForm.watch("class_id")
   const selectedSessionId = createForm.watch("class_session_id")
-
-  const { data: classesData } = useGetAdminClasses(
-    {},
-    { query: { enabled: !isEdit && open } }
-  )
-  const classes = (classesData?.status === 200 && classesData.data.data?.items) || []
-
-  const { data: sessionsData } = useGetClassesIdSessions(
-    selectedClassId,
-    {},
-    { query: { enabled: !isEdit && open && !!selectedClassId } }
-  )
-  const sessions = (sessionsData?.status === 200 && sessionsData.data.data?.items) || []
 
   const onSubmitCreate = createForm.handleSubmit((values) => {
     createMutation.mutate({
@@ -252,56 +239,26 @@ export function PracticeCreateModal({ open, onOpenChange, practice }: PracticeCr
           <>
             <Field data-invalid={!!createErrors.class_id || undefined}>
               <FieldLabel>{t("admin.practices.form.class")}</FieldLabel>
-              <Select
+              <ClassPicker
                 value={selectedClassId || undefined}
-                onValueChange={(v) => {
-                  createForm.setValue("class_id", v ?? "", { shouldValidate: true })
+                onChange={(id) => {
+                  createForm.setValue("class_id", id, { shouldValidate: true })
                   createForm.setValue("class_session_id", "", { shouldValidate: true })
                 }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t("admin.practices.form.classPlaceholder")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {classes.map((c) =>
-                    c.id ? (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}
-                      </SelectItem>
-                    ) : null
-                  )}
-                </SelectContent>
-              </Select>
+                placeholder={t("admin.practices.form.classPlaceholder")}
+              />
               <FieldError errors={[createErrors.class_id]} />
             </Field>
             <Field data-invalid={!!createErrors.class_session_id || undefined}>
               <FieldLabel>{t("admin.practices.form.session")}</FieldLabel>
-              <Select
+              <SessionPicker
+                classId={selectedClassId || undefined}
                 value={selectedSessionId || undefined}
-                onValueChange={(v) =>
-                  createForm.setValue("class_session_id", v ?? "", { shouldValidate: true })
+                onChange={(id) =>
+                  createForm.setValue("class_session_id", id, { shouldValidate: true })
                 }
-                disabled={!selectedClassId}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      selectedClassId
-                        ? t("admin.practices.form.sessionPlaceholder")
-                        : t("admin.practices.form.selectClassFirst")
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {sessions.map((s) =>
-                    s.id ? (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.name}
-                      </SelectItem>
-                    ) : null
-                  )}
-                </SelectContent>
-              </Select>
+                placeholder={t("admin.practices.form.sessionPlaceholder")}
+              />
               <FieldError errors={[createErrors.class_session_id]} />
             </Field>
             <Field data-invalid={!!createErrors.title || undefined}>

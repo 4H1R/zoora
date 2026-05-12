@@ -47,7 +47,17 @@ func canManageQuiz(caller domain.Caller, quiz *domain.Quiz) bool {
 	if caller.IsAdmin {
 		return true
 	}
-	if caller.HasPermission("quizzes:update_any") {
+	if caller.HasPermission(domain.PermQuizzesUpdateAny) {
+		return true
+	}
+	return caller.UserID == quiz.UserID
+}
+
+func canDeleteQuiz(caller domain.Caller, quiz *domain.Quiz) bool {
+	if caller.IsAdmin {
+		return true
+	}
+	if caller.HasPermission(domain.PermQuizzesDeleteAny) {
 		return true
 	}
 	return caller.UserID == quiz.UserID
@@ -55,6 +65,9 @@ func canManageQuiz(caller domain.Caller, quiz *domain.Quiz) bool {
 
 func (s *service) canViewQuiz(ctx context.Context, caller domain.Caller, quiz *domain.Quiz) (bool, error) {
 	if canManageQuiz(caller, quiz) {
+		return true, nil
+	}
+	if caller.HasPermission(domain.PermQuizzesViewAny) {
 		return true, nil
 	}
 	ok, err := s.members.Exists(ctx, quiz.ClassID, caller.UserID)
@@ -77,6 +90,7 @@ func (s *service) Create(ctx context.Context, dto domain.CreateQuizDTO) (*domain
 		return nil, domain.ErrForbidden
 	}
 	quiz := &domain.Quiz{
+		OrganizationID:  class.OrganizationID,
 		UserID:          caller.UserID,
 		ClassID:         dto.ClassID,
 		Title:           dto.Title,
@@ -149,7 +163,7 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if !canManageQuiz(caller, quiz) {
+	if !canDeleteQuiz(caller, quiz) {
 		return domain.ErrForbidden
 	}
 	if err := s.repo.Delete(ctx, id); err != nil {
@@ -179,8 +193,8 @@ func (s *service) resolveListScope(caller domain.Caller) domain.QuizListScope {
 	if caller.IsAdmin {
 		return domain.QuizListScope{All: true}
 	}
-	if caller.HasPermission("quizzes:update_any") {
-		return domain.QuizListScope{All: true}
+	if caller.HasPermission(domain.PermQuizzesViewAny) || caller.HasPermission(domain.PermQuizzesUpdateAny) {
+		return domain.QuizListScope{All: true, OrganizationID: caller.OrgID}
 	}
 	userID := caller.UserID
 	return domain.QuizListScope{
@@ -190,14 +204,14 @@ func (s *service) resolveListScope(caller domain.Caller) domain.QuizListScope {
 }
 
 func canManage(caller domain.Caller) bool {
-	return caller.IsAdmin || caller.HasPermission("quizzes:update_any")
+	return caller.IsAdmin || caller.HasPermission(domain.PermQuizzesUpdateAny)
 }
 
 func canManageClass(caller domain.Caller, class *domain.Class) bool {
 	if caller.IsAdmin {
 		return true
 	}
-	if caller.HasPermission("quizzes:update_any") {
+	if caller.HasPermission(domain.PermClassesUpdateAny) {
 		return true
 	}
 	return caller.UserID == class.UserID

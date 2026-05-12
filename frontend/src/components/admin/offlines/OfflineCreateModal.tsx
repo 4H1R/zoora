@@ -2,33 +2,19 @@ import type { GithubCom4H1RZooraInternalDomainOfflineRoom as OfflineRoom } from 
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
-import { CheckIcon, ChevronsUpDownIcon } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { useDebounce } from "use-debounce"
 import { z } from "zod"
 
-import { useGetAdminClasses } from "@/api/admin-classes/admin-classes"
 import { getGetAdminOfflinesQueryKey } from "@/api/admin-offlines/admin-offlines"
-import { useGetClassesIdSessions } from "@/api/classes/classes"
 import { usePostOfflines, usePutOfflinesId } from "@/api/offlines/offlines"
+import { ClassPicker, SessionPicker } from "@/components/admin/forms/ClassSessionPicker"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
-import { Button } from "@/components/ui/button"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Textarea } from "@/components/ui/textarea"
-import { cn } from "@/lib/utils"
 
 const createSchema = z.object({
   class_id: z.string().uuid(),
@@ -51,6 +37,8 @@ interface OfflineCreateModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   room?: OfflineRoom | null
+  defaultClassId?: string
+  defaultSessionId?: string
 }
 
 function isoToLocalInput(iso?: string): string {
@@ -68,7 +56,13 @@ function localInputToISO(value?: string): string | undefined {
   return d.toISOString()
 }
 
-export function OfflineCreateModal({ open, onOpenChange, room }: OfflineCreateModalProps) {
+export function OfflineCreateModal({
+  open,
+  onOpenChange,
+  room,
+  defaultClassId,
+  defaultSessionId,
+}: OfflineCreateModalProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const isEdit = !!room
@@ -92,9 +86,15 @@ export function OfflineCreateModal({ open, onOpenChange, room }: OfflineCreateMo
         published_at: isoToLocalInput(room.published_at),
       })
     } else {
-      createForm.reset({ class_id: "", class_session_id: "", title: "", description: "", published_at: "" })
+      createForm.reset({
+        class_id: defaultClassId ?? "",
+        class_session_id: defaultSessionId ?? "",
+        title: "",
+        description: "",
+        published_at: "",
+      })
     }
-  }, [open, room, isEdit])
+  }, [open, room, isEdit, defaultClassId, defaultSessionId])
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getGetAdminOfflinesQueryKey() })
@@ -191,7 +191,7 @@ export function OfflineCreateModal({ open, onOpenChange, room }: OfflineCreateMo
           <>
             <Field data-invalid={!!createErrors.class_id || undefined}>
               <FieldLabel>{t("admin.offlines.form.class")}</FieldLabel>
-              <ClassSelect
+              <ClassPicker
                 value={selectedClassId || undefined}
                 onChange={(id) => {
                   createForm.setValue("class_id", id, { shouldValidate: true })
@@ -203,7 +203,7 @@ export function OfflineCreateModal({ open, onOpenChange, room }: OfflineCreateMo
             </Field>
             <Field data-invalid={!!createErrors.class_session_id || undefined}>
               <FieldLabel>{t("admin.offlines.form.session")}</FieldLabel>
-              <SessionSelect
+              <SessionPicker
                 classId={selectedClassId || undefined}
                 value={selectedSessionId || undefined}
                 onChange={(id) => createForm.setValue("class_session_id", id, { shouldValidate: true })}
@@ -235,150 +235,5 @@ export function OfflineCreateModal({ open, onOpenChange, room }: OfflineCreateMo
         )}
       </FieldGroup>
     </ResourceFormDialog>
-  )
-}
-
-interface ClassSelectProps {
-  value?: string
-  onChange: (id: string) => void
-  placeholder?: string
-}
-
-function ClassSelect({ value, onChange, placeholder }: ClassSelectProps) {
-  const { t } = useTranslation()
-  const [open, setOpen] = useState(false)
-  const [search, setSearch] = useState("")
-  const [debouncedSearch] = useDebounce(search, 300)
-
-  const { data } = useGetAdminClasses({ search: debouncedSearch || undefined })
-  const classes = (data?.status === 200 && data.data.data?.items) || []
-  const selected = classes.find((c) => c.id === value)
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        render={
-          <Button variant="outline" role="combobox" className="w-full justify-between font-normal" />
-        }
-      >
-        {selected ? (
-          <span className="truncate">{selected.name}</span>
-        ) : (
-          <span className="text-muted-foreground">{placeholder ?? t("admin.offlines.form.classPlaceholder")}</span>
-        )}
-        <ChevronsUpDownIcon className="text-muted-foreground ms-2 size-4 shrink-0 opacity-50" />
-      </PopoverTrigger>
-      <PopoverContent className="w-72 p-0" align="start">
-        <Command>
-          <CommandInput
-            value={search}
-            onValueChange={setSearch}
-            placeholder={t("admin.classes.searchPlaceholder")}
-          />
-          <CommandList>
-            <CommandEmpty>{t("admin.classes.noResults")}</CommandEmpty>
-            <CommandGroup>
-              {classes.map((cls) => (
-                <CommandItem
-                  key={cls.id}
-                  value={cls.name ?? ""}
-                  onSelect={() => {
-                    if (cls.id) {
-                      onChange(cls.id)
-                      setOpen(false)
-                    }
-                  }}
-                >
-                  <CheckIcon className={cn("me-2 size-4", value === cls.id ? "opacity-100" : "opacity-0")} />
-                  <div className="min-w-0">
-                    <div className="truncate text-sm">{cls.name}</div>
-                    {cls.user?.name && (
-                      <div className="text-muted-foreground truncate text-xs">{cls.user.name}</div>
-                    )}
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  )
-}
-
-interface SessionSelectProps {
-  classId?: string
-  value?: string
-  onChange: (id: string) => void
-  placeholder?: string
-}
-
-function SessionSelect({ classId, value, onChange, placeholder }: SessionSelectProps) {
-  const { t } = useTranslation()
-  const [open, setOpen] = useState(false)
-  const [search, setSearch] = useState("")
-  const [debouncedSearch] = useDebounce(search, 300)
-
-  const { data } = useGetClassesIdSessions(
-    classId ?? "",
-    { search: debouncedSearch || undefined },
-    { query: { enabled: !!classId } }
-  )
-  const sessions = (data?.status === 200 && data.data.data?.items) || []
-  const selected = sessions.find((s) => s.id === value)
-
-  return (
-    <Popover open={open} onOpenChange={(o) => classId && setOpen(o)}>
-      <PopoverTrigger
-        render={
-          <Button
-            variant="outline"
-            role="combobox"
-            disabled={!classId}
-            className="w-full justify-between font-normal"
-          />
-        }
-      >
-        {selected ? (
-          <span className="truncate">{selected.name}</span>
-        ) : (
-          <span className="text-muted-foreground">
-            {classId
-              ? (placeholder ?? t("admin.offlines.form.sessionPlaceholder"))
-              : t("admin.offlines.form.sessionSelectClassFirst")}
-          </span>
-        )}
-        <ChevronsUpDownIcon className="text-muted-foreground ms-2 size-4 shrink-0 opacity-50" />
-      </PopoverTrigger>
-      <PopoverContent className="w-72 p-0" align="start">
-        <Command>
-          <CommandInput
-            value={search}
-            onValueChange={setSearch}
-            placeholder={t("admin.sessions.searchPlaceholder")}
-          />
-          <CommandList>
-            <CommandEmpty>{t("admin.sessions.noResults")}</CommandEmpty>
-            <CommandGroup>
-              {sessions.map((s) => (
-                <CommandItem
-                  key={s.id}
-                  value={s.name ?? ""}
-                  onSelect={() => {
-                    if (s.id) {
-                      onChange(s.id)
-                      setOpen(false)
-                    }
-                  }}
-                >
-                  <CheckIcon className={cn("me-2 size-4", value === s.id ? "opacity-100" : "opacity-0")} />
-                  <span className="truncate text-sm">{s.name}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
   )
 }

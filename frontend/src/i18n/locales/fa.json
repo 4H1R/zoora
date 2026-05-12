@@ -182,7 +182,16 @@
     "classManagement": {
       "title": "مدیریت کلاس",
       "sessions": "جلسات",
-      "gradebook": "دفتر نمرات"
+      "offlines": "محتوای آفلاین",
+      "liveRooms": "جلسات زنده",
+      "practices": "تمرین‌ها",
+      "gradebook": "دفتر نمرات",
+      "backToSessions": "بازگشت به جلسات"
+    },
+    "classSessionPicker": {
+      "classPlaceholder": "انتخاب کلاس…",
+      "sessionPlaceholder": "انتخاب جلسه…",
+      "selectClassFirst": "ابتدا کلاس را انتخاب کنید"
     },
     "classes": {
       "title": "کلاس‌ها",
@@ -298,7 +307,23 @@
       },
       "actions": {
         "edit": "ویرایش جلسه",
-        "delete": "حذف"
+        "delete": "حذف",
+        "manageRooms": "مدیریت اتاق‌ها"
+      },
+      "manageRooms": {
+        "title": "مدیریت اتاق‌ها",
+        "description": "اتاق‌های مرتبط با این جلسه.",
+        "viewAll": "مشاهده همه",
+        "tabs": {
+          "live": "زنده",
+          "offline": "آفلاین",
+          "practice": "تمرین"
+        },
+        "empty": {
+          "live": "اتاق زنده‌ای برای این جلسه وجود ندارد.",
+          "offline": "محتوای آفلاینی برای این جلسه وجود ندارد.",
+          "practice": "تمرینی برای این جلسه وجود ندارد."
+        }
       },
       "types": {
         "all": "همه انواع",

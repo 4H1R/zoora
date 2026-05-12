@@ -182,7 +182,16 @@
     "classManagement": {
       "title": "Class Management",
       "sessions": "Sessions",
-      "gradebook": "Gradebook"
+      "offlines": "Offline Content",
+      "liveRooms": "Live Sessions",
+      "practices": "Practices",
+      "gradebook": "Gradebook",
+      "backToSessions": "Back to sessions"
+    },
+    "classSessionPicker": {
+      "classPlaceholder": "Select class…",
+      "sessionPlaceholder": "Select session…",
+      "selectClassFirst": "Select a class first"
     },
     "classes": {
       "title": "Classes",
@@ -298,7 +307,23 @@
       },
       "actions": {
         "edit": "Edit session",
-        "delete": "Delete"
+        "delete": "Delete",
+        "manageRooms": "Manage Rooms"
+      },
+      "manageRooms": {
+        "title": "Manage Rooms",
+        "description": "Rooms linked to this session.",
+        "viewAll": "View all",
+        "tabs": {
+          "live": "Live",
+          "offline": "Offline",
+          "practice": "Practice"
+        },
+        "empty": {
+          "live": "No live rooms for this session.",
+          "offline": "No offline rooms for this session.",
+          "practice": "No practices for this session."
+        }
       },
       "types": {
         "all": "All types",

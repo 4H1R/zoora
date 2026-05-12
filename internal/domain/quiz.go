@@ -205,6 +205,7 @@ const SubmissionGracePeriod = 30 // seconds
 
 type QuizListScope struct {
 	All            bool
+	OrganizationID *uuid.UUID
 	OwnerID        *uuid.UUID
 	MemberUserID   *uuid.UUID
 	ClassID        *uuid.UUID

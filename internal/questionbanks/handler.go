@@ -38,15 +38,15 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 
 	authed := rg.Group("", authMiddleware)
 	{
-		authed.GET("/question-banks", h.List)
+		authed.GET("/question-banks", perm(domain.PermQuestionBanksView), h.List)
 		authed.POST("/question-banks", perm(domain.PermQuestionBanksCreate), h.Create)
-		authed.GET("/question-banks/:id", idParam, h.Get)
+		authed.GET("/question-banks/:id", perm(domain.PermQuestionBanksView), idParam, h.Get)
 		authed.PUT("/question-banks/:id", perm(domain.PermQuestionBanksUpdate), idParam, h.Update)
 		authed.DELETE("/question-banks/:id", perm(domain.PermQuestionBanksDelete), idParam, h.Delete)
 
-		authed.GET("/question-banks/:id/questions", idParam, h.ListQuestions)
+		authed.GET("/question-banks/:id/questions", perm(domain.PermQuestionBanksView), idParam, h.ListQuestions)
 		authed.POST("/question-banks/:id/questions", perm(domain.PermQuestionBanksUpdate), idParam, h.CreateQuestion)
-		authed.GET("/question-banks/questions/:questionId", questionIDParam, h.GetQuestion)
+		authed.GET("/question-banks/questions/:questionId", perm(domain.PermQuestionBanksView), questionIDParam, h.GetQuestion)
 		authed.PUT("/question-banks/questions/:questionId", perm(domain.PermQuestionBanksUpdate), questionIDParam, h.UpdateQuestion)
 		authed.DELETE("/question-banks/questions/:questionId", perm(domain.PermQuestionBanksDelete), questionIDParam, h.DeleteQuestion)
 	}

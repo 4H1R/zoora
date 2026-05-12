@@ -27,7 +27,7 @@ func canManageBank(caller domain.Caller, bank *domain.QuestionBank) bool {
 	if caller.IsAdmin {
 		return true
 	}
-	if caller.HasPermission("question_banks:update_any") {
+	if caller.HasPermission(domain.PermQuestionBanksUpdateAny) {
 		if caller.OrgID != nil && bank.OrganizationID != *caller.OrgID {
 			return false
 		}
@@ -36,17 +36,52 @@ func canManageBank(caller domain.Caller, bank *domain.QuestionBank) bool {
 	return false
 }
 
+func canDeleteBank(caller domain.Caller, bank *domain.QuestionBank) bool {
+	if caller.IsAdmin {
+		return true
+	}
+	if caller.HasPermission(domain.PermQuestionBanksDeleteAny) {
+		if caller.OrgID != nil && bank.OrganizationID != *caller.OrgID {
+			return false
+		}
+		return true
+	}
+	return false
+}
+
+func canViewBank(caller domain.Caller, bank *domain.QuestionBank) bool {
+	if canManageBank(caller, bank) {
+		return true
+	}
+	if caller.HasPermission(domain.PermQuestionBanksViewAny) {
+		if caller.OrgID != nil && bank.OrganizationID != *caller.OrgID {
+			return false
+		}
+		return true
+	}
+	return caller.OrgID != nil && bank.OrganizationID == *caller.OrgID
+}
+
 func (s *service) Create(ctx context.Context, dto domain.CreateQuestionBankDTO) (*domain.QuestionBank, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	if !caller.IsAdmin && !caller.HasPermission("question_banks:update_any") {
+	if !caller.IsAdmin &&
+		!caller.HasPermission(domain.PermQuestionBanksCreate) &&
+		!caller.HasPermission(domain.PermQuestionBanksCreateAny) &&
+		!caller.HasPermission(domain.PermQuestionBanksUpdateAny) {
+		return nil, domain.ErrForbidden
+	}
+	if caller.OrgID == nil && !caller.IsAdmin {
 		return nil, domain.ErrForbidden
 	}
 	bank := &domain.QuestionBank{
 		Name:        dto.Name,
 		Description: dto.Description,
+	}
+	if caller.OrgID != nil {
+		bank.OrganizationID = *caller.OrgID
 	}
 	if err := s.repo.Create(ctx, bank); err != nil {
 		return nil, err
@@ -59,13 +94,16 @@ func (s *service) Create(ctx context.Context, dto domain.CreateQuestionBankDTO) 
 }
 
 func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*domain.QuestionBank, error) {
-	_, ok := domain.CallerFromCtx(ctx)
+	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
 	bank, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+	if !canViewBank(caller, bank) {
+		return nil, domain.ErrForbidden
 	}
 	return bank, nil
 }
@@ -103,7 +141,7 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if !canManageBank(caller, bank) {
+	if !canDeleteBank(caller, bank) {
 		return domain.ErrForbidden
 	}
 	if err := s.repo.Delete(ctx, id); err != nil {
@@ -126,6 +164,9 @@ func (s *service) List(ctx context.Context, p domain.ListParams) ([]domain.Quest
 	}
 	if caller.OrgID == nil {
 		return nil, 0, domain.ErrForbidden
+	}
+	if caller.HasPermission(domain.PermQuestionBanksViewAny) || caller.HasPermission(domain.PermQuestionBanksUpdateAny) {
+		return s.repo.AdminList(ctx, domain.AdminListQuestionBanksQuery{OrganizationID: caller.OrgID, ListParams: p})
 	}
 	return s.repo.List(ctx, *caller.OrgID, p)
 }
@@ -158,13 +199,20 @@ func (s *service) CreateQuestion(ctx context.Context, bankID uuid.UUID, dto doma
 }
 
 func (s *service) GetQuestion(ctx context.Context, id uuid.UUID) (*domain.Question, error) {
-	_, ok := domain.CallerFromCtx(ctx)
+	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
 	question, err := s.questions.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+	bank, err := s.repo.FindByID(ctx, question.BankID)
+	if err != nil {
+		return nil, err
+	}
+	if !canViewBank(caller, bank) {
+		return nil, domain.ErrForbidden
 	}
 	return question, nil
 }
@@ -213,7 +261,7 @@ func (s *service) DeleteQuestion(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if !canManageBank(caller, bank) {
+	if !canDeleteBank(caller, bank) {
 		return domain.ErrForbidden
 	}
 	return s.questions.Delete(ctx, id)
@@ -227,6 +275,9 @@ func (s *service) ListQuestions(ctx context.Context, bankID uuid.UUID, q domain.
 	bank, err := s.repo.FindByID(ctx, bankID)
 	if err != nil {
 		return nil, 0, err
+	}
+	if !canViewBank(caller, bank) {
+		return nil, 0, domain.ErrForbidden
 	}
 	if !canManageBank(caller, bank) {
 		q.IncludeDeleted = false
