@@ -259,8 +259,11 @@
       "form": {
         "createTitle": "اتاق زنده جدید",
         "createDescription": "اتاق زنده برای یک جلسه کلاس ایجاد کنید.",
-        "classSessionId": "شناسه جلسه کلاس",
-        "classSessionIdPlaceholder": "UUID جلسه کلاس را وارد کنید…",
+        "class": "کلاس",
+        "classPlaceholder": "انتخاب کلاس…",
+        "session": "جلسه",
+        "sessionPlaceholder": "انتخاب جلسه…",
+        "sessionSelectClassFirst": "ابتدا یک کلاس انتخاب کنید",
         "maxParticipants": "حداکثر شرکت‌کنندگان",
         "maxParticipantsPlaceholder": "۱۰۰",
         "allowMicDefault": "میکروفن به‌صورت پیش‌فرض فعال",

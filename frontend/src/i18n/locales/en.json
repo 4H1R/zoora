@@ -259,8 +259,11 @@
       "form": {
         "createTitle": "New live room",
         "createDescription": "Provision a live room for a class session.",
-        "classSessionId": "Class session ID",
-        "classSessionIdPlaceholder": "Paste class session UUID…",
+        "class": "Class",
+        "classPlaceholder": "Select class…",
+        "session": "Session",
+        "sessionPlaceholder": "Select session…",
+        "sessionSelectClassFirst": "Select a class first",
         "maxParticipants": "Max participants",
         "maxParticipantsPlaceholder": "100",
         "allowMicDefault": "Allow mic by default",
