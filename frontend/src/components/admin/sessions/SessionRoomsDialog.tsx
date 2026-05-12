@@ -1,12 +1,13 @@
 import type { GithubCom4H1RZooraInternalDomainClassSession as Session } from "@/api/model"
 
 import { Link } from "@tanstack/react-router"
-import { DumbbellIcon, FileVideoIcon, VideoIcon } from "lucide-react"
+import { ClipboardListIcon, DumbbellIcon, FileVideoIcon, VideoIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { useGetAdminLiveRooms } from "@/api/admin-livesessions/admin-livesessions"
 import { useGetAdminOfflines } from "@/api/admin-offlines/admin-offlines"
 import { useGetAdminPractices } from "@/api/admin-practices/admin-practices"
+import { useGetAdminQuizzes } from "@/api/admin-quizzes/admin-quizzes"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -47,10 +48,23 @@ export function SessionRoomsDialog({
     { class_session_id: sessionId ?? "" },
     { query: { enabled: open && !!sessionId } }
   )
+  const { data: quizData, isLoading: quizLoading } = useGetAdminQuizzes(
+    { class_id: classId },
+    { query: { enabled: open && !!classId } }
+  )
 
   const liveRooms = (liveData?.status === 200 && liveData.data.data?.items) || []
   const offlineRooms = (offlineData?.status === 200 && offlineData.data.data?.items) || []
   const practiceRooms = (practiceData?.status === 200 && practiceData.data.data?.items) || []
+  const allQuizzes = (quizData?.status === 200 && quizData.data.data?.items) || []
+  // Quizzes are class-scoped. Filter to those whose rooms reference this session.
+  const sessionQuizzes = sessionId
+    ? allQuizzes.filter((q) =>
+        (session?.quiz_rooms ?? []).some((r) => r.quiz_id === q.id)
+      )
+    : []
+  // Fall back to all class quizzes when session has no preloaded rooms.
+  const quizzesToShow = sessionQuizzes.length > 0 ? sessionQuizzes : allQuizzes
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -81,6 +95,11 @@ export function SessionRoomsDialog({
               <DumbbellIcon data-icon="inline-start" />
               {t("admin.sessions.manageRooms.tabs.practice")}
               <Badge variant="secondary" className="ms-1.5">{practiceRooms.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="quiz">
+              <ClipboardListIcon data-icon="inline-start" />
+              {t("admin.sessions.manageRooms.tabs.quiz")}
+              <Badge variant="secondary" className="ms-1.5">{quizzesToShow.length}</Badge>
             </TabsTrigger>
           </TabsList>
 
@@ -119,6 +138,29 @@ export function SessionRoomsDialog({
               viewAll={
                 <Link
                   to="/admin/classes/$classId/offlines"
+                  params={{ classId }}
+                  onClick={() => onOpenChange(false)}
+                >
+                  <Button variant="outline" size="sm">
+                    {t("admin.sessions.manageRooms.viewAll")}
+                  </Button>
+                </Link>
+              }
+            />
+          </TabsContent>
+
+          <TabsContent value="quiz">
+            <RoomList
+              isLoading={quizLoading}
+              empty={t("admin.sessions.manageRooms.empty.quiz")}
+              items={quizzesToShow.map((q) => ({
+                id: q.id ?? "",
+                primary: q.title ?? "—",
+                secondary: q.description,
+              }))}
+              viewAll={
+                <Link
+                  to="/admin/classes/$classId/quizzes"
                   params={{ classId }}
                   onClick={() => onOpenChange(false)}
                 >

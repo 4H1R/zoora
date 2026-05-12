@@ -185,8 +185,13 @@
       "offlines": "محتوای آفلاین",
       "liveRooms": "جلسات زنده",
       "practices": "تمرین‌ها",
+      "quizzes": "آزمون‌ها",
+      "questions": "بانک سوال",
       "gradebook": "دفتر نمرات",
       "backToSessions": "بازگشت به جلسات"
+    },
+    "bankPicker": {
+      "placeholder": "انتخاب بانک سوال…"
     },
     "classSessionPicker": {
       "classPlaceholder": "انتخاب کلاس…",
@@ -317,12 +322,14 @@
         "tabs": {
           "live": "زنده",
           "offline": "آفلاین",
-          "practice": "تمرین"
+          "practice": "تمرین",
+          "quiz": "آزمون‌ها"
         },
         "empty": {
           "live": "اتاق زنده‌ای برای این جلسه وجود ندارد.",
           "offline": "محتوای آفلاینی برای این جلسه وجود ندارد.",
-          "practice": "تمرینی برای این جلسه وجود ندارد."
+          "practice": "تمرینی برای این جلسه وجود ندارد.",
+          "quiz": "آزمونی به این جلسه متصل نشده است."
         }
       },
       "types": {
@@ -443,6 +450,147 @@
         "createSuccess": "تمرین ایجاد شد",
         "updateSuccess": "تمرین به‌روز شد",
         "deleteSuccess": "تمرین حذف شد"
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش/پنهان ستون‌ها"
+      }
+    },
+    "quizzes": {
+      "title": "آزمون‌ها",
+      "subtitle": "مدیریت آزمون‌های این کلاس.",
+      "searchPlaceholder": "جستجوی آزمون‌ها…",
+      "newQuiz": "آزمون جدید",
+      "title_col": "عنوان",
+      "class": "کلاس",
+      "session": "جلسه",
+      "teacher": "مالک",
+      "duration": "مدت",
+      "minutesShort": "دقیقه",
+      "createdAt": "ایجاد شده",
+      "noResults": "آزمونی یافت نشد",
+      "noResultsHint": "اولین آزمون این کلاس را بسازید.",
+      "stats": {
+        "total": "کل آزمون‌ها"
+      },
+      "actions": {
+        "edit": "ویرایش آزمون",
+        "delete": "حذف",
+        "manageQuestions": "مدیریت سوال‌ها"
+      },
+      "form": {
+        "createTitle": "آزمون جدید",
+        "createDescription": "ایجاد یک آزمون جدید برای این کلاس.",
+        "editTitle": "ویرایش آزمون",
+        "editDescription": "به‌روزرسانی جزئیات آزمون.",
+        "title": "عنوان",
+        "titlePlaceholder": "عنوان آزمون",
+        "description": "توضیحات",
+        "descriptionPlaceholder": "توضیحات اختیاری",
+        "duration": "مدت (دقیقه)",
+        "session": "جلسه مرتبط",
+        "sessionPlaceholder": "اختیاری — اتصال به یک جلسه",
+        "sessionHint": "با اتصال به جلسه یک اتاق آزمون ساخته می‌شود.",
+        "createSuccess": "آزمون ایجاد شد",
+        "updateSuccess": "آزمون به‌روز شد",
+        "deleteSuccess": "آزمون حذف شد",
+        "linkRoomFailed": "آزمون ساخته شد ولی اتصال به جلسه ناموفق بود"
+      },
+      "questions": {
+        "title": "مدیریت سوال‌ها",
+        "description": "به‌صورت دستی یا تصادفی از بانک سوال انتخاب کنید.",
+        "currentRules": "انتخاب فعلی",
+        "questions": "سوال",
+        "selected": "انتخاب‌شده",
+        "selectQuestions": "انتخاب سوال‌ها",
+        "bank": "بانک سوال",
+        "count": "تعداد سوال‌ها",
+        "empty": "هنوز انتخابی انجام نشده.",
+        "ruleAdded": "انتخاب ذخیره شد",
+        "ruleDeleted": "انتخاب حذف شد",
+        "addManual": "افزودن انتخاب‌شده‌ها",
+        "addRandom": "افزودن قاعده تصادفی",
+        "randomHint": "هنگام اجرا، سیستم به‌تعداد مشخص سوال تصادفی از بانک انتخاب می‌کند.",
+        "tabs": {
+          "manual": "دستی",
+          "random": "تصادفی"
+        },
+        "ruleType": {
+          "manual": "دستی",
+          "random": "تصادفی"
+        }
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش/پنهان ستون‌ها"
+      }
+    },
+    "questionBanks": {
+      "title": "بانک‌های سوال",
+      "searchPlaceholder": "جستجوی بانک‌ها…",
+      "newBank": "بانک جدید",
+      "noResults": "بانکی یافت نشد",
+      "form": {
+        "createTitle": "بانک سوال جدید",
+        "createDescription": "ایجاد یک بانک سوال برای سازمان.",
+        "name": "نام",
+        "namePlaceholder": "نام بانک",
+        "description": "توضیحات",
+        "descriptionPlaceholder": "توضیحات اختیاری",
+        "createSuccess": "بانک ایجاد شد"
+      }
+    },
+    "questions": {
+      "title": "بانک سوال",
+      "subtitle": "مدیریت سوال‌های قابل استفاده مجدد.",
+      "searchPlaceholder": "جستجوی سوال‌ها…",
+      "newQuestion": "سوال جدید",
+      "pickBankHint": "برای دیدن سوال‌ها یک بانک انتخاب کنید.",
+      "text": "متن سوال",
+      "type": "نوع",
+      "optionsCount": "گزینه‌ها",
+      "totalScore": "مجموع نمره",
+      "createdAt": "ایجاد شده",
+      "noResults": "سوالی یافت نشد",
+      "noResultsHint": "اولین سوال این بانک را بسازید.",
+      "filter": {
+        "bank": "بانک سوال",
+        "type": "نوع",
+        "allTypes": "همه انواع"
+      },
+      "types": {
+        "descriptive": "تشریحی",
+        "short_answer": "پاسخ کوتاه",
+        "choice": "چندگزینه‌ای"
+      },
+      "stats": {
+        "total": "کل سوال‌ها"
+      },
+      "actions": {
+        "edit": "ویرایش سوال",
+        "delete": "حذف"
+      },
+      "form": {
+        "createTitle": "سوال جدید",
+        "createDescription": "افزودن سوال به یک بانک.",
+        "editTitle": "ویرایش سوال",
+        "editDescription": "به‌روزرسانی جزئیات سوال.",
+        "bank": "بانک سوال",
+        "bankPlaceholder": "انتخاب بانک…",
+        "text": "متن سوال",
+        "textPlaceholder": "متن سوال را وارد کنید…",
+        "type": "نوع",
+        "options": "گزینه‌ها",
+        "optionValuePlaceholder": "مقدار گزینه",
+        "scorePlaceholder": "نمره",
+        "addOption": "افزودن گزینه",
+        "optionsEmpty": "هنوز گزینه‌ای ندارد.",
+        "optionsHint": "برای چندگزینه‌ای، به گزینه‌های درست نمره مثبت بدهید. برای پاسخ کوتاه، پاسخ‌های قابل قبول را با نمره ذکر کنید.",
+        "createSuccess": "سوال ایجاد شد",
+        "updateSuccess": "سوال به‌روز شد",
+        "deleteSuccess": "سوال حذف شد"
       },
       "toolbar": {
         "sort": "مرتب‌سازی",

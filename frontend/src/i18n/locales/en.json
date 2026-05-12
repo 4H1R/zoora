@@ -185,8 +185,13 @@
       "offlines": "Offline Content",
       "liveRooms": "Live Sessions",
       "practices": "Practices",
+      "quizzes": "Quizzes",
+      "questions": "Question Bank",
       "gradebook": "Gradebook",
       "backToSessions": "Back to sessions"
+    },
+    "bankPicker": {
+      "placeholder": "Select question bank…"
     },
     "classSessionPicker": {
       "classPlaceholder": "Select class…",
@@ -317,12 +322,14 @@
         "tabs": {
           "live": "Live",
           "offline": "Offline",
-          "practice": "Practice"
+          "practice": "Practice",
+          "quiz": "Quizzes"
         },
         "empty": {
           "live": "No live rooms for this session.",
           "offline": "No offline rooms for this session.",
-          "practice": "No practices for this session."
+          "practice": "No practices for this session.",
+          "quiz": "No quizzes linked to this session."
         }
       },
       "types": {
@@ -443,6 +450,147 @@
         "createSuccess": "Practice created",
         "updateSuccess": "Practice updated",
         "deleteSuccess": "Practice deleted"
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
+    },
+    "quizzes": {
+      "title": "Quizzes",
+      "subtitle": "Manage quizzes for this class.",
+      "searchPlaceholder": "Search quizzes…",
+      "newQuiz": "New quiz",
+      "title_col": "Title",
+      "class": "Class",
+      "session": "Session",
+      "teacher": "Owner",
+      "duration": "Duration",
+      "minutesShort": "min",
+      "createdAt": "Created",
+      "noResults": "No quizzes found",
+      "noResultsHint": "Create the first quiz for this class.",
+      "stats": {
+        "total": "Total quizzes"
+      },
+      "actions": {
+        "edit": "Edit quiz",
+        "delete": "Delete",
+        "manageQuestions": "Manage questions"
+      },
+      "form": {
+        "createTitle": "New quiz",
+        "createDescription": "Create a new quiz for this class.",
+        "editTitle": "Edit quiz",
+        "editDescription": "Update quiz details.",
+        "title": "Title",
+        "titlePlaceholder": "Quiz title",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional description",
+        "duration": "Duration (minutes)",
+        "session": "Linked session",
+        "sessionPlaceholder": "Optional — link to a session",
+        "sessionHint": "Linking a session creates a quiz room.",
+        "createSuccess": "Quiz created",
+        "updateSuccess": "Quiz updated",
+        "deleteSuccess": "Quiz deleted",
+        "linkRoomFailed": "Quiz created but session room linking failed"
+      },
+      "questions": {
+        "title": "Manage questions",
+        "description": "Pick questions manually or generate randomly from a bank.",
+        "currentRules": "Current selection",
+        "questions": "questions",
+        "selected": "selected",
+        "selectQuestions": "Select questions",
+        "bank": "Question bank",
+        "count": "Number of questions",
+        "empty": "No selection yet.",
+        "ruleAdded": "Selection saved",
+        "ruleDeleted": "Selection removed",
+        "addManual": "Add selected",
+        "addRandom": "Add random rule",
+        "randomHint": "At runtime, the system picks this many random questions from the bank.",
+        "tabs": {
+          "manual": "Manual",
+          "random": "Random"
+        },
+        "ruleType": {
+          "manual": "Manual",
+          "random": "Random"
+        }
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
+    },
+    "questionBanks": {
+      "title": "Question Banks",
+      "searchPlaceholder": "Search question banks…",
+      "newBank": "New bank",
+      "noResults": "No banks found",
+      "form": {
+        "createTitle": "New question bank",
+        "createDescription": "Create a new organization-wide question bank.",
+        "name": "Name",
+        "namePlaceholder": "Bank name",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional description",
+        "createSuccess": "Bank created"
+      }
+    },
+    "questions": {
+      "title": "Question Bank",
+      "subtitle": "Manage reusable questions.",
+      "searchPlaceholder": "Search questions…",
+      "newQuestion": "New question",
+      "pickBankHint": "Pick a question bank to view its questions.",
+      "text": "Question",
+      "type": "Type",
+      "optionsCount": "Options",
+      "totalScore": "Total score",
+      "createdAt": "Created",
+      "noResults": "No questions found",
+      "noResultsHint": "Add the first question to this bank.",
+      "filter": {
+        "bank": "Question bank",
+        "type": "Type",
+        "allTypes": "All types"
+      },
+      "types": {
+        "descriptive": "Descriptive",
+        "short_answer": "Short answer",
+        "choice": "Multiple choice"
+      },
+      "stats": {
+        "total": "Total questions"
+      },
+      "actions": {
+        "edit": "Edit question",
+        "delete": "Delete"
+      },
+      "form": {
+        "createTitle": "New question",
+        "createDescription": "Add a question to a bank.",
+        "editTitle": "Edit question",
+        "editDescription": "Update question details.",
+        "bank": "Question bank",
+        "bankPlaceholder": "Select a bank…",
+        "text": "Question text",
+        "textPlaceholder": "Enter the question…",
+        "type": "Type",
+        "options": "Options",
+        "optionValuePlaceholder": "Option value",
+        "scorePlaceholder": "Score",
+        "addOption": "Add option",
+        "optionsEmpty": "No options yet.",
+        "optionsHint": "For multiple-choice, give correct options a positive score. For short answer, list accepted values with their scores.",
+        "createSuccess": "Question created",
+        "updateSuccess": "Question updated",
+        "deleteSuccess": "Question deleted"
       },
       "toolbar": {
         "sort": "Sort",

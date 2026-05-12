@@ -5,8 +5,10 @@ import { useParams, useRouterState } from "@tanstack/react-router"
 import {
   Building2Icon,
   CalendarIcon,
+  ClipboardListIcon,
   DumbbellIcon,
   FileVideoIcon,
+  HelpCircleIcon,
   KeyIcon,
   LayoutDashboardIcon,
   SchoolIcon,
@@ -82,6 +84,16 @@ export function AppSidebar({
           title: t("admin.classManagement.practices"),
           url: `/admin/classes/${activeClassId}/practices`,
           icon: <DumbbellIcon />,
+        },
+        {
+          title: t("admin.classManagement.quizzes"),
+          url: `/admin/classes/${activeClassId}/quizzes`,
+          icon: <ClipboardListIcon />,
+        },
+        {
+          title: t("admin.classManagement.questions"),
+          url: `/admin/classes/${activeClassId}/questions`,
+          icon: <HelpCircleIcon />,
         },
         {
           title: t("admin.classManagement.gradebook"),
