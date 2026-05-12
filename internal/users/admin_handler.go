@@ -52,6 +52,7 @@ func (h *AdminHandler) RegisterAdminRoutes(group *gin.RouterGroup) {
 // @Produce json
 // @Security BearerAuth
 // @Param organization_id query string false "Filter by organization UUID"
+// @Param role_id query string false "Filter by role UUID"
 // @Param is_admin query bool false "Filter by admin flag"
 // @Param include_deleted query bool false "Include soft-deleted users"
 // @Param search query string false "Substring match on username/name"

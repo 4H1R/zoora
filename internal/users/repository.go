@@ -47,7 +47,14 @@ func (r *repository) Create(ctx context.Context, user *domain.User) error {
 }
 
 func (r *repository) FindByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
-	return r.findOne(ctx, "id = ?", id)
+	var user domain.User
+	if err := r.baseQuery(ctx).Preload("Role").First(&user, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("users.repository.FindByID: %w", err)
+	}
+	return &user, nil
 }
 
 func (r *repository) FindByUsername(ctx context.Context, username string) (*domain.User, error) {
@@ -79,13 +86,19 @@ func (r *repository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (r *repository) List(ctx context.Context, q domain.ListUsersQuery) ([]domain.User, int64, error) {
-	base := r.baseQuery(ctx)
-	if q.OrganizationID != "" {
-		base = base.Where("organization_id = ?", q.OrganizationID)
+// List applies a role-resolved scope produced by the service. All
+// short-circuits scoping; otherwise OrganizationID narrows the result set
+// when set.
+func (r *repository) List(ctx context.Context, scope domain.UserListScope, p domain.ListParams) ([]domain.User, int64, error) {
+	base := database.DB(ctx, r.db).Model(&domain.User{}).Preload("Role")
+	if scope.IncludeDeleted {
+		base = base.Unscoped()
+	}
+	if !scope.All && scope.OrganizationID != nil {
+		base = base.Where("organization_id = ?", *scope.OrganizationID)
 	}
 	var users []domain.User
-	total, err := listparams.Paginate(base, q.ListParams, &users)
+	total, err := listparams.Paginate(base, p, &users)
 	if err != nil {
 		return nil, 0, fmt.Errorf("users.repository.List: %w", err)
 	}
@@ -121,12 +134,15 @@ func (r *repository) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID)
 // search/order/pagination to listparams. Soft-deleted rows are excluded
 // unless IncludeDeleted is true.
 func (r *repository) AdminList(ctx context.Context, q domain.AdminListUsersQuery) ([]domain.User, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.User{})
+	base := database.DB(ctx, r.db).Model(&domain.User{}).Preload("Role")
 	if q.IncludeDeleted {
 		base = base.Unscoped()
 	}
-	if q.OrganizationID != "" {
-		base = base.Where("organization_id = ?", q.OrganizationID)
+	if q.OrganizationID != nil {
+		base = base.Where("organization_id = ?", *q.OrganizationID)
+	}
+	if q.RoleID != nil {
+		base = base.Where("role_id = ?", *q.RoleID)
 	}
 	if q.IsAdmin != nil {
 		base = base.Where("is_admin = ?", *q.IsAdmin)

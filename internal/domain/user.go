@@ -71,15 +71,23 @@ type AdminForceResetPasswordDTO struct {
 	NewPassword string `json:"new_password" binding:"required,strongpassword"`
 }
 
-type AdminListUsersQuery struct {
-	OrganizationID string `form:"organization_id"`
-	IsAdmin        *bool  `form:"is_admin"`
-	IncludeDeleted bool   `form:"include_deleted"`
-	ListParams     ListParams `form:"-"`
+// UserListScope is the role-resolved scope produced by the service for
+// GET /users. The repository is role-agnostic and only translates this
+// into SQL filters.
+type UserListScope struct {
+	All            bool
+	OrganizationID *uuid.UUID
+	IncludeDeleted bool
 }
 
-type ListUsersQuery struct {
-	OrganizationID string     `form:"-"`
+// AdminListUsersQuery is the query for GET /admin/users. Typed filters
+// sit alongside the embedded ListParams populated by the handler after
+// white-listing.
+type AdminListUsersQuery struct {
+	OrganizationID *uuid.UUID `form:"organization_id"`
+	RoleID         *uuid.UUID `form:"role_id"`
+	IsAdmin        *bool      `form:"is_admin"`
+	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }
 
@@ -93,7 +101,7 @@ type UserRepository interface {
 	FindByUsername(ctx context.Context, username string) (*User, error)
 	Update(ctx context.Context, user *User) error
 	Delete(ctx context.Context, id uuid.UUID) error
-	List(ctx context.Context, q ListUsersQuery) ([]User, int64, error)
+	List(ctx context.Context, scope UserListScope, p ListParams) ([]User, int64, error)
 
 	// Admin-only operations.
 	HardDelete(ctx context.Context, id uuid.UUID) error
@@ -107,7 +115,7 @@ type UserService interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*User, error)
 	Update(ctx context.Context, id uuid.UUID, dto UpdateUserDTO) (*User, error)
 	Delete(ctx context.Context, id uuid.UUID) error
-	List(ctx context.Context, q ListUsersQuery) ([]User, int64, error)
+	List(ctx context.Context, p ListParams) ([]User, int64, error)
 	GetProfile(ctx context.Context, id uuid.UUID) (*User, error)
 	UpdateProfile(ctx context.Context, id uuid.UUID, dto UpdateProfileDTO) (*User, error)
 	ChangePassword(ctx context.Context, id uuid.UUID, dto ChangePasswordDTO) error

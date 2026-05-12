@@ -114,18 +114,13 @@ func (h *Handler) GetUserByID(c *gin.Context) {
 // @Failure 500 {object} domain.Response{error=domain.ErrorBody}
 // @Router /users [get]
 func (h *Handler) ListUsers(c *gin.Context) {
-	var q domain.ListUsersQuery
-	if err := c.ShouldBindQuery(&q); err != nil {
-		_ = c.Error(domain.NewValidationError(map[string]string{"query": err.Error()}))
-		return
-	}
-	q.ListParams = listparams.Bind(c, usersListConfig)
-	users, total, err := h.svc.List(c.Request.Context(), q)
+	p := listparams.Bind(c, usersListConfig)
+	users, total, err := h.svc.List(c.Request.Context(), p)
 	if err != nil {
 		_ = c.Error(err)
 		return
 	}
-	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(users, total, q.ListParams))
+	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(users, total, p))
 }
 
 // UpdateUser updates a user by ID.
