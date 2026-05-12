@@ -176,6 +176,11 @@
       "roles": "Roles",
       "classes": "Classes"
     },
+    "classManagement": {
+      "title": "Class Management",
+      "sessions": "Sessions",
+      "gradebook": "Gradebook"
+    },
     "classes": {
       "title": "Classes",
       "searchPlaceholder": "Search classes…",

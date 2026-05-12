@@ -7,6 +7,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { cn } from "@/lib/utils"
 
 export interface NavItem {
   title: string
@@ -17,6 +18,7 @@ export interface NavItem {
 export interface NavGroup {
   label: string
   items: NavItem[]
+  indent?: boolean
 }
 
 export function NavMain({ groups }: { groups: NavGroup[] }) {
@@ -34,7 +36,10 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
                   tooltip={item.title}
                   isActive={pathname.startsWith(item.url)}
                   render={<Link to={item.url} />}
-                  className="data-active:[&_svg]:text-primary gap-2.5 px-2.5 py-1.5 text-sm [&_svg]:size-4 [&_svg]:[stroke-width:1.75]"
+                  className={cn(
+                    "data-active:[&_svg]:text-primary gap-2.5 px-2.5 py-1.5 text-sm [&_svg]:size-4 [&_svg]:[stroke-width:1.75]",
+                    group.indent && "ps-6"
+                  )}
                 >
                   {item.icon}
                   <span>{item.title}</span>

@@ -176,6 +176,11 @@
       "roles": "نقش‌ها",
       "classes": "کلاس‌ها"
     },
+    "classManagement": {
+      "title": "مدیریت کلاس",
+      "sessions": "جلسات",
+      "gradebook": "دفتر نمرات"
+    },
     "classes": {
       "title": "کلاس‌ها",
       "searchPlaceholder": "جستجوی کلاس‌ها…",

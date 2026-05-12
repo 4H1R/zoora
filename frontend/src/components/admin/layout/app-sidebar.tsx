@@ -1,6 +1,17 @@
 import type { GithubCom4H1RZooraInternalDomainUser } from "@/api/model"
+import type { NavGroup } from "@/components/layout/nav-main"
 
-import { Building2Icon, KeyIcon, LayoutDashboardIcon, SchoolIcon, ShieldIcon, UsersIcon } from "lucide-react"
+import { useRouterState } from "@tanstack/react-router"
+import {
+  Building2Icon,
+  CalendarIcon,
+  KeyIcon,
+  LayoutDashboardIcon,
+  SchoolIcon,
+  ShieldIcon,
+  TrophyIcon,
+  UsersIcon,
+} from "lucide-react"
 import * as React from "react"
 import { useTranslation } from "react-i18next"
 
@@ -8,6 +19,8 @@ import { OrgSwitcher } from "@/components/admin/layout/org-switcher"
 import { AppSidebar as AppSidebarShared } from "@/components/layout/app-sidebar"
 import { Sidebar } from "@/components/ui/sidebar"
 import { useAdminStore } from "@/stores/admin"
+
+const CLASS_ID_RE = /^\/admin\/classes\/([^/]+)(?:\/|$)/
 
 export function AppSidebar({
   user,
@@ -17,8 +30,12 @@ export function AppSidebar({
 }) {
   const { t } = useTranslation()
   const { activeOrganization, setActiveOrganization } = useAdminStore()
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
 
-  const navGroups = [
+  const classIdMatch = pathname.match(CLASS_ID_RE)
+  const activeClassId = classIdMatch?.[1]
+
+  const navGroups: NavGroup[] = [
     {
       label: t("admin.platform"),
       items: [
@@ -36,6 +53,25 @@ export function AppSidebar({
       ],
     },
   ]
+
+  if (activeClassId) {
+    navGroups.push({
+      label: t("admin.classManagement.title"),
+      indent: true,
+      items: [
+        {
+          title: t("admin.classManagement.sessions"),
+          url: `/admin/classes/${activeClassId}/sessions`,
+          icon: <CalendarIcon />,
+        },
+        {
+          title: t("admin.classManagement.gradebook"),
+          url: `/admin/classes/${activeClassId}/gradebook`,
+          icon: <TrophyIcon />,
+        },
+      ],
+    })
+  }
 
   return (
     <AppSidebarShared
