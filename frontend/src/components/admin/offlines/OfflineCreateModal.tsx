@@ -9,7 +9,7 @@ import { toast } from "sonner"
 import { z } from "zod"
 
 import { getGetAdminOfflinesQueryKey } from "@/api/admin-offlines/admin-offlines"
-import { usePostOfflines, usePutOfflinesId } from "@/api/offlines/offlines"
+import { getGetOfflinesQueryKey, usePostOfflines, usePutOfflinesId } from "@/api/offlines/offlines"
 import { ClassPicker, SessionPicker } from "@/components/admin/forms/ClassSessionPicker"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
@@ -98,6 +98,7 @@ export function OfflineCreateModal({
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getGetAdminOfflinesQueryKey() })
+    queryClient.invalidateQueries({ queryKey: getGetOfflinesQueryKey() })
   }
 
   const createMutation = usePostOfflines({

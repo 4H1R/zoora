@@ -119,7 +119,7 @@ type ClassListScope struct {
 // sit alongside the embedded ListParams populated by the handler after
 // white-listing.
 type AdminListClassesQuery struct {
-	UserID         *uuid.UUID `form:"user_id"`
+	UserID         *uuid.UUID `form:"-"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }

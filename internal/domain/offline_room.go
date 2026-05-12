@@ -52,17 +52,20 @@ type OfflineRoomListScope struct {
 	MemberUserID   *uuid.UUID
 }
 
+// UUID query params (class_id, class_session_id, etc.) use form:"-" because
+// Gin's form binder cannot decode strings into uuid.UUID's [16]byte underlying
+// type. Handlers populate these via httpx.BindUUIDQueries.
 type ListOfflineRoomsQuery struct {
-	ClassID        *uuid.UUID `form:"class_id"`
-	ClassSessionID *uuid.UUID `form:"class_session_id"`
+	ClassID        *uuid.UUID `form:"-"`
+	ClassSessionID *uuid.UUID `form:"-"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }
 
 type AdminListOfflineRoomsQuery struct {
-	ClassID        *uuid.UUID `form:"class_id"`
-	ClassSessionID *uuid.UUID `form:"class_session_id"`
-	CreatorID      *uuid.UUID `form:"creator_id"`
+	ClassID        *uuid.UUID `form:"-"`
+	ClassSessionID *uuid.UUID `form:"-"`
+	CreatorID      *uuid.UUID `form:"-"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }

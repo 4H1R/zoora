@@ -539,7 +539,8 @@
         "namePlaceholder": "نام بانک",
         "description": "توضیحات",
         "descriptionPlaceholder": "توضیحات اختیاری",
-        "createSuccess": "بانک ایجاد شد"
+        "createSuccess": "بانک ایجاد شد",
+        "noActiveOrg": "ابتدا یک سازمان از نوار کناری انتخاب کنید."
       }
     },
     "questions": {

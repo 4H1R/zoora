@@ -84,8 +84,8 @@ type UserListScope struct {
 // sit alongside the embedded ListParams populated by the handler after
 // white-listing.
 type AdminListUsersQuery struct {
-	OrganizationID *uuid.UUID `form:"organization_id"`
-	RoleID         *uuid.UUID `form:"role_id"`
+	OrganizationID *uuid.UUID `form:"-"`
+	RoleID         *uuid.UUID `form:"-"`
 	IsAdmin        *bool      `form:"is_admin"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`

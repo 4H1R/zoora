@@ -539,7 +539,8 @@
         "namePlaceholder": "Bank name",
         "description": "Description",
         "descriptionPlaceholder": "Optional description",
-        "createSuccess": "Bank created"
+        "createSuccess": "Bank created",
+        "noActiveOrg": "Select an organization from the sidebar before creating a bank."
       }
     },
     "questions": {

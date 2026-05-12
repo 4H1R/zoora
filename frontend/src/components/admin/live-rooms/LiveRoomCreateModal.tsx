@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import { z } from "zod"
 
 import { getGetAdminLiveRoomsQueryKey } from "@/api/admin-livesessions/admin-livesessions"
-import { usePostLiveRooms } from "@/api/live-sessions/live-sessions"
+import { getGetLiveRoomsQueryKey, usePostLiveRooms } from "@/api/live-sessions/live-sessions"
 import { ClassPicker, SessionPicker } from "@/components/admin/forms/ClassSessionPicker"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -72,6 +72,7 @@ export function LiveRoomCreateModal({
       onSuccess: () => {
         toast.success(t("admin.liveRooms.form.createSuccess"))
         queryClient.invalidateQueries({ queryKey: getGetAdminLiveRoomsQueryKey() })
+        queryClient.invalidateQueries({ queryKey: getGetLiveRoomsQueryKey() })
         onOpenChange(false)
       },
     },

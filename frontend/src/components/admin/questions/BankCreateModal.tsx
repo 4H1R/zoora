@@ -7,13 +7,15 @@ import { toast } from "sonner"
 import { z } from "zod"
 
 import {
-  getGetQuestionBanksQueryKey,
-  usePostQuestionBanks,
-} from "@/api/question-banks/question-banks"
+  getGetAdminQuestionBanksQueryKey,
+  usePostAdminQuestionBanks,
+} from "@/api/admin-questionbanks/admin-questionbanks"
+import { getGetQuestionBanksQueryKey } from "@/api/question-banks/question-banks"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { useAdminStore } from "@/stores/admin"
 
 const schema = z.object({
   name: z.string().min(2),
@@ -31,6 +33,7 @@ interface BankCreateModalProps {
 export function BankCreateModal({ open, onOpenChange, onCreated }: BankCreateModalProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const activeOrganizationId = useAdminStore((s) => s.activeOrganizationId)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -41,10 +44,11 @@ export function BankCreateModal({ open, onOpenChange, onCreated }: BankCreateMod
     if (open) form.reset({ name: "", description: "" })
   }, [open])
 
-  const mutation = usePostQuestionBanks({
+  const mutation = usePostAdminQuestionBanks({
     mutation: {
       onSuccess: (res) => {
         toast.success(t("admin.questionBanks.form.createSuccess"))
+        queryClient.invalidateQueries({ queryKey: getGetAdminQuestionBanksQueryKey() })
         queryClient.invalidateQueries({ queryKey: getGetQuestionBanksQueryKey() })
         const id = res.status === 201 ? res.data.data?.id : undefined
         if (id && onCreated) onCreated(id)
@@ -54,7 +58,17 @@ export function BankCreateModal({ open, onOpenChange, onCreated }: BankCreateMod
   })
 
   const onSubmit = form.handleSubmit((values) => {
-    mutation.mutate({ data: { name: values.name, description: values.description } })
+    if (!activeOrganizationId) {
+      toast.error(t("admin.questionBanks.form.noActiveOrg"))
+      return
+    }
+    mutation.mutate({
+      data: {
+        organization_id: activeOrganizationId,
+        name: values.name,
+        description: values.description,
+      },
+    })
   })
 
   const errors = form.formState.errors

@@ -76,7 +76,7 @@ type AutoMarkResult struct {
 
 type ListAttendanceQuery struct {
 	Status     *AttendanceStatus `form:"status"`
-	UserID     *uuid.UUID        `form:"user_id"`
+	UserID     *uuid.UUID        `form:"-"`
 	ListParams ListParams        `form:"-"`
 }
 

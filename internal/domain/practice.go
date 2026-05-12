@@ -79,8 +79,8 @@ type PracticeRoomListScope struct {
 }
 
 type ListPracticeRoomsQuery struct {
-	ClassID        *uuid.UUID `form:"class_id"`
-	ClassSessionID *uuid.UUID `form:"class_session_id"`
+	ClassID        *uuid.UUID `form:"-"`
+	ClassSessionID *uuid.UUID `form:"-"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }
@@ -90,9 +90,9 @@ type ListPracticeSubmissionsQuery struct {
 }
 
 type AdminListPracticeRoomsQuery struct {
-	ClassID        *uuid.UUID `form:"class_id"`
-	ClassSessionID *uuid.UUID `form:"class_session_id"`
-	UserID         *uuid.UUID `form:"user_id"`
+	ClassID        *uuid.UUID `form:"-"`
+	ClassSessionID *uuid.UUID `form:"-"`
+	UserID         *uuid.UUID `form:"-"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }

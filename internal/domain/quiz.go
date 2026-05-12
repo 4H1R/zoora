@@ -100,14 +100,14 @@ type CreateQuizRoomDTO struct {
 }
 
 type ListQuizzesQuery struct {
-	ClassID        *uuid.UUID `form:"class_id"`
+	ClassID        *uuid.UUID `form:"-"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }
 
 type AdminListQuizzesQuery struct {
-	ClassID        *uuid.UUID `form:"class_id"`
-	UserID         *uuid.UUID `form:"user_id"`
+	ClassID        *uuid.UUID `form:"-"`
+	UserID         *uuid.UUID `form:"-"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }
@@ -117,7 +117,7 @@ type ListQuizRulesQuery struct {
 }
 
 type ListQuizRoomsQuery struct {
-	QuizID     *uuid.UUID `form:"quiz_id"`
+	QuizID     *uuid.UUID `form:"-"`
 	ListParams ListParams `form:"-"`
 }
 
@@ -192,7 +192,7 @@ type GradeSubmissionDTO struct {
 }
 
 type ListSubmissionsQuery struct {
-	UserID     *uuid.UUID `form:"user_id"`
+	UserID     *uuid.UUID `form:"-"`
 	Status     *string    `form:"status"`
 	ListParams ListParams `form:"-"`
 }

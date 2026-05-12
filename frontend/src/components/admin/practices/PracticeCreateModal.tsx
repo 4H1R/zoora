@@ -9,7 +9,11 @@ import { toast } from "sonner"
 import { z } from "zod"
 
 import { getGetAdminPracticesQueryKey } from "@/api/admin-practices/admin-practices"
-import { usePostPractices, usePutPracticesId } from "@/api/practices/practices"
+import {
+  getGetPracticesQueryKey,
+  usePostPractices,
+  usePutPracticesId,
+} from "@/api/practices/practices"
 import { ClassPicker, SessionPicker } from "@/components/admin/forms/ClassSessionPicker"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
@@ -123,6 +127,7 @@ export function PracticeCreateModal({
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getGetAdminPracticesQueryKey() })
+    queryClient.invalidateQueries({ queryKey: getGetPracticesQueryKey() })
   }
 
   const createMutation = usePostPractices({

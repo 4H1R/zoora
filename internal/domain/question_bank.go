@@ -89,7 +89,7 @@ type ListQuestionsQuery struct {
 }
 
 type AdminListQuestionBanksQuery struct {
-	OrganizationID *uuid.UUID `form:"organization_id"`
+	OrganizationID *uuid.UUID `form:"-"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }

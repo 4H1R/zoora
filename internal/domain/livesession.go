@@ -125,8 +125,8 @@ type LiveRoomListScope struct {
 // alongside the embedded ListParams populated by the handler after white-listing.
 type ListLiveRoomsQuery struct {
 	Status         *LiveRoomStatus `form:"status"`
-	ClassID        *uuid.UUID      `form:"class_id"`
-	ClassSessionID *uuid.UUID      `form:"class_session_id"`
+	ClassID        *uuid.UUID      `form:"-"`
+	ClassSessionID *uuid.UUID      `form:"-"`
 	IncludeDeleted bool            `form:"include_deleted"`
 	ListParams     ListParams      `form:"-"`
 }
@@ -134,9 +134,9 @@ type ListLiveRoomsQuery struct {
 // AdminListLiveRoomsQuery is the query for GET /admin/live-rooms.
 type AdminListLiveRoomsQuery struct {
 	Status         *LiveRoomStatus `form:"status"`
-	UserID         *uuid.UUID      `form:"user_id"`
-	ClassID        *uuid.UUID      `form:"class_id"`
-	ClassSessionID *uuid.UUID      `form:"class_session_id"`
+	UserID         *uuid.UUID      `form:"-"`
+	ClassID        *uuid.UUID      `form:"-"`
+	ClassSessionID *uuid.UUID      `form:"-"`
 	IncludeDeleted bool            `form:"include_deleted"`
 	ListParams     ListParams      `form:"-"`
 }
@@ -144,7 +144,7 @@ type AdminListLiveRoomsQuery struct {
 // ListLiveParticipantsQuery is the query for GET /live-rooms/:id/participants.
 type ListLiveParticipantsQuery struct {
 	ActiveOnly *bool      `form:"active_only"`
-	UserID     *uuid.UUID `form:"user_id"`
+	UserID     *uuid.UUID `form:"-"`
 	ListParams ListParams `form:"-"`
 }
 
