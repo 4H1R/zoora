@@ -42,11 +42,14 @@ type UpdateOfflineRoomDTO struct {
 	PublishedAt *time.Time `json:"published_at"`
 }
 
+// OfflineRoomListScope is the role-resolved view onto offline_rooms that the
+// repository understands. The service builds it from the Caller; the repo
+// only knows how to translate it into SQL filters.
 type OfflineRoomListScope struct {
 	All            bool
+	OrganizationID *uuid.UUID
 	OwnerID        *uuid.UUID
 	MemberUserID   *uuid.UUID
-	IncludeDeleted bool
 }
 
 type ListOfflineRoomsQuery struct {

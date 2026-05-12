@@ -82,8 +82,8 @@ func (m *mockParticipantRepo) FindActiveByRoomAndUser(ctx context.Context, roomI
 func (m *mockParticipantRepo) Update(ctx context.Context, p *domain.LiveParticipant) error {
 	return m.Called(ctx, p).Error(0)
 }
-func (m *mockParticipantRepo) ListByRoom(ctx context.Context, roomID uuid.UUID, p domain.ListParams) ([]domain.LiveParticipant, int64, error) {
-	a := m.Called(ctx, roomID, p)
+func (m *mockParticipantRepo) ListByRoom(ctx context.Context, roomID uuid.UUID, q domain.ListLiveParticipantsQuery) ([]domain.LiveParticipant, int64, error) {
+	a := m.Called(ctx, roomID, q)
 	ps, _ := a.Get(0).([]domain.LiveParticipant)
 	return ps, a.Get(1).(int64), a.Error(2)
 }
@@ -118,10 +118,10 @@ func (m *mockRecordingRepo) FindActiveByRoom(ctx context.Context, roomID uuid.UU
 func (m *mockRecordingRepo) Update(ctx context.Context, r *domain.LiveRecording) error {
 	return m.Called(ctx, r).Error(0)
 }
-func (m *mockRecordingRepo) ListByRoom(ctx context.Context, roomID uuid.UUID) ([]domain.LiveRecording, error) {
-	a := m.Called(ctx, roomID)
+func (m *mockRecordingRepo) ListByRoom(ctx context.Context, roomID uuid.UUID, q domain.ListLiveRecordingsQuery) ([]domain.LiveRecording, int64, error) {
+	a := m.Called(ctx, roomID, q)
 	recs, _ := a.Get(0).([]domain.LiveRecording)
-	return recs, a.Error(1)
+	return recs, a.Get(1).(int64), a.Error(2)
 }
 
 type mockClassSessionRepo struct{ mock.Mock }
@@ -509,7 +509,7 @@ func TestHeartbeat_Teacher_Success(t *testing.T) {
 
 func TestList_NoCaller_Forbidden(t *testing.T) {
 	svc, _, _, _, _, _, _, _ := newTestService(t)
-	_, _, err := svc.List(context.Background(), domain.ListParams{})
+	_, _, err := svc.List(context.Background(), domain.ListLiveRoomsQuery{})
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 
@@ -518,7 +518,7 @@ func TestList_Admin_All(t *testing.T) {
 	roomRepo.On("List", mock.Anything, domain.LiveRoomListScope{All: true}, mock.Anything).
 		Return([]domain.LiveRoom{{ID: testRoomID}}, int64(1), nil)
 
-	rooms, total, err := svc.List(adminCtx(), domain.ListParams{})
+	rooms, total, err := svc.List(adminCtx(), domain.ListLiveRoomsQuery{})
 	assert.NoError(t, err)
 	assert.Len(t, rooms, 1)
 	assert.Equal(t, int64(1), total)
@@ -654,7 +654,7 @@ func TestViewAny_ListReturnsAll(t *testing.T) {
 	roomRepo.On("List", mock.Anything, domain.LiveRoomListScope{All: true}, mock.Anything).
 		Return([]domain.LiveRoom{{ID: testRoomID}}, int64(1), nil)
 
-	rooms, total, err := svc.List(ctx, domain.ListParams{})
+	rooms, total, err := svc.List(ctx, domain.ListLiveRoomsQuery{})
 	assert.NoError(t, err)
 	assert.Len(t, rooms, 1)
 	assert.Equal(t, int64(1), total)

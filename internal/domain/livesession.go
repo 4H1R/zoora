@@ -109,16 +109,49 @@ type JoinLiveRoomResponse struct {
 	ChatID     *uuid.UUID `json:"chat_id,omitempty"`
 }
 
+// LiveRoomListScope is the role-resolved filter set the repository understands.
+// All short-circuits role scoping but typed filters (status/class/etc.) still apply.
 type LiveRoomListScope struct {
-	All          bool
-	TeacherID    *uuid.UUID
-	MemberUserID *uuid.UUID
+	All            bool
+	TeacherID      *uuid.UUID
+	MemberUserID   *uuid.UUID
+	Status         *LiveRoomStatus
+	ClassID        *uuid.UUID
+	ClassSessionID *uuid.UUID
+	IncludeDeleted bool
 }
 
-type AdminListLiveRoomsQuery struct {
+// ListLiveRoomsQuery is the query for GET /live-rooms. Typed filters sit
+// alongside the embedded ListParams populated by the handler after white-listing.
+type ListLiveRoomsQuery struct {
 	Status         *LiveRoomStatus `form:"status"`
+	ClassID        *uuid.UUID      `form:"class_id"`
+	ClassSessionID *uuid.UUID      `form:"class_session_id"`
 	IncludeDeleted bool            `form:"include_deleted"`
 	ListParams     ListParams      `form:"-"`
+}
+
+// AdminListLiveRoomsQuery is the query for GET /admin/live-rooms.
+type AdminListLiveRoomsQuery struct {
+	Status         *LiveRoomStatus `form:"status"`
+	UserID         *uuid.UUID      `form:"user_id"`
+	ClassID        *uuid.UUID      `form:"class_id"`
+	ClassSessionID *uuid.UUID      `form:"class_session_id"`
+	IncludeDeleted bool            `form:"include_deleted"`
+	ListParams     ListParams      `form:"-"`
+}
+
+// ListLiveParticipantsQuery is the query for GET /live-rooms/:id/participants.
+type ListLiveParticipantsQuery struct {
+	ActiveOnly *bool      `form:"active_only"`
+	UserID     *uuid.UUID `form:"user_id"`
+	ListParams ListParams `form:"-"`
+}
+
+// ListLiveRecordingsQuery is the query for GET /live-rooms/:id/recordings.
+type ListLiveRecordingsQuery struct {
+	Status     *LiveRecordingStatus `form:"status"`
+	ListParams ListParams           `form:"-"`
 }
 
 type LiveRoomRepository interface {
@@ -138,7 +171,7 @@ type LiveParticipantRepository interface {
 	Create(ctx context.Context, p *LiveParticipant) error
 	FindActiveByRoomAndUser(ctx context.Context, roomID, userID uuid.UUID) (*LiveParticipant, error)
 	Update(ctx context.Context, p *LiveParticipant) error
-	ListByRoom(ctx context.Context, roomID uuid.UUID, p ListParams) ([]LiveParticipant, int64, error)
+	ListByRoom(ctx context.Context, roomID uuid.UUID, q ListLiveParticipantsQuery) ([]LiveParticipant, int64, error)
 	ListAllByRoom(ctx context.Context, roomID uuid.UUID) ([]LiveParticipant, error)
 	MarkAllLeft(ctx context.Context, roomID uuid.UUID, leftAt time.Time) error
 }
@@ -148,7 +181,7 @@ type LiveRecordingRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*LiveRecording, error)
 	FindActiveByRoom(ctx context.Context, roomID uuid.UUID) (*LiveRecording, error)
 	Update(ctx context.Context, r *LiveRecording) error
-	ListByRoom(ctx context.Context, roomID uuid.UUID) ([]LiveRecording, error)
+	ListByRoom(ctx context.Context, roomID uuid.UUID, q ListLiveRecordingsQuery) ([]LiveRecording, int64, error)
 }
 
 type LiveSessionService interface {
@@ -160,13 +193,16 @@ type LiveSessionService interface {
 	EndRoom(ctx context.Context, roomID uuid.UUID) (*LiveRoom, error)
 	UpdateRoomConfig(ctx context.Context, roomID uuid.UUID, dto UpdateLiveRoomConfigDTO) (*LiveRoom, error)
 	Heartbeat(ctx context.Context, roomID uuid.UUID) error
-	List(ctx context.Context, p ListParams) ([]LiveRoom, int64, error)
+	// List returns rooms visible to the caller under the RBAC hierarchy:
+	// super-admin / view_any sees all, teacher sees own classes' rooms,
+	// student sees rooms in classes they are enrolled in.
+	List(ctx context.Context, q ListLiveRoomsQuery) ([]LiveRoom, int64, error)
 
 	StartRecording(ctx context.Context, roomID uuid.UUID) (*LiveRecording, error)
 	StopRecording(ctx context.Context, recordingID uuid.UUID) (*LiveRecording, error)
-	ListRecordings(ctx context.Context, roomID uuid.UUID) ([]LiveRecording, error)
+	ListRecordings(ctx context.Context, roomID uuid.UUID, q ListLiveRecordingsQuery) ([]LiveRecording, int64, error)
 
-	ListParticipants(ctx context.Context, roomID uuid.UUID, p ListParams) ([]LiveParticipant, int64, error)
+	ListParticipants(ctx context.Context, roomID uuid.UUID, q ListLiveParticipantsQuery) ([]LiveParticipant, int64, error)
 
 	AdminList(ctx context.Context, q AdminListLiveRoomsQuery) ([]LiveRoom, int64, error)
 	AdminEndRoom(ctx context.Context, roomID uuid.UUID) (*LiveRoom, error)

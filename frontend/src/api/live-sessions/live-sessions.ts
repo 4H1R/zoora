@@ -46,6 +46,7 @@ import type {
   GetLiveRoomsIdRecordings401,
   GetLiveRoomsIdRecordings403,
   GetLiveRoomsIdRecordings404,
+  GetLiveRoomsIdRecordingsParams,
   GetLiveRoomsParams,
   GithubCom4H1RZooraInternalDomainCreateLiveRoomDTO,
   GithubCom4H1RZooraInternalDomainResponse,
@@ -95,6 +96,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * Returns rooms filtered by caller role: super-admins / livesessions:view_any see all, teachers see their classes' rooms, students see rooms in classes they are enrolled in. Search matches substrings of: livekit_room_name. Orderable fields: created_at, updated_at, status, actual_start_time, actual_end_time. Filters: status, class_id, class_session_id.
  * @summary List live rooms (scoped by RBAC)
  */
 export type getLiveRoomsResponse200 = {
@@ -956,6 +958,7 @@ export const usePostLiveRoomsIdLeave = <TError = ErrorType<PostLiveRoomsIdLeave4
       return useMutation(getPostLiveRoomsIdLeaveMutationOptions(options), queryClient);
     }
     /**
+ * Search matches substrings of: identity. Orderable fields: joined_at, left_at, created_at, total_duration_seconds. Filters: active_only, user_id.
  * @summary List live room participants
  */
 export type getLiveRoomsIdParticipantsResponse200 = {
@@ -1100,6 +1103,7 @@ export function useGetLiveRoomsIdParticipants<TData = Awaited<ReturnType<typeof 
 
 
 /**
+ * Orderable fields: started_at, ended_at, created_at, duration, size. Filters: status.
  * @summary List recordings
  */
 export type getLiveRoomsIdRecordingsResponse200 = {
@@ -1131,17 +1135,26 @@ export type getLiveRoomsIdRecordingsResponseError = (getLiveRoomsIdRecordingsRes
 
 export type getLiveRoomsIdRecordingsResponse = (getLiveRoomsIdRecordingsResponseSuccess | getLiveRoomsIdRecordingsResponseError)
 
-export const getGetLiveRoomsIdRecordingsUrl = (id: string,) => {
+export const getGetLiveRoomsIdRecordingsUrl = (id: string,
+    params?: GetLiveRoomsIdRecordingsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/live-rooms/${id}/recordings`
+  return stringifiedParams.length > 0 ? `/live-rooms/${id}/recordings?${stringifiedParams}` : `/live-rooms/${id}/recordings`
 }
 
-export const getLiveRoomsIdRecordings = async (id: string, options?: RequestInit): Promise<getLiveRoomsIdRecordingsResponse> => {
+export const getLiveRoomsIdRecordings = async (id: string,
+    params?: GetLiveRoomsIdRecordingsParams, options?: RequestInit): Promise<getLiveRoomsIdRecordingsResponse> => {
 
-  return customInstance<getLiveRoomsIdRecordingsResponse>(getGetLiveRoomsIdRecordingsUrl(id),
+  return customInstance<getLiveRoomsIdRecordingsResponse>(getGetLiveRoomsIdRecordingsUrl(id,params),
   {
     ...options,
     method: 'GET'
@@ -1154,23 +1167,25 @@ export const getLiveRoomsIdRecordings = async (id: string, options?: RequestInit
 
 
 
-export const getGetLiveRoomsIdRecordingsQueryKey = (id: string,) => {
+export const getGetLiveRoomsIdRecordingsQueryKey = (id: string,
+    params?: GetLiveRoomsIdRecordingsParams,) => {
     return [
-    `/live-rooms/${id}/recordings`
+    `/live-rooms/${id}/recordings`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getGetLiveRoomsIdRecordingsQueryOptions = <TData = Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError = ErrorType<GetLiveRoomsIdRecordings401 | GetLiveRoomsIdRecordings403 | GetLiveRoomsIdRecordings404>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getGetLiveRoomsIdRecordingsQueryOptions = <TData = Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError = ErrorType<GetLiveRoomsIdRecordings401 | GetLiveRoomsIdRecordings403 | GetLiveRoomsIdRecordings404>>(id: string,
+    params?: GetLiveRoomsIdRecordingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetLiveRoomsIdRecordingsQueryKey(id);
+  const queryKey =  queryOptions?.queryKey ?? getGetLiveRoomsIdRecordingsQueryKey(id,params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>> = ({ signal }) => getLiveRoomsIdRecordings(id, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>> = ({ signal }) => getLiveRoomsIdRecordings(id,params, { signal, ...requestOptions });
 
 
 
@@ -1184,7 +1199,8 @@ export type GetLiveRoomsIdRecordingsQueryError = ErrorType<GetLiveRoomsIdRecordi
 
 
 export function useGetLiveRoomsIdRecordings<TData = Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError = ErrorType<GetLiveRoomsIdRecordings401 | GetLiveRoomsIdRecordings403 | GetLiveRoomsIdRecordings404>>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>> & Pick<
+ id: string,
+    params: undefined |  GetLiveRoomsIdRecordingsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>,
           TError,
@@ -1194,7 +1210,8 @@ export function useGetLiveRoomsIdRecordings<TData = Awaited<ReturnType<typeof ge
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetLiveRoomsIdRecordings<TData = Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError = ErrorType<GetLiveRoomsIdRecordings401 | GetLiveRoomsIdRecordings403 | GetLiveRoomsIdRecordings404>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>> & Pick<
+ id: string,
+    params?: GetLiveRoomsIdRecordingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>,
           TError,
@@ -1204,7 +1221,8 @@ export function useGetLiveRoomsIdRecordings<TData = Awaited<ReturnType<typeof ge
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetLiveRoomsIdRecordings<TData = Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError = ErrorType<GetLiveRoomsIdRecordings401 | GetLiveRoomsIdRecordings403 | GetLiveRoomsIdRecordings404>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ id: string,
+    params?: GetLiveRoomsIdRecordingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1212,11 +1230,12 @@ export function useGetLiveRoomsIdRecordings<TData = Awaited<ReturnType<typeof ge
  */
 
 export function useGetLiveRoomsIdRecordings<TData = Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError = ErrorType<GetLiveRoomsIdRecordings401 | GetLiveRoomsIdRecordings403 | GetLiveRoomsIdRecordings404>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ id: string,
+    params?: GetLiveRoomsIdRecordingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLiveRoomsIdRecordings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetLiveRoomsIdRecordingsQueryOptions(id,options)
+  const queryOptions = getGetLiveRoomsIdRecordingsQueryOptions(id,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

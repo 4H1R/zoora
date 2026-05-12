@@ -415,6 +415,7 @@ func TestSubmit_Member_InWindow_Success(t *testing.T) {
 			EndTime:   time.Now().Add(1 * time.Hour),
 		}, nil)
 	memberRepo.On("Exists", ctx, classID, userID).Return(true, nil)
+	subRepo.On("FindByRoomAndUser", ctx, roomID, userID).Return(nil, domain.ErrNotFound)
 	subRepo.On("Create", ctx, mock.AnythingOfType("*domain.PracticeSubmission")).Return(nil)
 
 	sub, err := svc.Submit(ctx, roomID, domain.CreatePracticeSubmissionDTO{Content: "my work"})

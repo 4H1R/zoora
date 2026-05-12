@@ -12,6 +12,10 @@ export type GetAdminUsersParams = {
  */
 organization_id?: string;
 /**
+ * Filter by role UUID
+ */
+role_id?: string;
+/**
  * Filter by admin flag
  */
 is_admin?: boolean;

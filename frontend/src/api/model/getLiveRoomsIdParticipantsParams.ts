@@ -8,7 +8,19 @@
 
 export type GetLiveRoomsIdParticipantsParams = {
 /**
- * One of: joined_at, created_at
+ * true = still in room, false = already left
+ */
+active_only?: boolean;
+/**
+ * Filter by user UUID
+ */
+user_id?: string;
+/**
+ * Substring match on identity
+ */
+search?: string;
+/**
+ * One of: joined_at, left_at, created_at, total_duration_seconds
  */
 order_by?: string;
 /**

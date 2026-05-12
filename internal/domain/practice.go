@@ -72,6 +72,7 @@ type GradePracticeSubmissionDTO struct {
 
 type PracticeRoomListScope struct {
 	All            bool
+	OrganizationID *uuid.UUID
 	OwnerID        *uuid.UUID
 	MemberUserID   *uuid.UUID
 	IncludeDeleted bool

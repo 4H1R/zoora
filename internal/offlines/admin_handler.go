@@ -10,6 +10,8 @@ import (
 	"github.com/4H1R/zoora/internal/platform/listparams"
 )
 
+// adminRoomsListConfig is the white-list for GET /admin/offlines. Anything
+// outside these slices is silently ignored and falls back to defaults.
 var adminRoomsListConfig = domain.ListConfig{
 	AllowedSearchFields: []string{"title", "description"},
 	AllowedOrderFields:  []string{"created_at", "updated_at", "published_at", "title", "view_count"},
@@ -17,6 +19,9 @@ var adminRoomsListConfig = domain.ListConfig{
 	DefaultOrderDir:     "desc",
 }
 
+// AdminHandler registers under /api/v1/admin. The admin group is already
+// guarded by auth middleware + RequireAdmin, so this handler only binds
+// input, forwards to the service, and attaches errors.
 type AdminHandler struct {
 	svc domain.OfflineService
 }

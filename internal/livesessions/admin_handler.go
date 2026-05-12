@@ -10,10 +10,12 @@ import (
 	"github.com/4H1R/zoora/internal/platform/listparams"
 )
 
+// adminLiveRoomsListConfig white-lists search/order for GET /admin/live-rooms.
 var adminLiveRoomsListConfig = domain.ListConfig{
-	AllowedOrderFields: []string{"created_at", "updated_at", "status"},
-	DefaultOrderBy:     "created_at",
-	DefaultOrderDir:    "desc",
+	AllowedSearchFields: []string{"livekit_room_name"},
+	AllowedOrderFields:  []string{"created_at", "updated_at", "status", "actual_start_time", "actual_end_time"},
+	DefaultOrderBy:      "created_at",
+	DefaultOrderDir:     "desc",
 }
 
 type AdminHandler struct {
@@ -34,12 +36,17 @@ func (h *AdminHandler) RegisterAdminRoutes(group *gin.RouterGroup) {
 
 // List returns live rooms.
 // @Summary [Admin] List live rooms
+// @Description Cross-org list. Search matches substrings of: livekit_room_name. Orderable fields: created_at, updated_at, status, actual_start_time, actual_end_time. Filters: status, user_id (teacher), class_id, class_session_id, include_deleted.
 // @Tags Admin/LiveSessions
 // @Produce json
 // @Security BearerAuth
 // @Param status query string false "Filter by status: created|active|finished"
+// @Param user_id query string false "Filter by teacher UUID"
+// @Param class_id query string false "Filter by class UUID"
+// @Param class_session_id query string false "Filter by class session UUID"
 // @Param include_deleted query bool false "Include soft-deleted rooms"
-// @Param order_by query string false "One of: created_at, updated_at, status"
+// @Param search query string false "Substring match on livekit_room_name"
+// @Param order_by query string false "One of: created_at, updated_at, status, actual_start_time, actual_end_time"
 // @Param order_dir query string false "asc or desc"
 // @Param page query int false "1-based page number"
 // @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.LiveRoom}}

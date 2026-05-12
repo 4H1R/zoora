@@ -8,7 +8,27 @@
 
 export type GetLiveRoomsParams = {
 /**
- * One of: created_at, updated_at, status
+ * Filter by status: created|active|finished
+ */
+status?: string;
+/**
+ * Filter by class UUID
+ */
+class_id?: string;
+/**
+ * Filter by class session UUID
+ */
+class_session_id?: string;
+/**
+ * Include soft-deleted rooms (managers only)
+ */
+include_deleted?: boolean;
+/**
+ * Substring match on livekit_room_name
+ */
+search?: string;
+/**
+ * One of: created_at, updated_at, status, actual_start_time, actual_end_time
  */
 order_by?: string;
 /**

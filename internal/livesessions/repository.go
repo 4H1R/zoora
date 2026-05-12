@@ -87,11 +87,26 @@ func (r *roomRepository) Delete(ctx context.Context, id uuid.UUID) error {
 
 func (r *roomRepository) List(ctx context.Context, scope domain.LiveRoomListScope, p domain.ListParams) ([]domain.LiveRoom, int64, error) {
 	base := database.DB(ctx, r.db).Model(&domain.LiveRoom{})
+	if scope.IncludeDeleted {
+		base = base.Unscoped()
+	}
+
+	joined := false
+	if !scope.All && (scope.TeacherID != nil || scope.MemberUserID != nil) {
+		joined = true
+	}
+	// ClassID filter is satisfied via class_sessions; force the join.
+	if scope.ClassID != nil {
+		joined = true
+	}
+	if joined {
+		base = base.
+			Joins("JOIN class_sessions cs ON cs.id = live_rooms.class_session_id").
+			Joins("JOIN classes c ON c.id = cs.class_id").
+			Distinct("live_rooms.*")
+	}
+
 	if !scope.All {
-		if scope.TeacherID != nil || scope.MemberUserID != nil {
-			base = base.Joins("JOIN class_sessions cs ON cs.id = live_rooms.class_session_id").
-				Joins("JOIN classes c ON c.id = cs.class_id")
-		}
 		switch {
 		case scope.TeacherID != nil && scope.MemberUserID != nil:
 			base = base.Where(
@@ -107,12 +122,44 @@ func (r *roomRepository) List(ctx context.Context, scope domain.LiveRoomListScop
 			)
 		}
 	}
+
+	if scope.Status != nil {
+		base = base.Where("live_rooms.status = ?", *scope.Status)
+	}
+	if scope.ClassSessionID != nil {
+		base = base.Where("live_rooms.class_session_id = ?", *scope.ClassSessionID)
+	}
+	if scope.ClassID != nil {
+		base = base.Where("cs.class_id = ?", *scope.ClassID)
+	}
+
+	// When joined, qualify search/order with live_rooms. so SQL is unambiguous.
+	if joined {
+		p = qualifyLiveRoomListParams(p)
+	}
+
 	var rooms []domain.LiveRoom
 	total, err := listparams.Paginate(base, p, &rooms)
 	if err != nil {
 		return nil, 0, fmt.Errorf("livesessions.roomRepository.List: %w", err)
 	}
 	return rooms, total, nil
+}
+
+// qualifyLiveRoomListParams prefixes search/order columns with `live_rooms.`
+// so they are unambiguous when class_sessions/classes are joined.
+func qualifyLiveRoomListParams(p domain.ListParams) domain.ListParams {
+	if p.OrderBy != "" {
+		p.OrderBy = "live_rooms." + p.OrderBy
+	}
+	if len(p.SearchFields) > 0 {
+		qualified := make([]string, len(p.SearchFields))
+		for i, f := range p.SearchFields {
+			qualified[i] = "live_rooms." + f
+		}
+		p.SearchFields = qualified
+	}
+	return p
 }
 
 func (r *roomRepository) FindActiveRoomsWithStaleHost(ctx context.Context, staleDuration time.Duration) ([]domain.LiveRoom, error) {
@@ -132,11 +179,36 @@ func (r *roomRepository) AdminList(ctx context.Context, q domain.AdminListLiveRo
 	if q.IncludeDeleted {
 		base = base.Unscoped()
 	}
+
+	// Joins are needed only when the caller filters by teacher (UserID) or class.
+	joined := q.UserID != nil || q.ClassID != nil
+	if joined {
+		base = base.
+			Joins("JOIN class_sessions cs ON cs.id = live_rooms.class_session_id").
+			Joins("JOIN classes c ON c.id = cs.class_id").
+			Distinct("live_rooms.*")
+	}
+
 	if q.Status != nil {
 		base = base.Where("live_rooms.status = ?", *q.Status)
 	}
+	if q.UserID != nil {
+		base = base.Where("c.user_id = ?", *q.UserID)
+	}
+	if q.ClassID != nil {
+		base = base.Where("cs.class_id = ?", *q.ClassID)
+	}
+	if q.ClassSessionID != nil {
+		base = base.Where("live_rooms.class_session_id = ?", *q.ClassSessionID)
+	}
+
+	p := q.ListParams
+	if joined {
+		p = qualifyLiveRoomListParams(p)
+	}
+
 	var rooms []domain.LiveRoom
-	total, err := listparams.Paginate(base, q.ListParams, &rooms)
+	total, err := listparams.Paginate(base, p, &rooms)
 	if err != nil {
 		return nil, 0, fmt.Errorf("livesessions.roomRepository.AdminList: %w", err)
 	}
@@ -204,11 +276,21 @@ func (r *participantRepository) Update(ctx context.Context, p *domain.LivePartic
 	return nil
 }
 
-func (r *participantRepository) ListByRoom(ctx context.Context, roomID uuid.UUID, p domain.ListParams) ([]domain.LiveParticipant, int64, error) {
+func (r *participantRepository) ListByRoom(ctx context.Context, roomID uuid.UUID, q domain.ListLiveParticipantsQuery) ([]domain.LiveParticipant, int64, error) {
 	base := database.DB(ctx, r.db).Model(&domain.LiveParticipant{}).
 		Where("live_room_id = ?", roomID)
+	if q.ActiveOnly != nil {
+		if *q.ActiveOnly {
+			base = base.Where("left_at IS NULL")
+		} else {
+			base = base.Where("left_at IS NOT NULL")
+		}
+	}
+	if q.UserID != nil {
+		base = base.Where("user_id = ?", *q.UserID)
+	}
 	var participants []domain.LiveParticipant
-	total, err := listparams.Paginate(base, p, &participants)
+	total, err := listparams.Paginate(base, q.ListParams, &participants)
 	if err != nil {
 		return nil, 0, fmt.Errorf("livesessions.participantRepository.ListByRoom: %w", err)
 	}
@@ -289,14 +371,16 @@ func (r *recordingRepository) Update(ctx context.Context, rec *domain.LiveRecord
 	return nil
 }
 
-func (r *recordingRepository) ListByRoom(ctx context.Context, roomID uuid.UUID) ([]domain.LiveRecording, error) {
-	var recs []domain.LiveRecording
-	err := database.DB(ctx, r.db).Model(&domain.LiveRecording{}).
-		Where("live_room_id = ?", roomID).
-		Order("started_at DESC").
-		Find(&recs).Error
-	if err != nil {
-		return nil, fmt.Errorf("livesessions.recordingRepository.ListByRoom: %w", err)
+func (r *recordingRepository) ListByRoom(ctx context.Context, roomID uuid.UUID, q domain.ListLiveRecordingsQuery) ([]domain.LiveRecording, int64, error) {
+	base := database.DB(ctx, r.db).Model(&domain.LiveRecording{}).
+		Where("live_room_id = ?", roomID)
+	if q.Status != nil {
+		base = base.Where("status = ?", *q.Status)
 	}
-	return recs, nil
+	var recs []domain.LiveRecording
+	total, err := listparams.Paginate(base, q.ListParams, &recs)
+	if err != nil {
+		return nil, 0, fmt.Errorf("livesessions.recordingRepository.ListByRoom: %w", err)
+	}
+	return recs, total, nil
 }

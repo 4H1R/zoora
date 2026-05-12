@@ -55,10 +55,10 @@ func (s *service) canUpdateRoom(caller domain.Caller, class *domain.Class) bool 
 	if caller.IsAdmin {
 		return true
 	}
-	if caller.HasPermission("livesessions:update_any") {
+	if caller.HasPermission(domain.PermLiveSessionsUpdateAny) {
 		return true
 	}
-	if caller.HasPermission("livesessions:update") && caller.UserID == class.UserID {
+	if caller.HasPermission(domain.PermLiveSessionsUpdate) && caller.UserID == class.UserID {
 		return true
 	}
 	return false
@@ -68,17 +68,17 @@ func (s *service) canManageRoom(caller domain.Caller, class *domain.Class) bool 
 	if caller.IsAdmin {
 		return true
 	}
-	if caller.HasPermission("livesessions:manage_any") {
+	if caller.HasPermission(domain.PermLiveSessionsManageAny) {
 		return true
 	}
-	if caller.HasPermission("livesessions:manage") && caller.UserID == class.UserID {
+	if caller.HasPermission(domain.PermLiveSessionsManage) && caller.UserID == class.UserID {
 		return true
 	}
 	return false
 }
 
 func (s *service) canViewRoom(ctx context.Context, caller domain.Caller, class *domain.Class) (bool, error) {
-	if caller.IsAdmin || caller.HasPermission("livesessions:view_any") {
+	if caller.IsAdmin || caller.HasPermission(domain.PermLiveSessionsViewAny) {
 		return true, nil
 	}
 	if s.canManageRoom(caller, class) {
@@ -108,8 +108,11 @@ func (s *service) loadRoomWithClass(ctx context.Context, roomID uuid.UUID) (*dom
 	return room, session, class, nil
 }
 
+// resolveListScope maps a Caller into the role-resolved LiveRoomListScope the
+// repository understands. Typed filters from the request query are layered on
+// top by the caller, not here.
 func (s *service) resolveListScope(caller domain.Caller) domain.LiveRoomListScope {
-	if caller.IsAdmin || caller.HasPermission("livesessions:view_any") {
+	if caller.IsAdmin || caller.HasPermission(domain.PermLiveSessionsViewAny) {
 		return domain.LiveRoomListScope{All: true}
 	}
 	userID := caller.UserID
@@ -212,7 +215,7 @@ func (s *service) JoinRoom(ctx context.Context, roomID uuid.UUID) (*domain.JoinL
 	}
 
 	isManager := s.canManageRoom(caller, class)
-	hasJoinAny := caller.HasPermission("livesessions:join_any")
+	hasJoinAny := caller.HasPermission(domain.PermLiveSessionsJoinAny)
 	if !isManager && !hasJoinAny {
 		enrolled, err := s.members.Exists(ctx, class.ID, caller.UserID)
 		if err != nil {
@@ -438,13 +441,20 @@ func (s *service) Heartbeat(ctx context.Context, roomID uuid.UUID) error {
 	return s.rooms.Update(ctx, room)
 }
 
-func (s *service) List(ctx context.Context, p domain.ListParams) ([]domain.LiveRoom, int64, error) {
+func (s *service) List(ctx context.Context, q domain.ListLiveRoomsQuery) ([]domain.LiveRoom, int64, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, 0, domain.ErrForbidden
 	}
 	scope := s.resolveListScope(caller)
-	return s.rooms.List(ctx, scope, p)
+	scope.Status = q.Status
+	scope.ClassID = q.ClassID
+	scope.ClassSessionID = q.ClassSessionID
+	// Soft-deleted rooms are an admin/manager-only view.
+	if q.IncludeDeleted && (caller.IsAdmin || caller.HasPermission(domain.PermLiveSessionsViewAny)) {
+		scope.IncludeDeleted = true
+	}
+	return s.rooms.List(ctx, scope, q.ListParams)
 }
 
 func (s *service) StartRecording(ctx context.Context, roomID uuid.UUID) (*domain.LiveRecording, error) {
@@ -516,26 +526,26 @@ func (s *service) StopRecording(ctx context.Context, recordingID uuid.UUID) (*do
 	return rec, nil
 }
 
-func (s *service) ListRecordings(ctx context.Context, roomID uuid.UUID) ([]domain.LiveRecording, error) {
+func (s *service) ListRecordings(ctx context.Context, roomID uuid.UUID, q domain.ListLiveRecordingsQuery) ([]domain.LiveRecording, int64, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
-		return nil, domain.ErrForbidden
+		return nil, 0, domain.ErrForbidden
 	}
 	_, _, class, err := s.loadRoomWithClass(ctx, roomID)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	ok, err = s.canViewRoom(ctx, caller, class)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if !ok {
-		return nil, domain.ErrForbidden
+		return nil, 0, domain.ErrForbidden
 	}
-	return s.recordings.ListByRoom(ctx, roomID)
+	return s.recordings.ListByRoom(ctx, roomID, q)
 }
 
-func (s *service) ListParticipants(ctx context.Context, roomID uuid.UUID, p domain.ListParams) ([]domain.LiveParticipant, int64, error) {
+func (s *service) ListParticipants(ctx context.Context, roomID uuid.UUID, q domain.ListLiveParticipantsQuery) ([]domain.LiveParticipant, int64, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, 0, domain.ErrForbidden
@@ -551,7 +561,7 @@ func (s *service) ListParticipants(ctx context.Context, roomID uuid.UUID, p doma
 	if !ok {
 		return nil, 0, domain.ErrForbidden
 	}
-	return s.participants.ListByRoom(ctx, roomID, p)
+	return s.participants.ListByRoom(ctx, roomID, q)
 }
 
 func (s *service) AutoCloseStaleRooms(ctx context.Context) error {

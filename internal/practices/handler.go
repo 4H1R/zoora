@@ -37,15 +37,15 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 
 	authed := rg.Group("", authMiddleware)
 	{
-		authed.GET("/practices", h.ListRooms)
+		authed.GET("/practices", perm(domain.PermPracticesView), h.ListRooms)
 		authed.POST("/practices", perm(domain.PermPracticesCreate), h.CreateRoom)
-		authed.GET("/practices/:id", idParam, h.GetRoom)
+		authed.GET("/practices/:id", perm(domain.PermPracticesView), idParam, h.GetRoom)
 		authed.PUT("/practices/:id", perm(domain.PermPracticesUpdate), idParam, h.UpdateRoom)
 		authed.DELETE("/practices/:id", perm(domain.PermPracticesDelete), idParam, h.DeleteRoom)
 
 		authed.POST("/practices/:id/submissions", perm(domain.PermPracticesSubmit), idParam, h.Submit)
-		authed.GET("/practices/:id/submissions", idParam, h.ListSubmissions)
-		authed.GET("/practices/submissions/:submissionId", submissionIDParam, h.GetSubmission)
+		authed.GET("/practices/:id/submissions", perm(domain.PermPracticesView), idParam, h.ListSubmissions)
+		authed.GET("/practices/submissions/:submissionId", perm(domain.PermPracticesView), submissionIDParam, h.GetSubmission)
 		authed.PUT("/practices/submissions/:submissionId/grade", perm(domain.PermPracticesGrade), submissionIDParam, h.Grade)
 	}
 }

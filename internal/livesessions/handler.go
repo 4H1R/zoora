@@ -10,16 +10,26 @@ import (
 	"github.com/4H1R/zoora/internal/platform/listparams"
 )
 
+// liveRoomsListConfig is the handler-owned white-list for GET /live-rooms.
 var liveRoomsListConfig = domain.ListConfig{
-	AllowedSearchFields: []string{},
-	AllowedOrderFields:  []string{"created_at", "updated_at", "status"},
+	AllowedSearchFields: []string{"livekit_room_name"},
+	AllowedOrderFields:  []string{"created_at", "updated_at", "status", "actual_start_time", "actual_end_time"},
 	DefaultOrderBy:      "created_at",
 	DefaultOrderDir:     "desc",
 }
 
+// participantsListConfig gates GET /live-rooms/:id/participants.
 var participantsListConfig = domain.ListConfig{
-	AllowedOrderFields: []string{"joined_at", "created_at"},
-	DefaultOrderBy:     "joined_at",
+	AllowedSearchFields: []string{"identity"},
+	AllowedOrderFields:  []string{"joined_at", "left_at", "created_at", "total_duration_seconds"},
+	DefaultOrderBy:      "joined_at",
+	DefaultOrderDir:     "desc",
+}
+
+// recordingsListConfig gates GET /live-rooms/:id/recordings.
+var recordingsListConfig = domain.ListConfig{
+	AllowedOrderFields: []string{"started_at", "ended_at", "created_at", "duration", "size"},
+	DefaultOrderBy:     "started_at",
 	DefaultOrderDir:    "desc",
 }
 
@@ -82,10 +92,16 @@ func (h *Handler) CreateRoom(c *gin.Context) {
 
 // List returns live rooms visible to the caller.
 // @Summary List live rooms (scoped by RBAC)
+// @Description Returns rooms filtered by caller role: super-admins / livesessions:view_any see all, teachers see their classes' rooms, students see rooms in classes they are enrolled in. Search matches substrings of: livekit_room_name. Orderable fields: created_at, updated_at, status, actual_start_time, actual_end_time. Filters: status, class_id, class_session_id.
 // @Tags LiveSessions
 // @Produce json
 // @Security BearerAuth
-// @Param order_by query string false "One of: created_at, updated_at, status"
+// @Param status query string false "Filter by status: created|active|finished"
+// @Param class_id query string false "Filter by class UUID"
+// @Param class_session_id query string false "Filter by class session UUID"
+// @Param include_deleted query bool false "Include soft-deleted rooms (managers only)"
+// @Param search query string false "Substring match on livekit_room_name"
+// @Param order_by query string false "One of: created_at, updated_at, status, actual_start_time, actual_end_time"
 // @Param order_dir query string false "asc or desc"
 // @Param page query int false "1-based page number"
 // @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.LiveRoom}}
@@ -93,13 +109,18 @@ func (h *Handler) CreateRoom(c *gin.Context) {
 // @Failure 403 {object} domain.Response{error=domain.ErrorBody}
 // @Router /live-rooms [get]
 func (h *Handler) List(c *gin.Context) {
-	p := listparams.Bind(c, liveRoomsListConfig)
-	rooms, total, err := h.svc.List(c.Request.Context(), p)
+	var q domain.ListLiveRoomsQuery
+	if err := c.ShouldBindQuery(&q); err != nil {
+		_ = c.Error(domain.NewValidationError(map[string]string{"query": err.Error()}))
+		return
+	}
+	q.ListParams = listparams.Bind(c, liveRoomsListConfig)
+	rooms, total, err := h.svc.List(c.Request.Context(), q)
 	if err != nil {
 		_ = c.Error(err)
 		return
 	}
-	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(rooms, total, p))
+	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(rooms, total, q.ListParams))
 }
 
 // GetRoom returns a live room by ID.
@@ -251,11 +272,15 @@ func (h *Handler) Heartbeat(c *gin.Context) {
 
 // ListParticipants lists participants in a live room.
 // @Summary List live room participants
+// @Description Search matches substrings of: identity. Orderable fields: joined_at, left_at, created_at, total_duration_seconds. Filters: active_only, user_id.
 // @Tags LiveSessions
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "LiveRoom UUID"
-// @Param order_by query string false "One of: joined_at, created_at"
+// @Param active_only query bool false "true = still in room, false = already left"
+// @Param user_id query string false "Filter by user UUID"
+// @Param search query string false "Substring match on identity"
+// @Param order_by query string false "One of: joined_at, left_at, created_at, total_duration_seconds"
 // @Param order_dir query string false "asc or desc"
 // @Param page query int false "1-based page number"
 // @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.LiveParticipant}}
@@ -264,13 +289,18 @@ func (h *Handler) Heartbeat(c *gin.Context) {
 // @Failure 404 {object} domain.Response{error=domain.ErrorBody}
 // @Router /live-rooms/{id}/participants [get]
 func (h *Handler) ListParticipants(c *gin.Context) {
-	p := listparams.Bind(c, participantsListConfig)
-	participants, total, err := h.svc.ListParticipants(c.Request.Context(), httpx.UUIDParam(c, "id"), p)
+	var q domain.ListLiveParticipantsQuery
+	if err := c.ShouldBindQuery(&q); err != nil {
+		_ = c.Error(domain.NewValidationError(map[string]string{"query": err.Error()}))
+		return
+	}
+	q.ListParams = listparams.Bind(c, participantsListConfig)
+	participants, total, err := h.svc.ListParticipants(c.Request.Context(), httpx.UUIDParam(c, "id"), q)
 	if err != nil {
 		_ = c.Error(err)
 		return
 	}
-	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(participants, total, p))
+	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(participants, total, q.ListParams))
 }
 
 // StartRecording starts recording a live room.
@@ -318,20 +348,31 @@ func (h *Handler) StopRecording(c *gin.Context) {
 
 // ListRecordings returns all recordings for a live room.
 // @Summary List recordings
+// @Description Orderable fields: started_at, ended_at, created_at, duration, size. Filters: status.
 // @Tags LiveSessions
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "LiveRoom UUID"
-// @Success 200 {object} domain.Response{data=[]domain.LiveRecording}
+// @Param status query string false "Filter by status: started|completed|failed"
+// @Param order_by query string false "One of: started_at, ended_at, created_at, duration, size"
+// @Param order_dir query string false "asc or desc"
+// @Param page query int false "1-based page number"
+// @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.LiveRecording}}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 403 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 404 {object} domain.Response{error=domain.ErrorBody}
 // @Router /live-rooms/{id}/recordings [get]
 func (h *Handler) ListRecordings(c *gin.Context) {
-	recs, err := h.svc.ListRecordings(c.Request.Context(), httpx.UUIDParam(c, "id"))
+	var q domain.ListLiveRecordingsQuery
+	if err := c.ShouldBindQuery(&q); err != nil {
+		_ = c.Error(domain.NewValidationError(map[string]string{"query": err.Error()}))
+		return
+	}
+	q.ListParams = listparams.Bind(c, recordingsListConfig)
+	recs, total, err := h.svc.ListRecordings(c.Request.Context(), httpx.UUIDParam(c, "id"), q)
 	if err != nil {
 		_ = c.Error(err)
 		return
 	}
-	domain.SuccessResponse(c, http.StatusOK, recs)
+	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(recs, total, q.ListParams))
 }
