@@ -5,12 +5,15 @@ import { useRouterState } from "@tanstack/react-router"
 import {
   Building2Icon,
   CalendarIcon,
+  DumbbellIcon,
+  FileVideoIcon,
   KeyIcon,
   LayoutDashboardIcon,
   SchoolIcon,
   ShieldIcon,
   TrophyIcon,
   UsersIcon,
+  VideoIcon,
 } from "lucide-react"
 import * as React from "react"
 import { useTranslation } from "react-i18next"
@@ -41,6 +44,9 @@ export function AppSidebar({
       items: [
         { title: t("admin.dashboard.title"), url: "/admin/dashboard", icon: <LayoutDashboardIcon /> },
         { title: t("admin.nav.classes"), url: "/admin/classes", icon: <SchoolIcon /> },
+        { title: t("admin.nav.liveRooms"), url: "/admin/live-rooms", icon: <VideoIcon /> },
+        { title: t("admin.nav.offlines"), url: "/admin/offlines", icon: <FileVideoIcon /> },
+        { title: t("admin.nav.practices"), url: "/admin/practices", icon: <DumbbellIcon /> },
         { title: t("admin.organizations"), url: "/admin/organizations", icon: <Building2Icon /> },
       ],
     },

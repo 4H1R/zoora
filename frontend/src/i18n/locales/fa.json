@@ -174,7 +174,10 @@
     "nav": {
       "users": "کاربران",
       "roles": "نقش‌ها",
-      "classes": "کلاس‌ها"
+      "classes": "کلاس‌ها",
+      "liveRooms": "اتاق‌های زنده",
+      "offlines": "اتاق‌های آفلاین",
+      "practices": "تمرین‌ها"
     },
     "classManagement": {
       "title": "مدیریت کلاس",
@@ -226,6 +229,52 @@
         "toggleColumns": "نمایش/پنهان ستون‌ها"
       }
     },
+    "liveRooms": {
+      "title": "اتاق‌های زنده",
+      "subtitle": "جلسات زنده در تمامی سازمان‌ها.",
+      "searchPlaceholder": "جستجو بر اساس نام اتاق…",
+      "newLiveRoom": "اتاق زنده جدید",
+      "name": "اتاق",
+      "status": "وضعیت",
+      "startedAt": "زمان شروع",
+      "endedAt": "زمان پایان",
+      "createdAt": "ایجاد",
+      "noResults": "اتاق زنده‌ای یافت نشد",
+      "noResultsHint": "اتاق جدید بسازید یا فیلترها را تغییر دهید.",
+      "stats": {
+        "total": "مجموع اتاق‌ها",
+        "active": "فعال اکنون"
+      },
+      "statuses": {
+        "created": "زمان‌بندی‌شده",
+        "active": "فعال",
+        "finished": "پایان‌یافته"
+      },
+      "actions": {
+        "end": "پایان اتاق",
+        "endSuccess": "اتاق پایان یافت",
+        "delete": "حذف",
+        "deleteSuccess": "اتاق حذف شد"
+      },
+      "form": {
+        "createTitle": "اتاق زنده جدید",
+        "createDescription": "اتاق زنده برای یک جلسه کلاس ایجاد کنید.",
+        "classSessionId": "شناسه جلسه کلاس",
+        "classSessionIdPlaceholder": "UUID جلسه کلاس را وارد کنید…",
+        "maxParticipants": "حداکثر شرکت‌کنندگان",
+        "maxParticipantsPlaceholder": "۱۰۰",
+        "allowMicDefault": "میکروفن به‌صورت پیش‌فرض فعال",
+        "allowCameraDefault": "دوربین به‌صورت پیش‌فرض فعال",
+        "allowScreenShareDefault": "اشتراک‌گذاری صفحه به‌صورت پیش‌فرض فعال",
+        "autoRecord": "ضبط خودکار با شروع اتاق",
+        "createSuccess": "اتاق زنده ایجاد شد"
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش/پنهان ستون‌ها"
+      }
+    },
     "sessions": {
       "title": "جلسات کلاس",
       "subtitle": "جلسات این کلاس را مدیریت کنید.",
@@ -270,6 +319,102 @@
         "createSuccess": "جلسه ایجاد شد",
         "updateSuccess": "جلسه به‌روز شد",
         "deleteSuccess": "جلسه حذف شد"
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش/پنهان ستون‌ها"
+      }
+    },
+    "offlines": {
+      "title": "اتاق‌های آفلاین",
+      "subtitle": "مدیریت اتاق‌های ضبط‌شده آفلاین در همه کلاس‌ها.",
+      "searchPlaceholder": "جستجوی اتاق‌های آفلاین…",
+      "newRoom": "اتاق آفلاین جدید",
+      "title_column": "عنوان",
+      "class": "کلاس",
+      "session": "جلسه",
+      "creator": "سازنده",
+      "viewCount": "بازدید",
+      "publishedAt": "انتشار",
+      "createdAt": "ایجاد",
+      "noResults": "اتاق آفلاینی یافت نشد",
+      "noResultsHint": "فیلترها یا جستجو را تغییر دهید.",
+      "stats": {
+        "total": "کل اتاق‌های آفلاین"
+      },
+      "actions": {
+        "edit": "ویرایش اتاق",
+        "delete": "حذف"
+      },
+      "form": {
+        "createTitle": "اتاق آفلاین جدید",
+        "createDescription": "ایجاد یک اتاق آفلاین جدید.",
+        "editTitle": "ویرایش اتاق آفلاین",
+        "editDescription": "بروزرسانی اطلاعات اتاق آفلاین.",
+        "title": "عنوان",
+        "titlePlaceholder": "عنوان اتاق آفلاین",
+        "description": "توضیحات",
+        "descriptionPlaceholder": "توضیحات اختیاری",
+        "publishedAt": "تاریخ انتشار",
+        "class": "کلاس",
+        "classPlaceholder": "انتخاب کلاس…",
+        "session": "جلسه",
+        "sessionPlaceholder": "انتخاب جلسه…",
+        "sessionSelectClassFirst": "ابتدا کلاس را انتخاب کنید",
+        "createSuccess": "اتاق آفلاین ایجاد شد",
+        "updateSuccess": "اتاق آفلاین بروزرسانی شد",
+        "deleteSuccess": "اتاق آفلاین حذف شد"
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش/پنهان ستون‌ها"
+      }
+    },
+    "practices": {
+      "title": "اتاق‌های تمرین",
+      "subtitle": "مدیریت اتاق‌های تمرین در همه کلاس‌ها.",
+      "searchPlaceholder": "جستجوی تمرین‌ها…",
+      "newPractice": "تمرین جدید",
+      "title_col": "عنوان",
+      "class": "کلاس",
+      "session": "جلسه",
+      "teacher": "مالک",
+      "maxScore": "حداکثر نمره",
+      "startTime": "شروع",
+      "endTime": "پایان",
+      "createdAt": "ایجاد شده",
+      "noResults": "اتاق تمرینی یافت نشد",
+      "noResultsHint": "اولین اتاق تمرین را ایجاد کنید.",
+      "stats": {
+        "total": "کل تمرین‌ها"
+      },
+      "actions": {
+        "edit": "ویرایش تمرین",
+        "delete": "حذف"
+      },
+      "form": {
+        "createTitle": "تمرین جدید",
+        "createDescription": "یک اتاق تمرین جدید ایجاد کنید.",
+        "editTitle": "ویرایش تمرین",
+        "editDescription": "اطلاعات اتاق تمرین را به‌روز کنید.",
+        "class": "کلاس",
+        "classPlaceholder": "انتخاب کلاس…",
+        "session": "جلسه کلاس",
+        "sessionPlaceholder": "انتخاب جلسه…",
+        "selectClassFirst": "ابتدا یک کلاس انتخاب کنید",
+        "title": "عنوان",
+        "titlePlaceholder": "عنوان تمرین",
+        "content": "محتوا",
+        "contentPlaceholder": "دستورالعمل اختیاری",
+        "maxScore": "حداکثر نمره",
+        "maxScorePlaceholder": "۰ یعنی بدون حداکثر",
+        "startTime": "زمان شروع",
+        "endTime": "زمان پایان",
+        "createSuccess": "تمرین ایجاد شد",
+        "updateSuccess": "تمرین به‌روز شد",
+        "deleteSuccess": "تمرین حذف شد"
       },
       "toolbar": {
         "sort": "مرتب‌سازی",

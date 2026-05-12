@@ -86,7 +86,9 @@ func (r *roomRepository) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 func (r *roomRepository) List(ctx context.Context, scope domain.LiveRoomListScope, p domain.ListParams) ([]domain.LiveRoom, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.LiveRoom{})
+	base := database.DB(ctx, r.db).Model(&domain.LiveRoom{}).
+		Preload("ClassSession").
+		Preload("ClassSession.Class")
 	if scope.IncludeDeleted {
 		base = base.Unscoped()
 	}
@@ -175,7 +177,9 @@ func (r *roomRepository) FindActiveRoomsWithStaleHost(ctx context.Context, stale
 }
 
 func (r *roomRepository) AdminList(ctx context.Context, q domain.AdminListLiveRoomsQuery) ([]domain.LiveRoom, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.LiveRoom{})
+	base := database.DB(ctx, r.db).Model(&domain.LiveRoom{}).
+		Preload("ClassSession").
+		Preload("ClassSession.Class")
 	if q.IncludeDeleted {
 		base = base.Unscoped()
 	}

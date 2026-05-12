@@ -174,7 +174,10 @@
     "nav": {
       "users": "Users",
       "roles": "Roles",
-      "classes": "Classes"
+      "classes": "Classes",
+      "liveRooms": "Live Rooms",
+      "offlines": "Offline Rooms",
+      "practices": "Practices"
     },
     "classManagement": {
       "title": "Class Management",
@@ -226,6 +229,52 @@
         "toggleColumns": "Toggle columns"
       }
     },
+    "liveRooms": {
+      "title": "Live Rooms",
+      "subtitle": "Cross-organization live sessions.",
+      "searchPlaceholder": "Search by room name…",
+      "newLiveRoom": "New live room",
+      "name": "Room",
+      "status": "Status",
+      "startedAt": "Started",
+      "endedAt": "Ended",
+      "createdAt": "Created",
+      "noResults": "No live rooms found",
+      "noResultsHint": "Create one or adjust your filters.",
+      "stats": {
+        "total": "Total rooms",
+        "active": "Active now"
+      },
+      "statuses": {
+        "created": "Scheduled",
+        "active": "Active",
+        "finished": "Finished"
+      },
+      "actions": {
+        "end": "End room",
+        "endSuccess": "Room ended",
+        "delete": "Delete",
+        "deleteSuccess": "Room deleted"
+      },
+      "form": {
+        "createTitle": "New live room",
+        "createDescription": "Provision a live room for a class session.",
+        "classSessionId": "Class session ID",
+        "classSessionIdPlaceholder": "Paste class session UUID…",
+        "maxParticipants": "Max participants",
+        "maxParticipantsPlaceholder": "100",
+        "allowMicDefault": "Allow mic by default",
+        "allowCameraDefault": "Allow camera by default",
+        "allowScreenShareDefault": "Allow screen share by default",
+        "autoRecord": "Auto record when room starts",
+        "createSuccess": "Live room created"
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
+    },
     "sessions": {
       "title": "Class Sessions",
       "subtitle": "Manage sessions for this class.",
@@ -270,6 +319,102 @@
         "createSuccess": "Session created",
         "updateSuccess": "Session updated",
         "deleteSuccess": "Session deleted"
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
+    },
+    "offlines": {
+      "title": "Offline Rooms",
+      "subtitle": "Manage recorded offline rooms across all classes.",
+      "searchPlaceholder": "Search offline rooms…",
+      "newRoom": "New offline room",
+      "title_column": "Title",
+      "class": "Class",
+      "session": "Session",
+      "creator": "Creator",
+      "viewCount": "Views",
+      "publishedAt": "Published",
+      "createdAt": "Created",
+      "noResults": "No offline rooms found",
+      "noResultsHint": "Try adjusting your search or filters.",
+      "stats": {
+        "total": "Total offline rooms"
+      },
+      "actions": {
+        "edit": "Edit room",
+        "delete": "Delete"
+      },
+      "form": {
+        "createTitle": "New offline room",
+        "createDescription": "Create a new offline room.",
+        "editTitle": "Edit offline room",
+        "editDescription": "Update offline room details.",
+        "title": "Title",
+        "titlePlaceholder": "Offline room title",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional description",
+        "publishedAt": "Published at",
+        "class": "Class",
+        "classPlaceholder": "Select class…",
+        "session": "Session",
+        "sessionPlaceholder": "Select session…",
+        "sessionSelectClassFirst": "Select a class first",
+        "createSuccess": "Offline room created",
+        "updateSuccess": "Offline room updated",
+        "deleteSuccess": "Offline room deleted"
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
+    },
+    "practices": {
+      "title": "Practice Rooms",
+      "subtitle": "Manage practice rooms across all classes.",
+      "searchPlaceholder": "Search practices…",
+      "newPractice": "New practice",
+      "title_col": "Title",
+      "class": "Class",
+      "session": "Session",
+      "teacher": "Owner",
+      "maxScore": "Max score",
+      "startTime": "Start",
+      "endTime": "End",
+      "createdAt": "Created",
+      "noResults": "No practice rooms found",
+      "noResultsHint": "Create the first practice room.",
+      "stats": {
+        "total": "Total practices"
+      },
+      "actions": {
+        "edit": "Edit practice",
+        "delete": "Delete"
+      },
+      "form": {
+        "createTitle": "New practice",
+        "createDescription": "Create a new practice room.",
+        "editTitle": "Edit practice",
+        "editDescription": "Update practice room details.",
+        "class": "Class",
+        "classPlaceholder": "Select class…",
+        "session": "Class session",
+        "sessionPlaceholder": "Select session…",
+        "selectClassFirst": "Pick a class first",
+        "title": "Title",
+        "titlePlaceholder": "Practice title",
+        "content": "Content",
+        "contentPlaceholder": "Optional instructions",
+        "maxScore": "Max score",
+        "maxScorePlaceholder": "0 for no maximum",
+        "startTime": "Start time",
+        "endTime": "End time",
+        "createSuccess": "Practice created",
+        "updateSuccess": "Practice updated",
+        "deleteSuccess": "Practice deleted"
       },
       "toolbar": {
         "sort": "Sort",

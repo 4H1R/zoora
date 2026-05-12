@@ -20,8 +20,11 @@ import { Route as AuthOrgOrgIdRouteImport } from './routes/_auth/org/$orgId'
 import { Route as AdminAdminDashboardRouteImport } from './routes/_admin/admin/dashboard'
 import { Route as AdminAdminUsersIndexRouteImport } from './routes/_admin/admin/users/index'
 import { Route as AdminAdminRolesIndexRouteImport } from './routes/_admin/admin/roles/index'
+import { Route as AdminAdminPracticesIndexRouteImport } from './routes/_admin/admin/practices/index'
 import { Route as AdminAdminPermissionsIndexRouteImport } from './routes/_admin/admin/permissions/index'
 import { Route as AdminAdminOrganizationsIndexRouteImport } from './routes/_admin/admin/organizations/index'
+import { Route as AdminAdminOfflinesIndexRouteImport } from './routes/_admin/admin/offlines/index'
+import { Route as AdminAdminLiveRoomsIndexRouteImport } from './routes/_admin/admin/live-rooms/index'
 import { Route as AdminAdminClassesIndexRouteImport } from './routes/_admin/admin/classes/index'
 import { Route as AuthOrgOrgIdSettingsRouteImport } from './routes/_auth/org/$orgId/settings'
 import { Route as AuthOrgOrgIdDashboardRouteImport } from './routes/_auth/org/$orgId/dashboard'
@@ -85,6 +88,12 @@ const AdminAdminRolesIndexRoute = AdminAdminRolesIndexRouteImport.update({
   path: '/admin/roles/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAdminPracticesIndexRoute =
+  AdminAdminPracticesIndexRouteImport.update({
+    id: '/admin/practices/',
+    path: '/admin/practices/',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminAdminPermissionsIndexRoute =
   AdminAdminPermissionsIndexRouteImport.update({
     id: '/admin/permissions/',
@@ -95,6 +104,17 @@ const AdminAdminOrganizationsIndexRoute =
   AdminAdminOrganizationsIndexRouteImport.update({
     id: '/admin/organizations/',
     path: '/admin/organizations/',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminOfflinesIndexRoute = AdminAdminOfflinesIndexRouteImport.update({
+  id: '/admin/offlines/',
+  path: '/admin/offlines/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAdminLiveRoomsIndexRoute =
+  AdminAdminLiveRoomsIndexRouteImport.update({
+    id: '/admin/live-rooms/',
+    path: '/admin/live-rooms/',
     getParentRoute: () => AdminRoute,
   } as any)
 const AdminAdminClassesIndexRoute = AdminAdminClassesIndexRouteImport.update({
@@ -162,8 +182,11 @@ export interface FileRoutesByFullPath {
   '/org/$orgId/dashboard': typeof AuthOrgOrgIdDashboardRoute
   '/org/$orgId/settings': typeof AuthOrgOrgIdSettingsRoute
   '/admin/classes/': typeof AdminAdminClassesIndexRoute
+  '/admin/live-rooms/': typeof AdminAdminLiveRoomsIndexRoute
+  '/admin/offlines/': typeof AdminAdminOfflinesIndexRoute
   '/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
   '/admin/permissions/': typeof AdminAdminPermissionsIndexRoute
+  '/admin/practices/': typeof AdminAdminPracticesIndexRoute
   '/admin/roles/': typeof AdminAdminRolesIndexRoute
   '/admin/users/': typeof AdminAdminUsersIndexRoute
   '/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
@@ -184,8 +207,11 @@ export interface FileRoutesByTo {
   '/org/$orgId/dashboard': typeof AuthOrgOrgIdDashboardRoute
   '/org/$orgId/settings': typeof AuthOrgOrgIdSettingsRoute
   '/admin/classes': typeof AdminAdminClassesIndexRoute
+  '/admin/live-rooms': typeof AdminAdminLiveRoomsIndexRoute
+  '/admin/offlines': typeof AdminAdminOfflinesIndexRoute
   '/admin/organizations': typeof AdminAdminOrganizationsIndexRoute
   '/admin/permissions': typeof AdminAdminPermissionsIndexRoute
+  '/admin/practices': typeof AdminAdminPracticesIndexRoute
   '/admin/roles': typeof AdminAdminRolesIndexRoute
   '/admin/users': typeof AdminAdminUsersIndexRoute
   '/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
@@ -210,8 +236,11 @@ export interface FileRoutesById {
   '/_auth/org/$orgId/dashboard': typeof AuthOrgOrgIdDashboardRoute
   '/_auth/org/$orgId/settings': typeof AuthOrgOrgIdSettingsRoute
   '/_admin/admin/classes/': typeof AdminAdminClassesIndexRoute
+  '/_admin/admin/live-rooms/': typeof AdminAdminLiveRoomsIndexRoute
+  '/_admin/admin/offlines/': typeof AdminAdminOfflinesIndexRoute
   '/_admin/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
   '/_admin/admin/permissions/': typeof AdminAdminPermissionsIndexRoute
+  '/_admin/admin/practices/': typeof AdminAdminPracticesIndexRoute
   '/_admin/admin/roles/': typeof AdminAdminRolesIndexRoute
   '/_admin/admin/users/': typeof AdminAdminUsersIndexRoute
   '/_admin/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
@@ -234,8 +263,11 @@ export interface FileRouteTypes {
     | '/org/$orgId/dashboard'
     | '/org/$orgId/settings'
     | '/admin/classes/'
+    | '/admin/live-rooms/'
+    | '/admin/offlines/'
     | '/admin/organizations/'
     | '/admin/permissions/'
+    | '/admin/practices/'
     | '/admin/roles/'
     | '/admin/users/'
     | '/admin/classes/$classId/gradebook'
@@ -256,8 +288,11 @@ export interface FileRouteTypes {
     | '/org/$orgId/dashboard'
     | '/org/$orgId/settings'
     | '/admin/classes'
+    | '/admin/live-rooms'
+    | '/admin/offlines'
     | '/admin/organizations'
     | '/admin/permissions'
+    | '/admin/practices'
     | '/admin/roles'
     | '/admin/users'
     | '/admin/classes/$classId/gradebook'
@@ -281,8 +316,11 @@ export interface FileRouteTypes {
     | '/_auth/org/$orgId/dashboard'
     | '/_auth/org/$orgId/settings'
     | '/_admin/admin/classes/'
+    | '/_admin/admin/live-rooms/'
+    | '/_admin/admin/offlines/'
     | '/_admin/admin/organizations/'
     | '/_admin/admin/permissions/'
+    | '/_admin/admin/practices/'
     | '/_admin/admin/roles/'
     | '/_admin/admin/users/'
     | '/_admin/admin/classes/$classId/gradebook'
@@ -381,6 +419,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminRolesIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/admin/practices/': {
+      id: '/_admin/admin/practices/'
+      path: '/admin/practices'
+      fullPath: '/admin/practices/'
+      preLoaderRoute: typeof AdminAdminPracticesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/admin/permissions/': {
       id: '/_admin/admin/permissions/'
       path: '/admin/permissions'
@@ -393,6 +438,20 @@ declare module '@tanstack/react-router' {
       path: '/admin/organizations'
       fullPath: '/admin/organizations/'
       preLoaderRoute: typeof AdminAdminOrganizationsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/offlines/': {
+      id: '/_admin/admin/offlines/'
+      path: '/admin/offlines'
+      fullPath: '/admin/offlines/'
+      preLoaderRoute: typeof AdminAdminOfflinesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/live-rooms/': {
+      id: '/_admin/admin/live-rooms/'
+      path: '/admin/live-rooms'
+      fullPath: '/admin/live-rooms/'
+      preLoaderRoute: typeof AdminAdminLiveRoomsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
     '/_admin/admin/classes/': {
@@ -472,8 +531,11 @@ interface AdminRouteChildren {
   AdminAdminDashboardRoute: typeof AdminAdminDashboardRoute
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
   AdminAdminClassesIndexRoute: typeof AdminAdminClassesIndexRoute
+  AdminAdminLiveRoomsIndexRoute: typeof AdminAdminLiveRoomsIndexRoute
+  AdminAdminOfflinesIndexRoute: typeof AdminAdminOfflinesIndexRoute
   AdminAdminOrganizationsIndexRoute: typeof AdminAdminOrganizationsIndexRoute
   AdminAdminPermissionsIndexRoute: typeof AdminAdminPermissionsIndexRoute
+  AdminAdminPracticesIndexRoute: typeof AdminAdminPracticesIndexRoute
   AdminAdminRolesIndexRoute: typeof AdminAdminRolesIndexRoute
   AdminAdminUsersIndexRoute: typeof AdminAdminUsersIndexRoute
   AdminAdminClassesClassIdGradebookRoute: typeof AdminAdminClassesClassIdGradebookRoute
@@ -484,8 +546,11 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAdminDashboardRoute: AdminAdminDashboardRoute,
   AdminAdminIndexRoute: AdminAdminIndexRoute,
   AdminAdminClassesIndexRoute: AdminAdminClassesIndexRoute,
+  AdminAdminLiveRoomsIndexRoute: AdminAdminLiveRoomsIndexRoute,
+  AdminAdminOfflinesIndexRoute: AdminAdminOfflinesIndexRoute,
   AdminAdminOrganizationsIndexRoute: AdminAdminOrganizationsIndexRoute,
   AdminAdminPermissionsIndexRoute: AdminAdminPermissionsIndexRoute,
+  AdminAdminPracticesIndexRoute: AdminAdminPracticesIndexRoute,
   AdminAdminRolesIndexRoute: AdminAdminRolesIndexRoute,
   AdminAdminUsersIndexRoute: AdminAdminUsersIndexRoute,
   AdminAdminClassesClassIdGradebookRoute:
