@@ -52,7 +52,7 @@ func DefaultLiveRoomConfig() LiveRoomConfig {
 
 type LiveRoom struct {
 	ID              uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	ClassSessionID  uuid.UUID      `gorm:"type:uuid;not null;uniqueIndex" json:"class_session_id"`
+	ClassSessionID  uuid.UUID      `gorm:"type:uuid;not null;index" json:"class_session_id"`
 	ClassSession    *ClassSession  `gorm:"foreignKey:ClassSessionID" json:"class_session,omitempty"`
 	LiveKitRoomName string         `gorm:"column:livekit_room_name;type:varchar(255);not null;uniqueIndex" json:"livekit_room_name"`
 	Status          LiveRoomStatus `gorm:"type:varchar(20);not null;default:'created'" json:"status"`
@@ -157,7 +157,6 @@ type ListLiveRecordingsQuery struct {
 type LiveRoomRepository interface {
 	Create(ctx context.Context, room *LiveRoom) error
 	FindByID(ctx context.Context, id uuid.UUID) (*LiveRoom, error)
-	FindByClassSessionID(ctx context.Context, sessionID uuid.UUID) (*LiveRoom, error)
 	Update(ctx context.Context, room *LiveRoom) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, scope LiveRoomListScope, p ListParams) ([]LiveRoom, int64, error)

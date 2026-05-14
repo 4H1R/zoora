@@ -210,9 +210,6 @@ func (r *sessionRepository) ListByClass(ctx context.Context, classID uuid.UUID, 
 		base = base.Unscoped()
 	}
 	base = base.Where("class_id = ?", classID)
-	if q.Type != nil {
-		base = base.Where("type = ?", *q.Type)
-	}
 	var sessions []domain.ClassSession
 	total, err := listparams.Paginate(base, q.ListParams, &sessions)
 	if err != nil {

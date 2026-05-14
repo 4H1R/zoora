@@ -325,22 +325,16 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 				counts.ClassMembers++
 			}
 
-			// 10. ClassSessions (3 per class: live, quiz, practice)
-			sessionTypes := []domain.ClassSessionType{
-				domain.ClassSessionTypeLive,
-				domain.ClassSessionTypeQuiz,
-				domain.ClassSessionTypePractice,
-			}
+			// 10. ClassSessions (3 per class)
 			var quizSession *domain.ClassSession
-			for _, st := range sessionTypes {
+			for i := 0; i < 3; i++ {
 				s := factory.NewClassSession(class.ID, func(s *domain.ClassSession) {
-					s.Type = st
 					s.StartTime = time.Now().Add(time.Duration(counts.ClassSessions+1) * 24 * time.Hour)
 				})
 				if err := db.WithContext(ctx).Create(s).Error; err != nil {
 					return nil, fmt.Errorf("creating class session: %w", err)
 				}
-				if st == domain.ClassSessionTypeQuiz {
+				if i == 1 {
 					quizSession = s
 				}
 				counts.ClassSessions++

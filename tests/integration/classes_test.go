@@ -192,7 +192,7 @@ func TestIntegration_ClassRepo_AdminList_SearchAndFilter(t *testing.T) {
 	assert.Equal(t, int64(3), total)
 }
 
-func TestIntegration_SessionRepo_CRUD_FilterType(t *testing.T) {
+func TestIntegration_SessionRepo_CRUD(t *testing.T) {
 	r := setupClassesDB(t)
 	ctx := context.Background()
 	org := seedOrg(t, r.orgs, "Acme")
@@ -200,24 +200,16 @@ func TestIntegration_SessionRepo_CRUD_FilterType(t *testing.T) {
 	c := seedClass(t, r, org.ID, teacher.ID, "Math", 0)
 
 	start := time.Date(2026, 5, 1, 10, 0, 0, 0, time.UTC)
-	s1 := &domain.ClassSession{ClassID: c.ID, Name: "Live1", StartTime: start, Type: domain.ClassSessionTypeLive}
-	s2 := &domain.ClassSession{ClassID: c.ID, Name: "Quiz1", StartTime: start.Add(time.Hour), Type: domain.ClassSessionTypeQuiz}
+	s1 := &domain.ClassSession{ClassID: c.ID, Name: "Sess1", StartTime: start}
+	s2 := &domain.ClassSession{ClassID: c.ID, Name: "Sess2", StartTime: start.Add(time.Hour)}
 	require.NoError(t, r.sessions.Create(ctx, s1))
 	require.NoError(t, r.sessions.Create(ctx, s2))
 
 	bigPage := domain.ListParams{Page: 1, PageSize: 50}
 
-	// Unfiltered list.
 	_, total, err := r.sessions.ListByClass(ctx, c.ID, domain.ListClassSessionsQuery{ListParams: bigPage})
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), total)
-
-	// Filter by type=live.
-	live := domain.ClassSessionTypeLive
-	got, total, err := r.sessions.ListByClass(ctx, c.ID, domain.ListClassSessionsQuery{Type: &live, ListParams: bigPage})
-	require.NoError(t, err)
-	assert.Equal(t, int64(1), total)
-	assert.Equal(t, "Live1", got[0].Name)
 }
 
 func TestIntegration_MemberRepo_UniqueAndCapacityCount(t *testing.T) {

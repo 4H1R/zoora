@@ -188,12 +188,11 @@ func (h *Handler) Delete(c *gin.Context) {
 
 // ListSessions lists sessions for a class.
 // @Summary List class sessions
-// @Description Search matches substrings of: name, description. Orderable fields: created_at, updated_at, name, start_time. Filter by session type: live|quiz|practice.
+// @Description Search matches substrings of: name, description. Orderable fields: created_at, updated_at, name, start_time.
 // @Tags Classes
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Class UUID"
-// @Param type query string false "Filter by type: live|quiz|practice"
 // @Param search query string false "Substring match on name/description"
 // @Param order_by query string false "One of: created_at, updated_at, name, start_time"
 // @Param order_dir query string false "asc or desc"

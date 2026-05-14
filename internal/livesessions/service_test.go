@@ -28,13 +28,6 @@ func (m *mockRoomRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Live
 	}
 	return a.Get(0).(*domain.LiveRoom), a.Error(1)
 }
-func (m *mockRoomRepo) FindByClassSessionID(ctx context.Context, id uuid.UUID) (*domain.LiveRoom, error) {
-	a := m.Called(ctx, id)
-	if a.Get(0) == nil {
-		return nil, a.Error(1)
-	}
-	return a.Get(0).(*domain.LiveRoom), a.Error(1)
-}
 func (m *mockRoomRepo) Update(ctx context.Context, room *domain.LiveRoom) error {
 	return m.Called(ctx, room).Error(0)
 }

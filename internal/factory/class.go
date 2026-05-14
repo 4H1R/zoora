@@ -25,17 +25,11 @@ func NewClass(orgID, teacherID uuid.UUID, opts ...func(*domain.Class)) *domain.C
 
 func NewClassSession(classID uuid.UUID, opts ...func(*domain.ClassSession)) *domain.ClassSession {
 	id := nextID()
-	sessionTypes := []domain.ClassSessionType{
-		domain.ClassSessionTypeLive,
-		domain.ClassSessionTypeQuiz,
-		domain.ClassSessionTypePractice,
-	}
 	s := &domain.ClassSession{
 		ClassID:     classID,
 		Name:        fmt.Sprintf("Session %d", id),
 		Description: fake.Sentence(6),
 		StartTime:   time.Now().Add(time.Duration(id) * 24 * time.Hour),
-		Type:        sessionTypes[id%3],
 	}
 	for _, o := range opts {
 		o(s)

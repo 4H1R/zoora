@@ -8,25 +8,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// ClassSessionType enumerates the allowed kinds of a ClassSession. Values are
-// mirrored by a CHECK constraint in the class_sessions migration so bad data
-// cannot reach the table even if it bypasses the service layer.
-type ClassSessionType string
-
-const (
-	ClassSessionTypeLive     ClassSessionType = "live"
-	ClassSessionTypeQuiz     ClassSessionType = "quiz"
-	ClassSessionTypePractice ClassSessionType = "practice"
-)
-
-func (t ClassSessionType) Valid() bool {
-	switch t {
-	case ClassSessionTypeLive, ClassSessionTypeQuiz, ClassSessionTypePractice:
-		return true
-	}
-	return false
-}
-
 // Class is a cohort owned by a single teacher (UserID) inside an organization.
 // TotalUsers stores the maximum enrollment capacity (not the current member
 // count). 0 means unlimited. Current enrollment is derived from class_members.
@@ -43,22 +24,23 @@ type Class struct {
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
+// ClassSession مدل سازمان‌دهنده روم‌های مختلف در یک کلاس
 type ClassSession struct {
-	ID           uuid.UUID        `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	ClassID      uuid.UUID        `gorm:"type:uuid;not null;index" json:"class_id"`
-	Class        *Class           `gorm:"foreignKey:ClassID" json:"class,omitempty"`
-	Name         string           `gorm:"not null" json:"name"`
-	Description  string           `json:"description"`
-	StartTime    time.Time        `gorm:"not null" json:"start_time"`
-	Type         ClassSessionType `gorm:"type:varchar(20);not null" json:"type"`
-	IsRecordable bool             `gorm:"not null;default:false" json:"is_recordable"`
-	QuizRooms    []QuizRoom       `gorm:"foreignKey:ClassSessionID" json:"quiz_rooms,omitempty"`
-	LiveRooms      []LiveRoom       `gorm:"foreignKey:ClassSessionID" json:"live_rooms,omitempty"`
-	PracticeRooms  []PracticeRoom   `gorm:"foreignKey:ClassSessionID" json:"practice_rooms,omitempty"`
-	OfflineRooms   []OfflineRoom    `gorm:"foreignKey:ClassSessionID" json:"offline_rooms,omitempty"`
-	CreatedAt    time.Time        `json:"created_at"`
-	UpdatedAt    time.Time        `json:"updated_at"`
-	DeletedAt    gorm.DeletedAt   `gorm:"index" json:"-"`
+	ID          uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	ClassID     uuid.UUID      `gorm:"type:uuid;not null;index" json:"class_id"`
+	Class       *Class         `gorm:"foreignKey:ClassID" json:"class,omitempty"`
+	Name        string         `gorm:"not null" json:"name"`
+	Description string         `json:"description"`
+	StartTime   time.Time      `gorm:"not null" json:"start_time"`
+
+	QuizRooms     []QuizRoom     `gorm:"foreignKey:ClassSessionID" json:"quiz_rooms,omitempty"`
+	LiveRooms     []LiveRoom     `gorm:"foreignKey:ClassSessionID" json:"live_rooms,omitempty"`
+	PracticeRooms []PracticeRoom `gorm:"foreignKey:ClassSessionID" json:"practice_rooms,omitempty"`
+	OfflineRooms  []OfflineRoom  `gorm:"foreignKey:ClassSessionID" json:"offline_rooms,omitempty"`
+
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 // ClassMember links a user to a class they are enrolled in. The unique
@@ -88,19 +70,15 @@ type UpdateClassDTO struct {
 }
 
 type CreateClassSessionDTO struct {
-	Name         string           `json:"name" binding:"required,min=2"`
-	Description  string           `json:"description"`
-	StartTime    time.Time        `json:"start_time" binding:"required"`
-	Type         ClassSessionType `json:"type" binding:"required,oneof=live quiz practice"`
-	IsRecordable bool             `json:"is_recordable"`
+	Name        string    `json:"name" binding:"required,min=2"`
+	Description string    `json:"description"`
+	StartTime   time.Time `json:"start_time" binding:"required"`
 }
 
 type UpdateClassSessionDTO struct {
-	Name         *string           `json:"name" binding:"omitempty,min=2"`
-	Description  *string           `json:"description"`
-	StartTime    *time.Time        `json:"start_time"`
-	Type         *ClassSessionType `json:"type" binding:"omitempty,oneof=live quiz practice"`
-	IsRecordable *bool             `json:"is_recordable"`
+	Name        *string    `json:"name" binding:"omitempty,min=2"`
+	Description *string    `json:"description"`
+	StartTime   *time.Time `json:"start_time"`
 }
 
 type EnrollClassMemberDTO struct {
@@ -142,9 +120,8 @@ type AdminUpdateClassDTO struct {
 
 // ListClassSessionsQuery is the query for GET /classes/:id/sessions.
 type ListClassSessionsQuery struct {
-	Type           *ClassSessionType `form:"type"`
-	IncludeDeleted bool              `form:"include_deleted"`
-	ListParams     ListParams        `form:"-"`
+	IncludeDeleted bool       `form:"include_deleted"`
+	ListParams     ListParams `form:"-"`
 }
 
 // ListClassMembersQuery is the query for GET /classes/:id/members.

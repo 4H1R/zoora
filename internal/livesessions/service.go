@@ -144,11 +144,11 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreateLiveRoomDTO) 
 		cfg = domain.DefaultLiveRoomConfig()
 	}
 
-	roomName := fmt.Sprintf("session-%s", dto.ClassSessionID.String())
-
+	roomID := uuid.New()
 	room := &domain.LiveRoom{
+		ID:              roomID,
 		ClassSessionID:  dto.ClassSessionID,
-		LiveKitRoomName: roomName,
+		LiveKitRoomName: fmt.Sprintf("session-%s-%s", dto.ClassSessionID.String(), roomID.String()),
 		Status:          domain.LiveRoomStatusCreated,
 		Config:          cfg,
 	}

@@ -224,29 +224,14 @@ func TestHandler_CreateSession_Success(t *testing.T) {
 	r, svc := newHandlerRouter(t)
 	classID := uuid.New()
 	svc.On("CreateSession", mock.Anything, classID, mock.AnythingOfType("domain.CreateClassSessionDTO")).
-		Return(&domain.ClassSession{ID: uuid.New(), ClassID: classID, Type: domain.ClassSessionTypeLive}, nil)
+		Return(&domain.ClassSession{ID: uuid.New(), ClassID: classID}, nil)
 
-	body := map[string]any{
-		"name":          "Kickoff",
-		"start_time":    "2026-05-01T10:00:00Z",
-		"type":          "live",
-		"is_recordable": true,
-	}
-	w := do(t, r, "POST", "/api/v1/classes/"+classID.String()+"/sessions", body)
-	assert.Equal(t, http.StatusCreated, w.Code)
-}
-
-func TestHandler_CreateSession_InvalidType_Maps400(t *testing.T) {
-	r, svc := newHandlerRouter(t)
-	classID := uuid.New()
 	body := map[string]any{
 		"name":       "Kickoff",
 		"start_time": "2026-05-01T10:00:00Z",
-		"type":       "bogus",
 	}
 	w := do(t, r, "POST", "/api/v1/classes/"+classID.String()+"/sessions", body)
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-	svc.AssertNotCalled(t, "CreateSession")
+	assert.Equal(t, http.StatusCreated, w.Code)
 }
 
 func TestHandler_Enroll_Conflict_Maps409(t *testing.T) {

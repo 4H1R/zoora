@@ -49,17 +49,6 @@ func (r *roomRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Li
 	return &room, nil
 }
 
-func (r *roomRepository) FindByClassSessionID(ctx context.Context, sessionID uuid.UUID) (*domain.LiveRoom, error) {
-	var room domain.LiveRoom
-	if err := r.baseQuery(ctx).First(&room, "class_session_id = ?", sessionID).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, domain.ErrNotFound
-		}
-		return nil, fmt.Errorf("livesessions.roomRepository.FindByClassSessionID: %w", err)
-	}
-	return &room, nil
-}
-
 func (r *roomRepository) Update(ctx context.Context, room *domain.LiveRoom) error {
 	result := database.DB(ctx, r.db).Save(room)
 	if result.Error != nil {

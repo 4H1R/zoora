@@ -40,16 +40,15 @@ func TestNewClassSession(t *testing.T) {
 	assert.Equal(t, classID, s.ClassID)
 	assert.NotEmpty(t, s.Name)
 	assert.False(t, s.StartTime.IsZero())
-	assert.True(t, s.Type.Valid())
 }
 
 func TestNewClassSession_WithOverride(t *testing.T) {
 	classID := uuid.New()
 	s := factory.NewClassSession(classID, func(s *domain.ClassSession) {
-		s.Type = domain.ClassSessionTypeQuiz
+		s.Name = "Custom"
 	})
 
-	assert.Equal(t, domain.ClassSessionTypeQuiz, s.Type)
+	assert.Equal(t, "Custom", s.Name)
 }
 
 func TestNewClassMember(t *testing.T) {

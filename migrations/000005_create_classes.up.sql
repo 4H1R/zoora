@@ -22,13 +22,10 @@ CREATE TABLE class_sessions (
     name VARCHAR(255) NOT NULL,
     description TEXT NOT NULL DEFAULT '',
     start_time TIMESTAMPTZ NOT NULL,
-    type VARCHAR(20) NOT NULL,
-    is_recordable BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,
-    CONSTRAINT fk_class_sessions_class FOREIGN KEY (class_id) REFERENCES classes (id) ON DELETE CASCADE,
-    CONSTRAINT chk_class_sessions_type CHECK (type IN ('live', 'quiz', 'practice'))
+    CONSTRAINT fk_class_sessions_class FOREIGN KEY (class_id) REFERENCES classes (id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_class_sessions_class_id ON class_sessions (class_id);
