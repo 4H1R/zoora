@@ -84,6 +84,25 @@ type ListAttendanceQuery struct {
 	ListParams   ListParams        `form:"-"`
 }
 
+// AdminListAttendanceQuery is the query for GET /admin/attendance. Typed
+// filters sit alongside the embedded ListParams populated by the handler
+// after white-listing.
+type AdminListAttendanceQuery struct {
+	Status         *AttendanceStatus `form:"status" binding:"omitempty,oneof=present absent late excused"`
+	IsAutoMarked   *bool             `form:"is_auto_marked"`
+	UserID         *uuid.UUID        `form:"-"`
+	ClassID        *uuid.UUID        `form:"-"`
+	ClassSessionID *uuid.UUID        `form:"-"`
+	OrganizationID *uuid.UUID        `form:"-"`
+	ListParams     ListParams        `form:"-"`
+}
+
+// AdminUpdateAttendanceDTO is the body for PUT /admin/attendance/:id.
+type AdminUpdateAttendanceDTO struct {
+	Status  *AttendanceStatus `json:"status" binding:"omitempty,oneof=present absent late excused"`
+	Remarks *string           `json:"remarks"`
+}
+
 type AttendanceRepository interface {
 	Create(ctx context.Context, a *Attendance) error
 	FindByID(ctx context.Context, id uuid.UUID) (*Attendance, error)
@@ -91,6 +110,9 @@ type AttendanceRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	ListBySession(ctx context.Context, sessionID uuid.UUID, q ListAttendanceQuery) ([]Attendance, int64, error)
 	FindBySessionAndUser(ctx context.Context, sessionID, userID uuid.UUID) (*Attendance, error)
+
+	// Admin-only.
+	AdminList(ctx context.Context, q AdminListAttendanceQuery) ([]Attendance, int64, error)
 }
 
 type AttendanceService interface {
@@ -101,4 +123,9 @@ type AttendanceService interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (*Attendance, error)
 	ListBySession(ctx context.Context, classID, sessionID uuid.UUID, q ListAttendanceQuery) ([]Attendance, int64, error)
+
+	// Admin surface. Require caller.IsAdmin.
+	AdminList(ctx context.Context, q AdminListAttendanceQuery) ([]Attendance, int64, error)
+	AdminUpdate(ctx context.Context, id uuid.UUID, dto AdminUpdateAttendanceDTO) (*Attendance, error)
+	AdminHardDelete(ctx context.Context, id uuid.UUID) error
 }

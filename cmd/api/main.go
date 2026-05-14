@@ -244,9 +244,10 @@ func main() {
 	adminPracticeHandler := practices.NewAdminHandler(practiceService)
 	adminPollHandler := polls.NewAdminHandler(pollService)
 	adminRoleHandler := roles.NewAdminHandler(roleService)
+	adminAttendanceHandler := attendance.NewAdminHandler(attendanceService)
 
 	adminGroup := v1.Group("/admin", authMiddleware, auth.RequireAdmin())
-	admin.RegisterRoutes(adminGroup, adminUserHandler, adminOrgHandler, adminClassHandler, adminQuestionBankHandler, adminQuizHandler, adminLiveSessionHandler, adminOfflineHandler, adminPracticeHandler, adminPollHandler, adminRoleHandler)
+	admin.RegisterRoutes(adminGroup, adminUserHandler, adminOrgHandler, adminClassHandler, adminQuestionBankHandler, adminQuizHandler, adminLiveSessionHandler, adminOfflineHandler, adminPracticeHandler, adminPollHandler, adminRoleHandler, adminAttendanceHandler)
 
 	// router.GET("/ws/:room", websocket.HandleWebSocket(wsHub, jwtService, log))
 

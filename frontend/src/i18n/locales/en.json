@@ -199,6 +199,52 @@
       "sessionPlaceholder": "Select session…",
       "selectClassFirst": "Select a class first"
     },
+    "attendance": {
+      "title": "Attendance",
+      "searchPlaceholder": "Search by remarks…",
+      "student": "Student",
+      "class": "Class",
+      "session": "Session",
+      "status": "Status",
+      "source": "Source",
+      "remarks": "Remarks",
+      "createdAt": "Created",
+      "noResults": "No attendance records found",
+      "noResultsHint": "Try adjusting your search or filters.",
+      "stats": {
+        "total": "Total records",
+        "present": "Present (page)"
+      },
+      "statuses": {
+        "present": "Present",
+        "absent": "Absent",
+        "late": "Late",
+        "excused": "Excused"
+      },
+      "sources": {
+        "auto": "Auto",
+        "manual": "Manual"
+      },
+      "actions": {
+        "edit": "Edit attendance",
+        "delete": "Delete"
+      },
+      "form": {
+        "editTitle": "Edit attendance",
+        "editDescription": "Update status or remarks for this record.",
+        "status": "Status",
+        "statusPlaceholder": "Select status…",
+        "remarks": "Remarks",
+        "remarksPlaceholder": "Optional remarks",
+        "updateSuccess": "Attendance updated",
+        "deleteSuccess": "Attendance deleted"
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
+    },
     "classes": {
       "title": "Classes",
       "searchPlaceholder": "Search classes…",

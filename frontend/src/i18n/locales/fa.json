@@ -199,6 +199,52 @@
       "sessionPlaceholder": "انتخاب جلسه…",
       "selectClassFirst": "ابتدا کلاس را انتخاب کنید"
     },
+    "attendance": {
+      "title": "حضور و غیاب",
+      "searchPlaceholder": "جستجو در توضیحات…",
+      "student": "دانش‌آموز",
+      "class": "کلاس",
+      "session": "جلسه",
+      "status": "وضعیت",
+      "source": "منبع",
+      "remarks": "توضیحات",
+      "createdAt": "ایجاد",
+      "noResults": "هیچ رکورد حضور و غیابی یافت نشد",
+      "noResultsHint": "جستجو یا فیلترها را تغییر دهید.",
+      "stats": {
+        "total": "کل رکوردها",
+        "present": "حاضر (صفحه)"
+      },
+      "statuses": {
+        "present": "حاضر",
+        "absent": "غایب",
+        "late": "تأخیر",
+        "excused": "موجه"
+      },
+      "sources": {
+        "auto": "خودکار",
+        "manual": "دستی"
+      },
+      "actions": {
+        "edit": "ویرایش حضور",
+        "delete": "حذف"
+      },
+      "form": {
+        "editTitle": "ویرایش حضور",
+        "editDescription": "وضعیت یا توضیحات این رکورد را به‌روز کنید.",
+        "status": "وضعیت",
+        "statusPlaceholder": "انتخاب وضعیت…",
+        "remarks": "توضیحات",
+        "remarksPlaceholder": "توضیحات اختیاری",
+        "updateSuccess": "حضور و غیاب به‌روز شد",
+        "deleteSuccess": "حضور و غیاب حذف شد"
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "تغییر ستون‌ها"
+      }
+    },
     "classes": {
       "title": "کلاس‌ها",
       "searchPlaceholder": "جستجوی کلاس‌ها…",

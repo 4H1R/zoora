@@ -407,7 +407,7 @@ export function useGetAttendanceId<TData = Awaited<ReturnType<typeof getAttendan
 
 
 /**
- * Returns attendance records for a class session. Teachers/admins see all; students see only their own record. Filterable by status and user_id. Orderable: created_at, updated_at, status.
+ * Returns attendance records for a class session. Teachers/admins see all; students see only their own record. Search matches substrings of: remarks. Filters: status, user_id, is_auto_marked. Orderable fields: created_at, updated_at, status.
  * @summary List attendance by session
  */
 export type getClassesIdSessionsSessionIdAttendanceResponse200 = {

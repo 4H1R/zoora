@@ -90,6 +90,34 @@ func (r *repository) ListBySession(ctx context.Context, sessionID uuid.UUID, q d
 	return items, total, nil
 }
 
+func (r *repository) AdminList(ctx context.Context, q domain.AdminListAttendanceQuery) ([]domain.Attendance, int64, error) {
+	base := r.baseQuery(ctx).Preload("User").Preload("Class").Preload("ClassSession")
+	if q.Status != nil {
+		base = base.Where("status = ?", *q.Status)
+	}
+	if q.IsAutoMarked != nil {
+		base = base.Where("is_auto_marked = ?", *q.IsAutoMarked)
+	}
+	if q.UserID != nil {
+		base = base.Where("user_id = ?", *q.UserID)
+	}
+	if q.ClassID != nil {
+		base = base.Where("class_id = ?", *q.ClassID)
+	}
+	if q.ClassSessionID != nil {
+		base = base.Where("class_session_id = ?", *q.ClassSessionID)
+	}
+	if q.OrganizationID != nil {
+		base = base.Where("organization_id = ?", *q.OrganizationID)
+	}
+	var items []domain.Attendance
+	total, err := listparams.Paginate(base, q.ListParams, &items)
+	if err != nil {
+		return nil, 0, fmt.Errorf("attendance.repository.AdminList: %w", err)
+	}
+	return items, total, nil
+}
+
 func (r *repository) FindBySessionAndUser(ctx context.Context, sessionID, userID uuid.UUID) (*domain.Attendance, error) {
 	var a domain.Attendance
 	if err := r.baseQuery(ctx).
