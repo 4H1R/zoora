@@ -74,10 +74,14 @@ type AutoMarkResult struct {
 	Skipped int `json:"skipped"`
 }
 
+// ListAttendanceQuery is the query for GET /classes/:id/sessions/:sessionId/attendance.
+// Typed filters sit alongside the embedded ListParams populated by the handler
+// after white-listing.
 type ListAttendanceQuery struct {
-	Status     *AttendanceStatus `form:"status"`
-	UserID     *uuid.UUID        `form:"-"`
-	ListParams ListParams        `form:"-"`
+	Status       *AttendanceStatus `form:"status" binding:"omitempty,oneof=present absent late excused"`
+	IsAutoMarked *bool             `form:"is_auto_marked"`
+	UserID       *uuid.UUID        `form:"-"`
+	ListParams   ListParams        `form:"-"`
 }
 
 type AttendanceRepository interface {

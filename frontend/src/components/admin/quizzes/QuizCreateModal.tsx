@@ -15,17 +15,18 @@ import {
   usePostQuizzes,
   usePutQuizzesId,
 } from "@/api/quizzes/quizzes"
-import { SessionPicker } from "@/components/admin/forms/ClassSessionPicker"
+import { ClassPicker, SessionPicker } from "@/components/admin/forms/ClassSessionPicker"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 
 const createSchema = z.object({
+  class_id: z.string().uuid(),
+  class_session_id: z.string().uuid(),
   title: z.string().min(2),
   description: z.string().optional(),
   duration_minutes: z.coerce.number().int().gt(0),
-  class_session_id: z.string().optional(),
 })
 
 const editSchema = z.object({
@@ -41,17 +42,28 @@ interface QuizCreateModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   quiz?: Quiz | null
-  classId: string
+  defaultClassId?: string
 }
 
-export function QuizCreateModal({ open, onOpenChange, quiz, classId }: QuizCreateModalProps) {
+export function QuizCreateModal({
+  open,
+  onOpenChange,
+  quiz,
+  defaultClassId,
+}: QuizCreateModalProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const isEdit = !!quiz
 
   const createForm = useForm<CreateValues>({
     resolver: zodResolver(createSchema),
-    defaultValues: { title: "", description: "", duration_minutes: 30, class_session_id: "" },
+    defaultValues: {
+      class_id: defaultClassId ?? "",
+      class_session_id: "",
+      title: "",
+      description: "",
+      duration_minutes: 30,
+    },
   })
 
   const editForm = useForm<EditValues>({
@@ -69,13 +81,14 @@ export function QuizCreateModal({ open, onOpenChange, quiz, classId }: QuizCreat
       })
     } else {
       createForm.reset({
+        class_id: defaultClassId ?? "",
+        class_session_id: "",
         title: "",
         description: "",
         duration_minutes: 30,
-        class_session_id: "",
       })
     }
-  }, [open, quiz, isEdit])
+  }, [open, quiz, isEdit, defaultClassId])
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getGetQuizzesQueryKey() })
@@ -84,7 +97,7 @@ export function QuizCreateModal({ open, onOpenChange, quiz, classId }: QuizCreat
 
   const createMutation = usePostQuizzes({
     mutation: {
-      onSuccess: async (res, variables) => {
+      onSuccess: async (res) => {
         const sessionId = createForm.getValues("class_session_id")
         const quizId = res.status === 201 ? res.data.data?.id : undefined
         if (sessionId && quizId) {
@@ -97,7 +110,6 @@ export function QuizCreateModal({ open, onOpenChange, quiz, classId }: QuizCreat
         toast.success(t("admin.quizzes.form.createSuccess"))
         invalidate()
         onOpenChange(false)
-        void variables
       },
     },
   })
@@ -113,12 +125,13 @@ export function QuizCreateModal({ open, onOpenChange, quiz, classId }: QuizCreat
   })
 
   const isLoading = createMutation.isPending || updateMutation.isPending
+  const selectedClassId = createForm.watch("class_id")
   const selectedSessionId = createForm.watch("class_session_id")
 
   const onSubmitCreate = createForm.handleSubmit((values) => {
     createMutation.mutate({
       data: {
-        class_id: classId,
+        class_id: values.class_id,
         title: values.title,
         description: values.description,
         duration_minutes: values.duration_minutes,
@@ -156,6 +169,35 @@ export function QuizCreateModal({ open, onOpenChange, quiz, classId }: QuizCreat
       submitLabel={isEdit ? t("common.save") : t("common.create")}
     >
       <FieldGroup>
+        {!isEdit && (
+          <>
+            <Field data-invalid={!!createErrors.class_id || undefined}>
+              <FieldLabel>{t("admin.quizzes.form.class")}</FieldLabel>
+              <ClassPicker
+                value={selectedClassId || undefined}
+                onChange={(id) => {
+                  createForm.setValue("class_id", id, { shouldValidate: true })
+                  createForm.setValue("class_session_id", "", { shouldValidate: true })
+                }}
+                placeholder={t("admin.quizzes.form.classPlaceholder")}
+              />
+              <FieldError errors={[createErrors.class_id]} />
+            </Field>
+            <Field data-invalid={!!createErrors.class_session_id || undefined}>
+              <FieldLabel>{t("admin.quizzes.form.session")}</FieldLabel>
+              <SessionPicker
+                classId={selectedClassId || undefined}
+                value={selectedSessionId || undefined}
+                onChange={(id) =>
+                  createForm.setValue("class_session_id", id, { shouldValidate: true })
+                }
+                placeholder={t("admin.quizzes.form.sessionPlaceholder")}
+              />
+              <FieldError errors={[createErrors.class_session_id]} />
+            </Field>
+          </>
+        )}
+
         <Field
           data-invalid={!!(isEdit ? editErrors.title : createErrors.title) || undefined}
         >
@@ -195,23 +237,6 @@ export function QuizCreateModal({ open, onOpenChange, quiz, classId }: QuizCreat
             errors={[isEdit ? editErrors.duration_minutes : createErrors.duration_minutes]}
           />
         </Field>
-
-        {!isEdit && (
-          <Field>
-            <FieldLabel>{t("admin.quizzes.form.session")}</FieldLabel>
-            <SessionPicker
-              classId={classId}
-              value={selectedSessionId || undefined}
-              onChange={(id) =>
-                createForm.setValue("class_session_id", id, { shouldValidate: true })
-              }
-              placeholder={t("admin.quizzes.form.sessionPlaceholder")}
-            />
-            <p className="text-muted-foreground text-xs">
-              {t("admin.quizzes.form.sessionHint")}
-            </p>
-          </Field>
-        )}
       </FieldGroup>
     </ResourceFormDialog>
   )

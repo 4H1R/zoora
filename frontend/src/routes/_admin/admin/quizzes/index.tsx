@@ -1,12 +1,11 @@
 import type { GithubCom4H1RZooraInternalDomainQuiz as Quiz } from "@/api/model"
 
-import { createFileRoute, Link } from "@tanstack/react-router"
-import { ArrowLeftIcon, ClipboardListIcon, PlusIcon } from "lucide-react"
+import { createFileRoute } from "@tanstack/react-router"
+import { ClipboardListIcon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
-import { useGetClassesId } from "@/api/classes/classes"
-import { useGetQuizzes } from "@/api/quizzes/quizzes"
+import { useGetAdminQuizzes } from "@/api/admin-quizzes/admin-quizzes"
 import { QuizCreateModal } from "@/components/admin/quizzes/QuizCreateModal"
 import { QuizQuestionsDialog } from "@/components/admin/quizzes/QuizQuestionsDialog"
 import { QuizTable } from "@/components/admin/quizzes/QuizTable"
@@ -16,15 +15,14 @@ import { Button } from "@/components/ui/button"
 import { adminHead } from "@/lib/admin-head"
 import { adminSearchSchema } from "@/lib/data-table"
 
-export const Route = createFileRoute("/_admin/admin/classes/$classId/quizzes")({
+export const Route = createFileRoute("/_admin/admin/quizzes/")({
   head: () => adminHead("admin.quizzes.title"),
   validateSearch: adminSearchSchema,
-  component: ClassQuizzesPage,
+  component: QuizzesPage,
 })
 
-function ClassQuizzesPage() {
+function QuizzesPage() {
   const { t } = useTranslation()
-  const { classId } = Route.useParams()
   const { search, order_by, order_dir, page } = Route.useSearch()
   const currentPage = page ?? 1
 
@@ -33,9 +31,6 @@ function ClassQuizzesPage() {
 
   const [questionsOpen, setQuestionsOpen] = useState(false)
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null)
-
-  const { data: classData } = useGetClassesId(classId)
-  const cls = (classData?.status === 200 && classData.data.data) || undefined
 
   const handleEdit = (q: Quiz) => {
     setEditingQuiz(q)
@@ -62,8 +57,7 @@ function ClassQuizzesPage() {
     if (!open) setActiveQuiz(null)
   }
 
-  const { data, isLoading } = useGetQuizzes({
-    class_id: classId,
+  const { data, isLoading } = useGetAdminQuizzes({
     search: search || undefined,
     page: currentPage,
     order_by: order_by || undefined,
@@ -88,22 +82,12 @@ function ClassQuizzesPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title={
-          cls?.name ? `${cls.name} · ${t("admin.quizzes.title")}` : t("admin.quizzes.title")
-        }
+        title={t("admin.quizzes.title")}
         actions={
-          <div className="flex items-center gap-2">
-            <Link to="/admin/classes/$classId/sessions" params={{ classId }}>
-              <Button variant="outline" size="sm">
-                <ArrowLeftIcon data-icon="inline-start" />
-                {t("admin.classManagement.backToSessions")}
-              </Button>
-            </Link>
-            <Button size="sm" onClick={handleCreate}>
-              <PlusIcon data-icon="inline-start" />
-              {t("admin.quizzes.newQuiz")}
-            </Button>
-          </div>
+          <Button size="sm" onClick={handleCreate}>
+            <PlusIcon data-icon="inline-start" />
+            {t("admin.quizzes.newQuiz")}
+          </Button>
         }
       />
       <StatCards stats={statCards} />
@@ -119,7 +103,6 @@ function ClassQuizzesPage() {
         open={formOpen}
         onOpenChange={handleFormOpenChange}
         quiz={editingQuiz}
-        defaultClassId={classId}
       />
       <QuizQuestionsDialog
         open={questionsOpen}

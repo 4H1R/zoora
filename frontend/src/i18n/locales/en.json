@@ -20,6 +20,7 @@
     "recording": "Recording",
     "publish": "Publish",
     "create": "Create",
+    "edit": "Edit",
     "delete": "Delete",
     "deleteConfirm": {
       "title": "Are you sure?",
@@ -489,9 +490,11 @@
         "description": "Description",
         "descriptionPlaceholder": "Optional description",
         "duration": "Duration (minutes)",
-        "session": "Linked session",
-        "sessionPlaceholder": "Optional — link to a session",
-        "sessionHint": "Linking a session creates a quiz room.",
+        "class": "Class",
+        "classPlaceholder": "Select a class",
+        "session": "Session",
+        "sessionPlaceholder": "Select a session",
+        "sessionHint": "A quiz room will be created for this session.",
         "createSuccess": "Quiz created",
         "updateSuccess": "Quiz updated",
         "deleteSuccess": "Quiz deleted",
@@ -541,6 +544,48 @@
         "descriptionPlaceholder": "Optional description",
         "createSuccess": "Bank created",
         "noActiveOrg": "Select an organization from the sidebar before creating a bank."
+      }
+    },
+    "gradebook": {
+      "title": "Gradebook",
+      "newColumn": "New column",
+      "student": "Student",
+      "noResults": "No gradebook columns yet",
+      "noResultsHint": "Create a column to start tracking grades.",
+      "stats": {
+        "columns": "Columns",
+        "students": "Students"
+      },
+      "types": {
+        "auto_attendance": "Auto · Attendance",
+        "auto_practice": "Auto · Practice",
+        "auto_quiz": "Auto · Quiz",
+        "manual_grade": "Manual · Grade",
+        "manual_attendance": "Manual · Attendance",
+        "manual_text": "Manual · Text"
+      },
+      "form": {
+        "createTitle": "New gradebook column",
+        "createDescription": "Add a column to track grades or attendance.",
+        "editTitle": "Edit column",
+        "editDescription": "Update the column title or order.",
+        "title": "Title",
+        "titlePlaceholder": "e.g. Midterm exam",
+        "type": "Type",
+        "orderIndex": "Order index",
+        "sourcePlaceholder": "Select source…",
+        "source": {
+          "auto_attendance": "Session",
+          "auto_practice": "Practice",
+          "auto_quiz": "Quiz"
+        },
+        "createSuccess": "Column created",
+        "updateSuccess": "Column updated",
+        "deleteSuccess": "Column deleted",
+        "cellTitle": "Edit grade",
+        "value": "Value",
+        "valuePlaceholder": "Enter value",
+        "cellUpdateSuccess": "Grade updated"
       }
     },
     "questions": {

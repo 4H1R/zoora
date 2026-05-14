@@ -20,6 +20,7 @@
     "recording": "ضبط",
     "publish": "انتشار",
     "create": "ایجاد",
+    "edit": "ویرایش",
     "delete": "حذف",
     "deleteConfirm": {
       "title": "آیا مطمئن هستید؟",
@@ -489,9 +490,11 @@
         "description": "توضیحات",
         "descriptionPlaceholder": "توضیحات اختیاری",
         "duration": "مدت (دقیقه)",
-        "session": "جلسه مرتبط",
-        "sessionPlaceholder": "اختیاری — اتصال به یک جلسه",
-        "sessionHint": "با اتصال به جلسه یک اتاق آزمون ساخته می‌شود.",
+        "class": "کلاس",
+        "classPlaceholder": "یک کلاس انتخاب کنید",
+        "session": "جلسه",
+        "sessionPlaceholder": "یک جلسه انتخاب کنید",
+        "sessionHint": "برای این جلسه یک اتاق آزمون ساخته می‌شود.",
         "createSuccess": "آزمون ایجاد شد",
         "updateSuccess": "آزمون به‌روز شد",
         "deleteSuccess": "آزمون حذف شد",
@@ -541,6 +544,48 @@
         "descriptionPlaceholder": "توضیحات اختیاری",
         "createSuccess": "بانک ایجاد شد",
         "noActiveOrg": "ابتدا یک سازمان از نوار کناری انتخاب کنید."
+      }
+    },
+    "gradebook": {
+      "title": "کارنامه",
+      "newColumn": "ستون جدید",
+      "student": "دانش‌آموز",
+      "noResults": "هنوز ستونی در کارنامه وجود ندارد",
+      "noResultsHint": "برای ثبت نمرات یک ستون ایجاد کنید.",
+      "stats": {
+        "columns": "ستون‌ها",
+        "students": "دانش‌آموزان"
+      },
+      "types": {
+        "auto_attendance": "خودکار · حضور",
+        "auto_practice": "خودکار · تمرین",
+        "auto_quiz": "خودکار · آزمون",
+        "manual_grade": "دستی · نمره",
+        "manual_attendance": "دستی · حضور",
+        "manual_text": "دستی · متن"
+      },
+      "form": {
+        "createTitle": "ستون جدید کارنامه",
+        "createDescription": "ستونی برای ثبت نمرات یا حضور اضافه کنید.",
+        "editTitle": "ویرایش ستون",
+        "editDescription": "عنوان یا ترتیب ستون را تغییر دهید.",
+        "title": "عنوان",
+        "titlePlaceholder": "مثلاً آزمون میان‌ترم",
+        "type": "نوع",
+        "orderIndex": "ترتیب",
+        "sourcePlaceholder": "انتخاب منبع…",
+        "source": {
+          "auto_attendance": "جلسه",
+          "auto_practice": "تمرین",
+          "auto_quiz": "آزمون"
+        },
+        "createSuccess": "ستون ایجاد شد",
+        "updateSuccess": "ستون به‌روزرسانی شد",
+        "deleteSuccess": "ستون حذف شد",
+        "cellTitle": "ویرایش نمره",
+        "value": "مقدار",
+        "valuePlaceholder": "مقدار را وارد کنید",
+        "cellUpdateSuccess": "نمره به‌روزرسانی شد"
       }
     },
     "questions": {

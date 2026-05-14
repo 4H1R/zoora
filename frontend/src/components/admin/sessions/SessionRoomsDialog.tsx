@@ -68,7 +68,7 @@ export function SessionRoomsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>
             {t("admin.sessions.manageRooms.title")}
@@ -79,8 +79,8 @@ export function SessionRoomsDialog({
           <DialogDescription>{t("admin.sessions.manageRooms.description")}</DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="live">
-          <TabsList>
+        <Tabs defaultValue="live" className="min-h-0 flex-1 overflow-hidden">
+          <TabsList className="w-full max-w-full overflow-x-auto">
             <TabsTrigger value="live">
               <VideoIcon data-icon="inline-start" />
               {t("admin.sessions.manageRooms.tabs.live")}
@@ -103,7 +103,7 @@ export function SessionRoomsDialog({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="live">
+          <TabsContent value="live" className="min-h-0 overflow-y-auto">
             <RoomList
               isLoading={liveLoading}
               empty={t("admin.sessions.manageRooms.empty.live")}
@@ -126,7 +126,7 @@ export function SessionRoomsDialog({
             />
           </TabsContent>
 
-          <TabsContent value="offline">
+          <TabsContent value="offline" className="min-h-0 overflow-y-auto">
             <RoomList
               isLoading={offlineLoading}
               empty={t("admin.sessions.manageRooms.empty.offline")}
@@ -149,7 +149,7 @@ export function SessionRoomsDialog({
             />
           </TabsContent>
 
-          <TabsContent value="quiz">
+          <TabsContent value="quiz" className="min-h-0 overflow-y-auto">
             <RoomList
               isLoading={quizLoading}
               empty={t("admin.sessions.manageRooms.empty.quiz")}
@@ -172,7 +172,7 @@ export function SessionRoomsDialog({
             />
           </TabsContent>
 
-          <TabsContent value="practice">
+          <TabsContent value="practice" className="min-h-0 overflow-y-auto">
             <PracticeList
               isLoading={practiceLoading}
               empty={t("admin.sessions.manageRooms.empty.practice")}

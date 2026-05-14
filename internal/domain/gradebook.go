@@ -86,6 +86,12 @@ type GradebookMatrix struct {
 	Rows    []GradebookMatrixRow `json:"rows"`
 }
 
+// ListGradebookColumnsQuery is the query for GET /classes/:id/gradebook/columns.
+type ListGradebookColumnsQuery struct {
+	Type       *GradebookColumnType `form:"type" binding:"omitempty,oneof=auto_attendance auto_practice auto_quiz manual_grade manual_attendance manual_text"`
+	ListParams ListParams           `form:"-"`
+}
+
 // --- Interfaces ---
 
 type GradebookColumnRepository interface {
@@ -93,7 +99,8 @@ type GradebookColumnRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*GradebookColumn, error)
 	Update(ctx context.Context, col *GradebookColumn) error
 	Delete(ctx context.Context, id uuid.UUID) error
-	ListByClass(ctx context.Context, classID uuid.UUID) ([]GradebookColumn, error)
+	ListByClass(ctx context.Context, classID uuid.UUID, q ListGradebookColumnsQuery) ([]GradebookColumn, int64, error)
+	ListAllByClass(ctx context.Context, classID uuid.UUID) ([]GradebookColumn, error)
 }
 
 type GradebookCellRepository interface {
@@ -106,5 +113,6 @@ type GradebookService interface {
 	UpdateColumn(ctx context.Context, columnID uuid.UUID, dto UpdateGradebookColumnDTO) (*GradebookColumn, error)
 	DeleteColumn(ctx context.Context, columnID uuid.UUID) error
 	UpsertCell(ctx context.Context, classID, columnID uuid.UUID, dto UpsertGradebookCellDTO) (*GradebookCell, error)
+	ListColumns(ctx context.Context, classID uuid.UUID, q ListGradebookColumnsQuery) ([]GradebookColumn, int64, error)
 	GetMatrix(ctx context.Context, classID uuid.UUID) (*GradebookMatrix, error)
 }
