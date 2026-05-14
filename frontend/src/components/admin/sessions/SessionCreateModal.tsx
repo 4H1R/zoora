@@ -13,24 +13,15 @@ import {
   usePostClassesIdSessions,
   usePutClassesSessionsSessionId,
 } from "@/api/classes/classes"
-import {
-  GithubCom4H1RZooraInternalDomainCreateClassSessionDTOType as SessionType,
-} from "@/api/model"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-
-const TYPE_VALUES = ["live", "quiz", "practice"] as const
 
 const schema = z.object({
   name: z.string().min(2),
   description: z.string().optional(),
   start_time: z.string().min(1),
-  type: z.enum(TYPE_VALUES),
-  is_recordable: z.boolean().optional(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -61,8 +52,6 @@ export function SessionCreateModal({ open, onOpenChange, classId, session }: Ses
       name: "",
       description: "",
       start_time: "",
-      type: "live",
-      is_recordable: false,
     },
   })
 
@@ -73,11 +62,9 @@ export function SessionCreateModal({ open, onOpenChange, classId, session }: Ses
         name: session.name ?? "",
         description: session.description ?? "",
         start_time: isoToLocalInput(session.start_time),
-        type: (session.type as FormValues["type"]) ?? "live",
-        is_recordable: !!session.is_recordable,
       })
     } else {
-      form.reset({ name: "", description: "", start_time: "", type: "live", is_recordable: false })
+      form.reset({ name: "", description: "", start_time: "" })
     }
   }, [open, session, isEdit])
 
@@ -106,8 +93,6 @@ export function SessionCreateModal({ open, onOpenChange, classId, session }: Ses
   })
 
   const isLoading = createMutation.isPending || updateMutation.isPending
-  const selectedType = form.watch("type")
-  const isRecordable = form.watch("is_recordable")
   const errors = form.formState.errors
 
   const onSubmit = form.handleSubmit((values) => {
@@ -119,8 +104,6 @@ export function SessionCreateModal({ open, onOpenChange, classId, session }: Ses
           name: values.name,
           description: values.description,
           start_time: startISO,
-          type: values.type as SessionType,
-          is_recordable: values.is_recordable,
         },
       })
     } else {
@@ -130,8 +113,6 @@ export function SessionCreateModal({ open, onOpenChange, classId, session }: Ses
           name: values.name,
           description: values.description,
           start_time: startISO,
-          type: values.type as SessionType,
-          is_recordable: values.is_recordable,
         },
       })
     }
@@ -172,36 +153,6 @@ export function SessionCreateModal({ open, onOpenChange, classId, session }: Ses
           <FieldLabel>{t("admin.sessions.form.startTime")}</FieldLabel>
           <Input type="datetime-local" {...form.register("start_time")} />
           <FieldError errors={[errors.start_time]} />
-        </Field>
-
-        <Field data-invalid={!!errors.type || undefined}>
-          <FieldLabel>{t("admin.sessions.form.type")}</FieldLabel>
-          <Select
-            value={selectedType}
-            onValueChange={(v) => form.setValue("type", v as FormValues["type"], { shouldValidate: true })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t("admin.sessions.form.typePlaceholder")} />
-            </SelectTrigger>
-            <SelectContent>
-              {TYPE_VALUES.map((v) => (
-                <SelectItem key={v} value={v}>
-                  {t(`admin.sessions.types.${v}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <FieldError errors={[errors.type]} />
-        </Field>
-
-        <Field orientation="horizontal">
-          <Checkbox
-            checked={!!isRecordable}
-            onCheckedChange={(checked) => form.setValue("is_recordable", !!checked, { shouldValidate: true })}
-          />
-          <FieldLabel className="cursor-pointer text-start">
-            {t("admin.sessions.form.isRecordable")}
-          </FieldLabel>
         </Field>
       </FieldGroup>
     </ResourceFormDialog>

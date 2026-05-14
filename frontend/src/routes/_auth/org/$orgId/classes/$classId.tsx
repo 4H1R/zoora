@@ -18,7 +18,6 @@ import {
   usePostClassesIdSessions,
 } from "@/api/classes/classes"
 import { getLiveRooms, usePostLiveRooms } from "@/api/live-sessions/live-sessions"
-import { GithubCom4H1RZooraInternalDomainCreateClassSessionDTOType as SessionType } from "@/api/model"
 
 export const Route = createFileRoute("/_auth/org/$orgId/classes/$classId")({
   head: () => orgHead("org.nav.classes"),
@@ -28,7 +27,6 @@ export const Route = createFileRoute("/_auth/org/$orgId/classes/$classId")({
 const sessionSchema = z.object({
   name: z.string().min(2),
   start_time: z.string().min(1),
-  type: z.enum(["live", "quiz", "practice"]),
 })
 
 type SessionFormValues = z.infer<typeof sessionSchema>
@@ -90,7 +88,7 @@ function RouteComponent() {
     formState: { errors },
   } = useForm<SessionFormValues>({
     resolver: zodResolver(sessionSchema),
-    defaultValues: { name: "", start_time: "", type: "live" },
+    defaultValues: { name: "", start_time: "" },
   })
 
   const createMutation = usePostClassesIdSessions({
@@ -109,7 +107,6 @@ function RouteComponent() {
       data: {
         name: values.name,
         start_time: new Date(values.start_time).toISOString(),
-        type: values.type as SessionType,
       },
     })
   })
@@ -136,14 +133,6 @@ function RouteComponent() {
             <input type="datetime-local" {...register("start_time")} />
             {errors.start_time && <span>{errors.start_time.message}</span>}
           </div>
-          <div>
-            <label>{t("classes.sessions.form.type")}</label>
-            <select {...register("type")}>
-              <option value="live">{t("classes.sessions.types.live")}</option>
-              <option value="quiz">{t("classes.sessions.types.quiz")}</option>
-              <option value="practice">{t("classes.sessions.types.practice")}</option>
-            </select>
-          </div>
           <button type="submit" disabled={createMutation.isPending}>
             {t("common.create")}
           </button>
@@ -161,8 +150,8 @@ function RouteComponent() {
         <ul>
           {sessions.map((s) => (
             <li key={s.id}>
-              <strong>{s.name}</strong> — {s.type} — {s.start_time}
-              {s.type === "live" && <LiveSessionButton session={s} />}
+              <strong>{s.name}</strong> — {s.start_time}
+              <LiveSessionButton session={s} />
             </li>
           ))}
         </ul>
