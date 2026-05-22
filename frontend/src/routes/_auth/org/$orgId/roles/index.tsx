@@ -27,6 +27,7 @@ import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { adminSearchSchema, useAdminTable } from "@/lib/data-table"
+import { useRoleName } from "@/lib/permissions"
 
 import { useRoleColumns } from "./-columns"
 import { RoleFormDialog } from "./-role-form-dialog"
@@ -41,6 +42,8 @@ function RolesPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { orgId } = Route.useParams()
+  const { search } = Route.useSearch()
+  const roleName = useRoleName()
   const allowed = useOrgGuard("roles:view")
 
   const [formOpen, setFormOpen] = useState(false)
@@ -76,8 +79,17 @@ function RolesPage() {
     },
   })
 
-  const roles = (data?.status === 200 && data.data.data) || []
+  const allRoles = (data?.status === 200 && data.data.data) || []
   const stats = (statsData?.status === 200 && statsData.data.data) || undefined
+
+  const q = (search ?? "").trim().toLowerCase()
+  const roles = q
+    ? allRoles.filter((r) => {
+        const raw = (r.name ?? "").toLowerCase()
+        const label = (r.name ? roleName(r.name) : "").toLowerCase()
+        return raw.includes(q) || label.includes(q)
+      })
+    : allRoles
 
   const columns = useRoleColumns({ onEdit: handleEdit, onDelete: handleDelete })
 

@@ -36,11 +36,12 @@ function UsersPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { orgId } = Route.useParams()
-  const { page, page_size } = Route.useSearch()
+  const { search, order_by, order_dir, page, page_size } = Route.useSearch()
   const allowed = useOrgGuard(["users:view", "users:view_any"])
 
   const currentPage = page ?? 1
   const pageSize = page_size ?? 8
+  const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
@@ -61,6 +62,9 @@ function UsersPage() {
   }
 
   const { data, isLoading } = useGetUsers({
+    search: search || undefined,
+    order_by: order_by || undefined,
+    order_dir: order_dir || undefined,
     page: currentPage,
     page_size: pageSize,
   })
@@ -87,7 +91,7 @@ function UsersPage() {
     data: users,
     columns,
     rowCount: total,
-    sorting: [],
+    sorting,
   })
 
   const statCards = [
