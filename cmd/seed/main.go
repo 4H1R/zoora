@@ -321,12 +321,29 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 				domain.QuestionTypeChoice,
 			}
 			var bankQuestions []*domain.Question
-			for _, qt := range questionTypes {
+			for i, qt := range questionTypes {
 				q := factory.NewQuestion(bank.ID, org.ID, func(q *domain.Question) {
 					q.Type = qt
 				})
 				if err := db.WithContext(ctx).Create(q).Error; err != nil {
 					return nil, fmt.Errorf("creating question: %w", err)
+				}
+				if i == 0 {
+					photo := factory.NewMedia(func(m *domain.Media) {
+						m.ModelType = domain.QuestionMediaModelType
+						m.ModelID = q.ID
+						m.CollectionName = domain.QuestionPhotosCollection
+						m.MimeType = "image/png"
+						m.FileName = "diagram.png"
+					})
+					if err := db.WithContext(ctx).Create(photo).Error; err != nil {
+						return nil, fmt.Errorf("creating question photo: %w", err)
+					}
+					counts.Media++
+					q.Metadata = []domain.QuestionMetadata{{Type: domain.QuestionMetadataPhoto, MediaID: photo.ID}}
+					if err := db.WithContext(ctx).Save(q).Error; err != nil {
+						return nil, fmt.Errorf("updating question metadata: %w", err)
+					}
 				}
 				bankQuestions = append(bankQuestions, q)
 				counts.Questions++
@@ -400,6 +417,15 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 				return nil, fmt.Errorf("creating quiz rule: %w", err)
 			}
 			counts.QuizRules++
+
+			var quizTotal float64
+			for _, q := range bankQuestions {
+				quizTotal += q.MaxScore()
+			}
+			quiz.TotalScore = quizTotal
+			if err := db.WithContext(ctx).Save(quiz).Error; err != nil {
+				return nil, fmt.Errorf("updating quiz total_score: %w", err)
+			}
 
 			// 13. QuizRoom
 			room := factory.NewQuizRoom(quiz.ID, quizSession.ID)

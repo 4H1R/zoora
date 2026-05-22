@@ -33,6 +33,7 @@ type Quiz struct {
 	Title           string         `gorm:"not null" json:"title"`
 	Description     string         `json:"description"`
 	DurationMinutes int            `gorm:"not null" json:"duration_minutes"`
+	TotalScore      float64        `gorm:"not null;default:0" json:"total_score"`
 	CreatedAt       time.Time      `json:"created_at"`
 	UpdatedAt       time.Time      `json:"updated_at"`
 	DeletedAt       gorm.DeletedAt `gorm:"index" json:"-"`

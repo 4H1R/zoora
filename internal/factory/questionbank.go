@@ -41,22 +41,35 @@ func NewQuestion(bankID, orgID uuid.UUID, opts ...func(*domain.Question)) *domai
 		OrganizationID: orgID,
 		Text:           fmt.Sprintf("%s? (%d)", fake.Question(), id),
 		Type:           questionTypes[id%3],
+		Metadata:       []domain.QuestionMetadata{},
 	}
 	for _, o := range opts {
 		o(q)
 	}
-	if q.Type == domain.QuestionTypeChoice && len(q.Options) == 0 {
-		count := fake.IntRange(3, 5)
-		q.Options = make([]domain.QuestionOption, count)
-		for i := range count {
-			q.Options[i] = NewQuestionOption()
-			if i == 0 {
-				q.Options[i].Score = float64(fake.IntRange(1, 5))
+	if len(q.Options) == 0 {
+		switch q.Type {
+		case domain.QuestionTypeChoice:
+			count := fake.IntRange(3, 5)
+			q.Options = make([]domain.QuestionOption, count)
+			for i := range count {
+				q.Options[i] = NewQuestionOption()
 			}
+			q.Options[0].Score = float64(fake.IntRange(1, 5))
+		case domain.QuestionTypeShortAnswer:
+			opt := NewQuestionOption()
+			if opt.Score <= 0 {
+				opt.Score = float64(fake.IntRange(1, 5))
+			}
+			q.Options = []domain.QuestionOption{opt}
+		case domain.QuestionTypeDescriptive:
+			q.Options = []domain.QuestionOption{{
+				ID:    uuid.New().String(),
+				Score: float64(fake.IntRange(1, 5)),
+			}}
 		}
 	}
-	if q.Type != domain.QuestionTypeChoice {
-		q.Options = []domain.QuestionOption{}
+	if q.Metadata == nil {
+		q.Metadata = []domain.QuestionMetadata{}
 	}
 	return q
 }

@@ -551,6 +551,8 @@ export * from './githubCom4H1RZooraInternalDomainPresignUploadDTO';
 export * from './githubCom4H1RZooraInternalDomainPresignUploadResponse';
 export * from './githubCom4H1RZooraInternalDomainQuestion';
 export * from './githubCom4H1RZooraInternalDomainQuestionBank';
+export * from './githubCom4H1RZooraInternalDomainQuestionMetadata';
+export * from './githubCom4H1RZooraInternalDomainQuestionMetadataType';
 export * from './githubCom4H1RZooraInternalDomainQuestionOption';
 export * from './githubCom4H1RZooraInternalDomainQuestionType';
 export * from './githubCom4H1RZooraInternalDomainQuiz';

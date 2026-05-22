@@ -2,7 +2,10 @@ package questionbanks
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -12,15 +15,45 @@ import (
 type service struct {
 	repo      domain.QuestionBankRepository
 	questions domain.QuestionRepository
+	media     domain.MediaRepository
 	logger    *slog.Logger
 }
 
 func NewService(
 	repo domain.QuestionBankRepository,
 	questions domain.QuestionRepository,
+	media domain.MediaRepository,
 	logger *slog.Logger,
 ) domain.QuestionBankService {
-	return &service{repo: repo, questions: questions, logger: logger}
+	return &service{repo: repo, questions: questions, media: media, logger: logger}
+}
+
+func (s *service) validateMetadataMedia(ctx context.Context, items []domain.QuestionMetadata) error {
+	if err := domain.ValidateQuestionMetadata(items); err != nil {
+		return err
+	}
+	for i, item := range items {
+		m, err := s.media.FindByID(ctx, item.MediaID)
+		if err != nil {
+			if errors.Is(err, domain.ErrNotFound) {
+				return domain.NewValidationError(map[string]string{
+					fmt.Sprintf("metadata[%d].media_id", i): "media not found",
+				})
+			}
+			return err
+		}
+		if m.ModelType != domain.QuestionMediaModelType {
+			return domain.NewValidationError(map[string]string{
+				fmt.Sprintf("metadata[%d].media_id", i): "media must belong to a question",
+			})
+		}
+		if item.Type == domain.QuestionMetadataPhoto && !strings.HasPrefix(m.MimeType, "image/") {
+			return domain.NewValidationError(map[string]string{
+				fmt.Sprintf("metadata[%d].media_id", i): "media is not an image",
+			})
+		}
+	}
+	return nil
 }
 
 func canManageBank(caller domain.Caller, bank *domain.QuestionBank) bool {
@@ -185,12 +218,23 @@ func (s *service) CreateQuestion(ctx context.Context, bankID uuid.UUID, dto doma
 	if !canManageBank(caller, bank) {
 		return nil, domain.ErrForbidden
 	}
+	if err := domain.ValidateQuestionOptions(dto.Type, dto.Options); err != nil {
+		return nil, err
+	}
+	if err := s.validateMetadataMedia(ctx, dto.Metadata); err != nil {
+		return nil, err
+	}
+	metadata := dto.Metadata
+	if metadata == nil {
+		metadata = []domain.QuestionMetadata{}
+	}
 	question := &domain.Question{
 		BankID:         bankID,
 		OrganizationID: bank.OrganizationID,
 		Text:           dto.Text,
 		Type:           dto.Type,
 		Options:        dto.Options,
+		Metadata:       metadata,
 	}
 	if err := s.questions.Create(ctx, question); err != nil {
 		return nil, err
@@ -241,6 +285,17 @@ func (s *service) UpdateQuestion(ctx context.Context, id uuid.UUID, dto domain.U
 	}
 	if dto.Options != nil {
 		question.Options = dto.Options
+	}
+	if dto.Options != nil || dto.Type != nil {
+		if err := domain.ValidateQuestionOptions(question.Type, question.Options); err != nil {
+			return nil, err
+		}
+	}
+	if dto.Metadata != nil {
+		if err := s.validateMetadataMedia(ctx, dto.Metadata); err != nil {
+			return nil, err
+		}
+		question.Metadata = dto.Metadata
 	}
 	if err := s.questions.Update(ctx, question); err != nil {
 		return nil, err

@@ -195,6 +195,14 @@ func (r *questionRepository) ListByBank(ctx context.Context, bankID uuid.UUID, q
 	return questions, total, nil
 }
 
+func (r *questionRepository) ListAllByBank(ctx context.Context, bankID uuid.UUID) ([]domain.Question, error) {
+	var questions []domain.Question
+	if err := r.baseQuery(ctx).Where("bank_id = ?", bankID).Find(&questions).Error; err != nil {
+		return nil, fmt.Errorf("questionbanks.questionRepository.ListAllByBank: %w", err)
+	}
+	return questions, nil
+}
+
 func (r *questionRepository) FindByIDs(ctx context.Context, ids []uuid.UUID) ([]domain.Question, error) {
 	var questions []domain.Question
 	if err := r.baseQuery(ctx).Where("id IN ?", ids).Find(&questions).Error; err != nil {

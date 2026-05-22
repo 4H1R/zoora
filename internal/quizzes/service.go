@@ -247,6 +247,9 @@ func (s *service) CreateRule(ctx context.Context, quizID uuid.UUID, dto domain.C
 	if err := s.rules.Create(ctx, rule); err != nil {
 		return nil, err
 	}
+	if err := s.recomputeQuizTotal(ctx, quizID); err != nil {
+		s.logger.Warn("failed to recompute quiz total", "quiz_id", quizID.String(), "err", err)
+	}
 	return rule, nil
 }
 
@@ -307,6 +310,9 @@ func (s *service) UpdateRule(ctx context.Context, id uuid.UUID, dto domain.Updat
 	if err := s.rules.Update(ctx, rule); err != nil {
 		return nil, err
 	}
+	if err := s.recomputeQuizTotal(ctx, rule.QuizID); err != nil {
+		s.logger.Warn("failed to recompute quiz total", "quiz_id", rule.QuizID.String(), "err", err)
+	}
 	return rule, nil
 }
 
@@ -326,7 +332,63 @@ func (s *service) DeleteRule(ctx context.Context, id uuid.UUID) error {
 	if !canManageQuiz(caller, quiz) {
 		return domain.ErrForbidden
 	}
-	return s.rules.Delete(ctx, id)
+	if err := s.rules.Delete(ctx, id); err != nil {
+		return err
+	}
+	if err := s.recomputeQuizTotal(ctx, rule.QuizID); err != nil {
+		s.logger.Warn("failed to recompute quiz total", "quiz_id", rule.QuizID.String(), "err", err)
+	}
+	return nil
+}
+
+// recomputeQuizTotal aggregates the max score of every question wired into
+// the quiz's rules and persists it on the quiz row.
+func (s *service) recomputeQuizTotal(ctx context.Context, quizID uuid.UUID) error {
+	rules, _, err := s.rules.ListByQuiz(ctx, quizID, domain.ListParams{Page: 1, PageSize: 10000})
+	if err != nil {
+		return err
+	}
+	var total float64
+	for _, r := range rules {
+		switch r.Type {
+		case domain.QuizRuleTypeManual:
+			if len(r.QuestionIDs) == 0 {
+				continue
+			}
+			qs, err := s.questions.FindByIDs(ctx, r.QuestionIDs)
+			if err != nil {
+				return err
+			}
+			for i := range qs {
+				total += qs[i].MaxScore()
+			}
+		case domain.QuizRuleTypeRandom:
+			if r.BankID == nil || r.Count == 0 {
+				continue
+			}
+			all, err := s.questions.ListAllByBank(ctx, *r.BankID)
+			if err != nil {
+				return err
+			}
+			if len(all) == 0 {
+				continue
+			}
+			var sum float64
+			for i := range all {
+				sum += all[i].MaxScore()
+			}
+			total += (sum / float64(len(all))) * float64(r.Count)
+		}
+	}
+	quiz, err := s.repo.FindByID(ctx, quizID)
+	if err != nil {
+		return err
+	}
+	if quiz.TotalScore == total {
+		return nil
+	}
+	quiz.TotalScore = total
+	return s.repo.Update(ctx, quiz)
 }
 
 func (s *service) ListRules(ctx context.Context, quizID uuid.UUID, q domain.ListQuizRulesQuery) ([]domain.QuizRule, int64, error) {

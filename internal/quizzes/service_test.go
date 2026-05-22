@@ -171,6 +171,11 @@ func (m *mQRepo) FindByIDs(ctx context.Context, ids []uuid.UUID) ([]domain.Quest
 	qs, _ := a.Get(0).([]domain.Question)
 	return qs, a.Error(1)
 }
+func (m *mQRepo) ListAllByBank(ctx context.Context, bankID uuid.UUID) ([]domain.Question, error) {
+	a := m.Called(ctx, bankID)
+	qs, _ := a.Get(0).([]domain.Question)
+	return qs, a.Error(1)
+}
 func (m *mQRepo) CountByBank(ctx context.Context, bankID uuid.UUID) (int64, error) {
 	a := m.Called(ctx, bankID)
 	return a.Get(0).(int64), a.Error(1)
@@ -182,6 +187,11 @@ func (m *mQRepo) RandomByBank(ctx context.Context, bankID uuid.UUID, count int) 
 }
 func (m *mQRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
+}
+func (m *mQRepo) AdminList(ctx context.Context, q domain.AdminListQuestionsQuery) ([]domain.Question, int64, error) {
+	a := m.Called(ctx, q)
+	qs, _ := a.Get(0).([]domain.Question)
+	return qs, a.Get(1).(int64), a.Error(2)
 }
 
 type mClassRepo struct{ mock.Mock }

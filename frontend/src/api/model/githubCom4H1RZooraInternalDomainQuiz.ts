@@ -17,6 +17,7 @@ export interface GithubCom4H1RZooraInternalDomainQuiz {
   id?: string;
   organization_id?: string;
   title?: string;
+  total_score?: number;
   updated_at?: string;
   user?: GithubCom4H1RZooraInternalDomainUser;
   user_id?: string;

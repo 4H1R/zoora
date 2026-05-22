@@ -134,7 +134,7 @@ func main() {
 	userService := users.NewService(userRepo, roleRepo, log)
 	orgService := organizations.NewService(orgRepo, userRepo, log)
 	classService := classes.NewService(classRepo, classSessionRepo, classMemberRepo, log)
-	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, log)
+	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, log)
 	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, log)
 	transactor := database.NewTransactor(db)
 	roleService := roles.NewService(roleRepo, permRepo, transactor, redisClient, log)
