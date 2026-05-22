@@ -634,6 +634,7 @@
       "student": "دانش‌آموز",
       "status": "وضعیت",
       "score": "نمره",
+      "scoreOf": "از {{max}}",
       "submittedAt": "زمان ارسال",
       "startedAt": "شروع",
       "noResults": "پاسخ‌نامه‌ای یافت نشد",

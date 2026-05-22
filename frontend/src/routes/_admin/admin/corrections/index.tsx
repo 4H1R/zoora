@@ -66,6 +66,9 @@ function CorrectionsPage() {
   const submissions = subsData?.items ?? []
   const total = subsData?.total ?? 0
 
+  const selectedQuiz = quizzes.find((q) => q.id === quizId)
+  const quizMaxScore = selectedQuiz?.total_score
+
   const pendingCount = submissions.filter((s) => s.status === "submitted").length
   const gradedCount = submissions.filter((s) => s.status === "graded").length
 
@@ -191,6 +194,7 @@ function CorrectionsPage() {
           isLoading={subsLoading}
           sorting={sorting}
           onGrade={handleGrade}
+          quizMaxScore={quizMaxScore}
         />
       ) : (
         <Card className="text-muted-foreground flex flex-col items-center gap-3 p-8 text-center text-sm">
@@ -209,6 +213,7 @@ function CorrectionsPage() {
         }}
         submission={activeSubmission}
         quizId={quizId}
+        quizMaxScore={quizMaxScore}
       />
     </div>
   )

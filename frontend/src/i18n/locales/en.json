@@ -634,6 +634,7 @@
       "student": "Student",
       "status": "Status",
       "score": "Score",
+      "scoreOf": "of {{max}}",
       "submittedAt": "Submitted",
       "startedAt": "Started",
       "noResults": "No submissions found",

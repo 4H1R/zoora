@@ -27,12 +27,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
 
 interface GradeSubmissionDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   submission: QuizSubmission | null
   quizId?: string
+  quizMaxScore?: number
 }
 
 export function GradeSubmissionDialog({
@@ -40,6 +42,7 @@ export function GradeSubmissionDialog({
   onOpenChange,
   submission,
   quizId,
+  quizMaxScore,
 }: GradeSubmissionDialogProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -88,16 +91,23 @@ export function GradeSubmissionDialog({
 
   const totalScore = Object.values(scores).reduce((sum, v) => sum + (Number.isFinite(v) ? v : 0), 0)
 
+  const answers = submission?.answers ?? []
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="w-[calc(100%-2rem)] !max-w-6xl">
         <DialogHeader>
-          <DialogTitle>
-            {t("admin.corrections.dialog.title")}
+          <DialogTitle className="flex flex-wrap items-center gap-2">
+            <span>{t("admin.corrections.dialog.title")}</span>
             {submission?.user?.name && (
-              <span className="text-muted-foreground ms-2 text-sm font-normal">
-                · {submission.user.name}
-              </span>
+              <Badge variant="secondary" className="text-xs font-normal">
+                {submission.user.name}
+              </Badge>
+            )}
+            {answers.length > 0 && (
+              <Badge variant="outline" className="text-xs font-normal">
+                {answers.length} {t("admin.corrections.dialog.answer")}
+              </Badge>
             )}
           </DialogTitle>
           <DialogDescription>
@@ -105,8 +115,8 @@ export function GradeSubmissionDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[60vh] space-y-3 overflow-y-auto pe-1">
-          {(submission?.answers ?? []).map((answer, idx) => (
+        <div className="max-h-[70vh] space-y-4 overflow-y-auto pe-1">
+          {answers.map((answer, idx) => (
             <AnswerRow
               key={answer.question_id ?? idx}
               index={idx}
@@ -118,7 +128,7 @@ export function GradeSubmissionDialog({
               }}
             />
           ))}
-          {(!submission?.answers || submission.answers.length === 0) && (
+          {answers.length === 0 && (
             <div className="text-muted-foreground rounded-md border px-3 py-6 text-center text-sm">
               {t("admin.corrections.dialog.noAnswer")}
             </div>
@@ -129,6 +139,11 @@ export function GradeSubmissionDialog({
           <div className="text-sm">
             <span className="text-muted-foreground">{t("admin.corrections.dialog.totalScore")}:</span>{" "}
             <span className="font-semibold tabular-nums">{totalScore.toFixed(2)}</span>
+            {quizMaxScore != null && quizMaxScore > 0 && (
+              <span className="text-muted-foreground ms-1 tabular-nums">
+                {t("admin.corrections.scoreOf", { max: quizMaxScore.toFixed(2) })}
+              </span>
+            )}
           </div>
           <Button onClick={handleSave} disabled={gradeMutation.isPending || !submission?.id}>
             {t("admin.corrections.dialog.save")}
@@ -154,27 +169,54 @@ function AnswerRow({ index, answer, score, onScoreChange }: AnswerRowProps) {
   )
   const question: Question | undefined = data?.status === 200 ? data.data.data : undefined
 
-  const maxScore = (question?.options ?? []).reduce((sum, o) => sum + (o.score ?? 0), 0)
+  const maxScore = (question?.options ?? []).reduce(
+    (sum, o) => sum + Math.max(0, o.score ?? 0),
+    0
+  )
 
   return (
-    <div className="rounded-lg border p-3">
-      <div className="mb-2 flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="text-muted-foreground mb-1 flex items-center gap-2 text-xs">
-            <span>#{index + 1}</span>
-            {question?.type && (
-              <Badge variant="secondary" className="text-xs">
-                {t(`admin.questions.types.${question.type}`)}
-              </Badge>
-            )}
-            {answer.spent_seconds != null && (
-              <span className="tabular-nums">
-                {t("admin.corrections.dialog.spent")}: {answer.spent_seconds}
-                {t("admin.corrections.dialog.secondsShort")}
-              </span>
-            )}
+    <div className="bg-card rounded-lg border shadow-sm">
+      <div className="bg-muted/40 flex flex-wrap items-center justify-between gap-3 rounded-t-lg border-b px-4 py-2">
+        <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
+          <span className="bg-background rounded px-1.5 py-0.5 font-semibold tabular-nums">
+            #{index + 1}
+          </span>
+          {question?.type && (
+            <Badge variant="secondary" className="text-xs">
+              {t(`admin.questions.types.${question.type}`)}
+            </Badge>
+          )}
+          {answer.spent_seconds != null && (
+            <span className="tabular-nums">
+              {t("admin.corrections.dialog.spent")}: {answer.spent_seconds}
+              {t("admin.corrections.dialog.secondsShort")}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-muted-foreground text-xs">
+            {t("admin.corrections.dialog.score")}
+          </label>
+          <Input
+            type="number"
+            step="0.5"
+            min={0}
+            value={score}
+            onChange={(e) => onScoreChange(Number(e.target.value))}
+            className="h-8 w-24 text-end tabular-nums"
+          />
+          {maxScore > 0 && (
+            <span className="text-muted-foreground text-xs tabular-nums">/ {maxScore}</span>
+          )}
+        </div>
+      </div>
+
+      <div className="grid gap-4 p-4 lg:grid-cols-2">
+        <section>
+          <div className="text-muted-foreground mb-1.5 text-xs font-medium uppercase tracking-wide">
+            {t("admin.questions.title")}
           </div>
-          <div className="text-sm">
+          <div className="text-sm whitespace-pre-wrap break-words">
             {isLoading ? (
               <span className="text-muted-foreground">{t("admin.corrections.dialog.loading")}</span>
             ) : question?.text ? (
@@ -183,30 +225,39 @@ function AnswerRow({ index, answer, score, onScoreChange }: AnswerRowProps) {
               <span className="text-muted-foreground">{t("admin.corrections.dialog.questionMissing")}</span>
             )}
           </div>
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          <label className="text-muted-foreground text-xs">
-            {t("admin.corrections.dialog.score")}
-          </label>
-          <div className="flex items-center gap-1">
-            <Input
-              type="number"
-              step="0.5"
-              min={0}
-              value={score}
-              onChange={(e) => onScoreChange(Number(e.target.value))}
-              className="w-24 text-end tabular-nums"
-            />
-            {maxScore > 0 && (
-              <span className="text-muted-foreground text-xs tabular-nums">/ {maxScore}</span>
-            )}
-          </div>
-        </div>
-      </div>
+          {question?.options && question.options.length > 0 && (
+            <ul className="mt-3 space-y-1">
+              {question.options.map((o) => {
+                const isCorrect = (o.score ?? 0) > 0
+                return (
+                  <li
+                    key={o.id ?? o.value}
+                    className={cn(
+                      "rounded-md border px-2 py-1 text-xs",
+                      isCorrect
+                        ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    <span className="me-2">{o.value}</span>
+                    {(o.score ?? 0) !== 0 && (
+                      <span className="tabular-nums opacity-70">({o.score})</span>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </section>
 
-      <div className="text-muted-foreground bg-muted/40 rounded-md px-3 py-2 text-xs">
-        <div className="mb-1 font-medium">{t("admin.corrections.dialog.answer")}</div>
-        {renderAnswer(answer, question, t)}
+        <section>
+          <div className="text-muted-foreground mb-1.5 text-xs font-medium uppercase tracking-wide">
+            {t("admin.corrections.dialog.answer")}
+          </div>
+          <div className="bg-muted/30 min-h-[3rem] rounded-md border px-3 py-2 text-sm">
+            {renderAnswer(answer, question, t)}
+          </div>
+        </section>
       </div>
     </div>
   )

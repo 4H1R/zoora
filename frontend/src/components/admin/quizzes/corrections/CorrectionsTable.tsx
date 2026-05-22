@@ -19,6 +19,7 @@ interface CorrectionsTableProps {
   isLoading: boolean
   sorting: SortingState
   onGrade: (s: QuizSubmission) => void
+  quizMaxScore?: number
 }
 
 export function CorrectionsTable({
@@ -27,6 +28,7 @@ export function CorrectionsTable({
   isLoading,
   sorting,
   onGrade,
+  quizMaxScore,
 }: CorrectionsTableProps) {
   const { t } = useTranslation()
   const formatDate = useFormatDate()
@@ -82,6 +84,11 @@ export function CorrectionsTable({
       cell: ({ row }) => (
         <span className="text-sm font-medium tabular-nums">
           {(row.original.total_score ?? 0).toFixed(2)}
+          {quizMaxScore != null && quizMaxScore > 0 && (
+            <span className="text-muted-foreground ms-1 font-normal">
+              {t("admin.corrections.scoreOf", { max: quizMaxScore.toFixed(2) })}
+            </span>
+          )}
         </span>
       ),
       enableSorting: true,
