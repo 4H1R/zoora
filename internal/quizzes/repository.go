@@ -72,7 +72,8 @@ func (r *quizRepository) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 func (r *quizRepository) List(ctx context.Context, scope domain.QuizListScope, p domain.ListParams) ([]domain.Quiz, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.Quiz{})
+	db := database.DB(ctx, r.db)
+	base := db.Model(&domain.Quiz{})
 	if scope.IncludeDeleted {
 		base = base.Unscoped()
 	}
@@ -81,6 +82,12 @@ func (r *quizRepository) List(ctx context.Context, scope domain.QuizListScope, p
 	}
 	if scope.ClassID != nil {
 		base = base.Where("class_id = ?", *scope.ClassID)
+	}
+	if scope.ClassSessionID != nil {
+		sub := db.Table("quiz_rooms").
+			Select("quiz_id").
+			Where("class_session_id = ?", *scope.ClassSessionID)
+		base = base.Where("id IN (?)", sub)
 	}
 	if !scope.All {
 		switch {
@@ -129,12 +136,19 @@ func (r *quizRepository) FindByIDIncludingDeleted(ctx context.Context, id uuid.U
 }
 
 func (r *quizRepository) AdminList(ctx context.Context, q domain.AdminListQuizzesQuery) ([]domain.Quiz, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.Quiz{})
+	db := database.DB(ctx, r.db)
+	base := db.Model(&domain.Quiz{})
 	if q.IncludeDeleted {
 		base = base.Unscoped()
 	}
 	if q.ClassID != nil {
 		base = base.Where("class_id = ?", *q.ClassID)
+	}
+	if q.ClassSessionID != nil {
+		sub := db.Table("quiz_rooms").
+			Select("quiz_id").
+			Where("class_session_id = ?", *q.ClassSessionID)
+		base = base.Where("id IN (?)", sub)
 	}
 	if q.UserID != nil {
 		base = base.Where("user_id = ?", *q.UserID)

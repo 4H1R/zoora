@@ -21,9 +21,10 @@ interface ClassPickerProps {
   value?: string
   onChange: (id: string) => void
   placeholder?: string
+  disabled?: boolean
 }
 
-export function ClassPicker({ value, onChange, placeholder }: ClassPickerProps) {
+export function ClassPicker({ value, onChange, placeholder, disabled }: ClassPickerProps) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState("")
@@ -34,10 +35,15 @@ export function ClassPicker({ value, onChange, placeholder }: ClassPickerProps) 
   const selected = classes.find((c) => c.id === value)
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(o) => !disabled && setOpen(o)}>
       <PopoverTrigger
         render={
-          <Button variant="outline" role="combobox" className="w-full justify-between font-normal" />
+          <Button
+            variant="outline"
+            role="combobox"
+            disabled={disabled}
+            className="w-full justify-between font-normal"
+          />
         }
       >
         {selected ? (
@@ -94,13 +100,22 @@ interface SessionPickerProps {
   value?: string
   onChange: (id: string) => void
   placeholder?: string
+  disabled?: boolean
 }
 
-export function SessionPicker({ classId, value, onChange, placeholder }: SessionPickerProps) {
+export function SessionPicker({
+  classId,
+  value,
+  onChange,
+  placeholder,
+  disabled,
+}: SessionPickerProps) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [debouncedSearch] = useDebounce(search, 300)
+
+  const isDisabled = disabled || !classId
 
   const { data } = useGetClassesIdSessions(
     classId ?? "",
@@ -111,13 +126,13 @@ export function SessionPicker({ classId, value, onChange, placeholder }: Session
   const selected = sessions.find((s) => s.id === value)
 
   return (
-    <Popover open={open} onOpenChange={(o) => classId && setOpen(o)}>
+    <Popover open={open} onOpenChange={(o) => !isDisabled && setOpen(o)}>
       <PopoverTrigger
         render={
           <Button
             variant="outline"
             role="combobox"
-            disabled={!classId}
+            disabled={isDisabled}
             className="w-full justify-between font-normal"
           />
         }

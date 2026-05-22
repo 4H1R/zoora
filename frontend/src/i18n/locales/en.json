@@ -518,6 +518,12 @@
       "createdAt": "Created",
       "noResults": "No quizzes found",
       "noResultsHint": "Create the first quiz for this class.",
+      "filter": {
+        "class": "Class",
+        "session": "Session",
+        "clear": "Clear filters",
+        "selectSessionFirst": "Select a session to view quizzes."
+      },
       "stats": {
         "total": "Total quizzes"
       },

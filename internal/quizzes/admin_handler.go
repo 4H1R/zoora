@@ -39,6 +39,7 @@ func (h *AdminHandler) RegisterAdminRoutes(group *gin.RouterGroup) {
 // @Produce json
 // @Security BearerAuth
 // @Param class_id query string false "Filter by class UUID"
+// @Param class_session_id query string false "Filter by class session UUID (matches quizzes with a quiz_room in that session)"
 // @Param user_id query string false "Filter by owner UUID"
 // @Param include_deleted query bool false "Include soft-deleted rows"
 // @Param search query string false "Substring match on title/description"
@@ -57,8 +58,9 @@ func (h *AdminHandler) List(c *gin.Context) {
 		return
 	}
 	if err := httpx.BindUUIDQueries(c, map[string]**uuid.UUID{
-		"class_id": &q.ClassID,
-		"user_id":  &q.UserID,
+		"class_id":         &q.ClassID,
+		"class_session_id": &q.ClassSessionID,
+		"user_id":          &q.UserID,
 	}); err != nil {
 		_ = c.Error(err)
 		return

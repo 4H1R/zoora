@@ -7,12 +7,14 @@ import { useTranslation } from "react-i18next"
 
 import { useGetClassesId } from "@/api/classes/classes"
 import { useGetQuizzes } from "@/api/quizzes/quizzes"
+import { ClassPicker, SessionPicker } from "@/components/admin/forms/ClassSessionPicker"
 import { QuizCreateModal } from "@/components/admin/quizzes/QuizCreateModal"
 import { QuizQuestionsDialog } from "@/components/admin/quizzes/QuizQuestionsDialog"
 import { QuizTable } from "@/components/admin/quizzes/QuizTable"
 import { StatCards } from "@/components/data-table/stat-cards"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 import { adminHead } from "@/lib/admin-head"
 import { adminSearchSchema } from "@/lib/data-table"
 
@@ -27,6 +29,8 @@ function ClassQuizzesPage() {
   const { classId } = Route.useParams()
   const { search, order_by, order_dir, page } = Route.useSearch()
   const currentPage = page ?? 1
+
+  const sessionId: string | undefined = undefined
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null)
@@ -62,17 +66,21 @@ function ClassQuizzesPage() {
     if (!open) setActiveQuiz(null)
   }
 
-  const { data, isLoading } = useGetQuizzes({
-    class_id: classId,
-    search: search || undefined,
-    page: currentPage,
-    order_by: order_by || undefined,
-    order_dir: order_dir || undefined,
-  })
+  const { data, isLoading } = useGetQuizzes(
+    {
+      class_id: classId,
+      class_session_id: sessionId || undefined,
+      search: search || undefined,
+      page: currentPage,
+      order_by: order_by || undefined,
+      order_dir: order_dir || undefined,
+    },
+    { query: { enabled: !!sessionId } }
+  )
 
   const quizzesData = (data?.status === 200 && data.data.data) || undefined
-  const quizzes = quizzesData?.items ?? []
-  const total = quizzesData?.total ?? 0
+  const quizzes = sessionId ? (quizzesData?.items ?? []) : []
+  const total = sessionId ? (quizzesData?.total ?? 0) : 0
 
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
 
@@ -107,14 +115,39 @@ function ClassQuizzesPage() {
         }
       />
       <StatCards stats={statCards} />
-      <QuizTable
-        quizzes={quizzes}
-        total={total}
-        isLoading={isLoading}
-        sorting={sorting}
-        onEdit={handleEdit}
-        onManageQuestions={handleManageQuestions}
-      />
+      <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
+        <div className="flex-1">
+          <label className="mb-1.5 block text-xs font-medium">
+            {t("admin.quizzes.filter.class")}
+          </label>
+          <ClassPicker value={classId} onChange={() => {}} disabled />
+        </div>
+        <div className="flex-1">
+          <label className="mb-1.5 block text-xs font-medium">
+            {t("admin.quizzes.filter.session")}
+          </label>
+          <SessionPicker
+            classId={classId}
+            value={sessionId}
+            onChange={() => {}}
+            disabled
+          />
+        </div>
+      </Card>
+      {sessionId ? (
+        <QuizTable
+          quizzes={quizzes}
+          total={total}
+          isLoading={isLoading}
+          sorting={sorting}
+          onEdit={handleEdit}
+          onManageQuestions={handleManageQuestions}
+        />
+      ) : (
+        <Card className="text-muted-foreground p-8 text-center text-sm">
+          {t("admin.quizzes.filter.selectSessionFirst")}
+        </Card>
+      )}
       <QuizCreateModal
         open={formOpen}
         onOpenChange={handleFormOpenChange}

@@ -85,6 +85,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 // @Produce json
 // @Security BearerAuth
 // @Param class_id query string false "Filter by class UUID"
+// @Param class_session_id query string false "Filter by class session UUID (matches quizzes with a quiz_room in that session)"
 // @Param search query string false "Substring match on title/description"
 // @Param order_by query string false "One of: created_at, updated_at, title, duration_minutes"
 // @Param order_dir query string false "asc or desc"
@@ -100,7 +101,10 @@ func (h *Handler) List(c *gin.Context) {
 		_ = c.Error(domain.NewValidationError(map[string]string{"query": err.Error()}))
 		return
 	}
-	if err := httpx.BindUUIDQueries(c, map[string]**uuid.UUID{"class_id": &q.ClassID}); err != nil {
+	if err := httpx.BindUUIDQueries(c, map[string]**uuid.UUID{
+		"class_id":         &q.ClassID,
+		"class_session_id": &q.ClassSessionID,
+	}); err != nil {
 		_ = c.Error(err)
 		return
 	}

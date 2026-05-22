@@ -101,12 +101,14 @@ type CreateQuizRoomDTO struct {
 
 type ListQuizzesQuery struct {
 	ClassID        *uuid.UUID `form:"-"`
+	ClassSessionID *uuid.UUID `form:"-"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }
 
 type AdminListQuizzesQuery struct {
 	ClassID        *uuid.UUID `form:"-"`
+	ClassSessionID *uuid.UUID `form:"-"`
 	UserID         *uuid.UUID `form:"-"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
@@ -209,6 +211,7 @@ type QuizListScope struct {
 	OwnerID        *uuid.UUID
 	MemberUserID   *uuid.UUID
 	ClassID        *uuid.UUID
+	ClassSessionID *uuid.UUID
 	IncludeDeleted bool
 }
 

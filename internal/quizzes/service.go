@@ -183,6 +183,7 @@ func (s *service) List(ctx context.Context, q domain.ListQuizzesQuery) ([]domain
 	}
 	scope := s.resolveListScope(caller)
 	scope.ClassID = q.ClassID
+	scope.ClassSessionID = q.ClassSessionID
 	if canManage(caller) {
 		scope.IncludeDeleted = q.IncludeDeleted
 	}

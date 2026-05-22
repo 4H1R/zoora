@@ -12,6 +12,10 @@ export type GetAdminQuizzesParams = {
  */
 class_id?: string;
 /**
+ * Filter by class session UUID (matches quizzes with a quiz_room in that session)
+ */
+class_session_id?: string;
+/**
  * Filter by owner UUID
  */
 user_id?: string;
