@@ -545,6 +545,7 @@
       "teacher": "Owner",
       "duration": "Duration",
       "minutesShort": "min",
+      "totalScore": "Total score",
       "createdAt": "Created",
       "noResults": "No quizzes found",
       "noResultsHint": "Create the first quiz for this class.",
@@ -768,11 +769,32 @@
         "textPlaceholder": "Enter the question…",
         "type": "Type",
         "options": "Options",
+        "maxScore": "Maximum score",
         "optionValuePlaceholder": "Option value",
         "scorePlaceholder": "Score",
         "addOption": "Add option",
         "optionsEmpty": "No options yet.",
         "optionsHint": "For multiple-choice, give correct options a positive score. For short answer, list accepted values with their scores.",
+        "hints": {
+          "choice": "Add at least 2 options. Correct options get a positive score; distractors can be 0 or negative.",
+          "short_answer": "List accepted answers with a non-negative score each.",
+          "descriptive": "Set the maximum score graders can award for this open-ended question."
+        },
+        "errors": {
+          "choice": "Choice questions need at least 2 options.",
+          "shortAnswer": "Short-answer questions need at least 1 option.",
+          "descriptive": "Descriptive questions need a maximum score.",
+          "valueRequired": "Option text is required.",
+          "negative": "Negative scores are only allowed for multiple-choice options."
+        },
+        "photos": {
+          "label": "Photos",
+          "add": "Add photo",
+          "empty": "No photos attached.",
+          "notImage": "Only image files are allowed.",
+          "uploadSuccess": "Photo uploaded",
+          "uploadError": "Photo upload failed"
+        },
         "createSuccess": "Question created",
         "updateSuccess": "Question updated",
         "deleteSuccess": "Question deleted"

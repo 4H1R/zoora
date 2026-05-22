@@ -37,7 +37,7 @@ func (r *quizRepository) Create(ctx context.Context, quiz *domain.Quiz) error {
 
 func (r *quizRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Quiz, error) {
 	var quiz domain.Quiz
-	if err := r.baseQuery(ctx).First(&quiz, "id = ?", id).Error; err != nil {
+	if err := r.baseQuery(ctx).Preload("User").Preload("Class").First(&quiz, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}
@@ -73,7 +73,7 @@ func (r *quizRepository) Delete(ctx context.Context, id uuid.UUID) error {
 
 func (r *quizRepository) List(ctx context.Context, scope domain.QuizListScope, p domain.ListParams) ([]domain.Quiz, int64, error) {
 	db := database.DB(ctx, r.db)
-	base := db.Model(&domain.Quiz{})
+	base := db.Model(&domain.Quiz{}).Preload("User").Preload("Class")
 	if scope.IncludeDeleted {
 		base = base.Unscoped()
 	}
@@ -137,7 +137,7 @@ func (r *quizRepository) FindByIDIncludingDeleted(ctx context.Context, id uuid.U
 
 func (r *quizRepository) AdminList(ctx context.Context, q domain.AdminListQuizzesQuery) ([]domain.Quiz, int64, error) {
 	db := database.DB(ctx, r.db)
-	base := db.Model(&domain.Quiz{})
+	base := db.Model(&domain.Quiz{}).Preload("User").Preload("Class")
 	if q.IncludeDeleted {
 		base = base.Unscoped()
 	}

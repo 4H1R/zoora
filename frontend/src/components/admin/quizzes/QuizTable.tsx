@@ -1,7 +1,7 @@
 import type { GithubCom4H1RZooraInternalDomainQuiz as Quiz } from "@/api/model"
 import type { ColumnDef, SortingState } from "@tanstack/react-table"
 
-import { ClipboardListIcon, ClockIcon } from "lucide-react"
+import { ClipboardListIcon, ClockIcon, TrophyIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { DataTable } from "@/components/data-table/data-table"
@@ -71,6 +71,18 @@ function useQuizColumns({
         </span>
       ),
       enableSorting: true,
+      enableHiding: true,
+    },
+    {
+      accessorKey: "total_score",
+      header: t("admin.quizzes.totalScore"),
+      cell: ({ row }) => (
+        <span className="inline-flex items-center gap-1.5 text-xs tabular-nums">
+          <TrophyIcon className="text-muted-foreground size-3.5" />
+          {(row.original.total_score ?? 0).toFixed(2)}
+        </span>
+      ),
+      enableSorting: false,
       enableHiding: true,
     },
     {

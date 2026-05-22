@@ -28,29 +28,33 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 
+import { QuestionPhotoUploader } from "./QuestionPhotoUploader"
+
 const TYPE_VALUES = ["descriptive", "short_answer", "choice"] as const
+type QType = (typeof TYPE_VALUES)[number]
 
 const optionSchema = z.object({
   id: z.string().min(1),
-  value: z.string().min(1),
+  value: z.string(),
   score: z.coerce.number(),
 })
 
-const createSchema = z.object({
-  bank_id: z.string().uuid(),
-  text: z.string().min(1),
-  type: z.enum(TYPE_VALUES),
-  options: z.array(optionSchema).optional(),
+const metadataSchema = z.object({
+  type: z.literal("photo"),
+  media_id: z.string().uuid(),
 })
 
-const editSchema = z.object({
+const baseSchema = z.object({
+  bank_id: z.string().uuid().optional(),
   text: z.string().min(1),
   type: z.enum(TYPE_VALUES),
-  options: z.array(optionSchema).optional(),
+  options: z.array(optionSchema),
+  metadata: z.array(metadataSchema),
 })
 
-type CreateValues = z.infer<typeof createSchema>
-type EditValues = z.infer<typeof editSchema>
+type FormValues = z.infer<typeof baseSchema>
+type FormOption = FormValues["options"][number]
+type FormMetadata = FormValues["metadata"][number]
 
 interface QuestionCreateModalProps {
   open: boolean
@@ -60,7 +64,38 @@ interface QuestionCreateModalProps {
 }
 
 function nextOptId() {
-  return crypto.randomUUID().slice(0, 8)
+  return crypto.randomUUID()
+}
+
+function defaultOptionsFor(type: QType): FormOption[] {
+  switch (type) {
+    case "choice":
+      return [
+        { id: nextOptId(), value: "", score: 1 },
+        { id: nextOptId(), value: "", score: 0 },
+      ]
+    case "short_answer":
+      return [{ id: nextOptId(), value: "", score: 1 }]
+    case "descriptive":
+      return [{ id: nextOptId(), value: "", score: 1 }]
+  }
+}
+
+function validateOptionsFor(type: QType, options: FormOption[]): string | null {
+  if (type === "choice") {
+    if (options.length < 2) return "choice"
+    for (const o of options) if (!o.value?.trim()) return "valueRequired"
+  } else if (type === "short_answer") {
+    if (options.length < 1) return "shortAnswer"
+    for (const o of options) {
+      if (!o.value?.trim()) return "valueRequired"
+      if ((o.score ?? 0) < 0) return "negative"
+    }
+  } else {
+    if (options.length < 1) return "descriptive"
+    for (const o of options) if ((o.score ?? 0) < 0) return "negative"
+  }
+  return null
 }
 
 export function QuestionCreateModal({
@@ -73,54 +108,59 @@ export function QuestionCreateModal({
   const queryClient = useQueryClient()
   const isEdit = !!question
 
-  const createForm = useForm<CreateValues>({
-    resolver: zodResolver(createSchema),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(baseSchema),
     defaultValues: {
       bank_id: "",
       text: "",
       type: "descriptive",
-      options: [],
+      options: defaultOptionsFor("descriptive"),
+      metadata: [],
     },
   })
 
-  const editForm = useForm<EditValues>({
-    resolver: zodResolver(editSchema),
-    defaultValues: { text: "", type: "descriptive", options: [] },
-  })
-
-  const createOpts = useFieldArray({ control: createForm.control, name: "options" })
-  const editOpts = useFieldArray({ control: editForm.control, name: "options" })
+  const optsArr = useFieldArray({ control: form.control, name: "options" })
 
   useEffect(() => {
     if (!open) return
     if (isEdit && question) {
-      editForm.reset({
-        text: question.text ?? "",
-        type: (question.type as EditValues["type"]) ?? "descriptive",
-        options:
-          question.options?.map((o) => ({
+      const type = ((question.type as QType) ?? "descriptive") as QType
+      const opts = question.options?.length
+        ? question.options.map((o) => ({
             id: o.id ?? nextOptId(),
             value: o.value ?? "",
             score: o.score ?? 0,
-          })) ?? [],
+          }))
+        : defaultOptionsFor(type)
+      form.reset({
+        bank_id: question.bank_id ?? "",
+        text: question.text ?? "",
+        type,
+        options: opts,
+        metadata: (question.metadata ?? []).map((m) => ({
+          type: "photo" as const,
+          media_id: m.media_id ?? "",
+        })),
       })
     } else {
-      createForm.reset({
+      form.reset({
         bank_id: defaultBankId ?? "",
         text: "",
         type: "descriptive",
-        options: [],
+        options: defaultOptionsFor("descriptive"),
+        metadata: [],
       })
     }
   }, [open, question, isEdit, defaultBankId])
 
   const invalidate = (bankId?: string) => {
-    const id = bankId ?? question?.bank_id ?? createForm.getValues("bank_id")
+    const id = bankId ?? question?.bank_id ?? form.getValues("bank_id")
     if (id) {
       queryClient.invalidateQueries({
         queryKey: getGetQuestionBanksIdQuestionsQueryKey(id),
       })
     }
+    queryClient.invalidateQueries({ queryKey: ["getAdminQuestions"] })
   }
 
   const createMutation = usePostQuestionBanksIdQuestions({
@@ -145,37 +185,63 @@ export function QuestionCreateModal({
 
   const isLoading = createMutation.isPending || updateMutation.isPending
 
-  const createBankId = createForm.watch("bank_id")
-  const createType = createForm.watch("type")
-  const editType = editForm.watch("type")
+  const type = form.watch("type") as QType
+  const bankId = form.watch("bank_id")
+  const metadata = form.watch("metadata") as FormMetadata[]
 
-  const onSubmitCreate = createForm.handleSubmit((values) => {
-    createMutation.mutate({
-      id: values.bank_id,
-      data: {
-        text: values.text,
-        type: values.type,
-        options: values.type === "descriptive" ? [] : values.options ?? [],
-      },
-    })
+  const handleTypeChange = (next: QType) => {
+    form.setValue("type", next, { shouldValidate: true })
+    const current = form.getValues("options") as FormOption[]
+    if (next === "choice" && current.length < 2) {
+      form.setValue("options", defaultOptionsFor("choice"))
+    } else if ((next === "short_answer" || next === "descriptive") && current.length < 1) {
+      form.setValue("options", defaultOptionsFor(next))
+    } else if (next === "descriptive") {
+      form.setValue(
+        "options",
+        current.map((o) => ({ ...o, value: "" }))
+      )
+    }
+  }
+
+  const onSubmit = form.handleSubmit((values) => {
+    const err = validateOptionsFor(values.type as QType, values.options as FormOption[])
+    if (err) {
+      toast.error(t(`admin.questions.form.errors.${err}`))
+      return
+    }
+
+    if (isEdit) {
+      if (!question?.id) return
+      updateMutation.mutate({
+        questionId: question.id,
+        data: {
+          text: values.text,
+          type: values.type,
+          options: values.options,
+          metadata: values.metadata,
+        },
+      })
+    } else {
+      if (!values.bank_id) {
+        form.setError("bank_id", { message: "required" })
+        return
+      }
+      createMutation.mutate({
+        id: values.bank_id,
+        data: {
+          text: values.text,
+          type: values.type,
+          options: values.options,
+          metadata: values.metadata,
+        },
+      })
+    }
   })
 
-  const onSubmitEdit = editForm.handleSubmit((values) => {
-    if (!question?.id) return
-    updateMutation.mutate({
-      questionId: question.id,
-      data: {
-        text: values.text,
-        type: values.type,
-        options: values.type === "descriptive" ? [] : values.options ?? [],
-      },
-    })
-  })
-
-  const createErrors = createForm.formState.errors
-  const editErrors = editForm.formState.errors
-
-  const showOptions = (isEdit ? editType : createType) !== "descriptive"
+  const errors = form.formState.errors
+  const showValueField = type !== "descriptive"
+  const minOptions = type === "choice" ? 2 : 1
 
   return (
     <ResourceFormDialog
@@ -189,47 +255,36 @@ export function QuestionCreateModal({
           ? t("admin.questions.form.editDescription")
           : t("admin.questions.form.createDescription")
       }
-      onSubmit={isEdit ? onSubmitEdit : onSubmitCreate}
+      onSubmit={onSubmit}
       isLoading={isLoading}
       submitLabel={isEdit ? t("common.save") : t("common.create")}
     >
       <FieldGroup>
         {!isEdit && (
-          <Field data-invalid={!!createErrors.bank_id || undefined}>
+          <Field data-invalid={!!errors.bank_id || undefined}>
             <FieldLabel>{t("admin.questions.form.bank")}</FieldLabel>
             <BankPicker
-              value={createBankId || undefined}
-              onChange={(id) => createForm.setValue("bank_id", id, { shouldValidate: true })}
+              value={bankId || undefined}
+              onChange={(id) => form.setValue("bank_id", id, { shouldValidate: true })}
               placeholder={t("admin.questions.form.bankPlaceholder")}
             />
-            <FieldError errors={[createErrors.bank_id]} />
+            <FieldError errors={[errors.bank_id]} />
           </Field>
         )}
 
-        <Field data-invalid={!!(isEdit ? editErrors.text : createErrors.text) || undefined}>
+        <Field data-invalid={!!errors.text || undefined}>
           <FieldLabel>{t("admin.questions.form.text")}</FieldLabel>
           <Textarea
-            {...(isEdit ? editForm.register("text") : createForm.register("text"))}
+            {...form.register("text")}
             placeholder={t("admin.questions.form.textPlaceholder")}
             rows={3}
           />
-          <FieldError errors={[isEdit ? editErrors.text : createErrors.text]} />
+          <FieldError errors={[errors.text]} />
         </Field>
 
-        <Field data-invalid={!!(isEdit ? editErrors.type : createErrors.type) || undefined}>
+        <Field data-invalid={!!errors.type || undefined}>
           <FieldLabel>{t("admin.questions.form.type")}</FieldLabel>
-          <Select
-            value={isEdit ? editType : createType}
-            onValueChange={(v) => {
-              if (isEdit) {
-                editForm.setValue("type", v as EditValues["type"], { shouldValidate: true })
-              } else {
-                createForm.setValue("type", v as CreateValues["type"], {
-                  shouldValidate: true,
-                })
-              }
-            }}
-          >
+          <Select value={type} onValueChange={(v) => handleTypeChange(v as QType)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -241,70 +296,76 @@ export function QuestionCreateModal({
               ))}
             </SelectContent>
           </Select>
-          <FieldError errors={[isEdit ? editErrors.type : createErrors.type]} />
+          <FieldError errors={[errors.type]} />
         </Field>
 
-        {showOptions && (
-          <Field>
-            <FieldLabel className="flex items-center justify-between">
-              <span>{t("admin.questions.form.options")}</span>
+        <Field>
+          <FieldLabel className="flex items-center justify-between">
+            <span>
+              {type === "descriptive"
+                ? t("admin.questions.form.maxScore")
+                : t("admin.questions.form.options")}
+            </span>
+            {type !== "descriptive" && (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  if (isEdit) {
-                    editOpts.append({ id: nextOptId(), value: "", score: 0 })
-                  } else {
-                    createOpts.append({ id: nextOptId(), value: "", score: 0 })
-                  }
-                }}
+                onClick={() =>
+                  optsArr.append({ id: nextOptId(), value: "", score: 0 })
+                }
               >
                 <PlusIcon data-icon="inline-start" />
                 {t("admin.questions.form.addOption")}
               </Button>
-            </FieldLabel>
-            <div className="flex flex-col gap-2">
-              {(isEdit ? editOpts.fields : createOpts.fields).map((field, idx) => (
-                <div key={field.id} className="flex items-start gap-2">
+            )}
+          </FieldLabel>
+          <div className="flex flex-col gap-2">
+            {optsArr.fields.map((field, idx) => (
+              <div key={field.id} className="flex items-start gap-2">
+                {showValueField && (
                   <Input
                     className="flex-1"
                     placeholder={t("admin.questions.form.optionValuePlaceholder")}
-                    {...(isEdit
-                      ? editForm.register(`options.${idx}.value`)
-                      : createForm.register(`options.${idx}.value`))}
+                    {...form.register(`options.${idx}.value`)}
                   />
-                  <Input
-                    type="number"
-                    step="any"
-                    className="w-24"
-                    placeholder={t("admin.questions.form.scorePlaceholder")}
-                    {...(isEdit
-                      ? editForm.register(`options.${idx}.score`)
-                      : createForm.register(`options.${idx}.score`))}
-                  />
+                )}
+                <Input
+                  type="number"
+                  step="any"
+                  className={showValueField ? "w-24" : "flex-1"}
+                  placeholder={t("admin.questions.form.scorePlaceholder")}
+                  {...form.register(`options.${idx}.score`, { valueAsNumber: true })}
+                />
+                {type !== "descriptive" && optsArr.fields.length > minOptions && (
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
                     className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    onClick={() => (isEdit ? editOpts.remove(idx) : createOpts.remove(idx))}
+                    onClick={() => optsArr.remove(idx)}
                   >
                     <Trash2Icon />
                   </Button>
-                </div>
-              ))}
-              {(isEdit ? editOpts.fields : createOpts.fields).length === 0 && (
-                <p className="text-muted-foreground text-xs">
-                  {t("admin.questions.form.optionsEmpty")}
-                </p>
-              )}
-              <p className="text-muted-foreground text-xs">
-                {t("admin.questions.form.optionsHint")}
-              </p>
-            </div>
-          </Field>
-        )}
+                )}
+              </div>
+            ))}
+            <p className="text-muted-foreground text-xs">
+              {t(`admin.questions.form.hints.${type}`)}
+            </p>
+          </div>
+        </Field>
+
+        <Field>
+          <FieldLabel>{t("admin.questions.form.photos.label")}</FieldLabel>
+          <QuestionPhotoUploader
+            value={metadata}
+            onChange={(next) =>
+              form.setValue("metadata", next, { shouldValidate: false, shouldDirty: true })
+            }
+            questionId={question?.id}
+          />
+        </Field>
       </FieldGroup>
     </ResourceFormDialog>
   )

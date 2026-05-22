@@ -25,6 +25,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 	{
 		authed.POST("/media/presign", perm(domain.PermMediaCreate), h.PresignUpload)
 		authed.GET("/media/:id", perm(domain.PermMediaView), idParam, h.Get)
+		authed.GET("/media/:id/download-url", perm(domain.PermMediaView), idParam, h.PresignDownload)
 		authed.DELETE("/media/:id", perm(domain.PermMediaDelete), idParam, h.Delete)
 		authed.GET("/media", perm(domain.PermMediaView), h.ListByModel)
 	}
@@ -74,6 +75,26 @@ func (h *Handler) Get(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, m)
+}
+
+// PresignDownload returns a short-lived presigned GET URL for a media object.
+// @Summary Get presigned download URL
+// @Description Returns a presigned URL that grants temporary read access to the underlying S3 object.
+// @Tags Media
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Media UUID"
+// @Success 200 {object} domain.Response{data=domain.PresignDownloadResponse}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /media/{id}/download-url [get]
+func (h *Handler) PresignDownload(c *gin.Context) {
+	resp, err := h.svc.PresignDownload(c.Request.Context(), httpx.UUIDParam(c, "id"))
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, resp)
 }
 
 // Delete removes a media record (admin/staff only).

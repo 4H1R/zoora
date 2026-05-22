@@ -12,7 +12,10 @@ import (
 	"github.com/4H1R/zoora/internal/platform/storage"
 )
 
-const presignExpiry = 15 * time.Minute
+const (
+	presignExpiry         = 15 * time.Minute
+	presignDownloadExpiry = 1 * time.Hour
+)
 
 type service struct {
 	repo    domain.MediaRepository
@@ -64,6 +67,22 @@ func (s *service) PresignUpload(ctx context.Context, dto domain.PresignUploadDTO
 		Key:       m.S3Key(),
 		Media:     m,
 	}, nil
+}
+
+func (s *service) PresignDownload(ctx context.Context, id uuid.UUID) (*domain.PresignDownloadResponse, error) {
+	if _, ok := domain.CallerFromCtx(ctx); !ok {
+		return nil, domain.ErrForbidden
+	}
+	m, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	key := m.S3Key()
+	url, err := s.storage.GeneratePresignedDownloadURL(ctx, key, presignDownloadExpiry)
+	if err != nil {
+		return nil, err
+	}
+	return &domain.PresignDownloadResponse{URL: url, Key: key}, nil
 }
 
 func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*domain.Media, error) {
