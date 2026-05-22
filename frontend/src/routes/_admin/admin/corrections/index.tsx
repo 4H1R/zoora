@@ -27,7 +27,7 @@ import {
 import { adminHead } from "@/lib/admin-head"
 import { adminSearchSchema } from "@/lib/data-table"
 
-export const Route = createFileRoute("/_admin/admin/quizzes/corrections/")({
+export const Route = createFileRoute("/_admin/admin/corrections/")({
   head: () => adminHead("admin.corrections.title"),
   validateSearch: adminSearchSchema,
   component: CorrectionsPage,

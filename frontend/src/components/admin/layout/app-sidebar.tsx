@@ -57,7 +57,7 @@ export function AppSidebar({
         { title: t("admin.quizzes.title"), url: "/admin/quizzes", icon: <ClipboardListIcon /> },
         {
           title: t("admin.corrections.title"),
-          url: "/admin/quizzes/corrections",
+          url: "/admin/corrections",
           icon: <CheckSquareIcon />,
         },
         { title: t("admin.questions.title"), url: "/admin/questions", icon: <HelpCircleIcon /> },
