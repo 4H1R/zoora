@@ -612,6 +612,58 @@
         "toggleColumns": "نمایش/پنهان ستون‌ها"
       }
     },
+    "corrections": {
+      "title": "تصحیح آزمون",
+      "subtitle": "نمره‌گذاری پاسخ‌های تشریحی و مرور پاسخ‌نامه‌ها.",
+      "filter": {
+        "class": "کلاس",
+        "quiz": "آزمون",
+        "quizPlaceholder": "یک آزمون انتخاب کنید",
+        "selectClassFirst": "ابتدا یک کلاس انتخاب کنید.",
+        "selectQuizFirst": "برای مشاهده پاسخ‌ها یک آزمون انتخاب کنید.",
+        "clear": "پاک کردن فیلتر",
+        "status": "وضعیت",
+        "allStatuses": "همه وضعیت‌ها"
+      },
+      "stats": {
+        "total": "پاسخ‌نامه‌ها",
+        "pending": "در انتظار تصحیح",
+        "graded": "تصحیح‌شده"
+      },
+      "student": "دانش‌آموز",
+      "status": "وضعیت",
+      "score": "نمره",
+      "submittedAt": "زمان ارسال",
+      "startedAt": "شروع",
+      "noResults": "پاسخ‌نامه‌ای یافت نشد",
+      "noResultsHint": "پاسخ‌نامه‌های دانش‌آموزان اینجا نمایش داده می‌شود.",
+      "actions": {
+        "grade": "تصحیح",
+        "view": "مشاهده"
+      },
+      "statuses": {
+        "in_progress": "در حال انجام",
+        "submitted": "در انتظار تصحیح",
+        "graded": "تصحیح‌شده"
+      },
+      "dialog": {
+        "title": "تصحیح پاسخ‌نامه",
+        "description": "برای هر پاسخ نمره وارد کنید. نمرات خودکار قابل بازنویسی هستند.",
+        "question": "سوال",
+        "answer": "پاسخ دانش‌آموز",
+        "noAnswer": "بدون پاسخ",
+        "score": "نمره",
+        "totalScore": "نمره کل",
+        "save": "ذخیره نمرات",
+        "saveSuccess": "نمرات ذخیره شد",
+        "saveFailed": "ذخیره نمرات با خطا مواجه شد",
+        "loading": "در حال بارگذاری سوال…",
+        "questionMissing": "سوال یافت نشد",
+        "selectedOptions": "گزینه‌های انتخاب‌شده",
+        "spent": "زمان صرف‌شده",
+        "secondsShort": "ث"
+      }
+    },
     "questionBanks": {
       "title": "بانک‌های سوال",
       "searchPlaceholder": "جستجوی بانک‌ها…",

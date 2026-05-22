@@ -328,7 +328,9 @@ func (r *submissionRepository) Create(ctx context.Context, sub *domain.QuizSubmi
 
 func (r *submissionRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.QuizSubmission, error) {
 	var sub domain.QuizSubmission
-	if err := database.DB(ctx, r.db).Model(&domain.QuizSubmission{}).First(&sub, "id = ?", id).Error; err != nil {
+	if err := database.DB(ctx, r.db).Model(&domain.QuizSubmission{}).
+		Preload("User").
+		First(&sub, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}
@@ -362,7 +364,9 @@ func (r *submissionRepository) FindByQuizAndUser(ctx context.Context, quizID, us
 }
 
 func (r *submissionRepository) ListByQuiz(ctx context.Context, quizID uuid.UUID, q domain.ListSubmissionsQuery) ([]domain.QuizSubmission, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.QuizSubmission{}).Where("quiz_id = ?", quizID)
+	base := database.DB(ctx, r.db).Model(&domain.QuizSubmission{}).
+		Preload("User").
+		Where("quiz_id = ?", quizID)
 	if q.UserID != nil {
 		base = base.Where("user_id = ?", *q.UserID)
 	}

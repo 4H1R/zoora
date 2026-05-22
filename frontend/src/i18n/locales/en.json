@@ -612,6 +612,58 @@
         "toggleColumns": "Toggle columns"
       }
     },
+    "corrections": {
+      "title": "Quiz Corrections",
+      "subtitle": "Grade descriptive answers and review submissions.",
+      "filter": {
+        "class": "Class",
+        "quiz": "Quiz",
+        "quizPlaceholder": "Select a quiz",
+        "selectClassFirst": "Select a class to load quizzes.",
+        "selectQuizFirst": "Select a quiz to view submissions.",
+        "clear": "Clear filters",
+        "status": "Status",
+        "allStatuses": "All statuses"
+      },
+      "stats": {
+        "total": "Submissions",
+        "pending": "Awaiting grading",
+        "graded": "Graded"
+      },
+      "student": "Student",
+      "status": "Status",
+      "score": "Score",
+      "submittedAt": "Submitted",
+      "startedAt": "Started",
+      "noResults": "No submissions found",
+      "noResultsHint": "Submissions from students will appear here.",
+      "actions": {
+        "grade": "Grade",
+        "view": "View"
+      },
+      "statuses": {
+        "in_progress": "In progress",
+        "submitted": "Awaiting grading",
+        "graded": "Graded"
+      },
+      "dialog": {
+        "title": "Grade submission",
+        "description": "Set a score for each answer. Auto-graded answers can be overridden.",
+        "question": "Question",
+        "answer": "Student answer",
+        "noAnswer": "No answer",
+        "score": "Score",
+        "totalScore": "Total score",
+        "save": "Save grades",
+        "saveSuccess": "Grades saved",
+        "saveFailed": "Failed to save grades",
+        "loading": "Loading question…",
+        "questionMissing": "Question not found",
+        "selectedOptions": "Selected options",
+        "spent": "Time spent",
+        "secondsShort": "s"
+      }
+    },
     "questionBanks": {
       "title": "Question Banks",
       "searchPlaceholder": "Search question banks…",

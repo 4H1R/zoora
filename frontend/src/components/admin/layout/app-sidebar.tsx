@@ -5,6 +5,7 @@ import { useParams, useRouterState } from "@tanstack/react-router"
 import {
   Building2Icon,
   CalendarIcon,
+  CheckSquareIcon,
   ClipboardCheckIcon,
   ClipboardListIcon,
   DumbbellIcon,
@@ -54,6 +55,11 @@ export function AppSidebar({
         { title: t("admin.liveRooms.title"), url: "/admin/live-rooms", icon: <VideoIcon /> },
         { title: t("admin.practices.title"), url: "/admin/practices", icon: <DumbbellIcon /> },
         { title: t("admin.quizzes.title"), url: "/admin/quizzes", icon: <ClipboardListIcon /> },
+        {
+          title: t("admin.corrections.title"),
+          url: "/admin/quizzes/corrections",
+          icon: <CheckSquareIcon />,
+        },
         { title: t("admin.questions.title"), url: "/admin/questions", icon: <HelpCircleIcon /> },
         { title: t("admin.attendance.title"), url: "/admin/attendance", icon: <ClipboardCheckIcon /> },
         { title: t("admin.gradebook.title"), url: "/admin/gradebook", icon: <TrophyIcon /> },
