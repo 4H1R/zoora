@@ -1,3 +1,5 @@
+import type { AppPermission } from "@/lib/access"
+
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router"
 import { FileIcon, LayoutDashboardIcon, SchoolIcon, SettingsIcon, ShieldIcon, UsersIcon } from "lucide-react"
 import { useEffect } from "react"
@@ -52,24 +54,63 @@ function RouteComponent() {
     }
   }, [userLoading, orgLoading, user, orgId, orgData, navigate])
 
-  const navGroups = [
+  type NavItemSpec = {
+    title: string
+    url: string
+    icon: React.ReactNode
+    perms?: AppPermission[]
+  }
+
+  const rawNavGroups: { label: string; items: NavItemSpec[] }[] = [
     {
       label: t("org.panel"),
       items: [
         { title: t("org.nav.dashboard"), url: `/org/${orgId}/dashboard`, icon: <LayoutDashboardIcon /> },
-        { title: t("org.nav.classes"), url: `/org/${orgId}/classes`, icon: <SchoolIcon /> },
+        {
+          title: t("org.nav.classes"),
+          url: `/org/${orgId}/classes`,
+          icon: <SchoolIcon />,
+          perms: ["classes:view", "classes:view_any"],
+        },
       ],
     },
     {
       label: t("org.nav.management"),
       items: [
-        { title: t("org.nav.users"), url: `/org/${orgId}/users`, icon: <UsersIcon /> },
-        { title: t("org.nav.roles"), url: `/org/${orgId}/roles`, icon: <ShieldIcon /> },
-        { title: t("org.nav.settings"), url: `/org/${orgId}/settings`, icon: <SettingsIcon /> },
-        { title: t("org.nav.files"), url: `/org/${orgId}/files`, icon: <FileIcon /> },
+        {
+          title: t("org.nav.users"),
+          url: `/org/${orgId}/users`,
+          icon: <UsersIcon />,
+          perms: ["users:view", "users:view_any"],
+        },
+        {
+          title: t("org.nav.roles"),
+          url: `/org/${orgId}/roles`,
+          icon: <ShieldIcon />,
+          perms: ["roles:view"],
+        },
+        {
+          title: t("org.nav.settings"),
+          url: `/org/${orgId}/settings`,
+          icon: <SettingsIcon />,
+          perms: ["organizations:update"],
+        },
+        {
+          title: t("org.nav.files"),
+          url: `/org/${orgId}/files`,
+          icon: <FileIcon />,
+          perms: ["media:view", "media:view_any"],
+        },
       ],
     },
   ]
+
+  const navGroups = rawNavGroups
+    .map((g) => ({
+      ...g,
+      items: g.items.filter((it) => !it.perms || it.perms.some((p) => access?.has(p))),
+    }))
+    .filter((g) => g.items.length > 0)
 
   if (userLoading || orgLoading || !access) return <SplashScreen />
   if (!user || user.organization_id !== orgId) {

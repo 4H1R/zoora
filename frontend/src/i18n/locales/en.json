@@ -985,6 +985,7 @@
     "sessions": {
       "newSession": "New session",
       "start": "Start",
+      "join": "Join",
       "empty": "No sessions yet",
       "form": {
         "name": "Name",

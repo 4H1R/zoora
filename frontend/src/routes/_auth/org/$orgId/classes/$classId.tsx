@@ -6,7 +6,9 @@ import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 
 import { orgHead } from "@/lib/org-head"
+import { useRequirePerm } from "@/lib/access"
 import { useState } from "react"
+import { useAccess } from "react-access-engine"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
@@ -34,6 +36,10 @@ type SessionFormValues = z.infer<typeof sessionSchema>
 function LiveSessionButton({ session }: { session: GithubCom4H1RZooraInternalDomainClassSession }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { can } = useAccess()
+
+  const canStart = can("livesessions:create") || can("livesessions:create_any")
+  const canJoin = can("livesessions:join") || can("livesessions:join_any")
 
   const joinMutation = usePostLiveRooms({
     mutation: {
@@ -57,22 +63,30 @@ function LiveSessionButton({ session }: { session: GithubCom4H1RZooraInternalDom
     },
   })
 
+  if (!canStart && !canJoin) return null
+
   return (
     <button
       type="button"
       disabled={joinMutation.isPending}
       onClick={() => joinMutation.mutate({ data: { class_session_id: session.id! } })}
     >
-      {t("classes.sessions.start")}
+      {canStart ? t("classes.sessions.start") : t("classes.sessions.join")}
     </button>
   )
 }
 
 function RouteComponent() {
   const { t } = useTranslation()
-  const { classId } = Route.useParams()
+  const { orgId, classId } = Route.useParams()
   const queryClient = useQueryClient()
   const [showForm, setShowForm] = useState(false)
+  const navigate = useNavigate()
+  const { can } = useAccess()
+  const canCreateSession = can("classes:update") || can("classes:update_any")
+  const allowed = useRequirePerm(["classes:view", "classes:view_any"], () =>
+    navigate({ to: "/org/$orgId/dashboard", params: { orgId } })
+  )
 
   const { data: classData, isPending: classPending } = useGetClassesId(classId)
   const { data: sessionsData, isPending: sessionsPending } = useGetClassesIdSessions(classId, undefined)
@@ -111,17 +125,20 @@ function RouteComponent() {
     })
   })
 
+  if (!allowed) return null
   if (classPending) return <div>Loading...</div>
 
   return (
     <div>
       <h1>{cls?.name}</h1>
 
-      <button type="button" onClick={() => setShowForm((v) => !v)}>
-        {t("classes.sessions.newSession")}
-      </button>
+      {canCreateSession && (
+        <button type="button" onClick={() => setShowForm((v) => !v)}>
+          {t("classes.sessions.newSession")}
+        </button>
+      )}
 
-      {showForm && (
+      {canCreateSession && showForm && (
         <form onSubmit={onSubmit}>
           <div>
             <label>{t("classes.sessions.form.name")}</label>

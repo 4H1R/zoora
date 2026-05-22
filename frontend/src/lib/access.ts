@@ -5,6 +5,7 @@ import type {
 } from "@/api/model"
 import type { UserContext } from "react-access-engine"
 
+import { useEffect } from "react"
 import { defineAccess, useAccess } from "react-access-engine"
 
 export type AppPermission = GithubCom4H1RZooraInternalDomainPermissionName
@@ -33,7 +34,11 @@ export function buildAccess(user: User, allRoles: Role[]) {
   })
   const accessUser: UserContext<string, string> = { id: user.id ?? "", roles }
 
-  return { config, user: accessUser }
+  const permSet = new Set<AppPermission>(userPermissions)
+  const has = (perm: AppPermission): boolean => isAdmin || permSet.has(perm)
+  const hasAny = (perms: AppPermission[]): boolean => perms.some(has)
+
+  return { config, user: accessUser, has, hasAny, isAdmin }
 }
 
 export function useCanSelfOr(basePerm: AppPermission, anyPerm: AppPermission, targetId: string | undefined) {
@@ -41,4 +46,18 @@ export function useCanSelfOr(basePerm: AppPermission, anyPerm: AppPermission, ta
   if (can(anyPerm)) return true
   if (can(basePerm) && targetId === user.id) return true
   return false
+}
+
+export function useCanAny(perms: AppPermission[]): boolean {
+  const { can } = useAccess()
+  return perms.some((p) => can(p))
+}
+
+export function useRequirePerm(perms: AppPermission | AppPermission[], onDeny: () => void) {
+  const list = Array.isArray(perms) ? perms : [perms]
+  const allowed = useCanAny(list)
+  useEffect(() => {
+    if (!allowed) onDeny()
+  }, [allowed, onDeny])
+  return allowed
 }

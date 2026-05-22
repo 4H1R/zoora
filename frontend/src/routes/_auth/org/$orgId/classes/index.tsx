@@ -1,8 +1,9 @@
 import type { NavFn } from "@/lib/data-table"
 
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 
 import { orgHead } from "@/lib/org-head"
+import { useRequirePerm } from "@/lib/access"
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table"
 import { LayoutGrid, List, PlusIcon, SearchIcon } from "lucide-react"
 import { useEffect, useState } from "react"
@@ -46,6 +47,10 @@ function RouteComponent() {
   const { orgId } = Route.useParams()
   const { search, order_by, order_dir, page } = Route.useSearch()
   const navigate = Route.useNavigate() as unknown as NavFn
+  const rootNavigate = useNavigate()
+  const allowed = useRequirePerm(["classes:view", "classes:view_any"], () =>
+    rootNavigate({ to: "/org/$orgId/dashboard", params: { orgId } })
+  )
 
   const currentPage = page ?? 1
 
@@ -130,6 +135,8 @@ function RouteComponent() {
       </div>
     )
   }
+
+  if (!allowed) return null
 
   return (
     <div className="flex flex-col gap-6">
