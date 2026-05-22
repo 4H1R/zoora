@@ -1,89 +1,143 @@
-import type { GithubCom4H1RZooraInternalDomainClassSession } from "@/api/model"
-import type { ErrorType } from "@/api/mutator/custom-instance"
+import type { GithubCom4H1RZooraInternalDomainClassSession as Session } from "@/api/model"
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useQueryClient } from "@tanstack/react-query"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
-
-import { orgHead } from "@/lib/org-head"
-import { useOrgGuard } from "@/lib/access"
+import { createFileRoute, Link } from "@tanstack/react-router"
+import { ArrowLeftIcon, CalendarClockIcon, PlusIcon, UserIcon } from "lucide-react"
 import { useState } from "react"
 import { useAccess } from "react-access-engine"
-import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import { z } from "zod"
 
-import {
-  getGetClassesIdSessionsQueryKey,
-  useGetClassesId,
-  useGetClassesIdSessions,
-  usePostClassesIdSessions,
-} from "@/api/classes/classes"
-import { getLiveRooms, usePostLiveRooms } from "@/api/live-sessions/live-sessions"
+import { useGetClassesId, useGetClassesIdSessions } from "@/api/classes/classes"
+import { SessionCreateModal } from "@/components/admin/sessions/SessionCreateModal"
+import { Eyebrow } from "@/components/eyebrow"
+import { SessionStatusPill } from "@/components/session/status-pill"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
+import { UserAvatar } from "@/components/user-avatar"
+import { useOrgGuard } from "@/lib/access"
+import { orgHead } from "@/lib/org-head"
+import { formatSessionDate, getSessionStatus, useNow } from "@/lib/session-status"
+import { cn } from "@/lib/utils"
 
 export const Route = createFileRoute("/_auth/org/$orgId/classes/$classId")({
-  head: () => orgHead("org.nav.classes"),
+  head: () => orgHead("org.class.title"),
   component: RouteComponent,
 })
 
-const sessionSchema = z.object({
-  name: z.string().min(2),
-  start_time: z.string().min(1),
-})
-
-type SessionFormValues = z.infer<typeof sessionSchema>
-
-function LiveSessionButton({ session }: { session: GithubCom4H1RZooraInternalDomainClassSession }) {
-  const { t } = useTranslation()
-  const navigate = useNavigate()
-  const { can } = useAccess()
-
-  const canStart = can("livesessions:create") || can("livesessions:create_any")
-  const canJoin = can("livesessions:join") || can("livesessions:join_any")
-
-  const joinMutation = usePostLiveRooms({
-    mutation: {
-      onSuccess: (result) => {
-        const room = (result.status === 201 && result.data.data) || undefined
-        if (room?.id) navigate({ to: "/live/$liveId", params: { liveId: room.id } })
-      },
-      onError: async (err, variables) => {
-        if ((err as ErrorType<unknown>).response?.status === 409) {
-          try {
-            const rooms = await getLiveRooms()
-            const roomsData = (rooms.status === 200 && rooms.data.data) || undefined
-            const items = roomsData?.items ?? []
-            const room = items.find((r) => r.class_session_id === variables.data.class_session_id)
-            if (room?.id) navigate({ to: "/live/$liveId", params: { liveId: room.id } })
-          } catch {
-            // ignore
-          }
-        }
-      },
-    },
-  })
-
-  if (!canStart && !canJoin) return null
+function SessionCard({
+  session,
+  orgId,
+  index,
+  now,
+}: {
+  session: Session
+  orgId: string
+  index: number
+  now: number
+}) {
+  const { t, i18n } = useTranslation()
+  const status = getSessionStatus(session.start_time, now)
+  const tileNumber = String(index + 1).padStart(2, "0")
+  const startStr = formatSessionDate(session.start_time, i18n.language, "short")
 
   return (
-    <button
-      type="button"
-      disabled={joinMutation.isPending}
-      onClick={() => joinMutation.mutate({ data: { class_session_id: session.id! } })}
+    <Link
+      to="/org/$orgId/classes/classsessions/$classSessionId"
+      params={{ orgId, classSessionId: session.id! }}
+      className="group/tile bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex flex-col gap-5 overflow-hidden rounded-2xl p-5 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-lg"
     >
-      {canStart ? t("classes.sessions.start") : t("classes.sessions.join")}
-    </button>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,var(--color-primary)/8%,transparent_60%)] opacity-0 transition-opacity group-hover/tile:opacity-100"
+      />
+
+      <div className="flex items-start justify-between gap-2">
+        <SessionStatusPill status={status} size="sm" />
+        <span className="text-muted-foreground font-mono text-xs tracking-[0.25em]">/{tileNumber}</span>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Eyebrow>{t("org.class.sessions.eyebrow")}</Eyebrow>
+        <h3 className="line-clamp-2 text-xl leading-snug font-semibold tracking-tight text-balance">
+          {session.name}
+        </h3>
+        {session.description ? (
+          <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">{session.description}</p>
+        ) : null}
+      </div>
+
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-dashed pt-4">
+        <span className="text-muted-foreground inline-flex items-center gap-2 font-mono text-xs">
+          <CalendarClockIcon className="size-3.5" />
+          {startStr}
+        </span>
+        <span className="text-muted-foreground group-hover/tile:text-foreground text-xs font-medium underline-offset-4 transition-colors group-hover/tile:underline">
+          {t("org.class.sessions.open")} →
+        </span>
+      </div>
+    </Link>
+  )
+}
+
+function SessionCardSkeleton() {
+  return (
+    <div className="bg-card ring-foreground/10 flex flex-col gap-5 rounded-2xl p-5 ring-1">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-5 w-20" />
+        <Skeleton className="h-3 w-8" />
+      </div>
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-6 w-4/5" />
+        <Skeleton className="h-3 w-3/5" />
+      </div>
+      <div className="flex items-center justify-between border-t border-dashed pt-4">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-3 w-12" />
+      </div>
+    </div>
+  )
+}
+
+function DecorativeBackground() {
+  return (
+    <>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,var(--color-primary)/6%,transparent_55%)]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.04] [background-image:linear-gradient(var(--color-foreground)_1px,transparent_1px),linear-gradient(90deg,var(--color-foreground)_1px,transparent_1px)] [background-size:48px_48px] [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]"
+      />
+    </>
+  )
+}
+
+function StatCell({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
+  return (
+    <div className="flex flex-col gap-2 px-5 py-5">
+      <Eyebrow>{label}</Eyebrow>
+      <span
+        className={cn(
+          "text-3xl font-semibold tracking-tight tabular-nums",
+          accent ? "text-destructive" : "text-foreground"
+        )}
+      >
+        {value}
+      </span>
+    </div>
   )
 }
 
 function RouteComponent() {
   const { t } = useTranslation()
-  const { classId } = Route.useParams()
-  const queryClient = useQueryClient()
-  const [showForm, setShowForm] = useState(false)
+  const { orgId, classId } = Route.useParams()
+  const allowed = useOrgGuard(["classes:view", "classes:view_any"])
   const { can } = useAccess()
   const canCreateSession = can("classes:update") || can("classes:update_any")
-  const allowed = useOrgGuard(["classes:view", "classes:view_any"])
+  const now = useNow(30_000)
+
+  const [formOpen, setFormOpen] = useState(false)
 
   const { data: classData, isPending: classPending } = useGetClassesId(classId)
   const { data: sessionsData, isPending: sessionsPending } = useGetClassesIdSessions(classId, undefined)
@@ -91,85 +145,122 @@ function RouteComponent() {
   const cls = (classData?.status === 200 && classData.data.data) || undefined
   const sessionsResult = (sessionsData?.status === 200 && sessionsData.data.data) || undefined
   const sessions = sessionsResult?.items ?? []
+  const total = sessionsResult?.total ?? sessions.length
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<SessionFormValues>({
-    resolver: zodResolver(sessionSchema),
-    defaultValues: { name: "", start_time: "" },
-  })
-
-  const createMutation = usePostClassesIdSessions({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getGetClassesIdSessionsQueryKey(classId) })
-        reset()
-        setShowForm(false)
-      },
-    },
-  })
-
-  const onSubmit = handleSubmit((values) => {
-    createMutation.mutate({
-      id: classId,
-      data: {
-        name: values.name,
-        start_time: new Date(values.start_time).toISOString(),
-      },
-    })
-  })
+  const liveCount = sessions.filter((s) => getSessionStatus(s.start_time, now) === "live").length
+  const scheduledCount = sessions.filter((s) => getSessionStatus(s.start_time, now) === "scheduled").length
 
   if (!allowed) return null
-  if (classPending) return <div>Loading...</div>
+
+  if (classPending) {
+    return (
+      <div className="flex flex-col gap-10 py-10">
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-16 w-3/4" />
+        <Skeleton className="h-20 w-full" />
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <SessionCardSkeleton />
+          <SessionCardSkeleton />
+          <SessionCardSkeleton />
+        </div>
+      </div>
+    )
+  }
+
+  const teacherName = cls?.user?.name ?? ""
+  const shortId = (cls?.id ?? "").slice(0, 8).toUpperCase()
 
   return (
-    <div>
-      <h1>{cls?.name}</h1>
+    <div className="relative isolate flex flex-col gap-10 pb-16">
+      <DecorativeBackground />
 
-      {canCreateSession && (
-        <button type="button" onClick={() => setShowForm((v) => !v)}>
-          {t("classes.sessions.newSession")}
-        </button>
-      )}
+      <div className="flex items-center justify-between pt-6">
+        <Link
+          to="/org/$orgId/classes"
+          params={{ orgId }}
+          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 font-mono text-xs tracking-[0.25em] uppercase transition-colors"
+        >
+          <ArrowLeftIcon className="size-3.5" />
+          {t("org.class.backToClasses")}
+        </Link>
+        <span className="text-muted-foreground font-mono text-xs tracking-[0.25em]">№ {shortId || "—"}</span>
+      </div>
 
-      {canCreateSession && showForm && (
-        <form onSubmit={onSubmit}>
-          <div>
-            <label>{t("classes.sessions.form.name")}</label>
-            <input {...register("name")} />
-            {errors.name && <span>{errors.name.message}</span>}
+      <header className="flex flex-col gap-5">
+        <Eyebrow>{t("org.class.eyebrow")}</Eyebrow>
+
+        <h1 className="max-w-4xl text-4xl leading-tight font-semibold tracking-tight text-balance md:text-5xl lg:text-6xl">
+          {cls?.name ?? "—"}
+        </h1>
+
+        {cls?.description ? (
+          <p className="text-muted-foreground max-w-2xl text-base leading-relaxed md:text-lg">{cls.description}</p>
+        ) : null}
+
+        {cls?.user_id ? (
+          <div className="text-muted-foreground inline-flex items-center gap-2 text-sm">
+            {teacherName ? <UserAvatar name={teacherName} size="md" /> : <UserIcon className="size-4" />}
+            <span className="text-foreground font-medium">{teacherName || t("org.class.unknownTeacher")}</span>
+            <Eyebrow className="text-muted-foreground">{t("org.class.instructor")}</Eyebrow>
           </div>
-          <div>
-            <label>{t("classes.sessions.form.startTime")}</label>
-            <input type="datetime-local" {...register("start_time")} />
-            {errors.start_time && <span>{errors.start_time.message}</span>}
-          </div>
-          <button type="submit" disabled={createMutation.isPending}>
-            {t("common.create")}
-          </button>
-          <button type="button" onClick={() => setShowForm(false)}>
-            {t("common.cancel")}
-          </button>
-        </form>
-      )}
+        ) : null}
+      </header>
 
-      {sessionsPending ? (
-        <div>Loading...</div>
-      ) : sessions.length === 0 ? (
-        <div>{t("classes.sessions.empty")}</div>
-      ) : (
-        <ul>
-          {sessions.map((s) => (
-            <li key={s.id}>
-              <strong>{s.name}</strong> — {s.start_time}
-              <LiveSessionButton session={s} />
-            </li>
-          ))}
-        </ul>
-      )}
+      <section className="bg-card ring-foreground/10 grid grid-cols-3 overflow-hidden rounded-2xl ring-1 divide-x divide-dashed rtl:divide-x-reverse">
+        <StatCell label={t("org.class.stats.total")} value={total} />
+        <StatCell label={t("org.class.stats.live")} value={liveCount} accent={liveCount > 0} />
+        <StatCell label={t("org.class.stats.upcoming")} value={scheduledCount} />
+      </section>
+
+      <section className="flex flex-col gap-5">
+        <div className="flex items-end justify-between gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Eyebrow>{t("org.class.sessions.eyebrow")}</Eyebrow>
+            <h2 className="text-2xl font-semibold tracking-tight">{t("org.class.sessions.title")}</h2>
+          </div>
+
+          {canCreateSession ? (
+            <Button onClick={() => setFormOpen(true)}>
+              <PlusIcon className="size-4" />
+              {t("org.class.sessions.newSession")}
+            </Button>
+          ) : null}
+        </div>
+
+        {sessionsPending ? (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <SessionCardSkeleton />
+            <SessionCardSkeleton />
+            <SessionCardSkeleton />
+          </div>
+        ) : sessions.length === 0 ? (
+          <div className="bg-card ring-foreground/10 flex flex-col items-center gap-3 rounded-2xl px-6 py-16 text-center ring-1">
+            <CalendarClockIcon className="text-muted-foreground size-8" />
+            <h3 className="text-foreground text-lg font-semibold tracking-tight">
+              {t("org.class.sessions.emptyTitle")}
+            </h3>
+            <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
+              {t("org.class.sessions.emptyHint")}
+            </p>
+            {canCreateSession ? (
+              <Button onClick={() => setFormOpen(true)} className="mt-2">
+                <PlusIcon className="size-4" />
+                {t("org.class.sessions.newSession")}
+              </Button>
+            ) : null}
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {sessions.map((s, i) => (
+              <SessionCard key={s.id} session={s} orgId={orgId} index={i} now={now} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {canCreateSession ? (
+        <SessionCreateModal open={formOpen} onOpenChange={setFormOpen} classId={classId} session={null} />
+      ) : null}
     </div>
   )
 }

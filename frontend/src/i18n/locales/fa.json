@@ -1131,6 +1131,59 @@
       "updateSuccess": "سازمان به‌روزرسانی شد",
       "saving": "در حال ذخیره…"
     },
+    "class": {
+      "title": "کلاس",
+      "eyebrow": "کلاس",
+      "instructor": "مدرس",
+      "unknownTeacher": "تعیین نشده",
+      "backToClasses": "بازگشت به کلاس‌ها",
+      "stats": {
+        "total": "جلسات",
+        "live": "زنده اکنون",
+        "upcoming": "آینده"
+      },
+      "sessions": {
+        "eyebrow": "جلسات",
+        "title": "جلسات کلاس",
+        "newSession": "جلسه جدید",
+        "open": "باز کردن",
+        "emptyTitle": "هنوز جلسه‌ای وجود ندارد",
+        "emptyHint": "اولین جلسه این کلاس را برنامه‌ریزی کنید."
+      }
+    },
+    "session": {
+      "title": "جلسه",
+      "eyebrow": "جلسه کلاس",
+      "backToClass": "بازگشت به کلاس",
+      "footnote": "خط‌زمانی جلسه",
+      "meta": {
+        "starts": "شروع",
+        "countdown": "شمارش معکوس",
+        "status": "وضعیت",
+        "created": "ایجاد شده"
+      },
+      "rooms": {
+        "eyebrow": "اتاق‌ها",
+        "title": "فعالیت‌ها",
+        "subtitle": "متصل به این جلسه",
+        "live": "اتاق‌های زنده",
+        "quizzes": "آزمون‌ها",
+        "practices": "تمرین‌ها",
+        "offlines": "ضبط‌ها"
+      },
+      "actions": {
+        "join": "ورود به جلسه زنده",
+        "start": "شروع جلسه زنده",
+        "viewClass": "مشاهده کلاس",
+        "notPermitted": "بدون دسترسی"
+      },
+      "notFound": {
+        "eyebrow": "خطا · ۴۰۴",
+        "title": "جلسه یافت نشد",
+        "description": "این جلسه کلاس وجود ندارد یا شما دسترسی ندارید.",
+        "backToClasses": "بازگشت به کلاس‌ها"
+      }
+    },
     "roles": {
       "title": "نقش‌ها",
       "searchPlaceholder": "جستجوی نقش‌ها…",

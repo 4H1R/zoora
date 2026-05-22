@@ -46,6 +46,7 @@ import { Route as AdminAdminClassesClassIdPracticesRouteImport } from './routes/
 import { Route as AdminAdminClassesClassIdOfflinesRouteImport } from './routes/_admin/admin/classes/$classId/offlines'
 import { Route as AdminAdminClassesClassIdLiveRoomsRouteImport } from './routes/_admin/admin/classes/$classId/live-rooms'
 import { Route as AdminAdminClassesClassIdGradebookRouteImport } from './routes/_admin/admin/classes/$classId/gradebook'
+import { Route as AuthOrgOrgIdClassesClasssessionsClassSessionIdRouteImport } from './routes/_auth/org/$orgId/classes/classsessions/$classSessionId'
 
 const GuestRoute = GuestRouteImport.update({
   id: '/_guest',
@@ -246,6 +247,12 @@ const AdminAdminClassesClassIdGradebookRoute =
     path: '/admin/classes/$classId/gradebook',
     getParentRoute: () => AdminRoute,
   } as any)
+const AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute =
+  AuthOrgOrgIdClassesClasssessionsClassSessionIdRouteImport.update({
+    id: '/classes/classsessions/$classSessionId',
+    path: '/classes/classsessions/$classSessionId',
+    getParentRoute: () => AuthOrgOrgIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -282,6 +289,7 @@ export interface FileRoutesByFullPath {
   '/org/$orgId/medias/': typeof AuthOrgOrgIdMediasIndexRoute
   '/org/$orgId/roles/': typeof AuthOrgOrgIdRolesIndexRoute
   '/org/$orgId/users/': typeof AuthOrgOrgIdUsersIndexRoute
+  '/org/$orgId/classes/classsessions/$classSessionId': typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -318,6 +326,7 @@ export interface FileRoutesByTo {
   '/org/$orgId/medias': typeof AuthOrgOrgIdMediasIndexRoute
   '/org/$orgId/roles': typeof AuthOrgOrgIdRolesIndexRoute
   '/org/$orgId/users': typeof AuthOrgOrgIdUsersIndexRoute
+  '/org/$orgId/classes/classsessions/$classSessionId': typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -358,6 +367,7 @@ export interface FileRoutesById {
   '/_auth/org/$orgId/medias/': typeof AuthOrgOrgIdMediasIndexRoute
   '/_auth/org/$orgId/roles/': typeof AuthOrgOrgIdRolesIndexRoute
   '/_auth/org/$orgId/users/': typeof AuthOrgOrgIdUsersIndexRoute
+  '/_auth/org/$orgId/classes/classsessions/$classSessionId': typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -396,6 +406,7 @@ export interface FileRouteTypes {
     | '/org/$orgId/medias/'
     | '/org/$orgId/roles/'
     | '/org/$orgId/users/'
+    | '/org/$orgId/classes/classsessions/$classSessionId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -432,6 +443,7 @@ export interface FileRouteTypes {
     | '/org/$orgId/medias'
     | '/org/$orgId/roles'
     | '/org/$orgId/users'
+    | '/org/$orgId/classes/classsessions/$classSessionId'
   id:
     | '__root__'
     | '/'
@@ -471,6 +483,7 @@ export interface FileRouteTypes {
     | '/_auth/org/$orgId/medias/'
     | '/_auth/org/$orgId/roles/'
     | '/_auth/org/$orgId/users/'
+    | '/_auth/org/$orgId/classes/classsessions/$classSessionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -742,6 +755,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminClassesClassIdGradebookRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_auth/org/$orgId/classes/classsessions/$classSessionId': {
+      id: '/_auth/org/$orgId/classes/classsessions/$classSessionId'
+      path: '/classes/classsessions/$classSessionId'
+      fullPath: '/org/$orgId/classes/classsessions/$classSessionId'
+      preLoaderRoute: typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRouteImport
+      parentRoute: typeof AuthOrgOrgIdRoute
+    }
   }
 }
 
@@ -811,6 +831,7 @@ interface AuthOrgOrgIdRouteChildren {
   AuthOrgOrgIdMediasIndexRoute: typeof AuthOrgOrgIdMediasIndexRoute
   AuthOrgOrgIdRolesIndexRoute: typeof AuthOrgOrgIdRolesIndexRoute
   AuthOrgOrgIdUsersIndexRoute: typeof AuthOrgOrgIdUsersIndexRoute
+  AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute: typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute
 }
 
 const AuthOrgOrgIdRouteChildren: AuthOrgOrgIdRouteChildren = {
@@ -821,6 +842,8 @@ const AuthOrgOrgIdRouteChildren: AuthOrgOrgIdRouteChildren = {
   AuthOrgOrgIdMediasIndexRoute: AuthOrgOrgIdMediasIndexRoute,
   AuthOrgOrgIdRolesIndexRoute: AuthOrgOrgIdRolesIndexRoute,
   AuthOrgOrgIdUsersIndexRoute: AuthOrgOrgIdUsersIndexRoute,
+  AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute:
+    AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute,
 }
 
 const AuthOrgOrgIdRouteWithChildren = AuthOrgOrgIdRoute._addFileChildren(

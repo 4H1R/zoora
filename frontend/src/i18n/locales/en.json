@@ -1099,6 +1099,59 @@
       "updateSuccess": "Organization updated",
       "saving": "Saving…"
     },
+    "class": {
+      "title": "Class",
+      "eyebrow": "Class",
+      "instructor": "Instructor",
+      "unknownTeacher": "Unassigned",
+      "backToClasses": "Back to classes",
+      "stats": {
+        "total": "Sessions",
+        "live": "Live now",
+        "upcoming": "Upcoming"
+      },
+      "sessions": {
+        "eyebrow": "Sessions",
+        "title": "Class sessions",
+        "newSession": "New session",
+        "open": "Open",
+        "emptyTitle": "No sessions yet",
+        "emptyHint": "Schedule the first session for this class to get started."
+      }
+    },
+    "session": {
+      "title": "Session",
+      "eyebrow": "Class session",
+      "backToClass": "Back to class",
+      "footnote": "Session timeline",
+      "meta": {
+        "starts": "Starts",
+        "countdown": "Countdown",
+        "status": "Status",
+        "created": "Created"
+      },
+      "rooms": {
+        "eyebrow": "Rooms",
+        "title": "Activities",
+        "subtitle": "Linked to this session",
+        "live": "Live rooms",
+        "quizzes": "Quizzes",
+        "practices": "Practices",
+        "offlines": "Recordings"
+      },
+      "actions": {
+        "join": "Join live",
+        "start": "Start live",
+        "viewClass": "View class",
+        "notPermitted": "No access"
+      },
+      "notFound": {
+        "eyebrow": "Error · 404",
+        "title": "Session not found",
+        "description": "The class session you're looking for does not exist or you don't have access.",
+        "backToClasses": "Back to classes"
+      }
+    },
     "roles": {
       "title": "Roles",
       "searchPlaceholder": "Search roles…",
