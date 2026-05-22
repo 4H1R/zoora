@@ -72,21 +72,18 @@ function QuizzesPage() {
     setSessionId(undefined)
   }
 
-  const { data, isLoading } = useGetAdminQuizzes(
-    {
-      class_id: classId || undefined,
-      class_session_id: sessionId || undefined,
-      search: search || undefined,
-      page: currentPage,
-      order_by: order_by || undefined,
-      order_dir: order_dir || undefined,
-    },
-    { query: { enabled: !!sessionId } }
-  )
+  const { data, isLoading } = useGetAdminQuizzes({
+    class_id: classId || undefined,
+    class_session_id: sessionId || undefined,
+    search: search || undefined,
+    page: currentPage,
+    order_by: order_by || undefined,
+    order_dir: order_dir || undefined,
+  })
 
   const quizzesData = (data?.status === 200 && data.data.data) || undefined
-  const quizzes = sessionId ? (quizzesData?.items ?? []) : []
-  const total = sessionId ? (quizzesData?.total ?? 0) : 0
+  const quizzes = quizzesData?.items ?? []
+  const total = quizzesData?.total ?? 0
 
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
 
@@ -135,20 +132,14 @@ function QuizzesPage() {
           </Button>
         )}
       </Card>
-      {sessionId ? (
-        <QuizTable
-          quizzes={quizzes}
-          total={total}
-          isLoading={isLoading}
-          sorting={sorting}
-          onEdit={handleEdit}
-          onManageQuestions={handleManageQuestions}
-        />
-      ) : (
-        <Card className="text-muted-foreground p-8 text-center text-sm">
-          {t("admin.quizzes.filter.selectSessionFirst")}
-        </Card>
-      )}
+      <QuizTable
+        quizzes={quizzes}
+        total={total}
+        isLoading={isLoading}
+        sorting={sorting}
+        onEdit={handleEdit}
+        onManageQuestions={handleManageQuestions}
+      />
       <QuizCreateModal
         open={formOpen}
         onOpenChange={handleFormOpenChange}

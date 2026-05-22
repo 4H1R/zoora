@@ -302,6 +302,12 @@
       "createdAt": "Created",
       "noResults": "No live rooms found",
       "noResultsHint": "Create one or adjust your filters.",
+      "filter": {
+        "class": "Class",
+        "session": "Session",
+        "clear": "Clear filters",
+        "selectSessionFirst": "Select a session to view live rooms."
+      },
       "stats": {
         "total": "Total rooms",
         "active": "Active now"
@@ -429,6 +435,12 @@
         "edit": "Edit room",
         "delete": "Delete"
       },
+      "filter": {
+        "class": "Class",
+        "session": "Session",
+        "clear": "Clear filters",
+        "selectSessionFirst": "Select a session to view offline rooms."
+      },
       "form": {
         "createTitle": "New offline room",
         "createDescription": "Create a new offline room.",
@@ -469,6 +481,12 @@
       "createdAt": "Created",
       "noResults": "No practice rooms found",
       "noResultsHint": "Create the first practice room.",
+      "filter": {
+        "class": "Class",
+        "session": "Session",
+        "clear": "Clear filters",
+        "selectSessionFirst": "Select a session to view practice rooms."
+      },
       "stats": {
         "total": "Total practices"
       },

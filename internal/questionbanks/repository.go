@@ -223,6 +223,28 @@ func (r *questionRepository) RandomByBank(ctx context.Context, bankID uuid.UUID,
 	return questions, nil
 }
 
+func (r *questionRepository) AdminList(ctx context.Context, q domain.AdminListQuestionsQuery) ([]domain.Question, int64, error) {
+	base := database.DB(ctx, r.db).Model(&domain.Question{}).Preload("Bank")
+	if q.IncludeDeleted {
+		base = base.Unscoped()
+	}
+	if q.BankID != nil {
+		base = base.Where("bank_id = ?", *q.BankID)
+	}
+	if q.OrganizationID != nil {
+		base = base.Where("organization_id = ?", *q.OrganizationID)
+	}
+	if q.Type != nil {
+		base = base.Where("type = ?", *q.Type)
+	}
+	var questions []domain.Question
+	total, err := listparams.Paginate(base, q.ListParams, &questions)
+	if err != nil {
+		return nil, 0, fmt.Errorf("questionbanks.questionRepository.AdminList: %w", err)
+	}
+	return questions, total, nil
+}
+
 func (r *questionRepository) HardDelete(ctx context.Context, id uuid.UUID) error {
 	result := database.DB(ctx, r.db).Unscoped().Delete(&domain.Question{}, "id = ?", id)
 	if result.Error != nil {

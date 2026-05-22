@@ -38,6 +38,11 @@ import type {
   GetAdminQuestionBanks403,
   GetAdminQuestionBanks500,
   GetAdminQuestionBanksParams,
+  GetAdminQuestions200,
+  GetAdminQuestions401,
+  GetAdminQuestions403,
+  GetAdminQuestions500,
+  GetAdminQuestionsParams,
   GithubCom4H1RZooraInternalDomainAdminCreateQuestionBankDTO,
   GithubCom4H1RZooraInternalDomainAdminUpdateQuestionBankDTO,
   GithubCom4H1RZooraInternalDomainResponse,
@@ -630,3 +635,140 @@ export const useDeleteAdminQuestionBanksId = <TError = ErrorType<DeleteAdminQues
       > => {
       return useMutation(getDeleteAdminQuestionBanksIdMutationOptions(options), queryClient);
     }
+    /**
+ * Cross-bank list. Search matches: text. Orderable: created_at, updated_at, type. Filters: bank_id, organization_id, type, include_deleted.
+ * @summary [Admin] List questions
+ */
+export type getAdminQuestionsResponse200 = {
+  data: GetAdminQuestions200
+  status: 200
+}
+
+export type getAdminQuestionsResponse401 = {
+  data: GetAdminQuestions401
+  status: 401
+}
+
+export type getAdminQuestionsResponse403 = {
+  data: GetAdminQuestions403
+  status: 403
+}
+
+export type getAdminQuestionsResponse500 = {
+  data: GetAdminQuestions500
+  status: 500
+}
+
+export type getAdminQuestionsResponseSuccess = (getAdminQuestionsResponse200) & {
+  headers: Headers;
+};
+export type getAdminQuestionsResponseError = (getAdminQuestionsResponse401 | getAdminQuestionsResponse403 | getAdminQuestionsResponse500) & {
+  headers: Headers;
+};
+
+export type getAdminQuestionsResponse = (getAdminQuestionsResponseSuccess | getAdminQuestionsResponseError)
+
+export const getGetAdminQuestionsUrl = (params?: GetAdminQuestionsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/admin/questions?${stringifiedParams}` : `/admin/questions`
+}
+
+export const getAdminQuestions = async (params?: GetAdminQuestionsParams, options?: RequestInit): Promise<getAdminQuestionsResponse> => {
+
+  return customInstance<getAdminQuestionsResponse>(getGetAdminQuestionsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminQuestionsQueryKey = (params?: GetAdminQuestionsParams,) => {
+    return [
+    `/admin/questions`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminQuestionsQueryOptions = <TData = Awaited<ReturnType<typeof getAdminQuestions>>, TError = ErrorType<GetAdminQuestions401 | GetAdminQuestions403 | GetAdminQuestions500>>(params?: GetAdminQuestionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuestions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminQuestionsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminQuestions>>> = ({ signal }) => getAdminQuestions(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminQuestions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminQuestionsQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminQuestions>>>
+export type GetAdminQuestionsQueryError = ErrorType<GetAdminQuestions401 | GetAdminQuestions403 | GetAdminQuestions500>
+
+
+export function useGetAdminQuestions<TData = Awaited<ReturnType<typeof getAdminQuestions>>, TError = ErrorType<GetAdminQuestions401 | GetAdminQuestions403 | GetAdminQuestions500>>(
+ params: undefined |  GetAdminQuestionsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuestions>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminQuestions>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminQuestions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminQuestions<TData = Awaited<ReturnType<typeof getAdminQuestions>>, TError = ErrorType<GetAdminQuestions401 | GetAdminQuestions403 | GetAdminQuestions500>>(
+ params?: GetAdminQuestionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuestions>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminQuestions>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminQuestions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminQuestions<TData = Awaited<ReturnType<typeof getAdminQuestions>>, TError = ErrorType<GetAdminQuestions401 | GetAdminQuestions403 | GetAdminQuestions500>>(
+ params?: GetAdminQuestionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuestions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary [Admin] List questions
+ */
+
+export function useGetAdminQuestions<TData = Awaited<ReturnType<typeof getAdminQuestions>>, TError = ErrorType<GetAdminQuestions401 | GetAdminQuestions403 | GetAdminQuestions500>>(
+ params?: GetAdminQuestionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminQuestions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminQuestionsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+

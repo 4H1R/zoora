@@ -5,13 +5,15 @@ import { ArrowLeftIcon, DumbbellIcon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
-import { useGetAdminPractices } from "@/api/admin-practices/admin-practices"
 import { useGetClassesId } from "@/api/classes/classes"
+import { useGetPractices } from "@/api/practices/practices"
+import { ClassPicker, SessionPicker } from "@/components/admin/forms/ClassSessionPicker"
 import { PracticeCreateModal } from "@/components/admin/practices/PracticeCreateModal"
 import { PracticeTable } from "@/components/admin/practices/PracticeTable"
 import { StatCards } from "@/components/data-table/stat-cards"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 import { adminHead } from "@/lib/admin-head"
 import { adminSearchSchema } from "@/lib/data-table"
 
@@ -26,6 +28,8 @@ function ClassPracticesPage() {
   const { classId } = Route.useParams()
   const { search, order_by, order_dir, page } = Route.useSearch()
   const currentPage = page ?? 1
+
+  const sessionId: string | undefined = undefined
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingPractice, setEditingPractice] = useState<PracticeRoom | null>(null)
@@ -48,17 +52,21 @@ function ClassPracticesPage() {
     if (!open) setEditingPractice(null)
   }
 
-  const { data, isLoading } = useGetAdminPractices({
-    class_id: classId,
-    search: search || undefined,
-    page: currentPage,
-    order_by: order_by || undefined,
-    order_dir: order_dir || undefined,
-  })
+  const { data, isLoading } = useGetPractices(
+    {
+      class_id: classId,
+      class_session_id: sessionId || undefined,
+      search: search || undefined,
+      page: currentPage,
+      order_by: order_by || undefined,
+      order_dir: order_dir || undefined,
+    },
+    { query: { enabled: !!sessionId } }
+  )
 
   const practicesData = (data?.status === 200 && data.data.data) || undefined
-  const practices = practicesData?.items ?? []
-  const total = practicesData?.total ?? 0
+  const practices = sessionId ? (practicesData?.items ?? []) : []
+  const total = sessionId ? (practicesData?.total ?? 0) : 0
 
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
 
@@ -91,13 +99,38 @@ function ClassPracticesPage() {
         }
       />
       <StatCards stats={statCards} />
-      <PracticeTable
-        practices={practices}
-        total={total}
-        isLoading={isLoading}
-        sorting={sorting}
-        onEdit={handleEdit}
-      />
+      <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
+        <div className="flex-1">
+          <label className="mb-1.5 block text-xs font-medium">
+            {t("admin.practices.filter.class")}
+          </label>
+          <ClassPicker value={classId} onChange={() => {}} disabled />
+        </div>
+        <div className="flex-1">
+          <label className="mb-1.5 block text-xs font-medium">
+            {t("admin.practices.filter.session")}
+          </label>
+          <SessionPicker
+            classId={classId}
+            value={sessionId}
+            onChange={() => {}}
+            disabled
+          />
+        </div>
+      </Card>
+      {sessionId ? (
+        <PracticeTable
+          practices={practices}
+          total={total}
+          isLoading={isLoading}
+          sorting={sorting}
+          onEdit={handleEdit}
+        />
+      ) : (
+        <Card className="text-muted-foreground p-8 text-center text-sm">
+          {t("admin.practices.filter.selectSessionFirst")}
+        </Card>
+      )}
       <PracticeCreateModal
         open={formOpen}
         onOpenChange={handleFormOpenChange}

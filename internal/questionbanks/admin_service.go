@@ -29,6 +29,19 @@ func (s *service) AdminList(ctx context.Context, q domain.AdminListQuestionBanks
 	return s.repo.AdminList(ctx, q)
 }
 
+func (s *service) AdminListQuestions(ctx context.Context, q domain.AdminListQuestionsQuery) ([]domain.Question, int64, error) {
+	if _, err := s.requireAdmin(ctx); err != nil {
+		return nil, 0, err
+	}
+	if q.ListParams.Page < 1 {
+		q.ListParams.Page = 1
+	}
+	if q.ListParams.PageSize <= 0 {
+		q.ListParams.PageSize = domain.DefaultPageSize
+	}
+	return s.questions.AdminList(ctx, q)
+}
+
 func (s *service) AdminCreate(ctx context.Context, dto domain.AdminCreateQuestionBankDTO) (*domain.QuestionBank, error) {
 	caller, err := s.requireAdmin(ctx)
 	if err != nil {

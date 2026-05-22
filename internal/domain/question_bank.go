@@ -94,6 +94,14 @@ type AdminListQuestionBanksQuery struct {
 	ListParams     ListParams `form:"-"`
 }
 
+type AdminListQuestionsQuery struct {
+	BankID         *uuid.UUID    `form:"-"`
+	OrganizationID *uuid.UUID    `form:"-"`
+	Type           *QuestionType `form:"type"`
+	IncludeDeleted bool          `form:"include_deleted"`
+	ListParams     ListParams    `form:"-"`
+}
+
 // AdminCreateQuestionBankDTO is the body for POST /admin/question-banks.
 type AdminCreateQuestionBankDTO struct {
 	OrganizationID uuid.UUID `json:"organization_id" binding:"required"`
@@ -132,6 +140,7 @@ type QuestionRepository interface {
 	RandomByBank(ctx context.Context, bankID uuid.UUID, count int) ([]Question, error)
 
 	HardDelete(ctx context.Context, id uuid.UUID) error
+	AdminList(ctx context.Context, q AdminListQuestionsQuery) ([]Question, int64, error)
 }
 
 type QuestionBankService interface {
@@ -148,6 +157,7 @@ type QuestionBankService interface {
 	ListQuestions(ctx context.Context, bankID uuid.UUID, q ListQuestionsQuery) ([]Question, int64, error)
 
 	AdminList(ctx context.Context, q AdminListQuestionBanksQuery) ([]QuestionBank, int64, error)
+	AdminListQuestions(ctx context.Context, q AdminListQuestionsQuery) ([]Question, int64, error)
 	AdminCreate(ctx context.Context, dto AdminCreateQuestionBankDTO) (*QuestionBank, error)
 	AdminUpdate(ctx context.Context, id uuid.UUID, dto AdminUpdateQuestionBankDTO) (*QuestionBank, error)
 	AdminHardDelete(ctx context.Context, id uuid.UUID) error

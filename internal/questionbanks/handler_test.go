@@ -90,6 +90,11 @@ func (m *mockBankSvc) AdminHardDelete(ctx context.Context, id uuid.UUID) error {
 func (m *mockBankSvc) AdminHardDeleteQuestion(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+func (m *mockBankSvc) AdminListQuestions(ctx context.Context, q domain.AdminListQuestionsQuery) ([]domain.Question, int64, error) {
+	a := m.Called(ctx, q)
+	qs, _ := a.Get(0).([]domain.Question)
+	return qs, a.Get(1).(int64), a.Error(2)
+}
 
 
 func newBankHandlerRouter(t *testing.T) (*gin.Engine, *mockBankSvc) {

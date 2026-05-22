@@ -21,6 +21,7 @@ import { Route as AdminAdminDashboardRouteImport } from './routes/_admin/admin/d
 import { Route as AdminAdminUsersIndexRouteImport } from './routes/_admin/admin/users/index'
 import { Route as AdminAdminRolesIndexRouteImport } from './routes/_admin/admin/roles/index'
 import { Route as AdminAdminQuizzesIndexRouteImport } from './routes/_admin/admin/quizzes/index'
+import { Route as AdminAdminQuestionsIndexRouteImport } from './routes/_admin/admin/questions/index'
 import { Route as AdminAdminPracticesIndexRouteImport } from './routes/_admin/admin/practices/index'
 import { Route as AdminAdminPermissionsIndexRouteImport } from './routes/_admin/admin/permissions/index'
 import { Route as AdminAdminOrganizationsIndexRouteImport } from './routes/_admin/admin/organizations/index'
@@ -100,6 +101,12 @@ const AdminAdminQuizzesIndexRoute = AdminAdminQuizzesIndexRouteImport.update({
   path: '/admin/quizzes/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAdminQuestionsIndexRoute =
+  AdminAdminQuestionsIndexRouteImport.update({
+    id: '/admin/questions/',
+    path: '/admin/questions/',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminAdminPracticesIndexRoute =
   AdminAdminPracticesIndexRouteImport.update({
     id: '/admin/practices/',
@@ -236,6 +243,7 @@ export interface FileRoutesByFullPath {
   '/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
   '/admin/permissions/': typeof AdminAdminPermissionsIndexRoute
   '/admin/practices/': typeof AdminAdminPracticesIndexRoute
+  '/admin/questions/': typeof AdminAdminQuestionsIndexRoute
   '/admin/quizzes/': typeof AdminAdminQuizzesIndexRoute
   '/admin/roles/': typeof AdminAdminRolesIndexRoute
   '/admin/users/': typeof AdminAdminUsersIndexRoute
@@ -268,6 +276,7 @@ export interface FileRoutesByTo {
   '/admin/organizations': typeof AdminAdminOrganizationsIndexRoute
   '/admin/permissions': typeof AdminAdminPermissionsIndexRoute
   '/admin/practices': typeof AdminAdminPracticesIndexRoute
+  '/admin/questions': typeof AdminAdminQuestionsIndexRoute
   '/admin/quizzes': typeof AdminAdminQuizzesIndexRoute
   '/admin/roles': typeof AdminAdminRolesIndexRoute
   '/admin/users': typeof AdminAdminUsersIndexRoute
@@ -304,6 +313,7 @@ export interface FileRoutesById {
   '/_admin/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
   '/_admin/admin/permissions/': typeof AdminAdminPermissionsIndexRoute
   '/_admin/admin/practices/': typeof AdminAdminPracticesIndexRoute
+  '/_admin/admin/questions/': typeof AdminAdminQuestionsIndexRoute
   '/_admin/admin/quizzes/': typeof AdminAdminQuizzesIndexRoute
   '/_admin/admin/roles/': typeof AdminAdminRolesIndexRoute
   '/_admin/admin/users/': typeof AdminAdminUsersIndexRoute
@@ -338,6 +348,7 @@ export interface FileRouteTypes {
     | '/admin/organizations/'
     | '/admin/permissions/'
     | '/admin/practices/'
+    | '/admin/questions/'
     | '/admin/quizzes/'
     | '/admin/roles/'
     | '/admin/users/'
@@ -370,6 +381,7 @@ export interface FileRouteTypes {
     | '/admin/organizations'
     | '/admin/permissions'
     | '/admin/practices'
+    | '/admin/questions'
     | '/admin/quizzes'
     | '/admin/roles'
     | '/admin/users'
@@ -405,6 +417,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/organizations/'
     | '/_admin/admin/permissions/'
     | '/_admin/admin/practices/'
+    | '/_admin/admin/questions/'
     | '/_admin/admin/quizzes/'
     | '/_admin/admin/roles/'
     | '/_admin/admin/users/'
@@ -514,6 +527,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/quizzes'
       fullPath: '/admin/quizzes/'
       preLoaderRoute: typeof AdminAdminQuizzesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/questions/': {
+      id: '/_admin/admin/questions/'
+      path: '/admin/questions'
+      fullPath: '/admin/questions/'
+      preLoaderRoute: typeof AdminAdminQuestionsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
     '/_admin/admin/practices/': {
@@ -676,6 +696,7 @@ interface AdminRouteChildren {
   AdminAdminOrganizationsIndexRoute: typeof AdminAdminOrganizationsIndexRoute
   AdminAdminPermissionsIndexRoute: typeof AdminAdminPermissionsIndexRoute
   AdminAdminPracticesIndexRoute: typeof AdminAdminPracticesIndexRoute
+  AdminAdminQuestionsIndexRoute: typeof AdminAdminQuestionsIndexRoute
   AdminAdminQuizzesIndexRoute: typeof AdminAdminQuizzesIndexRoute
   AdminAdminRolesIndexRoute: typeof AdminAdminRolesIndexRoute
   AdminAdminUsersIndexRoute: typeof AdminAdminUsersIndexRoute
@@ -698,6 +719,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAdminOrganizationsIndexRoute: AdminAdminOrganizationsIndexRoute,
   AdminAdminPermissionsIndexRoute: AdminAdminPermissionsIndexRoute,
   AdminAdminPracticesIndexRoute: AdminAdminPracticesIndexRoute,
+  AdminAdminQuestionsIndexRoute: AdminAdminQuestionsIndexRoute,
   AdminAdminQuizzesIndexRoute: AdminAdminQuizzesIndexRoute,
   AdminAdminRolesIndexRoute: AdminAdminRolesIndexRoute,
   AdminAdminUsersIndexRoute: AdminAdminUsersIndexRoute,

@@ -1,16 +1,18 @@
 import type { GithubCom4H1RZooraInternalDomainPracticeRoom as PracticeRoom } from "@/api/model"
 
 import { createFileRoute } from "@tanstack/react-router"
-import { DumbbellIcon, PlusIcon } from "lucide-react"
+import { DumbbellIcon, PlusIcon, XIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { useGetAdminPractices } from "@/api/admin-practices/admin-practices"
+import { ClassPicker, SessionPicker } from "@/components/admin/forms/ClassSessionPicker"
 import { PracticeCreateModal } from "@/components/admin/practices/PracticeCreateModal"
 import { PracticeTable } from "@/components/admin/practices/PracticeTable"
 import { StatCards } from "@/components/data-table/stat-cards"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 import { adminHead } from "@/lib/admin-head"
 import { adminSearchSchema } from "@/lib/data-table"
 
@@ -25,6 +27,9 @@ function PracticesPage() {
   const { search, order_by, order_dir, page } = Route.useSearch()
 
   const currentPage = page ?? 1
+
+  const [classId, setClassId] = useState<string | undefined>(undefined)
+  const [sessionId, setSessionId] = useState<string | undefined>(undefined)
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingPractice, setEditingPractice] = useState<PracticeRoom | null>(null)
@@ -44,7 +49,19 @@ function PracticesPage() {
     if (!open) setEditingPractice(null)
   }
 
+  const handleClassChange = (id: string) => {
+    setClassId(id || undefined)
+    setSessionId(undefined)
+  }
+
+  const handleClearFilters = () => {
+    setClassId(undefined)
+    setSessionId(undefined)
+  }
+
   const { data, isLoading } = useGetAdminPractices({
+    class_id: classId || undefined,
+    class_session_id: sessionId || undefined,
     search: search || undefined,
     page: currentPage,
     order_by: order_by || undefined,
@@ -78,6 +95,30 @@ function PracticesPage() {
         }
       />
       <StatCards stats={statCards} />
+      <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
+        <div className="flex-1">
+          <label className="mb-1.5 block text-xs font-medium">
+            {t("admin.practices.filter.class")}
+          </label>
+          <ClassPicker value={classId} onChange={handleClassChange} />
+        </div>
+        <div className="flex-1">
+          <label className="mb-1.5 block text-xs font-medium">
+            {t("admin.practices.filter.session")}
+          </label>
+          <SessionPicker
+            classId={classId}
+            value={sessionId}
+            onChange={(id) => setSessionId(id || undefined)}
+          />
+        </div>
+        {(classId || sessionId) && (
+          <Button variant="outline" size="sm" onClick={handleClearFilters}>
+            <XIcon data-icon="inline-start" />
+            {t("admin.practices.filter.clear")}
+          </Button>
+        )}
+      </Card>
       <PracticeTable
         practices={practices}
         total={total}
