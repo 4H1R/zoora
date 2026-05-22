@@ -1,29 +1,24 @@
 import type { GithubCom4H1RZooraInternalDomainAttendance as Attendance } from "@/api/model"
 
-import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
-import { ClipboardCheckIcon } from "lucide-react"
+import { ClipboardCheckIcon, XIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { toast } from "sonner"
 
-import {
-  getGetAdminAttendanceQueryKey,
-  useDeleteAdminAttendanceId,
-  useGetAdminAttendance,
-} from "@/api/admin-attendance/admin-attendance"
-import { DataTable } from "@/components/data-table/data-table"
-import { DataTablePagination } from "@/components/data-table/data-table-pagination"
+import { useGetAdminAttendance } from "@/api/admin-attendance/admin-attendance"
+import { AttendanceFormDialog } from "@/components/admin/attendance/AttendanceFormDialog"
+import { AttendanceTable } from "@/components/admin/attendance/AttendanceTable"
+import { ClassPicker, SessionPicker } from "@/components/admin/forms/ClassSessionPicker"
 import { StatCards } from "@/components/data-table/stat-cards"
-import { TableFilter } from "@/components/data-table/table-filter"
-import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { PageHeader } from "@/components/page-header"
+import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { adminHead } from "@/lib/admin-head"
-import { adminSearchSchema, useAdminTable } from "@/lib/data-table"
+import { adminSearchSchema } from "@/lib/data-table"
 
-import { AttendanceFormDialog } from "./-attendance-form-dialog"
-import { useAttendanceColumns } from "./-columns"
+const ATTENDANCE_STATUSES = ["present", "absent", "late", "excused"] as const
+type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number]
 
 export const Route = createFileRoute("/_admin/admin/attendance/")({
   head: () => adminHead("admin.attendance.title"),
@@ -33,29 +28,36 @@ export const Route = createFileRoute("/_admin/admin/attendance/")({
 
 function AttendancePage() {
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
   const { search, order_by, order_dir, page } = Route.useSearch()
-
   const currentPage = page ?? 1
 
+  const [classId, setClassId] = useState<string | undefined>(undefined)
+  const [sessionId, setSessionId] = useState<string | undefined>(undefined)
+  const [status, setStatus] = useState<AttendanceStatus | undefined>(undefined)
+
   const [editTarget, setEditTarget] = useState<Attendance | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<Attendance | null>(null)
+
+  const hasFilters = !!classId || !!sessionId || !!status
+
+  const handleClearFilters = () => {
+    setClassId(undefined)
+    setSessionId(undefined)
+    setStatus(undefined)
+  }
+
+  const handleClassChange = (id: string) => {
+    setClassId(id || undefined)
+    setSessionId(undefined)
+  }
 
   const { data, isLoading } = useGetAdminAttendance({
+    class_id: classId || undefined,
+    class_session_id: sessionId || undefined,
+    status: status || undefined,
     search: search || undefined,
     page: currentPage,
     order_by: order_by || undefined,
     order_dir: order_dir || undefined,
-  })
-
-  const deleteMutation = useDeleteAdminAttendanceId({
-    mutation: {
-      onSuccess: () => {
-        toast.success(t("admin.attendance.form.deleteSuccess"))
-        queryClient.invalidateQueries({ queryKey: getGetAdminAttendanceQueryKey() })
-        setDeleteTarget(null)
-      },
-    },
   })
 
   const attendanceData = (data?.status === 200 && data.data.data) || undefined
@@ -64,24 +66,11 @@ function AttendancePage() {
 
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
 
-  const columns = useAttendanceColumns({
-    onEdit: (a) => setEditTarget(a),
-    onDelete: (a) => setDeleteTarget(a),
-  })
-
-  const table = useAdminTable({ data: items, columns, rowCount: total, sorting })
-
   const statCards = [
     {
       icon: <ClipboardCheckIcon />,
       label: t("admin.attendance.stats.total"),
       value: total,
-      loading: isLoading,
-    },
-    {
-      icon: <ClipboardCheckIcon />,
-      label: t("admin.attendance.stats.present"),
-      value: items.filter((a) => a.status === "present").length,
       loading: isLoading,
     },
   ]
@@ -90,44 +79,63 @@ function AttendancePage() {
     <div className="flex flex-col gap-6">
       <PageHeader title={t("admin.attendance.title")} />
       <StatCards stats={statCards} />
-      <TableFilter
-        table={table}
-        searchPlaceholder={t("admin.attendance.searchPlaceholder")}
-        sortLabel={t("admin.attendance.toolbar.sort")}
-        columnsLabel={t("admin.attendance.toolbar.columns")}
-        toggleColumnsLabel={t("admin.attendance.toolbar.toggleColumns")}
-      />
-      <Card className="gap-0 overflow-hidden p-0">
-        <div className="overflow-x-auto">
-          <DataTable
-            table={table}
-            isLoading={isLoading}
-            emptyIcon={<ClipboardCheckIcon className="size-8 opacity-40" />}
-            emptyTitle={t("admin.attendance.noResults")}
-            emptyHint={t("admin.attendance.noResultsHint")}
+      <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
+        <div className="flex-1">
+          <label className="mb-1.5 block text-xs font-medium">
+            {t("admin.attendance.filter.class")}
+          </label>
+          <ClassPicker value={classId} onChange={handleClassChange} />
+        </div>
+        <div className="flex-1">
+          <label className="mb-1.5 block text-xs font-medium">
+            {t("admin.attendance.filter.session")}
+          </label>
+          <SessionPicker
+            classId={classId}
+            value={sessionId}
+            onChange={(id) => setSessionId(id || undefined)}
           />
         </div>
-        <DataTablePagination table={table} />
+        <div className="flex-1">
+          <label className="mb-1.5 block text-xs font-medium">
+            {t("admin.attendance.filter.status")}
+          </label>
+          <Select
+            value={status ?? null}
+            onValueChange={(val) => setStatus((val as AttendanceStatus) || undefined)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={t("admin.attendance.filter.allStatuses")} />
+            </SelectTrigger>
+            <SelectContent>
+              {ATTENDANCE_STATUSES.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {t(`admin.attendance.statuses.${s}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {hasFilters && (
+          <Button variant="outline" size="sm" onClick={handleClearFilters}>
+            <XIcon data-icon="inline-start" />
+            {t("admin.attendance.filter.clear")}
+          </Button>
+        )}
       </Card>
-
+      <AttendanceTable
+        items={items}
+        total={total}
+        isLoading={isLoading}
+        sorting={sorting}
+        onEdit={(a) => setEditTarget(a)}
+      />
       <AttendanceFormDialog
         open={!!editTarget}
         onOpenChange={(open: boolean) => {
           if (!open) setEditTarget(null)
         }}
         attendance={editTarget}
-      />
-
-      <DeleteConfirmDialog
-        open={!!deleteTarget}
-        onOpenChange={(open: boolean) => {
-          if (!open) setDeleteTarget(null)
-        }}
-        resourceName={deleteTarget?.user?.name ?? deleteTarget?.id ?? ""}
-        onConfirm={() => {
-          if (deleteTarget?.id) deleteMutation.mutate({ id: deleteTarget.id })
-        }}
-        isLoading={deleteMutation.isPending}
       />
     </div>
   )

@@ -1,21 +1,18 @@
 import type { GithubCom4H1RZooraInternalDomainAttendance as Attendance } from "@/api/model"
-import type { ColumnDef } from "@tanstack/react-table"
+import type { ColumnDef, SortingState } from "@tanstack/react-table"
 
-import { CalendarClockIcon, EllipsisVerticalIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import { CalendarClockIcon, ClipboardCheckIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { DataTable } from "@/components/data-table/data-table"
+import { DataTablePagination } from "@/components/data-table/data-table-pagination"
+import { TableFilter } from "@/components/data-table/table-filter"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { getEntityColor, getInitials, useFormatDate } from "@/lib/data-table"
+import { Card } from "@/components/ui/card"
+import { getEntityColor, getInitials, useAdminTable, useFormatDate } from "@/lib/data-table"
 import { cn } from "@/lib/utils"
+
+import { AttendanceActions } from "./AttendanceActions"
 
 type AttendanceStatus = "present" | "absent" | "late" | "excused"
 
@@ -26,76 +23,9 @@ const STATUS_BADGE_VARIANT: Record<AttendanceStatus, "default" | "secondary" | "
   excused: "secondary",
 }
 
-function useAttendanceStatusLabel() {
-  const { t } = useTranslation()
-  return (status?: string) => {
-    if (!status) return "—"
-    return t(`admin.attendance.statuses.${status}`, { defaultValue: status })
-  }
-}
-
-interface AttendanceRowActionsProps {
-  attendance: Attendance
-  onEdit: (a: Attendance) => void
-  onDelete: (a: Attendance) => void
-}
-
-function AttendanceRowActions({ attendance, onEdit, onDelete }: AttendanceRowActionsProps) {
-  const { t } = useTranslation()
-
-  return (
-    <div className="flex items-center justify-end gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
-      <Button variant="ghost" size="icon-xs" onClick={() => onEdit(attendance)}>
-        <PencilIcon />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon-xs"
-        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-        onClick={() => onDelete(attendance)}
-      >
-        <Trash2Icon />
-      </Button>
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button variant="ghost" size="icon-xs">
-              <EllipsisVerticalIcon />
-            </Button>
-          }
-        />
-        <DropdownMenuContent align="end" className="min-w-44">
-          <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => onEdit(attendance)}>
-              <PencilIcon data-icon="inline-start" />
-              {t("admin.attendance.actions.edit")}
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuGroup>
-            <DropdownMenuItem variant="destructive" onClick={() => onDelete(attendance)}>
-              <Trash2Icon data-icon="inline-start" />
-              {t("admin.attendance.actions.delete")}
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  )
-}
-
-interface UseAttendanceColumnsOptions {
-  onEdit: (a: Attendance) => void
-  onDelete: (a: Attendance) => void
-}
-
-export function useAttendanceColumns({
-  onEdit,
-  onDelete,
-}: UseAttendanceColumnsOptions): ColumnDef<Attendance>[] {
+function useAttendanceColumns(onEdit: (a: Attendance) => void): ColumnDef<Attendance>[] {
   const { t } = useTranslation()
   const formatDate = useFormatDate()
-  const statusLabel = useAttendanceStatusLabel()
 
   return [
     {
@@ -152,7 +82,11 @@ export function useAttendanceColumns({
       header: t("admin.attendance.status"),
       cell: ({ row }) => {
         const status = (row.original.status ?? "absent") as AttendanceStatus
-        return <Badge variant={STATUS_BADGE_VARIANT[status] ?? "outline"}>{statusLabel(status)}</Badge>
+        return (
+          <Badge variant={STATUS_BADGE_VARIANT[status] ?? "outline"}>
+            {t(`admin.attendance.statuses.${status}`, { defaultValue: status })}
+          </Badge>
+        )
       },
       enableSorting: true,
       enableHiding: true,
@@ -162,7 +96,9 @@ export function useAttendanceColumns({
       header: t("admin.attendance.source"),
       cell: ({ row }) => (
         <Badge variant="outline">
-          {row.original.is_auto_marked ? t("admin.attendance.sources.auto") : t("admin.attendance.sources.manual")}
+          {row.original.is_auto_marked
+            ? t("admin.attendance.sources.auto")
+            : t("admin.attendance.sources.manual")}
         </Badge>
       ),
       enableSorting: false,
@@ -192,11 +128,53 @@ export function useAttendanceColumns({
     {
       id: "actions",
       header: "",
-      cell: ({ row }) => (
-        <AttendanceRowActions attendance={row.original} onEdit={onEdit} onDelete={onDelete} />
-      ),
+      cell: ({ row }) => <AttendanceActions attendance={row.original} onEdit={onEdit} />,
       enableSorting: false,
       enableHiding: false,
     },
   ]
+}
+
+interface AttendanceTableProps {
+  items: Attendance[]
+  total: number
+  isLoading: boolean
+  sorting: SortingState
+  onEdit: (a: Attendance) => void
+}
+
+export function AttendanceTable({ items, total, isLoading, sorting, onEdit }: AttendanceTableProps) {
+  const { t } = useTranslation()
+  const columns = useAttendanceColumns(onEdit)
+
+  const table = useAdminTable({
+    data: items,
+    columns,
+    rowCount: total,
+    sorting,
+  })
+
+  return (
+    <>
+      <TableFilter
+        table={table}
+        searchPlaceholder={t("admin.attendance.searchPlaceholder")}
+        sortLabel={t("admin.attendance.toolbar.sort")}
+        columnsLabel={t("admin.attendance.toolbar.columns")}
+        toggleColumnsLabel={t("admin.attendance.toolbar.toggleColumns")}
+      />
+      <Card className="gap-0 overflow-hidden p-0">
+        <div className="overflow-x-auto">
+          <DataTable
+            table={table}
+            isLoading={isLoading}
+            emptyIcon={<ClipboardCheckIcon className="size-8 opacity-40" />}
+            emptyTitle={t("admin.attendance.noResults")}
+            emptyHint={t("admin.attendance.noResultsHint")}
+          />
+        </div>
+        <DataTablePagination table={table} />
+      </Card>
+    </>
+  )
 }

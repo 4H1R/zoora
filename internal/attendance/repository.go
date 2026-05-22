@@ -37,7 +37,11 @@ func (r *repository) Create(ctx context.Context, a *domain.Attendance) error {
 
 func (r *repository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Attendance, error) {
 	var a domain.Attendance
-	if err := r.baseQuery(ctx).Preload("User").First(&a, "id = ?", id).Error; err != nil {
+	if err := r.baseQuery(ctx).
+		Preload("User").
+		Preload("Class").
+		Preload("ClassSession").
+		First(&a, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}

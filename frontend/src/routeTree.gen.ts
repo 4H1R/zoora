@@ -28,6 +28,7 @@ import { Route as AdminAdminPermissionsIndexRouteImport } from './routes/_admin/
 import { Route as AdminAdminOrganizationsIndexRouteImport } from './routes/_admin/admin/organizations/index'
 import { Route as AdminAdminOfflinesIndexRouteImport } from './routes/_admin/admin/offlines/index'
 import { Route as AdminAdminLiveRoomsIndexRouteImport } from './routes/_admin/admin/live-rooms/index'
+import { Route as AdminAdminGradebookIndexRouteImport } from './routes/_admin/admin/gradebook/index'
 import { Route as AdminAdminClassesIndexRouteImport } from './routes/_admin/admin/classes/index'
 import { Route as AdminAdminAttendanceIndexRouteImport } from './routes/_admin/admin/attendance/index'
 import { Route as AuthOrgOrgIdSettingsRouteImport } from './routes/_auth/org/$orgId/settings'
@@ -142,6 +143,12 @@ const AdminAdminLiveRoomsIndexRoute =
     path: '/admin/live-rooms/',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminAdminGradebookIndexRoute =
+  AdminAdminGradebookIndexRouteImport.update({
+    id: '/admin/gradebook/',
+    path: '/admin/gradebook/',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminAdminClassesIndexRoute = AdminAdminClassesIndexRouteImport.update({
   id: '/admin/classes/',
   path: '/admin/classes/',
@@ -244,6 +251,7 @@ export interface FileRoutesByFullPath {
   '/org/$orgId/settings': typeof AuthOrgOrgIdSettingsRoute
   '/admin/attendance/': typeof AdminAdminAttendanceIndexRoute
   '/admin/classes/': typeof AdminAdminClassesIndexRoute
+  '/admin/gradebook/': typeof AdminAdminGradebookIndexRoute
   '/admin/live-rooms/': typeof AdminAdminLiveRoomsIndexRoute
   '/admin/offlines/': typeof AdminAdminOfflinesIndexRoute
   '/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
@@ -278,6 +286,7 @@ export interface FileRoutesByTo {
   '/org/$orgId/settings': typeof AuthOrgOrgIdSettingsRoute
   '/admin/attendance': typeof AdminAdminAttendanceIndexRoute
   '/admin/classes': typeof AdminAdminClassesIndexRoute
+  '/admin/gradebook': typeof AdminAdminGradebookIndexRoute
   '/admin/live-rooms': typeof AdminAdminLiveRoomsIndexRoute
   '/admin/offlines': typeof AdminAdminOfflinesIndexRoute
   '/admin/organizations': typeof AdminAdminOrganizationsIndexRoute
@@ -316,6 +325,7 @@ export interface FileRoutesById {
   '/_auth/org/$orgId/settings': typeof AuthOrgOrgIdSettingsRoute
   '/_admin/admin/attendance/': typeof AdminAdminAttendanceIndexRoute
   '/_admin/admin/classes/': typeof AdminAdminClassesIndexRoute
+  '/_admin/admin/gradebook/': typeof AdminAdminGradebookIndexRoute
   '/_admin/admin/live-rooms/': typeof AdminAdminLiveRoomsIndexRoute
   '/_admin/admin/offlines/': typeof AdminAdminOfflinesIndexRoute
   '/_admin/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
@@ -352,6 +362,7 @@ export interface FileRouteTypes {
     | '/org/$orgId/settings'
     | '/admin/attendance/'
     | '/admin/classes/'
+    | '/admin/gradebook/'
     | '/admin/live-rooms/'
     | '/admin/offlines/'
     | '/admin/organizations/'
@@ -386,6 +397,7 @@ export interface FileRouteTypes {
     | '/org/$orgId/settings'
     | '/admin/attendance'
     | '/admin/classes'
+    | '/admin/gradebook'
     | '/admin/live-rooms'
     | '/admin/offlines'
     | '/admin/organizations'
@@ -423,6 +435,7 @@ export interface FileRouteTypes {
     | '/_auth/org/$orgId/settings'
     | '/_admin/admin/attendance/'
     | '/_admin/admin/classes/'
+    | '/_admin/admin/gradebook/'
     | '/_admin/admin/live-rooms/'
     | '/_admin/admin/offlines/'
     | '/_admin/admin/organizations/'
@@ -590,6 +603,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminLiveRoomsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/admin/gradebook/': {
+      id: '/_admin/admin/gradebook/'
+      path: '/admin/gradebook'
+      fullPath: '/admin/gradebook/'
+      preLoaderRoute: typeof AdminAdminGradebookIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/admin/classes/': {
       id: '/_admin/admin/classes/'
       path: '/admin/classes'
@@ -710,6 +730,7 @@ interface AdminRouteChildren {
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
   AdminAdminAttendanceIndexRoute: typeof AdminAdminAttendanceIndexRoute
   AdminAdminClassesIndexRoute: typeof AdminAdminClassesIndexRoute
+  AdminAdminGradebookIndexRoute: typeof AdminAdminGradebookIndexRoute
   AdminAdminLiveRoomsIndexRoute: typeof AdminAdminLiveRoomsIndexRoute
   AdminAdminOfflinesIndexRoute: typeof AdminAdminOfflinesIndexRoute
   AdminAdminOrganizationsIndexRoute: typeof AdminAdminOrganizationsIndexRoute
@@ -734,6 +755,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAdminIndexRoute: AdminAdminIndexRoute,
   AdminAdminAttendanceIndexRoute: AdminAdminAttendanceIndexRoute,
   AdminAdminClassesIndexRoute: AdminAdminClassesIndexRoute,
+  AdminAdminGradebookIndexRoute: AdminAdminGradebookIndexRoute,
   AdminAdminLiveRoomsIndexRoute: AdminAdminLiveRoomsIndexRoute,
   AdminAdminOfflinesIndexRoute: AdminAdminOfflinesIndexRoute,
   AdminAdminOrganizationsIndexRoute: AdminAdminOrganizationsIndexRoute,

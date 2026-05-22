@@ -49,7 +49,7 @@ export function AttendanceFormDialog({ open, onOpenChange, attendance }: Attenda
         remarks: attendance.remarks ?? "",
       })
     }
-  }, [open, attendance])
+  }, [open, attendance, form])
 
   const updateMutation = usePutAdminAttendanceId({
     mutation: {

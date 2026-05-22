@@ -213,8 +213,14 @@
       "noResults": "No attendance records found",
       "noResultsHint": "Try adjusting your search or filters.",
       "stats": {
-        "total": "Total records",
-        "present": "Present (page)"
+        "total": "Total records"
+      },
+      "filter": {
+        "class": "Class",
+        "session": "Session",
+        "status": "Status",
+        "allStatuses": "All statuses",
+        "clear": "Clear filters"
       },
       "statuses": {
         "present": "Present",
@@ -628,6 +634,11 @@
       "student": "Student",
       "noResults": "No gradebook columns yet",
       "noResultsHint": "Create a column to start tracking grades.",
+      "filter": {
+        "class": "Class",
+        "selectClassFirst": "Select a class to view its gradebook.",
+        "clear": "Clear filters"
+      },
       "stats": {
         "columns": "Columns",
         "students": "Students"

@@ -313,6 +313,7 @@ func (r *memberRepository) CountByClass(ctx context.Context, classID uuid.UUID) 
 func (r *memberRepository) ListAllByClass(ctx context.Context, classID uuid.UUID) ([]domain.ClassMember, error) {
 	var members []domain.ClassMember
 	if err := database.DB(ctx, r.db).Model(&domain.ClassMember{}).
+		Preload("User").
 		Where("class_id = ?", classID).
 		Find(&members).Error; err != nil {
 		return nil, fmt.Errorf("classes.memberRepository.ListAllByClass: %w", err)

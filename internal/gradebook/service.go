@@ -257,8 +257,10 @@ func (s *service) GetMatrix(ctx context.Context, classID uuid.UUID) (*domain.Gra
 	}
 
 	studentIDs := make([]uuid.UUID, len(members))
+	studentByID := make(map[uuid.UUID]*domain.User, len(members))
 	for i, m := range members {
 		studentIDs[i] = m.UserID
+		studentByID[m.UserID] = m.User
 	}
 
 	var manualColIDs []uuid.UUID
@@ -300,6 +302,7 @@ func (s *service) GetMatrix(ctx context.Context, classID uuid.UUID) (*domain.Gra
 	for _, sid := range studentIDs {
 		row := domain.GradebookMatrixRow{
 			StudentID: sid,
+			Student:   studentByID[sid],
 			Cells:     make(map[string]string, len(columns)),
 		}
 		for _, col := range columns {
