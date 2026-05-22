@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 
 import { orgHead } from "@/lib/org-head"
-import { useRequirePerm } from "@/lib/access"
+import { useOrgGuard } from "@/lib/access"
 import { useState } from "react"
 import { useAccess } from "react-access-engine"
 import { useForm } from "react-hook-form"
@@ -78,15 +78,12 @@ function LiveSessionButton({ session }: { session: GithubCom4H1RZooraInternalDom
 
 function RouteComponent() {
   const { t } = useTranslation()
-  const { orgId, classId } = Route.useParams()
+  const { classId } = Route.useParams()
   const queryClient = useQueryClient()
   const [showForm, setShowForm] = useState(false)
-  const navigate = useNavigate()
   const { can } = useAccess()
   const canCreateSession = can("classes:update") || can("classes:update_any")
-  const allowed = useRequirePerm(["classes:view", "classes:view_any"], () =>
-    navigate({ to: "/org/$orgId/dashboard", params: { orgId } })
-  )
+  const allowed = useOrgGuard(["classes:view", "classes:view_any"])
 
   const { data: classData, isPending: classPending } = useGetClassesId(classId)
   const { data: sessionsData, isPending: sessionsPending } = useGetClassesIdSessions(classId, undefined)

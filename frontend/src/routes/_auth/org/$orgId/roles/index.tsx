@@ -1,10 +1,10 @@
 import type { GithubCom4H1RZooraInternalDomainRole as Role } from "@/api/model"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
 
 import { orgHead } from "@/lib/org-head"
-import { useRequirePerm } from "@/lib/access"
+import { useOrgGuard } from "@/lib/access"
 import { KeyIcon, PlusIcon, ShieldIcon } from "lucide-react"
 import { useState } from "react"
 import { Can } from "react-access-engine"
@@ -41,11 +41,7 @@ function RolesPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { orgId } = Route.useParams()
-  const {} = Route.useSearch()
-  const navigate = useNavigate()
-  const allowed = useRequirePerm("roles:view", () =>
-    navigate({ to: "/org/$orgId/dashboard", params: { orgId } })
-  )
+  const allowed = useOrgGuard("roles:view")
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingRole, setEditingRole] = useState<Role | null>(null)

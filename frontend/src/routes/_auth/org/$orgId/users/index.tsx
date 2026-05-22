@@ -1,10 +1,10 @@
 import type { GithubCom4H1RZooraInternalDomainUser as User } from "@/api/model"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
 
 import { orgHead } from "@/lib/org-head"
-import { useRequirePerm } from "@/lib/access"
+import { useOrgGuard } from "@/lib/access"
 import { PlusIcon, UsersIcon } from "lucide-react"
 import { useState } from "react"
 import { Can } from "react-access-engine"
@@ -37,10 +37,7 @@ function UsersPage() {
   const queryClient = useQueryClient()
   const { orgId } = Route.useParams()
   const { page, page_size } = Route.useSearch()
-  const navigate = useNavigate()
-  const allowed = useRequirePerm(["users:view", "users:view_any"], () =>
-    navigate({ to: "/org/$orgId/dashboard", params: { orgId } })
-  )
+  const allowed = useOrgGuard(["users:view", "users:view_any"])
 
   const currentPage = page ?? 1
   const pageSize = page_size ?? 8

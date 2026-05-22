@@ -1,10 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
 
 import { orgHead } from "@/lib/org-head"
+import { useOrgGuard } from "@/lib/access"
 import { useEffect } from "react"
-import { useAccess } from "react-access-engine"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -36,18 +36,10 @@ type SettingsFormValues = z.infer<typeof settingsSchema>
 function RouteComponent() {
   const { orgId } = Route.useParams()
   const { t } = useTranslation()
-  const { can } = useAccess()
-  const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const allowed = useOrgGuard("organizations:update")
 
-  const canUpdate = can("organizations:update")
   const { data: orgResponse, isLoading } = useGetOrganizationsId(orgId)
-
-  useEffect(() => {
-    if (!canUpdate) {
-      navigate({ to: "/org/$orgId/dashboard", params: { orgId } })
-    }
-  }, [canUpdate, navigate, orgId])
   const org = orgResponse?.status === 200 ? orgResponse.data.data : undefined
 
   const updateMutation = usePutOrganizationsId({
@@ -83,6 +75,8 @@ function RouteComponent() {
   })
 
   const isPending = updateMutation.isPending
+
+  if (!allowed) return null
 
   if (isLoading) {
     return (
