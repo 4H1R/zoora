@@ -232,11 +232,15 @@ func (s *service) CreateRule(ctx context.Context, quizID uuid.UUID, dto domain.C
 	if !canManageQuiz(caller, quiz) {
 		return nil, domain.ErrForbidden
 	}
+	questionIDs := dto.QuestionIDs
+	if questionIDs == nil {
+		questionIDs = []uuid.UUID{}
+	}
 	rule := &domain.QuizRule{
 		QuizID:      quizID,
 		Type:        dto.Type,
 		BankID:      dto.BankID,
-		QuestionIDs: dto.QuestionIDs,
+		QuestionIDs: questionIDs,
 		Count:       dto.Count,
 		IsDynamic:   dto.IsDynamic,
 	}
