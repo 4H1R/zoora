@@ -1182,6 +1182,42 @@
         "title": "جلسه یافت نشد",
         "description": "این جلسه کلاس وجود ندارد یا شما دسترسی ندارید.",
         "backToClasses": "بازگشت به کلاس‌ها"
+      },
+      "quizzes": {
+        "eyebrow": "آزمون‌ها",
+        "title": "آزمون‌های جلسه",
+        "cardEyebrow": "آزمون",
+        "newQuiz": "آزمون جدید",
+        "duration": "مدت زمان",
+        "minutesShort": "دقیقه",
+        "totalScore": "نمره",
+        "emptyTitle": "هنوز آزمونی وجود ندارد",
+        "emptyHint": "اولین آزمون این جلسه را بسازید.",
+        "actions": {
+          "edit": "ویرایش آزمون",
+          "delete": "حذف آزمون",
+          "manageQuestions": "مدیریت سوالات"
+        },
+        "form": {
+          "createTitle": "آزمون جدید",
+          "createDescription": "یک آزمون برای این جلسه بسازید.",
+          "editTitle": "ویرایش آزمون",
+          "editDescription": "به‌روزرسانی اطلاعات آزمون.",
+          "title": "عنوان",
+          "titlePlaceholder": "عنوان آزمون",
+          "description": "توضیحات",
+          "descriptionPlaceholder": "توضیحات اختیاری",
+          "duration": "مدت زمان (دقیقه)",
+          "startedAt": "زمان شروع",
+          "startedAtHint": "اختیاری. خالی بگذارید تا بلافاصله باز شود.",
+          "endedAt": "زمان پایان",
+          "endedAtHint": "اختیاری. خالی بگذارید تا مهلت نداشته باشد.",
+          "endedAtError": "زمان پایان باید بعد از زمان شروع باشد.",
+          "createSuccess": "آزمون ایجاد شد",
+          "updateSuccess": "آزمون به‌روزرسانی شد",
+          "deleteSuccess": "آزمون حذف شد",
+          "linkRoomFailed": "آزمون ساخته شد اما اتصال به جلسه ناموفق بود"
+        }
       }
     },
     "roles": {

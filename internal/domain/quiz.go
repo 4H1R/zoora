@@ -97,7 +97,9 @@ type UpdateQuizRuleDTO struct {
 }
 
 type CreateQuizRoomDTO struct {
-	ClassSessionID uuid.UUID `json:"class_session_id" binding:"required"`
+	ClassSessionID uuid.UUID  `json:"class_session_id" binding:"required"`
+	StartedAt      *time.Time `json:"started_at"`
+	EndedAt        *time.Time `json:"ended_at"`
 }
 
 type ListQuizzesQuery struct {

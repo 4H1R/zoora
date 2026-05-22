@@ -6,8 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface GithubCom4H1RZooraInternalDomainCreateQuizRoomDTO {
-  class_session_id: string;
-  ended_at?: string;
-  started_at?: string;
+export interface GithubCom4H1RZooraInternalDomainPresignDownloadResponse {
+  key?: string;
+  url?: string;
 }

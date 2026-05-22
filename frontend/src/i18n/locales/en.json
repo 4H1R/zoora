@@ -1150,6 +1150,42 @@
         "title": "Session not found",
         "description": "The class session you're looking for does not exist or you don't have access.",
         "backToClasses": "Back to classes"
+      },
+      "quizzes": {
+        "eyebrow": "Quizzes",
+        "title": "Session quizzes",
+        "cardEyebrow": "Quiz",
+        "newQuiz": "New quiz",
+        "duration": "Duration",
+        "minutesShort": "min",
+        "totalScore": "Score",
+        "emptyTitle": "No quizzes yet",
+        "emptyHint": "Create the first quiz for this session.",
+        "actions": {
+          "edit": "Edit quiz",
+          "delete": "Delete quiz",
+          "manageQuestions": "Manage questions"
+        },
+        "form": {
+          "createTitle": "New quiz",
+          "createDescription": "Create a quiz for this session.",
+          "editTitle": "Edit quiz",
+          "editDescription": "Update quiz details.",
+          "title": "Title",
+          "titlePlaceholder": "Quiz title",
+          "description": "Description",
+          "descriptionPlaceholder": "Optional description",
+          "duration": "Duration (minutes)",
+          "startedAt": "Opens at",
+          "startedAtHint": "Optional. Leave empty to open immediately.",
+          "endedAt": "Closes at",
+          "endedAtHint": "Optional. Leave empty for no deadline.",
+          "endedAtError": "Close time must be after open time.",
+          "createSuccess": "Quiz created",
+          "updateSuccess": "Quiz updated",
+          "deleteSuccess": "Quiz deleted",
+          "linkRoomFailed": "Quiz created but session room linking failed"
+        }
       }
     },
     "roles": {

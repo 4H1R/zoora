@@ -21,6 +21,7 @@ import { getLiveRooms, useGetLiveRooms, usePostLiveRooms } from "@/api/live-sess
 import { useGetOfflines } from "@/api/offlines/offlines"
 import { useGetPractices } from "@/api/practices/practices"
 import { useGetQuizzes } from "@/api/quizzes/quizzes"
+import { QuizzesSection } from "@/components/org/quizzes/QuizzesSection"
 import { Eyebrow } from "@/components/eyebrow"
 import { SessionStatusPill } from "@/components/session/status-pill"
 import { Button } from "@/components/ui/button"
@@ -67,11 +68,21 @@ function RoomTile({
   loading: boolean
 }) {
   const tileNumber = String(index + 1).padStart(2, "0")
+  const className =
+    "group/tile bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex flex-col justify-between overflow-hidden rounded-2xl p-5 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-lg"
+  const isAnchor = href.startsWith("#")
+  const Wrapper = ({ children }: { children: ReactNode }) =>
+    isAnchor ? (
+      <a href={href} className={className}>
+        {children}
+      </a>
+    ) : (
+      <Link to={href} className={className}>
+        {children}
+      </Link>
+    )
   return (
-    <Link
-      to={href}
-      className="group/tile bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex flex-col justify-between overflow-hidden rounded-2xl p-5 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-lg"
-    >
+    <Wrapper>
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,var(--color-primary)/8%,transparent_60%)] opacity-0 transition-opacity group-hover/tile:opacity-100"
@@ -93,7 +104,7 @@ function RoomTile({
           →
         </span>
       </div>
-    </Link>
+    </Wrapper>
   )
 }
 
@@ -301,7 +312,7 @@ function RouteComponent() {
             count={itemsCount(quizQ.data)}
             loading={quizQ.isPending}
             icon={<ClipboardListIcon className="size-5" />}
-            href={classPath}
+            href="#quizzes"
           />
           <RoomTile
             index={2}
@@ -321,6 +332,8 @@ function RouteComponent() {
           />
         </div>
       </section>
+
+      {classId ? <QuizzesSection classId={classId} classSessionId={classSessionId} /> : null}
 
       <footer className="border-t border-dashed pt-6">
         <div className="flex flex-wrap items-center justify-between gap-2">

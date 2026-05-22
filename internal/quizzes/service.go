@@ -427,6 +427,8 @@ func (s *service) CreateRoom(ctx context.Context, quizID uuid.UUID, dto domain.C
 	room := &domain.QuizRoom{
 		QuizID:         quizID,
 		ClassSessionID: dto.ClassSessionID,
+		StartedAt:      dto.StartedAt,
+		EndedAt:        dto.EndedAt,
 	}
 	if err := s.rooms.Create(ctx, room); err != nil {
 		return nil, err
