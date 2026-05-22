@@ -1,11 +1,11 @@
 import type { GithubCom4H1RZooraInternalDomainClassSession as Session } from "@/api/model"
 
-import { createFileRoute, Link } from "@tanstack/react-router"
-import { ArrowLeftIcon, CalendarClockIcon, PlusIcon } from "lucide-react"
+import { createFileRoute } from "@tanstack/react-router"
+import { CalendarClockIcon, PlusIcon, XIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
-import { useGetClassesId, useGetClassesIdSessions } from "@/api/classes/classes"
+import { useGetAdminSessions } from "@/api/admin-classes/admin-classes"
 import { ClassPicker } from "@/components/admin/forms/ClassSessionPicker"
 import { SessionCreateModal } from "@/components/admin/sessions/SessionCreateModal"
 import { SessionTable } from "@/components/admin/sessions/SessionTable"
@@ -16,18 +16,18 @@ import { Card } from "@/components/ui/card"
 import { adminHead } from "@/lib/admin-head"
 import { adminSearchSchema } from "@/lib/data-table"
 
-export const Route = createFileRoute("/_admin/admin/classes/$classId/sessions")({
+export const Route = createFileRoute("/_admin/admin/sessions/")({
   head: () => adminHead("admin.sessions.title"),
   validateSearch: adminSearchSchema,
-  component: ClassSessionsPage,
+  component: SessionsPage,
 })
 
-function ClassSessionsPage() {
+function SessionsPage() {
   const { t } = useTranslation()
-  const { classId } = Route.useParams()
   const { search, order_by, order_dir, page } = Route.useSearch()
-
   const currentPage = page ?? 1
+
+  const [classId, setClassId] = useState<string | undefined>(undefined)
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingSession, setEditingSession] = useState<Session | null>(null)
@@ -47,10 +47,12 @@ function ClassSessionsPage() {
     if (!open) setEditingSession(null)
   }
 
-  const { data: classData } = useGetClassesId(classId)
-  const cls = (classData?.status === 200 && classData.data.data) || undefined
+  const handleClearFilters = () => {
+    setClassId(undefined)
+  }
 
-  const { data, isLoading } = useGetClassesIdSessions(classId, {
+  const { data, isLoading } = useGetAdminSessions({
+    class_id: classId || undefined,
     search: search || undefined,
     page: currentPage,
     order_by: order_by || undefined,
@@ -72,23 +74,17 @@ function ClassSessionsPage() {
     },
   ]
 
+  const editClassId = editingSession?.class_id ?? classId ?? ""
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title={cls?.name ? `${cls.name} · ${t("admin.sessions.title")}` : t("admin.sessions.title")}
+        title={t("admin.sessions.title")}
         actions={
-          <div className="flex items-center gap-2">
-            <Link to="/admin/classes">
-              <Button variant="outline" size="sm">
-                <ArrowLeftIcon data-icon="inline-start" />
-                {t("admin.sessions.backToClasses")}
-              </Button>
-            </Link>
-            <Button size="sm" onClick={handleCreate}>
-              <PlusIcon data-icon="inline-start" />
-              {t("admin.sessions.newSession")}
-            </Button>
-          </div>
+          <Button size="sm" onClick={handleCreate} disabled={!classId}>
+            <PlusIcon data-icon="inline-start" />
+            {t("admin.sessions.newSession")}
+          </Button>
         }
       />
       <StatCards stats={statCards} />
@@ -97,22 +93,27 @@ function ClassSessionsPage() {
           <label className="mb-1.5 block text-xs font-medium">
             {t("admin.sessions.filter.class")}
           </label>
-          <ClassPicker value={classId} onChange={() => {}} disabled />
+          <ClassPicker value={classId} onChange={(id) => setClassId(id || undefined)} />
         </div>
+        {classId && (
+          <Button variant="outline" size="sm" onClick={handleClearFilters}>
+            <XIcon data-icon="inline-start" />
+            {t("admin.sessions.filter.clear")}
+          </Button>
+        )}
       </Card>
       <SessionTable
-        classId={classId}
         sessions={sessions}
         total={total}
         isLoading={isLoading}
         sorting={sorting}
+        showClass
         onEdit={handleEdit}
       />
-
       <SessionCreateModal
         open={formOpen}
         onOpenChange={handleFormOpenChange}
-        classId={classId}
+        classId={editClassId}
         session={editingSession}
       />
     </div>

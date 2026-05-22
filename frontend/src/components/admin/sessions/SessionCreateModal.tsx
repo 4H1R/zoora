@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
 
+import { getGetAdminSessionsQueryKey } from "@/api/admin-classes/admin-classes"
 import {
   getGetClassesIdSessionsQueryKey,
   usePostClassesIdSessions,
@@ -70,6 +71,7 @@ export function SessionCreateModal({ open, onOpenChange, classId, session }: Ses
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getGetClassesIdSessionsQueryKey(classId) })
+    queryClient.invalidateQueries({ queryKey: getGetAdminSessionsQueryKey() })
   }
 
   const createMutation = usePostClassesIdSessions({

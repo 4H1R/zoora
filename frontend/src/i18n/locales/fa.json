@@ -176,6 +176,7 @@
       "users": "کاربران",
       "roles": "نقش‌ها",
       "classes": "کلاس‌ها",
+      "sessions": "جلسات",
       "liveRooms": "اتاق‌های زنده",
       "offlines": "اتاق‌های آفلاین",
       "practices": "تمرین‌ها"
@@ -351,6 +352,11 @@
       "searchPlaceholder": "جستجوی جلسات…",
       "newSession": "جلسه جدید",
       "backToClasses": "بازگشت به کلاس‌ها",
+      "class": "کلاس",
+      "filter": {
+        "class": "کلاس",
+        "clear": "حذف فیلترها"
+      },
       "name": "جلسه",
       "type": "نوع",
       "startTime": "زمان شروع",

@@ -19,6 +19,7 @@ import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin/index
 import { Route as AuthOrgOrgIdRouteImport } from './routes/_auth/org/$orgId'
 import { Route as AdminAdminDashboardRouteImport } from './routes/_admin/admin/dashboard'
 import { Route as AdminAdminUsersIndexRouteImport } from './routes/_admin/admin/users/index'
+import { Route as AdminAdminSessionsIndexRouteImport } from './routes/_admin/admin/sessions/index'
 import { Route as AdminAdminRolesIndexRouteImport } from './routes/_admin/admin/roles/index'
 import { Route as AdminAdminQuizzesIndexRouteImport } from './routes/_admin/admin/quizzes/index'
 import { Route as AdminAdminQuestionsIndexRouteImport } from './routes/_admin/admin/questions/index'
@@ -89,6 +90,11 @@ const AdminAdminDashboardRoute = AdminAdminDashboardRouteImport.update({
 const AdminAdminUsersIndexRoute = AdminAdminUsersIndexRouteImport.update({
   id: '/admin/users/',
   path: '/admin/users/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAdminSessionsIndexRoute = AdminAdminSessionsIndexRouteImport.update({
+  id: '/admin/sessions/',
+  path: '/admin/sessions/',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAdminRolesIndexRoute = AdminAdminRolesIndexRouteImport.update({
@@ -246,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/admin/questions/': typeof AdminAdminQuestionsIndexRoute
   '/admin/quizzes/': typeof AdminAdminQuizzesIndexRoute
   '/admin/roles/': typeof AdminAdminRolesIndexRoute
+  '/admin/sessions/': typeof AdminAdminSessionsIndexRoute
   '/admin/users/': typeof AdminAdminUsersIndexRoute
   '/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
   '/admin/classes/$classId/live-rooms': typeof AdminAdminClassesClassIdLiveRoomsRoute
@@ -279,6 +286,7 @@ export interface FileRoutesByTo {
   '/admin/questions': typeof AdminAdminQuestionsIndexRoute
   '/admin/quizzes': typeof AdminAdminQuizzesIndexRoute
   '/admin/roles': typeof AdminAdminRolesIndexRoute
+  '/admin/sessions': typeof AdminAdminSessionsIndexRoute
   '/admin/users': typeof AdminAdminUsersIndexRoute
   '/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
   '/admin/classes/$classId/live-rooms': typeof AdminAdminClassesClassIdLiveRoomsRoute
@@ -316,6 +324,7 @@ export interface FileRoutesById {
   '/_admin/admin/questions/': typeof AdminAdminQuestionsIndexRoute
   '/_admin/admin/quizzes/': typeof AdminAdminQuizzesIndexRoute
   '/_admin/admin/roles/': typeof AdminAdminRolesIndexRoute
+  '/_admin/admin/sessions/': typeof AdminAdminSessionsIndexRoute
   '/_admin/admin/users/': typeof AdminAdminUsersIndexRoute
   '/_admin/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
   '/_admin/admin/classes/$classId/live-rooms': typeof AdminAdminClassesClassIdLiveRoomsRoute
@@ -351,6 +360,7 @@ export interface FileRouteTypes {
     | '/admin/questions/'
     | '/admin/quizzes/'
     | '/admin/roles/'
+    | '/admin/sessions/'
     | '/admin/users/'
     | '/admin/classes/$classId/gradebook'
     | '/admin/classes/$classId/live-rooms'
@@ -384,6 +394,7 @@ export interface FileRouteTypes {
     | '/admin/questions'
     | '/admin/quizzes'
     | '/admin/roles'
+    | '/admin/sessions'
     | '/admin/users'
     | '/admin/classes/$classId/gradebook'
     | '/admin/classes/$classId/live-rooms'
@@ -420,6 +431,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/questions/'
     | '/_admin/admin/quizzes/'
     | '/_admin/admin/roles/'
+    | '/_admin/admin/sessions/'
     | '/_admin/admin/users/'
     | '/_admin/admin/classes/$classId/gradebook'
     | '/_admin/admin/classes/$classId/live-rooms'
@@ -513,6 +525,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/users'
       fullPath: '/admin/users/'
       preLoaderRoute: typeof AdminAdminUsersIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/sessions/': {
+      id: '/_admin/admin/sessions/'
+      path: '/admin/sessions'
+      fullPath: '/admin/sessions/'
+      preLoaderRoute: typeof AdminAdminSessionsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
     '/_admin/admin/roles/': {
@@ -699,6 +718,7 @@ interface AdminRouteChildren {
   AdminAdminQuestionsIndexRoute: typeof AdminAdminQuestionsIndexRoute
   AdminAdminQuizzesIndexRoute: typeof AdminAdminQuizzesIndexRoute
   AdminAdminRolesIndexRoute: typeof AdminAdminRolesIndexRoute
+  AdminAdminSessionsIndexRoute: typeof AdminAdminSessionsIndexRoute
   AdminAdminUsersIndexRoute: typeof AdminAdminUsersIndexRoute
   AdminAdminClassesClassIdGradebookRoute: typeof AdminAdminClassesClassIdGradebookRoute
   AdminAdminClassesClassIdLiveRoomsRoute: typeof AdminAdminClassesClassIdLiveRoomsRoute
@@ -722,6 +742,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAdminQuestionsIndexRoute: AdminAdminQuestionsIndexRoute,
   AdminAdminQuizzesIndexRoute: AdminAdminQuizzesIndexRoute,
   AdminAdminRolesIndexRoute: AdminAdminRolesIndexRoute,
+  AdminAdminSessionsIndexRoute: AdminAdminSessionsIndexRoute,
   AdminAdminUsersIndexRoute: AdminAdminUsersIndexRoute,
   AdminAdminClassesClassIdGradebookRoute:
     AdminAdminClassesClassIdGradebookRoute,

@@ -124,6 +124,13 @@ type ListClassSessionsQuery struct {
 	ListParams     ListParams `form:"-"`
 }
 
+// AdminListClassSessionsQuery is the query for GET /admin/sessions.
+type AdminListClassSessionsQuery struct {
+	ClassID        *uuid.UUID `form:"-"`
+	IncludeDeleted bool       `form:"include_deleted"`
+	ListParams     ListParams `form:"-"`
+}
+
 // ListClassMembersQuery is the query for GET /classes/:id/members.
 type ListClassMembersQuery struct {
 	ListParams ListParams `form:"-"`
@@ -156,6 +163,7 @@ type ClassSessionRepository interface {
 	// Admin-only.
 	HardDelete(ctx context.Context, id uuid.UUID) error
 	FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*ClassSession, error)
+	AdminList(ctx context.Context, q AdminListClassSessionsQuery) ([]ClassSession, int64, error)
 }
 
 type ClassMemberRepository interface {
@@ -193,4 +201,5 @@ type ClassService interface {
 	AdminUpdate(ctx context.Context, id uuid.UUID, dto AdminUpdateClassDTO) (*Class, error)
 	AdminHardDelete(ctx context.Context, id uuid.UUID) error
 	AdminHardDeleteSession(ctx context.Context, id uuid.UUID) error
+	AdminListSessions(ctx context.Context, q AdminListClassSessionsQuery) ([]ClassSession, int64, error)
 }

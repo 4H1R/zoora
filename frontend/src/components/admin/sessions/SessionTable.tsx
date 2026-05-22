@@ -16,15 +16,17 @@ import { SessionActions } from "./SessionActions"
 
 function useSessionColumns({
   classId,
+  showClass,
   onEdit,
 }: {
-  classId: string
+  classId?: string
+  showClass?: boolean
   onEdit: (session: Session) => void
 }): ColumnDef<Session>[] {
   const { t } = useTranslation()
   const formatDate = useFormatDate()
 
-  return [
+  const cols: ColumnDef<Session>[] = [
     {
       accessorKey: "name",
       header: t("admin.sessions.name"),
@@ -49,6 +51,21 @@ function useSessionColumns({
       enableSorting: true,
       enableHiding: false,
     },
+    ...(showClass
+      ? [
+          {
+            accessorKey: "class",
+            header: t("admin.sessions.class"),
+            cell: ({ row }: { row: { original: Session } }) => (
+              <span className="text-sm">
+                {row.original.class?.name ?? <span className="text-muted-foreground">—</span>}
+              </span>
+            ),
+            enableSorting: false,
+            enableHiding: true,
+          } as ColumnDef<Session>,
+        ]
+      : []),
     {
       accessorKey: "start_time",
       header: t("admin.sessions.startTime"),
@@ -73,15 +90,23 @@ function useSessionColumns({
     {
       id: "actions",
       header: "",
-      cell: ({ row }) => <SessionActions session={row.original} classId={classId} onEdit={onEdit} />,
+      cell: ({ row }) => (
+        <SessionActions
+          session={row.original}
+          classId={classId ?? row.original.class_id ?? ""}
+          onEdit={onEdit}
+        />
+      ),
       enableSorting: false,
       enableHiding: false,
     },
   ]
+  return cols
 }
 
 interface SessionTableProps {
-  classId: string
+  classId?: string
+  showClass?: boolean
   sessions: Session[]
   total: number
   isLoading: boolean
@@ -89,9 +114,9 @@ interface SessionTableProps {
   onEdit: (session: Session) => void
 }
 
-export function SessionTable({ classId, sessions, total, isLoading, sorting, onEdit }: SessionTableProps) {
+export function SessionTable({ classId, showClass, sessions, total, isLoading, sorting, onEdit }: SessionTableProps) {
   const { t } = useTranslation()
-  const columns = useSessionColumns({ classId, onEdit })
+  const columns = useSessionColumns({ classId, showClass, onEdit })
 
   const table = useAdminTable({
     data: sessions,

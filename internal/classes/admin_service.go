@@ -92,6 +92,19 @@ func (s *service) AdminHardDelete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
+func (s *service) AdminListSessions(ctx context.Context, q domain.AdminListClassSessionsQuery) ([]domain.ClassSession, int64, error) {
+	if _, err := s.requireAdmin(ctx); err != nil {
+		return nil, 0, err
+	}
+	if q.ListParams.Page < 1 {
+		q.ListParams.Page = 1
+	}
+	if q.ListParams.PageSize <= 0 {
+		q.ListParams.PageSize = domain.DefaultPageSize
+	}
+	return s.sessions.AdminList(ctx, q)
+}
+
 func (s *service) AdminHardDeleteSession(ctx context.Context, id uuid.UUID) error {
 	caller, err := s.requireAdmin(ctx)
 	if err != nil {

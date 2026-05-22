@@ -48,6 +48,7 @@ export function AppSidebar({
       items: [
         { title: t("admin.dashboard.title"), url: "/admin/dashboard", icon: <LayoutDashboardIcon /> },
         { title: t("admin.nav.classes"), url: "/admin/classes", icon: <SchoolIcon /> },
+        { title: t("admin.nav.sessions"), url: "/admin/sessions", icon: <CalendarIcon /> },
         { title: t("admin.organizations"), url: "/admin/organizations", icon: <Building2Icon /> },
         { title: t("admin.offlines.title"), url: "/admin/offlines", icon: <FileVideoIcon /> },
         { title: t("admin.liveRooms.title"), url: "/admin/live-rooms", icon: <VideoIcon /> },

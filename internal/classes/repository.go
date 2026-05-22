@@ -218,6 +218,22 @@ func (r *sessionRepository) ListByClass(ctx context.Context, classID uuid.UUID, 
 	return sessions, total, nil
 }
 
+func (r *sessionRepository) AdminList(ctx context.Context, q domain.AdminListClassSessionsQuery) ([]domain.ClassSession, int64, error) {
+	base := database.DB(ctx, r.db).Model(&domain.ClassSession{}).Preload("Class")
+	if q.IncludeDeleted {
+		base = base.Unscoped()
+	}
+	if q.ClassID != nil {
+		base = base.Where("class_id = ?", *q.ClassID)
+	}
+	var sessions []domain.ClassSession
+	total, err := listparams.Paginate(base, q.ListParams, &sessions)
+	if err != nil {
+		return nil, 0, fmt.Errorf("classes.sessionRepository.AdminList: %w", err)
+	}
+	return sessions, total, nil
+}
+
 func (r *sessionRepository) HardDelete(ctx context.Context, id uuid.UUID) error {
 	result := database.DB(ctx, r.db).Unscoped().Delete(&domain.ClassSession{}, "id = ?", id)
 	if result.Error != nil {

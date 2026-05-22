@@ -6,6 +6,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import { getGetAdminSessionsQueryKey } from "@/api/admin-classes/admin-classes"
 import {
   getGetClassesIdSessionsQueryKey,
   useDeleteClassesSessionsSessionId,
@@ -38,7 +39,10 @@ export function SessionActions({ session, classId, onEdit }: SessionActionsProps
     mutation: {
       onSuccess: () => {
         toast.success(t("admin.sessions.form.deleteSuccess"))
-        queryClient.invalidateQueries({ queryKey: getGetClassesIdSessionsQueryKey(classId) })
+        if (classId) {
+          queryClient.invalidateQueries({ queryKey: getGetClassesIdSessionsQueryKey(classId) })
+        }
+        queryClient.invalidateQueries({ queryKey: getGetAdminSessionsQueryKey() })
         setDeleteOpen(false)
       },
     },

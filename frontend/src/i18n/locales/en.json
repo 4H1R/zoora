@@ -176,6 +176,7 @@
       "users": "Users",
       "roles": "Roles",
       "classes": "Classes",
+      "sessions": "Sessions",
       "liveRooms": "Live Rooms",
       "offlines": "Offline Rooms",
       "practices": "Practices"
@@ -351,6 +352,11 @@
       "searchPlaceholder": "Search sessions…",
       "newSession": "New session",
       "backToClasses": "Back to classes",
+      "class": "Class",
+      "filter": {
+        "class": "Class",
+        "clear": "Clear filters"
+      },
       "name": "Session",
       "type": "Type",
       "startTime": "Start time",

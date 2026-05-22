@@ -20,6 +20,14 @@ var adminClassesListConfig = domain.ListConfig{
 	DefaultOrderDir:     "desc",
 }
 
+// adminSessionsListConfig white-lists search/order for GET /admin/sessions.
+var adminSessionsListConfig = domain.ListConfig{
+	AllowedSearchFields: []string{"name", "description"},
+	AllowedOrderFields:  []string{"created_at", "updated_at", "name", "start_time"},
+	DefaultOrderBy:      "start_time",
+	DefaultOrderDir:     "desc",
+}
+
 // AdminHandler registers under /api/v1/admin. The admin group is already
 // guarded by auth middleware + RequireAdmin, so this handler only binds
 // input, forwards to the service, and attaches errors.
@@ -39,6 +47,7 @@ func (h *AdminHandler) RegisterAdminRoutes(group *gin.RouterGroup) {
 	group.POST("/classes", h.Create)
 	group.PUT("/classes/:id", idParam, h.Update)
 	group.DELETE("/classes/:id", idParam, h.HardDelete)
+	group.GET("/sessions", h.ListSessions)
 	group.DELETE("/classes/sessions/:sessionId", sessionIDParam, h.HardDeleteSession)
 }
 
@@ -154,6 +163,42 @@ func (h *AdminHandler) HardDelete(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, nil)
+}
+
+// ListSessions returns class sessions across all organizations.
+// @Summary [Admin] List class sessions
+// @Description Cross-org list. Search matches substrings of: name, description. Orderable fields: created_at, updated_at, name, start_time. Filters: class_id, include_deleted.
+// @Tags Admin/Classes
+// @Produce json
+// @Security BearerAuth
+// @Param class_id query string false "Filter by class UUID"
+// @Param include_deleted query bool false "Include soft-deleted sessions"
+// @Param search query string false "Substring match on name/description"
+// @Param order_by query string false "One of: created_at, updated_at, name, start_time"
+// @Param order_dir query string false "asc or desc"
+// @Param page query int false "1-based page number"
+// @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.ClassSession}}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 500 {object} domain.Response{error=domain.ErrorBody}
+// @Router /admin/sessions [get]
+func (h *AdminHandler) ListSessions(c *gin.Context) {
+	var q domain.AdminListClassSessionsQuery
+	if err := c.ShouldBindQuery(&q); err != nil {
+		_ = c.Error(domain.NewValidationError(map[string]string{"query": err.Error()}))
+		return
+	}
+	if err := httpx.BindUUIDQueries(c, map[string]**uuid.UUID{"class_id": &q.ClassID}); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	q.ListParams = listparams.Bind(c, adminSessionsListConfig)
+	sessions, total, err := h.svc.AdminListSessions(c.Request.Context(), q)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(sessions, total, q.ListParams))
 }
 
 // HardDeleteSession permanently deletes a class session, bypassing soft-delete.
