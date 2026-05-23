@@ -563,6 +563,12 @@
         "delete": "Delete",
         "manageQuestions": "Manage questions"
       },
+      "flags": {
+        "noBackNavigation": "Back navigation locked",
+        "noBackShort": "No back",
+        "shuffleQuestions": "Questions are shuffled",
+        "shuffleShort": "Shuffle"
+      },
       "form": {
         "createTitle": "New quiz",
         "createDescription": "Create a new quiz for this class.",
@@ -578,6 +584,15 @@
         "session": "Session",
         "sessionPlaceholder": "Select a session",
         "sessionHint": "A quiz room will be created for this session.",
+        "startedAt": "Opens at",
+        "startedAtHint": "When the quiz room opens for students.",
+        "endedAt": "Closes at",
+        "endedAtHint": "When the quiz room closes.",
+        "endedAtError": "Close time must be after open time.",
+        "noBackNavigation": "Lock back navigation",
+        "noBackNavigationHint": "Students cannot return to previous questions once answered.",
+        "shuffleQuestions": "Shuffle questions",
+        "shuffleQuestionsHint": "Each student sees questions in a randomized order.",
         "createSuccess": "Quiz created",
         "updateSuccess": "Quiz updated",
         "deleteSuccess": "Quiz deleted",
@@ -1167,6 +1182,12 @@
           "delete": "Delete quiz",
           "manageQuestions": "Manage questions"
         },
+        "flags": {
+          "noBackNavigation": "Back navigation locked",
+          "noBackShort": "No back",
+          "shuffleQuestions": "Questions are shuffled",
+          "shuffleShort": "Shuffle"
+        },
         "form": {
           "createTitle": "New quiz",
           "createDescription": "Create a quiz for this session.",
@@ -1178,10 +1199,14 @@
           "descriptionPlaceholder": "Optional description",
           "duration": "Duration (minutes)",
           "startedAt": "Opens at",
-          "startedAtHint": "Optional. Leave empty to open immediately.",
+          "startedAtHint": "When the quiz room opens for students.",
           "endedAt": "Closes at",
-          "endedAtHint": "Optional. Leave empty for no deadline.",
+          "endedAtHint": "When the quiz room closes.",
           "endedAtError": "Close time must be after open time.",
+          "noBackNavigation": "Lock back navigation",
+          "noBackNavigationHint": "Students cannot return to previous questions once answered.",
+          "shuffleQuestions": "Shuffle questions",
+          "shuffleQuestionsHint": "Each student sees questions in a randomized order.",
           "createSuccess": "Quiz created",
           "updateSuccess": "Quiz updated",
           "deleteSuccess": "Quiz deleted",

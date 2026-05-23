@@ -6,8 +6,10 @@ import {
   ClipboardListIcon,
   ClockIcon,
   ListChecksIcon,
+  LockKeyholeIcon,
   PencilIcon,
   PlusIcon,
+  ShuffleIcon,
   Trash2Icon,
   TrophyIcon,
 } from "lucide-react"
@@ -66,6 +68,28 @@ function QuizCard({ quiz, index, onEdit, onManageQuestions, onDelete }: QuizCard
         </h3>
         {quiz.description ? (
           <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">{quiz.description}</p>
+        ) : null}
+        {(quiz.no_back_navigation || quiz.shuffle_questions) ? (
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            {quiz.no_back_navigation ? (
+              <span
+                className="border-foreground/15 text-muted-foreground inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider"
+                title={t("org.session.quizzes.flags.noBackNavigation")}
+              >
+                <LockKeyholeIcon className="size-3" />
+                {t("org.session.quizzes.flags.noBackShort")}
+              </span>
+            ) : null}
+            {quiz.shuffle_questions ? (
+              <span
+                className="border-foreground/15 text-muted-foreground inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider"
+                title={t("org.session.quizzes.flags.shuffleQuestions")}
+              >
+                <ShuffleIcon className="size-3" />
+                {t("org.session.quizzes.flags.shuffleShort")}
+              </span>
+            ) : null}
+          </div>
         ) : null}
       </div>
 

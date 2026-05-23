@@ -1,12 +1,19 @@
 import type { GithubCom4H1RZooraInternalDomainQuiz as Quiz } from "@/api/model"
 import type { ColumnDef, SortingState } from "@tanstack/react-table"
 
-import { ClipboardListIcon, ClockIcon, TrophyIcon } from "lucide-react"
+import {
+  ClipboardListIcon,
+  ClockIcon,
+  LockKeyholeIcon,
+  ShuffleIcon,
+  TrophyIcon,
+} from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { TableFilter } from "@/components/data-table/table-filter"
+import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { getEntityColor, getInitials, useAdminTable, useFormatDate } from "@/lib/data-table"
 import { cn } from "@/lib/utils"
@@ -38,7 +45,31 @@ function useQuizColumns({
             {getInitials(row.original.title ?? "")}
           </div>
           <div className="min-w-0">
-            <div className="truncate text-start text-sm font-medium">{row.original.title}</div>
+            <div className="flex items-center gap-1.5">
+              <span className="truncate text-start text-sm font-medium">
+                {row.original.title}
+              </span>
+              {row.original.no_back_navigation && (
+                <Badge
+                  variant="secondary"
+                  className="h-4 gap-0.5 px-1 text-[10px] font-normal"
+                  title={t("admin.quizzes.flags.noBackNavigation")}
+                >
+                  <LockKeyholeIcon className="size-2.5" />
+                  {t("admin.quizzes.flags.noBackShort")}
+                </Badge>
+              )}
+              {row.original.shuffle_questions && (
+                <Badge
+                  variant="secondary"
+                  className="h-4 gap-0.5 px-1 text-[10px] font-normal"
+                  title={t("admin.quizzes.flags.shuffleQuestions")}
+                >
+                  <ShuffleIcon className="size-2.5" />
+                  {t("admin.quizzes.flags.shuffleShort")}
+                </Badge>
+              )}
+            </div>
             {row.original.description && (
               <div className="text-muted-foreground truncate text-start text-xs">
                 {row.original.description}

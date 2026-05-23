@@ -563,6 +563,12 @@
         "delete": "حذف",
         "manageQuestions": "مدیریت سوال‌ها"
       },
+      "flags": {
+        "noBackNavigation": "بازگشت به سوال‌های قبلی قفل است",
+        "noBackShort": "بدون بازگشت",
+        "shuffleQuestions": "سوال‌ها در هم ریخته می‌شوند",
+        "shuffleShort": "شافل"
+      },
       "form": {
         "createTitle": "آزمون جدید",
         "createDescription": "ایجاد یک آزمون جدید برای این کلاس.",
@@ -578,6 +584,15 @@
         "session": "جلسه",
         "sessionPlaceholder": "یک جلسه انتخاب کنید",
         "sessionHint": "برای این جلسه یک اتاق آزمون ساخته می‌شود.",
+        "startedAt": "زمان شروع",
+        "startedAtHint": "زمانی که اتاق آزمون برای دانش‌آموزان باز می‌شود.",
+        "endedAt": "زمان پایان",
+        "endedAtHint": "زمانی که اتاق آزمون بسته می‌شود.",
+        "endedAtError": "زمان پایان باید بعد از زمان شروع باشد.",
+        "noBackNavigation": "قفل بازگشت به سوال قبل",
+        "noBackNavigationHint": "دانش‌آموز پس از پاسخ نمی‌تواند به سوال‌های قبلی بازگردد.",
+        "shuffleQuestions": "ترتیب تصادفی سوال‌ها",
+        "shuffleQuestionsHint": "هر دانش‌آموز سوال‌ها را با ترتیب تصادفی می‌بیند.",
         "createSuccess": "آزمون ایجاد شد",
         "updateSuccess": "آزمون به‌روز شد",
         "deleteSuccess": "آزمون حذف شد",
@@ -1199,6 +1214,12 @@
           "delete": "حذف آزمون",
           "manageQuestions": "مدیریت سوالات"
         },
+        "flags": {
+          "noBackNavigation": "بازگشت به سوال قبلی قفل است",
+          "noBackShort": "بدون بازگشت",
+          "shuffleQuestions": "سوال‌ها در هم ریخته می‌شوند",
+          "shuffleShort": "شافل"
+        },
         "form": {
           "createTitle": "آزمون جدید",
           "createDescription": "یک آزمون برای این جلسه بسازید.",
@@ -1210,10 +1231,14 @@
           "descriptionPlaceholder": "توضیحات اختیاری",
           "duration": "مدت زمان (دقیقه)",
           "startedAt": "زمان شروع",
-          "startedAtHint": "اختیاری. خالی بگذارید تا بلافاصله باز شود.",
+          "startedAtHint": "زمانی که اتاق آزمون برای دانش‌آموزان باز می‌شود.",
           "endedAt": "زمان پایان",
-          "endedAtHint": "اختیاری. خالی بگذارید تا مهلت نداشته باشد.",
+          "endedAtHint": "زمانی که اتاق آزمون بسته می‌شود.",
           "endedAtError": "زمان پایان باید بعد از زمان شروع باشد.",
+          "noBackNavigation": "قفل بازگشت به سوال قبل",
+          "noBackNavigationHint": "دانش‌آموز پس از پاسخ نمی‌تواند به سوال‌های قبلی بازگردد.",
+          "shuffleQuestions": "ترتیب تصادفی سوال‌ها",
+          "shuffleQuestionsHint": "هر دانش‌آموز سوال‌ها را با ترتیب تصادفی می‌بیند.",
           "createSuccess": "آزمون ایجاد شد",
           "updateSuccess": "آزمون به‌روزرسانی شد",
           "deleteSuccess": "آزمون حذف شد",
