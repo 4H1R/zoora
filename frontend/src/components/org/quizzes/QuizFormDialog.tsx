@@ -15,12 +15,16 @@ import {
   usePutQuizzesId,
 } from "@/api/quizzes/quizzes"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import {
+  QuizCoreFields,
+  QuizFlagsFields,
+  QuizScheduleFields,
+} from "@/components/quizzes/quiz-form-fields"
+import { FieldGroup } from "@/components/ui/field"
 
-const baseSchema = {
+const TRANSLATION_PREFIX = "org.session.quizzes.form"
+
+const coreFields = {
   title: z.string().min(2),
   description: z.string().optional(),
   duration_minutes: z.coerce.number().int().gt(0),
@@ -30,21 +34,21 @@ const baseSchema = {
 
 const createSchema = z
   .object({
-    ...baseSchema,
+    ...coreFields,
     started_at: z.string().min(1),
     ended_at: z.string().min(1),
   })
-  .refine(
-    (v) => new Date(v.ended_at).getTime() > new Date(v.started_at).getTime(),
-    { path: ["ended_at"], message: "end_after_start" }
-  )
+  .refine((v) => new Date(v.ended_at).getTime() > new Date(v.started_at).getTime(), {
+    path: ["ended_at"],
+    message: "end_after_start",
+  })
 
-const editSchema = z.object(baseSchema)
+const editSchema = z.object(coreFields)
 
 type CreateValues = z.infer<typeof createSchema>
 type EditValues = z.infer<typeof editSchema>
 
-const emptyCreate: CreateValues = {
+const createDefaults: CreateValues = {
   title: "",
   description: "",
   duration_minutes: 30,
@@ -54,13 +58,13 @@ const emptyCreate: CreateValues = {
   ended_at: "",
 }
 
-const emptyEdit: EditValues = {
-  title: "",
-  description: "",
-  duration_minutes: 30,
-  no_back_navigation: false,
-  shuffle_questions: false,
-}
+const quizToEditValues = (quiz: Quiz): EditValues => ({
+  title: quiz.title ?? "",
+  description: quiz.description ?? "",
+  duration_minutes: quiz.duration_minutes ?? 30,
+  no_back_navigation: quiz.no_back_navigation ?? false,
+  shuffle_questions: quiz.shuffle_questions ?? false,
+})
 
 interface QuizFormDialogProps {
   open: boolean
@@ -79,226 +83,176 @@ export function QuizFormDialog({
 }: QuizFormDialogProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const isEdit = !!quiz
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: getGetQuizzesQueryKey() })
 
-  const createForm = useForm<CreateValues>({
+  return quiz ? (
+    <EditDialog
+      key={quiz.id}
+      open={open}
+      onOpenChange={onOpenChange}
+      quiz={quiz}
+      onInvalidate={invalidate}
+      t={t}
+    />
+  ) : (
+    <CreateDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      classId={classId}
+      classSessionId={classSessionId}
+      onInvalidate={invalidate}
+      t={t}
+    />
+  )
+}
+
+interface CreateDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  classId: string
+  classSessionId: string
+  onInvalidate: () => void
+  t: (key: string) => string
+}
+
+function CreateDialog({
+  open,
+  onOpenChange,
+  classId,
+  classSessionId,
+  onInvalidate,
+  t,
+}: CreateDialogProps) {
+  const form = useForm<CreateValues>({
     resolver: zodResolver(createSchema),
-    defaultValues: emptyCreate,
-  })
-  const editForm = useForm<EditValues>({
-    resolver: zodResolver(editSchema),
-    defaultValues: emptyEdit,
+    defaultValues: createDefaults,
   })
 
   useEffect(() => {
-    if (!open) return
-    if (isEdit && quiz) {
-      editForm.reset({
-        title: quiz.title ?? "",
-        description: quiz.description ?? "",
-        duration_minutes: quiz.duration_minutes ?? 30,
-        no_back_navigation: quiz.no_back_navigation ?? false,
-        shuffle_questions: quiz.shuffle_questions ?? false,
-      })
-    } else {
-      createForm.reset(emptyCreate)
-    }
-  }, [open, quiz, isEdit])
+    if (open) form.reset(createDefaults)
+  }, [open])
 
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: getGetQuizzesQueryKey() })
-  }
-
-  const createMutation = usePostQuizzes({
+  const mutation = usePostQuizzes({
     mutation: {
       onSuccess: async (res) => {
         const quizId = res.status === 201 ? res.data.data?.id : undefined
-        const started = createForm.getValues("started_at")
-        const ended = createForm.getValues("ended_at")
         if (quizId) {
           try {
             await postQuizzesIdRooms(quizId, {
               class_session_id: classSessionId,
-              started_at: new Date(started).toISOString(),
-              ended_at: new Date(ended).toISOString(),
+              started_at: new Date(form.getValues("started_at")).toISOString(),
+              ended_at: new Date(form.getValues("ended_at")).toISOString(),
             })
           } catch {
-            toast.error(t("org.session.quizzes.form.linkRoomFailed"))
+            toast.error(t(`${TRANSLATION_PREFIX}.linkRoomFailed`))
           }
         }
-        toast.success(t("org.session.quizzes.form.createSuccess"))
-        invalidate()
+        toast.success(t(`${TRANSLATION_PREFIX}.createSuccess`))
+        onInvalidate()
         onOpenChange(false)
       },
     },
   })
 
-  const updateMutation = usePutQuizzesId({
-    mutation: {
-      onSuccess: () => {
-        toast.success(t("org.session.quizzes.form.updateSuccess"))
-        invalidate()
-        onOpenChange(false)
+  const onSubmit = form.handleSubmit((values) => {
+    mutation.mutate({
+      data: {
+        class_id: classId,
+        title: values.title,
+        description: values.description,
+        duration_minutes: values.duration_minutes,
+        no_back_navigation: values.no_back_navigation,
+        shuffle_questions: values.shuffle_questions,
       },
-    },
+    })
   })
 
-  const isLoading = createMutation.isPending || updateMutation.isPending
-
-  const onSubmit = isEdit
-    ? editForm.handleSubmit((values) => {
-        if (!quiz?.id) return
-        updateMutation.mutate({
-          id: quiz.id,
-          data: {
-            title: values.title,
-            description: values.description,
-            duration_minutes: values.duration_minutes,
-            no_back_navigation: values.no_back_navigation,
-            shuffle_questions: values.shuffle_questions,
-          },
-        })
-      })
-    : createForm.handleSubmit((values) => {
-        createMutation.mutate({
-          data: {
-            class_id: classId,
-            title: values.title,
-            description: values.description,
-            duration_minutes: values.duration_minutes,
-            no_back_navigation: values.no_back_navigation,
-            shuffle_questions: values.shuffle_questions,
-          },
-        })
-      })
-
-  const createErrors = createForm.formState.errors
-  const editErrors = editForm.formState.errors
-  const createNoBack = createForm.watch("no_back_navigation")
-  const createShuffle = createForm.watch("shuffle_questions")
-  const editNoBack = editForm.watch("no_back_navigation")
-  const editShuffle = editForm.watch("shuffle_questions")
+  const errors = form.formState.errors
+  const noBack = form.watch("no_back_navigation")
+  const shuffle = form.watch("shuffle_questions")
 
   return (
     <ResourceFormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={
-        isEdit
-          ? t("org.session.quizzes.form.editTitle")
-          : t("org.session.quizzes.form.createTitle")
-      }
-      description={
-        isEdit
-          ? t("org.session.quizzes.form.editDescription")
-          : t("org.session.quizzes.form.createDescription")
-      }
+      title={t(`${TRANSLATION_PREFIX}.createTitle`)}
+      description={t(`${TRANSLATION_PREFIX}.createDescription`)}
       onSubmit={onSubmit}
-      isLoading={isLoading}
-      submitLabel={isEdit ? t("common.save") : t("common.create")}
+      isLoading={mutation.isPending}
+      submitLabel={t("common.create")}
     >
       <FieldGroup>
-        <Field data-invalid={!!(isEdit ? editErrors.title : createErrors.title) || undefined}>
-          <FieldLabel>{t("org.session.quizzes.form.title")}</FieldLabel>
-          <Input
-            {...(isEdit ? editForm.register("title") : createForm.register("title"))}
-            placeholder={t("org.session.quizzes.form.titlePlaceholder")}
-          />
-          <FieldError errors={[isEdit ? editErrors.title : createErrors.title]} />
-        </Field>
-        <Field>
-          <FieldLabel>{t("org.session.quizzes.form.description")}</FieldLabel>
-          <Textarea
-            {...(isEdit
-              ? editForm.register("description")
-              : createForm.register("description"))}
-            placeholder={t("org.session.quizzes.form.descriptionPlaceholder")}
-            rows={3}
-          />
-        </Field>
-        <Field
-          data-invalid={
-            !!(isEdit ? editErrors.duration_minutes : createErrors.duration_minutes) || undefined
-          }
-        >
-          <FieldLabel>{t("org.session.quizzes.form.duration")}</FieldLabel>
-          <Input
-            type="number"
-            min={1}
-            {...(isEdit
-              ? editForm.register("duration_minutes")
-              : createForm.register("duration_minutes"))}
-          />
-          <FieldError
-            errors={[isEdit ? editErrors.duration_minutes : createErrors.duration_minutes]}
-          />
-        </Field>
+        <QuizCoreFields register={form.register} errors={errors} prefix={TRANSLATION_PREFIX} />
+        <QuizScheduleFields register={form.register} errors={errors} prefix={TRANSLATION_PREFIX} />
+        <QuizFlagsFields
+          prefix={TRANSLATION_PREFIX}
+          noBackNavigation={noBack}
+          shuffleQuestions={shuffle}
+          onNoBackNavigationChange={(v) => form.setValue("no_back_navigation", v)}
+          onShuffleQuestionsChange={(v) => form.setValue("shuffle_questions", v)}
+        />
+      </FieldGroup>
+    </ResourceFormDialog>
+  )
+}
 
-        {!isEdit ? (
-          <>
-            <Field data-invalid={!!createErrors.started_at || undefined}>
-              <FieldLabel>{t("org.session.quizzes.form.startedAt")}</FieldLabel>
-              <Input type="datetime-local" {...createForm.register("started_at")} />
-              <p className="text-muted-foreground text-xs">
-                {t("org.session.quizzes.form.startedAtHint")}
-              </p>
-              <FieldError errors={[createErrors.started_at]} />
-            </Field>
-            <Field data-invalid={!!createErrors.ended_at || undefined}>
-              <FieldLabel>{t("org.session.quizzes.form.endedAt")}</FieldLabel>
-              <Input type="datetime-local" {...createForm.register("ended_at")} />
-              {createErrors.ended_at?.message === "end_after_start" ? (
-                <p className="text-destructive text-xs">
-                  {t("org.session.quizzes.form.endedAtError")}
-                </p>
-              ) : (
-                <p className="text-muted-foreground text-xs">
-                  {t("org.session.quizzes.form.endedAtHint")}
-                </p>
-              )}
-              <FieldError errors={[createErrors.ended_at]} />
-            </Field>
-          </>
-        ) : null}
+interface EditDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  quiz: Quiz
+  onInvalidate: () => void
+  t: (key: string) => string
+}
 
-        <div className="border-foreground/10 flex flex-col gap-3 rounded-md border border-dashed p-3">
-          <Field className="flex-row items-start gap-3 space-y-0">
-            <Checkbox
-              checked={isEdit ? editNoBack : createNoBack}
-              onCheckedChange={(c) => {
-                if (isEdit) editForm.setValue("no_back_navigation", !!c)
-                else createForm.setValue("no_back_navigation", !!c)
-              }}
-              className="mt-0.5"
-            />
-            <div className="flex flex-col gap-0.5">
-              <FieldLabel className="cursor-pointer">
-                {t("org.session.quizzes.form.noBackNavigation")}
-              </FieldLabel>
-              <p className="text-muted-foreground text-xs leading-relaxed">
-                {t("org.session.quizzes.form.noBackNavigationHint")}
-              </p>
-            </div>
-          </Field>
-          <Field className="flex-row items-start gap-3 space-y-0">
-            <Checkbox
-              checked={isEdit ? editShuffle : createShuffle}
-              onCheckedChange={(c) => {
-                if (isEdit) editForm.setValue("shuffle_questions", !!c)
-                else createForm.setValue("shuffle_questions", !!c)
-              }}
-              className="mt-0.5"
-            />
-            <div className="flex flex-col gap-0.5">
-              <FieldLabel className="cursor-pointer">
-                {t("org.session.quizzes.form.shuffleQuestions")}
-              </FieldLabel>
-              <p className="text-muted-foreground text-xs leading-relaxed">
-                {t("org.session.quizzes.form.shuffleQuestionsHint")}
-              </p>
-            </div>
-          </Field>
-        </div>
+function EditDialog({ open, onOpenChange, quiz, onInvalidate, t }: EditDialogProps) {
+  const form = useForm<EditValues>({
+    resolver: zodResolver(editSchema),
+    defaultValues: quizToEditValues(quiz),
+  })
+
+  useEffect(() => {
+    if (open) form.reset(quizToEditValues(quiz))
+  }, [open, quiz])
+
+  const mutation = usePutQuizzesId({
+    mutation: {
+      onSuccess: () => {
+        toast.success(t(`${TRANSLATION_PREFIX}.updateSuccess`))
+        onInvalidate()
+        onOpenChange(false)
+      },
+    },
+  })
+
+  const onSubmit = form.handleSubmit((values) => {
+    if (!quiz.id) return
+    mutation.mutate({ id: quiz.id, data: values })
+  })
+
+  const errors = form.formState.errors
+  const noBack = form.watch("no_back_navigation")
+  const shuffle = form.watch("shuffle_questions")
+
+  return (
+    <ResourceFormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t(`${TRANSLATION_PREFIX}.editTitle`)}
+      description={t(`${TRANSLATION_PREFIX}.editDescription`)}
+      onSubmit={onSubmit}
+      isLoading={mutation.isPending}
+      submitLabel={t("common.save")}
+    >
+      <FieldGroup>
+        <QuizCoreFields register={form.register} errors={errors} prefix={TRANSLATION_PREFIX} />
+        <QuizFlagsFields
+          prefix={TRANSLATION_PREFIX}
+          noBackNavigation={noBack}
+          shuffleQuestions={shuffle}
+          onNoBackNavigationChange={(v) => form.setValue("no_back_navigation", v)}
+          onShuffleQuestionsChange={(v) => form.setValue("shuffle_questions", v)}
+        />
       </FieldGroup>
     </ResourceFormDialog>
   )

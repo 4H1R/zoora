@@ -39,13 +39,15 @@ export function ResourceFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="flex max-h-[90dvh] flex-col sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
-        <form onSubmit={onSubmit} className="flex flex-col gap-4">
-          {children}
+        <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col gap-4">
+          <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-1">
+            {children}
+          </div>
           <DialogFooter>
             <DialogClose render={<Button variant="outline" disabled={isLoading} />}>{t("common.cancel")}</DialogClose>
             <Button type="submit" disabled={isLoading}>
