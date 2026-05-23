@@ -5,6 +5,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import {
   ArrowLeftIcon,
   CalendarClockIcon,
+  CheckSquareIcon,
   ClipboardListIcon,
   DumbbellIcon,
   FilmIcon,
@@ -14,7 +15,6 @@ import {
   VideoIcon,
 } from "lucide-react"
 import type { ReactNode } from "react"
-import { useAccess } from "react-access-engine"
 import { useTranslation } from "react-i18next"
 
 import { useGetClassesId, useGetClassesSessionsSessionId } from "@/api/classes/classes"
@@ -23,8 +23,12 @@ import { useGetOfflines } from "@/api/offlines/offlines"
 import { useGetPractices } from "@/api/practices/practices"
 import { useGetQuestionBanks } from "@/api/question-banks/question-banks"
 import { useGetQuizzes } from "@/api/quizzes/quizzes"
+import { useLivesessionPermissions } from "@/components/org/livesessions/use-livesession-permissions"
+import { useOfflinePermissions } from "@/components/org/offlines/use-offline-permissions"
+import { usePracticePermissions } from "@/components/org/practices/use-practice-permissions"
 import { QuestionBanksSection } from "@/components/org/question-banks/QuestionBanksSection"
 import { useBankPermissions } from "@/components/org/question-banks/use-bank-permissions"
+import { QuizCorrectionsSection } from "@/components/org/quizzes/QuizCorrectionsSection"
 import { QuizzesSection } from "@/components/org/quizzes/QuizzesSection"
 import { useQuizPermissions } from "@/components/org/quizzes/use-quiz-permissions"
 import { Eyebrow } from "@/components/eyebrow"
@@ -131,9 +135,7 @@ function DecorativeBackground() {
 function JoinAction({ session }: { session: Session }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { can } = useAccess()
-  const canStart = can("livesessions:create") || can("livesessions:create_any")
-  const canJoin = can("livesessions:join") || can("livesessions:join_any")
+  const { canCreate: canStart, canJoin } = useLivesessionPermissions()
 
   const join = usePostLiveRooms({
     mutation: {
@@ -186,7 +188,11 @@ function RouteComponent() {
   const { orgId, classSessionId } = Route.useParams()
   const allowed = useOrgGuard(["classes:view", "classes:view_any"])
   const { canView: canViewBanks } = useBankPermissions()
-  const { canView: canViewQuizzes } = useQuizPermissions()
+  const { canView: canViewQuizzes, canEdit: canGradeQuizzes } = useQuizPermissions()
+  const { canView: canViewLive, canJoin: canJoinLive } = useLivesessionPermissions()
+  const { canView: canViewPractices } = usePracticePermissions()
+  const { canView: canViewOfflines } = useOfflinePermissions()
+  const canViewLiveAny = canViewLive || canJoinLive
   const now = useNow(1000)
 
   const { data: sessionData, isPending: sessionPending, isError: sessionError } =
@@ -200,13 +206,22 @@ function RouteComponent() {
   const cls = (classData?.status === 200 && classData.data.data) || undefined
 
   const enabled = !!session
-  const liveQ = useGetLiveRooms({ class_session_id: classSessionId }, { query: { enabled } })
+  const liveQ = useGetLiveRooms(
+    { class_session_id: classSessionId },
+    { query: { enabled: enabled && canViewLiveAny } }
+  )
   const quizQ = useGetQuizzes(
     { class_session_id: classSessionId },
     { query: { enabled: enabled && canViewQuizzes } }
   )
-  const practiceQ = useGetPractices({ class_session_id: classSessionId }, { query: { enabled } })
-  const offlineQ = useGetOfflines({ class_session_id: classSessionId }, { query: { enabled } })
+  const practiceQ = useGetPractices(
+    { class_session_id: classSessionId },
+    { query: { enabled: enabled && canViewPractices } }
+  )
+  const offlineQ = useGetOfflines(
+    { class_session_id: classSessionId },
+    { query: { enabled: enabled && canViewOfflines } }
+  )
   const banksQ = useGetQuestionBanks(undefined, { query: { enabled: enabled && canViewBanks } })
 
   if (!allowed) return null
@@ -250,9 +265,25 @@ function RouteComponent() {
   const shortId = (session.id ?? "").slice(0, 8).toUpperCase()
   const classPath = `/org/${orgId}/classes/${classId ?? ""}`
 
-  const visibleTileCount = 3 + (canViewQuizzes ? 1 : 0) + (canViewBanks ? 1 : 0)
+  const visibleTileCount =
+    (canViewLiveAny ? 1 : 0) +
+    (canViewQuizzes ? 1 : 0) +
+    (canViewPractices ? 1 : 0) +
+    (canViewOfflines ? 1 : 0) +
+    (canViewBanks ? 1 : 0) +
+    (canGradeQuizzes ? 1 : 0)
   const roomGridCols =
-    visibleTileCount >= 5 ? "xl:grid-cols-5" : visibleTileCount === 4 ? "xl:grid-cols-4" : "xl:grid-cols-3"
+    visibleTileCount >= 6
+      ? "xl:grid-cols-6"
+      : visibleTileCount === 5
+      ? "xl:grid-cols-5"
+      : visibleTileCount === 4
+      ? "xl:grid-cols-4"
+      : visibleTileCount === 3
+      ? "xl:grid-cols-3"
+      : visibleTileCount === 2
+      ? "xl:grid-cols-2"
+      : "xl:grid-cols-1"
 
   return (
     <div className="relative isolate flex flex-col gap-10 pb-16">
@@ -313,54 +344,95 @@ function RouteComponent() {
         </div>
 
         <div className={cn("grid gap-4 md:grid-cols-2", roomGridCols)}>
-          <RoomTile
-            index={0}
-            label={t("org.session.rooms.live")}
-            count={itemsCount(liveQ.data)}
-            loading={liveQ.isPending}
-            icon={<VideoIcon className="size-5" />}
-            href={classPath}
-          />
-          {canViewQuizzes ? (
-            <RoomTile
-              index={1}
-              label={t("org.session.rooms.quizzes")}
-              count={itemsCount(quizQ.data)}
-              loading={quizQ.isPending}
-              icon={<ClipboardListIcon className="size-5" />}
-              href="#quizzes"
-            />
-          ) : null}
-          <RoomTile
-            index={2}
-            label={t("org.session.rooms.practices")}
-            count={itemsCount(practiceQ.data)}
-            loading={practiceQ.isPending}
-            icon={<DumbbellIcon className="size-5" />}
-            href={classPath}
-          />
-          <RoomTile
-            index={3}
-            label={t("org.session.rooms.offlines")}
-            count={itemsCount(offlineQ.data)}
-            loading={offlineQ.isPending}
-            icon={<FilmIcon className="size-5" />}
-            href={classPath}
-          />
-          {canViewBanks ? (
-            <RoomTile
-              index={4}
-              label={t("org.session.rooms.questionBanks")}
-              count={itemsCount(banksQ.data)}
-              loading={banksQ.isPending}
-              icon={<LibraryIcon className="size-5" />}
-              href="#question-banks"
-            />
-          ) : null}
+          {(() => {
+            let idx = 0
+            const tiles: ReactNode[] = []
+            if (canViewLiveAny) {
+              tiles.push(
+                <RoomTile
+                  key="live"
+                  index={idx++}
+                  label={t("org.session.rooms.live")}
+                  count={itemsCount(liveQ.data)}
+                  loading={liveQ.isPending}
+                  icon={<VideoIcon className="size-5" />}
+                  href={classPath}
+                />
+              )
+            }
+            if (canViewQuizzes) {
+              tiles.push(
+                <RoomTile
+                  key="quizzes"
+                  index={idx++}
+                  label={t("org.session.rooms.quizzes")}
+                  count={itemsCount(quizQ.data)}
+                  loading={quizQ.isPending}
+                  icon={<ClipboardListIcon className="size-5" />}
+                  href="#quizzes"
+                />
+              )
+            }
+            if (canViewPractices) {
+              tiles.push(
+                <RoomTile
+                  key="practices"
+                  index={idx++}
+                  label={t("org.session.rooms.practices")}
+                  count={itemsCount(practiceQ.data)}
+                  loading={practiceQ.isPending}
+                  icon={<DumbbellIcon className="size-5" />}
+                  href={classPath}
+                />
+              )
+            }
+            if (canViewOfflines) {
+              tiles.push(
+                <RoomTile
+                  key="offlines"
+                  index={idx++}
+                  label={t("org.session.rooms.offlines")}
+                  count={itemsCount(offlineQ.data)}
+                  loading={offlineQ.isPending}
+                  icon={<FilmIcon className="size-5" />}
+                  href={classPath}
+                />
+              )
+            }
+            if (canViewBanks) {
+              tiles.push(
+                <RoomTile
+                  key="banks"
+                  index={idx++}
+                  label={t("org.session.rooms.questionBanks")}
+                  count={itemsCount(banksQ.data)}
+                  loading={banksQ.isPending}
+                  icon={<LibraryIcon className="size-5" />}
+                  href="#question-banks"
+                />
+              )
+            }
+            if (canGradeQuizzes) {
+              tiles.push(
+                <RoomTile
+                  key="corrections"
+                  index={idx++}
+                  label={t("org.session.rooms.corrections")}
+                  count={itemsCount(quizQ.data)}
+                  loading={quizQ.isPending}
+                  icon={<CheckSquareIcon className="size-5" />}
+                  href="#corrections"
+                />
+              )
+            }
+            return tiles
+          })()}
         </div>
       </section>
 
       {classId ? <QuizzesSection classId={classId} classSessionId={classSessionId} /> : null}
+
+      {canGradeQuizzes ? <QuizCorrectionsSection classSessionId={classSessionId} /> : null}
 
       <QuestionBanksSection />
 

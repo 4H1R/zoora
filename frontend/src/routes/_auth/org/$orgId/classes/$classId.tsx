@@ -3,11 +3,11 @@ import type { GithubCom4H1RZooraInternalDomainClassSession as Session } from "@/
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { ArrowLeftIcon, CalendarClockIcon, PlusIcon, UserIcon } from "lucide-react"
 import { useState } from "react"
-import { useAccess } from "react-access-engine"
 import { useTranslation } from "react-i18next"
 
 import { useGetClassesId, useGetClassesIdSessions } from "@/api/classes/classes"
 import { SessionCreateModal } from "@/components/admin/sessions/SessionCreateModal"
+import { useClassPermissions } from "@/components/org/classes/use-class-permissions"
 import { Eyebrow } from "@/components/eyebrow"
 import { SessionStatusPill } from "@/components/session/status-pill"
 import { Button } from "@/components/ui/button"
@@ -132,15 +132,20 @@ function StatCell({ label, value, accent }: { label: string; value: number; acce
 function RouteComponent() {
   const { t } = useTranslation()
   const { orgId, classId } = Route.useParams()
+  const { canView, canEdit: canCreateSession } = useClassPermissions()
   const allowed = useOrgGuard(["classes:view", "classes:view_any"])
-  const { can } = useAccess()
-  const canCreateSession = can("classes:update") || can("classes:update_any")
   const now = useNow(30_000)
 
   const [formOpen, setFormOpen] = useState(false)
 
-  const { data: classData, isPending: classPending } = useGetClassesId(classId)
-  const { data: sessionsData, isPending: sessionsPending } = useGetClassesIdSessions(classId, undefined)
+  const { data: classData, isPending: classPending } = useGetClassesId(classId, {
+    query: { enabled: canView },
+  })
+  const { data: sessionsData, isPending: sessionsPending } = useGetClassesIdSessions(
+    classId,
+    undefined,
+    { query: { enabled: canView } }
+  )
 
   const cls = (classData?.status === 200 && classData.data.data) || undefined
   const sessionsResult = (sessionsData?.status === 200 && sessionsData.data.data) || undefined

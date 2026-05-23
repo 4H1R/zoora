@@ -7,7 +7,6 @@ import { orgHead } from "@/lib/org-head"
 import { useOrgGuard } from "@/lib/access"
 import { KeyIcon, PlusIcon, ShieldIcon } from "lucide-react"
 import { useState } from "react"
-import { Can } from "react-access-engine"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -18,6 +17,7 @@ import {
   useGetRoles,
   useGetRolesStats,
 } from "@/api/roles/roles"
+import { useRolePermissions } from "@/components/org/roles/use-role-permissions"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { StatCards } from "@/components/data-table/stat-cards"
@@ -44,6 +44,7 @@ function RolesPage() {
   const { orgId } = Route.useParams()
   const { search } = Route.useSearch()
   const roleName = useRoleName()
+  const { canView, canCreate } = useRolePermissions()
   const allowed = useOrgGuard("roles:view")
 
   const [formOpen, setFormOpen] = useState(false)
@@ -64,9 +65,11 @@ function RolesPage() {
     setFormOpen(true)
   }
 
-  const { data, isLoading } = useGetRoles()
+  const { data, isLoading } = useGetRoles({ query: { enabled: canView } })
 
-  const { data: statsData, isLoading: statsLoading } = useGetRolesStats()
+  const { data: statsData, isLoading: statsLoading } = useGetRolesStats({
+    query: { enabled: canView },
+  })
 
   const deleteMutation = useDeleteRolesId({
     mutation: {
@@ -122,12 +125,12 @@ function RolesPage() {
       <PageHeader
         title={t("org.roles.title")}
         actions={
-          <Can perform="roles:create">
+          canCreate ? (
             <Button size="sm" onClick={handleCreate}>
               <PlusIcon data-icon="inline-start" />
               {t("org.roles.newRole")}
             </Button>
-          </Can>
+          ) : null
         }
       />
       <StatCards stats={statCards} />

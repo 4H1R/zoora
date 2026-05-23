@@ -1153,7 +1153,8 @@
         "quizzes": "Quizzes",
         "practices": "Practices",
         "offlines": "Recordings",
-        "questionBanks": "Question banks"
+        "questionBanks": "Question banks",
+        "corrections": "Corrections"
       },
       "actions": {
         "join": "Join live",
@@ -1211,6 +1212,38 @@
           "updateSuccess": "Quiz updated",
           "deleteSuccess": "Quiz deleted",
           "linkRoomFailed": "Quiz created but session room linking failed"
+        }
+      },
+      "corrections": {
+        "eyebrow": "Corrections",
+        "title": "Quiz corrections",
+        "subtitle": "Grade descriptive answers and review student submissions for this session.",
+        "pickQuiz": "Choose quiz",
+        "noQuizSelected": "no quiz",
+        "emptyTitle": "No quizzes to correct",
+        "emptyHint": "Create a quiz for this session — submissions will surface here once students respond.",
+        "noResults": "No submissions yet",
+        "noResultsHint": "Student submissions will appear here as they finish.",
+        "stats": {
+          "total": "Submissions",
+          "pending": "Awaiting",
+          "graded": "Graded",
+          "maxScore": "Max score"
+        },
+        "filter": {
+          "all": "All",
+          "submitted": "Awaiting",
+          "graded": "Graded",
+          "in_progress": "In progress"
+        },
+        "row": {
+          "score": "Score",
+          "submitted": "Submitted",
+          "notSubmitted": "not submitted",
+          "grade": "Grade",
+          "regrade": "Re-grade",
+          "gradeHint": "Open the grading dialog",
+          "gradeDisabledHint": "Student has not submitted yet"
         }
       },
       "questionBanks": {
