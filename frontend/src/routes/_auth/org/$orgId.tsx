@@ -4,7 +4,6 @@ import { AccessProvider } from "react-access-engine"
 import { useTranslation } from "react-i18next"
 
 import { useGetOrganizationsId } from "@/api/organizations/organizations"
-import { useGetRoles } from "@/api/roles/roles"
 import { useGetUsersMe } from "@/api/users/users"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { AppSidebar } from "@/components/layout/app-sidebar"
@@ -38,12 +37,10 @@ function RouteComponent() {
   const sidebarSide = direction === "rtl" ? "right" : "left"
   const navigate = useNavigate()
 
-  const { data: rolesData } = useGetRoles()
   const { data: orgData, isLoading: orgLoading } = useGetOrganizationsId(orgId)
 
   const user = (data?.status === 200 && data.data.data) || undefined
-  const allRoles = (rolesData?.status === 200 && rolesData.data.data) || []
-  const access = user ? buildAccess(user, allRoles) : null
+  const access = user ? buildAccess(user) : null
 
   useEffect(() => {
     if (userLoading || orgLoading) return

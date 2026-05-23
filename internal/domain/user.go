@@ -98,6 +98,7 @@ type AssignRoleDTO struct {
 type UserRepository interface {
 	Create(ctx context.Context, user *User) error
 	FindByID(ctx context.Context, id uuid.UUID) (*User, error)
+	FindByIDWithPermissions(ctx context.Context, id uuid.UUID) (*User, error)
 	FindByUsername(ctx context.Context, username string) (*User, error)
 	Update(ctx context.Context, user *User) error
 	Delete(ctx context.Context, id uuid.UUID) error

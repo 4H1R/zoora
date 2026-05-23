@@ -158,7 +158,7 @@ func (s *service) resolveListScope(caller domain.Caller) domain.UserListScope {
 }
 
 func (s *service) GetProfile(ctx context.Context, id uuid.UUID) (*domain.User, error) {
-	return s.repo.FindByID(ctx, id)
+	return s.repo.FindByIDWithPermissions(ctx, id)
 }
 
 func (s *service) ChangePassword(ctx context.Context, id uuid.UUID, dto domain.ChangePasswordDTO) error {

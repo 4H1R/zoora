@@ -1,6 +1,5 @@
 import type {
   GithubCom4H1RZooraInternalDomainPermissionName,
-  GithubCom4H1RZooraInternalDomainRole as Role,
   GithubCom4H1RZooraInternalDomainUser as User,
 } from "@/api/model"
 import type { UserContext } from "react-access-engine"
@@ -11,10 +10,10 @@ import { defineAccess, useAccess } from "react-access-engine"
 
 export type AppPermission = GithubCom4H1RZooraInternalDomainPermissionName
 
-export function buildAccess(user: User, allRoles: Role[]) {
+export function buildAccess(user: User) {
   const isAdmin = !!user.is_admin
 
-  const userRole = allRoles.find((r) => r.id === user.role_id)
+  const userRole = user.role
   const roleName = userRole?.name
 
   const userPermissions: AppPermission[] = (userRole?.permissions ?? [])

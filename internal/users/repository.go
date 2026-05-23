@@ -57,6 +57,17 @@ func (r *repository) FindByID(ctx context.Context, id uuid.UUID) (*domain.User, 
 	return &user, nil
 }
 
+func (r *repository) FindByIDWithPermissions(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+	var user domain.User
+	if err := r.baseQuery(ctx).Preload("Role.Permissions").First(&user, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("users.repository.FindByIDWithPermissions: %w", err)
+	}
+	return &user, nil
+}
+
 func (r *repository) FindByUsername(ctx context.Context, username string) (*domain.User, error) {
 	return r.findOne(ctx, "username = ?", username)
 }
