@@ -249,6 +249,20 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 			}
 			ou.teachers = append(ou.teachers, staff)
 			counts.Users++
+
+			// Fixed user1 — debug student in Zoora Demo org
+			studentRole := studentRolesByOrg[org.ID]
+			user1 := factory.NewUser(org.ID, func(u *domain.User) {
+				u.OrganizationID = &org.ID
+				u.Username = "user1"
+				u.Name = "User One"
+				u.RoleID = &studentRole.ID
+			})
+			if err := db.WithContext(ctx).Create(user1).Error; err != nil {
+				return nil, fmt.Errorf("creating user1: %w", err)
+			}
+			ou.students = append(ou.students, user1)
+			counts.Users++
 		}
 
 		// One extra teacher per org with Teacher preset role
@@ -693,4 +707,5 @@ func printSummary(c *seedCounts) {
 	fmt.Println("\nLogins:")
 	fmt.Println("  admin1 / password   (super admin)")
 	fmt.Println("  staff1 / password   (Staff preset in Zoora Demo org)")
+	fmt.Println("  user1 / password    (Student in Zoora Demo org)")
 }

@@ -1137,7 +1137,8 @@
         "live": "Live rooms",
         "quizzes": "Quizzes",
         "practices": "Practices",
-        "offlines": "Recordings"
+        "offlines": "Recordings",
+        "questionBanks": "Question banks"
       },
       "actions": {
         "join": "Join live",
@@ -1185,6 +1186,42 @@
           "updateSuccess": "Quiz updated",
           "deleteSuccess": "Quiz deleted",
           "linkRoomFailed": "Quiz created but session room linking failed"
+        }
+      },
+      "questionBanks": {
+        "eyebrow": "Question banks",
+        "title": "Organization question banks",
+        "cardEyebrow": "Bank",
+        "newBank": "New bank",
+        "emptyTitle": "No question banks yet",
+        "emptyHint": "Create a bank to store reusable questions.",
+        "actions": {
+          "manage": "Manage questions",
+          "edit": "Edit bank",
+          "delete": "Delete bank"
+        },
+        "form": {
+          "createTitle": "New question bank",
+          "createDescription": "Create a bank to organize reusable questions.",
+          "editTitle": "Edit question bank",
+          "editDescription": "Update bank name and description.",
+          "name": "Name",
+          "namePlaceholder": "Bank name",
+          "description": "Description",
+          "descriptionPlaceholder": "Optional description",
+          "createSuccess": "Bank created",
+          "updateSuccess": "Bank updated",
+          "deleteSuccess": "Bank deleted"
+        },
+        "questions": {
+          "title": "Bank questions",
+          "description": "Add, edit, or remove questions in this bank.",
+          "count": "Questions",
+          "add": "Add question",
+          "options": "options",
+          "emptyTitle": "No questions yet",
+          "emptyHint": "Add the first question to this bank.",
+          "deleteSuccess": "Question deleted"
         }
       }
     },

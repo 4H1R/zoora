@@ -15,7 +15,9 @@ export interface GithubCom4H1RZooraInternalDomainQuiz {
   description?: string;
   duration_minutes?: number;
   id?: string;
+  no_back_navigation?: boolean;
   organization_id?: string;
+  shuffle_questions?: boolean;
   title?: string;
   total_score?: number;
   updated_at?: string;

@@ -24,19 +24,21 @@ func (t QuizRuleType) Valid() bool {
 }
 
 type Quiz struct {
-	ID              uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	OrganizationID  uuid.UUID      `gorm:"type:uuid;not null;index" json:"organization_id"`
-	UserID          uuid.UUID      `gorm:"type:uuid;not null;index" json:"user_id"`
-	User            *User          `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	ClassID         uuid.UUID      `gorm:"type:uuid;not null;index" json:"class_id"`
-	Class           *Class         `gorm:"foreignKey:ClassID" json:"class,omitempty"`
-	Title           string         `gorm:"not null" json:"title"`
-	Description     string         `json:"description"`
-	DurationMinutes int            `gorm:"not null" json:"duration_minutes"`
-	TotalScore      float64        `gorm:"not null;default:0" json:"total_score"`
-	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedAt       time.Time      `json:"updated_at"`
-	DeletedAt       gorm.DeletedAt `gorm:"index" json:"-"`
+	ID               uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	OrganizationID   uuid.UUID      `gorm:"type:uuid;not null;index" json:"organization_id"`
+	UserID           uuid.UUID      `gorm:"type:uuid;not null;index" json:"user_id"`
+	User             *User          `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	ClassID          uuid.UUID      `gorm:"type:uuid;not null;index" json:"class_id"`
+	Class            *Class         `gorm:"foreignKey:ClassID" json:"class,omitempty"`
+	Title            string         `gorm:"not null" json:"title"`
+	Description      string         `json:"description"`
+	DurationMinutes  int            `gorm:"not null" json:"duration_minutes"`
+	TotalScore       float64        `gorm:"not null;default:0" json:"total_score"`
+	NoBackNavigation bool           `gorm:"not null;default:false" json:"no_back_navigation"`
+	ShuffleQuestions bool           `gorm:"not null;default:false" json:"shuffle_questions"`
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
+	DeletedAt        gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 type QuizRule struct {
@@ -68,16 +70,20 @@ type QuizRoom struct {
 // --- DTOs ---
 
 type CreateQuizDTO struct {
-	ClassID         uuid.UUID `json:"class_id" binding:"required"`
-	Title           string    `json:"title" binding:"required,min=2"`
-	Description     string    `json:"description"`
-	DurationMinutes int       `json:"duration_minutes" binding:"required,gt=0"`
+	ClassID          uuid.UUID `json:"class_id" binding:"required"`
+	Title            string    `json:"title" binding:"required,min=2"`
+	Description      string    `json:"description"`
+	DurationMinutes  int       `json:"duration_minutes" binding:"required,gt=0"`
+	NoBackNavigation bool      `json:"no_back_navigation"`
+	ShuffleQuestions bool      `json:"shuffle_questions"`
 }
 
 type UpdateQuizDTO struct {
-	Title           *string `json:"title" binding:"omitempty,min=2"`
-	Description     *string `json:"description"`
-	DurationMinutes *int    `json:"duration_minutes" binding:"omitempty,gt=0"`
+	Title            *string `json:"title" binding:"omitempty,min=2"`
+	Description      *string `json:"description"`
+	DurationMinutes  *int    `json:"duration_minutes" binding:"omitempty,gt=0"`
+	NoBackNavigation *bool   `json:"no_back_navigation"`
+	ShuffleQuestions *bool   `json:"shuffle_questions"`
 }
 
 type CreateQuizRuleDTO struct {
@@ -98,8 +104,18 @@ type UpdateQuizRuleDTO struct {
 
 type CreateQuizRoomDTO struct {
 	ClassSessionID uuid.UUID  `json:"class_session_id" binding:"required"`
-	StartedAt      *time.Time `json:"started_at"`
-	EndedAt        *time.Time `json:"ended_at"`
+	StartedAt      *time.Time `json:"started_at" binding:"required"`
+	EndedAt        *time.Time `json:"ended_at" binding:"required"`
+}
+
+func (d CreateQuizRoomDTO) Validate() error {
+	if d.StartedAt == nil || d.EndedAt == nil {
+		return NewValidationError(map[string]string{"window": "started_at and ended_at are required"})
+	}
+	if !d.EndedAt.After(*d.StartedAt) {
+		return NewValidationError(map[string]string{"window": "ended_at must be after started_at"})
+	}
+	return nil
 }
 
 type ListQuizzesQuery struct {
@@ -167,9 +183,24 @@ type QuizSubmission struct {
 	UpdatedAt   time.Time          `json:"updated_at"`
 }
 
-// IsRoomOpen returns true when a quiz room is accepting submissions.
+// IsRoomOpen returns true when the quiz room window contains now.
+// StartedAt/EndedAt define the scheduled availability window.
+// A nil EndedAt is treated as open-ended (manual close).
 func (r *QuizRoom) IsRoomOpen() bool {
-	return r.StartedAt != nil && r.EndedAt == nil
+	return r.IsRoomOpenAt(time.Now())
+}
+
+func (r *QuizRoom) IsRoomOpenAt(t time.Time) bool {
+	if r.StartedAt == nil {
+		return false
+	}
+	if t.Before(*r.StartedAt) {
+		return false
+	}
+	if r.EndedAt != nil && !t.Before(*r.EndedAt) {
+		return false
+	}
+	return true
 }
 
 type StartQuizSubmissionDTO struct {

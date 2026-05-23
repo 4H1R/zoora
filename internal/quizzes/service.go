@@ -90,12 +90,14 @@ func (s *service) Create(ctx context.Context, dto domain.CreateQuizDTO) (*domain
 		return nil, domain.ErrForbidden
 	}
 	quiz := &domain.Quiz{
-		OrganizationID:  class.OrganizationID,
-		UserID:          caller.UserID,
-		ClassID:         dto.ClassID,
-		Title:           dto.Title,
-		Description:     dto.Description,
-		DurationMinutes: dto.DurationMinutes,
+		OrganizationID:   class.OrganizationID,
+		UserID:           caller.UserID,
+		ClassID:          dto.ClassID,
+		Title:            dto.Title,
+		Description:      dto.Description,
+		DurationMinutes:  dto.DurationMinutes,
+		NoBackNavigation: dto.NoBackNavigation,
+		ShuffleQuestions: dto.ShuffleQuestions,
 	}
 	if err := s.repo.Create(ctx, quiz); err != nil {
 		return nil, err
@@ -147,6 +149,12 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateQui
 	}
 	if dto.DurationMinutes != nil {
 		quiz.DurationMinutes = *dto.DurationMinutes
+	}
+	if dto.NoBackNavigation != nil {
+		quiz.NoBackNavigation = *dto.NoBackNavigation
+	}
+	if dto.ShuffleQuestions != nil {
+		quiz.ShuffleQuestions = *dto.ShuffleQuestions
 	}
 	if err := s.repo.Update(ctx, quiz); err != nil {
 		return nil, err
@@ -417,6 +425,9 @@ func (s *service) CreateRoom(ctx context.Context, quizID uuid.UUID, dto domain.C
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
+	if err := dto.Validate(); err != nil {
+		return nil, err
+	}
 	quiz, err := s.repo.FindByID(ctx, quizID)
 	if err != nil {
 		return nil, err
@@ -481,11 +492,14 @@ func (s *service) StartRoom(ctx context.Context, id uuid.UUID) (*domain.QuizRoom
 	if !canManageQuiz(caller, quiz) {
 		return nil, domain.ErrForbidden
 	}
-	if room.StartedAt != nil {
+	now := time.Now()
+	// Allow early open: only override StartedAt when it lies in the future.
+	if room.StartedAt == nil || now.Before(*room.StartedAt) {
+		room.StartedAt = &now
+	}
+	if room.EndedAt != nil && !room.EndedAt.After(now) {
 		return nil, domain.ErrConflict
 	}
-	now := time.Now()
-	room.StartedAt = &now
 	if err := s.rooms.Update(ctx, room); err != nil {
 		return nil, err
 	}
@@ -512,10 +526,10 @@ func (s *service) EndRoom(ctx context.Context, id uuid.UUID) (*domain.QuizRoom, 
 	if !canManageQuiz(caller, quiz) {
 		return nil, domain.ErrForbidden
 	}
-	if room.EndedAt != nil {
+	now := time.Now()
+	if room.EndedAt != nil && !room.EndedAt.After(now) {
 		return nil, domain.ErrConflict
 	}
-	now := time.Now()
 	room.EndedAt = &now
 	if err := s.rooms.Update(ctx, room); err != nil {
 		return nil, err

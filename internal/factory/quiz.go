@@ -12,12 +12,14 @@ import (
 func NewQuiz(orgID, userID, classID uuid.UUID, opts ...func(*domain.Quiz)) *domain.Quiz {
 	id := nextID()
 	q := &domain.Quiz{
-		OrganizationID:  orgID,
-		UserID:          userID,
-		ClassID:         classID,
-		Title:           fmt.Sprintf("%s Quiz %d", fake.Noun(), id),
-		Description:     fake.Sentence(8),
-		DurationMinutes: fake.IntRange(10, 60),
+		OrganizationID:   orgID,
+		UserID:           userID,
+		ClassID:          classID,
+		Title:            fmt.Sprintf("%s Quiz %d", fake.Noun(), id),
+		Description:      fake.Sentence(8),
+		DurationMinutes:  fake.IntRange(10, 60),
+		NoBackNavigation: fake.Bool(),
+		ShuffleQuestions: fake.Bool(),
 	}
 	for _, o := range opts {
 		o(q)
@@ -37,9 +39,16 @@ func NewQuizRule(quizID uuid.UUID, opts ...func(*domain.QuizRule)) *domain.QuizR
 }
 
 func NewQuizRoom(quizID, sessionID uuid.UUID, opts ...func(*domain.QuizRoom)) *domain.QuizRoom {
+	// Window centered on now: opened a bit in past, closes a few hours later.
+	openOffset := time.Duration(fake.IntRange(5, 30)) * time.Minute
+	windowLen := time.Duration(fake.IntRange(60, 240)) * time.Minute
+	start := time.Now().Add(-openOffset)
+	end := start.Add(windowLen)
 	qr := &domain.QuizRoom{
 		QuizID:         quizID,
 		ClassSessionID: sessionID,
+		StartedAt:      &start,
+		EndedAt:        &end,
 	}
 	for _, o := range opts {
 		o(qr)

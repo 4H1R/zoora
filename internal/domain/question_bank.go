@@ -106,8 +106,37 @@ type UpdateQuestionDTO struct {
 	Metadata []QuestionMetadata `json:"metadata"`
 }
 
+// IsMultiSelect reports whether a choice question has more than one
+// positive-score option. Multi-select questions allow several correct picks
+// and sum their scores.
+func (q *Question) IsMultiSelect() bool {
+	if q.Type != QuestionTypeChoice {
+		return false
+	}
+	positives := 0
+	for _, o := range q.Options {
+		if o.Score > 0 {
+			positives++
+			if positives > 1 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // MaxScore returns the highest option score. Negative-only sets return 0.
+// For multi-select choice questions, returns the sum of positive scores.
 func (q *Question) MaxScore() float64 {
+	if q.IsMultiSelect() {
+		var sum float64
+		for _, o := range q.Options {
+			if o.Score > 0 {
+				sum += o.Score
+			}
+		}
+		return sum
+	}
 	var max float64
 	for _, o := range q.Options {
 		if o.Score > max {
@@ -127,6 +156,15 @@ func ValidateQuestionOptions(qType QuestionType, options []QuestionOption) error
 	case QuestionTypeChoice:
 		if len(options) < 2 {
 			return NewValidationError(map[string]string{"options": "choice questions require at least 2 options"})
+		}
+		positives := 0
+		for _, o := range options {
+			if o.Score > 0 {
+				positives++
+			}
+		}
+		if positives == 0 {
+			return NewValidationError(map[string]string{"options": "choice questions require at least one option with a positive score"})
 		}
 	case QuestionTypeShortAnswer:
 		if len(options) < 1 {

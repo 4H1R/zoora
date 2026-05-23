@@ -8,6 +8,7 @@ import {
   ClipboardListIcon,
   DumbbellIcon,
   FilmIcon,
+  LibraryIcon,
   RadioIcon,
   SparklesIcon,
   VideoIcon,
@@ -20,8 +21,12 @@ import { useGetClassesId, useGetClassesSessionsSessionId } from "@/api/classes/c
 import { getLiveRooms, useGetLiveRooms, usePostLiveRooms } from "@/api/live-sessions/live-sessions"
 import { useGetOfflines } from "@/api/offlines/offlines"
 import { useGetPractices } from "@/api/practices/practices"
+import { useGetQuestionBanks } from "@/api/question-banks/question-banks"
 import { useGetQuizzes } from "@/api/quizzes/quizzes"
+import { QuestionBanksSection } from "@/components/org/question-banks/QuestionBanksSection"
+import { useBankPermissions } from "@/components/org/question-banks/use-bank-permissions"
 import { QuizzesSection } from "@/components/org/quizzes/QuizzesSection"
+import { useQuizPermissions } from "@/components/org/quizzes/use-quiz-permissions"
 import { Eyebrow } from "@/components/eyebrow"
 import { SessionStatusPill } from "@/components/session/status-pill"
 import { Button } from "@/components/ui/button"
@@ -180,6 +185,8 @@ function RouteComponent() {
   const { t, i18n } = useTranslation()
   const { orgId, classSessionId } = Route.useParams()
   const allowed = useOrgGuard(["classes:view", "classes:view_any"])
+  const { canView: canViewBanks } = useBankPermissions()
+  const { canView: canViewQuizzes } = useQuizPermissions()
   const now = useNow(1000)
 
   const { data: sessionData, isPending: sessionPending, isError: sessionError } =
@@ -194,9 +201,13 @@ function RouteComponent() {
 
   const enabled = !!session
   const liveQ = useGetLiveRooms({ class_session_id: classSessionId }, { query: { enabled } })
-  const quizQ = useGetQuizzes({ class_session_id: classSessionId }, { query: { enabled } })
+  const quizQ = useGetQuizzes(
+    { class_session_id: classSessionId },
+    { query: { enabled: enabled && canViewQuizzes } }
+  )
   const practiceQ = useGetPractices({ class_session_id: classSessionId }, { query: { enabled } })
   const offlineQ = useGetOfflines({ class_session_id: classSessionId }, { query: { enabled } })
+  const banksQ = useGetQuestionBanks(undefined, { query: { enabled: enabled && canViewBanks } })
 
   if (!allowed) return null
 
@@ -238,6 +249,10 @@ function RouteComponent() {
   const countdown = formatCountdown(session.start_time, now)
   const shortId = (session.id ?? "").slice(0, 8).toUpperCase()
   const classPath = `/org/${orgId}/classes/${classId ?? ""}`
+
+  const visibleTileCount = 3 + (canViewQuizzes ? 1 : 0) + (canViewBanks ? 1 : 0)
+  const roomGridCols =
+    visibleTileCount >= 5 ? "xl:grid-cols-5" : visibleTileCount === 4 ? "xl:grid-cols-4" : "xl:grid-cols-3"
 
   return (
     <div className="relative isolate flex flex-col gap-10 pb-16">
@@ -297,7 +312,7 @@ function RouteComponent() {
           <Eyebrow className="hidden md:inline">{t("org.session.rooms.subtitle")}</Eyebrow>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className={cn("grid gap-4 md:grid-cols-2", roomGridCols)}>
           <RoomTile
             index={0}
             label={t("org.session.rooms.live")}
@@ -306,14 +321,16 @@ function RouteComponent() {
             icon={<VideoIcon className="size-5" />}
             href={classPath}
           />
-          <RoomTile
-            index={1}
-            label={t("org.session.rooms.quizzes")}
-            count={itemsCount(quizQ.data)}
-            loading={quizQ.isPending}
-            icon={<ClipboardListIcon className="size-5" />}
-            href="#quizzes"
-          />
+          {canViewQuizzes ? (
+            <RoomTile
+              index={1}
+              label={t("org.session.rooms.quizzes")}
+              count={itemsCount(quizQ.data)}
+              loading={quizQ.isPending}
+              icon={<ClipboardListIcon className="size-5" />}
+              href="#quizzes"
+            />
+          ) : null}
           <RoomTile
             index={2}
             label={t("org.session.rooms.practices")}
@@ -330,10 +347,22 @@ function RouteComponent() {
             icon={<FilmIcon className="size-5" />}
             href={classPath}
           />
+          {canViewBanks ? (
+            <RoomTile
+              index={4}
+              label={t("org.session.rooms.questionBanks")}
+              count={itemsCount(banksQ.data)}
+              loading={banksQ.isPending}
+              icon={<LibraryIcon className="size-5" />}
+              href="#question-banks"
+            />
+          ) : null}
         </div>
       </section>
 
       {classId ? <QuizzesSection classId={classId} classSessionId={classSessionId} /> : null}
+
+      <QuestionBanksSection />
 
       <footer className="border-t border-dashed pt-6">
         <div className="flex flex-wrap items-center justify-between gap-2">

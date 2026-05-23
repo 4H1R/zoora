@@ -297,7 +297,7 @@ func (r *roomRepository) ListBySessionID(ctx context.Context, sessionID uuid.UUI
 func (r *roomRepository) FindOpenByQuizID(ctx context.Context, quizID uuid.UUID) (*domain.QuizRoom, error) {
 	var room domain.QuizRoom
 	if err := database.DB(ctx, r.db).Model(&domain.QuizRoom{}).
-		Where("quiz_id = ? AND started_at IS NOT NULL AND ended_at IS NULL", quizID).
+		Where("quiz_id = ? AND started_at IS NOT NULL AND started_at <= NOW() AND (ended_at IS NULL OR ended_at > NOW())", quizID).
 		First(&room).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound

@@ -8,6 +8,6 @@
 
 export interface GithubCom4H1RZooraInternalDomainCreateQuizRoomDTO {
   class_session_id: string;
-  ended_at?: string;
-  started_at?: string;
+  ended_at: string;
+  started_at: string;
 }

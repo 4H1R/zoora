@@ -90,7 +90,7 @@ func (s *service) SubmitQuiz(ctx context.Context, submissionID uuid.UUID, dto do
 		return nil, err
 	}
 
-	_, err = s.rooms.FindOpenByQuizID(ctx, sub.QuizID)
+	room, err := s.rooms.FindOpenByQuizID(ctx, sub.QuizID)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
 			return nil, domain.NewValidationError(map[string]string{"quiz_room": "room is not open"})
@@ -98,9 +98,13 @@ func (s *service) SubmitQuiz(ctx context.Context, submissionID uuid.UUID, dto do
 		return nil, err
 	}
 
-	elapsed := time.Since(sub.StartedAt)
-	allowed := time.Duration(quiz.DurationMinutes)*time.Minute + time.Duration(domain.SubmissionGracePeriod)*time.Second
-	late := elapsed > allowed
+	now := time.Now()
+	deadline := sub.StartedAt.Add(time.Duration(quiz.DurationMinutes) * time.Minute)
+	if room.EndedAt != nil && room.EndedAt.Before(deadline) {
+		deadline = *room.EndedAt
+	}
+	grace := time.Duration(domain.SubmissionGracePeriod) * time.Second
+	late := now.After(deadline.Add(grace))
 
 	questionIDs := make([]uuid.UUID, 0, len(dto.Answers))
 	for _, a := range dto.Answers {
@@ -135,15 +139,10 @@ func (s *service) SubmitQuiz(ctx context.Context, submissionID uuid.UUID, dto do
 		answers = append(answers, sa)
 	}
 
-	now := time.Now()
 	sub.Answers = answers
 	sub.TotalScore = totalScore
 	sub.SubmittedAt = &now
 	sub.Status = domain.SubmissionStatusSubmitted
-
-	if late {
-		sub.Status = domain.SubmissionStatusSubmitted
-	}
 
 	if err := s.submissions.Update(ctx, sub); err != nil {
 		return nil, err

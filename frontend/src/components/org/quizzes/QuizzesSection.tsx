@@ -12,7 +12,6 @@ import {
   TrophyIcon,
 } from "lucide-react"
 import { useState } from "react"
-import { useAccess } from "react-access-engine"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -30,6 +29,7 @@ import { useCanSelfOr } from "@/lib/access"
 import { formatSessionDate } from "@/lib/session-status"
 
 import { QuizFormDialog } from "./QuizFormDialog"
+import { useQuizPermissions } from "./use-quiz-permissions"
 
 interface QuizCardProps {
   quiz: Quiz
@@ -183,10 +183,12 @@ interface QuizzesSectionProps {
 export function QuizzesSection({ classId, classSessionId }: QuizzesSectionProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const { can } = useAccess()
-  const canCreate = can("quizzes:create") || can("quizzes:create_any")
+  const { canView, canCreate } = useQuizPermissions()
 
-  const quizzesQuery = useGetQuizzes({ class_session_id: classSessionId })
+  const quizzesQuery = useGetQuizzes(
+    { class_session_id: classSessionId },
+    { query: { enabled: canView } }
+  )
   const quizzes =
     (quizzesQuery.data?.status === 200 && quizzesQuery.data.data.data?.items) || []
 
@@ -212,6 +214,8 @@ export function QuizzesSection({ classId, classSessionId }: QuizzesSectionProps)
     setEditingQuiz(null)
     setFormOpen(true)
   }
+
+  if (!canView) return null
 
   return (
     <section id="quizzes" className="flex flex-col gap-5 scroll-mt-20">

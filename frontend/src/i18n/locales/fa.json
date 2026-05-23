@@ -1169,7 +1169,8 @@
         "live": "اتاق‌های زنده",
         "quizzes": "آزمون‌ها",
         "practices": "تمرین‌ها",
-        "offlines": "ضبط‌ها"
+        "offlines": "ضبط‌ها",
+        "questionBanks": "بانک‌های سوال"
       },
       "actions": {
         "join": "ورود به جلسه زنده",
@@ -1217,6 +1218,42 @@
           "updateSuccess": "آزمون به‌روزرسانی شد",
           "deleteSuccess": "آزمون حذف شد",
           "linkRoomFailed": "آزمون ساخته شد اما اتصال به جلسه ناموفق بود"
+        }
+      },
+      "questionBanks": {
+        "eyebrow": "بانک‌های سوال",
+        "title": "بانک‌های سوال سازمان",
+        "cardEyebrow": "بانک",
+        "newBank": "بانک جدید",
+        "emptyTitle": "هنوز بانک سوالی وجود ندارد",
+        "emptyHint": "یک بانک برای نگه‌داشتن سوال‌های قابل استفاده مجدد بسازید.",
+        "actions": {
+          "manage": "مدیریت سوالات",
+          "edit": "ویرایش بانک",
+          "delete": "حذف بانک"
+        },
+        "form": {
+          "createTitle": "بانک سوال جدید",
+          "createDescription": "یک بانک برای سازمان‌دهی سوالات قابل استفاده مجدد بسازید.",
+          "editTitle": "ویرایش بانک سوال",
+          "editDescription": "به‌روزرسانی نام و توضیحات بانک.",
+          "name": "نام",
+          "namePlaceholder": "نام بانک",
+          "description": "توضیحات",
+          "descriptionPlaceholder": "توضیحات اختیاری",
+          "createSuccess": "بانک ایجاد شد",
+          "updateSuccess": "بانک به‌روزرسانی شد",
+          "deleteSuccess": "بانک حذف شد"
+        },
+        "questions": {
+          "title": "سوالات بانک",
+          "description": "افزودن، ویرایش یا حذف سوالات این بانک.",
+          "count": "سوالات",
+          "add": "افزودن سوال",
+          "options": "گزینه",
+          "emptyTitle": "هنوز سوالی وجود ندارد",
+          "emptyHint": "اولین سوال را به این بانک اضافه کنید.",
+          "deleteSuccess": "سوال حذف شد"
         }
       }
     },
