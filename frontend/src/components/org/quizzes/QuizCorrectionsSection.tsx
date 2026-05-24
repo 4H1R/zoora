@@ -166,7 +166,7 @@ export function QuizCorrectionsSection({ classSessionId }: QuizCorrectionsSectio
 function EmptyState() {
   const { t } = useTranslation()
   return (
-    <div className="bg-card ring-foreground/10 flex flex-col items-center gap-3 rounded-2xl px-6 py-16 text-center ring-1">
+    <div className="bg-card border-border flex flex-col items-center gap-3 rounded-2xl border px-6 py-16 text-center shadow-sm dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/10">
       <ClipboardListIcon className="text-muted-foreground size-8" />
       <h3 className="text-foreground text-lg font-semibold tracking-tight">
         {t("org.session.corrections.emptyTitle")}
@@ -181,7 +181,7 @@ function EmptyState() {
 function NoSubmissions() {
   const { t } = useTranslation()
   return (
-    <div className="bg-card ring-foreground/10 flex flex-col items-center gap-2 rounded-2xl px-6 py-12 text-center ring-1">
+    <div className="bg-card border-border flex flex-col items-center gap-2 rounded-2xl border px-6 py-12 text-center shadow-sm dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/10">
       <CheckSquareIcon className="text-muted-foreground size-7 opacity-60" />
       <h3 className="text-foreground text-base font-semibold tracking-tight">
         {t("org.session.corrections.noResults")}
@@ -227,10 +227,10 @@ function QuizSelector({
               type="button"
               onClick={() => onSelect(q.id)}
               className={cn(
-                "group/pill ring-foreground/10 inline-flex items-center gap-2.5 rounded-full px-4 py-2 text-sm font-medium ring-1 transition-all",
+                "group/pill border-border inline-flex items-center gap-2.5 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/10",
                 active
-                  ? "bg-foreground text-background ring-foreground"
-                  : "bg-card text-foreground hover:ring-foreground/30 hover:-translate-y-0.5"
+                  ? "bg-foreground text-background border-foreground dark:ring-foreground"
+                  : "bg-card text-foreground hover:-translate-y-0.5 hover:border-foreground/30 dark:hover:ring-foreground/30"
               )}
             >
               <span
@@ -267,7 +267,7 @@ function StatStrip({
   const completion = total > 0 ? Math.round((graded / total) * 100) : 0
 
   return (
-    <div className="bg-card ring-foreground/10 grid grid-cols-2 overflow-hidden rounded-2xl ring-1 md:grid-cols-4">
+    <div className="bg-card border-border grid grid-cols-2 overflow-hidden rounded-2xl border shadow-sm dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/10 md:grid-cols-4">
       <StatCell
         icon={<ClipboardListIcon className="size-4" />}
         label={t("org.session.corrections.stats.total")}
@@ -325,7 +325,7 @@ function StatCell({
       : "text-foreground"
 
   return (
-    <div className="border-foreground/10 flex flex-col gap-2 border-b border-dashed p-5 md:border-b-0 md:border-s md:first:border-s-0">
+    <div className="border-border flex flex-col gap-2 border-b border-dashed p-5 md:border-b-0 md:border-s md:first:border-s-0">
       <div className="text-muted-foreground flex items-center gap-2">
         {icon}
         <Eyebrow className="text-[10px]">{label}</Eyebrow>
@@ -361,7 +361,7 @@ function StatusFilterBar({
 }) {
   const { t } = useTranslation()
   return (
-    <div className="border-foreground/10 flex flex-wrap items-center gap-1 border-b border-dashed pb-2">
+    <div className="border-border flex flex-wrap items-center gap-1 border-b border-dashed pb-2">
       {STATUS_FILTERS.map((s) => {
         const active = value === s
         const count =
@@ -435,7 +435,7 @@ function SubmissionRow({
       : "border-foreground/15 text-muted-foreground"
 
   return (
-    <li className="group/row bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex flex-col gap-4 overflow-hidden rounded-2xl p-4 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-md sm:flex-row sm:items-center sm:gap-6 sm:p-5">
+    <li className="group/row bg-card text-card-foreground border-border relative isolate flex flex-col gap-4 overflow-hidden rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-foreground/25 dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/10 dark:hover:ring-foreground/30 sm:flex-row sm:items-center sm:gap-6 sm:p-5">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,var(--color-primary)/6%,transparent_60%)] opacity-0 transition-opacity group-hover/row:opacity-100"
@@ -534,7 +534,7 @@ function StatusDot({ status }: { status: string }) {
 
 function SubmissionRowSkeleton() {
   return (
-    <div className="bg-card ring-foreground/10 flex items-center gap-4 rounded-2xl p-5 ring-1">
+    <div className="bg-card border-border flex items-center gap-4 rounded-2xl border p-5 shadow-sm dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/10">
       <Skeleton className="size-11 rounded-xl" />
       <div className="flex flex-1 flex-col gap-1.5">
         <Skeleton className="h-4 w-40" />
