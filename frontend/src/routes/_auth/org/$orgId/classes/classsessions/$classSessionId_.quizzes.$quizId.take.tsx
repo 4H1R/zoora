@@ -15,7 +15,7 @@ import { pickRoomForSession } from "@/components/quizzes/take/utils"
 import { orgHead } from "@/lib/org-head"
 
 export const Route = createFileRoute(
-  "/_auth/org/$orgId/classes/classsessions/$classSessionId/quizzes/$quizId/take",
+  "/_auth/org/$orgId/classes/classsessions/$classSessionId_/quizzes/$quizId/take",
 )({
   head: () => orgHead("org.session.quizzes.take.headTitle"),
   component: RouteComponent,
