@@ -44,6 +44,7 @@ import { Route as AdminAdminClassesClassIdQuizzesRouteImport } from './routes/_a
 import { Route as AdminAdminClassesClassIdQuestionsRouteImport } from './routes/_admin/admin/classes/$classId/questions'
 import { Route as AdminAdminClassesClassIdPracticesRouteImport } from './routes/_admin/admin/classes/$classId/practices'
 import { Route as AdminAdminClassesClassIdOfflinesRouteImport } from './routes/_admin/admin/classes/$classId/offlines'
+import { Route as AdminAdminClassesClassIdMembersRouteImport } from './routes/_admin/admin/classes/$classId/members'
 import { Route as AdminAdminClassesClassIdLiveRoomsRouteImport } from './routes/_admin/admin/classes/$classId/live-rooms'
 import { Route as AdminAdminClassesClassIdGradebookRouteImport } from './routes/_admin/admin/classes/$classId/gradebook'
 import { Route as AuthOrgOrgIdClassesClasssessionsClassSessionIdRouteImport } from './routes/_auth/org/$orgId/classes/classsessions/$classSessionId'
@@ -236,6 +237,12 @@ const AdminAdminClassesClassIdOfflinesRoute =
     path: '/admin/classes/$classId/offlines',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminAdminClassesClassIdMembersRoute =
+  AdminAdminClassesClassIdMembersRouteImport.update({
+    id: '/admin/classes/$classId/members',
+    path: '/admin/classes/$classId/members',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminAdminClassesClassIdLiveRoomsRoute =
   AdminAdminClassesClassIdLiveRoomsRouteImport.update({
     id: '/admin/classes/$classId/live-rooms',
@@ -288,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/admin/users/': typeof AdminAdminUsersIndexRoute
   '/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
   '/admin/classes/$classId/live-rooms': typeof AdminAdminClassesClassIdLiveRoomsRoute
+  '/admin/classes/$classId/members': typeof AdminAdminClassesClassIdMembersRoute
   '/admin/classes/$classId/offlines': typeof AdminAdminClassesClassIdOfflinesRoute
   '/admin/classes/$classId/practices': typeof AdminAdminClassesClassIdPracticesRoute
   '/admin/classes/$classId/questions': typeof AdminAdminClassesClassIdQuestionsRoute
@@ -326,6 +334,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminAdminUsersIndexRoute
   '/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
   '/admin/classes/$classId/live-rooms': typeof AdminAdminClassesClassIdLiveRoomsRoute
+  '/admin/classes/$classId/members': typeof AdminAdminClassesClassIdMembersRoute
   '/admin/classes/$classId/offlines': typeof AdminAdminClassesClassIdOfflinesRoute
   '/admin/classes/$classId/practices': typeof AdminAdminClassesClassIdPracticesRoute
   '/admin/classes/$classId/questions': typeof AdminAdminClassesClassIdQuestionsRoute
@@ -368,6 +377,7 @@ export interface FileRoutesById {
   '/_admin/admin/users/': typeof AdminAdminUsersIndexRoute
   '/_admin/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
   '/_admin/admin/classes/$classId/live-rooms': typeof AdminAdminClassesClassIdLiveRoomsRoute
+  '/_admin/admin/classes/$classId/members': typeof AdminAdminClassesClassIdMembersRoute
   '/_admin/admin/classes/$classId/offlines': typeof AdminAdminClassesClassIdOfflinesRoute
   '/_admin/admin/classes/$classId/practices': typeof AdminAdminClassesClassIdPracticesRoute
   '/_admin/admin/classes/$classId/questions': typeof AdminAdminClassesClassIdQuestionsRoute
@@ -408,6 +418,7 @@ export interface FileRouteTypes {
     | '/admin/users/'
     | '/admin/classes/$classId/gradebook'
     | '/admin/classes/$classId/live-rooms'
+    | '/admin/classes/$classId/members'
     | '/admin/classes/$classId/offlines'
     | '/admin/classes/$classId/practices'
     | '/admin/classes/$classId/questions'
@@ -446,6 +457,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/admin/classes/$classId/gradebook'
     | '/admin/classes/$classId/live-rooms'
+    | '/admin/classes/$classId/members'
     | '/admin/classes/$classId/offlines'
     | '/admin/classes/$classId/practices'
     | '/admin/classes/$classId/questions'
@@ -487,6 +499,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/users/'
     | '/_admin/admin/classes/$classId/gradebook'
     | '/_admin/admin/classes/$classId/live-rooms'
+    | '/_admin/admin/classes/$classId/members'
     | '/_admin/admin/classes/$classId/offlines'
     | '/_admin/admin/classes/$classId/practices'
     | '/_admin/admin/classes/$classId/questions'
@@ -756,6 +769,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminClassesClassIdOfflinesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/admin/classes/$classId/members': {
+      id: '/_admin/admin/classes/$classId/members'
+      path: '/admin/classes/$classId/members'
+      fullPath: '/admin/classes/$classId/members'
+      preLoaderRoute: typeof AdminAdminClassesClassIdMembersRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/admin/classes/$classId/live-rooms': {
       id: '/_admin/admin/classes/$classId/live-rooms'
       path: '/admin/classes/$classId/live-rooms'
@@ -806,6 +826,7 @@ interface AdminRouteChildren {
   AdminAdminUsersIndexRoute: typeof AdminAdminUsersIndexRoute
   AdminAdminClassesClassIdGradebookRoute: typeof AdminAdminClassesClassIdGradebookRoute
   AdminAdminClassesClassIdLiveRoomsRoute: typeof AdminAdminClassesClassIdLiveRoomsRoute
+  AdminAdminClassesClassIdMembersRoute: typeof AdminAdminClassesClassIdMembersRoute
   AdminAdminClassesClassIdOfflinesRoute: typeof AdminAdminClassesClassIdOfflinesRoute
   AdminAdminClassesClassIdPracticesRoute: typeof AdminAdminClassesClassIdPracticesRoute
   AdminAdminClassesClassIdQuestionsRoute: typeof AdminAdminClassesClassIdQuestionsRoute
@@ -834,6 +855,7 @@ const AdminRouteChildren: AdminRouteChildren = {
     AdminAdminClassesClassIdGradebookRoute,
   AdminAdminClassesClassIdLiveRoomsRoute:
     AdminAdminClassesClassIdLiveRoomsRoute,
+  AdminAdminClassesClassIdMembersRoute: AdminAdminClassesClassIdMembersRoute,
   AdminAdminClassesClassIdOfflinesRoute: AdminAdminClassesClassIdOfflinesRoute,
   AdminAdminClassesClassIdPracticesRoute:
     AdminAdminClassesClassIdPracticesRoute,

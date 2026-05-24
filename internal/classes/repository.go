@@ -323,6 +323,7 @@ func (r *memberRepository) ListAllByClass(ctx context.Context, classID uuid.UUID
 
 func (r *memberRepository) ListByClass(ctx context.Context, classID uuid.UUID, p domain.ListParams) ([]domain.ClassMember, int64, error) {
 	base := database.DB(ctx, r.db).Model(&domain.ClassMember{}).
+		Preload("User").
 		Where("class_id = ?", classID)
 	var members []domain.ClassMember
 	total, err := listparams.Paginate(base, p, &members)

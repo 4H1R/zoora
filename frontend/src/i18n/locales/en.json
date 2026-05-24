@@ -27,7 +27,8 @@
       "description": "This will permanently delete \"{{name}}\". This action cannot be undone."
     },
     "default": "Default",
-    "noResults": "No results."
+    "noResults": "No results.",
+    "loading": "Loading…"
   },
   "nav": {
     "overview": "Overview",
@@ -270,7 +271,8 @@
       "actions": {
         "edit": "Edit class",
         "delete": "Delete",
-        "viewSessions": "View sessions"
+        "viewSessions": "View sessions",
+        "manageMembers": "Manage members"
       },
       "form": {
         "createTitle": "New class",
@@ -295,6 +297,28 @@
         "sort": "Sort",
         "columns": "Columns",
         "toggleColumns": "Toggle columns"
+      }
+    },
+    "classMembers": {
+      "title": "Members",
+      "roster": "Roster",
+      "backToClasses": "Back to classes",
+      "joined": "Joined {{date}}",
+      "actions": {
+        "remove": "Remove from class"
+      },
+      "empty": {
+        "title": "No members yet",
+        "hint": "Add the first user to this class using the form above."
+      },
+      "form": {
+        "addTitle": "Add a user to this class",
+        "userPlaceholder": "Search user…",
+        "addButton": "Add to class",
+        "capacityHint": "{{used}} of {{capacity}} seats used",
+        "unlimitedHint": "Unlimited capacity",
+        "addSuccess": "User added to class",
+        "removeSuccess": "User removed from class"
       }
     },
     "liveRooms": {

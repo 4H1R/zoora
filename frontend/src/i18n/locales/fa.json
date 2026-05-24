@@ -27,7 +27,8 @@
       "description": "\"{{name}}\" به‌طور دائم حذف خواهد شد. این عمل قابل بازگشت نیست."
     },
     "default": "پیشفرض",
-    "noResults": "نتیجه‌ای یافت نشد."
+    "noResults": "نتیجه‌ای یافت نشد.",
+    "loading": "در حال بارگذاری…"
   },
   "nav": {
     "overview": "نمای کلی",
@@ -270,7 +271,8 @@
       "actions": {
         "edit": "ویرایش کلاس",
         "delete": "حذف",
-        "viewSessions": "مشاهده جلسات"
+        "viewSessions": "مشاهده جلسات",
+        "manageMembers": "مدیریت اعضا"
       },
       "form": {
         "createTitle": "کلاس جدید",
@@ -295,6 +297,28 @@
         "sort": "مرتب‌سازی",
         "columns": "ستون‌ها",
         "toggleColumns": "نمایش/پنهان ستون‌ها"
+      }
+    },
+    "classMembers": {
+      "title": "اعضا",
+      "roster": "فهرست اعضا",
+      "backToClasses": "بازگشت به کلاس‌ها",
+      "joined": "عضویت از {{date}}",
+      "actions": {
+        "remove": "حذف از کلاس"
+      },
+      "empty": {
+        "title": "هنوز عضوی وجود ندارد",
+        "hint": "اولین کاربر را با استفاده از فرم بالا به این کلاس اضافه کنید."
+      },
+      "form": {
+        "addTitle": "افزودن کاربر به این کلاس",
+        "userPlaceholder": "جستجوی کاربر…",
+        "addButton": "افزودن به کلاس",
+        "capacityHint": "{{used}} از {{capacity}} ظرفیت استفاده شده",
+        "unlimitedHint": "ظرفیت نامحدود",
+        "addSuccess": "کاربر به کلاس اضافه شد",
+        "removeSuccess": "کاربر از کلاس حذف شد"
       }
     },
     "liveRooms": {
