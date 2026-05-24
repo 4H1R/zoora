@@ -1196,7 +1196,8 @@
         "joinedAt": "عضو شد {{date}}",
         "emptyTitle": "هیچ دانش‌آموزی ثبت‌نام نکرده است",
         "emptyHint": "دانش‌آموزانی که به این کلاس می‌پیوندند اینجا نمایش داده می‌شوند.",
-        "addMember": "افزودن عضو"
+        "addMember": "افزودن عضو",
+        "removeAction": "حذف عضو"
       },
       "enrollMember": {
         "title": "افزودن عضو",
@@ -1210,6 +1211,11 @@
         "errorConflict": "کاربر قبلاً ثبت‌نام کرده یا ظرفیت کلاس پر است.",
         "errorForbidden": "اجازه افزودن عضو را ندارید.",
         "errorGeneric": "افزودن عضو ناموفق بود."
+      },
+      "removeMember": {
+        "success": "عضو حذف شد.",
+        "errorForbidden": "اجازه حذف عضو را ندارید.",
+        "errorGeneric": "حذف عضو ناموفق بود."
       }
     },
     "session": {

@@ -3,18 +3,30 @@ import type {
   GithubCom4H1RZooraInternalDomainClassSession as Session,
 } from "@/api/model"
 
+import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { ArrowLeftIcon, CalendarClockIcon, PlusIcon, UserIcon, UsersIcon } from "lucide-react"
+import {
+  ArrowLeftIcon,
+  CalendarClockIcon,
+  PlusIcon,
+  UserIcon,
+  UserMinusIcon,
+  UsersIcon,
+} from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useAccess } from "react-access-engine"
+import { toast } from "sonner"
 
 import {
+  getGetClassesIdMembersQueryKey,
+  useDeleteClassesIdMembersUserId,
   useGetClassesId,
   useGetClassesIdMembers,
   useGetClassesIdSessions,
 } from "@/api/classes/classes"
 import { SessionCreateModal } from "@/components/admin/sessions/SessionCreateModal"
+import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { EnrollMemberModal } from "@/components/org/classes/EnrollMemberModal"
 import { useClassPermissions } from "@/components/org/classes/use-class-permissions"
 import { Eyebrow } from "@/components/eyebrow"
@@ -122,7 +134,15 @@ function DecorativeBackground() {
   )
 }
 
-function StudentCard({ member, index }: { member: ClassMember; index: number }) {
+function StudentCard({
+  member,
+  index,
+  onRemove,
+}: {
+  member: ClassMember
+  index: number
+  onRemove?: (member: ClassMember) => void
+}) {
   const { t, i18n } = useTranslation()
   const name = member.user?.name ?? t("org.class.students.unknownName")
   const username = member.user?.username ?? ""
@@ -132,7 +152,7 @@ function StudentCard({ member, index }: { member: ClassMember; index: number }) 
     : ""
 
   return (
-    <div className="bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex items-center gap-4 overflow-hidden rounded-2xl p-4 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-lg">
+    <div className="group/student bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex items-center gap-4 overflow-hidden rounded-2xl p-4 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-lg">
       <UserAvatar name={name} size="lg" />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="truncate text-sm font-semibold tracking-tight">{name}</span>
@@ -146,7 +166,19 @@ function StudentCard({ member, index }: { member: ClassMember; index: number }) 
           </span>
         ) : null}
       </div>
-      <span className="text-muted-foreground font-mono text-xs tracking-[0.25em]">/{tileNumber}</span>
+      {onRemove ? (
+        <button
+          type="button"
+          onClick={() => onRemove(member)}
+          aria-label={t("org.class.students.removeAction")}
+          title={t("org.class.students.removeAction")}
+          className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:ring-ring inline-flex size-8 shrink-0 items-center justify-center rounded-full opacity-0 transition-all focus-visible:opacity-100 focus-visible:ring-2 focus-visible:outline-none group-hover/student:opacity-100"
+        >
+          <UserMinusIcon className="size-4" />
+        </button>
+      ) : (
+        <span className="text-muted-foreground font-mono text-xs tracking-[0.25em]">/{tileNumber}</span>
+      )}
     </div>
   )
 }
@@ -181,6 +213,7 @@ function StatCell({ label, value, accent }: { label: string; value: number; acce
 
 function RouteComponent() {
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
   const { orgId, classId } = Route.useParams()
   const { canView, canEdit: canCreateSession } = useClassPermissions()
   const allowed = useOrgGuard(["classes:view", "classes:view_any"])
@@ -189,6 +222,30 @@ function RouteComponent() {
 
   const [formOpen, setFormOpen] = useState(false)
   const [enrollOpen, setEnrollOpen] = useState(false)
+  const [removeTarget, setRemoveTarget] = useState<ClassMember | null>(null)
+
+  const removeMutation = useDeleteClassesIdMembersUserId({
+    mutation: {
+      onSuccess: () => {
+        toast.success(t("org.class.removeMember.success"))
+        queryClient.invalidateQueries({ queryKey: getGetClassesIdMembersQueryKey(classId) })
+        setRemoveTarget(null)
+      },
+      onError: (err) => {
+        const status = (err as { status?: number })?.status
+        if (status === 403) {
+          toast.error(t("org.class.removeMember.errorForbidden"))
+        } else {
+          toast.error(t("org.class.removeMember.errorGeneric"))
+        }
+      },
+    },
+  })
+
+  const handleConfirmRemove = () => {
+    if (!removeTarget?.user_id) return
+    removeMutation.mutate({ id: classId, userId: removeTarget.user_id })
+  }
 
   const { data: classData, isPending: classPending } = useGetClassesId(classId, {
     query: { enabled: canView },
@@ -371,7 +428,7 @@ function RouteComponent() {
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {members.map((m, i) => (
-                <StudentCard key={m.id} member={m} index={i} />
+                <StudentCard key={m.id} member={m} index={i} onRemove={setRemoveTarget} />
               ))}
             </div>
           )}
@@ -383,7 +440,18 @@ function RouteComponent() {
       ) : null}
 
       {canViewRoster ? (
-        <EnrollMemberModal open={enrollOpen} onOpenChange={setEnrollOpen} classId={classId} />
+        <>
+          <EnrollMemberModal open={enrollOpen} onOpenChange={setEnrollOpen} classId={classId} />
+          <DeleteConfirmDialog
+            open={!!removeTarget}
+            onOpenChange={(open) => !open && setRemoveTarget(null)}
+            resourceName={
+              removeTarget?.user?.name ?? t("org.class.students.unknownName")
+            }
+            onConfirm={handleConfirmRemove}
+            isLoading={removeMutation.isPending}
+          />
+        </>
       ) : null}
     </div>
   )
