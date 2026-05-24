@@ -1216,6 +1216,16 @@
         "questionBanks": "Question banks",
         "corrections": "Corrections"
       },
+      "workspace": {
+        "eyebrow": "Staff workspace",
+        "title": "Manage this session",
+        "subtitle": "Quizzes, corrections, and question banks — all in one place.",
+        "tabs": {
+          "quizzes": "Quizzes",
+          "corrections": "Corrections",
+          "banks": "Question banks"
+        }
+      },
       "actions": {
         "join": "Join live",
         "start": "Start live",

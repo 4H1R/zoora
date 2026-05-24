@@ -35,6 +35,7 @@ import { Eyebrow } from "@/components/eyebrow"
 import { SessionStatusPill } from "@/components/session/status-pill"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useOrgGuard } from "@/lib/access"
 import { orgHead } from "@/lib/org-head"
 import {
@@ -517,9 +518,9 @@ function RouteComponent() {
   const shortId = (session.id ?? "").slice(0, 8).toUpperCase()
   const classPath = `/org/${orgId}/classes/${classId ?? ""}`
 
-  const tiles: TileSpec[] = []
+  const navTiles: TileSpec[] = []
   if (canViewLiveAny) {
-    tiles.push({
+    navTiles.push({
       key: "live",
       label: t("org.session.rooms.live"),
       count: itemsCount(liveQ.data),
@@ -528,18 +529,8 @@ function RouteComponent() {
       href: classPath,
     })
   }
-  if (canViewQuizzes) {
-    tiles.push({
-      key: "quizzes",
-      label: t("org.session.rooms.quizzes"),
-      count: itemsCount(quizQ.data),
-      loading: quizQ.isPending,
-      icon: <ClipboardListIcon className="size-5" />,
-      href: "#quizzes",
-    })
-  }
   if (canViewPractices) {
-    tiles.push({
+    navTiles.push({
       key: "practices",
       label: t("org.session.rooms.practices"),
       count: itemsCount(practiceQ.data),
@@ -549,7 +540,7 @@ function RouteComponent() {
     })
   }
   if (canViewOfflines) {
-    tiles.push({
+    navTiles.push({
       key: "offlines",
       label: t("org.session.rooms.offlines"),
       count: itemsCount(offlineQ.data),
@@ -558,40 +549,51 @@ function RouteComponent() {
       href: classPath,
     })
   }
-  if (canViewBanks) {
-    tiles.push({
-      key: "banks",
-      label: t("org.session.rooms.questionBanks"),
-      count: itemsCount(banksQ.data),
-      loading: banksQ.isPending,
-      icon: <LibraryIcon className="size-5" />,
-      href: "#question-banks",
+  const navCount = navTiles.length
+  const navGridCols =
+    navCount >= 3 ? "md:grid-cols-3" : navCount === 2 ? "md:grid-cols-2" : "md:grid-cols-1"
+
+  type WorkspaceTab = {
+    key: "quizzes" | "corrections" | "banks"
+    label: string
+    count: number
+    loading: boolean
+    icon: ReactNode
+    content: ReactNode
+  }
+  const workspaceTabs: WorkspaceTab[] = []
+  if (canViewQuizzes && classId) {
+    workspaceTabs.push({
+      key: "quizzes",
+      label: t("org.session.workspace.tabs.quizzes"),
+      count: itemsCount(quizQ.data),
+      loading: quizQ.isPending,
+      icon: <ClipboardListIcon className="size-4" />,
+      content: <QuizzesSection classId={classId} classSessionId={classSessionId} />,
     })
   }
   if (canGradeQuizzes) {
-    tiles.push({
+    workspaceTabs.push({
       key: "corrections",
-      label: t("org.session.rooms.corrections"),
+      label: t("org.session.workspace.tabs.corrections"),
       count: itemsCount(quizQ.data),
       loading: quizQ.isPending,
-      icon: <CheckSquareIcon className="size-5" />,
-      href: "#corrections",
+      icon: <CheckSquareIcon className="size-4" />,
+      content: <QuizCorrectionsSection classSessionId={classSessionId} />,
     })
   }
-
-  const tileCount = tiles.length
-  const roomGridCols =
-    tileCount >= 6
-      ? "xl:grid-cols-6"
-      : tileCount === 5
-        ? "xl:grid-cols-5"
-        : tileCount === 4
-          ? "xl:grid-cols-4"
-          : tileCount === 3
-            ? "xl:grid-cols-3"
-            : tileCount === 2
-              ? "xl:grid-cols-2"
-              : "xl:grid-cols-1"
+  if (canViewBanks) {
+    workspaceTabs.push({
+      key: "banks",
+      label: t("org.session.workspace.tabs.banks"),
+      count: itemsCount(banksQ.data),
+      loading: banksQ.isPending,
+      icon: <LibraryIcon className="size-4" />,
+      content: <QuestionBanksSection />,
+    })
+  }
+  const workspaceCount = workspaceTabs.length
+  const defaultTab = workspaceTabs[0]?.key
 
   return (
     <div className="relative isolate flex flex-col gap-12 pb-16">
@@ -665,34 +667,95 @@ function RouteComponent() {
         <MetaCell index={3} label={t("org.session.meta.created")} value={createdStr} />
       </section>
 
-      {tileCount > 0 ? (
-        <section className="flex flex-col gap-6">
+      {navCount > 0 ? (
+        <section className="flex flex-col gap-4">
           <div className="flex items-end justify-between">
-            <div className="flex flex-col gap-2">
-              <Eyebrow>{t("org.session.rooms.eyebrow")}</Eyebrow>
-              <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
-                {t("org.session.rooms.title")}
-              </h2>
-            </div>
-            <Eyebrow className="hidden md:inline-flex items-center gap-2">
-              <span className="bg-muted-foreground/30 h-px w-8" />
+            <Eyebrow>{t("org.session.rooms.eyebrow")}</Eyebrow>
+            <Eyebrow className="hidden md:inline-flex items-center gap-2 text-muted-foreground/70">
+              <span className="bg-muted-foreground/30 h-px w-6" />
               {t("org.session.rooms.subtitle")}
             </Eyebrow>
           </div>
-
-          <div className={cn("grid gap-4 md:grid-cols-2 lg:grid-cols-3", roomGridCols)}>
-            {tiles.map((spec, i) => (
-              <RoomTile key={spec.key} spec={spec} index={i} total={tileCount} accent={accent} />
+          <div className={cn("grid gap-3 grid-cols-1 sm:grid-cols-2", navGridCols)}>
+            {navTiles.map((spec, i) => (
+              <RoomTile key={spec.key} spec={spec} index={i} total={navCount} accent={accent} />
             ))}
           </div>
         </section>
       ) : null}
 
-      {classId ? <QuizzesSection classId={classId} classSessionId={classSessionId} /> : null}
+      {workspaceCount > 0 ? (
+        <section className="flex flex-col gap-6">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div className="flex flex-col gap-2">
+              <Eyebrow>{t("org.session.workspace.eyebrow")}</Eyebrow>
+              <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+                {t("org.session.workspace.title")}
+              </h2>
+              <p className="text-muted-foreground max-w-xl text-sm leading-relaxed">
+                {t("org.session.workspace.subtitle")}
+              </p>
+            </div>
+            <Eyebrow className="text-muted-foreground/70 hidden md:inline-flex items-center gap-2 font-mono">
+              <span className="bg-muted-foreground/30 h-px w-6" />
+              {String(workspaceCount).padStart(2, "0")} {workspaceCount === 1 ? "view" : "views"}
+            </Eyebrow>
+          </div>
 
-      {canGradeQuizzes ? <QuizCorrectionsSection classSessionId={classSessionId} /> : null}
-
-      <QuestionBanksSection />
+          {workspaceCount === 1 ? (
+            <div>{workspaceTabs[0]!.content}</div>
+          ) : (
+            <Tabs defaultValue={defaultTab} className="gap-6">
+              <div className="bg-card border-border rounded-2xl border p-1.5 shadow-sm dark:border-0 dark:bg-card/40 dark:ring-1 dark:ring-foreground/10 dark:shadow-none">
+                <TabsList variant="line" className="h-auto w-full gap-1 bg-transparent p-0">
+                  {workspaceTabs.map((tab) => (
+                    <TabsTrigger
+                      key={tab.key}
+                      value={tab.key}
+                      className={cn(
+                        "group/wstab flex-1 justify-start gap-2.5 rounded-xl px-4 py-3",
+                        "data-active:bg-muted data-active:text-foreground dark:data-active:bg-foreground/5",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "bg-muted text-muted-foreground group-data-[active]/wstab:bg-foreground group-data-[active]/wstab:text-background flex size-8 items-center justify-center rounded-lg transition-colors",
+                        )}
+                      >
+                        {tab.icon}
+                      </span>
+                      <span className="flex flex-col items-start gap-0.5">
+                        <span className="text-sm font-semibold leading-none tracking-tight">{tab.label}</span>
+                        <span className="text-muted-foreground inline-flex items-center gap-1 font-mono text-[10px] tabular-nums">
+                          {tab.loading ? (
+                            <Skeleton className="h-3 w-6" />
+                          ) : (
+                            <>
+                              <span
+                                className={cn(
+                                  "size-1 rounded-full",
+                                  tab.count > 0 ? accent.dot : "bg-muted-foreground/40",
+                                )}
+                                aria-hidden
+                              />
+                              {tab.count}
+                            </>
+                          )}
+                        </span>
+                      </span>
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
+              {workspaceTabs.map((tab) => (
+                <TabsContent key={tab.key} value={tab.key} className="mt-0 flex flex-col gap-6">
+                  {tab.content}
+                </TabsContent>
+              ))}
+            </Tabs>
+          )}
+        </section>
+      ) : null}
 
       <footer className="border-border border-t border-dashed pt-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
