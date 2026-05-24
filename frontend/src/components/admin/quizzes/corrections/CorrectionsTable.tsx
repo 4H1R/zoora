@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { getEntityColor, getInitials, useAdminTable, useFormatDate } from "@/lib/data-table"
+import { formatScore } from "@/lib/score"
 import { cn } from "@/lib/utils"
 
 interface CorrectionsTableProps {
@@ -83,10 +84,10 @@ export function CorrectionsTable({
       header: t("admin.corrections.score"),
       cell: ({ row }) => (
         <span className="text-sm font-medium tabular-nums">
-          {(row.original.total_score ?? 0).toFixed(2)}
+          {formatScore(row.original.total_score ?? 0)}
           {quizMaxScore != null && quizMaxScore > 0 && (
             <span className="text-muted-foreground ms-1 font-normal">
-              {t("admin.corrections.scoreOf", { max: quizMaxScore.toFixed(2) })}
+              {t("admin.corrections.scoreOf", { max: formatScore(quizMaxScore) })}
             </span>
           )}
         </span>

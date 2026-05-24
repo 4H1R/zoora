@@ -20,6 +20,7 @@ import { useTranslation } from "react-i18next"
 import { Eyebrow } from "@/components/eyebrow"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
+import { formatScore } from "@/lib/score"
 
 import { DecorativeBackground } from "./decorations"
 import { MetaCell } from "./meta-cell"
@@ -81,7 +82,7 @@ export function StartScreen({ quiz, room, totalQuestions, backHref, starting, on
         <MetaCell
           icon={<TrophyIcon className="size-4" />}
           label={t("org.session.quizzes.take.meta.totalScore")}
-          value={(quiz.total_score ?? 0).toFixed(2)}
+          value={formatScore(quiz.total_score ?? 0)}
           mono
         />
         <MetaCell

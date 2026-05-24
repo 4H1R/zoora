@@ -48,7 +48,7 @@ var StaffPermissions = []PermissionName{
 var TeacherPermissions = []PermissionName{
 	PermLiveSessionsCreate, PermLiveSessionsView, PermLiveSessionsManage, PermLiveSessionsJoin,
 	PermRecordingsView, PermRecordingsDownload,
-	PermClassesView, PermClassesViewAny, PermClassesCreate,
+	PermClassesView, PermClassesCreate,
 	PermClassesUpdate, PermClassesDelete, PermClassesJoin,
 	PermUsersView, PermUsersViewAny,
 	PermQuizzesCreate, PermQuizzesUpdate, PermQuizzesView,

@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next"
 
 import { Eyebrow } from "@/components/eyebrow"
 import { Button } from "@/components/ui/button"
+import { formatScore } from "@/lib/score"
 
 import { DecorativeBackground } from "./decorations"
 import { MetaCell } from "./meta-cell"
@@ -56,13 +57,13 @@ export function ResultScreen({ quiz, submission, backHref }: ResultScreenProps) 
         <MetaCell
           icon={<TrophyIcon className="size-4" />}
           label={t("org.session.quizzes.take.result.earned")}
-          value={earned.toFixed(2)}
+          value={formatScore(earned)}
           mono
         />
         <MetaCell
           icon={<FlagIcon className="size-4" />}
           label={t("org.session.quizzes.take.result.outOf")}
-          value={total.toFixed(2)}
+          value={formatScore(total)}
           mono
         />
         <MetaCell
@@ -94,7 +95,7 @@ export function ResultScreen({ quiz, submission, backHref }: ResultScreenProps) 
                 {formatClock(a.spent_seconds ?? 0)}
               </span>
               <span className="text-foreground font-mono text-sm font-semibold tabular-nums">
-                {(a.earned_score ?? 0).toFixed(2)}
+                {formatScore(a.earned_score ?? 0)}
               </span>
             </div>
           ))}

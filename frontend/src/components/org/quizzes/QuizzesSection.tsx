@@ -30,6 +30,7 @@ import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useCanSelfOr } from "@/lib/access"
+import { formatScore } from "@/lib/score"
 import { formatSessionDate } from "@/lib/session-status"
 
 import { QuizFormDialog } from "./QuizFormDialog"
@@ -109,7 +110,7 @@ function QuizCard({ quiz, index, orgId, classSessionId, onEdit, onManageQuestion
           <Eyebrow className="text-[10px]">{t("org.session.quizzes.totalScore")}</Eyebrow>
           <span className="inline-flex items-center gap-1.5 font-mono text-sm tabular-nums">
             <TrophyIcon className="size-3.5" />
-            {(quiz.total_score ?? 0).toFixed(2)}
+            {formatScore(quiz.total_score ?? 0)}
           </span>
         </div>
       </div>

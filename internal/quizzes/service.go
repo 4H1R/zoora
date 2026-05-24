@@ -3,6 +3,7 @@ package quizzes
 import (
 	"context"
 	"log/slog"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -388,6 +389,9 @@ func (s *service) recomputeQuizTotal(ctx context.Context, quizID uuid.UUID) erro
 			total += (sum / float64(len(all))) * float64(r.Count)
 		}
 	}
+	// Round to 2 decimals — random rules use weighted average that
+	// otherwise produces noisy repeating decimals like 41.857142857142854.
+	total = math.Round(total*100) / 100
 	quiz, err := s.repo.FindByID(ctx, quizID)
 	if err != nil {
 		return err

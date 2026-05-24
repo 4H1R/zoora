@@ -27,6 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { formatScore } from "@/lib/score"
 import { cn } from "@/lib/utils"
 
 interface GradeSubmissionDialogProps {
@@ -138,10 +139,10 @@ export function GradeSubmissionDialog({
         <DialogFooter className="items-center justify-between sm:justify-between">
           <div className="text-sm">
             <span className="text-muted-foreground">{t("admin.corrections.dialog.totalScore")}:</span>{" "}
-            <span className="font-semibold tabular-nums">{totalScore.toFixed(2)}</span>
+            <span className="font-semibold tabular-nums">{formatScore(totalScore)}</span>
             {quizMaxScore != null && quizMaxScore > 0 && (
               <span className="text-muted-foreground ms-1 tabular-nums">
-                {t("admin.corrections.scoreOf", { max: quizMaxScore.toFixed(2) })}
+                {t("admin.corrections.scoreOf", { max: formatScore(quizMaxScore) })}
               </span>
             )}
           </div>
@@ -206,7 +207,7 @@ function AnswerRow({ index, answer, score, onScoreChange }: AnswerRowProps) {
             className="h-8 w-24 text-end tabular-nums"
           />
           {maxScore > 0 && (
-            <span className="text-muted-foreground text-xs tabular-nums">/ {maxScore}</span>
+            <span className="text-muted-foreground text-xs tabular-nums">/ {formatScore(maxScore)}</span>
           )}
         </div>
       </div>

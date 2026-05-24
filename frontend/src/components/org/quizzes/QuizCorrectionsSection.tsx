@@ -20,6 +20,7 @@ import { Eyebrow } from "@/components/eyebrow"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getEntityColor, getInitials, useFormatDate } from "@/lib/data-table"
+import { formatScore } from "@/lib/score"
 import { formatSessionDate } from "@/lib/session-status"
 import { cn } from "@/lib/utils"
 
@@ -294,7 +295,7 @@ function StatStrip({
       <StatCell
         icon={<CheckSquareIcon className="size-4" />}
         label={t("org.session.corrections.stats.maxScore")}
-        value={maxScore != null ? maxScore : "—"}
+        value={formatScore(maxScore)}
         mono
       />
     </div>
@@ -340,7 +341,7 @@ function StatCell({
               accentClass
             )}
           >
-            {typeof value === "number" ? value : value}
+            {value}
           </span>
         )}
         {suffix}
@@ -476,10 +477,10 @@ function SubmissionRow({
           <Eyebrow className="text-[9px]">{t("org.session.corrections.row.score")}</Eyebrow>
           <span className="inline-flex items-baseline gap-1 font-mono text-base tabular-nums">
             <span className={cn(status === "graded" ? "text-foreground" : "text-muted-foreground")}>
-              {score.toFixed(2)}
+              {formatScore(score)}
             </span>
             {maxScore != null && maxScore > 0 && (
-              <span className="text-muted-foreground text-[10px]">/ {maxScore.toFixed(2)}</span>
+              <span className="text-muted-foreground text-[10px]">/ {formatScore(maxScore)}</span>
             )}
           </span>
         </div>

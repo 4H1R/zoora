@@ -16,6 +16,7 @@ import { TableFilter } from "@/components/data-table/table-filter"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { getEntityColor, getInitials, useAdminTable, useFormatDate } from "@/lib/data-table"
+import { formatScore } from "@/lib/score"
 import { cn } from "@/lib/utils"
 
 import { QuizActions } from "./QuizActions"
@@ -110,7 +111,7 @@ function useQuizColumns({
       cell: ({ row }) => (
         <span className="inline-flex items-center gap-1.5 text-xs tabular-nums">
           <TrophyIcon className="text-muted-foreground size-3.5" />
-          {(row.original.total_score ?? 0).toFixed(2)}
+          {formatScore(row.original.total_score ?? 0)}
         </span>
       ),
       enableSorting: false,
