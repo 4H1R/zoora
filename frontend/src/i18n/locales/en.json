@@ -1217,9 +1217,9 @@
         "corrections": "Corrections"
       },
       "workspace": {
-        "eyebrow": "Staff workspace",
-        "title": "Manage this session",
-        "subtitle": "Quizzes, corrections, and question banks — all in one place.",
+        "eyebrow": "",
+        "title": "Manage Quizzes",
+        "subtitle": "Quizzes, corrections, and question banks",
         "tabs": {
           "quizzes": "Quizzes",
           "corrections": "Corrections",
