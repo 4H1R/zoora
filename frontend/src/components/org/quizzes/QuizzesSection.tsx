@@ -120,10 +120,44 @@ function QuizCard({ quiz, index, orgId, classSessionId, onEdit, onManageQuestion
           {createdStr}
         </span>
         <div className="flex items-center gap-1.5">
-          {quiz.id ? (
+          {(canEdit || canDelete) ? (
+            <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover/quiz:opacity-100">
+              {canEdit ? (
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  title={t("org.session.quizzes.actions.manageQuestions")}
+                  onClick={() => onManageQuestions(quiz)}
+                >
+                  <ListChecksIcon />
+                </Button>
+              ) : null}
+              {canEdit ? (
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  title={t("org.session.quizzes.actions.edit")}
+                  onClick={() => onEdit(quiz)}
+                >
+                  <PencilIcon />
+                </Button>
+              ) : null}
+              {canDelete ? (
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  title={t("org.session.quizzes.actions.delete")}
+                  onClick={() => onDelete(quiz)}
+                >
+                  <Trash2Icon />
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
+          {quiz.id && orgId ? (
             <Button
               size="sm"
-              variant="default"
               render={
                 <Link
                   to="/org/$orgId/classes/classsessions/$classSessionId/quizzes/$quizId/take"
@@ -133,39 +167,6 @@ function QuizCard({ quiz, index, orgId, classSessionId, onEdit, onManageQuestion
             >
               <PlayIcon className="size-3.5" />
               {t("org.session.quizzes.actions.take")}
-            </Button>
-          ) : null}
-        </div>
-        <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover/quiz:opacity-100">
-          {canEdit ? (
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              title={t("org.session.quizzes.actions.manageQuestions")}
-              onClick={() => onManageQuestions(quiz)}
-            >
-              <ListChecksIcon />
-            </Button>
-          ) : null}
-          {canEdit ? (
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              title={t("org.session.quizzes.actions.edit")}
-              onClick={() => onEdit(quiz)}
-            >
-              <PencilIcon />
-            </Button>
-          ) : null}
-          {canDelete ? (
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-              title={t("org.session.quizzes.actions.delete")}
-              onClick={() => onDelete(quiz)}
-            >
-              <Trash2Icon />
             </Button>
           ) : null}
         </div>
