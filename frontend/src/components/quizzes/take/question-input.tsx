@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea"
 
 import { OptionTile } from "./option-tile"
 import type { AnswerState } from "./types"
-import { countPositiveOptions } from "./utils"
 
 interface QuestionInputProps {
   question: Question
@@ -20,7 +19,7 @@ export function QuestionInput({ question, answer, onChange }: QuestionInputProps
   const opts = question.options ?? []
 
   if (question.type === "choice") {
-    const isMulti = countPositiveOptions(opts) > 1
+    const isMulti = question.is_multi_select ?? false
     return (
       <div className="flex flex-col gap-2">
         {opts.map((opt, i) => {

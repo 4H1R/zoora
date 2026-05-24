@@ -1132,6 +1132,14 @@
         "open": "Open",
         "emptyTitle": "No sessions yet",
         "emptyHint": "Schedule the first session for this class to get started."
+      },
+      "students": {
+        "eyebrow": "Roster",
+        "title": "Students",
+        "unknownName": "Unknown",
+        "joinedAt": "Joined {{date}}",
+        "emptyTitle": "No students enrolled",
+        "emptyHint": "Students who join this class will appear here."
       }
     },
     "session": {

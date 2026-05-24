@@ -78,6 +78,11 @@ type Question struct {
 	CreatedAt time.Time          `json:"created_at"`
 	UpdatedAt time.Time        `json:"updated_at"`
 	DeletedAt gorm.DeletedAt   `gorm:"index" json:"-"`
+
+	// IsMultiSelectFlag is populated only by the "take" endpoint after answer
+	// keys are stripped, so the client can still render multi-select choice
+	// questions without seeing per-option scores.
+	IsMultiSelectFlag *bool `gorm:"-" json:"is_multi_select,omitempty"`
 }
 
 // --- DTOs ---

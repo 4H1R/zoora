@@ -1,11 +1,19 @@
-import type { GithubCom4H1RZooraInternalDomainClassSession as Session } from "@/api/model"
+import type {
+  GithubCom4H1RZooraInternalDomainClassMember as ClassMember,
+  GithubCom4H1RZooraInternalDomainClassSession as Session,
+} from "@/api/model"
 
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { ArrowLeftIcon, CalendarClockIcon, PlusIcon, UserIcon } from "lucide-react"
+import { ArrowLeftIcon, CalendarClockIcon, PlusIcon, UserIcon, UsersIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { useAccess } from "react-access-engine"
 
-import { useGetClassesId, useGetClassesIdSessions } from "@/api/classes/classes"
+import {
+  useGetClassesId,
+  useGetClassesIdMembers,
+  useGetClassesIdSessions,
+} from "@/api/classes/classes"
 import { SessionCreateModal } from "@/components/admin/sessions/SessionCreateModal"
 import { useClassPermissions } from "@/components/org/classes/use-class-permissions"
 import { Eyebrow } from "@/components/eyebrow"
@@ -113,6 +121,47 @@ function DecorativeBackground() {
   )
 }
 
+function StudentCard({ member, index }: { member: ClassMember; index: number }) {
+  const { t, i18n } = useTranslation()
+  const name = member.user?.name ?? t("org.class.students.unknownName")
+  const username = member.user?.username ?? ""
+  const tileNumber = String(index + 1).padStart(2, "0")
+  const joinedStr = member.created_at
+    ? formatSessionDate(member.created_at, i18n.language, "short")
+    : ""
+
+  return (
+    <div className="bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex items-center gap-4 overflow-hidden rounded-2xl p-4 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-lg">
+      <UserAvatar name={name} size="lg" />
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="truncate text-sm font-semibold tracking-tight">{name}</span>
+        {username ? (
+          <span className="text-muted-foreground truncate font-mono text-xs">@{username}</span>
+        ) : null}
+        {joinedStr ? (
+          <span className="text-muted-foreground mt-1 inline-flex items-center gap-1.5 text-xs">
+            <CalendarClockIcon className="size-3" />
+            {t("org.class.students.joinedAt", { date: joinedStr })}
+          </span>
+        ) : null}
+      </div>
+      <span className="text-muted-foreground font-mono text-xs tracking-[0.25em]">/{tileNumber}</span>
+    </div>
+  )
+}
+
+function StudentCardSkeleton() {
+  return (
+    <div className="bg-card ring-foreground/10 flex items-center gap-4 rounded-2xl p-4 ring-1">
+      <Skeleton className="size-9 rounded-full" />
+      <div className="flex flex-1 flex-col gap-2">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-3 w-20" />
+      </div>
+    </div>
+  )
+}
+
 function StatCell({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
   return (
     <div className="flex flex-col gap-2 px-5 py-5">
@@ -135,6 +184,7 @@ function RouteComponent() {
   const { canView, canEdit: canCreateSession } = useClassPermissions()
   const allowed = useOrgGuard(["classes:view", "classes:view_any"])
   const now = useNow(30_000)
+  const { can, user: accessUser } = useAccess()
 
   const [formOpen, setFormOpen] = useState(false)
 
@@ -151,6 +201,21 @@ function RouteComponent() {
   const sessionsResult = (sessionsData?.status === 200 && sessionsData.data.data) || undefined
   const sessions = sessionsResult?.items ?? []
   const total = sessionsResult?.total ?? sessions.length
+
+  // Roster gating mirrors backend canManageClass:
+  // admin OR classes:update_any OR caller is class owner.
+  const canViewRoster =
+    !!cls &&
+    (can("classes:update_any") || (!!cls.user_id && cls.user_id === accessUser.id))
+
+  const { data: membersData, isPending: membersPending } = useGetClassesIdMembers(
+    classId,
+    undefined,
+    { query: { enabled: canView && canViewRoster } }
+  )
+  const membersResult = (membersData?.status === 200 && membersData.data.data) || undefined
+  const members = membersResult?.items ?? []
+  const studentsTotal = membersResult?.total ?? members.length
 
   const liveCount = sessions.filter((s) => getSessionStatus(s.start_time, now) === "live").length
   const scheduledCount = sessions.filter((s) => getSessionStatus(s.start_time, now) === "scheduled").length
@@ -262,6 +327,46 @@ function RouteComponent() {
           </div>
         )}
       </section>
+
+      {canViewRoster ? (
+        <section className="flex flex-col gap-5">
+          <div className="flex items-end justify-between gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Eyebrow>{t("org.class.students.eyebrow")}</Eyebrow>
+              <h2 className="text-2xl font-semibold tracking-tight">
+                {t("org.class.students.title")}
+                <span className="text-muted-foreground ms-2 font-mono text-sm font-normal tabular-nums">
+                  {studentsTotal}
+                </span>
+              </h2>
+            </div>
+          </div>
+
+          {membersPending ? (
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <StudentCardSkeleton />
+              <StudentCardSkeleton />
+              <StudentCardSkeleton />
+            </div>
+          ) : members.length === 0 ? (
+            <div className="bg-card ring-foreground/10 flex flex-col items-center gap-3 rounded-2xl px-6 py-16 text-center ring-1">
+              <UsersIcon className="text-muted-foreground size-8" />
+              <h3 className="text-foreground text-lg font-semibold tracking-tight">
+                {t("org.class.students.emptyTitle")}
+              </h3>
+              <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
+                {t("org.class.students.emptyHint")}
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {members.map((m, i) => (
+                <StudentCard key={m.id} member={m} index={i} />
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
 
       {canCreateSession ? (
         <SessionCreateModal open={formOpen} onOpenChange={setFormOpen} classId={classId} session={null} />

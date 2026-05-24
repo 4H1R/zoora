@@ -11,6 +11,99 @@ import (
 	"github.com/4H1R/zoora/internal/domain"
 )
 
+// ListQuestionsForTaking returns the ordered question list that a student
+// sees while taking the quiz. Composes rules + bank questions server-side and
+// strips answer-key data (option scores, short_answer correct values) so the
+// caller can never derive the grading rubric.
+func (s *service) ListQuestionsForTaking(ctx context.Context, quizID uuid.UUID) ([]domain.Question, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	quiz, err := s.repo.FindByID(ctx, quizID)
+	if err != nil {
+		return nil, err
+	}
+	visible, err := s.canViewQuiz(ctx, caller, quiz)
+	if err != nil {
+		return nil, err
+	}
+	if !visible {
+		return nil, domain.ErrForbidden
+	}
+
+	rules, _, err := s.rules.ListByQuiz(ctx, quizID, domain.ListParams{Page: 1, PageSize: 10000})
+	if err != nil {
+		return nil, err
+	}
+
+	seen := make(map[uuid.UUID]struct{})
+	out := make([]domain.Question, 0)
+	for _, r := range rules {
+		picked, err := s.pickQuestionsForRule(ctx, r)
+		if err != nil {
+			return nil, err
+		}
+		for i := range picked {
+			if _, dup := seen[picked[i].ID]; dup {
+				continue
+			}
+			seen[picked[i].ID] = struct{}{}
+			out = append(out, sanitizeQuestionForTaking(picked[i]))
+		}
+	}
+	return out, nil
+}
+
+func (s *service) pickQuestionsForRule(ctx context.Context, r domain.QuizRule) ([]domain.Question, error) {
+	switch r.Type {
+	case domain.QuizRuleTypeManual:
+		if len(r.QuestionIDs) == 0 {
+			return nil, nil
+		}
+		qs, err := s.questions.FindByIDs(ctx, r.QuestionIDs)
+		if err != nil {
+			return nil, err
+		}
+		byID := make(map[uuid.UUID]domain.Question, len(qs))
+		for i := range qs {
+			byID[qs[i].ID] = qs[i]
+		}
+		ordered := make([]domain.Question, 0, len(r.QuestionIDs))
+		for _, id := range r.QuestionIDs {
+			if q, ok := byID[id]; ok {
+				ordered = append(ordered, q)
+			}
+		}
+		return ordered, nil
+	case domain.QuizRuleTypeRandom:
+		if r.BankID == nil || r.Count == 0 {
+			return nil, nil
+		}
+		return s.questions.RandomByBank(ctx, *r.BankID, r.Count)
+	}
+	return nil, nil
+}
+
+// sanitizeQuestionForTaking removes answer-key data from a question. Choice
+// options keep id+value but lose score; short_answer/descriptive lose options
+// entirely because their options hold correct answers.
+func sanitizeQuestionForTaking(q domain.Question) domain.Question {
+	switch q.Type {
+	case domain.QuestionTypeChoice:
+		multi := q.IsMultiSelect()
+		opts := make([]domain.QuestionOption, len(q.Options))
+		for i, o := range q.Options {
+			opts[i] = domain.QuestionOption{ID: o.ID, Value: o.Value}
+		}
+		q.Options = opts
+		q.IsMultiSelectFlag = &multi
+	case domain.QuestionTypeShortAnswer, domain.QuestionTypeDescriptive:
+		q.Options = []domain.QuestionOption{}
+	}
+	return q
+}
+
 func (s *service) StartSubmission(ctx context.Context, quizID uuid.UUID, dto domain.StartQuizSubmissionDTO) (*domain.QuizSubmission, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {

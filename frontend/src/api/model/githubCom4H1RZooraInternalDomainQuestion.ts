@@ -15,6 +15,10 @@ export interface GithubCom4H1RZooraInternalDomainQuestion {
   bank_id?: string;
   created_at?: string;
   id?: string;
+  /** IsMultiSelectFlag is populated only by the "take" endpoint after answer
+  keys are stripped, so the client can still render multi-select choice
+  questions without seeing per-option scores. */
+  is_multi_select?: boolean;
   metadata?: GithubCom4H1RZooraInternalDomainQuestionMetadata[];
   options?: GithubCom4H1RZooraInternalDomainQuestionOption[];
   organization_id?: string;

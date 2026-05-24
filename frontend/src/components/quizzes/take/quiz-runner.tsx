@@ -2,48 +2,40 @@ import type {
   GithubCom4H1RZooraInternalDomainQuestion as Question,
   GithubCom4H1RZooraInternalDomainQuiz as Quiz,
   GithubCom4H1RZooraInternalDomainQuizRoom as QuizRoom,
-  GithubCom4H1RZooraInternalDomainQuizRule as QuizRule,
   GithubCom4H1RZooraInternalDomainQuizSubmission as QuizSubmission,
 } from "@/api/model"
 
-import { useQueries, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { getGetQuestionBanksIdQuestionsQueryOptions } from "@/api/question-banks/question-banks"
 import {
   getGetQuizzesIdSubmissionsQueryKey,
   usePostQuizzesIdSubmissions,
 } from "@/api/quizzes/quizzes"
 
-import { CenterMessage, LoadingScreen } from "./messages"
+import { CenterMessage } from "./messages"
 import { PlayArea } from "./play-area"
 import { StartScreen } from "./start-screen"
-import { buildQuestionList, isRoomOpen } from "./utils"
+import { isRoomOpen } from "./utils"
 
 interface QuizRunnerProps {
   quiz: Quiz
   room: QuizRoom | undefined
-  rules: QuizRule[]
+  questions: Question[]
   existingSubmission: QuizSubmission | undefined
   backHref: string
 }
 
-export function QuizRunner({ quiz, room, rules, existingSubmission, backHref }: QuizRunnerProps) {
+export function QuizRunner({
+  quiz,
+  room,
+  questions,
+  existingSubmission,
+  backHref,
+}: QuizRunnerProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
-
-  const uniqueBankIds = Array.from(
-    new Set(rules.map((r) => r.bank_id).filter((id): id is string => !!id)),
-  )
-
-  const bankQueries = useQueries({
-    queries: uniqueBankIds.map((bankId) =>
-      getGetQuestionBanksIdQuestionsQueryOptions(bankId, undefined, {
-        query: { enabled: !!bankId, staleTime: 60_000 },
-      }),
-    ),
-  })
 
   const startMutation = usePostQuizzesIdSubmissions({
     mutation: {
@@ -55,25 +47,6 @@ export function QuizRunner({ quiz, room, rules, existingSubmission, backHref }: 
       onError: () => toast.error(t("org.session.quizzes.take.startFailed")),
     },
   })
-
-  if (bankQueries.some((q) => q.isPending)) return <LoadingScreen />
-  if (bankQueries.some((q) => q.isError)) {
-    return (
-      <CenterMessage
-        title={t("org.session.quizzes.take.bankError.title")}
-        description={t("org.session.quizzes.take.bankError.description")}
-        backHref={backHref}
-      />
-    )
-  }
-
-  const bankMap = new Map<string, Question[]>()
-  bankQueries.forEach((q, i) => {
-    const id = uniqueBankIds[i]
-    if (q.data?.status === 200) bankMap.set(id, q.data.data.data?.items ?? [])
-  })
-
-  const questions = buildQuestionList(rules, bankMap)
 
   if (questions.length === 0) {
     return (

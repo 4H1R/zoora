@@ -308,6 +308,7 @@ type QuizService interface {
 	EndRoom(ctx context.Context, id uuid.UUID) (*QuizRoom, error)
 	ListRooms(ctx context.Context, quizID uuid.UUID, q ListQuizRoomsQuery) ([]QuizRoom, int64, error)
 
+	ListQuestionsForTaking(ctx context.Context, quizID uuid.UUID) ([]Question, error)
 	StartSubmission(ctx context.Context, quizID uuid.UUID, dto StartQuizSubmissionDTO) (*QuizSubmission, error)
 	SubmitQuiz(ctx context.Context, submissionID uuid.UUID, dto SubmitQuizDTO) (*QuizSubmission, error)
 	GetSubmission(ctx context.Context, id uuid.UUID) (*QuizSubmission, error)

@@ -1,8 +1,6 @@
 import type {
   GithubCom4H1RZooraInternalDomainQuestion as Question,
-  GithubCom4H1RZooraInternalDomainQuestionOption as QOption,
   GithubCom4H1RZooraInternalDomainQuizRoom as QuizRoom,
-  GithubCom4H1RZooraInternalDomainQuizRule as QuizRule,
 } from "@/api/model"
 
 import type { AnswerState } from "./types"
@@ -47,45 +45,6 @@ export function computeDeadline(startedAtIso: string | undefined, durationMinute
   const durationMs = durationMinutes * 60_000
   const roomEnd = room.ended_at ? new Date(room.ended_at).getTime() : Infinity
   return Math.min(startedAt + durationMs, roomEnd)
-}
-
-export function buildQuestionList(rules: QuizRule[], bankMap: Map<string, Question[]>): Question[] {
-  const seen = new Set<string>()
-  const out: Question[] = []
-  for (const rule of rules) {
-    if (!rule.bank_id) continue
-    const bankQs = bankMap.get(rule.bank_id) ?? []
-    const picked = pickForRule(rule, bankQs)
-    for (const q of picked) {
-      if (q.id && !seen.has(q.id)) {
-        seen.add(q.id)
-        out.push(q)
-      }
-    }
-  }
-  return out
-}
-
-function pickForRule(rule: QuizRule, bankQs: Question[]): Question[] {
-  const ids = rule.question_ids ?? []
-  if (rule.type === "manual") {
-    return ids
-      .map((id) => bankQs.find((bq) => bq.id === id))
-      .filter((q): q is Question => !!q)
-  }
-  if (ids.length > 0) {
-    return ids
-      .map((id) => bankQs.find((bq) => bq.id === id))
-      .filter((q): q is Question => !!q)
-  }
-  const count = rule.count ?? bankQs.length
-  return bankQs.slice(0, count)
-}
-
-export function countPositiveOptions(opts: QOption[]): number {
-  let n = 0
-  for (const o of opts) if ((o.score ?? 0) > 0) n++
-  return n
 }
 
 export function countAnswered(

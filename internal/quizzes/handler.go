@@ -70,6 +70,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		authed.POST("/quizzes/rooms/:roomId/start", perm(domain.PermQuizzesUpdate), roomIDParam, h.StartRoom)
 		authed.POST("/quizzes/rooms/:roomId/end", perm(domain.PermQuizzesUpdate), roomIDParam, h.EndRoom)
 
+		authed.GET("/quizzes/:id/questions", perm(domain.PermQuizzesView), idParam, h.ListQuestionsForTaking)
 		authed.POST("/quizzes/:id/submissions", perm(domain.PermQuizzesView), idParam, h.StartSubmission)
 		authed.GET("/quizzes/:id/submissions", perm(domain.PermQuizzesView), idParam, h.ListSubmissions)
 		authed.POST("/quizzes/submissions/:submissionId/submit", perm(domain.PermQuizzesView), submissionIDParam, h.SubmitQuiz)
@@ -443,6 +444,28 @@ func (h *Handler) EndRoom(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, room)
+}
+
+// ListQuestionsForTaking returns the ordered question list a student sees
+// while taking the quiz, with answer keys stripped.
+// @Summary List quiz questions for taking
+// @Description Returns the resolved, ordered list of questions for a quiz, composed from its rules. Choice options keep id+value but lose score; short_answer/descriptive options are stripped. Requires the caller to be able to view the quiz (enrollment or manage permission).
+// @Tags Quizzes
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Quiz UUID"
+// @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.Question}}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /quizzes/{id}/questions [get]
+func (h *Handler) ListQuestionsForTaking(c *gin.Context) {
+	questions, err := h.svc.ListQuestionsForTaking(c.Request.Context(), httpx.UUIDParam(c, "id"))
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(questions, int64(len(questions)), domain.ListParams{Page: 1, PageSize: len(questions)}))
 }
 
 // --- Submissions ---
