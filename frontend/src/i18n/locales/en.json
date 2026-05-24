@@ -1163,7 +1163,21 @@
         "unknownName": "Unknown",
         "joinedAt": "Joined {{date}}",
         "emptyTitle": "No students enrolled",
-        "emptyHint": "Students who join this class will appear here."
+        "emptyHint": "Students who join this class will appear here.",
+        "addMember": "Add member"
+      },
+      "enrollMember": {
+        "title": "Enroll a member",
+        "description": "Pick a user to add to this class roster.",
+        "userLabel": "User",
+        "userPlaceholder": "Select a user",
+        "searchPlaceholder": "Search by name or username…",
+        "noResults": "No users found.",
+        "submit": "Enroll",
+        "success": "Member enrolled.",
+        "errorConflict": "User already enrolled or class is full.",
+        "errorForbidden": "You don't have permission to enroll members.",
+        "errorGeneric": "Could not enroll member."
       }
     },
     "session": {

@@ -15,6 +15,7 @@ import {
   useGetClassesIdSessions,
 } from "@/api/classes/classes"
 import { SessionCreateModal } from "@/components/admin/sessions/SessionCreateModal"
+import { EnrollMemberModal } from "@/components/org/classes/EnrollMemberModal"
 import { useClassPermissions } from "@/components/org/classes/use-class-permissions"
 import { Eyebrow } from "@/components/eyebrow"
 import { SessionStatusPill } from "@/components/session/status-pill"
@@ -187,6 +188,7 @@ function RouteComponent() {
   const { can, user: accessUser } = useAccess()
 
   const [formOpen, setFormOpen] = useState(false)
+  const [enrollOpen, setEnrollOpen] = useState(false)
 
   const { data: classData, isPending: classPending } = useGetClassesId(classId, {
     query: { enabled: canView },
@@ -340,6 +342,10 @@ function RouteComponent() {
                 </span>
               </h2>
             </div>
+            <Button variant="outline" onClick={() => setEnrollOpen(true)}>
+              <PlusIcon className="size-4" />
+              {t("org.class.students.addMember")}
+            </Button>
           </div>
 
           {membersPending ? (
@@ -357,6 +363,10 @@ function RouteComponent() {
               <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
                 {t("org.class.students.emptyHint")}
               </p>
+              <Button onClick={() => setEnrollOpen(true)} className="mt-2">
+                <PlusIcon className="size-4" />
+                {t("org.class.students.addMember")}
+              </Button>
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -370,6 +380,10 @@ function RouteComponent() {
 
       {canCreateSession ? (
         <SessionCreateModal open={formOpen} onOpenChange={setFormOpen} classId={classId} session={null} />
+      ) : null}
+
+      {canViewRoster ? (
+        <EnrollMemberModal open={enrollOpen} onOpenChange={setEnrollOpen} classId={classId} />
       ) : null}
     </div>
   )
