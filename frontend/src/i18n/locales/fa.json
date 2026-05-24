@@ -1,4 +1,10 @@
 {
+  "time": {
+    "daysShort": "روز",
+    "hoursShort": "س",
+    "minutesShort": "د",
+    "secondsShort": "ث"
+  },
   "common": {
     "brandName": "زورا",
     "getStarted": "شروع کنید",
@@ -1227,7 +1233,9 @@
         "starts": "شروع",
         "countdown": "شمارش معکوس",
         "status": "وضعیت",
-        "created": "ایجاد شده"
+        "created": "ایجاد شده",
+        "elapsed": "از زمان شروع",
+        "untilStart": "تا شروع"
       },
       "rooms": {
         "eyebrow": "اتاق‌ها",

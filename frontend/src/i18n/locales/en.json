@@ -1,4 +1,10 @@
 {
+  "time": {
+    "daysShort": "d",
+    "hoursShort": "h",
+    "minutesShort": "m",
+    "secondsShort": "s"
+  },
   "common": {
     "brandName": "Zoora",
     "getStarted": "Get started",
@@ -1195,7 +1201,9 @@
         "starts": "Starts",
         "countdown": "Countdown",
         "status": "Status",
-        "created": "Created"
+        "created": "Created",
+        "elapsed": "Elapsed since start",
+        "untilStart": "Until start"
       },
       "rooms": {
         "eyebrow": "Rooms",
