@@ -1181,7 +1181,8 @@
         "actions": {
           "edit": "Edit quiz",
           "delete": "Delete quiz",
-          "manageQuestions": "Manage questions"
+          "manageQuestions": "Manage questions",
+          "take": "Take quiz"
         },
         "flags": {
           "noBackNavigation": "Back navigation locked",
@@ -1212,6 +1213,83 @@
           "updateSuccess": "Quiz updated",
           "deleteSuccess": "Quiz deleted",
           "linkRoomFailed": "Quiz created but session room linking failed"
+        },
+        "take": {
+          "headTitle": "Take quiz",
+          "eyebrow": "Quiz · Take",
+          "backToSession": "Back to session",
+          "begin": "Begin quiz",
+          "previous": "Previous",
+          "next": "Next",
+          "finish": "Finish quiz",
+          "finishConfirm": "Submit answers",
+          "progress": "Question {{current}} of {{total}}",
+          "questionN": "Question {{n}}",
+          "submitting": "Submitting answers…",
+          "submitted": "Quiz submitted",
+          "submitFailed": "Could not submit. Retrying may help.",
+          "startFailed": "Could not start the quiz.",
+          "autoSubmitNote": "Time up — answers submitted automatically.",
+          "multiSelectHint": "Multiple answers may be correct.",
+          "shortPlaceholder": "Type your answer…",
+          "descriptivePlaceholder": "Write your response…",
+          "noAccess": {
+            "title": "No access",
+            "description": "You do not have permission to take this quiz."
+          },
+          "notFound": {
+            "title": "Quiz not found",
+            "description": "This quiz could not be loaded."
+          },
+          "empty": {
+            "title": "No questions",
+            "description": "This quiz has no questions yet."
+          },
+          "noRoom": {
+            "title": "No quiz room",
+            "description": "This quiz is not linked to a session room."
+          },
+          "closed": {
+            "title": "Quiz room closed",
+            "description": "The quiz window is not currently open."
+          },
+          "bankError": {
+            "title": "Could not load questions",
+            "description": "Question banks failed to load. Try again."
+          },
+          "meta": {
+            "questions": "Questions",
+            "duration": "Duration",
+            "totalScore": "Total score",
+            "closesAt": "Closes"
+          },
+          "rules": {
+            "eyebrow": "Rules",
+            "timer": "Limit: {{minutes}} minutes from the moment you begin.",
+            "noBack": "You cannot return to previous questions.",
+            "backAllowed": "You may revisit previous questions.",
+            "shuffle": "Questions appear in a random order.",
+            "autoSubmit": "If time runs out, your answers submit automatically."
+          },
+          "types": {
+            "choice": "Choice",
+            "short": "Short answer",
+            "descriptive": "Descriptive"
+          },
+          "confirm": {
+            "title": "Submit quiz?",
+            "description": "You have answered {{answered}} of {{total}} questions. You cannot change answers after submitting."
+          },
+          "result": {
+            "eyebrow": "Result",
+            "submitted": "Submitted",
+            "graded": "Graded",
+            "earned": "Earned",
+            "outOf": "Out of",
+            "percent": "Percent",
+            "totalTime": "Total time",
+            "perQuestionEyebrow": "Per-question time & score"
+          }
         }
       },
       "corrections": {

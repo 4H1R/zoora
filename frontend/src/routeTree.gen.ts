@@ -47,6 +47,7 @@ import { Route as AdminAdminClassesClassIdOfflinesRouteImport } from './routes/_
 import { Route as AdminAdminClassesClassIdLiveRoomsRouteImport } from './routes/_admin/admin/classes/$classId/live-rooms'
 import { Route as AdminAdminClassesClassIdGradebookRouteImport } from './routes/_admin/admin/classes/$classId/gradebook'
 import { Route as AuthOrgOrgIdClassesClasssessionsClassSessionIdRouteImport } from './routes/_auth/org/$orgId/classes/classsessions/$classSessionId'
+import { Route as AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRouteImport } from './routes/_auth/org/$orgId/classes/classsessions/$classSessionId.quizzes.$quizId.take'
 
 const GuestRoute = GuestRouteImport.update({
   id: '/_guest',
@@ -253,6 +254,14 @@ const AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute =
     path: '/classes/classsessions/$classSessionId',
     getParentRoute: () => AuthOrgOrgIdRoute,
   } as any)
+const AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRoute =
+  AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRouteImport.update(
+    {
+      id: '/quizzes/$quizId/take',
+      path: '/quizzes/$quizId/take',
+      getParentRoute: () => AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute,
+    } as any,
+  )
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -289,7 +298,8 @@ export interface FileRoutesByFullPath {
   '/org/$orgId/medias/': typeof AuthOrgOrgIdMediasIndexRoute
   '/org/$orgId/roles/': typeof AuthOrgOrgIdRolesIndexRoute
   '/org/$orgId/users/': typeof AuthOrgOrgIdUsersIndexRoute
-  '/org/$orgId/classes/classsessions/$classSessionId': typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute
+  '/org/$orgId/classes/classsessions/$classSessionId': typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRouteWithChildren
+  '/org/$orgId/classes/classsessions/$classSessionId/quizzes/$quizId/take': typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -326,7 +336,8 @@ export interface FileRoutesByTo {
   '/org/$orgId/medias': typeof AuthOrgOrgIdMediasIndexRoute
   '/org/$orgId/roles': typeof AuthOrgOrgIdRolesIndexRoute
   '/org/$orgId/users': typeof AuthOrgOrgIdUsersIndexRoute
-  '/org/$orgId/classes/classsessions/$classSessionId': typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute
+  '/org/$orgId/classes/classsessions/$classSessionId': typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRouteWithChildren
+  '/org/$orgId/classes/classsessions/$classSessionId/quizzes/$quizId/take': typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -367,7 +378,8 @@ export interface FileRoutesById {
   '/_auth/org/$orgId/medias/': typeof AuthOrgOrgIdMediasIndexRoute
   '/_auth/org/$orgId/roles/': typeof AuthOrgOrgIdRolesIndexRoute
   '/_auth/org/$orgId/users/': typeof AuthOrgOrgIdUsersIndexRoute
-  '/_auth/org/$orgId/classes/classsessions/$classSessionId': typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute
+  '/_auth/org/$orgId/classes/classsessions/$classSessionId': typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRouteWithChildren
+  '/_auth/org/$orgId/classes/classsessions/$classSessionId/quizzes/$quizId/take': typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -407,6 +419,7 @@ export interface FileRouteTypes {
     | '/org/$orgId/roles/'
     | '/org/$orgId/users/'
     | '/org/$orgId/classes/classsessions/$classSessionId'
+    | '/org/$orgId/classes/classsessions/$classSessionId/quizzes/$quizId/take'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -444,6 +457,7 @@ export interface FileRouteTypes {
     | '/org/$orgId/roles'
     | '/org/$orgId/users'
     | '/org/$orgId/classes/classsessions/$classSessionId'
+    | '/org/$orgId/classes/classsessions/$classSessionId/quizzes/$quizId/take'
   id:
     | '__root__'
     | '/'
@@ -484,6 +498,7 @@ export interface FileRouteTypes {
     | '/_auth/org/$orgId/roles/'
     | '/_auth/org/$orgId/users/'
     | '/_auth/org/$orgId/classes/classsessions/$classSessionId'
+    | '/_auth/org/$orgId/classes/classsessions/$classSessionId/quizzes/$quizId/take'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -762,6 +777,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRouteImport
       parentRoute: typeof AuthOrgOrgIdRoute
     }
+    '/_auth/org/$orgId/classes/classsessions/$classSessionId/quizzes/$quizId/take': {
+      id: '/_auth/org/$orgId/classes/classsessions/$classSessionId/quizzes/$quizId/take'
+      path: '/quizzes/$quizId/take'
+      fullPath: '/org/$orgId/classes/classsessions/$classSessionId/quizzes/$quizId/take'
+      preLoaderRoute: typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRouteImport
+      parentRoute: typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute
+    }
   }
 }
 
@@ -823,6 +845,21 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface AuthOrgOrgIdClassesClasssessionsClassSessionIdRouteChildren {
+  AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRoute: typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRoute
+}
+
+const AuthOrgOrgIdClassesClasssessionsClassSessionIdRouteChildren: AuthOrgOrgIdClassesClasssessionsClassSessionIdRouteChildren =
+  {
+    AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRoute:
+      AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRoute,
+  }
+
+const AuthOrgOrgIdClassesClasssessionsClassSessionIdRouteWithChildren =
+  AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute._addFileChildren(
+    AuthOrgOrgIdClassesClasssessionsClassSessionIdRouteChildren,
+  )
+
 interface AuthOrgOrgIdRouteChildren {
   AuthOrgOrgIdDashboardRoute: typeof AuthOrgOrgIdDashboardRoute
   AuthOrgOrgIdSettingsRoute: typeof AuthOrgOrgIdSettingsRoute
@@ -831,7 +868,7 @@ interface AuthOrgOrgIdRouteChildren {
   AuthOrgOrgIdMediasIndexRoute: typeof AuthOrgOrgIdMediasIndexRoute
   AuthOrgOrgIdRolesIndexRoute: typeof AuthOrgOrgIdRolesIndexRoute
   AuthOrgOrgIdUsersIndexRoute: typeof AuthOrgOrgIdUsersIndexRoute
-  AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute: typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute
+  AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute: typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRouteWithChildren
 }
 
 const AuthOrgOrgIdRouteChildren: AuthOrgOrgIdRouteChildren = {
@@ -843,7 +880,7 @@ const AuthOrgOrgIdRouteChildren: AuthOrgOrgIdRouteChildren = {
   AuthOrgOrgIdRolesIndexRoute: AuthOrgOrgIdRolesIndexRoute,
   AuthOrgOrgIdUsersIndexRoute: AuthOrgOrgIdUsersIndexRoute,
   AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute:
-    AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute,
+    AuthOrgOrgIdClassesClasssessionsClassSessionIdRouteWithChildren,
 }
 
 const AuthOrgOrgIdRouteWithChildren = AuthOrgOrgIdRoute._addFileChildren(

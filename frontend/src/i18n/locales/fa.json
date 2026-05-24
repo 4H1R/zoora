@@ -1213,7 +1213,8 @@
         "actions": {
           "edit": "ویرایش آزمون",
           "delete": "حذف آزمون",
-          "manageQuestions": "مدیریت سوالات"
+          "manageQuestions": "مدیریت سوالات",
+          "take": "شرکت در آزمون"
         },
         "flags": {
           "noBackNavigation": "بازگشت به سوال قبلی قفل است",
@@ -1244,6 +1245,83 @@
           "updateSuccess": "آزمون به‌روزرسانی شد",
           "deleteSuccess": "آزمون حذف شد",
           "linkRoomFailed": "آزمون ساخته شد اما اتصال به جلسه ناموفق بود"
+        },
+        "take": {
+          "headTitle": "شرکت در آزمون",
+          "eyebrow": "آزمون · شرکت",
+          "backToSession": "بازگشت به جلسه",
+          "begin": "شروع آزمون",
+          "previous": "قبلی",
+          "next": "بعدی",
+          "finish": "پایان آزمون",
+          "finishConfirm": "ارسال پاسخ‌ها",
+          "progress": "سوال {{current}} از {{total}}",
+          "questionN": "سوال {{n}}",
+          "submitting": "در حال ارسال پاسخ‌ها…",
+          "submitted": "آزمون ارسال شد",
+          "submitFailed": "ارسال ناموفق بود. دوباره تلاش کنید.",
+          "startFailed": "شروع آزمون ناموفق بود.",
+          "autoSubmitNote": "زمان به پایان رسید — پاسخ‌ها به‌صورت خودکار ارسال شدند.",
+          "multiSelectHint": "ممکن است چند گزینه صحیح باشد.",
+          "shortPlaceholder": "پاسخ خود را بنویسید…",
+          "descriptivePlaceholder": "پاسخ خود را تایپ کنید…",
+          "noAccess": {
+            "title": "بدون دسترسی",
+            "description": "شما اجازه شرکت در این آزمون را ندارید."
+          },
+          "notFound": {
+            "title": "آزمون یافت نشد",
+            "description": "این آزمون قابل بارگذاری نیست."
+          },
+          "empty": {
+            "title": "بدون سوال",
+            "description": "این آزمون هنوز سوالی ندارد."
+          },
+          "noRoom": {
+            "title": "اتاق آزمون موجود نیست",
+            "description": "این آزمون به جلسه‌ای متصل نیست."
+          },
+          "closed": {
+            "title": "اتاق آزمون بسته است",
+            "description": "بازه برگزاری آزمون باز نیست."
+          },
+          "bankError": {
+            "title": "بارگذاری سوال‌ها ناموفق بود",
+            "description": "بانک سوال‌ها بارگذاری نشد. دوباره تلاش کنید."
+          },
+          "meta": {
+            "questions": "تعداد سوال",
+            "duration": "مدت",
+            "totalScore": "نمره کل",
+            "closesAt": "پایان"
+          },
+          "rules": {
+            "eyebrow": "قوانین",
+            "timer": "محدودیت: {{minutes}} دقیقه از لحظه شروع.",
+            "noBack": "بازگشت به سوال‌های قبلی ممکن نیست.",
+            "backAllowed": "می‌توانید به سوال‌های قبلی برگردید.",
+            "shuffle": "ترتیب سوال‌ها تصادفی است.",
+            "autoSubmit": "در صورت اتمام زمان، پاسخ‌ها خودکار ارسال می‌شوند."
+          },
+          "types": {
+            "choice": "چندگزینه‌ای",
+            "short": "پاسخ کوتاه",
+            "descriptive": "تشریحی"
+          },
+          "confirm": {
+            "title": "ارسال آزمون؟",
+            "description": "{{answered}} از {{total}} سوال را پاسخ داده‌اید. پس از ارسال امکان تغییر نیست."
+          },
+          "result": {
+            "eyebrow": "نتیجه",
+            "submitted": "ارسال‌شده",
+            "graded": "تصحیح‌شده",
+            "earned": "کسب‌شده",
+            "outOf": "از",
+            "percent": "درصد",
+            "totalTime": "زمان کل",
+            "perQuestionEyebrow": "زمان و نمره هر سوال"
+          }
         }
       },
       "corrections": {
