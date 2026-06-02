@@ -1429,6 +1429,103 @@
           "emptyHint": "Add the first question to this bank.",
           "deleteSuccess": "Question deleted"
         }
+      },
+      "practices": {
+        "eyebrow": "Practices",
+        "title": "Session practices",
+        "cardEyebrow": "Practice",
+        "newPractice": "New practice",
+        "window": "Window",
+        "maxScore": "Max score",
+        "emptyTitle": "No practices yet",
+        "emptyHint": "Create the first practice room for this session.",
+        "actions": {
+          "edit": "Edit practice",
+          "delete": "Delete practice",
+          "submit": "Submit"
+        },
+        "form": {
+          "createTitle": "New practice",
+          "createDescription": "Create a practice room for this session.",
+          "editTitle": "Edit practice",
+          "editDescription": "Update practice room details.",
+          "title": "Title",
+          "titlePlaceholder": "Practice title",
+          "content": "Content",
+          "contentPlaceholder": "Optional instructions",
+          "maxScore": "Max score",
+          "maxScorePlaceholder": "0 for no maximum",
+          "startTime": "Start time",
+          "endTime": "End time",
+          "createSuccess": "Practice created",
+          "updateSuccess": "Practice updated",
+          "deleteSuccess": "Practice deleted"
+        },
+        "submit": {
+          "title": "Submit practice",
+          "description": "Write your response and submit it for review.",
+          "descriptionNamed": "Submit your response for \"{{title}}\".",
+          "placeholder": "Type your response…",
+          "submit": "Submit",
+          "success": "Practice submitted",
+          "failed": "Could not submit. Try again."
+        },
+        "emptyHintMember": "No practice rooms are available for this session yet. Check back later."
+      },
+      "practiceScores": {
+        "eyebrow": "Practice scores",
+        "title": "Practice scoring",
+        "subtitle": "Review student practice submissions and assign scores for this session.",
+        "noneSelected": "no practice",
+        "pick": "Choose practice",
+        "emptyTitle": "No practices to score",
+        "emptyHint": "Create a practice room — submissions will surface here once students respond.",
+        "noResults": "No submissions yet",
+        "noResultsHint": "Student submissions will appear here as they finish.",
+        "stats": {
+          "total": "Submissions",
+          "pending": "Awaiting",
+          "graded": "Graded",
+          "maxScore": "Max score"
+        },
+        "filter": {
+          "all": "All",
+          "pending": "Awaiting",
+          "graded": "Graded"
+        },
+        "statuses": {
+          "graded": "Graded",
+          "pending": "Awaiting"
+        },
+        "row": {
+          "score": "Score",
+          "submitted": "Submitted",
+          "notSubmitted": "not submitted",
+          "grade": "Score",
+          "regrade": "Re-score"
+        },
+        "dialog": {
+          "title": "Score submission",
+          "description": "Review the response, assign a score, and leave an optional comment.",
+          "answer": "Response",
+          "noAnswer": "No response provided.",
+          "score": "Score",
+          "overMax": "Score cannot exceed max ({{max}}).",
+          "comment": "Teacher comment",
+          "commentPlaceholder": "Optional feedback for the student…",
+          "save": "Save score",
+          "saveSuccess": "Score saved",
+          "saveFailed": "Could not save score"
+        }
+      },
+      "practiceWorkspace": {
+        "eyebrow": "",
+        "title": "Manage Practices",
+        "subtitle": "Practice rooms and scoring",
+        "tabs": {
+          "practices": "Practices",
+          "practiceScores": "Practice scores"
+        }
       }
     },
     "roles": {

@@ -25,6 +25,8 @@ import { useGetQuestionBanks } from "@/api/question-banks/question-banks"
 import { useGetQuizzes } from "@/api/quizzes/quizzes"
 import { useLivesessionPermissions } from "@/components/org/livesessions/use-livesession-permissions"
 import { useOfflinePermissions } from "@/components/org/offlines/use-offline-permissions"
+import { PracticeScoresSection } from "@/components/org/practices/PracticeScoresSection"
+import { PracticesSection } from "@/components/org/practices/PracticesSection"
 import { usePracticePermissions } from "@/components/org/practices/use-practice-permissions"
 import { QuestionBanksSection } from "@/components/org/question-banks/QuestionBanksSection"
 import { useBankPermissions } from "@/components/org/question-banks/use-bank-permissions"
@@ -427,6 +429,102 @@ function JoinAction({ session, accent }: { session: Session; accent: Accent }) {
   )
 }
 
+type WorkspaceTab = {
+  key: string
+  label: string
+  count: number
+  loading: boolean
+  icon: ReactNode
+  content: ReactNode
+}
+
+function WorkspaceSection({
+  eyebrow,
+  title,
+  subtitle,
+  tabs,
+  accent,
+}: {
+  eyebrow: string
+  title: string
+  subtitle: string
+  tabs: WorkspaceTab[]
+  accent: Accent
+}) {
+  if (tabs.length === 0) return null
+  const count = tabs.length
+  const defaultTab = tabs[0]?.key
+
+  return (
+    <section className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-col gap-2">
+          <Eyebrow>{eyebrow}</Eyebrow>
+          <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">{title}</h2>
+          <p className="text-muted-foreground max-w-xl text-sm leading-relaxed">{subtitle}</p>
+        </div>
+        <Eyebrow className="text-muted-foreground/70 hidden md:inline-flex items-center gap-2 font-mono">
+          <span className="bg-muted-foreground/30 h-px w-6" />
+          {String(count).padStart(2, "0")} {count === 1 ? "view" : "views"}
+        </Eyebrow>
+      </div>
+
+      {count === 1 ? (
+        <div>{tabs[0]!.content}</div>
+      ) : (
+        <Tabs defaultValue={defaultTab} className="gap-6">
+          <div className="bg-card border-border rounded-2xl border p-1.5 shadow-sm dark:border-0 dark:bg-card/40 dark:ring-1 dark:ring-foreground/10 dark:shadow-none">
+            <TabsList variant="line" className="h-auto w-full gap-1 bg-transparent p-0">
+              {tabs.map((tab) => (
+                <TabsTrigger
+                  key={tab.key}
+                  value={tab.key}
+                  className={cn(
+                    "group/wstab flex-1 justify-start gap-2.5 rounded-xl px-4 py-3",
+                    "data-active:bg-muted data-active:text-foreground dark:data-active:bg-foreground/5",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "bg-muted text-muted-foreground group-data-[active]/wstab:bg-foreground group-data-[active]/wstab:text-background flex size-8 items-center justify-center rounded-lg transition-colors",
+                    )}
+                  >
+                    {tab.icon}
+                  </span>
+                  <span className="flex flex-col items-start gap-0.5">
+                    <span className="text-sm font-semibold leading-none tracking-tight">{tab.label}</span>
+                    <span className="text-muted-foreground inline-flex items-center gap-1 font-mono text-[10px] tabular-nums">
+                      {tab.loading ? (
+                        <Skeleton className="h-3 w-6" />
+                      ) : (
+                        <>
+                          <span
+                            className={cn(
+                              "size-1 rounded-full",
+                              tab.count > 0 ? accent.dot : "bg-muted-foreground/40",
+                            )}
+                            aria-hidden
+                          />
+                          {tab.count}
+                        </>
+                      )}
+                    </span>
+                  </span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+          {tabs.map((tab) => (
+            <TabsContent key={tab.key} value={tab.key} className="mt-0 flex flex-col gap-6">
+              {tab.content}
+            </TabsContent>
+          ))}
+        </Tabs>
+      )}
+    </section>
+  )
+}
+
 function RouteComponent() {
   const { t, i18n } = useTranslation()
   const { orgId, classSessionId } = Route.useParams()
@@ -434,7 +532,7 @@ function RouteComponent() {
   const { canView: canViewBanks } = useBankPermissions()
   const { canView: canViewQuizzes, canEdit: canGradeQuizzes } = useQuizPermissions()
   const { canView: canViewLive, canJoin: canJoinLive } = useLivesessionPermissions()
-  const { canView: canViewPractices } = usePracticePermissions()
+  const { canView: canViewPractices, canGrade: canGradePractices } = usePracticePermissions()
   const { canView: canViewOfflines } = useOfflinePermissions()
   const canViewLiveAny = canViewLive || canJoinLive
   const now = useNow(1000)
@@ -553,14 +651,6 @@ function RouteComponent() {
   const navGridCols =
     navCount >= 3 ? "md:grid-cols-3" : navCount === 2 ? "md:grid-cols-2" : "md:grid-cols-1"
 
-  type WorkspaceTab = {
-    key: "quizzes" | "corrections" | "banks"
-    label: string
-    count: number
-    loading: boolean
-    icon: ReactNode
-    content: ReactNode
-  }
   const workspaceTabs: WorkspaceTab[] = []
   if (canViewQuizzes && classId) {
     workspaceTabs.push({
@@ -592,8 +682,28 @@ function RouteComponent() {
       content: <QuestionBanksSection />,
     })
   }
-  const workspaceCount = workspaceTabs.length
-  const defaultTab = workspaceTabs[0]?.key
+
+  const practiceTabs: WorkspaceTab[] = []
+  if (canViewPractices) {
+    practiceTabs.push({
+      key: "practices",
+      label: t("org.session.practiceWorkspace.tabs.practices"),
+      count: itemsCount(practiceQ.data),
+      loading: practiceQ.isPending,
+      icon: <DumbbellIcon className="size-4" />,
+      content: <PracticesSection classSessionId={classSessionId} />,
+    })
+  }
+  if (canGradePractices) {
+    practiceTabs.push({
+      key: "practiceScores",
+      label: t("org.session.practiceWorkspace.tabs.practiceScores"),
+      count: itemsCount(practiceQ.data),
+      loading: practiceQ.isPending,
+      icon: <CheckSquareIcon className="size-4" />,
+      content: <PracticeScoresSection classSessionId={classSessionId} />,
+    })
+  }
 
   return (
     <div className="relative isolate flex flex-col gap-12 pb-16">
@@ -684,78 +794,21 @@ function RouteComponent() {
         </section>
       ) : null}
 
-      {workspaceCount > 0 ? (
-        <section className="flex flex-col gap-6">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div className="flex flex-col gap-2">
-              <Eyebrow>{t("org.session.workspace.eyebrow")}</Eyebrow>
-              <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
-                {t("org.session.workspace.title")}
-              </h2>
-              <p className="text-muted-foreground max-w-xl text-sm leading-relaxed">
-                {t("org.session.workspace.subtitle")}
-              </p>
-            </div>
-            <Eyebrow className="text-muted-foreground/70 hidden md:inline-flex items-center gap-2 font-mono">
-              <span className="bg-muted-foreground/30 h-px w-6" />
-              {String(workspaceCount).padStart(2, "0")} {workspaceCount === 1 ? "view" : "views"}
-            </Eyebrow>
-          </div>
+      <WorkspaceSection
+        eyebrow={t("org.session.workspace.eyebrow")}
+        title={t("org.session.workspace.title")}
+        subtitle={t("org.session.workspace.subtitle")}
+        tabs={workspaceTabs}
+        accent={accent}
+      />
 
-          {workspaceCount === 1 ? (
-            <div>{workspaceTabs[0]!.content}</div>
-          ) : (
-            <Tabs defaultValue={defaultTab} className="gap-6">
-              <div className="bg-card border-border rounded-2xl border p-1.5 shadow-sm dark:border-0 dark:bg-card/40 dark:ring-1 dark:ring-foreground/10 dark:shadow-none">
-                <TabsList variant="line" className="h-auto w-full gap-1 bg-transparent p-0">
-                  {workspaceTabs.map((tab) => (
-                    <TabsTrigger
-                      key={tab.key}
-                      value={tab.key}
-                      className={cn(
-                        "group/wstab flex-1 justify-start gap-2.5 rounded-xl px-4 py-3",
-                        "data-active:bg-muted data-active:text-foreground dark:data-active:bg-foreground/5",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "bg-muted text-muted-foreground group-data-[active]/wstab:bg-foreground group-data-[active]/wstab:text-background flex size-8 items-center justify-center rounded-lg transition-colors",
-                        )}
-                      >
-                        {tab.icon}
-                      </span>
-                      <span className="flex flex-col items-start gap-0.5">
-                        <span className="text-sm font-semibold leading-none tracking-tight">{tab.label}</span>
-                        <span className="text-muted-foreground inline-flex items-center gap-1 font-mono text-[10px] tabular-nums">
-                          {tab.loading ? (
-                            <Skeleton className="h-3 w-6" />
-                          ) : (
-                            <>
-                              <span
-                                className={cn(
-                                  "size-1 rounded-full",
-                                  tab.count > 0 ? accent.dot : "bg-muted-foreground/40",
-                                )}
-                                aria-hidden
-                              />
-                              {tab.count}
-                            </>
-                          )}
-                        </span>
-                      </span>
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </div>
-              {workspaceTabs.map((tab) => (
-                <TabsContent key={tab.key} value={tab.key} className="mt-0 flex flex-col gap-6">
-                  {tab.content}
-                </TabsContent>
-              ))}
-            </Tabs>
-          )}
-        </section>
-      ) : null}
+      <WorkspaceSection
+        eyebrow={t("org.session.practiceWorkspace.eyebrow")}
+        title={t("org.session.practiceWorkspace.title")}
+        subtitle={t("org.session.practiceWorkspace.subtitle")}
+        tabs={practiceTabs}
+        accent={accent}
+      />
 
       <footer className="border-border border-t border-dashed pt-6">
         <div className="flex flex-wrap items-center justify-between gap-2">

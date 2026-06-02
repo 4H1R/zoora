@@ -1461,6 +1461,103 @@
           "emptyHint": "اولین سوال را به این بانک اضافه کنید.",
           "deleteSuccess": "سوال حذف شد"
         }
+      },
+      "practices": {
+        "eyebrow": "تمرین‌ها",
+        "title": "تمرین‌های جلسه",
+        "cardEyebrow": "تمرین",
+        "newPractice": "تمرین جدید",
+        "window": "بازه",
+        "maxScore": "حداکثر نمره",
+        "emptyTitle": "هنوز تمرینی نیست",
+        "emptyHint": "اولین اتاق تمرین این جلسه را بسازید.",
+        "actions": {
+          "edit": "ویرایش تمرین",
+          "delete": "حذف تمرین",
+          "submit": "ارسال"
+        },
+        "form": {
+          "createTitle": "تمرین جدید",
+          "createDescription": "یک اتاق تمرین برای این جلسه بسازید.",
+          "editTitle": "ویرایش تمرین",
+          "editDescription": "جزئیات اتاق تمرین را به‌روزرسانی کنید.",
+          "title": "عنوان",
+          "titlePlaceholder": "عنوان تمرین",
+          "content": "محتوا",
+          "contentPlaceholder": "دستورالعمل اختیاری",
+          "maxScore": "حداکثر نمره",
+          "maxScorePlaceholder": "۰ برای بدون سقف",
+          "startTime": "زمان شروع",
+          "endTime": "زمان پایان",
+          "createSuccess": "تمرین ساخته شد",
+          "updateSuccess": "تمرین به‌روزرسانی شد",
+          "deleteSuccess": "تمرین حذف شد"
+        },
+        "submit": {
+          "title": "ارسال تمرین",
+          "description": "پاسخ خود را بنویسید و برای بررسی ارسال کنید.",
+          "descriptionNamed": "پاسخ خود را برای «{{title}}» ارسال کنید.",
+          "placeholder": "پاسخ خود را بنویسید…",
+          "submit": "ارسال",
+          "success": "تمرین ارسال شد",
+          "failed": "ارسال نشد. دوباره تلاش کنید."
+        },
+        "emptyHintMember": "هنوز اتاق تمرینی برای این جلسه موجود نیست. بعداً سر بزنید."
+      },
+      "practiceScores": {
+        "eyebrow": "نمرات تمرین",
+        "title": "نمره‌دهی تمرین",
+        "subtitle": "پاسخ‌های تمرین دانش‌آموزان را بررسی و برای این جلسه نمره ثبت کنید.",
+        "noneSelected": "بدون تمرین",
+        "pick": "انتخاب تمرین",
+        "emptyTitle": "تمرینی برای نمره‌دهی نیست",
+        "emptyHint": "یک اتاق تمرین بسازید — پاسخ‌ها پس از ارسال دانش‌آموزان اینجا نمایش داده می‌شوند.",
+        "noResults": "هنوز پاسخی نیست",
+        "noResultsHint": "پاسخ‌های دانش‌آموزان پس از پایان اینجا نمایش داده می‌شود.",
+        "stats": {
+          "total": "پاسخ‌ها",
+          "pending": "در انتظار",
+          "graded": "نمره‌دهی‌شده",
+          "maxScore": "حداکثر نمره"
+        },
+        "filter": {
+          "all": "همه",
+          "pending": "در انتظار",
+          "graded": "نمره‌دهی‌شده"
+        },
+        "statuses": {
+          "graded": "نمره‌دهی‌شده",
+          "pending": "در انتظار"
+        },
+        "row": {
+          "score": "نمره",
+          "submitted": "ارسال‌شده",
+          "notSubmitted": "ارسال‌نشده",
+          "grade": "نمره‌دهی",
+          "regrade": "نمره مجدد"
+        },
+        "dialog": {
+          "title": "نمره‌دهی پاسخ",
+          "description": "پاسخ را بررسی کنید، نمره بدهید و در صورت تمایل نظر بگذارید.",
+          "answer": "پاسخ",
+          "noAnswer": "پاسخی ثبت نشده است.",
+          "score": "نمره",
+          "overMax": "نمره نمی‌تواند از حداکثر ({{max}}) بیشتر باشد.",
+          "comment": "نظر معلم",
+          "commentPlaceholder": "بازخورد اختیاری برای دانش‌آموز…",
+          "save": "ثبت نمره",
+          "saveSuccess": "نمره ثبت شد",
+          "saveFailed": "ثبت نمره ناموفق بود"
+        }
+      },
+      "practiceWorkspace": {
+        "eyebrow": "",
+        "title": "مدیریت تمرین‌ها",
+        "subtitle": "اتاق‌های تمرین و نمره‌دهی",
+        "tabs": {
+          "practices": "تمرین‌ها",
+          "practiceScores": "نمرات تمرین"
+        }
       }
     },
     "roles": {
