@@ -15,9 +15,10 @@ interface SidePanelProps {
   tab: SidePanelTab
   setTab: (tab: SidePanelTab) => void
   onClose: () => void
+  chat: ReturnType<typeof useChat>
 }
 
-export function SidePanel({ tab, setTab, onClose }: SidePanelProps) {
+export function SidePanel({ tab, setTab, onClose, chat }: SidePanelProps) {
   const { t } = useTranslation()
 
   return (
@@ -41,7 +42,7 @@ export function SidePanel({ tab, setTab, onClose }: SidePanelProps) {
         </button>
       </div>
 
-      {tab === "people" ? <PeopleList /> : <ChatPanel />}
+      {tab === "people" ? <PeopleList /> : <ChatPanel chat={chat} />}
     </aside>
   )
 }
@@ -104,9 +105,9 @@ function PeopleList() {
   )
 }
 
-function ChatPanel() {
+function ChatPanel({ chat }: { chat: ReturnType<typeof useChat> }) {
   const { t } = useTranslation()
-  const { chatMessages, send, isSending } = useChat()
+  const { chatMessages, send, isSending } = chat
   const [text, setText] = useState("")
   const bottomRef = useRef<HTMLDivElement>(null)
 

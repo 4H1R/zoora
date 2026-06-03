@@ -1,4 +1,10 @@
-import { LiveKitRoom, RoomAudioRenderer, useChat } from "@livekit/components-react"
+import {
+  LayoutContextProvider,
+  LiveKitRoom,
+  RoomAudioRenderer,
+  useChat,
+  useCreateLayoutContext,
+} from "@livekit/components-react"
 import { useEffect, useState } from "react"
 
 import "@livekit/components-styles"
@@ -69,24 +75,27 @@ function RoomShell({
   onLeave: () => void
   leavePending: boolean
 }) {
+  const layoutContext = useCreateLayoutContext()
+  // Chat lives here (always mounted) so messages accumulate even while the
+  // chat panel is closed; the panel just reads from this shared state.
+  const chat = useChat()
   const [panel, setPanel] = useState<SidePanelTab | null>(null)
-  const { chatMessages } = useChat()
   const [readCount, setReadCount] = useState(0)
 
   useEffect(() => {
-    if (panel === "chat") setReadCount(chatMessages.length)
-  }, [panel, chatMessages.length])
+    if (panel === "chat") setReadCount(chat.chatMessages.length)
+  }, [panel, chat.chatMessages.length])
 
-  const unread = Math.max(0, chatMessages.length - readCount)
+  const unread = Math.max(0, chat.chatMessages.length - readCount)
 
   return (
-    <>
+    <LayoutContextProvider value={layoutContext}>
       <RoomHeader sessionName={sessionName} className={className} />
 
       <div className="flex min-h-0 flex-1">
         <div className="relative min-w-0 flex-1">
           <div className="absolute inset-0 p-3 sm:p-4">
-            <VideoGrid />
+            <VideoGrid layoutContext={layoutContext} />
           </div>
           <ControlBar
             panel={panel}
@@ -99,7 +108,7 @@ function RoomShell({
 
         {panel && (
           <div className="hidden h-full sm:block">
-            <SidePanel tab={panel} setTab={setPanel} onClose={() => setPanel(null)} />
+            <SidePanel tab={panel} setTab={setPanel} onClose={() => setPanel(null)} chat={chat} />
           </div>
         )}
       </div>
@@ -107,9 +116,9 @@ function RoomShell({
       {/* Mobile: overlay panel */}
       {panel && (
         <div className="absolute inset-0 z-30 bg-zinc-950/95 backdrop-blur-sm sm:hidden">
-          <SidePanel tab={panel} setTab={setPanel} onClose={() => setPanel(null)} />
+          <SidePanel tab={panel} setTab={setPanel} onClose={() => setPanel(null)} chat={chat} />
         </div>
       )}
-    </>
+    </LayoutContextProvider>
   )
 }
