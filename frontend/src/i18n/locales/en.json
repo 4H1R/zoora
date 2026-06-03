@@ -1749,6 +1749,32 @@
     "recordingNotice": "This session is being recorded. By joining, you agree to the recording and privacy terms.",
     "back": "Back",
     "secureEntry": "Secure entry",
-    "avSettingsNote": "Mic and camera are configured inside the class"
+    "avSettingsNote": "Adjust mic and camera before joining",
+    "you": "You",
+    "joinNow": "Join now",
+    "cameraOff": "Camera is off",
+    "cameraBlocked": "Camera access blocked",
+    "checkDevices": "Check your camera and microphone before joining",
+    "connecting": "Connecting",
+    "reconnecting": "Reconnecting",
+    "controls": {
+      "micOn": "Turn on microphone",
+      "micOff": "Mute microphone",
+      "cameraOn": "Turn on camera",
+      "cameraOff": "Turn off camera",
+      "shareScreen": "Share screen",
+      "stopShare": "Stop sharing",
+      "chat": "Chat",
+      "people": "People"
+    },
+    "chat": {
+      "empty": "No messages yet",
+      "placeholder": "Type a message…"
+    },
+    "device": {
+      "camera": "Camera",
+      "microphone": "Microphone",
+      "unknown": "Unknown device"
+    }
   }
 }
