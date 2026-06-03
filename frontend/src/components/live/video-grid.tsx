@@ -29,7 +29,8 @@ export function VideoGrid({ layoutContext }: { layoutContext: LayoutContextType 
 
   // Tap-to-focus comes from ParticipantTile's FocusToggle (drives the pin
   // through layout context). Screen share auto-pins on top of that.
-  const focusTrack = usePinnedTracks(layoutContext)[0]
+  const pinned = usePinnedTracks(layoutContext)[0]
+  const pinnedSid = pinned && isTrackReference(pinned) ? pinned.publication.trackSid : undefined
   const lastAutoPin = useRef<string | null>(null)
 
   useEffect(() => {
@@ -44,6 +45,13 @@ export function VideoGrid({ layoutContext }: { layoutContext: LayoutContextType 
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screenShareSid, layoutContext])
+
+  // Resolve the focused track from the *live* tracks array (by SID) so the
+  // rendered ref is fresh and identity-matches for carousel exclusion. The pin
+  // may hold a stale object, so never render it directly.
+  const focusTrack = pinnedSid
+    ? tracks.find((tr) => isTrackReference(tr) && tr.publication.trackSid === pinnedSid)
+    : undefined
 
   if (focusTrack) {
     const carousel = tracks.filter((tr) => tr !== focusTrack)
