@@ -1,5 +1,7 @@
 import type { GithubCom4H1RZooraInternalDomainClassSession as Session } from "@/api/model"
 import type { ErrorType } from "@/api/mutator/custom-instance"
+import type { SessionStatus } from "@/lib/session-status"
+import type { ReactNode } from "react"
 
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import {
@@ -12,17 +14,22 @@ import {
   LibraryIcon,
   RadioIcon,
   SparklesIcon,
+  UserCheckIcon,
   VideoIcon,
 } from "lucide-react"
-import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
+import { useGetClassesIdSessionsSessionIdAttendance } from "@/api/attendance/attendance"
 import { useGetClassesId, useGetClassesSessionsSessionId } from "@/api/classes/classes"
 import { getLiveRooms, useGetLiveRooms, usePostLiveRooms } from "@/api/live-sessions/live-sessions"
 import { useGetOfflines } from "@/api/offlines/offlines"
 import { useGetPractices } from "@/api/practices/practices"
 import { useGetQuestionBanks } from "@/api/question-banks/question-banks"
 import { useGetQuizzes } from "@/api/quizzes/quizzes"
+import { Eyebrow } from "@/components/eyebrow"
+import { AttendanceSection } from "@/components/org/livesessions/AttendanceSection"
+import { LiveRoomsSection } from "@/components/org/livesessions/LiveRoomsSection"
+import { useAttendancePermissions } from "@/components/org/livesessions/use-attendance-permissions"
 import { useLivesessionPermissions } from "@/components/org/livesessions/use-livesession-permissions"
 import { useOfflinePermissions } from "@/components/org/offlines/use-offline-permissions"
 import { PracticeScoresSection } from "@/components/org/practices/PracticeScoresSection"
@@ -33,19 +40,13 @@ import { useBankPermissions } from "@/components/org/question-banks/use-bank-per
 import { QuizCorrectionsSection } from "@/components/org/quizzes/QuizCorrectionsSection"
 import { QuizzesSection } from "@/components/org/quizzes/QuizzesSection"
 import { useQuizPermissions } from "@/components/org/quizzes/use-quiz-permissions"
-import { Eyebrow } from "@/components/eyebrow"
 import { SessionStatusPill } from "@/components/session/status-pill"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useOrgGuard } from "@/lib/access"
 import { orgHead } from "@/lib/org-head"
-import {
-  formatSessionDate,
-  getSessionStatus,
-  type SessionStatus,
-  useNow,
-} from "@/lib/session-status"
+import { formatSessionDate, getSessionStatus, useNow } from "@/lib/session-status"
 import { cn } from "@/lib/utils"
 
 export const Route = createFileRoute("/_auth/org/$orgId/classes/classsessions/$classSessionId")({
@@ -118,13 +119,13 @@ function DecorativeBackground({ accent }: { accent: Accent }) {
       <div
         aria-hidden
         className={cn(
-          "pointer-events-none absolute inset-x-0 -top-32 -z-10 h-[480px] bg-gradient-to-b to-transparent blur-3xl opacity-80 dark:opacity-100",
-          accent.glow,
+          "pointer-events-none absolute inset-x-0 -top-32 -z-10 h-[480px] bg-gradient-to-b to-transparent opacity-80 blur-3xl dark:opacity-100",
+          accent.glow
         )}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.07] dark:opacity-[0.04] [background-image:linear-gradient(var(--color-foreground)_1px,transparent_1px),linear-gradient(90deg,var(--color-foreground)_1px,transparent_1px)] [background-size:56px_56px] [mask-image:radial-gradient(ellipse_60%_45%_at_50%_0%,black,transparent_75%)]"
+        className="pointer-events-none absolute inset-0 -z-10 [background-image:linear-gradient(var(--color-foreground)_1px,transparent_1px),linear-gradient(90deg,var(--color-foreground)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_60%_45%_at_50%_0%,black,transparent_75%)] [background-size:56px_56px] opacity-[0.07] dark:opacity-[0.04]"
       />
       <div
         aria-hidden
@@ -152,7 +153,7 @@ function Breadcrumb({
   fallback: string
 }) {
   return (
-    <div className="flex items-center justify-between pt-6 animate-in fade-in-0 slide-in-from-top-2 fill-mode-both duration-500">
+    <div className="animate-in fade-in-0 slide-in-from-top-2 fill-mode-both flex items-center justify-between pt-6 duration-500">
       <Link
         to="/org/$orgId/classes/$classId"
         params={{ orgId, classId }}
@@ -162,8 +163,7 @@ function Breadcrumb({
         <span className="max-w-[18ch] truncate">{classLabel ?? fallback}</span>
       </Link>
       <span className="text-muted-foreground/70 inline-flex items-center gap-2 font-mono text-xs tracking-[0.25em]">
-        <span className="bg-muted-foreground/30 h-px w-8" />
-        № {shortId || "—"}
+        <span className="bg-muted-foreground/30 h-px w-8" />№ {shortId || "—"}
       </span>
     </div>
   )
@@ -181,28 +181,28 @@ function CountdownCard({
   t: (key: string) => string
 }) {
   const showDays = (parts?.days ?? 0) > 0
-  const labelKey = status === "live" ? "status.liveNow" : status === "ended" ? "status.ended" : "org.session.meta.countdown"
+  const labelKey =
+    status === "live" ? "status.liveNow" : status === "ended" ? "status.ended" : "org.session.meta.countdown"
 
   return (
     <div
       className={cn(
-        "relative isolate flex flex-col gap-5 overflow-hidden rounded-3xl border bg-card p-6 shadow-sm transition-shadow md:p-7",
-        "dark:bg-card/60 dark:backdrop-blur-sm dark:shadow-none",
-        accent.border,
+        "bg-card relative isolate flex flex-col gap-5 overflow-hidden rounded-3xl border p-6 shadow-sm transition-shadow md:p-7",
+        "dark:bg-card/60 dark:shadow-none dark:backdrop-blur-sm",
+        accent.border
       )}
     >
       <div
         aria-hidden
-        className={cn(
-          "pointer-events-none absolute -top-24 -end-16 -z-10 h-64 w-64 rounded-full blur-3xl",
-          accent.bg,
-        )}
+        className={cn("pointer-events-none absolute -end-16 -top-24 -z-10 h-64 w-64 rounded-full blur-3xl", accent.bg)}
       />
       <div className="flex items-center justify-between">
         <Eyebrow className={cn(accent.text)}>{t(labelKey)}</Eyebrow>
         <span className="relative flex size-2">
           {status === "live" ? (
-            <span className={cn("absolute inline-flex h-full w-full animate-ping rounded-full opacity-75", accent.dot)} />
+            <span
+              className={cn("absolute inline-flex h-full w-full animate-ping rounded-full opacity-75", accent.dot)}
+            />
           ) : null}
           <span className={cn("relative inline-flex size-2 rounded-full", accent.dot)} />
         </span>
@@ -232,30 +232,18 @@ function CountdownCard({
   )
 }
 
-function Segment({
-  value,
-  label,
-  accent,
-  muted,
-}: {
-  value: string
-  label: string
-  accent: Accent
-  muted?: boolean
-}) {
+function Segment({ value, label, accent, muted }: { value: string; label: string; accent: Accent; muted?: boolean }) {
   return (
     <div className="flex flex-col items-center">
       <span
         className={cn(
-          "text-4xl font-semibold leading-none tracking-tight md:text-5xl",
-          muted ? "text-muted-foreground" : accent.text,
+          "text-4xl leading-none font-semibold tracking-tight md:text-5xl",
+          muted ? "text-muted-foreground" : accent.text
         )}
       >
         {value}
       </span>
-      <span className="text-muted-foreground/70 mt-2 font-mono text-[10px] tracking-[0.25em] uppercase">
-        {label}
-      </span>
+      <span className="text-muted-foreground/70 mt-2 font-mono text-[10px] tracking-[0.25em] uppercase">{label}</span>
     </div>
   )
 }
@@ -273,14 +261,14 @@ function MetaCell({
 }) {
   return (
     <div
-      className="border-border flex flex-col gap-2 border-b border-dashed px-5 py-5 md:border-b-0 md:border-s md:first:border-s-0 md:py-6 animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both"
+      className="border-border animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both flex flex-col gap-2 border-b border-dashed px-5 py-5 md:border-s md:border-b-0 md:py-6 md:first:border-s-0"
       style={{ animationDelay: `${index * 80}ms`, animationDuration: "500ms" }}
     >
       <Eyebrow>{label}</Eyebrow>
       <span
         className={cn(
           "text-foreground text-base leading-tight font-medium md:text-lg",
-          mono && "font-mono tabular-nums",
+          mono && "font-mono tabular-nums"
         )}
       >
         {value}
@@ -306,7 +294,7 @@ function RoomTile({ spec, index, total, accent }: { spec: TileSpec; index: numbe
     "group/tile bg-card text-card-foreground border-border relative isolate flex h-full min-h-[180px] flex-col justify-between overflow-hidden rounded-2xl border p-5 shadow-sm transition-all duration-300",
     "hover:-translate-y-1 hover:shadow-lg hover:border-foreground/25",
     "dark:shadow-none dark:ring-1 dark:ring-foreground/8 dark:border-0 dark:hover:ring-foreground/30 dark:hover:shadow-xl dark:hover:shadow-foreground/[0.04]",
-    "animate-in fade-in-0 slide-in-from-bottom-3 fill-mode-both",
+    "animate-in fade-in-0 slide-in-from-bottom-3 fill-mode-both"
   )
 
   const inner = (
@@ -315,26 +303,27 @@ function RoomTile({ spec, index, total, accent }: { spec: TileSpec; index: numbe
         aria-hidden
         className={cn(
           "pointer-events-none absolute inset-0 -z-10 opacity-0 transition-opacity duration-500 group-hover/tile:opacity-100",
-          "bg-[radial-gradient(circle_at_var(--mx,80%)_var(--my,20%),var(--color-primary)/10%,transparent_55%)]",
+          "bg-[radial-gradient(circle_at_var(--mx,80%)_var(--my,20%),var(--color-primary)/10%,transparent_55%)]"
         )}
       />
       <div
         aria-hidden
         className={cn(
-          "absolute inset-x-5 top-0 -z-10 h-px scale-x-0 bg-gradient-to-r from-transparent via-foreground/30 to-transparent transition-transform duration-500 group-hover/tile:scale-x-100",
+          "via-foreground/30 absolute inset-x-5 top-0 -z-10 h-px scale-x-0 bg-gradient-to-r from-transparent to-transparent transition-transform duration-500 group-hover/tile:scale-x-100"
         )}
       />
       <div className="flex items-start justify-between">
         <div
           className={cn(
             "bg-muted text-foreground/80 group-hover/tile:text-foreground flex size-11 items-center justify-center rounded-xl transition-colors",
-            "group-hover/tile:bg-primary/10",
+            "group-hover/tile:bg-primary/10"
           )}
         >
           {spec.icon}
         </div>
         <span className="text-muted-foreground/60 font-mono text-[10px] tracking-[0.3em]">
-          {tileNumber}<span className="opacity-50">/{totalStr}</span>
+          {tileNumber}
+          <span className="opacity-50">/{totalStr}</span>
         </span>
       </div>
       <div className="mt-6 flex items-end justify-between gap-3">
@@ -343,18 +332,18 @@ function RoomTile({ spec, index, total, accent }: { spec: TileSpec; index: numbe
           {spec.loading ? (
             <Skeleton className="h-10 w-16" />
           ) : (
-            <span className="text-4xl font-semibold tracking-tight tabular-nums md:text-5xl">
-              {spec.count}
-            </span>
+            <span className="text-4xl font-semibold tracking-tight tabular-nums md:text-5xl">{spec.count}</span>
           )}
         </div>
         <span
           className={cn(
-            "text-muted-foreground inline-flex size-8 items-center justify-center rounded-full transition-all group-hover/tile:translate-x-1 group-hover/tile:bg-foreground group-hover/tile:text-background rtl:group-hover/tile:-translate-x-1",
-            accent.text,
+            "text-muted-foreground group-hover/tile:bg-foreground group-hover/tile:text-background inline-flex size-8 items-center justify-center rounded-full transition-all group-hover/tile:translate-x-1 rtl:group-hover/tile:-translate-x-1",
+            accent.text
           )}
         >
-          <span className="rtl:rotate-180" aria-hidden>→</span>
+          <span className="rtl:rotate-180" aria-hidden>
+            →
+          </span>
         </span>
       </div>
     </>
@@ -415,10 +404,7 @@ function JoinAction({ session, accent }: { session: Session; accent: Accent }) {
 
   return (
     <Button
-      className={cn(
-        "relative overflow-hidden",
-        "shadow-[0_8px_24px_-12px_var(--color-primary)]",
-      )}
+      className={cn("relative overflow-hidden", "shadow-[0_8px_24px_-12px_var(--color-primary)]")}
       disabled={join.isPending || !session.id}
       onClick={() => session.id && join.mutate({ data: { class_session_id: session.id } })}
     >
@@ -463,7 +449,7 @@ function WorkspaceSection({
           <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">{title}</h2>
           <p className="text-muted-foreground max-w-xl text-sm leading-relaxed">{subtitle}</p>
         </div>
-        <Eyebrow className="text-muted-foreground/70 hidden md:inline-flex items-center gap-2 font-mono">
+        <Eyebrow className="text-muted-foreground/70 hidden items-center gap-2 font-mono md:inline-flex">
           <span className="bg-muted-foreground/30 h-px w-6" />
           {String(count).padStart(2, "0")} {count === 1 ? "view" : "views"}
         </Eyebrow>
@@ -473,7 +459,7 @@ function WorkspaceSection({
         <div>{tabs[0]!.content}</div>
       ) : (
         <Tabs defaultValue={defaultTab} className="gap-6">
-          <div className="bg-card border-border rounded-2xl border p-1.5 shadow-sm dark:border-0 dark:bg-card/40 dark:ring-1 dark:ring-foreground/10 dark:shadow-none">
+          <div className="bg-card border-border dark:bg-card/40 dark:ring-foreground/10 rounded-2xl border p-1.5 shadow-sm dark:border-0 dark:shadow-none dark:ring-1">
             <TabsList variant="line" className="h-auto w-full gap-1 bg-transparent p-0">
               {tabs.map((tab) => (
                 <TabsTrigger
@@ -481,28 +467,25 @@ function WorkspaceSection({
                   value={tab.key}
                   className={cn(
                     "group/wstab flex-1 justify-start gap-2.5 rounded-xl px-4 py-3",
-                    "data-active:bg-muted data-active:text-foreground dark:data-active:bg-foreground/5",
+                    "data-active:bg-muted data-active:text-foreground dark:data-active:bg-foreground/5"
                   )}
                 >
                   <span
                     className={cn(
-                      "bg-muted text-muted-foreground group-data-[active]/wstab:bg-foreground group-data-[active]/wstab:text-background flex size-8 items-center justify-center rounded-lg transition-colors",
+                      "bg-muted text-muted-foreground group-data-[active]/wstab:bg-foreground group-data-[active]/wstab:text-background flex size-8 items-center justify-center rounded-lg transition-colors"
                     )}
                   >
                     {tab.icon}
                   </span>
                   <span className="flex flex-col items-start gap-0.5">
-                    <span className="text-sm font-semibold leading-none tracking-tight">{tab.label}</span>
+                    <span className="text-sm leading-none font-semibold tracking-tight">{tab.label}</span>
                     <span className="text-muted-foreground inline-flex items-center gap-1 font-mono text-[10px] tabular-nums">
                       {tab.loading ? (
                         <Skeleton className="h-3 w-6" />
                       ) : (
                         <>
                           <span
-                            className={cn(
-                              "size-1 rounded-full",
-                              tab.count > 0 ? accent.dot : "bg-muted-foreground/40",
-                            )}
+                            className={cn("size-1 rounded-full", tab.count > 0 ? accent.dot : "bg-muted-foreground/40")}
                             aria-hidden
                           />
                           {tab.count}
@@ -534,11 +517,15 @@ function RouteComponent() {
   const { canView: canViewLive, canJoin: canJoinLive } = useLivesessionPermissions()
   const { canView: canViewPractices, canGrade: canGradePractices } = usePracticePermissions()
   const { canView: canViewOfflines } = useOfflinePermissions()
+  const { canView: canViewAttendance } = useAttendancePermissions()
   const canViewLiveAny = canViewLive || canJoinLive
   const now = useNow(1000)
 
-  const { data: sessionData, isPending: sessionPending, isError: sessionError } =
-    useGetClassesSessionsSessionId(classSessionId)
+  const {
+    data: sessionData,
+    isPending: sessionPending,
+    isError: sessionError,
+  } = useGetClassesSessionsSessionId(classSessionId)
   const session = (sessionData?.status === 200 && sessionData.data.data) || undefined
   const classId = session?.class_id
 
@@ -548,23 +535,23 @@ function RouteComponent() {
   const cls = (classData?.status === 200 && classData.data.data) || undefined
 
   const enabled = !!session
-  const liveQ = useGetLiveRooms(
-    { class_session_id: classSessionId },
-    { query: { enabled: enabled && canViewLiveAny } },
-  )
-  const quizQ = useGetQuizzes(
-    { class_session_id: classSessionId },
-    { query: { enabled: enabled && canViewQuizzes } },
-  )
+  const liveQ = useGetLiveRooms({ class_session_id: classSessionId }, { query: { enabled: enabled && canViewLiveAny } })
+  const quizQ = useGetQuizzes({ class_session_id: classSessionId }, { query: { enabled: enabled && canViewQuizzes } })
   const practiceQ = useGetPractices(
     { class_session_id: classSessionId },
-    { query: { enabled: enabled && canViewPractices } },
+    { query: { enabled: enabled && canViewPractices } }
   )
   const offlineQ = useGetOfflines(
     { class_session_id: classSessionId },
-    { query: { enabled: enabled && canViewOfflines } },
+    { query: { enabled: enabled && canViewOfflines } }
   )
   const banksQ = useGetQuestionBanks(undefined, { query: { enabled: enabled && canViewBanks } })
+  const attendanceQ = useGetClassesIdSessionsSessionIdAttendance(
+    classId ?? "",
+    classSessionId,
+    { order_by: "status", order_dir: "asc" },
+    { query: { enabled: enabled && canViewAttendance && !!classId } }
+  )
 
   if (!allowed) return null
 
@@ -624,7 +611,7 @@ function RouteComponent() {
       count: itemsCount(liveQ.data),
       loading: liveQ.isPending,
       icon: <VideoIcon className="size-5" />,
-      href: classPath,
+      href: "#live-rooms",
     })
   }
   if (canViewPractices) {
@@ -648,8 +635,7 @@ function RouteComponent() {
     })
   }
   const navCount = navTiles.length
-  const navGridCols =
-    navCount >= 3 ? "md:grid-cols-3" : navCount === 2 ? "md:grid-cols-2" : "md:grid-cols-1"
+  const navGridCols = navCount >= 3 ? "md:grid-cols-3" : navCount === 2 ? "md:grid-cols-2" : "md:grid-cols-1"
 
   const workspaceTabs: WorkspaceTab[] = []
   if (canViewQuizzes && classId) {
@@ -705,6 +691,28 @@ function RouteComponent() {
     })
   }
 
+  const liveTabs: WorkspaceTab[] = []
+  if (canViewLiveAny) {
+    liveTabs.push({
+      key: "rooms",
+      label: t("org.session.liveWorkspace.tabs.rooms"),
+      count: itemsCount(liveQ.data),
+      loading: liveQ.isPending,
+      icon: <VideoIcon className="size-4" />,
+      content: <LiveRoomsSection classSessionId={classSessionId} />,
+    })
+  }
+  if (canViewAttendance && classId) {
+    liveTabs.push({
+      key: "presence",
+      label: t("org.session.liveWorkspace.tabs.presence"),
+      count: itemsCount(attendanceQ.data),
+      loading: attendanceQ.isPending,
+      icon: <UserCheckIcon className="size-4" />,
+      content: <AttendanceSection classId={classId} classSessionId={classSessionId} />,
+    })
+  }
+
   return (
     <div className="relative isolate flex flex-col gap-12 pb-16">
       <DecorativeBackground accent={accent} />
@@ -718,7 +726,7 @@ function RouteComponent() {
       />
 
       <section className="grid gap-8 lg:grid-cols-5 lg:gap-10">
-        <header className="flex flex-col gap-6 lg:col-span-3 animate-in fade-in-0 slide-in-from-bottom-3 fill-mode-both duration-700">
+        <header className="animate-in fade-in-0 slide-in-from-bottom-3 fill-mode-both flex flex-col gap-6 duration-700 lg:col-span-3">
           <div className="flex flex-wrap items-center gap-3">
             <SessionStatusPill status={status} />
             <span className="bg-foreground/15 h-px w-8" aria-hidden />
@@ -739,9 +747,7 @@ function RouteComponent() {
             <JoinAction session={session} accent={accent} />
             <Button
               variant="outline"
-              render={
-                <Link to="/org/$orgId/classes/$classId" params={{ orgId, classId: classId ?? "" }} />
-              }
+              render={<Link to="/org/$orgId/classes/$classId" params={{ orgId, classId: classId ?? "" }} />}
             >
               <SparklesIcon className="size-4" />
               {t("org.session.actions.viewClass")}
@@ -749,7 +755,10 @@ function RouteComponent() {
           </div>
         </header>
 
-        <div className="lg:col-span-2 animate-in fade-in-0 slide-in-from-bottom-3 fill-mode-both duration-700" style={{ animationDelay: "120ms" }}>
+        <div
+          className="animate-in fade-in-0 slide-in-from-bottom-3 fill-mode-both duration-700 lg:col-span-2"
+          style={{ animationDelay: "120ms" }}
+        >
           <CountdownCard parts={parts} status={status} accent={accent} t={t} />
         </div>
       </section>
@@ -757,20 +766,24 @@ function RouteComponent() {
       <section
         className={cn(
           "bg-card border-border grid grid-cols-1 overflow-hidden rounded-2xl border shadow-sm md:grid-cols-4",
-          "dark:bg-card/40 dark:border-0 dark:ring-1 dark:ring-foreground/8 dark:backdrop-blur-sm dark:shadow-none",
+          "dark:bg-card/40 dark:ring-foreground/8 dark:border-0 dark:shadow-none dark:ring-1 dark:backdrop-blur-sm"
         )}
       >
         <MetaCell index={0} label={t("org.session.meta.starts")} value={startStr} />
-        <MetaCell index={1} label={t("org.session.meta.status")} value={t(`status.${status === "live" ? "liveNow" : status}`)} />
+        <MetaCell
+          index={1}
+          label={t("org.session.meta.status")}
+          value={t(`status.${status === "live" ? "liveNow" : status}`)}
+        />
         <MetaCell
           index={2}
           label={t("org.session.meta.countdown")}
           mono
           value={
             parts
-              ? (parts.days > 0
-                  ? `${parts.days}d ${pad(parts.hours)}:${pad(parts.minutes)}:${pad(parts.seconds)}`
-                  : `${pad(parts.hours)}:${pad(parts.minutes)}:${pad(parts.seconds)}`)
+              ? parts.days > 0
+                ? `${parts.days}d ${pad(parts.hours)}:${pad(parts.minutes)}:${pad(parts.seconds)}`
+                : `${pad(parts.hours)}:${pad(parts.minutes)}:${pad(parts.seconds)}`
               : "—"
           }
         />
@@ -781,18 +794,26 @@ function RouteComponent() {
         <section className="flex flex-col gap-4">
           <div className="flex items-end justify-between">
             <Eyebrow>{t("org.session.rooms.eyebrow")}</Eyebrow>
-            <Eyebrow className="hidden md:inline-flex items-center gap-2 text-muted-foreground/70">
+            <Eyebrow className="text-muted-foreground/70 hidden items-center gap-2 md:inline-flex">
               <span className="bg-muted-foreground/30 h-px w-6" />
               {t("org.session.rooms.subtitle")}
             </Eyebrow>
           </div>
-          <div className={cn("grid gap-3 grid-cols-1 sm:grid-cols-2", navGridCols)}>
+          <div className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2", navGridCols)}>
             {navTiles.map((spec, i) => (
               <RoomTile key={spec.key} spec={spec} index={i} total={navCount} accent={accent} />
             ))}
           </div>
         </section>
       ) : null}
+
+      <WorkspaceSection
+        eyebrow={t("org.session.liveWorkspace.eyebrow")}
+        title={t("org.session.liveWorkspace.title")}
+        subtitle={t("org.session.liveWorkspace.subtitle")}
+        tabs={liveTabs}
+        accent={accent}
+      />
 
       <WorkspaceSection
         eyebrow={t("org.session.workspace.eyebrow")}

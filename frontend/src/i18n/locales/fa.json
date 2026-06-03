@@ -1558,6 +1558,97 @@
           "practices": "تمرین‌ها",
           "practiceScores": "نمرات تمرین"
         }
+      },
+      "liveWorkspace": {
+        "eyebrow": "",
+        "title": "کلاس زنده",
+        "subtitle": "اتاق‌های زنده و حضور و غیاب این جلسه",
+        "tabs": {
+          "rooms": "اتاق‌ها",
+          "presence": "حضور و غیاب"
+        }
+      },
+      "liveRooms": {
+        "eyebrow": "اتاق زنده",
+        "title": "اتاق‌های زنده جلسه",
+        "newRoom": "اتاق جدید",
+        "startedAt": "شروع",
+        "endedAt": "پایان",
+        "details": "شرکت‌کنندگان و ضبط‌ها",
+        "emptyTitle": "هنوز اتاق زنده‌ای نیست",
+        "emptyHint": "اولین اتاق زنده این جلسه را بسازید.",
+        "emptyHintMember": "هنوز اتاق زنده‌ای ساخته نشده است.",
+        "status": {
+          "created": "زمان‌بندی‌شده",
+          "active": "زنده",
+          "finished": "پایان‌یافته"
+        },
+        "actions": {
+          "start": "شروع",
+          "join": "پیوستن",
+          "end": "پایان",
+          "endSuccess": "اتاق زنده پایان یافت"
+        },
+        "form": {
+          "createTitle": "اتاق زنده جدید",
+          "createDescription": "یک اتاق زنده برای این جلسه بسازید.",
+          "maxParticipants": "حداکثر شرکت‌کننده",
+          "allowMic": "اجازه میکروفون به‌صورت پیش‌فرض",
+          "allowCamera": "اجازه دوربین به‌صورت پیش‌فرض",
+          "allowScreen": "اجازه اشتراک صفحه به‌صورت پیش‌فرض",
+          "autoRecord": "ضبط خودکار",
+          "createSuccess": "اتاق زنده ساخته شد"
+        },
+        "participants": {
+          "empty": "هنوز شرکت‌کننده‌ای نیست",
+          "inRoom": "در اتاق",
+          "left": "خارج شد"
+        },
+        "recordings": {
+          "title": "ضبط‌ها",
+          "start": "شروع ضبط",
+          "recording": "در حال ضبط…",
+          "startSuccess": "ضبط آغاز شد",
+          "deleteSuccess": "ضبط حذف شد",
+          "empty": "هنوز ضبطی نیست",
+          "status": {
+            "started": "در حال ضبط",
+            "completed": "کامل",
+            "failed": "ناموفق"
+          }
+        }
+      },
+      "attendance": {
+        "eyebrow": "حضور و غیاب",
+        "title": "حضور و غیاب",
+        "auto": "خودکار",
+        "manual": "دستی",
+        "emptyTitle": "هنوز رکوردی نیست",
+        "emptyHint": "از یک اتاق زنده به‌صورت خودکار حضور و غیاب بزنید.",
+        "emptyHintMember": "هنوز حضور و غیابی ثبت نشده است.",
+        "status": {
+          "present": "حاضر",
+          "absent": "غایب",
+          "late": "با تاخیر",
+          "excused": "موجه"
+        },
+        "autoMark": {
+          "eyebrow": "ثبت خودکار",
+          "hint": "بر اساس حضور در اتاق زنده، حضور و غیاب را خودکار ثبت کنید.",
+          "room": "اتاق زنده",
+          "roomPlaceholder": "یک اتاق انتخاب کنید",
+          "minMinutes": "حداقل دقیقه",
+          "run": "ثبت خودکار",
+          "success": "{{marked}} ثبت شد، {{skipped}} نادیده گرفته شد"
+        },
+        "form": {
+          "editTitle": "ویرایش حضور و غیاب",
+          "status": "وضعیت",
+          "remarks": "توضیحات",
+          "remarksPlaceholder": "توضیح اختیاری",
+          "updateSuccess": "به‌روزرسانی شد",
+          "deleteSuccess": "حذف شد"
+        }
       }
     },
     "roles": {

@@ -1526,6 +1526,97 @@
           "practices": "Practices",
           "practiceScores": "Practice scores"
         }
+      },
+      "liveWorkspace": {
+        "eyebrow": "",
+        "title": "Live Room",
+        "subtitle": "Live rooms and attendance for this session",
+        "tabs": {
+          "rooms": "Live rooms",
+          "presence": "Presence"
+        }
+      },
+      "liveRooms": {
+        "eyebrow": "Live room",
+        "title": "Session live rooms",
+        "newRoom": "New room",
+        "startedAt": "Started",
+        "endedAt": "Ended",
+        "details": "Participants & recordings",
+        "emptyTitle": "No live rooms yet",
+        "emptyHint": "Create the first live room for this session.",
+        "emptyHintMember": "No live rooms have been created yet.",
+        "status": {
+          "created": "Scheduled",
+          "active": "Live",
+          "finished": "Ended"
+        },
+        "actions": {
+          "start": "Start",
+          "join": "Join",
+          "end": "End",
+          "endSuccess": "Live room ended"
+        },
+        "form": {
+          "createTitle": "New live room",
+          "createDescription": "Create a live room for this session.",
+          "maxParticipants": "Max participants",
+          "allowMic": "Allow mic by default",
+          "allowCamera": "Allow camera by default",
+          "allowScreen": "Allow screen share by default",
+          "autoRecord": "Auto-record",
+          "createSuccess": "Live room created"
+        },
+        "participants": {
+          "empty": "No participants yet",
+          "inRoom": "In room",
+          "left": "Left"
+        },
+        "recordings": {
+          "title": "Recordings",
+          "start": "Start recording",
+          "recording": "Recording…",
+          "startSuccess": "Recording started",
+          "deleteSuccess": "Recording deleted",
+          "empty": "No recordings yet",
+          "status": {
+            "started": "Recording",
+            "completed": "Completed",
+            "failed": "Failed"
+          }
+        }
+      },
+      "attendance": {
+        "eyebrow": "Presence",
+        "title": "Attendance",
+        "auto": "Auto",
+        "manual": "Manual",
+        "emptyTitle": "No attendance yet",
+        "emptyHint": "Auto-mark attendance from a live room.",
+        "emptyHintMember": "No attendance has been recorded yet.",
+        "status": {
+          "present": "Present",
+          "absent": "Absent",
+          "late": "Late",
+          "excused": "Excused"
+        },
+        "autoMark": {
+          "eyebrow": "Auto-mark",
+          "hint": "Mark attendance automatically from who attended a live room.",
+          "room": "Live room",
+          "roomPlaceholder": "Select a room",
+          "minMinutes": "Min minutes",
+          "run": "Auto-mark",
+          "success": "Marked {{marked}}, skipped {{skipped}}"
+        },
+        "form": {
+          "editTitle": "Edit attendance",
+          "status": "Status",
+          "remarks": "Remarks",
+          "remarksPlaceholder": "Optional note",
+          "updateSuccess": "Attendance updated",
+          "deleteSuccess": "Attendance deleted"
+        }
       }
     },
     "roles": {
