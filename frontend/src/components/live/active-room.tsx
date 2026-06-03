@@ -45,7 +45,7 @@ export function ActiveRoom({
       video={choices.videoEnabled ? { deviceId: choices.videoDeviceId } : false}
       onDisconnected={onDisconnect}
       data-lk-theme="default"
-      className="zoora-live flex h-screen flex-col bg-zinc-950 text-zinc-100"
+      className="zoora-live relative flex flex-col overflow-hidden bg-zinc-950 text-zinc-100"
     >
       <RoomShell
         sessionName={sessionName}
