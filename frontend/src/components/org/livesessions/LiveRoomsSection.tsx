@@ -2,7 +2,7 @@ import type { GithubCom4H1RZooraInternalDomainLiveRoom as LiveRoom } from "@/api
 
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
-import { ChevronDownIcon, PlusIcon, RadioIcon, SquareIcon, UsersIcon, VideoIcon } from "lucide-react"
+import { ChevronDownIcon, FilmIcon, PlusIcon, RadioIcon, SquareIcon, UsersIcon, VideoIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import {
   getGetLiveRoomsQueryKey,
   useGetLiveRooms,
+  useGetLiveRoomsIdParticipants,
   usePostLiveRoomsIdEnd,
   usePostLiveRoomsIdStart,
 } from "@/api/live-sessions/live-sessions"
@@ -21,7 +22,6 @@ import { formatSessionDate } from "@/lib/session-status"
 import { cn } from "@/lib/utils"
 
 import { LiveRoomFormDialog } from "./LiveRoomFormDialog"
-import { LiveRoomParticipants } from "./LiveRoomParticipants"
 import { LiveRoomRecordings } from "./LiveRoomRecordings"
 import { useLivesessionPermissions } from "./use-livesession-permissions"
 
@@ -29,6 +29,25 @@ const STATUS_STYLES: Record<string, string> = {
   active: "bg-destructive/10 text-destructive",
   created: "bg-primary/10 text-primary",
   finished: "bg-muted text-muted-foreground",
+}
+
+function ParticipantCountBadge({ roomId, isActive }: { roomId: string; isActive: boolean }) {
+  const { t } = useTranslation()
+  const query = useGetLiveRoomsIdParticipants(
+    roomId,
+    { order_by: "joined_at", order_dir: "desc" },
+    { query: { enabled: !!roomId } }
+  )
+  const items = (query.data?.status === 200 && query.data.data.data?.items) || []
+  const active = items.filter((p) => !p.left_at).length
+  const total = items.length
+  if (query.isPending || total === 0) return null
+  return (
+    <span className="text-muted-foreground inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.2em] uppercase">
+      <UsersIcon className="size-3" />
+      {isActive ? t("org.session.liveRooms.participantsActive", { active, total }) : t("org.session.liveRooms.participantsTotal", { total })}
+    </span>
+  )
 }
 
 interface LiveRoomCardProps {
@@ -89,7 +108,10 @@ function LiveRoomCard({ room, index, canJoin, canManage }: LiveRoomCardProps) {
         >
           <VideoIcon className="size-5" />
         </div>
-        <span className="text-muted-foreground font-mono text-xs tracking-[0.25em]">/{tileNumber}</span>
+        <div className="flex items-center gap-3">
+          <ParticipantCountBadge roomId={room.id ?? ""} isActive={isActive} />
+          <span className="text-muted-foreground font-mono text-xs tracking-[0.25em]">/{tileNumber}</span>
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -159,20 +181,15 @@ function LiveRoomCard({ room, index, canJoin, canManage }: LiveRoomCardProps) {
           render={
             <Button variant="ghost" size="sm" className="w-full justify-between">
               <span className="inline-flex items-center gap-2">
-                <UsersIcon className="size-3.5" />
-                {t("org.session.liveRooms.details")}
+                <FilmIcon className="size-3.5" />
+                {t("org.session.liveRooms.recordingsLabel")}
               </span>
               <ChevronDownIcon className={cn("size-4 transition-transform", open && "rotate-180")} />
             </Button>
           }
         />
         <CollapsibleContent className="flex flex-col gap-4 pt-3">
-          {open ? (
-            <>
-              <LiveRoomParticipants roomId={room.id ?? ""} />
-              <LiveRoomRecordings roomId={room.id ?? ""} isActive={isActive} canManage={canManage} />
-            </>
-          ) : null}
+          {open ? <LiveRoomRecordings roomId={room.id ?? ""} isActive={isActive} canManage={canManage} /> : null}
         </CollapsibleContent>
       </Collapsible>
     </div>
