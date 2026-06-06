@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { useAccess } from "react-access-engine"
 import { toast } from "sonner"
 
 import {
@@ -21,6 +22,7 @@ import {
   useGetClassesIdSessionsSessionIdAttendance,
   usePostClassesIdSessionsSessionIdAttendanceAutoMark,
 } from "@/api/attendance/attendance"
+import { useGetClassesId, useGetClassesIdMembers } from "@/api/classes/classes"
 import { useGetLiveRooms } from "@/api/live-sessions/live-sessions"
 import { Eyebrow } from "@/components/eyebrow"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
@@ -33,6 +35,7 @@ import { getEntityColor, getInitials } from "@/lib/data-table"
 import { cn } from "@/lib/utils"
 
 import { AttendanceEditDialog } from "./AttendanceEditDialog"
+import { AttendanceRoster } from "./AttendanceRoster"
 import { useAttendancePermissions } from "./use-attendance-permissions"
 
 const STATUS_META: Record<string, { style: string; icon: typeof CheckCircle2Icon }> = {
@@ -209,9 +212,22 @@ interface AttendanceSectionProps {
 export function AttendanceSection({ classId, classSessionId }: AttendanceSectionProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const { can, user: accessUser } = useAccess()
   const { canView, canCreate, canEdit, canDelete } = useAttendancePermissions()
   const [editing, setEditing] = useState<Attendance | null>(null)
   const [deleting, setDeleting] = useState<Attendance | null>(null)
+
+  const { data: classData } = useGetClassesId(classId, { query: { enabled: canView && !!classId } })
+  const cls = (classData?.status === 200 && classData.data.data) || undefined
+
+  // Roster visibility mirrors backend canManageClass: classes:update_any OR class owner.
+  const canViewRoster = !!cls && (can("classes:update_any") || (!!cls.user_id && cls.user_id === accessUser.id))
+  const canMark = canCreate || canEdit
+
+  const membersQuery = useGetClassesIdMembers(classId, undefined, {
+    query: { enabled: canView && canViewRoster },
+  })
+  const members = (membersQuery.data?.status === 200 && membersQuery.data.data.data?.items) || []
 
   const query = useGetClassesIdSessionsSessionIdAttendance(
     classId,
@@ -235,6 +251,8 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
 
   if (!canView) return null
 
+  const loading = query.isPending || (canViewRoster && membersQuery.isPending)
+
   return (
     <section id="attendance" className="flex scroll-mt-20 flex-col gap-5">
       <div className="flex flex-col gap-1.5">
@@ -244,12 +262,20 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
 
       {canCreate ? <AutoMarkControl classId={classId} classSessionId={classSessionId} /> : null}
 
-      {query.isPending ? (
+      {loading ? (
         <div className="flex flex-col gap-2">
           <Skeleton className="h-16 w-full rounded-2xl" />
           <Skeleton className="h-16 w-full rounded-2xl" />
           <Skeleton className="h-16 w-full rounded-2xl" />
         </div>
+      ) : canViewRoster ? (
+        <AttendanceRoster
+          classId={classId}
+          classSessionId={classSessionId}
+          members={members}
+          records={records}
+          canMark={canMark}
+        />
       ) : records.length === 0 ? (
         <div className="bg-card ring-foreground/10 flex flex-col items-center gap-3 rounded-2xl px-6 py-16 text-center ring-1">
           <UserCheckIcon className="text-muted-foreground size-8" />
@@ -257,7 +283,7 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
             {t("org.session.attendance.emptyTitle")}
           </h3>
           <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
-            {canCreate ? t("org.session.attendance.emptyHint") : t("org.session.attendance.emptyHintMember")}
+            {t("org.session.attendance.emptyHintMember")}
           </p>
         </div>
       ) : (
