@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -150,6 +151,7 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreateLiveRoomDTO) 
 	room := &domain.LiveRoom{
 		ID:              roomID,
 		ClassSessionID:  dto.ClassSessionID,
+		Name:            strings.TrimSpace(dto.Name),
 		LiveKitRoomName: fmt.Sprintf("session-%s-%s", dto.ClassSessionID.String(), roomID.String()),
 		Status:          domain.LiveRoomStatusCreated,
 		Config:          cfg,

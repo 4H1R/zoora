@@ -33,18 +33,11 @@ const (
 )
 
 type LiveRoomConfig struct {
-	AllowMicDefault         bool       `json:"allow_mic_default"`
-	AllowCameraDefault      bool       `json:"allow_camera_default"`
-	AllowScreenShareDefault bool       `json:"allow_screen_share_default"`
-	AutoRecord              bool       `json:"auto_record"`
-	MaxParticipants         int        `json:"max_participants"`
-	// Name is an optional human-friendly label for the room. Distinct from the
-	// auto-generated LiveKitRoomName. Stored in the jsonb config (no migration).
-	Name string `json:"name"`
-	// ScheduledStartTime is the planned start time when the room is created in
-	// "schedule for later" mode. Nil for rooms started instantly. Stored in the
-	// jsonb config (no migration).
-	ScheduledStartTime *time.Time `json:"scheduled_start_time"`
+	AllowMicDefault         bool `json:"allow_mic_default"`
+	AllowCameraDefault      bool `json:"allow_camera_default"`
+	AllowScreenShareDefault bool `json:"allow_screen_share_default"`
+	AutoRecord              bool `json:"auto_record"`
+	MaxParticipants         int  `json:"max_participants"`
 }
 
 func DefaultLiveRoomConfig() LiveRoomConfig {
@@ -61,6 +54,7 @@ type LiveRoom struct {
 	ID              uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
 	ClassSessionID  uuid.UUID      `gorm:"type:uuid;not null;index" json:"class_session_id"`
 	ClassSession    *ClassSession  `gorm:"foreignKey:ClassSessionID" json:"class_session,omitempty"`
+	Name            string         `gorm:"type:varchar(255);not null;default:''" json:"name"`
 	LiveKitRoomName string         `gorm:"column:livekit_room_name;type:varchar(255);not null;uniqueIndex" json:"livekit_room_name"`
 	Status          LiveRoomStatus `gorm:"type:varchar(20);not null;default:'created'" json:"status"`
 	Config          LiveRoomConfig `gorm:"type:jsonb;not null;serializer:json" json:"config"`
@@ -102,6 +96,7 @@ type LiveRecording struct {
 
 type CreateLiveRoomDTO struct {
 	ClassSessionID uuid.UUID      `json:"class_session_id" binding:"required"`
+	Name           string         `json:"name" binding:"omitempty,max=255"`
 	Config         LiveRoomConfig `json:"config"`
 }
 

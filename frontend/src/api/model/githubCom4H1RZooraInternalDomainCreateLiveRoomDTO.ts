@@ -10,4 +10,6 @@ import type { GithubCom4H1RZooraInternalDomainLiveRoomConfig } from './githubCom
 export interface GithubCom4H1RZooraInternalDomainCreateLiveRoomDTO {
   class_session_id: string;
   config?: GithubCom4H1RZooraInternalDomainLiveRoomConfig;
+  /** @maxLength 255 */
+  name?: string;
 }

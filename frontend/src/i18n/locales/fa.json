@@ -1600,7 +1600,14 @@
           "allowCamera": "اجازه دوربین به‌صورت پیش‌فرض",
           "allowScreen": "اجازه اشتراک صفحه به‌صورت پیش‌فرض",
           "autoRecord": "ضبط خودکار",
-          "createSuccess": "اتاق زنده ساخته شد"
+          "createSuccess": "اتاق زنده ساخته شد",
+          "name": "نام اتاق",
+          "namePlaceholder": "نام اختیاری",
+          "mode": "زمان",
+          "scheduleLater": "زمان‌بندی برای بعد",
+          "startNow": "شروع فوری",
+          "createAndStart": "ایجاد و شروع",
+          "createError": "ایجاد اتاق زنده ناموفق بود. دوباره تلاش کنید."
         },
         "participants": {
           "empty": "هنوز شرکت‌کننده‌ای نیست",

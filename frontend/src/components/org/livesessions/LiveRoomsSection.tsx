@@ -129,8 +129,8 @@ function LiveRoomCard({ room, index, canJoin, canManage }: LiveRoomCardProps) {
           ) : null}
           {t(`org.session.liveRooms.status.${status}`)}
         </span>
-        <h3 className="line-clamp-1 font-mono text-sm tracking-tight">
-          {room.livekit_room_name ?? room.id?.slice(0, 8).toUpperCase() ?? "—"}
+        <h3 className="line-clamp-1 text-sm font-medium tracking-tight">
+          {room.name?.trim() || room.livekit_room_name || room.id?.slice(0, 8).toUpperCase() || "—"}
         </h3>
       </div>
 

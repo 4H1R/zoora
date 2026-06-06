@@ -1568,7 +1568,14 @@
           "allowCamera": "Allow camera by default",
           "allowScreen": "Allow screen share by default",
           "autoRecord": "Auto-record",
-          "createSuccess": "Live room created"
+          "createSuccess": "Live room created",
+          "name": "Room name",
+          "namePlaceholder": "Optional name",
+          "mode": "When",
+          "scheduleLater": "Schedule for later",
+          "startNow": "Start now",
+          "createAndStart": "Create & start",
+          "createError": "Could not create the live room. Try again."
         },
         "participants": {
           "empty": "No participants yet",

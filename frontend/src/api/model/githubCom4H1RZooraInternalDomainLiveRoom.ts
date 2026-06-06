@@ -19,6 +19,7 @@ export interface GithubCom4H1RZooraInternalDomainLiveRoom {
   host_last_seen_at?: string;
   id?: string;
   livekit_room_name?: string;
+  name?: string;
   status?: GithubCom4H1RZooraInternalDomainLiveRoomStatus;
   updated_at?: string;
 }
