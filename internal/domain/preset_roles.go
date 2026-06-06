@@ -43,6 +43,9 @@ var StaffPermissions = []PermissionName{
 	PermPracticesView, PermPracticesViewAny, PermPracticesCreate, PermPracticesCreateAny,
 	PermPracticesUpdate, PermPracticesUpdateAny, PermPracticesDelete, PermPracticesDeleteAny,
 	PermPracticesSubmit, PermPracticesGrade,
+	// Attendance
+	PermAttendanceView, PermAttendanceViewAny, PermAttendanceCreate, PermAttendanceCreateAny,
+	PermAttendanceUpdate, PermAttendanceUpdateAny, PermAttendanceDelete, PermAttendanceDeleteAny,
 }
 
 var TeacherPermissions = []PermissionName{
@@ -54,4 +57,5 @@ var TeacherPermissions = []PermissionName{
 	PermQuizzesCreate, PermQuizzesUpdate, PermQuizzesView,
 	PermQuestionBanksCreate, PermQuestionBanksUpdate, PermQuestionBanksView,
 	PermPollsCreate, PermPollsUpdate, PermPollsView,
+	PermAttendanceView, PermAttendanceCreate, PermAttendanceUpdate, PermAttendanceDelete,
 }
