@@ -200,3 +200,63 @@ func TestBulkMark_CreatesWhenMissing(t *testing.T) {
 	repo.AssertCalled(t, "Create", mock.Anything, mock.AnythingOfType("*domain.Attendance"))
 	repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
 }
+
+func TestMark_UpdatesExisting(t *testing.T) {
+	ownerID := uuid.New()
+	classID := uuid.New()
+	sessionID := uuid.New()
+	userID := uuid.New()
+	orgID := uuid.New()
+
+	repo := &mAttRepo{}
+	classes := &mClassRepo{}
+	sessions := &mSessRepo{}
+
+	classes.On("FindByID", mock.Anything, classID).
+		Return(&domain.Class{ID: classID, OrganizationID: orgID, UserID: ownerID}, nil)
+	sessions.On("FindByID", mock.Anything, sessionID).
+		Return(&domain.ClassSession{ID: sessionID, ClassID: classID}, nil)
+	existing := &domain.Attendance{ID: uuid.New(), ClassSessionID: sessionID, UserID: userID, Status: domain.AttendanceStatusAbsent}
+	repo.On("FindBySessionAndUser", mock.Anything, sessionID, userID).Return(existing, nil)
+	repo.On("Update", mock.Anything, mock.AnythingOfType("*domain.Attendance")).Return(nil)
+
+	svc := newSvc(repo, classes, sessions)
+	dto := domain.CreateAttendanceDTO{UserID: userID, Status: domain.AttendanceStatusPresent}
+
+	a, err := svc.Mark(ownerCtx(ownerID), classID, sessionID, dto)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, a)
+	assert.Equal(t, domain.AttendanceStatusPresent, a.Status)
+	repo.AssertCalled(t, "Update", mock.Anything, mock.AnythingOfType("*domain.Attendance"))
+	repo.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+}
+
+func TestMark_CreatesWhenMissing(t *testing.T) {
+	ownerID := uuid.New()
+	classID := uuid.New()
+	sessionID := uuid.New()
+	userID := uuid.New()
+	orgID := uuid.New()
+
+	repo := &mAttRepo{}
+	classes := &mClassRepo{}
+	sessions := &mSessRepo{}
+
+	classes.On("FindByID", mock.Anything, classID).
+		Return(&domain.Class{ID: classID, OrganizationID: orgID, UserID: ownerID}, nil)
+	sessions.On("FindByID", mock.Anything, sessionID).
+		Return(&domain.ClassSession{ID: sessionID, ClassID: classID}, nil)
+	repo.On("FindBySessionAndUser", mock.Anything, sessionID, userID).Return(nil, domain.ErrNotFound)
+	repo.On("Create", mock.Anything, mock.AnythingOfType("*domain.Attendance")).Return(nil)
+
+	svc := newSvc(repo, classes, sessions)
+	dto := domain.CreateAttendanceDTO{UserID: userID, Status: domain.AttendanceStatusPresent}
+
+	a, err := svc.Mark(ownerCtx(ownerID), classID, sessionID, dto)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, a)
+	repo.AssertCalled(t, "Create", mock.Anything, mock.AnythingOfType("*domain.Attendance"))
+	repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+}
