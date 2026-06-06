@@ -56,6 +56,37 @@ func canManageAttendance(caller domain.Caller, class *domain.Class) bool {
 	return caller.UserID == class.UserID
 }
 
+// upsertEntry updates an existing attendance row for (session,user) or creates a
+// new one. Mirrors the dedupe used by AutoMark so re-marking never duplicates.
+func (s *service) upsertEntry(ctx context.Context, class *domain.Class, sessionID uuid.UUID, entry domain.CreateAttendanceDTO) (*domain.Attendance, error) {
+	existing, err := s.repo.FindBySessionAndUser(ctx, sessionID, entry.UserID)
+	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+		return nil, err
+	}
+	if existing != nil {
+		existing.Status = entry.Status
+		existing.Remarks = entry.Remarks
+		existing.IsAutoMarked = entry.IsAutoMarked
+		if err := s.repo.Update(ctx, existing); err != nil {
+			return nil, err
+		}
+		return existing, nil
+	}
+	a := &domain.Attendance{
+		OrganizationID: class.OrganizationID,
+		ClassID:        class.ID,
+		ClassSessionID: sessionID,
+		UserID:         entry.UserID,
+		Status:         entry.Status,
+		IsAutoMarked:   entry.IsAutoMarked,
+		Remarks:        entry.Remarks,
+	}
+	if err := s.repo.Create(ctx, a); err != nil {
+		return nil, err
+	}
+	return a, nil
+}
+
 func (s *service) Mark(ctx context.Context, classID, sessionID uuid.UUID, dto domain.CreateAttendanceDTO) (*domain.Attendance, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
@@ -76,16 +107,8 @@ func (s *service) Mark(ctx context.Context, classID, sessionID uuid.UUID, dto do
 		return nil, domain.ErrNotFound
 	}
 
-	a := &domain.Attendance{
-		OrganizationID: class.OrganizationID,
-		ClassID:        classID,
-		ClassSessionID: sessionID,
-		UserID:         dto.UserID,
-		Status:         dto.Status,
-		IsAutoMarked:   dto.IsAutoMarked,
-		Remarks:        dto.Remarks,
-	}
-	if err := s.repo.Create(ctx, a); err != nil {
+	a, err := s.upsertEntry(ctx, class, sessionID, dto)
+	if err != nil {
 		return nil, err
 	}
 	s.logger.Info("attendance marked",
@@ -120,16 +143,8 @@ func (s *service) BulkMark(ctx context.Context, classID, sessionID uuid.UUID, dt
 
 	var results []domain.Attendance
 	for _, entry := range dto.Entries {
-		a := &domain.Attendance{
-			OrganizationID: class.OrganizationID,
-			ClassID:        classID,
-			ClassSessionID: sessionID,
-			UserID:         entry.UserID,
-			Status:         entry.Status,
-			IsAutoMarked:   entry.IsAutoMarked,
-			Remarks:        entry.Remarks,
-		}
-		if err := s.repo.Create(ctx, a); err != nil {
+		a, err := s.upsertEntry(ctx, class, sessionID, entry)
+		if err != nil {
 			return nil, err
 		}
 		results = append(results, *a)
