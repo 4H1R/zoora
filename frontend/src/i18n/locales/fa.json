@@ -1575,6 +1575,9 @@
         "startedAt": "شروع",
         "endedAt": "پایان",
         "details": "شرکت‌کنندگان و ضبط‌ها",
+        "recordingsLabel": "ضبط‌ها",
+        "participantsActive": "{{active}}/{{total}} در اتاق",
+        "participantsTotal": "{{total}} پیوسته",
         "emptyTitle": "هنوز اتاق زنده‌ای نیست",
         "emptyHint": "اولین اتاق زنده این جلسه را بسازید.",
         "emptyHintMember": "هنوز اتاق زنده‌ای ساخته نشده است.",
@@ -1648,6 +1651,18 @@
           "remarksPlaceholder": "توضیح اختیاری",
           "updateSuccess": "به‌روزرسانی شد",
           "deleteSuccess": "حذف شد"
+        },
+        "roster": {
+          "save": "ذخیره حضور و غیاب",
+          "saving": "در حال ذخیره…",
+          "markAllPresent": "همه حاضر",
+          "markAllAbsent": "همه غایب",
+          "unmarked": "ثبت‌نشده",
+          "unsaved": "{{count}} تغییر ذخیره‌نشده",
+          "saveSuccess": "حضور و غیاب ذخیره شد",
+          "emptyMembers": "هنوز دانش‌آموزی در این کلاس ثبت‌نام نشده است.",
+          "title": "فهرست کلاس",
+          "hint": "برای هر دانش‌آموز وضعیت را انتخاب و سپس ذخیره کنید."
         }
       }
     },
@@ -1757,6 +1772,7 @@
     "checkDevices": "پیش از ورود، دوربین و میکروفن خود را بررسی کنید",
     "connecting": "در حال اتصال",
     "reconnecting": "در حال اتصال مجدد",
+    "peopleCount": "{{count}} نفر",
     "controls": {
       "micOn": "روشن کردن میکروفن",
       "micOff": "بی‌صدا کردن میکروفن",

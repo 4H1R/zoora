@@ -1543,6 +1543,9 @@
         "startedAt": "Started",
         "endedAt": "Ended",
         "details": "Participants & recordings",
+        "recordingsLabel": "Recordings",
+        "participantsActive": "{{active}}/{{total}} in room",
+        "participantsTotal": "{{total}} joined",
         "emptyTitle": "No live rooms yet",
         "emptyHint": "Create the first live room for this session.",
         "emptyHintMember": "No live rooms have been created yet.",
@@ -1616,6 +1619,18 @@
           "remarksPlaceholder": "Optional note",
           "updateSuccess": "Attendance updated",
           "deleteSuccess": "Attendance deleted"
+        },
+        "roster": {
+          "save": "Save attendance",
+          "saving": "Saving…",
+          "markAllPresent": "All present",
+          "markAllAbsent": "All absent",
+          "unmarked": "Unmarked",
+          "unsaved": "{{count}} unsaved",
+          "saveSuccess": "Attendance saved",
+          "emptyMembers": "No students enrolled in this class yet.",
+          "title": "Class roster",
+          "hint": "Tap a status for each student, then save."
         }
       }
     },
@@ -1757,6 +1772,7 @@
     "checkDevices": "Check your camera and microphone before joining",
     "connecting": "Connecting",
     "reconnecting": "Reconnecting",
+    "peopleCount": "{{count}} people",
     "controls": {
       "micOn": "Turn on microphone",
       "micOff": "Mute microphone",
