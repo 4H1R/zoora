@@ -217,7 +217,7 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
   const [editing, setEditing] = useState<Attendance | null>(null)
   const [deleting, setDeleting] = useState<Attendance | null>(null)
 
-  const { data: classData } = useGetClassesId(classId, { query: { enabled: canView && !!classId } })
+  const { data: classData, isPending: classPending } = useGetClassesId(classId, { query: { enabled: canView && !!classId } })
   const cls = (classData?.status === 200 && classData.data.data) || undefined
 
   // Roster visibility mirrors backend canManageClass: classes:update_any OR class owner.
@@ -251,7 +251,7 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
 
   if (!canView) return null
 
-  const loading = query.isPending || (canViewRoster && membersQuery.isPending)
+  const loading = query.isPending || classPending || (canViewRoster && membersQuery.isPending)
 
   return (
     <section id="attendance" className="flex scroll-mt-20 flex-col gap-5">
@@ -283,7 +283,7 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
             {t("org.session.attendance.emptyTitle")}
           </h3>
           <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
-            {t("org.session.attendance.emptyHintMember")}
+            {canCreate ? t("org.session.attendance.emptyHint") : t("org.session.attendance.emptyHintMember")}
           </p>
         </div>
       ) : (

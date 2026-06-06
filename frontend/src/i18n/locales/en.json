@@ -1628,6 +1628,7 @@
           "unmarked": "Unmarked",
           "unsaved": "{{count}} unsaved",
           "saveSuccess": "Attendance saved",
+          "saveError": "Could not save attendance. Try again.",
           "emptyMembers": "No students enrolled in this class yet.",
           "title": "Class roster",
           "hint": "Tap a status for each student, then save."

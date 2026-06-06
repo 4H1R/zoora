@@ -57,6 +57,9 @@ export function AttendanceRoster({ classId, classSessionId, members, records, ca
           queryKey: getGetClassesIdSessionsSessionIdAttendanceQueryKey(classId, classSessionId),
         })
       },
+      onError: () => {
+        toast.error(t("org.session.attendance.roster.saveError"))
+      },
     },
   })
 
@@ -147,7 +150,7 @@ export function AttendanceRoster({ classId, classSessionId, members, records, ca
                       type="button"
                       disabled={!canMark}
                       title={t(`org.session.attendance.status.${seg.value}`)}
-                      onClick={() => canMark && setPending((p) => ({ ...p, [userId]: seg.value }))}
+                      onClick={() => canMark && userId && setPending((p) => ({ ...p, [userId]: seg.value }))}
                       className={cn(
                         "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition-colors",
                         isOn ? seg.active : "text-muted-foreground hover:text-foreground",
