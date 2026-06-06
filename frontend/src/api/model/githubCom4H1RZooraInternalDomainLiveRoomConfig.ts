@@ -12,4 +12,11 @@ export interface GithubCom4H1RZooraInternalDomainLiveRoomConfig {
   allow_screen_share_default?: boolean;
   auto_record?: boolean;
   max_participants?: number;
+  /** Name is an optional human-friendly label for the room. Distinct from the
+  auto-generated LiveKitRoomName. Stored in the jsonb config (no migration). */
+  name?: string;
+  /** ScheduledStartTime is the planned start time when the room is created in
+  "schedule for later" mode. Nil for rooms started instantly. Stored in the
+  jsonb config (no migration). */
+  scheduled_start_time?: string;
 }

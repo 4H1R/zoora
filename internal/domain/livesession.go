@@ -33,11 +33,18 @@ const (
 )
 
 type LiveRoomConfig struct {
-	AllowMicDefault         bool `json:"allow_mic_default"`
-	AllowCameraDefault      bool `json:"allow_camera_default"`
-	AllowScreenShareDefault bool `json:"allow_screen_share_default"`
-	AutoRecord              bool `json:"auto_record"`
-	MaxParticipants         int  `json:"max_participants"`
+	AllowMicDefault         bool       `json:"allow_mic_default"`
+	AllowCameraDefault      bool       `json:"allow_camera_default"`
+	AllowScreenShareDefault bool       `json:"allow_screen_share_default"`
+	AutoRecord              bool       `json:"auto_record"`
+	MaxParticipants         int        `json:"max_participants"`
+	// Name is an optional human-friendly label for the room. Distinct from the
+	// auto-generated LiveKitRoomName. Stored in the jsonb config (no migration).
+	Name string `json:"name"`
+	// ScheduledStartTime is the planned start time when the room is created in
+	// "schedule for later" mode. Nil for rooms started instantly. Stored in the
+	// jsonb config (no migration).
+	ScheduledStartTime *time.Time `json:"scheduled_start_time"`
 }
 
 func DefaultLiveRoomConfig() LiveRoomConfig {

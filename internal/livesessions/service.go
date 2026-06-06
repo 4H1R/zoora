@@ -141,7 +141,9 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreateLiveRoomDTO) 
 
 	cfg := dto.Config
 	if cfg.MaxParticipants <= 0 {
-		cfg = domain.DefaultLiveRoomConfig()
+		// Only backfill the participant cap; preserve caller-supplied fields
+		// such as Name and ScheduledStartTime.
+		cfg.MaxParticipants = domain.DefaultLiveRoomConfig().MaxParticipants
 	}
 
 	roomID := uuid.New()
