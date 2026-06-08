@@ -38,6 +38,7 @@ import { Route as AuthOrgOrgIdUsersIndexRouteImport } from './routes/_auth/org/$
 import { Route as AuthOrgOrgIdRolesIndexRouteImport } from './routes/_auth/org/$orgId/roles/index'
 import { Route as AuthOrgOrgIdMediasIndexRouteImport } from './routes/_auth/org/$orgId/medias/index'
 import { Route as AuthOrgOrgIdClassesIndexRouteImport } from './routes/_auth/org/$orgId/classes/index'
+import { Route as AuthOrgOrgIdOfflinesOfflineIdRouteImport } from './routes/_auth/org/$orgId/offlines/$offlineId'
 import { Route as AuthOrgOrgIdClassesClassIdRouteImport } from './routes/_auth/org/$orgId/classes/$classId'
 import { Route as AdminAdminClassesClassIdSessionsRouteImport } from './routes/_admin/admin/classes/$classId/sessions'
 import { Route as AdminAdminClassesClassIdQuizzesRouteImport } from './routes/_admin/admin/classes/$classId/quizzes'
@@ -202,6 +203,12 @@ const AuthOrgOrgIdClassesIndexRoute =
     path: '/classes/',
     getParentRoute: () => AuthOrgOrgIdRoute,
   } as any)
+const AuthOrgOrgIdOfflinesOfflineIdRoute =
+  AuthOrgOrgIdOfflinesOfflineIdRouteImport.update({
+    id: '/offlines/$offlineId',
+    path: '/offlines/$offlineId',
+    getParentRoute: () => AuthOrgOrgIdRoute,
+  } as any)
 const AuthOrgOrgIdClassesClassIdRoute =
   AuthOrgOrgIdClassesClassIdRouteImport.update({
     id: '/classes/$classId',
@@ -309,6 +316,7 @@ export interface FileRoutesByFullPath {
   '/admin/classes/$classId/quizzes': typeof AdminAdminClassesClassIdQuizzesRoute
   '/admin/classes/$classId/sessions': typeof AdminAdminClassesClassIdSessionsRoute
   '/org/$orgId/classes/$classId': typeof AuthOrgOrgIdClassesClassIdRoute
+  '/org/$orgId/offlines/$offlineId': typeof AuthOrgOrgIdOfflinesOfflineIdRoute
   '/org/$orgId/classes/': typeof AuthOrgOrgIdClassesIndexRoute
   '/org/$orgId/medias/': typeof AuthOrgOrgIdMediasIndexRoute
   '/org/$orgId/roles/': typeof AuthOrgOrgIdRolesIndexRoute
@@ -349,6 +357,7 @@ export interface FileRoutesByTo {
   '/admin/classes/$classId/quizzes': typeof AdminAdminClassesClassIdQuizzesRoute
   '/admin/classes/$classId/sessions': typeof AdminAdminClassesClassIdSessionsRoute
   '/org/$orgId/classes/$classId': typeof AuthOrgOrgIdClassesClassIdRoute
+  '/org/$orgId/offlines/$offlineId': typeof AuthOrgOrgIdOfflinesOfflineIdRoute
   '/org/$orgId/classes': typeof AuthOrgOrgIdClassesIndexRoute
   '/org/$orgId/medias': typeof AuthOrgOrgIdMediasIndexRoute
   '/org/$orgId/roles': typeof AuthOrgOrgIdRolesIndexRoute
@@ -393,6 +402,7 @@ export interface FileRoutesById {
   '/_admin/admin/classes/$classId/quizzes': typeof AdminAdminClassesClassIdQuizzesRoute
   '/_admin/admin/classes/$classId/sessions': typeof AdminAdminClassesClassIdSessionsRoute
   '/_auth/org/$orgId/classes/$classId': typeof AuthOrgOrgIdClassesClassIdRoute
+  '/_auth/org/$orgId/offlines/$offlineId': typeof AuthOrgOrgIdOfflinesOfflineIdRoute
   '/_auth/org/$orgId/classes/': typeof AuthOrgOrgIdClassesIndexRoute
   '/_auth/org/$orgId/medias/': typeof AuthOrgOrgIdMediasIndexRoute
   '/_auth/org/$orgId/roles/': typeof AuthOrgOrgIdRolesIndexRoute
@@ -435,6 +445,7 @@ export interface FileRouteTypes {
     | '/admin/classes/$classId/quizzes'
     | '/admin/classes/$classId/sessions'
     | '/org/$orgId/classes/$classId'
+    | '/org/$orgId/offlines/$offlineId'
     | '/org/$orgId/classes/'
     | '/org/$orgId/medias/'
     | '/org/$orgId/roles/'
@@ -475,6 +486,7 @@ export interface FileRouteTypes {
     | '/admin/classes/$classId/quizzes'
     | '/admin/classes/$classId/sessions'
     | '/org/$orgId/classes/$classId'
+    | '/org/$orgId/offlines/$offlineId'
     | '/org/$orgId/classes'
     | '/org/$orgId/medias'
     | '/org/$orgId/roles'
@@ -518,6 +530,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/classes/$classId/quizzes'
     | '/_admin/admin/classes/$classId/sessions'
     | '/_auth/org/$orgId/classes/$classId'
+    | '/_auth/org/$orgId/offlines/$offlineId'
     | '/_auth/org/$orgId/classes/'
     | '/_auth/org/$orgId/medias/'
     | '/_auth/org/$orgId/roles/'
@@ -740,6 +753,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthOrgOrgIdClassesIndexRouteImport
       parentRoute: typeof AuthOrgOrgIdRoute
     }
+    '/_auth/org/$orgId/offlines/$offlineId': {
+      id: '/_auth/org/$orgId/offlines/$offlineId'
+      path: '/offlines/$offlineId'
+      fullPath: '/org/$orgId/offlines/$offlineId'
+      preLoaderRoute: typeof AuthOrgOrgIdOfflinesOfflineIdRouteImport
+      parentRoute: typeof AuthOrgOrgIdRoute
+    }
     '/_auth/org/$orgId/classes/$classId': {
       id: '/_auth/org/$orgId/classes/$classId'
       path: '/classes/$classId'
@@ -891,6 +911,7 @@ interface AuthOrgOrgIdRouteChildren {
   AuthOrgOrgIdDashboardRoute: typeof AuthOrgOrgIdDashboardRoute
   AuthOrgOrgIdSettingsRoute: typeof AuthOrgOrgIdSettingsRoute
   AuthOrgOrgIdClassesClassIdRoute: typeof AuthOrgOrgIdClassesClassIdRoute
+  AuthOrgOrgIdOfflinesOfflineIdRoute: typeof AuthOrgOrgIdOfflinesOfflineIdRoute
   AuthOrgOrgIdClassesIndexRoute: typeof AuthOrgOrgIdClassesIndexRoute
   AuthOrgOrgIdMediasIndexRoute: typeof AuthOrgOrgIdMediasIndexRoute
   AuthOrgOrgIdRolesIndexRoute: typeof AuthOrgOrgIdRolesIndexRoute
@@ -904,6 +925,7 @@ const AuthOrgOrgIdRouteChildren: AuthOrgOrgIdRouteChildren = {
   AuthOrgOrgIdDashboardRoute: AuthOrgOrgIdDashboardRoute,
   AuthOrgOrgIdSettingsRoute: AuthOrgOrgIdSettingsRoute,
   AuthOrgOrgIdClassesClassIdRoute: AuthOrgOrgIdClassesClassIdRoute,
+  AuthOrgOrgIdOfflinesOfflineIdRoute: AuthOrgOrgIdOfflinesOfflineIdRoute,
   AuthOrgOrgIdClassesIndexRoute: AuthOrgOrgIdClassesIndexRoute,
   AuthOrgOrgIdMediasIndexRoute: AuthOrgOrgIdMediasIndexRoute,
   AuthOrgOrgIdRolesIndexRoute: AuthOrgOrgIdRolesIndexRoute,
