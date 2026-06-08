@@ -1223,6 +1223,31 @@
       "eyebrow": "Class session",
       "backToClass": "Back to class",
       "footnote": "Session timeline",
+      "nav": {
+        "overview": "Overview",
+        "live": "Live Rooms",
+        "quizzes": "Quizzes",
+        "practices": "Practices",
+        "recordings": "Recordings"
+      },
+      "overview": {
+        "stats": {
+          "live": "Live rooms",
+          "quizzes": "Quizzes",
+          "practices": "Practices",
+          "offline": "Offline"
+        },
+        "units": {
+          "rooms_one": "live room",
+          "rooms_other": "live rooms",
+          "quizzes_one": "quiz",
+          "quizzes_other": "quizzes",
+          "practices_one": "practice",
+          "practices_other": "practices",
+          "recordings_one": "recording",
+          "recordings_other": "recordings"
+        }
+      },
       "meta": {
         "starts": "Starts",
         "countdown": "Countdown",

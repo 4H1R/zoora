@@ -11,12 +11,15 @@ import {
   ClipboardListIcon,
   DumbbellIcon,
   FilmIcon,
+  LayoutDashboardIcon,
   LibraryIcon,
+  PlusIcon,
   RadioIcon,
   SparklesIcon,
   UserCheckIcon,
   VideoIcon,
 } from "lucide-react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { useGetClassesIdSessionsSessionIdAttendance } from "@/api/attendance/attendance"
@@ -108,6 +111,13 @@ function countdownParts(iso: string | undefined, now: number) {
 
 const pad = (n: number) => String(n).padStart(2, "0")
 
+function countdownLabel(parts: ReturnType<typeof countdownParts>): string {
+  if (!parts) return "—"
+  if (parts.days > 0) return `${parts.days}d ${parts.hours}h`
+  if (parts.hours > 0) return `${parts.hours}h ${pad(parts.minutes)}m`
+  return `${pad(parts.minutes)}m ${pad(parts.seconds)}s`
+}
+
 function itemsCount(payload: unknown): number {
   const p = payload as { status?: number; data?: { data?: { items?: unknown[] } } } | undefined
   if (!p || p.status !== 200) return 0
@@ -120,21 +130,13 @@ function DecorativeBackground({ accent }: { accent: Accent }) {
       <div
         aria-hidden
         className={cn(
-          "pointer-events-none absolute inset-x-0 -top-32 -z-10 h-[480px] bg-gradient-to-b to-transparent opacity-80 blur-3xl dark:opacity-100",
+          "pointer-events-none absolute inset-x-0 -top-32 -z-10 h-[420px] bg-gradient-to-b to-transparent opacity-70 blur-3xl dark:opacity-90",
           accent.glow
         )}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 [background-image:linear-gradient(var(--color-foreground)_1px,transparent_1px),linear-gradient(90deg,var(--color-foreground)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_60%_45%_at_50%_0%,black,transparent_75%)] [background-size:56px_56px] opacity-[0.07] dark:opacity-[0.04]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.025] mix-blend-overlay"
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-        }}
+        className="pointer-events-none absolute inset-0 -z-10 [background-image:linear-gradient(var(--color-foreground)_1px,transparent_1px),linear-gradient(90deg,var(--color-foreground)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_60%_40%_at_50%_0%,black,transparent_75%)] [background-size:56px_56px] opacity-[0.06] dark:opacity-[0.035]"
       />
     </>
   )
@@ -144,228 +146,33 @@ function Breadcrumb({
   orgId,
   classId,
   className: classLabel,
-  shortId,
   fallback,
 }: {
   orgId: string
   classId: string
   className: string | undefined
-  shortId: string
   fallback: string
 }) {
   return (
-    <div className="animate-in fade-in-0 slide-in-from-top-2 fill-mode-both flex items-center justify-between pt-6 duration-500">
+    <div className="animate-in fade-in-0 slide-in-from-top-2 fill-mode-both flex items-center gap-2 pt-6 font-mono text-xs tracking-[0.25em] uppercase duration-500">
+      <Link
+        to="/org/$orgId/classes"
+        params={{ orgId }}
+        className="text-muted-foreground hover:text-foreground transition-colors"
+      >
+        {fallback}
+      </Link>
+      <span className="text-muted-foreground/40" aria-hidden>
+        /
+      </span>
       <Link
         to="/org/$orgId/classes/$classId"
         params={{ orgId, classId }}
-        className="text-muted-foreground hover:text-foreground group inline-flex items-center gap-2 font-mono text-xs tracking-[0.25em] uppercase transition-colors"
+        className="text-foreground max-w-[22ch] truncate"
       >
-        <ArrowLeftIcon className="size-3.5 transition-transform group-hover:-translate-x-0.5 rtl:group-hover:translate-x-0.5" />
-        <span className="max-w-[18ch] truncate">{classLabel ?? fallback}</span>
+        {classLabel ?? fallback}
       </Link>
-      <span className="text-muted-foreground/70 inline-flex items-center gap-2 font-mono text-xs tracking-[0.25em]">
-        <span className="bg-muted-foreground/30 h-px w-8" />№ {shortId || "—"}
-      </span>
     </div>
-  )
-}
-
-function CountdownCard({
-  parts,
-  status,
-  accent,
-  t,
-}: {
-  parts: ReturnType<typeof countdownParts>
-  status: SessionStatus
-  accent: Accent
-  t: (key: string) => string
-}) {
-  const showDays = (parts?.days ?? 0) > 0
-  const labelKey =
-    status === "live" ? "status.liveNow" : status === "ended" ? "status.ended" : "org.session.meta.countdown"
-
-  return (
-    <div
-      className={cn(
-        "bg-card relative isolate flex flex-col gap-5 overflow-hidden rounded-3xl border p-6 shadow-sm transition-shadow md:p-7",
-        "dark:bg-card/60 dark:shadow-none dark:backdrop-blur-sm",
-        accent.border
-      )}
-    >
-      <div
-        aria-hidden
-        className={cn("pointer-events-none absolute -end-16 -top-24 -z-10 h-64 w-64 rounded-full blur-3xl", accent.bg)}
-      />
-      <div className="flex items-center justify-between">
-        <Eyebrow className={cn(accent.text)}>{t(labelKey)}</Eyebrow>
-        <span className="relative flex size-2">
-          {status === "live" ? (
-            <span
-              className={cn("absolute inline-flex h-full w-full animate-ping rounded-full opacity-75", accent.dot)}
-            />
-          ) : null}
-          <span className={cn("relative inline-flex size-2 rounded-full", accent.dot)} />
-        </span>
-      </div>
-
-      <div className="flex items-baseline gap-2 font-mono tabular-nums">
-        {showDays ? (
-          <>
-            <Segment value={String(parts?.days ?? 0)} label={t("time.daysShort")} accent={accent} />
-            <span className="text-muted-foreground/50 -mt-2 text-3xl font-light">·</span>
-          </>
-        ) : null}
-        <Segment value={pad(parts?.hours ?? 0)} label={t("time.hoursShort")} accent={accent} />
-        <span className="text-muted-foreground/50 -mt-2 text-3xl font-light">:</span>
-        <Segment value={pad(parts?.minutes ?? 0)} label={t("time.minutesShort")} accent={accent} />
-        <span className="text-muted-foreground/50 -mt-2 text-3xl font-light">:</span>
-        <Segment value={pad(parts?.seconds ?? 0)} label={t("time.secondsShort")} accent={accent} muted />
-      </div>
-
-      <div className="border-border mt-1 flex items-center justify-between border-t border-dashed pt-4">
-        <Eyebrow className="text-[10px]">
-          {parts?.isPast ? t("org.session.meta.elapsed") : t("org.session.meta.untilStart")}
-        </Eyebrow>
-        <CalendarClockIcon className={cn("size-3.5", accent.text)} />
-      </div>
-    </div>
-  )
-}
-
-function Segment({ value, label, accent, muted }: { value: string; label: string; accent: Accent; muted?: boolean }) {
-  return (
-    <div className="flex flex-col items-center">
-      <span
-        className={cn(
-          "text-4xl leading-none font-semibold tracking-tight md:text-5xl",
-          muted ? "text-muted-foreground" : accent.text
-        )}
-      >
-        {value}
-      </span>
-      <span className="text-muted-foreground/70 mt-2 font-mono text-[10px] tracking-[0.25em] uppercase">{label}</span>
-    </div>
-  )
-}
-
-function MetaCell({
-  label,
-  value,
-  mono = false,
-  index,
-}: {
-  label: string
-  value: ReactNode
-  mono?: boolean
-  index: number
-}) {
-  return (
-    <div
-      className="border-border animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both flex flex-col gap-2 border-b border-dashed px-5 py-5 md:border-s md:border-b-0 md:py-6 md:first:border-s-0"
-      style={{ animationDelay: `${index * 80}ms`, animationDuration: "500ms" }}
-    >
-      <Eyebrow>{label}</Eyebrow>
-      <span
-        className={cn(
-          "text-foreground text-base leading-tight font-medium md:text-lg",
-          mono && "font-mono tabular-nums"
-        )}
-      >
-        {value}
-      </span>
-    </div>
-  )
-}
-
-type TileSpec = {
-  key: string
-  label: string
-  count: number
-  loading: boolean
-  icon: ReactNode
-  href: string
-}
-
-function RoomTile({ spec, index, total, accent }: { spec: TileSpec; index: number; total: number; accent: Accent }) {
-  const tileNumber = String(index + 1).padStart(2, "0")
-  const totalStr = String(total).padStart(2, "0")
-  const isAnchor = spec.href.startsWith("#")
-  const className = cn(
-    "group/tile bg-card text-card-foreground border-border relative isolate flex h-full min-h-[180px] flex-col justify-between overflow-hidden rounded-2xl border p-5 shadow-sm transition-all duration-300",
-    "hover:-translate-y-1 hover:shadow-lg hover:border-foreground/25",
-    "dark:shadow-none dark:ring-1 dark:ring-foreground/8 dark:border-0 dark:hover:ring-foreground/30 dark:hover:shadow-xl dark:hover:shadow-foreground/[0.04]",
-    "animate-in fade-in-0 slide-in-from-bottom-3 fill-mode-both"
-  )
-
-  const inner = (
-    <>
-      <div
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute inset-0 -z-10 opacity-0 transition-opacity duration-500 group-hover/tile:opacity-100",
-          "bg-[radial-gradient(circle_at_var(--mx,80%)_var(--my,20%),var(--color-primary)/10%,transparent_55%)]"
-        )}
-      />
-      <div
-        aria-hidden
-        className={cn(
-          "via-foreground/30 absolute inset-x-5 top-0 -z-10 h-px scale-x-0 bg-gradient-to-r from-transparent to-transparent transition-transform duration-500 group-hover/tile:scale-x-100"
-        )}
-      />
-      <div className="flex items-start justify-between">
-        <div
-          className={cn(
-            "bg-muted text-foreground/80 group-hover/tile:text-foreground flex size-11 items-center justify-center rounded-xl transition-colors",
-            "group-hover/tile:bg-primary/10"
-          )}
-        >
-          {spec.icon}
-        </div>
-        <span className="text-muted-foreground/60 font-mono text-[10px] tracking-[0.3em]">
-          {tileNumber}
-          <span className="opacity-50">/{totalStr}</span>
-        </span>
-      </div>
-      <div className="mt-6 flex items-end justify-between gap-3">
-        <div className="flex flex-col gap-2">
-          <Eyebrow className="text-[10px]">{spec.label}</Eyebrow>
-          {spec.loading ? (
-            <Skeleton className="h-10 w-16" />
-          ) : (
-            <span className="text-4xl font-semibold tracking-tight tabular-nums md:text-5xl">{spec.count}</span>
-          )}
-        </div>
-        <span
-          className={cn(
-            "text-muted-foreground group-hover/tile:bg-foreground group-hover/tile:text-background inline-flex size-8 items-center justify-center rounded-full transition-all group-hover/tile:translate-x-1 rtl:group-hover/tile:-translate-x-1",
-            accent.text
-          )}
-        >
-          <span className="rtl:rotate-180" aria-hidden>
-            →
-          </span>
-        </span>
-      </div>
-    </>
-  )
-
-  const style: React.CSSProperties = {
-    animationDelay: `${index * 70}ms`,
-    animationDuration: "500ms",
-  }
-
-  if (isAnchor) {
-    return (
-      <a href={spec.href} className={className} style={style}>
-        {inner}
-      </a>
-    )
-  }
-  return (
-    <Link to={spec.href} className={className} style={style}>
-      {inner}
-    </Link>
   )
 }
 
@@ -416,7 +223,228 @@ function JoinAction({ session, accent }: { session: Session; accent: Accent }) {
   )
 }
 
-type WorkspaceTab = {
+function SessionHeader({
+  session,
+  status,
+  accent,
+  classId,
+  orgId,
+  shortId,
+  t,
+}: {
+  session: Session
+  status: SessionStatus
+  accent: Accent
+  classId: string
+  orgId: string
+  shortId: string
+  t: (key: string) => string
+}) {
+  const statusLabel = t(`status.${status === "live" ? "liveNow" : status}`)
+  return (
+    <header
+      className={cn(
+        "animate-in fade-in-0 slide-in-from-bottom-3 fill-mode-both bg-card relative isolate overflow-hidden rounded-3xl border p-7 shadow-sm duration-500 md:p-9",
+        "dark:bg-card/50 dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/8 dark:backdrop-blur-sm",
+        accent.border
+      )}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 [background-image:linear-gradient(var(--color-foreground)_1px,transparent_1px),linear-gradient(90deg,var(--color-foreground)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_70%_90%_at_85%_-10%,black,transparent_70%)] [background-size:40px_40px] opacity-[0.05]"
+      />
+      <div
+        aria-hidden
+        className={cn("pointer-events-none absolute -end-24 -top-28 -z-10 h-72 w-72 rounded-full blur-3xl", accent.bg)}
+      />
+
+      <div className="flex items-center justify-between gap-3">
+        <Link
+          to="/org/$orgId/classes/$classId"
+          params={{ orgId, classId }}
+          className="text-muted-foreground hover:text-foreground group inline-flex items-center gap-2 font-mono text-xs tracking-[0.25em] uppercase transition-colors"
+        >
+          <ArrowLeftIcon className="size-3.5 transition-transform group-hover:-translate-x-0.5 rtl:rotate-180 rtl:group-hover:translate-x-0.5" />
+          {t("org.session.backToClass")}
+        </Link>
+        <span className="text-muted-foreground/70 inline-flex items-center gap-2 font-mono text-xs tracking-[0.25em]">
+          <span className="bg-muted-foreground/30 h-px w-8" />№ {shortId || "—"}
+        </span>
+      </div>
+
+      <div className="mt-8 flex flex-col gap-4">
+        <div className="flex flex-wrap items-center gap-2.5 font-mono text-xs tracking-[0.25em] uppercase">
+          {status === "live" ? (
+            <SessionStatusPill status={status} size="sm" />
+          ) : (
+            <span className={cn("font-semibold", accent.text)}>{statusLabel}</span>
+          )}
+          <span className="text-muted-foreground/40" aria-hidden>
+            —
+          </span>
+          <span className="text-muted-foreground">{t("org.session.eyebrow")}</span>
+        </div>
+
+        <h1 className="max-w-3xl text-4xl leading-[1.05] font-semibold tracking-tight text-balance md:text-5xl">
+          {session.name}
+        </h1>
+
+        {session.description ? (
+          <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">{session.description}</p>
+        ) : null}
+      </div>
+
+      <div className="mt-7 flex flex-wrap items-center gap-3">
+        <JoinAction session={session} accent={accent} />
+        <Button
+          variant="outline"
+          render={<Link to="/org/$orgId/classes/$classId" params={{ orgId, classId }} />}
+        >
+          <SparklesIcon className="size-4" />
+          {t("org.session.actions.viewClass")}
+        </Button>
+      </div>
+    </header>
+  )
+}
+
+function StatCell({
+  label,
+  value,
+  loading,
+  index,
+  accent,
+  highlight,
+}: {
+  label: string
+  value: ReactNode
+  loading?: boolean
+  index: number
+  accent: Accent
+  highlight?: boolean
+}) {
+  return (
+    <div
+      className="border-border animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both flex flex-col gap-3 border-b border-dashed px-5 py-5 md:border-s md:border-b-0 md:first:border-s-0"
+      style={{ animationDelay: `${index * 60}ms`, animationDuration: "450ms" }}
+    >
+      <Eyebrow className="text-[10px]">{label}</Eyebrow>
+      {loading ? (
+        <Skeleton className="h-8 w-14" />
+      ) : (
+        <span
+          className={cn(
+            "font-mono text-3xl leading-none font-semibold tracking-tight tabular-nums md:text-4xl",
+            highlight ? accent.text : "text-foreground"
+          )}
+        >
+          {value}
+        </span>
+      )}
+    </div>
+  )
+}
+
+type Surface = {
+  key: string
+  eyebrow: string
+  title: string
+  icon: ReactNode
+  count: number
+  loading: boolean
+  emptyHint: string
+  canCreate: boolean
+  newLabel: string
+  unitKey: string
+}
+
+function SummaryCard({
+  surface,
+  index,
+  accent,
+  onOpen,
+  t,
+}: {
+  surface: Surface
+  index: number
+  accent: Accent
+  onOpen: () => void
+  t: (key: string, opts?: Record<string, unknown>) => string
+}) {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          onOpen()
+        }
+      }}
+      className={cn(
+        "group/card bg-card text-card-foreground border-border animate-in fade-in-0 slide-in-from-bottom-3 fill-mode-both relative isolate flex cursor-pointer flex-col gap-4 overflow-hidden rounded-2xl border p-5 shadow-sm transition-all duration-300",
+        "hover:-translate-y-0.5 hover:shadow-lg hover:border-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+        "dark:shadow-none dark:ring-1 dark:ring-foreground/8 dark:border-0 dark:hover:ring-foreground/30"
+      )}
+      style={{ animationDelay: `${index * 70}ms`, animationDuration: "450ms" }}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,var(--color-primary)/8%,transparent_60%)] opacity-0 transition-opacity group-hover/card:opacity-100"
+      />
+
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <div className="bg-muted text-foreground/80 group-hover/card:bg-primary/10 group-hover/card:text-foreground flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors">
+            {surface.icon}
+          </div>
+          <div className="flex flex-col gap-1">
+            <Eyebrow className="text-[10px]">{surface.eyebrow}</Eyebrow>
+            <h3 className="text-lg font-semibold tracking-tight">{surface.title}</h3>
+          </div>
+        </div>
+        {surface.canCreate ? (
+          <Button
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation()
+              onOpen()
+            }}
+          >
+            <PlusIcon className="size-4" />
+            {surface.newLabel}
+          </Button>
+        ) : null}
+      </div>
+
+      <div className="border-border mt-auto flex items-center justify-between gap-3 border-t border-dashed pt-4">
+        {surface.loading ? (
+          <Skeleton className="h-4 w-40" />
+        ) : surface.count > 0 ? (
+          <span className="text-foreground inline-flex items-center gap-2 text-sm font-medium">
+            <span className={cn("font-mono text-lg font-semibold tabular-nums", accent.text)}>{surface.count}</span>
+            {t(surface.unitKey, { count: surface.count })}
+          </span>
+        ) : (
+          <span className="text-muted-foreground text-sm leading-relaxed">{surface.emptyHint}</span>
+        )}
+        <span
+          className={cn(
+            "text-muted-foreground group-hover/card:bg-foreground group-hover/card:text-background inline-flex size-7 shrink-0 items-center justify-center rounded-full transition-all group-hover/card:translate-x-0.5 rtl:group-hover/card:-translate-x-0.5",
+            accent.text
+          )}
+        >
+          <span className="rtl:rotate-180" aria-hidden>
+            →
+          </span>
+        </span>
+      </div>
+    </div>
+  )
+}
+
+type SubTab = {
   key: string
   label: string
   count: number
@@ -425,88 +453,61 @@ type WorkspaceTab = {
   content: ReactNode
 }
 
-function WorkspaceSection({
-  eyebrow,
-  title,
-  subtitle,
-  tabs,
-  accent,
-}: {
-  eyebrow: string
-  title: string
-  subtitle: string
-  tabs: WorkspaceTab[]
-  accent: Accent
-}) {
+function SubTabs({ tabs, accent }: { tabs: SubTab[]; accent: Accent }) {
   if (tabs.length === 0) return null
-  const count = tabs.length
-  const defaultTab = tabs[0]?.key
+  if (tabs.length === 1) return <div className="flex flex-col gap-6">{tabs[0]!.content}</div>
 
   return (
-    <section className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex flex-col gap-2">
-          <Eyebrow>{eyebrow}</Eyebrow>
-          <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">{title}</h2>
-          <p className="text-muted-foreground max-w-xl text-sm leading-relaxed">{subtitle}</p>
-        </div>
-        <Eyebrow className="text-muted-foreground/70 hidden items-center gap-2 font-mono md:inline-flex">
-          <span className="bg-muted-foreground/30 h-px w-6" />
-          {String(count).padStart(2, "0")} {count === 1 ? "view" : "views"}
-        </Eyebrow>
-      </div>
-
-      {count === 1 ? (
-        <div>{tabs[0]!.content}</div>
-      ) : (
-        <Tabs defaultValue={defaultTab} className="gap-6">
-          <div className="bg-card border-border dark:bg-card/40 dark:ring-foreground/10 rounded-2xl border p-1.5 shadow-sm dark:border-0 dark:shadow-none dark:ring-1">
-            <TabsList variant="line" className="h-auto w-full gap-1 bg-transparent p-0">
-              {tabs.map((tab) => (
-                <TabsTrigger
-                  key={tab.key}
-                  value={tab.key}
-                  className={cn(
-                    "group/wstab flex-1 justify-start gap-2.5 rounded-xl px-4 py-3",
-                    "data-active:bg-muted data-active:text-foreground dark:data-active:bg-foreground/5"
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "bg-muted text-muted-foreground group-data-[active]/wstab:bg-foreground group-data-[active]/wstab:text-background flex size-8 items-center justify-center rounded-lg transition-colors"
-                    )}
-                  >
-                    {tab.icon}
-                  </span>
-                  <span className="flex flex-col items-start gap-0.5">
-                    <span className="text-sm leading-none font-semibold tracking-tight">{tab.label}</span>
-                    <span className="text-muted-foreground inline-flex items-center gap-1 font-mono text-[10px] tabular-nums">
-                      {tab.loading ? (
-                        <Skeleton className="h-3 w-6" />
-                      ) : (
-                        <>
-                          <span
-                            className={cn("size-1 rounded-full", tab.count > 0 ? accent.dot : "bg-muted-foreground/40")}
-                            aria-hidden
-                          />
-                          {tab.count}
-                        </>
-                      )}
-                    </span>
-                  </span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </div>
+    <Tabs defaultValue={tabs[0]?.key} className="gap-6">
+      <div className="bg-card border-border dark:bg-card/40 dark:ring-foreground/10 rounded-2xl border p-1.5 shadow-sm dark:border-0 dark:shadow-none dark:ring-1">
+        <TabsList variant="line" className="h-auto w-full flex-wrap gap-1 bg-transparent p-0">
           {tabs.map((tab) => (
-            <TabsContent key={tab.key} value={tab.key} className="mt-0 flex flex-col gap-6">
-              {tab.content}
-            </TabsContent>
+            <TabsTrigger
+              key={tab.key}
+              value={tab.key}
+              className={cn(
+                "group/wstab flex-1 justify-start gap-2.5 rounded-xl px-4 py-3",
+                "data-active:bg-muted data-active:text-foreground dark:data-active:bg-foreground/5"
+              )}
+            >
+              <span className="bg-muted text-muted-foreground group-data-[active]/wstab:bg-foreground group-data-[active]/wstab:text-background flex size-8 items-center justify-center rounded-lg transition-colors">
+                {tab.icon}
+              </span>
+              <span className="flex flex-col items-start gap-0.5">
+                <span className="text-sm leading-none font-semibold tracking-tight">{tab.label}</span>
+                <span className="text-muted-foreground inline-flex items-center gap-1 font-mono text-[10px] tabular-nums">
+                  {tab.loading ? (
+                    <Skeleton className="h-3 w-6" />
+                  ) : (
+                    <>
+                      <span
+                        className={cn("size-1 rounded-full", tab.count > 0 ? accent.dot : "bg-muted-foreground/40")}
+                        aria-hidden
+                      />
+                      {tab.count}
+                    </>
+                  )}
+                </span>
+              </span>
+            </TabsTrigger>
           ))}
-        </Tabs>
-      )}
-    </section>
+        </TabsList>
+      </div>
+      {tabs.map((tab) => (
+        <TabsContent key={tab.key} value={tab.key} className="mt-0 flex flex-col gap-6">
+          {tab.content}
+        </TabsContent>
+      ))}
+    </Tabs>
   )
+}
+
+type TopTab = {
+  key: string
+  label: string
+  count: number | null
+  loading: boolean
+  content: ReactNode
 }
 
 function RouteComponent() {
@@ -514,13 +515,19 @@ function RouteComponent() {
   const { orgId, classSessionId } = Route.useParams()
   const allowed = useOrgGuard(["classes:view", "classes:view_any"])
   const { canView: canViewBanks } = useBankPermissions()
-  const { canView: canViewQuizzes, canEdit: canGradeQuizzes } = useQuizPermissions()
-  const { canView: canViewLive, canJoin: canJoinLive } = useLivesessionPermissions()
-  const { canView: canViewPractices, canGrade: canGradePractices } = usePracticePermissions()
-  const { canView: canViewOfflines } = useOfflinePermissions()
+  const { canView: canViewQuizzes, canEdit: canGradeQuizzes, canCreate: canCreateQuizzes } = useQuizPermissions()
+  const { canView: canViewLive, canJoin: canJoinLive, canCreate: canCreateLive } = useLivesessionPermissions()
+  const {
+    canView: canViewPractices,
+    canGrade: canGradePractices,
+    canCreate: canCreatePractices,
+  } = usePracticePermissions()
+  const { canView: canViewOfflines, canCreate: canCreateOfflines } = useOfflinePermissions()
   const { canView: canViewAttendance } = useAttendancePermissions()
   const canViewLiveAny = canViewLive || canJoinLive
   const now = useNow(1000)
+
+  const [tab, setTab] = useState("overview")
 
   const {
     data: sessionData,
@@ -558,23 +565,16 @@ function RouteComponent() {
 
   if (sessionPending) {
     return (
-      <div className="flex flex-col gap-10 py-10">
-        <Skeleton className="h-5 w-40" />
-        <div className="grid gap-6 lg:grid-cols-5">
-          <div className="flex flex-col gap-5 lg:col-span-3">
-            <Skeleton className="h-6 w-28" />
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-10 w-2/3" />
-            <Skeleton className="h-11 w-44" />
-          </div>
-          <Skeleton className="h-52 w-full lg:col-span-2" />
-        </div>
-        <Skeleton className="h-24 w-full" />
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Skeleton className="h-44 w-full" />
-          <Skeleton className="h-44 w-full" />
-          <Skeleton className="h-44 w-full" />
-          <Skeleton className="h-44 w-full" />
+      <div className="flex flex-col gap-8 py-10">
+        <Skeleton className="h-5 w-48" />
+        <Skeleton className="h-60 w-full rounded-3xl" />
+        <Skeleton className="h-12 w-full rounded-2xl" />
+        <Skeleton className="h-28 w-full rounded-2xl" />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Skeleton className="h-40 w-full rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
         </div>
       </div>
     )
@@ -598,115 +598,13 @@ function RouteComponent() {
 
   const status = getSessionStatus(session.start_time, now)
   const accent = ACCENTS[status]
-  const startStr = formatSessionDate(session.start_time, i18n.language, "long")
-  const createdStr = formatSessionDate(session.created_at, i18n.language, "long")
   const parts = countdownParts(session.start_time, now)
   const shortId = (session.id ?? "").slice(0, 8).toUpperCase()
-  const classPath = `/org/${orgId}/classes/${classId ?? ""}`
 
-  const navTiles: TileSpec[] = []
+  // Inner sub-tabs per surface — nothing is dropped, just regrouped.
+  const liveSubTabs: SubTab[] = []
   if (canViewLiveAny) {
-    navTiles.push({
-      key: "live",
-      label: t("org.session.rooms.live"),
-      count: itemsCount(liveQ.data),
-      loading: liveQ.isPending,
-      icon: <VideoIcon className="size-5" />,
-      href: "#live-rooms",
-    })
-  }
-  if (canViewPractices) {
-    navTiles.push({
-      key: "practices",
-      label: t("org.session.rooms.practices"),
-      count: itemsCount(practiceQ.data),
-      loading: practiceQ.isPending,
-      icon: <DumbbellIcon className="size-5" />,
-      href: classPath,
-    })
-  }
-  if (canViewOfflines) {
-    navTiles.push({
-      key: "offlines",
-      label: t("org.session.rooms.offlines"),
-      count: itemsCount(offlineQ.data),
-      loading: offlineQ.isPending,
-      icon: <FilmIcon className="size-5" />,
-      href: "#offlines",
-    })
-  }
-  const navCount = navTiles.length
-  const navGridCols = navCount >= 3 ? "md:grid-cols-3" : navCount === 2 ? "md:grid-cols-2" : "md:grid-cols-1"
-
-  const workspaceTabs: WorkspaceTab[] = []
-  if (canViewQuizzes && classId) {
-    workspaceTabs.push({
-      key: "quizzes",
-      label: t("org.session.workspace.tabs.quizzes"),
-      count: itemsCount(quizQ.data),
-      loading: quizQ.isPending,
-      icon: <ClipboardListIcon className="size-4" />,
-      content: <QuizzesSection classId={classId} classSessionId={classSessionId} />,
-    })
-  }
-  if (canGradeQuizzes) {
-    workspaceTabs.push({
-      key: "corrections",
-      label: t("org.session.workspace.tabs.corrections"),
-      count: itemsCount(quizQ.data),
-      loading: quizQ.isPending,
-      icon: <CheckSquareIcon className="size-4" />,
-      content: <QuizCorrectionsSection classSessionId={classSessionId} />,
-    })
-  }
-  if (canViewBanks) {
-    workspaceTabs.push({
-      key: "banks",
-      label: t("org.session.workspace.tabs.banks"),
-      count: itemsCount(banksQ.data),
-      loading: banksQ.isPending,
-      icon: <LibraryIcon className="size-4" />,
-      content: <QuestionBanksSection />,
-    })
-  }
-
-  const practiceTabs: WorkspaceTab[] = []
-  if (canViewPractices) {
-    practiceTabs.push({
-      key: "practices",
-      label: t("org.session.practiceWorkspace.tabs.practices"),
-      count: itemsCount(practiceQ.data),
-      loading: practiceQ.isPending,
-      icon: <DumbbellIcon className="size-4" />,
-      content: <PracticesSection classSessionId={classSessionId} />,
-    })
-  }
-  if (canGradePractices) {
-    practiceTabs.push({
-      key: "practiceScores",
-      label: t("org.session.practiceWorkspace.tabs.practiceScores"),
-      count: itemsCount(practiceQ.data),
-      loading: practiceQ.isPending,
-      icon: <CheckSquareIcon className="size-4" />,
-      content: <PracticeScoresSection classSessionId={classSessionId} />,
-    })
-  }
-
-  const offlineTabs: WorkspaceTab[] = []
-  if (canViewOfflines) {
-    offlineTabs.push({
-      key: "offlines",
-      label: t("org.session.offlineWorkspace.tabs.offlines"),
-      count: itemsCount(offlineQ.data),
-      loading: offlineQ.isPending,
-      icon: <FilmIcon className="size-4" />,
-      content: <OfflinesSection classSessionId={classSessionId} orgId={orgId} />,
-    })
-  }
-
-  const liveTabs: WorkspaceTab[] = []
-  if (canViewLiveAny) {
-    liveTabs.push({
+    liveSubTabs.push({
       key: "rooms",
       label: t("org.session.liveWorkspace.tabs.rooms"),
       count: itemsCount(liveQ.data),
@@ -716,7 +614,7 @@ function RouteComponent() {
     })
   }
   if (canViewAttendance && classId) {
-    liveTabs.push({
+    liveSubTabs.push({
       key: "presence",
       label: t("org.session.liveWorkspace.tabs.presence"),
       count: itemsCount(attendanceQ.data),
@@ -726,131 +624,319 @@ function RouteComponent() {
     })
   }
 
+  const quizSubTabs: SubTab[] = []
+  if (canViewQuizzes && classId) {
+    quizSubTabs.push({
+      key: "quizzes",
+      label: t("org.session.workspace.tabs.quizzes"),
+      count: itemsCount(quizQ.data),
+      loading: quizQ.isPending,
+      icon: <ClipboardListIcon className="size-4" />,
+      content: <QuizzesSection classId={classId} classSessionId={classSessionId} />,
+    })
+  }
+  if (canGradeQuizzes) {
+    quizSubTabs.push({
+      key: "corrections",
+      label: t("org.session.workspace.tabs.corrections"),
+      count: itemsCount(quizQ.data),
+      loading: quizQ.isPending,
+      icon: <CheckSquareIcon className="size-4" />,
+      content: <QuizCorrectionsSection classSessionId={classSessionId} />,
+    })
+  }
+  if (canViewBanks) {
+    quizSubTabs.push({
+      key: "banks",
+      label: t("org.session.workspace.tabs.banks"),
+      count: itemsCount(banksQ.data),
+      loading: banksQ.isPending,
+      icon: <LibraryIcon className="size-4" />,
+      content: <QuestionBanksSection />,
+    })
+  }
+
+  const practiceSubTabs: SubTab[] = []
+  if (canViewPractices) {
+    practiceSubTabs.push({
+      key: "practices",
+      label: t("org.session.practiceWorkspace.tabs.practices"),
+      count: itemsCount(practiceQ.data),
+      loading: practiceQ.isPending,
+      icon: <DumbbellIcon className="size-4" />,
+      content: <PracticesSection classSessionId={classSessionId} />,
+    })
+  }
+  if (canGradePractices) {
+    practiceSubTabs.push({
+      key: "practiceScores",
+      label: t("org.session.practiceWorkspace.tabs.practiceScores"),
+      count: itemsCount(practiceQ.data),
+      loading: practiceQ.isPending,
+      icon: <CheckSquareIcon className="size-4" />,
+      content: <PracticeScoresSection classSessionId={classSessionId} />,
+    })
+  }
+
+  const offlineSubTabs: SubTab[] = []
+  if (canViewOfflines) {
+    offlineSubTabs.push({
+      key: "offlines",
+      label: t("org.session.offlineWorkspace.tabs.offlines"),
+      count: itemsCount(offlineQ.data),
+      loading: offlineQ.isPending,
+      icon: <FilmIcon className="size-4" />,
+      content: <OfflinesSection classSessionId={classSessionId} orgId={orgId} />,
+    })
+  }
+
+  // Overview summary cards.
+  const surfaces: Surface[] = []
+  if (canViewLiveAny) {
+    surfaces.push({
+      key: "live",
+      eyebrow: t("org.session.liveRooms.eyebrow"),
+      title: t("org.session.liveRooms.title"),
+      icon: <VideoIcon className="size-5" />,
+      count: itemsCount(liveQ.data),
+      loading: liveQ.isPending,
+      emptyHint: canCreateLive ? t("org.session.liveRooms.emptyHint") : t("org.session.liveRooms.emptyHintMember"),
+      canCreate: canCreateLive,
+      newLabel: t("org.session.liveRooms.newRoom"),
+      unitKey: "org.session.overview.units.rooms",
+    })
+  }
+  if (canViewQuizzes) {
+    surfaces.push({
+      key: "quizzes",
+      eyebrow: t("org.session.quizzes.eyebrow"),
+      title: t("org.session.quizzes.title"),
+      icon: <ClipboardListIcon className="size-5" />,
+      count: itemsCount(quizQ.data),
+      loading: quizQ.isPending,
+      emptyHint: t("org.session.quizzes.emptyHint"),
+      canCreate: canCreateQuizzes,
+      newLabel: t("org.session.quizzes.newQuiz"),
+      unitKey: "org.session.overview.units.quizzes",
+    })
+  }
+  if (canViewPractices) {
+    surfaces.push({
+      key: "practices",
+      eyebrow: t("org.session.practices.eyebrow"),
+      title: t("org.session.practices.title"),
+      icon: <DumbbellIcon className="size-5" />,
+      count: itemsCount(practiceQ.data),
+      loading: practiceQ.isPending,
+      emptyHint: canCreatePractices
+        ? t("org.session.practices.emptyHint")
+        : t("org.session.practices.emptyHintMember"),
+      canCreate: canCreatePractices,
+      newLabel: t("org.session.practices.newPractice"),
+      unitKey: "org.session.overview.units.practices",
+    })
+  }
+  if (canViewOfflines) {
+    surfaces.push({
+      key: "recordings",
+      eyebrow: t("org.session.offlines.eyebrow"),
+      title: t("org.session.offlines.title"),
+      icon: <FilmIcon className="size-5" />,
+      count: itemsCount(offlineQ.data),
+      loading: offlineQ.isPending,
+      emptyHint: canCreateOfflines
+        ? t("org.session.offlines.emptyHint")
+        : t("org.session.offlines.emptyHintMember"),
+      canCreate: canCreateOfflines,
+      newLabel: t("org.session.offlines.newOffline"),
+      unitKey: "org.session.overview.units.recordings",
+    })
+  }
+
+  // Top-level tabs.
+  const topTabs: TopTab[] = [
+    {
+      key: "overview",
+      label: t("org.session.nav.overview"),
+      count: null,
+      loading: false,
+      content: (
+        <div className="flex flex-col gap-8">
+          <section
+            className={cn(
+              "bg-card border-border grid grid-cols-2 overflow-hidden rounded-2xl border shadow-sm md:grid-cols-5",
+              "dark:bg-card/40 dark:ring-foreground/8 dark:border-0 dark:shadow-none dark:ring-1 dark:backdrop-blur-sm"
+            )}
+          >
+            <StatCell
+              index={0}
+              accent={accent}
+              highlight
+              label={
+                status === "live"
+                  ? t("status.liveNow")
+                  : status === "ended"
+                    ? t("status.ended")
+                    : t("org.session.meta.countdown")
+              }
+              value={status === "ended" ? "—" : countdownLabel(parts)}
+            />
+            {canViewLiveAny ? (
+              <StatCell
+                index={1}
+                accent={accent}
+                label={t("org.session.overview.stats.live")}
+                value={itemsCount(liveQ.data)}
+                loading={liveQ.isPending}
+              />
+            ) : null}
+            {canViewQuizzes ? (
+              <StatCell
+                index={2}
+                accent={accent}
+                label={t("org.session.overview.stats.quizzes")}
+                value={itemsCount(quizQ.data)}
+                loading={quizQ.isPending}
+              />
+            ) : null}
+            {canViewPractices ? (
+              <StatCell
+                index={3}
+                accent={accent}
+                label={t("org.session.overview.stats.practices")}
+                value={itemsCount(practiceQ.data)}
+                loading={practiceQ.isPending}
+              />
+            ) : null}
+            {canViewOfflines ? (
+              <StatCell
+                index={4}
+                accent={accent}
+                label={t("org.session.overview.stats.offline")}
+                value={itemsCount(offlineQ.data)}
+                loading={offlineQ.isPending}
+              />
+            ) : null}
+          </section>
+
+          {surfaces.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {surfaces.map((surface, i) => (
+                <SummaryCard
+                  key={surface.key}
+                  surface={surface}
+                  index={i}
+                  accent={accent}
+                  onOpen={() => setTab(surface.key)}
+                  t={t}
+                />
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ),
+    },
+  ]
+  if (canViewLiveAny) {
+    topTabs.push({
+      key: "live",
+      label: t("org.session.nav.live"),
+      count: itemsCount(liveQ.data),
+      loading: liveQ.isPending,
+      content: <SubTabs tabs={liveSubTabs} accent={accent} />,
+    })
+  }
+  if (canViewQuizzes) {
+    topTabs.push({
+      key: "quizzes",
+      label: t("org.session.nav.quizzes"),
+      count: itemsCount(quizQ.data),
+      loading: quizQ.isPending,
+      content: <SubTabs tabs={quizSubTabs} accent={accent} />,
+    })
+  }
+  if (canViewPractices) {
+    topTabs.push({
+      key: "practices",
+      label: t("org.session.nav.practices"),
+      count: itemsCount(practiceQ.data),
+      loading: practiceQ.isPending,
+      content: <SubTabs tabs={practiceSubTabs} accent={accent} />,
+    })
+  }
+  if (canViewOfflines) {
+    topTabs.push({
+      key: "recordings",
+      label: t("org.session.nav.recordings"),
+      count: itemsCount(offlineQ.data),
+      loading: offlineQ.isPending,
+      content: <SubTabs tabs={offlineSubTabs} accent={accent} />,
+    })
+  }
+
   return (
-    <div className="relative isolate flex flex-col gap-12 pb-16">
+    <div className="relative isolate flex flex-col gap-8 pb-16">
       <DecorativeBackground accent={accent} />
 
       <Breadcrumb
         orgId={orgId}
         classId={classId ?? ""}
         className={cls?.name}
+        fallback={t("org.nav.classes")}
+      />
+
+      <SessionHeader
+        session={session}
+        status={status}
+        accent={accent}
+        classId={classId ?? ""}
+        orgId={orgId}
         shortId={shortId}
-        fallback={t("org.session.backToClass")}
+        t={t}
       />
 
-      <section className="grid gap-8 lg:grid-cols-5 lg:gap-10">
-        <header className="animate-in fade-in-0 slide-in-from-bottom-3 fill-mode-both flex flex-col gap-6 duration-700 lg:col-span-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <SessionStatusPill status={status} />
-            <span className="bg-foreground/15 h-px w-8" aria-hidden />
-            <Eyebrow>{t("org.session.eyebrow")}</Eyebrow>
-          </div>
-
-          <h1 className="max-w-4xl text-4xl leading-[1.05] font-semibold tracking-tight text-balance md:text-5xl lg:text-[3.5rem] xl:text-6xl">
-            {session.name}
-          </h1>
-
-          {session.description ? (
-            <p className="text-muted-foreground max-w-2xl text-base leading-relaxed md:text-lg">
-              {session.description}
-            </p>
-          ) : null}
-
-          <div className="mt-2 flex flex-wrap items-center gap-3">
-            <JoinAction session={session} accent={accent} />
-            <Button
-              variant="outline"
-              render={<Link to="/org/$orgId/classes/$classId" params={{ orgId, classId: classId ?? "" }} />}
-            >
-              <SparklesIcon className="size-4" />
-              {t("org.session.actions.viewClass")}
-            </Button>
-          </div>
-        </header>
-
-        <div
-          className="animate-in fade-in-0 slide-in-from-bottom-3 fill-mode-both duration-700 lg:col-span-2"
-          style={{ animationDelay: "120ms" }}
-        >
-          <CountdownCard parts={parts} status={status} accent={accent} t={t} />
-        </div>
-      </section>
-
-      <section
-        className={cn(
-          "bg-card border-border grid grid-cols-1 overflow-hidden rounded-2xl border shadow-sm md:grid-cols-4",
-          "dark:bg-card/40 dark:ring-foreground/8 dark:border-0 dark:shadow-none dark:ring-1 dark:backdrop-blur-sm"
-        )}
-      >
-        <MetaCell index={0} label={t("org.session.meta.starts")} value={startStr} />
-        <MetaCell
-          index={1}
-          label={t("org.session.meta.status")}
-          value={t(`status.${status === "live" ? "liveNow" : status}`)}
-        />
-        <MetaCell
-          index={2}
-          label={t("org.session.meta.countdown")}
-          mono
-          value={
-            parts
-              ? parts.days > 0
-                ? `${parts.days}d ${pad(parts.hours)}:${pad(parts.minutes)}:${pad(parts.seconds)}`
-                : `${pad(parts.hours)}:${pad(parts.minutes)}:${pad(parts.seconds)}`
-              : "—"
-          }
-        />
-        <MetaCell index={3} label={t("org.session.meta.created")} value={createdStr} />
-      </section>
-
-      {navCount > 0 ? (
-        <section className="flex flex-col gap-4">
-          <div className="flex items-end justify-between">
-            <Eyebrow>{t("org.session.rooms.eyebrow")}</Eyebrow>
-            <Eyebrow className="text-muted-foreground/70 hidden items-center gap-2 md:inline-flex">
-              <span className="bg-muted-foreground/30 h-px w-6" />
-              {t("org.session.rooms.subtitle")}
-            </Eyebrow>
-          </div>
-          <div className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2", navGridCols)}>
-            {navTiles.map((spec, i) => (
-              <RoomTile key={spec.key} spec={spec} index={i} total={navCount} accent={accent} />
+      <Tabs value={tab} onValueChange={setTab} className="gap-8">
+        <div className="bg-card border-border dark:bg-card/40 dark:ring-foreground/10 sticky top-2 z-10 rounded-2xl border p-1.5 shadow-sm dark:border-0 dark:shadow-none dark:ring-1 dark:backdrop-blur-md">
+          <TabsList variant="line" className="h-auto w-full flex-wrap gap-1 bg-transparent p-0">
+            {topTabs.map((tt) => (
+              <TabsTrigger
+                key={tt.key}
+                value={tt.key}
+                className={cn(
+                  "group/toptab gap-2 rounded-xl px-4 py-2.5",
+                  "data-active:bg-foreground data-active:text-background data-active:shadow-sm"
+                )}
+              >
+                {tt.key === "overview" ? <LayoutDashboardIcon className="size-4" /> : null}
+                <span className="text-sm font-semibold tracking-tight">{tt.label}</span>
+                {tt.count !== null ? (
+                  tt.loading ? (
+                    <Skeleton className="h-3 w-4" />
+                  ) : (
+                    <span className="inline-flex items-center gap-1 font-mono text-xs tabular-nums">
+                      <span
+                        className={cn(
+                          "size-1.5 rounded-full",
+                          tt.count > 0 ? accent.dot : "bg-muted-foreground/40",
+                          "group-data-[active]/toptab:bg-background"
+                        )}
+                        aria-hidden
+                      />
+                      {tt.count}
+                    </span>
+                  )
+                ) : null}
+              </TabsTrigger>
             ))}
-          </div>
-        </section>
-      ) : null}
+          </TabsList>
+        </div>
 
-      <WorkspaceSection
-        eyebrow={t("org.session.liveWorkspace.eyebrow")}
-        title={t("org.session.liveWorkspace.title")}
-        subtitle={t("org.session.liveWorkspace.subtitle")}
-        tabs={liveTabs}
-        accent={accent}
-      />
-
-      <WorkspaceSection
-        eyebrow={t("org.session.workspace.eyebrow")}
-        title={t("org.session.workspace.title")}
-        subtitle={t("org.session.workspace.subtitle")}
-        tabs={workspaceTabs}
-        accent={accent}
-      />
-
-      <WorkspaceSection
-        eyebrow={t("org.session.practiceWorkspace.eyebrow")}
-        title={t("org.session.practiceWorkspace.title")}
-        subtitle={t("org.session.practiceWorkspace.subtitle")}
-        tabs={practiceTabs}
-        accent={accent}
-      />
-
-      <WorkspaceSection
-        eyebrow={t("org.session.offlineWorkspace.eyebrow")}
-        title={t("org.session.offlineWorkspace.title")}
-        subtitle={t("org.session.offlineWorkspace.subtitle")}
-        tabs={offlineTabs}
-        accent={accent}
-      />
+        {topTabs.map((tt) => (
+          <TabsContent key={tt.key} value={tt.key} className="mt-0">
+            {tt.content}
+          </TabsContent>
+        ))}
+      </Tabs>
 
       <footer className="border-border border-t border-dashed pt-6">
         <div className="flex flex-wrap items-center justify-between gap-2">

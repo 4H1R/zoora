@@ -1255,6 +1255,31 @@
       "eyebrow": "جلسه کلاس",
       "backToClass": "بازگشت به کلاس",
       "footnote": "خط‌زمانی جلسه",
+      "nav": {
+        "overview": "نمای کلی",
+        "live": "اتاق‌های زنده",
+        "quizzes": "آزمون‌ها",
+        "practices": "تمرین‌ها",
+        "recordings": "ضبط‌ها"
+      },
+      "overview": {
+        "stats": {
+          "live": "اتاق‌های زنده",
+          "quizzes": "آزمون‌ها",
+          "practices": "تمرین‌ها",
+          "offline": "آفلاین"
+        },
+        "units": {
+          "rooms_one": "اتاق زنده",
+          "rooms_other": "اتاق زنده",
+          "quizzes_one": "آزمون",
+          "quizzes_other": "آزمون",
+          "practices_one": "تمرین",
+          "practices_other": "تمرین",
+          "recordings_one": "ضبط",
+          "recordings_other": "ضبط"
+        }
+      },
       "meta": {
         "starts": "شروع",
         "countdown": "شمارش معکوس",
