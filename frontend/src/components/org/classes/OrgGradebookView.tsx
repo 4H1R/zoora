@@ -18,6 +18,7 @@ import { useTranslation } from "react-i18next"
 import { useAccess } from "react-access-engine"
 import { toast } from "sonner"
 
+import type { ErrorType } from "@/api/mutator/custom-instance"
 import {
   getGetClassesIdGradebookQueryKey,
   useDeleteClassesIdGradebookColumnsColumnId,
@@ -88,7 +89,7 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
   const canManage = can("gradebook:update_any") || isOwner
   const canDelete = can("gradebook:delete_any") || isOwner
 
-  const errStatus = (error as { status?: number } | undefined)?.status
+  const errStatus = (error as ErrorType<unknown> | undefined)?.response?.status
   const forbidden = isError && errStatus === 403
 
   const deleteMutation = useDeleteClassesIdGradebookColumnsColumnId({
