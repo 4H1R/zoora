@@ -1585,6 +1585,47 @@
           "practiceScores": "نمرات تمرین"
         }
       },
+      "offlines": {
+        "eyebrow": "آفلاین",
+        "title": "اتاق‌های آفلاین",
+        "newOffline": "اتاق آفلاین جدید",
+        "cardEyebrow": "ضبط‌شده",
+        "views": "بازدید",
+        "published": "انتشار",
+        "notPublished": "پیش‌نویس",
+        "attachments": "پیوست‌ها",
+        "open": "باز کردن",
+        "emptyTitle": "هنوز اتاق آفلاینی نیست",
+        "emptyHint": "برای اشتراک‌گذاری ضبط‌ها و فایل‌های این جلسه یک اتاق آفلاین بسازید.",
+        "emptyHintMember": "هنوز محتوای آفلاینی برای این جلسه به اشتراک گذاشته نشده است.",
+        "actions": { "edit": "ویرایش", "delete": "حذف" },
+        "form": {
+          "createTitle": "اتاق آفلاین جدید",
+          "editTitle": "ویرایش اتاق آفلاین",
+          "createDescription": "ضبط‌ها و فایل‌ها را با این جلسه به اشتراک بگذارید.",
+          "editDescription": "این اتاق آفلاین را به‌روزرسانی کنید.",
+          "title": "عنوان",
+          "titlePlaceholder": "مثلاً ضبط جلسه ۳",
+          "description": "توضیحات",
+          "descriptionPlaceholder": "خلاصه (اختیاری)",
+          "publishedAt": "زمان انتشار",
+          "attachments": "پیوست‌ها",
+          "addAttachment": "افزودن فایل",
+          "uploading": "در حال بارگذاری…",
+          "noAttachments": "هنوز فایلی پیوست نشده است",
+          "createSuccess": "اتاق آفلاین ساخته شد",
+          "updateSuccess": "اتاق آفلاین به‌روزرسانی شد",
+          "deleteSuccess": "اتاق آفلاین حذف شد",
+          "uploadError": "بارگذاری ناموفق بود",
+          "removeError": "حذف فایل ممکن نشد"
+        }
+      },
+      "offlineWorkspace": {
+        "eyebrow": "آفلاین",
+        "title": "اتاق‌های آفلاین",
+        "subtitle": "ضبط‌ها و فایل‌هایی که دانشجویان هر زمان می‌توانند مرور کنند.",
+        "tabs": { "offlines": "اتاق‌های آفلاین" }
+      },
       "liveWorkspace": {
         "eyebrow": "",
         "title": "کلاس زنده",
@@ -1699,6 +1740,18 @@
           "hint": "برای هر دانش‌آموز وضعیت را انتخاب و سپس ذخیره کنید."
         }
       }
+    },
+    "offline": {
+      "title": "اتاق آفلاین",
+      "back": "بازگشت به جلسه",
+      "views": "بازدید",
+      "published": "انتشار",
+      "created": "ایجاد",
+      "attachments": "پیوست‌ها",
+      "download": "دانلود",
+      "noAttachments": "فایلی به این اتاق پیوست نشده است.",
+      "notFound": "اتاق آفلاین یافت نشد.",
+      "loading": "در حال بارگذاری…"
     },
     "roles": {
       "title": "نقش‌ها",

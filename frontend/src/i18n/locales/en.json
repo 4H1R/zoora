@@ -1553,6 +1553,47 @@
           "practiceScores": "Practice scores"
         }
       },
+      "offlines": {
+        "eyebrow": "On-demand",
+        "title": "Offline Rooms",
+        "newOffline": "New offline room",
+        "cardEyebrow": "Recording",
+        "views": "Views",
+        "published": "Published",
+        "notPublished": "Draft",
+        "attachments": "Attachments",
+        "open": "Open",
+        "emptyTitle": "No offline rooms yet",
+        "emptyHint": "Create an offline room to share recordings and files for this session.",
+        "emptyHintMember": "No offline content has been shared for this session yet.",
+        "actions": { "edit": "Edit", "delete": "Delete" },
+        "form": {
+          "createTitle": "New offline room",
+          "editTitle": "Edit offline room",
+          "createDescription": "Share recordings and files with this session.",
+          "editDescription": "Update this offline room.",
+          "title": "Title",
+          "titlePlaceholder": "e.g. Session 3 recording",
+          "description": "Description",
+          "descriptionPlaceholder": "Optional summary",
+          "publishedAt": "Publish at",
+          "attachments": "Attachments",
+          "addAttachment": "Add file",
+          "uploading": "Uploading…",
+          "noAttachments": "No files attached yet",
+          "createSuccess": "Offline room created",
+          "updateSuccess": "Offline room updated",
+          "deleteSuccess": "Offline room deleted",
+          "uploadError": "Upload failed",
+          "removeError": "Could not remove file"
+        }
+      },
+      "offlineWorkspace": {
+        "eyebrow": "On-demand",
+        "title": "Offline Rooms",
+        "subtitle": "Recordings and files students can review any time.",
+        "tabs": { "offlines": "Offline rooms" }
+      },
       "liveWorkspace": {
         "eyebrow": "",
         "title": "Live Room",
@@ -1667,6 +1708,18 @@
           "hint": "Tap a status for each student, then save."
         }
       }
+    },
+    "offline": {
+      "title": "Offline Room",
+      "back": "Back to session",
+      "views": "Views",
+      "published": "Published",
+      "created": "Created",
+      "attachments": "Attachments",
+      "download": "Download",
+      "noAttachments": "No files attached to this room.",
+      "notFound": "Offline room not found.",
+      "loading": "Loading…"
     },
     "roles": {
       "title": "Roles",
