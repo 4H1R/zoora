@@ -9,6 +9,7 @@ import {
   ArrowLeftIcon,
   CalendarClockIcon,
   PlusIcon,
+  TrophyIcon,
   UserIcon,
   UserMinusIcon,
   UsersIcon,
@@ -312,7 +313,17 @@ function RouteComponent() {
           <ArrowLeftIcon className="size-3.5" />
           {t("org.class.backToClasses")}
         </Link>
-        <span className="text-muted-foreground font-mono text-xs tracking-[0.25em]">№ {shortId || "—"}</span>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            render={<Link to="/org/$orgId/classes/$classId/gradebook" params={{ orgId, classId }} />}
+          >
+            <TrophyIcon className="size-4" />
+            {t("org.class.gradebook.open")}
+          </Button>
+          <span className="text-muted-foreground font-mono text-xs tracking-[0.25em]">№ {shortId || "—"}</span>
+        </div>
       </div>
 
       <header className="flex flex-col gap-5">
