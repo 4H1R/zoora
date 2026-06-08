@@ -95,6 +95,7 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreatePracticeRoomD
 		MaxScore:       dto.MaxScore,
 		StartTime:      dto.StartTime,
 		EndTime:        dto.EndTime,
+		Attachments:    dto.Attachments,
 	}
 	if err := s.rooms.Create(ctx, room); err != nil {
 		return nil, err
@@ -152,6 +153,9 @@ func (s *service) UpdateRoom(ctx context.Context, id uuid.UUID, dto domain.Updat
 	}
 	if dto.EndTime != nil {
 		room.EndTime = *dto.EndTime
+	}
+	if dto.Attachments != nil {
+		room.Attachments = *dto.Attachments
 	}
 	if err := s.rooms.Update(ctx, room); err != nil {
 		return nil, err
@@ -245,6 +249,7 @@ func (s *service) Submit(ctx context.Context, roomID uuid.UUID, dto domain.Creat
 		UserID:         caller.UserID,
 		Content:        dto.Content,
 		SubmittedAt:    now,
+		Attachments:    dto.Attachments,
 	}
 	if err := s.subs.Create(ctx, sub); err != nil {
 		return nil, err
