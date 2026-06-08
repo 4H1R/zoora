@@ -50,7 +50,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useOrgGuard } from "@/lib/access"
 import { orgHead } from "@/lib/org-head"
-import { formatSessionDate, getSessionStatus, useNow } from "@/lib/session-status"
+import { getSessionStatus, useNow } from "@/lib/session-status"
 import { cn } from "@/lib/utils"
 
 export const Route = createFileRoute("/_auth/org/$orgId/classes/classsessions/$classSessionId")({
@@ -58,19 +58,11 @@ export const Route = createFileRoute("/_auth/org/$orgId/classes/classsessions/$c
   component: RouteComponent,
 })
 
-type Accent = {
-  text: string
-  ring: string
-  bg: string
-  border: string
-  glow: string
-  dot: string
-}
+type Accent = { text: string; bg: string; border: string; glow: string; dot: string }
 
 const ACCENTS: Record<SessionStatus, Accent> = {
   live: {
     text: "text-destructive",
-    ring: "ring-destructive/30",
     bg: "bg-destructive/12 dark:bg-destructive/10",
     border: "border-destructive/45 dark:border-destructive/40",
     glow: "from-destructive/30 via-destructive/8 dark:from-destructive/25 dark:via-destructive/5",
@@ -78,7 +70,6 @@ const ACCENTS: Record<SessionStatus, Accent> = {
   },
   scheduled: {
     text: "text-primary",
-    ring: "ring-primary/30",
     bg: "bg-primary/12 dark:bg-primary/10",
     border: "border-primary/40 dark:border-primary/30",
     glow: "from-primary/25 via-primary/8 dark:from-primary/20 dark:via-primary/5",
@@ -86,7 +77,6 @@ const ACCENTS: Record<SessionStatus, Accent> = {
   },
   ended: {
     text: "text-muted-foreground",
-    ring: "ring-border",
     bg: "bg-muted",
     border: "border-border",
     glow: "from-foreground/12 via-foreground/0 dark:from-foreground/8",
@@ -94,28 +84,23 @@ const ACCENTS: Record<SessionStatus, Accent> = {
   },
 }
 
-function countdownParts(iso: string | undefined, now: number) {
-  if (!iso) return null
-  const target = new Date(iso).getTime()
-  if (Number.isNaN(target)) return null
-  const diff = target - now
-  const abs = Math.abs(diff)
-  return {
-    isPast: diff <= 0,
-    days: Math.floor(abs / 86_400_000),
-    hours: Math.floor((abs % 86_400_000) / 3_600_000),
-    minutes: Math.floor((abs % 3_600_000) / 60_000),
-    seconds: Math.floor((abs % 60_000) / 1000),
-  }
-}
+// Static class lookups — Tailwind needs literal class names, so dynamic counts map here.
+const STAT_COLS = ["", "md:grid-cols-1", "md:grid-cols-2", "md:grid-cols-3", "md:grid-cols-4", "md:grid-cols-5"]
 
 const pad = (n: number) => String(n).padStart(2, "0")
 
-function countdownLabel(parts: ReturnType<typeof countdownParts>): string {
-  if (!parts) return "—"
-  if (parts.days > 0) return `${parts.days}d ${parts.hours}h`
-  if (parts.hours > 0) return `${parts.hours}h ${pad(parts.minutes)}m`
-  return `${pad(parts.minutes)}m ${pad(parts.seconds)}s`
+function countdownLabel(iso: string | undefined, now: number): string {
+  if (!iso) return "—"
+  const target = new Date(iso).getTime()
+  if (Number.isNaN(target)) return "—"
+  const abs = Math.abs(target - now)
+  const days = Math.floor(abs / 86_400_000)
+  const hours = Math.floor((abs % 86_400_000) / 3_600_000)
+  const minutes = Math.floor((abs % 3_600_000) / 60_000)
+  const seconds = Math.floor((abs % 60_000) / 1000)
+  if (days > 0) return `${days}d ${hours}h`
+  if (hours > 0) return `${hours}h ${pad(minutes)}m`
+  return `${pad(minutes)}m ${pad(seconds)}s`
 }
 
 function itemsCount(payload: unknown): number {
@@ -123,6 +108,29 @@ function itemsCount(payload: unknown): number {
   if (!p || p.status !== 200) return 0
   return p.data?.data?.items?.length ?? 0
 }
+
+// ── Descriptors ──────────────────────────────────────────────────────────────
+// One surface drives its overview stat, overview card, top tab, and sub-tabs.
+
+type SubTab = { key: string; label: string; count: number; loading: boolean; icon: ReactNode; content: ReactNode }
+
+type Surface = {
+  key: string
+  eyebrow: string
+  title: string
+  navLabel: string
+  statLabel: string
+  icon: ReactNode
+  count: number
+  loading: boolean
+  canCreate: boolean
+  newLabel: string
+  summaryLabel: string
+  emptyHint: string
+  subTabs: SubTab[]
+}
+
+// ── Presentational pieces ─────────────────────────────────────────────────────
 
 function DecorativeBackground({ accent }: { accent: Accent }) {
   return (
@@ -142,17 +150,8 @@ function DecorativeBackground({ accent }: { accent: Accent }) {
   )
 }
 
-function Breadcrumb({
-  orgId,
-  classId,
-  className: classLabel,
-  fallback,
-}: {
-  orgId: string
-  classId: string
-  className: string | undefined
-  fallback: string
-}) {
+function Breadcrumb({ orgId, classId, classLabel }: { orgId: string; classId: string; classLabel: string | undefined }) {
+  const { t } = useTranslation()
   return (
     <div className="animate-in fade-in-0 slide-in-from-top-2 fill-mode-both flex items-center gap-2 pt-6 font-mono text-xs tracking-[0.25em] uppercase duration-500">
       <Link
@@ -160,7 +159,7 @@ function Breadcrumb({
         params={{ orgId }}
         className="text-muted-foreground hover:text-foreground transition-colors"
       >
-        {fallback}
+        {t("org.nav.classes")}
       </Link>
       <span className="text-muted-foreground/40" aria-hidden>
         /
@@ -170,7 +169,7 @@ function Breadcrumb({
         params={{ orgId, classId }}
         className="text-foreground max-w-[22ch] truncate"
       >
-        {classLabel ?? fallback}
+        {classLabel ?? t("org.nav.classes")}
       </Link>
     </div>
   )
@@ -192,8 +191,7 @@ function JoinAction({ session, accent }: { session: Session; accent: Accent }) {
         try {
           const rooms = await getLiveRooms()
           const roomsData = (rooms.status === 200 && rooms.data.data) || undefined
-          const items = roomsData?.items ?? []
-          const room = items.find((r) => r.class_session_id === variables.data.class_session_id)
+          const room = (roomsData?.items ?? []).find((r) => r.class_session_id === variables.data.class_session_id)
           if (room?.id) navigate({ to: "/live/$liveId", params: { liveId: room.id } })
         } catch {
           // ignore
@@ -212,7 +210,7 @@ function JoinAction({ session, accent }: { session: Session; accent: Accent }) {
 
   return (
     <Button
-      className={cn("relative overflow-hidden", "shadow-[0_8px_24px_-12px_var(--color-primary)]")}
+      className="relative overflow-hidden shadow-[0_8px_24px_-12px_var(--color-primary)]"
       disabled={join.isPending || !session.id}
       onClick={() => session.id && join.mutate({ data: { class_session_id: session.id } })}
     >
@@ -230,7 +228,6 @@ function SessionHeader({
   classId,
   orgId,
   shortId,
-  t,
 }: {
   session: Session
   status: SessionStatus
@@ -238,8 +235,8 @@ function SessionHeader({
   classId: string
   orgId: string
   shortId: string
-  t: (key: string) => string
 }) {
+  const { t } = useTranslation()
   const statusLabel = t(`status.${status === "live" ? "liveNow" : status}`)
   return (
     <header
@@ -296,10 +293,7 @@ function SessionHeader({
 
       <div className="mt-7 flex flex-wrap items-center gap-3">
         <JoinAction session={session} accent={accent} />
-        <Button
-          variant="outline"
-          render={<Link to="/org/$orgId/classes/$classId" params={{ orgId, classId }} />}
-        >
+        <Button variant="outline" render={<Link to="/org/$orgId/classes/$classId" params={{ orgId, classId }} />}>
           <SparklesIcon className="size-4" />
           {t("org.session.actions.viewClass")}
         </Button>
@@ -313,15 +307,13 @@ function StatCell({
   value,
   loading,
   index,
-  accent,
-  highlight,
+  className,
 }: {
   label: string
   value: ReactNode
   loading?: boolean
   index: number
-  accent: Accent
-  highlight?: boolean
+  className?: string
 }) {
   return (
     <div
@@ -334,8 +326,8 @@ function StatCell({
       ) : (
         <span
           className={cn(
-            "font-mono text-3xl leading-none font-semibold tracking-tight tabular-nums md:text-4xl",
-            highlight ? accent.text : "text-foreground"
+            "font-mono text-3xl leading-none font-semibold tracking-tight tabular-nums md:text-4xl text-foreground",
+            className
           )}
         >
           {value}
@@ -345,31 +337,16 @@ function StatCell({
   )
 }
 
-type Surface = {
-  key: string
-  eyebrow: string
-  title: string
-  icon: ReactNode
-  count: number
-  loading: boolean
-  emptyHint: string
-  canCreate: boolean
-  newLabel: string
-  unitKey: string
-}
-
 function SummaryCard({
   surface,
   index,
   accent,
   onOpen,
-  t,
 }: {
   surface: Surface
   index: number
   accent: Accent
   onOpen: () => void
-  t: (key: string, opts?: Record<string, unknown>) => string
 }) {
   return (
     <div
@@ -424,7 +401,7 @@ function SummaryCard({
         ) : surface.count > 0 ? (
           <span className="text-foreground inline-flex items-center gap-2 text-sm font-medium">
             <span className={cn("font-mono text-lg font-semibold tabular-nums", accent.text)}>{surface.count}</span>
-            {t(surface.unitKey, { count: surface.count })}
+            {surface.summaryLabel}
           </span>
         ) : (
           <span className="text-muted-foreground text-sm leading-relaxed">{surface.emptyHint}</span>
@@ -442,15 +419,6 @@ function SummaryCard({
       </div>
     </div>
   )
-}
-
-type SubTab = {
-  key: string
-  label: string
-  count: number
-  loading: boolean
-  icon: ReactNode
-  content: ReactNode
 }
 
 function SubTabs({ tabs, accent }: { tabs: SubTab[]; accent: Accent }) {
@@ -502,16 +470,10 @@ function SubTabs({ tabs, accent }: { tabs: SubTab[]; accent: Accent }) {
   )
 }
 
-type TopTab = {
-  key: string
-  label: string
-  count: number | null
-  loading: boolean
-  content: ReactNode
-}
+// ── Route ─────────────────────────────────────────────────────────────────────
 
 function RouteComponent() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { orgId, classSessionId } = Route.useParams()
   const allowed = useOrgGuard(["classes:view", "classes:view_any"])
   const { canView: canViewBanks } = useBankPermissions()
@@ -537,9 +499,7 @@ function RouteComponent() {
   const session = (sessionData?.status === 200 && sessionData.data.data) || undefined
   const classId = session?.class_id
 
-  const { data: classData } = useGetClassesId(classId ?? "", {
-    query: { enabled: !!classId },
-  })
+  const { data: classData } = useGetClassesId(classId ?? "", { query: { enabled: !!classId } })
   const cls = (classData?.status === 200 && classData.data.data) || undefined
 
   const enabled = !!session
@@ -598,225 +558,249 @@ function RouteComponent() {
 
   const status = getSessionStatus(session.start_time, now)
   const accent = ACCENTS[status]
-  const parts = countdownParts(session.start_time, now)
   const shortId = (session.id ?? "").slice(0, 8).toUpperCase()
 
-  // Inner sub-tabs per surface — nothing is dropped, just regrouped.
-  const liveSubTabs: SubTab[] = []
-  if (canViewLiveAny) {
-    liveSubTabs.push({
-      key: "rooms",
-      label: t("org.session.liveWorkspace.tabs.rooms"),
-      count: itemsCount(liveQ.data),
-      loading: liveQ.isPending,
-      icon: <VideoIcon className="size-4" />,
-      content: <LiveRoomsSection classSessionId={classSessionId} />,
-    })
-  }
-  if (canViewAttendance && classId) {
-    liveSubTabs.push({
-      key: "presence",
-      label: t("org.session.liveWorkspace.tabs.presence"),
-      count: itemsCount(attendanceQ.data),
-      loading: attendanceQ.isPending,
-      icon: <UserCheckIcon className="size-4" />,
-      content: <AttendanceSection classId={classId} classSessionId={classSessionId} />,
-    })
-  }
-
-  const quizSubTabs: SubTab[] = []
-  if (canViewQuizzes && classId) {
-    quizSubTabs.push({
-      key: "quizzes",
-      label: t("org.session.workspace.tabs.quizzes"),
-      count: itemsCount(quizQ.data),
-      loading: quizQ.isPending,
-      icon: <ClipboardListIcon className="size-4" />,
-      content: <QuizzesSection classId={classId} classSessionId={classSessionId} />,
-    })
-  }
-  if (canGradeQuizzes) {
-    quizSubTabs.push({
-      key: "corrections",
-      label: t("org.session.workspace.tabs.corrections"),
-      count: itemsCount(quizQ.data),
-      loading: quizQ.isPending,
-      icon: <CheckSquareIcon className="size-4" />,
-      content: <QuizCorrectionsSection classSessionId={classSessionId} />,
-    })
-  }
-  if (canViewBanks) {
-    quizSubTabs.push({
-      key: "banks",
-      label: t("org.session.workspace.tabs.banks"),
-      count: itemsCount(banksQ.data),
-      loading: banksQ.isPending,
-      icon: <LibraryIcon className="size-4" />,
-      content: <QuestionBanksSection />,
-    })
-  }
-
-  const practiceSubTabs: SubTab[] = []
-  if (canViewPractices) {
-    practiceSubTabs.push({
-      key: "practices",
-      label: t("org.session.practiceWorkspace.tabs.practices"),
-      count: itemsCount(practiceQ.data),
-      loading: practiceQ.isPending,
-      icon: <DumbbellIcon className="size-4" />,
-      content: <PracticesSection classSessionId={classSessionId} />,
-    })
-  }
-  if (canGradePractices) {
-    practiceSubTabs.push({
-      key: "practiceScores",
-      label: t("org.session.practiceWorkspace.tabs.practiceScores"),
-      count: itemsCount(practiceQ.data),
-      loading: practiceQ.isPending,
-      icon: <CheckSquareIcon className="size-4" />,
-      content: <PracticeScoresSection classSessionId={classSessionId} />,
-    })
-  }
-
-  const offlineSubTabs: SubTab[] = []
-  if (canViewOfflines) {
-    offlineSubTabs.push({
-      key: "offlines",
-      label: t("org.session.offlineWorkspace.tabs.offlines"),
-      count: itemsCount(offlineQ.data),
-      loading: offlineQ.isPending,
-      icon: <FilmIcon className="size-4" />,
-      content: <OfflinesSection classSessionId={classSessionId} orgId={orgId} />,
-    })
-  }
-
-  // Overview summary cards.
+  // Build each surface once; stats, overview cards, and top tabs all derive from it.
   const surfaces: Surface[] = []
+
   if (canViewLiveAny) {
+    const subTabs: SubTab[] = [
+      {
+        key: "rooms",
+        label: t("org.session.liveWorkspace.tabs.rooms"),
+        count: itemsCount(liveQ.data),
+        loading: liveQ.isPending,
+        icon: <VideoIcon className="size-4" />,
+        content: <LiveRoomsSection classSessionId={classSessionId} />,
+      },
+    ]
+    if (canViewAttendance && classId) {
+      subTabs.push({
+        key: "presence",
+        label: t("org.session.liveWorkspace.tabs.presence"),
+        count: itemsCount(attendanceQ.data),
+        loading: attendanceQ.isPending,
+        icon: <UserCheckIcon className="size-4" />,
+        content: <AttendanceSection classId={classId} classSessionId={classSessionId} />,
+      })
+    }
+    const count = itemsCount(liveQ.data)
     surfaces.push({
       key: "live",
       eyebrow: t("org.session.liveRooms.eyebrow"),
       title: t("org.session.liveRooms.title"),
+      navLabel: t("org.session.nav.live"),
+      statLabel: t("org.session.overview.stats.live"),
       icon: <VideoIcon className="size-5" />,
-      count: itemsCount(liveQ.data),
+      count,
       loading: liveQ.isPending,
-      emptyHint: canCreateLive ? t("org.session.liveRooms.emptyHint") : t("org.session.liveRooms.emptyHintMember"),
       canCreate: canCreateLive,
       newLabel: t("org.session.liveRooms.newRoom"),
-      unitKey: "org.session.overview.units.rooms",
+      summaryLabel: t("org.session.overview.units.rooms", { count }),
+      emptyHint: canCreateLive ? t("org.session.liveRooms.emptyHint") : t("org.session.liveRooms.emptyHintMember"),
+      subTabs,
     })
   }
+
   if (canViewQuizzes) {
+    const subTabs: SubTab[] = []
+    if (classId) {
+      subTabs.push({
+        key: "quizzes",
+        label: t("org.session.workspace.tabs.quizzes"),
+        count: itemsCount(quizQ.data),
+        loading: quizQ.isPending,
+        icon: <ClipboardListIcon className="size-4" />,
+        content: <QuizzesSection classId={classId} classSessionId={classSessionId} />,
+      })
+    }
+    if (canGradeQuizzes) {
+      subTabs.push({
+        key: "corrections",
+        label: t("org.session.workspace.tabs.corrections"),
+        count: itemsCount(quizQ.data),
+        loading: quizQ.isPending,
+        icon: <CheckSquareIcon className="size-4" />,
+        content: <QuizCorrectionsSection classSessionId={classSessionId} />,
+      })
+    }
+    if (canViewBanks) {
+      subTabs.push({
+        key: "banks",
+        label: t("org.session.workspace.tabs.banks"),
+        count: itemsCount(banksQ.data),
+        loading: banksQ.isPending,
+        icon: <LibraryIcon className="size-4" />,
+        content: <QuestionBanksSection />,
+      })
+    }
+    const count = itemsCount(quizQ.data)
     surfaces.push({
       key: "quizzes",
       eyebrow: t("org.session.quizzes.eyebrow"),
       title: t("org.session.quizzes.title"),
+      navLabel: t("org.session.nav.quizzes"),
+      statLabel: t("org.session.overview.stats.quizzes"),
       icon: <ClipboardListIcon className="size-5" />,
-      count: itemsCount(quizQ.data),
+      count,
       loading: quizQ.isPending,
-      emptyHint: t("org.session.quizzes.emptyHint"),
       canCreate: canCreateQuizzes,
       newLabel: t("org.session.quizzes.newQuiz"),
-      unitKey: "org.session.overview.units.quizzes",
+      summaryLabel: t("org.session.overview.units.quizzes", { count }),
+      emptyHint: t("org.session.quizzes.emptyHint"),
+      subTabs,
     })
   }
+
   if (canViewPractices) {
+    const subTabs: SubTab[] = [
+      {
+        key: "practices",
+        label: t("org.session.practiceWorkspace.tabs.practices"),
+        count: itemsCount(practiceQ.data),
+        loading: practiceQ.isPending,
+        icon: <DumbbellIcon className="size-4" />,
+        content: <PracticesSection classSessionId={classSessionId} />,
+      },
+    ]
+    if (canGradePractices) {
+      subTabs.push({
+        key: "practiceScores",
+        label: t("org.session.practiceWorkspace.tabs.practiceScores"),
+        count: itemsCount(practiceQ.data),
+        loading: practiceQ.isPending,
+        icon: <CheckSquareIcon className="size-4" />,
+        content: <PracticeScoresSection classSessionId={classSessionId} />,
+      })
+    }
+    const count = itemsCount(practiceQ.data)
     surfaces.push({
       key: "practices",
       eyebrow: t("org.session.practices.eyebrow"),
       title: t("org.session.practices.title"),
+      navLabel: t("org.session.nav.practices"),
+      statLabel: t("org.session.overview.stats.practices"),
       icon: <DumbbellIcon className="size-5" />,
-      count: itemsCount(practiceQ.data),
+      count,
       loading: practiceQ.isPending,
+      canCreate: canCreatePractices,
+      newLabel: t("org.session.practices.newPractice"),
+      summaryLabel: t("org.session.overview.units.practices", { count }),
       emptyHint: canCreatePractices
         ? t("org.session.practices.emptyHint")
         : t("org.session.practices.emptyHintMember"),
-      canCreate: canCreatePractices,
-      newLabel: t("org.session.practices.newPractice"),
-      unitKey: "org.session.overview.units.practices",
+      subTabs,
     })
   }
+
   if (canViewOfflines) {
+    const count = itemsCount(offlineQ.data)
     surfaces.push({
       key: "recordings",
       eyebrow: t("org.session.offlines.eyebrow"),
       title: t("org.session.offlines.title"),
+      navLabel: t("org.session.nav.recordings"),
+      statLabel: t("org.session.overview.stats.offline"),
       icon: <FilmIcon className="size-5" />,
-      count: itemsCount(offlineQ.data),
+      count,
       loading: offlineQ.isPending,
+      canCreate: canCreateOfflines,
+      newLabel: t("org.session.offlines.newOffline"),
+      summaryLabel: t("org.session.overview.units.recordings", { count }),
       emptyHint: canCreateOfflines
         ? t("org.session.offlines.emptyHint")
         : t("org.session.offlines.emptyHintMember"),
-      canCreate: canCreateOfflines,
-      newLabel: t("org.session.offlines.newOffline"),
-      unitKey: "org.session.overview.units.recordings",
+      subTabs: [
+        {
+          key: "offlines",
+          label: t("org.session.offlineWorkspace.tabs.offlines"),
+          count,
+          loading: offlineQ.isPending,
+          icon: <FilmIcon className="size-4" />,
+          content: <OfflinesSection classSessionId={classSessionId} orgId={orgId} />,
+        },
+      ],
     })
   }
 
-  // Top-level tabs.
-  const topTabs: TopTab[] = [
-    {
-      key: "overview",
-      label: t("org.session.nav.overview"),
-      count: null,
-      loading: false,
-      content: (
-        <div className="flex flex-col gap-8">
+  const countdownStatLabel =
+    status === "live" ? t("status.liveNow") : status === "ended" ? t("status.ended") : t("org.session.meta.countdown")
+  const statCount = surfaces.length + 1
+
+  return (
+    <div className="relative isolate flex flex-col gap-8 pb-16">
+      <DecorativeBackground accent={accent} />
+
+      <Breadcrumb orgId={orgId} classId={classId ?? ""} classLabel={cls?.name} />
+
+      <SessionHeader
+        session={session}
+        status={status}
+        accent={accent}
+        classId={classId ?? ""}
+        orgId={orgId}
+        shortId={shortId}
+      />
+
+      <Tabs value={tab} onValueChange={setTab} className="gap-8">
+        <div className="bg-card border-border dark:bg-card/40 dark:ring-foreground/10 sticky top-2 z-10 rounded-2xl border p-1.5 shadow-sm dark:border-0 dark:shadow-none dark:ring-1 dark:backdrop-blur-md">
+          <TabsList variant="line" className="h-auto w-full flex-wrap gap-1 bg-transparent p-0">
+            <TabsTrigger
+              value="overview"
+              className="gap-2 rounded-xl px-4 py-2.5 data-active:bg-foreground data-active:text-background data-active:shadow-sm"
+            >
+              <LayoutDashboardIcon className="size-4" />
+              <span className="text-sm font-semibold tracking-tight">{t("org.session.nav.overview")}</span>
+            </TabsTrigger>
+            {surfaces.map((surface) => (
+              <TabsTrigger
+                key={surface.key}
+                value={surface.key}
+                className="group/toptab gap-2 rounded-xl px-4 py-2.5 data-active:bg-foreground data-active:text-background data-active:shadow-sm"
+              >
+                <span className="text-sm font-semibold tracking-tight">{surface.navLabel}</span>
+                {surface.loading ? (
+                  <Skeleton className="h-3 w-4" />
+                ) : (
+                  <span className="inline-flex items-center gap-1 font-mono text-xs tabular-nums">
+                    <span
+                      className={cn(
+                        "size-1.5 rounded-full group-data-[active]/toptab:bg-background",
+                        surface.count > 0 ? accent.dot : "bg-muted-foreground/40"
+                      )}
+                      aria-hidden
+                    />
+                    {surface.count}
+                  </span>
+                )}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+
+        <TabsContent value="overview" className="mt-0 flex flex-col gap-8">
           <section
             className={cn(
-              "bg-card border-border grid grid-cols-2 overflow-hidden rounded-2xl border shadow-sm md:grid-cols-5",
-              "dark:bg-card/40 dark:ring-foreground/8 dark:border-0 dark:shadow-none dark:ring-1 dark:backdrop-blur-sm"
+              "bg-card border-border grid grid-cols-2 overflow-hidden rounded-2xl border shadow-sm",
+              "dark:bg-card/40 dark:ring-foreground/8 dark:border-0 dark:shadow-none dark:ring-1 dark:backdrop-blur-sm",
+              STAT_COLS[statCount] ?? "md:grid-cols-5"
             )}
           >
             <StatCell
               index={0}
-              accent={accent}
-              highlight
-              label={
-                status === "live"
-                  ? t("status.liveNow")
-                  : status === "ended"
-                    ? t("status.ended")
-                    : t("org.session.meta.countdown")
-              }
-              value={status === "ended" ? "—" : countdownLabel(parts)}
+              label={countdownStatLabel}
+              value={status === "ended" ? "—" : countdownLabel(session.start_time, now)}
+              className={accent.text}
             />
-            {canViewLiveAny ? (
+            {surfaces.map((surface, i) => (
               <StatCell
-                index={1}
-                accent={accent}
-                label={t("org.session.overview.stats.live")}
-                value={itemsCount(liveQ.data)}
-                loading={liveQ.isPending}
+                key={surface.key}
+                index={i + 1}
+                label={surface.statLabel}
+                value={surface.count}
+                loading={surface.loading}
               />
-            ) : null}
-            {canViewQuizzes ? (
-              <StatCell
-                index={2}
-                accent={accent}
-                label={t("org.session.overview.stats.quizzes")}
-                value={itemsCount(quizQ.data)}
-                loading={quizQ.isPending}
-              />
-            ) : null}
-            {canViewPractices ? (
-              <StatCell
-                index={3}
-                accent={accent}
-                label={t("org.session.overview.stats.practices")}
-                value={itemsCount(practiceQ.data)}
-                loading={practiceQ.isPending}
-              />
-            ) : null}
-            {canViewOfflines ? (
-              <StatCell
-                index={4}
-                accent={accent}
-                label={t("org.session.overview.stats.offline")}
-                value={itemsCount(offlineQ.data)}
-                loading={offlineQ.isPending}
-              />
-            ) : null}
+            ))}
           </section>
 
           {surfaces.length > 0 ? (
@@ -828,112 +812,15 @@ function RouteComponent() {
                   index={i}
                   accent={accent}
                   onOpen={() => setTab(surface.key)}
-                  t={t}
                 />
               ))}
             </div>
           ) : null}
-        </div>
-      ),
-    },
-  ]
-  if (canViewLiveAny) {
-    topTabs.push({
-      key: "live",
-      label: t("org.session.nav.live"),
-      count: itemsCount(liveQ.data),
-      loading: liveQ.isPending,
-      content: <SubTabs tabs={liveSubTabs} accent={accent} />,
-    })
-  }
-  if (canViewQuizzes) {
-    topTabs.push({
-      key: "quizzes",
-      label: t("org.session.nav.quizzes"),
-      count: itemsCount(quizQ.data),
-      loading: quizQ.isPending,
-      content: <SubTabs tabs={quizSubTabs} accent={accent} />,
-    })
-  }
-  if (canViewPractices) {
-    topTabs.push({
-      key: "practices",
-      label: t("org.session.nav.practices"),
-      count: itemsCount(practiceQ.data),
-      loading: practiceQ.isPending,
-      content: <SubTabs tabs={practiceSubTabs} accent={accent} />,
-    })
-  }
-  if (canViewOfflines) {
-    topTabs.push({
-      key: "recordings",
-      label: t("org.session.nav.recordings"),
-      count: itemsCount(offlineQ.data),
-      loading: offlineQ.isPending,
-      content: <SubTabs tabs={offlineSubTabs} accent={accent} />,
-    })
-  }
+        </TabsContent>
 
-  return (
-    <div className="relative isolate flex flex-col gap-8 pb-16">
-      <DecorativeBackground accent={accent} />
-
-      <Breadcrumb
-        orgId={orgId}
-        classId={classId ?? ""}
-        className={cls?.name}
-        fallback={t("org.nav.classes")}
-      />
-
-      <SessionHeader
-        session={session}
-        status={status}
-        accent={accent}
-        classId={classId ?? ""}
-        orgId={orgId}
-        shortId={shortId}
-        t={t}
-      />
-
-      <Tabs value={tab} onValueChange={setTab} className="gap-8">
-        <div className="bg-card border-border dark:bg-card/40 dark:ring-foreground/10 sticky top-2 z-10 rounded-2xl border p-1.5 shadow-sm dark:border-0 dark:shadow-none dark:ring-1 dark:backdrop-blur-md">
-          <TabsList variant="line" className="h-auto w-full flex-wrap gap-1 bg-transparent p-0">
-            {topTabs.map((tt) => (
-              <TabsTrigger
-                key={tt.key}
-                value={tt.key}
-                className={cn(
-                  "group/toptab gap-2 rounded-xl px-4 py-2.5",
-                  "data-active:bg-foreground data-active:text-background data-active:shadow-sm"
-                )}
-              >
-                {tt.key === "overview" ? <LayoutDashboardIcon className="size-4" /> : null}
-                <span className="text-sm font-semibold tracking-tight">{tt.label}</span>
-                {tt.count !== null ? (
-                  tt.loading ? (
-                    <Skeleton className="h-3 w-4" />
-                  ) : (
-                    <span className="inline-flex items-center gap-1 font-mono text-xs tabular-nums">
-                      <span
-                        className={cn(
-                          "size-1.5 rounded-full",
-                          tt.count > 0 ? accent.dot : "bg-muted-foreground/40",
-                          "group-data-[active]/toptab:bg-background"
-                        )}
-                        aria-hidden
-                      />
-                      {tt.count}
-                    </span>
-                  )
-                ) : null}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
-
-        {topTabs.map((tt) => (
-          <TabsContent key={tt.key} value={tt.key} className="mt-0">
-            {tt.content}
+        {surfaces.map((surface) => (
+          <TabsContent key={surface.key} value={surface.key} className="mt-0">
+            <SubTabs tabs={surface.subTabs} accent={accent} />
           </TabsContent>
         ))}
       </Tabs>
