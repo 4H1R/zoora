@@ -23,6 +23,7 @@ func NewPracticeRoom(orgID, classID, sessionID, userID uuid.UUID, opts ...func(*
 		MaxScore:       float64(fake.IntRange(10, 100)),
 		StartTime:      start,
 		EndTime:        end,
+		Attachments:    []uuid.UUID{},
 	}
 	for _, o := range opts {
 		o(r)
@@ -39,6 +40,7 @@ func NewPracticeSubmission(roomID, userID uuid.UUID, opts ...func(*domain.Practi
 		Score:          &score,
 		TeacherComment: fake.Sentence(6),
 		SubmittedAt:    time.Now(),
+		Attachments:    []uuid.UUID{},
 	}
 	for _, o := range opts {
 		o(s)

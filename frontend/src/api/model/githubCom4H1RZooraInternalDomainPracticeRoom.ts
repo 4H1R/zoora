@@ -10,6 +10,7 @@ import type { GithubCom4H1RZooraInternalDomainClassSession } from './githubCom4H
 import type { GithubCom4H1RZooraInternalDomainUser } from './githubCom4H1RZooraInternalDomainUser';
 
 export interface GithubCom4H1RZooraInternalDomainPracticeRoom {
+  attachments?: string[];
   class?: GithubCom4H1RZooraInternalDomainClass;
   class_id?: string;
   class_session?: GithubCom4H1RZooraInternalDomainClassSession;

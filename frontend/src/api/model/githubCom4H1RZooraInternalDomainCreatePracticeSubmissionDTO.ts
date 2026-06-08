@@ -7,5 +7,6 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainCreatePracticeSubmissionDTO {
+  attachments?: string[];
   content?: string;
 }
