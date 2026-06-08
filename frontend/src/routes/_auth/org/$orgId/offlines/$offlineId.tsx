@@ -1,12 +1,10 @@
 import type { GithubCom4H1RZooraInternalDomainMedia as Media } from "@/api/model"
 
-import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { ArrowLeftIcon, DownloadIcon, EyeIcon, FileIcon, Loader2Icon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import { useGetMedia } from "@/api/media/media"
-import { apiClient } from "@/api/mutator/custom-instance"
+import { useGetMedia, useGetMediaIdDownloadUrl } from "@/api/media/media"
 import { useGetOfflinesId } from "@/api/offlines/offlines"
 import { Eyebrow } from "@/components/eyebrow"
 import { Button } from "@/components/ui/button"
@@ -25,21 +23,12 @@ export const Route = createFileRoute("/_auth/org/$orgId/offlines/$offlineId")({
   component: RouteComponent,
 })
 
-function useDownloadURL(mediaId: string | undefined) {
-  return useQuery({
-    queryKey: ["media", "download-url", mediaId],
-    enabled: !!mediaId,
-    staleTime: 30 * 60 * 1000,
-    queryFn: async () => {
-      const res = await apiClient(`/media/${mediaId}/download-url`, { method: "GET" })
-      return (res.data as { data?: { url?: string } }).data?.url ?? null
-    },
-  })
-}
-
 function AttachmentViewer({ media }: { media: Media }) {
   const { t } = useTranslation()
-  const { data: url } = useDownloadURL(media.id)
+  const downloadQuery = useGetMediaIdDownloadUrl(media.id ?? "", {
+    query: { enabled: !!media.id, staleTime: 30 * 60 * 1000 },
+  })
+  const url = (downloadQuery.data?.status === 200 && downloadQuery.data.data.data?.url) || null
   const mime = media.mime_type ?? ""
   const label = media.name || media.file_name || ""
 
