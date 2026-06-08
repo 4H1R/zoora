@@ -20,6 +20,7 @@ import {
   useDeletePracticesId,
   useGetPractices,
 } from "@/api/practices/practices"
+import { MediaAttachmentList } from "@/components/media/MediaAttachmentList"
 import { Eyebrow } from "@/components/eyebrow"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
@@ -70,6 +71,9 @@ function PracticeCard({ practice, index, canSubmit, onEdit, onDelete, onSubmit }
         </h3>
         {practice.content ? (
           <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">{practice.content}</p>
+        ) : null}
+        {practice.attachments && practice.attachments.length > 0 ? (
+          <MediaAttachmentList mediaIds={practice.attachments} className="pt-1" />
         ) : null}
       </div>
 

@@ -1124,6 +1124,42 @@
       "settings": "تنظیمات",
       "files": "فایل‌ها"
     },
+    "dashboard": {
+      "overview": "نمای کلی",
+      "welcome": "خوش آمدید",
+      "welcomeName": "خوش آمدید، {{name}}",
+      "viewAll": "مشاهده همه",
+      "stats": {
+        "classes": "کلاس‌ها",
+        "members": "اعضا",
+        "quizzes": "آزمون‌ها"
+      },
+      "actions": {
+        "newClass": "کلاس جدید"
+      },
+      "recentClasses": {
+        "title": "کلاس‌های اخیر",
+        "empty": "هنوز کلاسی وجود ندارد.",
+        "unassigned": "بدون مدرس",
+        "members_one": "{{count}} عضو",
+        "members_other": "{{count}} عضو"
+      },
+      "activity": {
+        "title": "فعالیت‌های اخیر",
+        "empty": "فعالیت اخیری وجود ندارد.",
+        "classCreated": "کلاس جدید",
+        "quizCreated": "آزمون جدید"
+      },
+      "weekly": {
+        "title": "فعالیت این هفته",
+        "total_one": "{{count}} مورد",
+        "total_other": "{{count}} مورد"
+      },
+      "memberEmpty": {
+        "title": "همه‌چیز آماده است",
+        "hint": "کلاس‌ها و فعالیت‌های شما پس از ثبت‌نام اینجا نمایش داده می‌شوند."
+      }
+    },
     "users": {
       "title": "کاربران",
       "searchPlaceholder": "جستجوی کاربران…",
@@ -1540,6 +1576,7 @@
           "maxScorePlaceholder": "۰ برای بدون سقف",
           "startTime": "زمان شروع",
           "endTime": "زمان پایان",
+          "attachments": "پیوست‌ها",
           "createSuccess": "تمرین ساخته شد",
           "updateSuccess": "تمرین به‌روزرسانی شد",
           "deleteSuccess": "تمرین حذف شد"
@@ -1549,6 +1586,8 @@
           "description": "پاسخ خود را بنویسید و برای بررسی ارسال کنید.",
           "descriptionNamed": "پاسخ خود را برای «{{title}}» ارسال کنید.",
           "placeholder": "پاسخ خود را بنویسید…",
+          "answer": "پاسخ شما",
+          "attachments": "پیوست‌ها",
           "submit": "ارسال",
           "success": "تمرین ارسال شد",
           "failed": "ارسال نشد. دوباره تلاش کنید."
@@ -1699,6 +1738,9 @@
           "mode": "زمان",
           "scheduleLater": "زمان‌بندی برای بعد",
           "startNow": "شروع فوری",
+          "scheduledTime": "زمان شروع زمان‌بندی‌شده",
+          "scheduledTimeHint": "دانشجویان تا زمان شروع جلسه، شمارش معکوس می‌بینند.",
+          "scheduledTimeRequired": "یک تاریخ و زمان در آینده انتخاب کنید.",
           "createAndStart": "ایجاد و شروع",
           "createError": "ایجاد اتاق زنده ناموفق بود. دوباره تلاش کنید."
         },
@@ -1886,6 +1928,17 @@
     "connecting": "در حال اتصال",
     "reconnecting": "در حال اتصال مجدد",
     "peopleCount": "{{count}} نفر",
+    "waitingForHost": "در انتظار شروع جلسه توسط میزبان",
+    "waitingHint": "به محض اینکه استاد کلاس را شروع کند می‌توانید بپیوندید. این صفحه به‌صورت خودکار به‌روزرسانی می‌شود.",
+    "startSession": "شروع جلسه",
+    "startError": "شروع جلسه ممکن نشد. دوباره تلاش کنید.",
+    "scheduledFor": "زمان‌بندی‌شده برای",
+    "startsIn": "شروع تا",
+    "errors": {
+      "screenShare": "اشتراک صفحه شروع نشد. دسترسی مرورگر را بررسی کرده و دوباره تلاش کنید.",
+      "camera": "تغییر وضعیت دوربین ممکن نشد.",
+      "microphone": "تغییر وضعیت میکروفون ممکن نشد."
+    },
     "controls": {
       "micOn": "روشن کردن میکروفن",
       "micOff": "بی‌صدا کردن میکروفن",
@@ -1904,6 +1957,13 @@
       "camera": "دوربین",
       "microphone": "میکروفن",
       "unknown": "دستگاه ناشناس"
+    }
+  },
+  "media": {
+    "uploader": {
+      "add": "افزودن فایل",
+      "empty": "برای پیوست فایل کلیک کنید",
+      "uploadError": "بارگذاری ناموفق بود"
     }
   }
 }

@@ -1092,6 +1092,42 @@
       "settings": "Settings",
       "files": "Files"
     },
+    "dashboard": {
+      "overview": "Overview",
+      "welcome": "Welcome back",
+      "welcomeName": "Welcome back, {{name}}",
+      "viewAll": "View all",
+      "stats": {
+        "classes": "Classes",
+        "members": "Members",
+        "quizzes": "Quizzes"
+      },
+      "actions": {
+        "newClass": "New class"
+      },
+      "recentClasses": {
+        "title": "Recent classes",
+        "empty": "No classes yet.",
+        "unassigned": "Unassigned",
+        "members_one": "{{count}} member",
+        "members_other": "{{count}} members"
+      },
+      "activity": {
+        "title": "Recent activity",
+        "empty": "No recent activity.",
+        "classCreated": "New class",
+        "quizCreated": "New quiz"
+      },
+      "weekly": {
+        "title": "This week's activity",
+        "total_one": "{{count}} item",
+        "total_other": "{{count}} items"
+      },
+      "memberEmpty": {
+        "title": "You're all set",
+        "hint": "Your classes and activity will show up here once you're enrolled."
+      }
+    },
     "users": {
       "title": "Users",
       "searchPlaceholder": "Search users…",
@@ -1508,6 +1544,7 @@
           "maxScorePlaceholder": "0 for no maximum",
           "startTime": "Start time",
           "endTime": "End time",
+          "attachments": "Attachments",
           "createSuccess": "Practice created",
           "updateSuccess": "Practice updated",
           "deleteSuccess": "Practice deleted"
@@ -1517,6 +1554,8 @@
           "description": "Write your response and submit it for review.",
           "descriptionNamed": "Submit your response for \"{{title}}\".",
           "placeholder": "Type your response…",
+          "answer": "Your answer",
+          "attachments": "Attachments",
           "submit": "Submit",
           "success": "Practice submitted",
           "failed": "Could not submit. Try again."
@@ -1667,6 +1706,9 @@
           "mode": "When",
           "scheduleLater": "Schedule for later",
           "startNow": "Start now",
+          "scheduledTime": "Scheduled start time",
+          "scheduledTimeHint": "Students see a countdown until you start the session.",
+          "scheduledTimeRequired": "Pick a future date and time.",
           "createAndStart": "Create & start",
           "createError": "Could not create the live room. Try again."
         },
@@ -1886,6 +1928,17 @@
     "connecting": "Connecting",
     "reconnecting": "Reconnecting",
     "peopleCount": "{{count}} people",
+    "waitingForHost": "Waiting for the host to start",
+    "waitingHint": "You'll be able to join as soon as your teacher starts the class. This page updates automatically.",
+    "startSession": "Start session",
+    "startError": "Couldn't start the session. Please try again.",
+    "scheduledFor": "Scheduled for",
+    "startsIn": "Starts in",
+    "errors": {
+      "screenShare": "Couldn't start screen sharing. Check your browser permissions and try again.",
+      "camera": "Couldn't toggle your camera.",
+      "microphone": "Couldn't toggle your microphone."
+    },
     "controls": {
       "micOn": "Turn on microphone",
       "micOff": "Mute microphone",
@@ -1904,6 +1957,13 @@
       "camera": "Camera",
       "microphone": "Microphone",
       "unknown": "Unknown device"
+    }
+  },
+  "media": {
+    "uploader": {
+      "add": "Add files",
+      "empty": "Click to attach files",
+      "uploadError": "Upload failed"
     }
   }
 }
