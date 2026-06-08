@@ -31,6 +31,7 @@ import { AttendanceSection } from "@/components/org/livesessions/AttendanceSecti
 import { LiveRoomsSection } from "@/components/org/livesessions/LiveRoomsSection"
 import { useAttendancePermissions } from "@/components/org/livesessions/use-attendance-permissions"
 import { useLivesessionPermissions } from "@/components/org/livesessions/use-livesession-permissions"
+import { OfflinesSection } from "@/components/org/offlines/OfflinesSection"
 import { useOfflinePermissions } from "@/components/org/offlines/use-offline-permissions"
 import { PracticeScoresSection } from "@/components/org/practices/PracticeScoresSection"
 import { PracticesSection } from "@/components/org/practices/PracticesSection"
@@ -631,7 +632,7 @@ function RouteComponent() {
       count: itemsCount(offlineQ.data),
       loading: offlineQ.isPending,
       icon: <FilmIcon className="size-5" />,
-      href: classPath,
+      href: "#offlines",
     })
   }
   const navCount = navTiles.length
@@ -688,6 +689,18 @@ function RouteComponent() {
       loading: practiceQ.isPending,
       icon: <CheckSquareIcon className="size-4" />,
       content: <PracticeScoresSection classSessionId={classSessionId} />,
+    })
+  }
+
+  const offlineTabs: WorkspaceTab[] = []
+  if (canViewOfflines) {
+    offlineTabs.push({
+      key: "offlines",
+      label: t("org.session.offlineWorkspace.tabs.offlines"),
+      count: itemsCount(offlineQ.data),
+      loading: offlineQ.isPending,
+      icon: <FilmIcon className="size-4" />,
+      content: <OfflinesSection classSessionId={classSessionId} orgId={orgId} />,
     })
   }
 
@@ -828,6 +841,14 @@ function RouteComponent() {
         title={t("org.session.practiceWorkspace.title")}
         subtitle={t("org.session.practiceWorkspace.subtitle")}
         tabs={practiceTabs}
+        accent={accent}
+      />
+
+      <WorkspaceSection
+        eyebrow={t("org.session.offlineWorkspace.eyebrow")}
+        title={t("org.session.offlineWorkspace.title")}
+        subtitle={t("org.session.offlineWorkspace.subtitle")}
+        tabs={offlineTabs}
         accent={accent}
       />
 
