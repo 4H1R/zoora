@@ -2,7 +2,7 @@ import type { GithubCom4H1RZooraInternalDomainPracticeRoom as PracticeRoom } fro
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -13,6 +13,10 @@ import {
   usePostPractices,
   usePutPracticesId,
 } from "@/api/practices/practices"
+import {
+  MediaAttachmentUploader,
+  type PendingAttachment,
+} from "@/components/media/MediaAttachmentUploader"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
@@ -76,6 +80,9 @@ export function PracticeFormDialog({
   const queryClient = useQueryClient()
   const isEdit = !!practice
 
+  const [attachments, setAttachments] = useState<PendingAttachment[]>([])
+  const [newModelId, setNewModelId] = useState(() => crypto.randomUUID())
+
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: defaults,
@@ -84,6 +91,10 @@ export function PracticeFormDialog({
   useEffect(() => {
     if (!open) return
     form.reset(practice ? practiceToValues(practice) : defaults)
+    setAttachments(
+      (practice?.attachments ?? []).map((id) => ({ media_id: id, name: id, size: 0 })),
+    )
+    if (!practice) setNewModelId(crypto.randomUUID())
   }, [open, practice])
 
   const invalidate = () =>
@@ -118,6 +129,7 @@ export function PracticeFormDialog({
       max_score: values.max_score,
       start_time: new Date(values.start_time).toISOString(),
       end_time: new Date(values.end_time).toISOString(),
+      attachments: attachments.map((a) => a.media_id),
     }
     if (isEdit && practice?.id) {
       updateMutation.mutate({ id: practice.id, data: payload })
@@ -152,6 +164,15 @@ export function PracticeFormDialog({
             {...form.register("content")}
             placeholder={t(`${TRANSLATION_PREFIX}.contentPlaceholder`)}
             rows={4}
+          />
+        </Field>
+        <Field>
+          <FieldLabel>{t(`${TRANSLATION_PREFIX}.attachments`)}</FieldLabel>
+          <MediaAttachmentUploader
+            value={attachments}
+            onChange={setAttachments}
+            modelType="practice"
+            modelId={isEdit ? practice?.id : newModelId}
           />
         </Field>
         <Field data-invalid={!!errors.max_score || undefined}>
