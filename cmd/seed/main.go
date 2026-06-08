@@ -196,6 +196,11 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 		domain.PermUsersView,
 		domain.PermQuizzesView,
 		domain.PermPollsView,
+		// View-only access so members see the same session tabs as staff
+		// (Practices, Recordings, Live presence) — no create/grade rights.
+		domain.PermPracticesView,
+		domain.PermOfflinesView,
+		domain.PermAttendanceView,
 	}
 	studentPermIDs := resolvePermIDs(studentPermNames)
 
