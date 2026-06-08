@@ -49,6 +49,15 @@ const AUTO_TYPES = new Set<string>([
   ColumnType.GradebookColumnAutoQuiz,
 ])
 
+const TYPE_BADGE: Record<string, "default" | "secondary" | "outline"> = {
+  auto_attendance: "secondary",
+  auto_practice: "secondary",
+  auto_quiz: "secondary",
+  manual_grade: "default",
+  manual_attendance: "outline",
+  manual_text: "outline",
+}
+
 interface CellTarget {
   column: GradebookColumn
   student: { id: string; name: string }
@@ -179,11 +188,11 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex min-w-0 flex-col gap-1">
                           <span className="truncate text-sm font-medium">{col.title}</span>
-                          <Badge variant="outline" className="w-fit text-[10px]">
+                          <Badge variant={TYPE_BADGE[col.type ?? ""] ?? "outline"} className="w-fit text-[10px]">
                             {t(`org.class.gradebook.types.${col.type}`)}
                           </Badge>
                         </div>
-                        {canManage ? (
+                        {canManage || canDelete ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger
                               render={
@@ -193,20 +202,22 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
                               }
                             />
                             <DropdownMenuContent align="end" className="min-w-40">
-                              <DropdownMenuGroup>
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setEditingColumn(col)
-                                    setColumnDialogOpen(true)
-                                  }}
-                                >
-                                  <PencilIcon data-icon="inline-start" />
-                                  {t("common.edit")}
-                                </DropdownMenuItem>
-                              </DropdownMenuGroup>
+                              {canManage ? (
+                                <DropdownMenuGroup>
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setEditingColumn(col)
+                                      setColumnDialogOpen(true)
+                                    }}
+                                  >
+                                    <PencilIcon data-icon="inline-start" />
+                                    {t("common.edit")}
+                                  </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                              ) : null}
                               {canDelete ? (
                                 <>
-                                  <DropdownMenuSeparator />
+                                  {canManage ? <DropdownMenuSeparator /> : null}
                                   <DropdownMenuGroup>
                                     <DropdownMenuItem
                                       variant="destructive"
@@ -284,7 +295,7 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
         </div>
       </div>
 
-      {canManage ? (
+      {canManage || canDelete ? (
         <>
           <GradebookColumnDialog
             open={columnDialogOpen}
