@@ -1617,7 +1617,8 @@
           "updateSuccess": "اتاق آفلاین به‌روزرسانی شد",
           "deleteSuccess": "اتاق آفلاین حذف شد",
           "uploadError": "بارگذاری ناموفق بود",
-          "removeError": "حذف فایل ممکن نشد"
+          "removeError": "حذف فایل ممکن نشد",
+          "saveError": "ذخیره اتاق آفلاین ممکن نشد"
         }
       },
       "offlineWorkspace": {

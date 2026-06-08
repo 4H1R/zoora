@@ -86,19 +86,33 @@ export function OfflineFormDialog({ open, onOpenChange, room, classSessionId }: 
   const onSubmit = form.handleSubmit(async (values) => {
     const published_at = localInputToISO(values.published_at)
     if (isEdit && room?.id) {
-      await updateMutation.mutateAsync({
-        id: room.id,
-        data: { title: values.title, description: values.description, published_at },
-      })
+      try {
+        await updateMutation.mutateAsync({
+          id: room.id,
+          data: { title: values.title, description: values.description, published_at },
+        })
+      } catch (err) {
+        console.error(err)
+        toast.error(t(`${PREFIX}.saveError`))
+        return
+      }
       toast.success(t(`${PREFIX}.updateSuccess`))
       invalidate()
       onOpenChange(false)
       return
     }
-    const res = await createMutation.mutateAsync({
-      data: { class_session_id: classSessionId, title: values.title, description: values.description, published_at },
-    })
+    let res
+    try {
+      res = await createMutation.mutateAsync({
+        data: { class_session_id: classSessionId, title: values.title, description: values.description, published_at },
+      })
+    } catch (err) {
+      console.error(err)
+      toast.error(t(`${PREFIX}.saveError`))
+      return
+    }
     const newId = res.status === 201 ? res.data.data?.id : undefined
+    let uploadFailed = false
     if (newId && pendingFiles.length > 0) {
       setUploading(true)
       for (const file of pendingFiles) {
@@ -106,12 +120,13 @@ export function OfflineFormDialog({ open, onOpenChange, room, classSessionId }: 
           await uploadOfflineAttachment(presign.mutateAsync, newId, file)
         } catch (err) {
           console.error(err)
+          uploadFailed = true
           toast.error(t(`${PREFIX}.uploadError`))
         }
       }
       setUploading(false)
     }
-    toast.success(t(`${PREFIX}.createSuccess`))
+    if (!uploadFailed) toast.success(t(`${PREFIX}.createSuccess`))
     invalidate()
     onOpenChange(false)
   })

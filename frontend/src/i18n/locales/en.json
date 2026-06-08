@@ -1585,7 +1585,8 @@
           "updateSuccess": "Offline room updated",
           "deleteSuccess": "Offline room deleted",
           "uploadError": "Upload failed",
-          "removeError": "Could not remove file"
+          "removeError": "Could not remove file",
+          "saveError": "Could not save offline room"
         }
       },
       "offlineWorkspace": {
