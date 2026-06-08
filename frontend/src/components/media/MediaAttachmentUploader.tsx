@@ -73,11 +73,11 @@ export function MediaAttachmentUploader({
         if (!put.ok) throw new Error(`upload failed: ${put.status}`)
         uploaded.push({ media_id: res.data.data.media.id, name: file.name, size: file.size })
       }
-      onChange([...value, ...uploaded])
     } catch (err) {
       console.error(err)
       toast.error(t("media.uploader.uploadError"))
     } finally {
+      if (uploaded.length > 0) onChange([...value, ...uploaded])
       setIsUploading(false)
     }
   }
