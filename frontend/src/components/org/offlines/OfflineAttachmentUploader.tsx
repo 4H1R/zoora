@@ -65,7 +65,11 @@ export function OfflineAttachmentUploader({ offlineId }: OfflineAttachmentUpload
   return (
     <div className="flex flex-col gap-2">
       <input ref={inputRef} type="file" className="hidden" onChange={handleFile} />
-      {attachments.length === 0 ? (
+      {mediaQuery.isPending ? (
+        <div className="text-muted-foreground flex items-center gap-2 text-xs">
+          <Loader2Icon className="size-4 animate-spin" />
+        </div>
+      ) : attachments.length === 0 ? (
         <p className="text-muted-foreground text-xs">{t("org.session.offlines.form.noAttachments")}</p>
       ) : (
         <ul className="flex flex-col gap-1.5">
@@ -81,9 +85,10 @@ export function OfflineAttachmentUploader({ offlineId }: OfflineAttachmentUpload
                 variant="ghost"
                 size="icon-xs"
                 className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                disabled={deleteMedia.isPending}
                 onClick={() => m.id && handleRemove(m.id)}
               >
-                <Trash2Icon />
+                {deleteMedia.isPending ? <Loader2Icon className="animate-spin" /> : <Trash2Icon />}
               </Button>
             </li>
           ))}
