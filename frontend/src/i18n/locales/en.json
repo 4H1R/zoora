@@ -1190,6 +1190,32 @@
         "success": "Member removed.",
         "errorForbidden": "You don't have permission to remove members.",
         "errorGeneric": "Could not remove member."
+      },
+      "gradebook": {
+        "title": "Gradebook",
+        "eyebrow": "Gradebook",
+        "subtitle": "Track grades and attendance for this class.",
+        "open": "Gradebook",
+        "backToClass": "Back to class",
+        "newColumn": "New column",
+        "student": "Student",
+        "stats": {
+          "columns": "Columns",
+          "students": "Students"
+        },
+        "noResults": "No gradebook columns yet",
+        "noResultsHint": "Create a column to start tracking grades.",
+        "noAccessTitle": "No access to this gradebook",
+        "noAccessHint": "You don't have permission to view this class gradebook.",
+        "deleteSuccess": "Column deleted",
+        "types": {
+          "auto_attendance": "Auto · Attendance",
+          "auto_practice": "Auto · Practice",
+          "auto_quiz": "Auto · Quiz",
+          "manual_grade": "Manual · Grade",
+          "manual_attendance": "Manual · Attendance",
+          "manual_text": "Manual · Text"
+        }
       }
     },
     "session": {

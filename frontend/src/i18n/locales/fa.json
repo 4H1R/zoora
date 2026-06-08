@@ -1222,6 +1222,32 @@
         "success": "عضو حذف شد.",
         "errorForbidden": "اجازه حذف عضو را ندارید.",
         "errorGeneric": "حذف عضو ناموفق بود."
+      },
+      "gradebook": {
+        "title": "کارنامه",
+        "eyebrow": "کارنامه",
+        "subtitle": "نمرات و حضور و غیاب این کلاس را پیگیری کنید.",
+        "open": "کارنامه",
+        "backToClass": "بازگشت به کلاس",
+        "newColumn": "ستون جدید",
+        "student": "دانش‌آموز",
+        "stats": {
+          "columns": "ستون‌ها",
+          "students": "دانش‌آموزان"
+        },
+        "noResults": "هنوز ستونی در کارنامه نیست",
+        "noResultsHint": "برای شروع ثبت نمرات یک ستون بسازید.",
+        "noAccessTitle": "دسترسی به این کارنامه ندارید",
+        "noAccessHint": "اجازه‌ی مشاهده‌ی کارنامه‌ی این کلاس را ندارید.",
+        "deleteSuccess": "ستون حذف شد",
+        "types": {
+          "auto_attendance": "خودکار · حضور و غیاب",
+          "auto_practice": "خودکار · تمرین",
+          "auto_quiz": "خودکار · آزمون",
+          "manual_grade": "دستی · نمره",
+          "manual_attendance": "دستی · حضور و غیاب",
+          "manual_text": "دستی · متن"
+        }
       }
     },
     "session": {
