@@ -22,8 +22,19 @@ interface Connection {
 function RouteComponent() {
   const { liveId } = Route.useParams()
   const { t } = useTranslation()
-  const { data, isPending } = useGetLiveRoomsId(liveId)
   const [connection, setConnection] = useState<Connection | null>(null)
+  const { data, isPending } = useGetLiveRoomsId(liveId, {
+    query: {
+      // While a student waits in the lobby for a scheduled room, poll so the
+      // status flips from "created" to "active" the moment the host starts —
+      // no manual refresh. Stop polling once connected to the room.
+      refetchInterval: (query) => {
+        const res = query.state.data
+        const status = res?.status === 200 ? res.data.data?.status : undefined
+        return !connection && status === "created" ? 5000 : false
+      },
+    },
+  })
 
   const room = (data?.status === 200 && data.data.data) || undefined
 

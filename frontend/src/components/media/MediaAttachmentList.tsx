@@ -1,30 +1,10 @@
-import { useQuery } from "@tanstack/react-query"
 import { DownloadIcon, FileIcon, Loader2Icon } from "lucide-react"
 
-import { apiClient } from "@/api/mutator/custom-instance"
+import { useMediaInfo } from "@/lib/media"
 import { cn } from "@/lib/utils"
 
-interface MediaMeta {
-  file_name?: string
-  name?: string
-}
-
-function useMediaChip(mediaID: string) {
-  return useQuery({
-    queryKey: ["media", "chip", mediaID],
-    queryFn: async () => {
-      const metaRes = await apiClient(`/media/${mediaID}`, { method: "GET" })
-      const meta = (metaRes.data as { data?: MediaMeta }).data ?? {}
-      const urlRes = await apiClient(`/media/${mediaID}/download-url`, { method: "GET" })
-      const url = (urlRes.data as { data?: { url?: string } }).data?.url ?? null
-      return { name: meta.file_name || meta.name || mediaID, url }
-    },
-    staleTime: 25 * 60 * 1000,
-  })
-}
-
 function AttachmentChip({ mediaID }: { mediaID: string }) {
-  const { data, isPending } = useMediaChip(mediaID)
+  const { data, isPending } = useMediaInfo(mediaID)
 
   return (
     <a
@@ -32,6 +12,7 @@ function AttachmentChip({ mediaID }: { mediaID: string }) {
       target="_blank"
       rel="noreferrer"
       aria-disabled={isPending || !data?.url}
+      tabIndex={data?.url ? undefined : -1}
       className={cn(
         "border-foreground/10 bg-muted/40 text-foreground group inline-flex max-w-full items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs transition-colors",
         data?.url

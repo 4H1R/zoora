@@ -589,6 +589,19 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 			}
 			counts.LiveRecordings++
 
+			// 17b. A scheduled (not-yet-started) live room so the lobby's
+			// host-start / student-wait + countdown flow has seed data.
+			scheduledRoom := factory.NewLiveRoom(liveSession.ID, func(lr *domain.LiveRoom) {
+				lr.Name = "Scheduled session"
+				lr.Status = domain.LiveRoomStatusCreated
+				at := time.Now().Add(24 * time.Hour)
+				lr.ScheduledStartTime = &at
+			})
+			if err := db.WithContext(ctx).Create(scheduledRoom).Error; err != nil {
+				return nil, fmt.Errorf("creating scheduled live room: %w", err)
+			}
+			counts.LiveRooms++
+
 			// 18. PracticeRoom + submissions
 			pr := factory.NewPracticeRoom(org.ID, class.ID, practiceSession.ID, teacher.ID)
 			if err := db.WithContext(ctx).Create(pr).Error; err != nil {

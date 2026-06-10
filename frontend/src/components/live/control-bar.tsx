@@ -11,6 +11,7 @@ import {
   VideoOff,
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 
 import { Spinner } from "@/components/ui/spinner"
 import { cn } from "@/lib/utils"
@@ -29,8 +30,17 @@ export function ControlBar({ panel, setPanel, onLeave, leavePending, unread }: C
   const { t } = useTranslation()
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled, isScreenShareEnabled } = useLocalParticipant()
 
-  const toggle = (fn: () => Promise<unknown>) => {
-    void fn()
+  // Previously the toggle fired-and-forgot (`void fn()`), so a rejected
+  // setScreenShareEnabled (e.g. publish blocked) gave the user zero feedback —
+  // the button "did nothing". Now we await and surface real failures; dismissing
+  // the OS picker (NotAllowedError/AbortError) is a no-op, not an error.
+  const toggle = async (fn: () => Promise<unknown>, errorKey: string) => {
+    try {
+      await fn()
+    } catch (err) {
+      if (err instanceof DOMException && (err.name === "NotAllowedError" || err.name === "AbortError")) return
+      toast.error(t(errorKey))
+    }
   }
 
   return (
@@ -43,7 +53,9 @@ export function ControlBar({ panel, setPanel, onLeave, leavePending, unread }: C
           on={isMicrophoneEnabled}
           danger
           label={isMicrophoneEnabled ? t("liveRoom.controls.micOff") : t("liveRoom.controls.micOn")}
-          onClick={() => toggle(() => localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled))}
+          onClick={() =>
+            toggle(() => localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled), "liveRoom.errors.microphone")
+          }
         />
         <CtrlButton
           icon={Video}
@@ -51,7 +63,9 @@ export function ControlBar({ panel, setPanel, onLeave, leavePending, unread }: C
           on={isCameraEnabled}
           danger
           label={isCameraEnabled ? t("liveRoom.controls.cameraOff") : t("liveRoom.controls.cameraOn")}
-          onClick={() => toggle(() => localParticipant.setCameraEnabled(!isCameraEnabled))}
+          onClick={() =>
+            toggle(() => localParticipant.setCameraEnabled(!isCameraEnabled), "liveRoom.errors.camera")
+          }
         />
         <CtrlButton
           icon={MonitorUp}
@@ -59,7 +73,9 @@ export function ControlBar({ panel, setPanel, onLeave, leavePending, unread }: C
           active={isScreenShareEnabled}
           label={isScreenShareEnabled ? t("liveRoom.controls.stopShare") : t("liveRoom.controls.shareScreen")}
           className="hidden sm:flex"
-          onClick={() => toggle(() => localParticipant.setScreenShareEnabled(!isScreenShareEnabled))}
+          onClick={() =>
+            toggle(() => localParticipant.setScreenShareEnabled(!isScreenShareEnabled), "liveRoom.errors.screenShare")
+          }
         />
 
         <span className="mx-0.5 h-7 w-px bg-white/10" />

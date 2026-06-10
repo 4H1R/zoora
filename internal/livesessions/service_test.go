@@ -143,6 +143,11 @@ func (m *mockClassSessionRepo) ListByClass(ctx context.Context, classID uuid.UUI
 func (m *mockClassSessionRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+func (m *mockClassSessionRepo) AdminList(ctx context.Context, q domain.AdminListClassSessionsQuery) ([]domain.ClassSession, int64, error) {
+	a := m.Called(ctx, q)
+	ss, _ := a.Get(0).([]domain.ClassSession)
+	return ss, a.Get(1).(int64), a.Error(2)
+}
 func (m *mockClassSessionRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.ClassSession, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {

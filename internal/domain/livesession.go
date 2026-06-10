@@ -51,19 +51,20 @@ func DefaultLiveRoomConfig() LiveRoomConfig {
 }
 
 type LiveRoom struct {
-	ID              uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	ClassSessionID  uuid.UUID      `gorm:"type:uuid;not null;index" json:"class_session_id"`
-	ClassSession    *ClassSession  `gorm:"foreignKey:ClassSessionID" json:"class_session,omitempty"`
-	Name            string         `gorm:"type:varchar(255);not null;default:''" json:"name"`
-	LiveKitRoomName string         `gorm:"column:livekit_room_name;type:varchar(255);not null;uniqueIndex" json:"livekit_room_name"`
-	Status          LiveRoomStatus `gorm:"type:varchar(20);not null;default:'created'" json:"status"`
-	Config          LiveRoomConfig `gorm:"type:jsonb;not null;serializer:json" json:"config"`
-	ActualStartTime *time.Time     `json:"actual_start_time"`
-	ActualEndTime   *time.Time     `json:"actual_end_time"`
-	HostLastSeenAt  *time.Time     `json:"host_last_seen_at"`
-	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedAt       time.Time      `json:"updated_at"`
-	DeletedAt       gorm.DeletedAt `gorm:"index" json:"-"`
+	ID                 uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	ClassSessionID     uuid.UUID      `gorm:"type:uuid;not null;index" json:"class_session_id"`
+	ClassSession       *ClassSession  `gorm:"foreignKey:ClassSessionID" json:"class_session,omitempty"`
+	Name               string         `gorm:"type:varchar(255);not null;default:''" json:"name"`
+	LiveKitRoomName    string         `gorm:"column:livekit_room_name;type:varchar(255);not null;uniqueIndex" json:"livekit_room_name"`
+	Status             LiveRoomStatus `gorm:"type:varchar(20);not null;default:'created'" json:"status"`
+	Config             LiveRoomConfig `gorm:"type:jsonb;not null;serializer:json" json:"config"`
+	ScheduledStartTime *time.Time     `json:"scheduled_start_time"`
+	ActualStartTime    *time.Time     `json:"actual_start_time"`
+	ActualEndTime      *time.Time     `json:"actual_end_time"`
+	HostLastSeenAt     *time.Time     `json:"host_last_seen_at"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
+	DeletedAt          gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 type LiveParticipant struct {
@@ -95,9 +96,10 @@ type LiveRecording struct {
 }
 
 type CreateLiveRoomDTO struct {
-	ClassSessionID uuid.UUID      `json:"class_session_id" binding:"required"`
-	Name           string         `json:"name" binding:"omitempty,max=255"`
-	Config         LiveRoomConfig `json:"config"`
+	ClassSessionID     uuid.UUID      `json:"class_session_id" binding:"required"`
+	Name               string         `json:"name" binding:"omitempty,max=255"`
+	ScheduledStartTime *time.Time     `json:"scheduled_start_time"`
+	Config             LiveRoomConfig `json:"config"`
 }
 
 type UpdateLiveRoomConfigDTO struct {

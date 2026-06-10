@@ -41,6 +41,14 @@ export function buildAccess(user: User) {
   return { config, user: accessUser, has, hasAny, isAdmin }
 }
 
+// userHasAny is a hook-free permission check over a fetched /users/me object.
+// Use it on routes rendered OUTSIDE the org <AccessProvider> (e.g. /live/$liveId),
+// where the useAccess* hooks throw. Inside the provider, prefer useCanAny.
+export function userHasAny(user: User | undefined, perms: AppPermission[]): boolean {
+  if (!user) return false
+  return buildAccess(user).hasAny(perms)
+}
+
 export function useCanSelfOr(basePerm: AppPermission, anyPerm: AppPermission, targetId: string | undefined) {
   const { can, user } = useAccess()
   if (can(anyPerm)) return true

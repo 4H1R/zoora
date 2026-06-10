@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	lkproto "github.com/livekit/protocol/livekit"
 
 	"github.com/4H1R/zoora/internal/domain"
 	lk "github.com/4H1R/zoora/internal/platform/livekit"
@@ -142,19 +143,19 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreateLiveRoomDTO) 
 
 	cfg := dto.Config
 	if cfg.MaxParticipants <= 0 {
-		// Only backfill the participant cap; preserve caller-supplied fields
-		// such as Name and ScheduledStartTime.
+		// Backfill only the participant cap; preserve caller-supplied flags.
 		cfg.MaxParticipants = domain.DefaultLiveRoomConfig().MaxParticipants
 	}
 
 	roomID := uuid.New()
 	room := &domain.LiveRoom{
-		ID:              roomID,
-		ClassSessionID:  dto.ClassSessionID,
-		Name:            strings.TrimSpace(dto.Name),
-		LiveKitRoomName: fmt.Sprintf("session-%s-%s", dto.ClassSessionID.String(), roomID.String()),
-		Status:          domain.LiveRoomStatusCreated,
-		Config:          cfg,
+		ID:                 roomID,
+		ClassSessionID:     dto.ClassSessionID,
+		Name:               strings.TrimSpace(dto.Name),
+		LiveKitRoomName:    fmt.Sprintf("session-%s-%s", dto.ClassSessionID.String(), roomID.String()),
+		Status:             domain.LiveRoomStatusCreated,
+		ScheduledStartTime: dto.ScheduledStartTime,
+		Config:             cfg,
 	}
 
 	err = s.tx.RunInTx(ctx, func(txCtx context.Context) error {
@@ -231,11 +232,31 @@ func (s *service) JoinRoom(ctx context.Context, roomID uuid.UUID) (*domain.JoinL
 	}
 
 	isModerator := isManager || hasJoinAny
-	canPublish := isModerator || room.Config.AllowMicDefault || room.Config.AllowCameraDefault
+
+	// A scheduled room sits in "created" until someone starts it (the prejoin
+	// lobby calls join, never start). The host joining auto-starts it so the
+	// LiveKit room actually exists; everyone else must wait for the host.
+	if room.Status == domain.LiveRoomStatusCreated {
+		if isModerator {
+			if _, err := s.startRoomInternal(ctx, room); err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, domain.NewValidationError(map[string]string{"status": "room not started yet"})
+		}
+	}
+
+	// Defensive: guarantee the LiveKit room exists before issuing a token
+	// (idempotent — returns the existing room if already created).
+	if _, err := s.livekit.CreateRoom(ctx, room.LiveKitRoomName, uint32(room.Config.MaxParticipants)); err != nil {
+		return nil, fmt.Errorf("livesessions.service.JoinRoom livekit: %w", err)
+	}
+
+	sources := publishSources(isModerator, room.Config)
 	roomAdmin := isModerator
 
 	identity := caller.UserID.String()
-	token, err := s.livekit.GenerateToken(room.LiveKitRoomName, identity, identity, canPublish, roomAdmin)
+	token, err := s.livekit.GenerateToken(room.LiveKitRoomName, identity, identity, sources, roomAdmin)
 	if err != nil {
 		return nil, fmt.Errorf("livesessions.service.JoinRoom token: %w", err)
 	}
@@ -307,9 +328,24 @@ func (s *service) StartRoom(ctx context.Context, roomID uuid.UUID) (*domain.Live
 		return nil, domain.NewValidationError(map[string]string{"status": "room must be in created state to start"})
 	}
 
-	_, err = s.livekit.CreateRoom(ctx, room.LiveKitRoomName, uint32(room.Config.MaxParticipants))
-	if err != nil {
-		return nil, fmt.Errorf("livesessions.service.StartRoom livekit: %w", err)
+	if _, err := s.startRoomInternal(ctx, room); err != nil {
+		return nil, err
+	}
+
+	s.logger.Info("live room started",
+		"room_id", room.ID.String(),
+		"started_by", caller.UserID.String(),
+	)
+	return room, nil
+}
+
+// startRoomInternal creates the LiveKit room, promotes the DB row to active and
+// kicks off auto-recording. Callers must have already verified manage rights and
+// that the room is in the created state. Shared by StartRoom and JoinRoom (host
+// auto-start) so the two paths can never drift.
+func (s *service) startRoomInternal(ctx context.Context, room *domain.LiveRoom) (*domain.LiveRoom, error) {
+	if _, err := s.livekit.CreateRoom(ctx, room.LiveKitRoomName, uint32(room.Config.MaxParticipants)); err != nil {
+		return nil, fmt.Errorf("livesessions.service.startRoomInternal livekit: %w", err)
 	}
 
 	now := time.Now()
@@ -337,12 +373,32 @@ func (s *service) StartRoom(ctx context.Context, roomID uuid.UUID) (*domain.Live
 			}
 		}
 	}
-
-	s.logger.Info("live room started",
-		"room_id", room.ID.String(),
-		"started_by", caller.UserID.String(),
-	)
 	return room, nil
+}
+
+// publishSources maps a caller's role + the room config into the LiveKit track
+// sources they may publish. Moderators get everything; others get only what the
+// room config allows. An empty result yields a subscribe-only (view) token.
+func publishSources(isModerator bool, cfg domain.LiveRoomConfig) []lkproto.TrackSource {
+	if isModerator {
+		return []lkproto.TrackSource{
+			lkproto.TrackSource_CAMERA,
+			lkproto.TrackSource_MICROPHONE,
+			lkproto.TrackSource_SCREEN_SHARE,
+			lkproto.TrackSource_SCREEN_SHARE_AUDIO,
+		}
+	}
+	var sources []lkproto.TrackSource
+	if cfg.AllowCameraDefault {
+		sources = append(sources, lkproto.TrackSource_CAMERA)
+	}
+	if cfg.AllowMicDefault {
+		sources = append(sources, lkproto.TrackSource_MICROPHONE)
+	}
+	if cfg.AllowScreenShareDefault {
+		sources = append(sources, lkproto.TrackSource_SCREEN_SHARE, lkproto.TrackSource_SCREEN_SHARE_AUDIO)
+	}
+	return sources
 }
 
 func (s *service) endRoomInternal(ctx context.Context, room *domain.LiveRoom) (*domain.LiveRoom, error) {

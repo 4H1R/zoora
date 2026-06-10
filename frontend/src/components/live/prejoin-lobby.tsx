@@ -5,10 +5,12 @@ import {
   CalendarDays,
   ChevronLeft,
   Circle,
+  Hourglass,
   Info,
   Lock,
   Mic,
   MicOff,
+  Radio,
   Settings2,
   ShieldCheck,
   Users,
@@ -39,6 +41,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Spinner } from "@/components/ui/spinner"
 import { UserAvatar } from "@/components/user-avatar"
+import { userHasAny } from "@/lib/access"
+import { formatCountdown, useNow } from "@/lib/session-status"
 import { cn } from "@/lib/utils"
 
 interface PreJoinLobbyProps {
@@ -48,13 +52,22 @@ interface PreJoinLobbyProps {
 }
 
 export function PreJoinLobby({ room, liveId, onJoined }: PreJoinLobbyProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const router = useRouter()
   const joinMutation = usePostLiveRoomsIdJoin()
   const { data: meData } = useGetUsersMe()
   const me = meData?.status === 200 ? meData.data.data : undefined
   const orgId = me?.organization_id
   const myName = me?.name ?? t("liveRoom.you")
+  // The /live route renders outside the org AccessProvider, so the useAccess
+  // hooks aren't available — userHasAny reads permissions straight off /users/me.
+  const isModerator = userHasAny(me, [
+    "livesessions:manage",
+    "livesessions:manage_any",
+    "livesessions:create",
+    "livesessions:create_any",
+  ])
+  const now = useNow(1000)
 
   const [audioEnabled, setAudioEnabled] = useState(true)
   const [videoEnabled, setVideoEnabled] = useState(true)
@@ -102,6 +115,7 @@ export function PreJoinLobby({ room, liveId, onJoined }: PreJoinLobbyProps) {
 
   const isFinished = room?.status === "finished"
   const isActive = room?.status === "active"
+  const isCreated = room?.status === "created"
   const session = room?.class_session
   const className = session?.class?.name
   const teacherName = session?.class?.user?.name
@@ -109,11 +123,18 @@ export function PreJoinLobby({ room, liveId, onJoined }: PreJoinLobbyProps) {
   const maxParticipants = room?.config?.max_participants
   const autoRecord = room?.config?.auto_record
 
-  const startTime = session?.start_time
-    ? new Date(session.start_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  // The room's own scheduled time wins; fall back to the session start time.
+  const scheduledIso = room?.scheduled_start_time ?? session?.start_time
+  // Students can't enter a not-yet-started (created) room; only the host can.
+  const isWaiting = isCreated && !isModerator
+
+  // Format in the active app language (was hard-coded to the browser default,
+  // so Persian users saw English dates).
+  const startTime = scheduledIso
+    ? new Date(scheduledIso).toLocaleTimeString(i18n.language, { hour: "2-digit", minute: "2-digit" })
     : undefined
-  const startDate = session?.start_time
-    ? new Date(session.start_time).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })
+  const startDate = scheduledIso
+    ? new Date(scheduledIso).toLocaleDateString(i18n.language, { weekday: "long", month: "long", day: "numeric" })
     : undefined
 
   const handleJoin = () => {
@@ -265,25 +286,48 @@ export function PreJoinLobby({ room, liveId, onJoined }: PreJoinLobbyProps) {
               </div>
             )}
 
-            {joinMutation.isError && (
+            {joinMutation.isError && !isWaiting && (
               <p className="mt-4 text-center text-sm text-red-400">{t("liveRoom.joinError")}</p>
             )}
 
             <div className="mt-auto flex flex-col gap-3 pt-6">
-              <Button
-                size="lg"
-                onClick={handleJoin}
-                disabled={joinMutation.isPending || isFinished}
-                className="h-12 w-full gap-2 bg-indigo-500 text-base font-semibold text-white hover:bg-indigo-400"
-              >
-                {joinMutation.isPending ? (
-                  <Spinner className="size-4" />
-                ) : isFinished ? (
-                  t("liveRoom.sessionEnded")
-                ) : (
-                  t("liveRoom.joinNow")
-                )}
-              </Button>
+              {isWaiting ? (
+                <div className="flex flex-col items-center gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/5 px-5 py-6 text-center">
+                  <span className="flex size-11 items-center justify-center rounded-full bg-amber-400/15 text-amber-300">
+                    <Hourglass className="size-5 animate-pulse" />
+                  </span>
+                  <p className="text-sm font-medium text-zinc-100">{t("liveRoom.waitingForHost")}</p>
+                  {scheduledIso && now < new Date(scheduledIso).getTime() && (
+                    <p
+                      className="font-mono text-2xl font-semibold tracking-tight text-amber-200 tabular-nums"
+                      dir="ltr"
+                    >
+                      {formatCountdown(scheduledIso, now)}
+                    </p>
+                  )}
+                  <p className="text-xs leading-relaxed text-zinc-400">{t("liveRoom.waitingHint")}</p>
+                </div>
+              ) : (
+                <Button
+                  size="lg"
+                  onClick={handleJoin}
+                  disabled={joinMutation.isPending || isFinished}
+                  className="h-12 w-full gap-2 bg-indigo-500 text-base font-semibold text-white hover:bg-indigo-400"
+                >
+                  {joinMutation.isPending ? (
+                    <Spinner className="size-4" />
+                  ) : isFinished ? (
+                    t("liveRoom.sessionEnded")
+                  ) : isCreated ? (
+                    <>
+                      <Radio className="size-4" />
+                      {t("liveRoom.startSession")}
+                    </>
+                  ) : (
+                    t("liveRoom.joinNow")
+                  )}
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 onClick={() => router.history.back()}

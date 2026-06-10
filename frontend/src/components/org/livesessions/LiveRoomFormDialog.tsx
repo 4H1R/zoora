@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils"
 const schema = z.object({
   name: z.string().max(255).optional(),
   mode: z.enum(["schedule", "now"]),
+  scheduled_start_time: z.string().optional(),
   max_participants: z.coerce.number().int().min(1).max(1000).optional(),
   auto_record: z.boolean().optional(),
   allow_mic_default: z.boolean().optional(),
@@ -34,6 +35,7 @@ type FormValues = z.infer<typeof schema>
 const DEFAULTS: FormValues = {
   name: "",
   mode: "schedule",
+  scheduled_start_time: "",
   max_participants: 100,
   auto_record: false,
   allow_mic_default: true,
@@ -74,11 +76,24 @@ export function LiveRoomFormDialog({ open, onOpenChange, classSessionId }: LiveR
   const pending = createMutation.isPending || startMutation.isPending
 
   const onSubmit = form.handleSubmit(async (values) => {
+    // Schedule mode must carry a real future timestamp — otherwise the room is
+    // "scheduled" in name only (the old behaviour) and students get no countdown.
+    let scheduledISO: string | undefined
+    if (values.mode === "schedule") {
+      const ts = values.scheduled_start_time ? new Date(values.scheduled_start_time).getTime() : NaN
+      if (Number.isNaN(ts) || ts <= Date.now()) {
+        form.setError("scheduled_start_time", { message: t("org.session.liveRooms.form.scheduledTimeRequired") })
+        return
+      }
+      scheduledISO = new Date(ts).toISOString()
+    }
+
     try {
       const result = await createMutation.mutateAsync({
         data: {
           class_session_id: classSessionId,
           name: values.name?.trim() || undefined,
+          scheduled_start_time: scheduledISO,
           config: {
             max_participants: values.max_participants ?? 100,
             auto_record: !!values.auto_record,
@@ -141,6 +156,15 @@ export function LiveRoomFormDialog({ open, onOpenChange, classSessionId }: LiveR
             />
           </div>
         </Field>
+
+        {mode === "schedule" ? (
+          <Field data-invalid={!!errors.scheduled_start_time || undefined}>
+            <FieldLabel>{t("org.session.liveRooms.form.scheduledTime")}</FieldLabel>
+            <Input type="datetime-local" {...form.register("scheduled_start_time")} />
+            <FieldError errors={[errors.scheduled_start_time]} />
+            <p className="text-muted-foreground text-xs">{t("org.session.liveRooms.form.scheduledTimeHint")}</p>
+          </Field>
+        ) : null}
 
         <Field data-invalid={!!errors.max_participants || undefined}>
           <FieldLabel>{t("org.session.liveRooms.form.maxParticipants")}</FieldLabel>
