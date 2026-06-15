@@ -88,7 +88,7 @@ func seedQuizFixture(t *testing.T, r quizRepos) quizFixture {
 	require.NoError(t, r.members.Create(ctx, &domain.ClassMember{ClassID: cls.ID, UserID: student.ID}))
 
 	start := time.Date(2026, 5, 1, 10, 0, 0, 0, time.UTC)
-	sess := &domain.ClassSession{ClassID: cls.ID, Name: "Quiz Session", StartTime: start, Type: domain.ClassSessionTypeQuiz}
+	sess := &domain.ClassSession{ClassID: cls.ID, Name: "Quiz Session", StartTime: start}
 	require.NoError(t, r.sessions.Create(ctx, sess))
 
 	bank := seedBank(t, r.banks, org.ID, "Math Bank")

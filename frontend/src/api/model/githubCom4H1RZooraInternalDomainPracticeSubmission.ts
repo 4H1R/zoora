@@ -9,6 +9,7 @@ import type { GithubCom4H1RZooraInternalDomainPracticeRoom } from './githubCom4H
 import type { GithubCom4H1RZooraInternalDomainUser } from './githubCom4H1RZooraInternalDomainUser';
 
 export interface GithubCom4H1RZooraInternalDomainPracticeSubmission {
+  attachments?: string[];
   content?: string;
   created_at?: string;
   id?: string;

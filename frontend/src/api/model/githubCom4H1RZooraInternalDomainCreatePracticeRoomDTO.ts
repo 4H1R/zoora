@@ -7,6 +7,7 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainCreatePracticeRoomDTO {
+  attachments?: string[];
   class_session_id: string;
   content?: string;
   end_time: string;

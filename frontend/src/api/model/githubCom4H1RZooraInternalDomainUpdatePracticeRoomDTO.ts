@@ -7,6 +7,7 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainUpdatePracticeRoomDTO {
+  attachments?: string[];
   content?: string;
   end_time?: string;
   /** @minimum 0 */

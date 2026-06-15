@@ -5,6 +5,7 @@ import { SidebarBreadcrumb } from "@/components/layout/sidebar-breadcrumb"
 const SEGMENT_KEYS: Record<string, string> = {
   dashboard: "admin.dashboard.title",
   classes: "admin.nav.classes",
+  corrections: "admin.corrections.title",
   organizations: "admin.organizations",
   permissions: "admin.permissions.title",
   roles: "admin.nav.roles",

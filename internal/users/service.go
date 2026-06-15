@@ -138,25 +138,27 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (s *service) List(ctx context.Context, q domain.ListUsersQuery) ([]domain.User, int64, error) {
+func (s *service) List(ctx context.Context, p domain.ListParams) ([]domain.User, int64, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, 0, domain.ErrForbidden
 	}
-	if !caller.IsAdmin && caller.OrgID != nil {
-		q.OrganizationID = caller.OrgID.String()
+	scope := s.resolveListScope(caller)
+	return s.repo.List(ctx, scope, p)
+}
+
+// resolveListScope maps a Caller into the role-resolved UserListScope the
+// repository understands. Super-admins see all rows; everyone else is
+// scoped to their organization.
+func (s *service) resolveListScope(caller domain.Caller) domain.UserListScope {
+	if caller.IsAdmin {
+		return domain.UserListScope{All: true}
 	}
-	if q.ListParams.Page < 1 {
-		q.ListParams.Page = 1
-	}
-	if q.ListParams.PageSize <= 0 {
-		q.ListParams.PageSize = domain.DefaultPageSize
-	}
-	return s.repo.List(ctx, q)
+	return domain.UserListScope{OrganizationID: caller.OrgID}
 }
 
 func (s *service) GetProfile(ctx context.Context, id uuid.UUID) (*domain.User, error) {
-	return s.repo.FindByID(ctx, id)
+	return s.repo.FindByIDWithPermissions(ctx, id)
 }
 
 func (s *service) ChangePassword(ctx context.Context, id uuid.UUID, dto domain.ChangePasswordDTO) error {

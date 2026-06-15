@@ -59,21 +59,21 @@ type AnswerPollDTO struct {
 
 type ListPollsQuery struct {
 	ModelType      *string    `form:"model_type"`
-	ModelID        *uuid.UUID `form:"model_id"`
+	ModelID        *uuid.UUID `form:"-"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }
 
 type AdminListPollsQuery struct {
-	UserID         *uuid.UUID `form:"user_id"`
+	UserID         *uuid.UUID `form:"-"`
 	ModelType      *string    `form:"model_type"`
-	ModelID        *uuid.UUID `form:"model_id"`
+	ModelID        *uuid.UUID `form:"-"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }
 
 type ListPollAnswersQuery struct {
-	UserID     *uuid.UUID `form:"user_id"`
+	UserID     *uuid.UUID `form:"-"`
 	ListParams ListParams `form:"-"`
 }
 

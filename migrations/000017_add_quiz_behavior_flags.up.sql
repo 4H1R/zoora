@@ -1,0 +1,3 @@
+ALTER TABLE quizzes
+    ADD COLUMN no_back_navigation BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN shuffle_questions BOOLEAN NOT NULL DEFAULT FALSE;

@@ -16,6 +16,10 @@ class_id?: string;
  */
 class_session_id?: string;
 /**
+ * Include soft-deleted rooms (privileged callers only)
+ */
+include_deleted?: boolean;
+/**
  * Substring match on title/description
  */
 search?: string;

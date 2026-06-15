@@ -75,6 +75,32 @@ func (m *mockQuestionRepo) ListByBank(ctx context.Context, bankID uuid.UUID, q d
 	qs, _ := a.Get(0).([]domain.Question)
 	return qs, a.Get(1).(int64), a.Error(2)
 }
+func (m *mockQuestionRepo) ListAllByBank(ctx context.Context, bankID uuid.UUID) ([]domain.Question, error) {
+	a := m.Called(ctx, bankID)
+	qs, _ := a.Get(0).([]domain.Question)
+	return qs, a.Error(1)
+}
+
+type mockMediaRepo struct{ mock.Mock }
+
+func (m *mockMediaRepo) Create(ctx context.Context, media *domain.Media) error {
+	return m.Called(ctx, media).Error(0)
+}
+func (m *mockMediaRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Media, error) {
+	a := m.Called(ctx, id)
+	if a.Get(0) == nil {
+		return nil, a.Error(1)
+	}
+	return a.Get(0).(*domain.Media), a.Error(1)
+}
+func (m *mockMediaRepo) Delete(ctx context.Context, id uuid.UUID) error {
+	return m.Called(ctx, id).Error(0)
+}
+func (m *mockMediaRepo) ListByModel(ctx context.Context, modelType string, modelID uuid.UUID, collection string) ([]domain.Media, error) {
+	a := m.Called(ctx, modelType, modelID, collection)
+	ms, _ := a.Get(0).([]domain.Media)
+	return ms, a.Error(1)
+}
 func (m *mockQuestionRepo) FindByIDs(ctx context.Context, ids []uuid.UUID) ([]domain.Question, error) {
 	a := m.Called(ctx, ids)
 	qs, _ := a.Get(0).([]domain.Question)
@@ -91,6 +117,11 @@ func (m *mockQuestionRepo) RandomByBank(ctx context.Context, bankID uuid.UUID, c
 }
 func (m *mockQuestionRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
+}
+func (m *mockQuestionRepo) AdminList(ctx context.Context, q domain.AdminListQuestionsQuery) ([]domain.Question, int64, error) {
+	a := m.Called(ctx, q)
+	qs, _ := a.Get(0).([]domain.Question)
+	return qs, a.Get(1).(int64), a.Error(2)
 }
 
 func staffCtx(orgIDs ...uuid.UUID) context.Context {
@@ -118,11 +149,12 @@ func memberCtx() context.Context {
 }
 
 func newTestBankService(bankRepo *mockBankRepo, questionRepo *mockQuestionRepo) domain.QuestionBankService {
-	return questionbanks.NewService(bankRepo, questionRepo, slog.Default())
+	return questionbanks.NewService(bankRepo, questionRepo, &mockMediaRepo{}, slog.Default())
 }
 
 func TestBankService_Create_AsStaff(t *testing.T) {
-	ctx := staffCtx()
+	orgID := uuid.New()
+	ctx := staffCtx(orgID)
 	bankRepo := &mockBankRepo{}
 	qRepo := &mockQuestionRepo{}
 
@@ -133,6 +165,7 @@ func TestBankService_Create_AsStaff(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, "Physics", bank.Name)
+	assert.Equal(t, orgID, bank.OrganizationID)
 	bankRepo.AssertExpectations(t)
 }
 
@@ -150,11 +183,15 @@ func TestBankService_Create_NonStaff_Forbidden(t *testing.T) {
 }
 
 func TestBankService_GetByID_Success(t *testing.T) {
-	ctx := memberCtx()
+	orgID := uuid.New()
+	ctx := domain.WithCaller(context.Background(), domain.Caller{
+		UserID: uuid.New(),
+		OrgID:  &orgID,
+	})
 	bankRepo := &mockBankRepo{}
 	bankID := uuid.New()
 	bankRepo.On("FindByID", ctx, bankID).
-		Return(&domain.QuestionBank{ID: bankID, Name: "Physics"}, nil)
+		Return(&domain.QuestionBank{ID: bankID, OrganizationID: orgID, Name: "Physics"}, nil)
 
 	svc := newTestBankService(bankRepo, &mockQuestionRepo{})
 	bank, err := svc.GetByID(ctx, bankID)

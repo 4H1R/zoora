@@ -4,12 +4,15 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/platform/httpx"
 	"github.com/4H1R/zoora/internal/platform/listparams"
 )
 
+// adminRoomsListConfig is the white-list for GET /admin/offlines. Anything
+// outside these slices is silently ignored and falls back to defaults.
 var adminRoomsListConfig = domain.ListConfig{
 	AllowedSearchFields: []string{"title", "description"},
 	AllowedOrderFields:  []string{"created_at", "updated_at", "published_at", "title", "view_count"},
@@ -17,6 +20,9 @@ var adminRoomsListConfig = domain.ListConfig{
 	DefaultOrderDir:     "desc",
 }
 
+// AdminHandler registers under /api/v1/admin. The admin group is already
+// guarded by auth middleware + RequireAdmin, so this handler only binds
+// input, forwards to the service, and attaches errors.
 type AdminHandler struct {
 	svc domain.OfflineService
 }
@@ -55,6 +61,14 @@ func (h *AdminHandler) List(c *gin.Context) {
 	var q domain.AdminListOfflineRoomsQuery
 	if err := c.ShouldBindQuery(&q); err != nil {
 		_ = c.Error(domain.NewValidationError(map[string]string{"query": err.Error()}))
+		return
+	}
+	if err := httpx.BindUUIDQueries(c, map[string]**uuid.UUID{
+		"class_id":         &q.ClassID,
+		"class_session_id": &q.ClassSessionID,
+		"creator_id":       &q.CreatorID,
+	}); err != nil {
+		_ = c.Error(err)
 		return
 	}
 	q.ListParams = listparams.Bind(c, adminRoomsListConfig)

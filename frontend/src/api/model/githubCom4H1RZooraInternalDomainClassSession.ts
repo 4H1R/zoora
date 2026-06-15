@@ -6,7 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 import type { GithubCom4H1RZooraInternalDomainClass } from './githubCom4H1RZooraInternalDomainClass';
-import type { GithubCom4H1RZooraInternalDomainClassSessionType } from './githubCom4H1RZooraInternalDomainClassSessionType';
 import type { GithubCom4H1RZooraInternalDomainLiveRoom } from './githubCom4H1RZooraInternalDomainLiveRoom';
 import type { GithubCom4H1RZooraInternalDomainOfflineRoom } from './githubCom4H1RZooraInternalDomainOfflineRoom';
 import type { GithubCom4H1RZooraInternalDomainPracticeRoom } from './githubCom4H1RZooraInternalDomainPracticeRoom';
@@ -18,13 +17,11 @@ export interface GithubCom4H1RZooraInternalDomainClassSession {
   created_at?: string;
   description?: string;
   id?: string;
-  is_recordable?: boolean;
   live_rooms?: GithubCom4H1RZooraInternalDomainLiveRoom[];
   name?: string;
   offline_rooms?: GithubCom4H1RZooraInternalDomainOfflineRoom[];
   practice_rooms?: GithubCom4H1RZooraInternalDomainPracticeRoom[];
   quiz_rooms?: GithubCom4H1RZooraInternalDomainQuizRoom[];
   start_time?: string;
-  type?: GithubCom4H1RZooraInternalDomainClassSessionType;
   updated_at?: string;
 }

@@ -49,6 +49,37 @@ func Pagination(c *gin.Context) (offset, limit int) {
 	return
 }
 
+// ParseUUIDQuery extracts and parses a UUID from query string. Returns (nil, nil)
+// when the param is absent or empty. Gin's form binder cannot natively bind
+// *uuid.UUID because uuid.UUID's underlying [16]byte triggers Gin's array
+// length check (binding/form_mapping.go ~line 302). Handlers must mark such
+// fields form:"-" and call this helper.
+func ParseUUIDQuery(c *gin.Context, key string) (*uuid.UUID, error) {
+	raw := c.Query(key)
+	if raw == "" {
+		return nil, nil
+	}
+	id, err := uuid.Parse(raw)
+	if err != nil {
+		return nil, err
+	}
+	return &id, nil
+}
+
+// BindUUIDQueries iterates the provided key→target pairs and parses each one
+// from the request query string into *uuid.UUID. Returns the first parse
+// failure as a domain.ValidationError keyed by the offending query parameter.
+func BindUUIDQueries(c *gin.Context, fields map[string]**uuid.UUID) error {
+	for key, target := range fields {
+		id, err := ParseUUIDQuery(c, key)
+		if err != nil {
+			return domain.NewValidationError(map[string]string{key: err.Error()})
+		}
+		*target = id
+	}
+	return nil
+}
+
 // RequireUUIDParam parses URL param as UUID, stashes it in context under param name.
 // Aborts 400 on parse failure.
 func RequireUUIDParam(name string) gin.HandlerFunc {

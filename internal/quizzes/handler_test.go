@@ -95,6 +95,11 @@ func (m *mockQuizSvc) ListRooms(ctx context.Context, quizID uuid.UUID, q domain.
 	rs, _ := a.Get(0).([]domain.QuizRoom)
 	return rs, a.Get(1).(int64), a.Error(2)
 }
+func (m *mockQuizSvc) ListQuestionsForTaking(ctx context.Context, quizID uuid.UUID) ([]domain.Question, error) {
+	a := m.Called(ctx, quizID)
+	qs, _ := a.Get(0).([]domain.Question)
+	return qs, a.Error(1)
+}
 func (m *mockQuizSvc) StartSubmission(ctx context.Context, quizID uuid.UUID, dto domain.StartQuizSubmissionDTO) (*domain.QuizSubmission, error) {
 	a := m.Called(ctx, quizID, dto)
 	s, _ := a.Get(0).(*domain.QuizSubmission)

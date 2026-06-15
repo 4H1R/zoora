@@ -4,14 +4,19 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/platform/httpx"
 	"github.com/4H1R/zoora/internal/platform/listparams"
 )
 
+// attendanceListConfig is the handler-owned white-list for GET
+// /classes/:id/sessions/:sessionId/attendance. Only columns in these slices
+// can be searched/ordered by the client; anything else silently falls back
+// to defaults.
 var attendanceListConfig = domain.ListConfig{
-	AllowedSearchFields: []string{},
+	AllowedSearchFields: []string{"remarks"},
 	AllowedOrderFields:  []string{"created_at", "updated_at", "status"},
 	DefaultOrderBy:      "created_at",
 	DefaultOrderDir:     "desc",
@@ -44,14 +49,16 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 
 // List returns attendance records for a session.
 // @Summary List attendance by session
-// @Description Returns attendance records for a class session. Teachers/admins see all; students see only their own record. Filterable by status and user_id. Orderable: created_at, updated_at, status.
+// @Description Returns attendance records for a class session. Teachers/admins see all; students see only their own record. Search matches substrings of: remarks. Filters: status, user_id, is_auto_marked. Orderable fields: created_at, updated_at, status.
 // @Tags Attendance
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Class UUID"
 // @Param sessionId path string true "Session UUID"
-// @Param status query string false "Filter by status: present|absent|late|excused"
+// @Param status query string false "Filter by status" Enums(present,absent,late,excused)
 // @Param user_id query string false "Filter by user UUID"
+// @Param is_auto_marked query bool false "Filter auto-marked vs manual"
+// @Param search query string false "Substring match on remarks"
 // @Param order_by query string false "One of: created_at, updated_at, status"
 // @Param order_dir query string false "asc or desc"
 // @Param page query int false "1-based page number"
@@ -64,6 +71,10 @@ func (h *Handler) List(c *gin.Context) {
 	var q domain.ListAttendanceQuery
 	if err := c.ShouldBindQuery(&q); err != nil {
 		_ = c.Error(domain.NewValidationError(map[string]string{"query": err.Error()}))
+		return
+	}
+	if err := httpx.BindUUIDQueries(c, map[string]**uuid.UUID{"user_id": &q.UserID}); err != nil {
+		_ = c.Error(err)
 		return
 	}
 	q.ListParams = listparams.Bind(c, attendanceListConfig)

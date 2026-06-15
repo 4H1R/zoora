@@ -33,7 +33,12 @@ func (m *mColRepo) Update(ctx context.Context, col *domain.GradebookColumn) erro
 func (m *mColRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
-func (m *mColRepo) ListByClass(ctx context.Context, classID uuid.UUID) ([]domain.GradebookColumn, error) {
+func (m *mColRepo) ListByClass(ctx context.Context, classID uuid.UUID, q domain.ListGradebookColumnsQuery) ([]domain.GradebookColumn, int64, error) {
+	a := m.Called(ctx, classID, q)
+	cols, _ := a.Get(0).([]domain.GradebookColumn)
+	return cols, a.Get(1).(int64), a.Error(2)
+}
+func (m *mColRepo) ListAllByClass(ctx context.Context, classID uuid.UUID) ([]domain.GradebookColumn, error) {
 	a := m.Called(ctx, classID)
 	cols, _ := a.Get(0).([]domain.GradebookColumn)
 	return cols, a.Error(1)
@@ -145,6 +150,11 @@ func (m *mAttendanceRepo) FindBySessionAndUser(ctx context.Context, sessionID, u
 		return nil, a.Error(1)
 	}
 	return a.Get(0).(*domain.Attendance), a.Error(1)
+}
+func (m *mAttendanceRepo) AdminList(ctx context.Context, q domain.AdminListAttendanceQuery) ([]domain.Attendance, int64, error) {
+	a := m.Called(ctx, q)
+	items, _ := a.Get(0).([]domain.Attendance)
+	return items, a.Get(1).(int64), a.Error(2)
 }
 
 type mPracticeSubRepo struct{ mock.Mock }
@@ -476,7 +486,7 @@ func TestGetMatrix_Teacher_Success(t *testing.T) {
 
 	d.classRepo.On("FindByID", ctx, classID).
 		Return(&domain.Class{ID: classID, UserID: teacherID}, nil)
-	d.colRepo.On("ListByClass", ctx, classID).
+	d.colRepo.On("ListAllByClass", ctx, classID).
 		Return([]domain.GradebookColumn{
 			{ID: colManual, ClassID: classID, Title: "Grade", Type: domain.GradebookColumnManualGrade, OrderIndex: 0},
 			{ID: colAuto, ClassID: classID, Title: "Attendance", Type: domain.GradebookColumnAutoAttendance, SourceID: &sessionID, OrderIndex: 1},
@@ -526,7 +536,7 @@ func TestGetMatrix_Student_Enrolled_Success(t *testing.T) {
 	d.classRepo.On("FindByID", ctx, classID).
 		Return(&domain.Class{ID: classID, UserID: otherTeacher}, nil)
 	d.memberRepo.On("Exists", ctx, classID, studentID).Return(true, nil)
-	d.colRepo.On("ListByClass", ctx, classID).Return([]domain.GradebookColumn{}, nil)
+	d.colRepo.On("ListAllByClass", ctx, classID).Return([]domain.GradebookColumn{}, nil)
 	d.memberRepo.On("ListAllByClass", ctx, classID).Return([]domain.ClassMember{}, nil)
 	d.cellRepo.On("ListByColumns", ctx, ([]uuid.UUID)(nil)).Return([]domain.GradebookCell{}, nil)
 

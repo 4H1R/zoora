@@ -19,17 +19,38 @@ import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin/index
 import { Route as AuthOrgOrgIdRouteImport } from './routes/_auth/org/$orgId'
 import { Route as AdminAdminDashboardRouteImport } from './routes/_admin/admin/dashboard'
 import { Route as AdminAdminUsersIndexRouteImport } from './routes/_admin/admin/users/index'
+import { Route as AdminAdminSessionsIndexRouteImport } from './routes/_admin/admin/sessions/index'
 import { Route as AdminAdminRolesIndexRouteImport } from './routes/_admin/admin/roles/index'
+import { Route as AdminAdminQuizzesIndexRouteImport } from './routes/_admin/admin/quizzes/index'
+import { Route as AdminAdminQuestionsIndexRouteImport } from './routes/_admin/admin/questions/index'
+import { Route as AdminAdminPracticesIndexRouteImport } from './routes/_admin/admin/practices/index'
 import { Route as AdminAdminPermissionsIndexRouteImport } from './routes/_admin/admin/permissions/index'
 import { Route as AdminAdminOrganizationsIndexRouteImport } from './routes/_admin/admin/organizations/index'
+import { Route as AdminAdminOfflinesIndexRouteImport } from './routes/_admin/admin/offlines/index'
+import { Route as AdminAdminLiveRoomsIndexRouteImport } from './routes/_admin/admin/live-rooms/index'
+import { Route as AdminAdminGradebookIndexRouteImport } from './routes/_admin/admin/gradebook/index'
+import { Route as AdminAdminCorrectionsIndexRouteImport } from './routes/_admin/admin/corrections/index'
 import { Route as AdminAdminClassesIndexRouteImport } from './routes/_admin/admin/classes/index'
+import { Route as AdminAdminAttendanceIndexRouteImport } from './routes/_admin/admin/attendance/index'
 import { Route as AuthOrgOrgIdSettingsRouteImport } from './routes/_auth/org/$orgId/settings'
 import { Route as AuthOrgOrgIdDashboardRouteImport } from './routes/_auth/org/$orgId/dashboard'
 import { Route as AuthOrgOrgIdUsersIndexRouteImport } from './routes/_auth/org/$orgId/users/index'
 import { Route as AuthOrgOrgIdRolesIndexRouteImport } from './routes/_auth/org/$orgId/roles/index'
 import { Route as AuthOrgOrgIdMediasIndexRouteImport } from './routes/_auth/org/$orgId/medias/index'
 import { Route as AuthOrgOrgIdClassesIndexRouteImport } from './routes/_auth/org/$orgId/classes/index'
+import { Route as AuthOrgOrgIdOfflinesOfflineIdRouteImport } from './routes/_auth/org/$orgId/offlines/$offlineId'
 import { Route as AuthOrgOrgIdClassesClassIdRouteImport } from './routes/_auth/org/$orgId/classes/$classId'
+import { Route as AdminAdminClassesClassIdSessionsRouteImport } from './routes/_admin/admin/classes/$classId/sessions'
+import { Route as AdminAdminClassesClassIdQuizzesRouteImport } from './routes/_admin/admin/classes/$classId/quizzes'
+import { Route as AdminAdminClassesClassIdQuestionsRouteImport } from './routes/_admin/admin/classes/$classId/questions'
+import { Route as AdminAdminClassesClassIdPracticesRouteImport } from './routes/_admin/admin/classes/$classId/practices'
+import { Route as AdminAdminClassesClassIdOfflinesRouteImport } from './routes/_admin/admin/classes/$classId/offlines'
+import { Route as AdminAdminClassesClassIdMembersRouteImport } from './routes/_admin/admin/classes/$classId/members'
+import { Route as AdminAdminClassesClassIdLiveRoomsRouteImport } from './routes/_admin/admin/classes/$classId/live-rooms'
+import { Route as AdminAdminClassesClassIdGradebookRouteImport } from './routes/_admin/admin/classes/$classId/gradebook'
+import { Route as AuthOrgOrgIdClassesClasssessionsClassSessionIdRouteImport } from './routes/_auth/org/$orgId/classes/classsessions/$classSessionId'
+import { Route as AuthOrgOrgIdClassesClassIdGradebookRouteImport } from './routes/_auth/org/$orgId/classes/$classId_.gradebook'
+import { Route as AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRouteImport } from './routes/_auth/org/$orgId/classes/classsessions/$classSessionId_.quizzes.$quizId.take'
 
 const GuestRoute = GuestRouteImport.update({
   id: '/_guest',
@@ -78,11 +99,33 @@ const AdminAdminUsersIndexRoute = AdminAdminUsersIndexRouteImport.update({
   path: '/admin/users/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAdminSessionsIndexRoute = AdminAdminSessionsIndexRouteImport.update({
+  id: '/admin/sessions/',
+  path: '/admin/sessions/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAdminRolesIndexRoute = AdminAdminRolesIndexRouteImport.update({
   id: '/admin/roles/',
   path: '/admin/roles/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAdminQuizzesIndexRoute = AdminAdminQuizzesIndexRouteImport.update({
+  id: '/admin/quizzes/',
+  path: '/admin/quizzes/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAdminQuestionsIndexRoute =
+  AdminAdminQuestionsIndexRouteImport.update({
+    id: '/admin/questions/',
+    path: '/admin/questions/',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminPracticesIndexRoute =
+  AdminAdminPracticesIndexRouteImport.update({
+    id: '/admin/practices/',
+    path: '/admin/practices/',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminAdminPermissionsIndexRoute =
   AdminAdminPermissionsIndexRouteImport.update({
     id: '/admin/permissions/',
@@ -95,11 +138,40 @@ const AdminAdminOrganizationsIndexRoute =
     path: '/admin/organizations/',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminAdminOfflinesIndexRoute = AdminAdminOfflinesIndexRouteImport.update({
+  id: '/admin/offlines/',
+  path: '/admin/offlines/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAdminLiveRoomsIndexRoute =
+  AdminAdminLiveRoomsIndexRouteImport.update({
+    id: '/admin/live-rooms/',
+    path: '/admin/live-rooms/',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminGradebookIndexRoute =
+  AdminAdminGradebookIndexRouteImport.update({
+    id: '/admin/gradebook/',
+    path: '/admin/gradebook/',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminCorrectionsIndexRoute =
+  AdminAdminCorrectionsIndexRouteImport.update({
+    id: '/admin/corrections/',
+    path: '/admin/corrections/',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminAdminClassesIndexRoute = AdminAdminClassesIndexRouteImport.update({
   id: '/admin/classes/',
   path: '/admin/classes/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAdminAttendanceIndexRoute =
+  AdminAdminAttendanceIndexRouteImport.update({
+    id: '/admin/attendance/',
+    path: '/admin/attendance/',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AuthOrgOrgIdSettingsRoute = AuthOrgOrgIdSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -131,12 +203,86 @@ const AuthOrgOrgIdClassesIndexRoute =
     path: '/classes/',
     getParentRoute: () => AuthOrgOrgIdRoute,
   } as any)
+const AuthOrgOrgIdOfflinesOfflineIdRoute =
+  AuthOrgOrgIdOfflinesOfflineIdRouteImport.update({
+    id: '/offlines/$offlineId',
+    path: '/offlines/$offlineId',
+    getParentRoute: () => AuthOrgOrgIdRoute,
+  } as any)
 const AuthOrgOrgIdClassesClassIdRoute =
   AuthOrgOrgIdClassesClassIdRouteImport.update({
     id: '/classes/$classId',
     path: '/classes/$classId',
     getParentRoute: () => AuthOrgOrgIdRoute,
   } as any)
+const AdminAdminClassesClassIdSessionsRoute =
+  AdminAdminClassesClassIdSessionsRouteImport.update({
+    id: '/admin/classes/$classId/sessions',
+    path: '/admin/classes/$classId/sessions',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminClassesClassIdQuizzesRoute =
+  AdminAdminClassesClassIdQuizzesRouteImport.update({
+    id: '/admin/classes/$classId/quizzes',
+    path: '/admin/classes/$classId/quizzes',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminClassesClassIdQuestionsRoute =
+  AdminAdminClassesClassIdQuestionsRouteImport.update({
+    id: '/admin/classes/$classId/questions',
+    path: '/admin/classes/$classId/questions',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminClassesClassIdPracticesRoute =
+  AdminAdminClassesClassIdPracticesRouteImport.update({
+    id: '/admin/classes/$classId/practices',
+    path: '/admin/classes/$classId/practices',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminClassesClassIdOfflinesRoute =
+  AdminAdminClassesClassIdOfflinesRouteImport.update({
+    id: '/admin/classes/$classId/offlines',
+    path: '/admin/classes/$classId/offlines',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminClassesClassIdMembersRoute =
+  AdminAdminClassesClassIdMembersRouteImport.update({
+    id: '/admin/classes/$classId/members',
+    path: '/admin/classes/$classId/members',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminClassesClassIdLiveRoomsRoute =
+  AdminAdminClassesClassIdLiveRoomsRouteImport.update({
+    id: '/admin/classes/$classId/live-rooms',
+    path: '/admin/classes/$classId/live-rooms',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminClassesClassIdGradebookRoute =
+  AdminAdminClassesClassIdGradebookRouteImport.update({
+    id: '/admin/classes/$classId/gradebook',
+    path: '/admin/classes/$classId/gradebook',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute =
+  AuthOrgOrgIdClassesClasssessionsClassSessionIdRouteImport.update({
+    id: '/classes/classsessions/$classSessionId',
+    path: '/classes/classsessions/$classSessionId',
+    getParentRoute: () => AuthOrgOrgIdRoute,
+  } as any)
+const AuthOrgOrgIdClassesClassIdGradebookRoute =
+  AuthOrgOrgIdClassesClassIdGradebookRouteImport.update({
+    id: '/classes/$classId_/gradebook',
+    path: '/classes/$classId/gradebook',
+    getParentRoute: () => AuthOrgOrgIdRoute,
+  } as any)
+const AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRoute =
+  AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRouteImport.update(
+    {
+      id: '/classes/classsessions/$classSessionId_/quizzes/$quizId/take',
+      path: '/classes/classsessions/$classSessionId/quizzes/$quizId/take',
+      getParentRoute: () => AuthOrgOrgIdRoute,
+    } as any,
+  )
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -147,16 +293,37 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminAdminIndexRoute
   '/org/$orgId/dashboard': typeof AuthOrgOrgIdDashboardRoute
   '/org/$orgId/settings': typeof AuthOrgOrgIdSettingsRoute
+  '/admin/attendance/': typeof AdminAdminAttendanceIndexRoute
   '/admin/classes/': typeof AdminAdminClassesIndexRoute
+  '/admin/corrections/': typeof AdminAdminCorrectionsIndexRoute
+  '/admin/gradebook/': typeof AdminAdminGradebookIndexRoute
+  '/admin/live-rooms/': typeof AdminAdminLiveRoomsIndexRoute
+  '/admin/offlines/': typeof AdminAdminOfflinesIndexRoute
   '/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
   '/admin/permissions/': typeof AdminAdminPermissionsIndexRoute
+  '/admin/practices/': typeof AdminAdminPracticesIndexRoute
+  '/admin/questions/': typeof AdminAdminQuestionsIndexRoute
+  '/admin/quizzes/': typeof AdminAdminQuizzesIndexRoute
   '/admin/roles/': typeof AdminAdminRolesIndexRoute
+  '/admin/sessions/': typeof AdminAdminSessionsIndexRoute
   '/admin/users/': typeof AdminAdminUsersIndexRoute
+  '/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
+  '/admin/classes/$classId/live-rooms': typeof AdminAdminClassesClassIdLiveRoomsRoute
+  '/admin/classes/$classId/members': typeof AdminAdminClassesClassIdMembersRoute
+  '/admin/classes/$classId/offlines': typeof AdminAdminClassesClassIdOfflinesRoute
+  '/admin/classes/$classId/practices': typeof AdminAdminClassesClassIdPracticesRoute
+  '/admin/classes/$classId/questions': typeof AdminAdminClassesClassIdQuestionsRoute
+  '/admin/classes/$classId/quizzes': typeof AdminAdminClassesClassIdQuizzesRoute
+  '/admin/classes/$classId/sessions': typeof AdminAdminClassesClassIdSessionsRoute
   '/org/$orgId/classes/$classId': typeof AuthOrgOrgIdClassesClassIdRoute
+  '/org/$orgId/offlines/$offlineId': typeof AuthOrgOrgIdOfflinesOfflineIdRoute
   '/org/$orgId/classes/': typeof AuthOrgOrgIdClassesIndexRoute
   '/org/$orgId/medias/': typeof AuthOrgOrgIdMediasIndexRoute
   '/org/$orgId/roles/': typeof AuthOrgOrgIdRolesIndexRoute
   '/org/$orgId/users/': typeof AuthOrgOrgIdUsersIndexRoute
+  '/org/$orgId/classes/$classId/gradebook': typeof AuthOrgOrgIdClassesClassIdGradebookRoute
+  '/org/$orgId/classes/classsessions/$classSessionId': typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute
+  '/org/$orgId/classes/classsessions/$classSessionId/quizzes/$quizId/take': typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -167,16 +334,37 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminAdminIndexRoute
   '/org/$orgId/dashboard': typeof AuthOrgOrgIdDashboardRoute
   '/org/$orgId/settings': typeof AuthOrgOrgIdSettingsRoute
+  '/admin/attendance': typeof AdminAdminAttendanceIndexRoute
   '/admin/classes': typeof AdminAdminClassesIndexRoute
+  '/admin/corrections': typeof AdminAdminCorrectionsIndexRoute
+  '/admin/gradebook': typeof AdminAdminGradebookIndexRoute
+  '/admin/live-rooms': typeof AdminAdminLiveRoomsIndexRoute
+  '/admin/offlines': typeof AdminAdminOfflinesIndexRoute
   '/admin/organizations': typeof AdminAdminOrganizationsIndexRoute
   '/admin/permissions': typeof AdminAdminPermissionsIndexRoute
+  '/admin/practices': typeof AdminAdminPracticesIndexRoute
+  '/admin/questions': typeof AdminAdminQuestionsIndexRoute
+  '/admin/quizzes': typeof AdminAdminQuizzesIndexRoute
   '/admin/roles': typeof AdminAdminRolesIndexRoute
+  '/admin/sessions': typeof AdminAdminSessionsIndexRoute
   '/admin/users': typeof AdminAdminUsersIndexRoute
+  '/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
+  '/admin/classes/$classId/live-rooms': typeof AdminAdminClassesClassIdLiveRoomsRoute
+  '/admin/classes/$classId/members': typeof AdminAdminClassesClassIdMembersRoute
+  '/admin/classes/$classId/offlines': typeof AdminAdminClassesClassIdOfflinesRoute
+  '/admin/classes/$classId/practices': typeof AdminAdminClassesClassIdPracticesRoute
+  '/admin/classes/$classId/questions': typeof AdminAdminClassesClassIdQuestionsRoute
+  '/admin/classes/$classId/quizzes': typeof AdminAdminClassesClassIdQuizzesRoute
+  '/admin/classes/$classId/sessions': typeof AdminAdminClassesClassIdSessionsRoute
   '/org/$orgId/classes/$classId': typeof AuthOrgOrgIdClassesClassIdRoute
+  '/org/$orgId/offlines/$offlineId': typeof AuthOrgOrgIdOfflinesOfflineIdRoute
   '/org/$orgId/classes': typeof AuthOrgOrgIdClassesIndexRoute
   '/org/$orgId/medias': typeof AuthOrgOrgIdMediasIndexRoute
   '/org/$orgId/roles': typeof AuthOrgOrgIdRolesIndexRoute
   '/org/$orgId/users': typeof AuthOrgOrgIdUsersIndexRoute
+  '/org/$orgId/classes/$classId/gradebook': typeof AuthOrgOrgIdClassesClassIdGradebookRoute
+  '/org/$orgId/classes/classsessions/$classSessionId': typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute
+  '/org/$orgId/classes/classsessions/$classSessionId/quizzes/$quizId/take': typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -191,16 +379,37 @@ export interface FileRoutesById {
   '/_admin/admin/': typeof AdminAdminIndexRoute
   '/_auth/org/$orgId/dashboard': typeof AuthOrgOrgIdDashboardRoute
   '/_auth/org/$orgId/settings': typeof AuthOrgOrgIdSettingsRoute
+  '/_admin/admin/attendance/': typeof AdminAdminAttendanceIndexRoute
   '/_admin/admin/classes/': typeof AdminAdminClassesIndexRoute
+  '/_admin/admin/corrections/': typeof AdminAdminCorrectionsIndexRoute
+  '/_admin/admin/gradebook/': typeof AdminAdminGradebookIndexRoute
+  '/_admin/admin/live-rooms/': typeof AdminAdminLiveRoomsIndexRoute
+  '/_admin/admin/offlines/': typeof AdminAdminOfflinesIndexRoute
   '/_admin/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
   '/_admin/admin/permissions/': typeof AdminAdminPermissionsIndexRoute
+  '/_admin/admin/practices/': typeof AdminAdminPracticesIndexRoute
+  '/_admin/admin/questions/': typeof AdminAdminQuestionsIndexRoute
+  '/_admin/admin/quizzes/': typeof AdminAdminQuizzesIndexRoute
   '/_admin/admin/roles/': typeof AdminAdminRolesIndexRoute
+  '/_admin/admin/sessions/': typeof AdminAdminSessionsIndexRoute
   '/_admin/admin/users/': typeof AdminAdminUsersIndexRoute
+  '/_admin/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
+  '/_admin/admin/classes/$classId/live-rooms': typeof AdminAdminClassesClassIdLiveRoomsRoute
+  '/_admin/admin/classes/$classId/members': typeof AdminAdminClassesClassIdMembersRoute
+  '/_admin/admin/classes/$classId/offlines': typeof AdminAdminClassesClassIdOfflinesRoute
+  '/_admin/admin/classes/$classId/practices': typeof AdminAdminClassesClassIdPracticesRoute
+  '/_admin/admin/classes/$classId/questions': typeof AdminAdminClassesClassIdQuestionsRoute
+  '/_admin/admin/classes/$classId/quizzes': typeof AdminAdminClassesClassIdQuizzesRoute
+  '/_admin/admin/classes/$classId/sessions': typeof AdminAdminClassesClassIdSessionsRoute
   '/_auth/org/$orgId/classes/$classId': typeof AuthOrgOrgIdClassesClassIdRoute
+  '/_auth/org/$orgId/offlines/$offlineId': typeof AuthOrgOrgIdOfflinesOfflineIdRoute
   '/_auth/org/$orgId/classes/': typeof AuthOrgOrgIdClassesIndexRoute
   '/_auth/org/$orgId/medias/': typeof AuthOrgOrgIdMediasIndexRoute
   '/_auth/org/$orgId/roles/': typeof AuthOrgOrgIdRolesIndexRoute
   '/_auth/org/$orgId/users/': typeof AuthOrgOrgIdUsersIndexRoute
+  '/_auth/org/$orgId/classes/$classId_/gradebook': typeof AuthOrgOrgIdClassesClassIdGradebookRoute
+  '/_auth/org/$orgId/classes/classsessions/$classSessionId': typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute
+  '/_auth/org/$orgId/classes/classsessions/$classSessionId_/quizzes/$quizId/take': typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -213,16 +422,37 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/org/$orgId/dashboard'
     | '/org/$orgId/settings'
+    | '/admin/attendance/'
     | '/admin/classes/'
+    | '/admin/corrections/'
+    | '/admin/gradebook/'
+    | '/admin/live-rooms/'
+    | '/admin/offlines/'
     | '/admin/organizations/'
     | '/admin/permissions/'
+    | '/admin/practices/'
+    | '/admin/questions/'
+    | '/admin/quizzes/'
     | '/admin/roles/'
+    | '/admin/sessions/'
     | '/admin/users/'
+    | '/admin/classes/$classId/gradebook'
+    | '/admin/classes/$classId/live-rooms'
+    | '/admin/classes/$classId/members'
+    | '/admin/classes/$classId/offlines'
+    | '/admin/classes/$classId/practices'
+    | '/admin/classes/$classId/questions'
+    | '/admin/classes/$classId/quizzes'
+    | '/admin/classes/$classId/sessions'
     | '/org/$orgId/classes/$classId'
+    | '/org/$orgId/offlines/$offlineId'
     | '/org/$orgId/classes/'
     | '/org/$orgId/medias/'
     | '/org/$orgId/roles/'
     | '/org/$orgId/users/'
+    | '/org/$orgId/classes/$classId/gradebook'
+    | '/org/$orgId/classes/classsessions/$classSessionId'
+    | '/org/$orgId/classes/classsessions/$classSessionId/quizzes/$quizId/take'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -233,16 +463,37 @@ export interface FileRouteTypes {
     | '/admin'
     | '/org/$orgId/dashboard'
     | '/org/$orgId/settings'
+    | '/admin/attendance'
     | '/admin/classes'
+    | '/admin/corrections'
+    | '/admin/gradebook'
+    | '/admin/live-rooms'
+    | '/admin/offlines'
     | '/admin/organizations'
     | '/admin/permissions'
+    | '/admin/practices'
+    | '/admin/questions'
+    | '/admin/quizzes'
     | '/admin/roles'
+    | '/admin/sessions'
     | '/admin/users'
+    | '/admin/classes/$classId/gradebook'
+    | '/admin/classes/$classId/live-rooms'
+    | '/admin/classes/$classId/members'
+    | '/admin/classes/$classId/offlines'
+    | '/admin/classes/$classId/practices'
+    | '/admin/classes/$classId/questions'
+    | '/admin/classes/$classId/quizzes'
+    | '/admin/classes/$classId/sessions'
     | '/org/$orgId/classes/$classId'
+    | '/org/$orgId/offlines/$offlineId'
     | '/org/$orgId/classes'
     | '/org/$orgId/medias'
     | '/org/$orgId/roles'
     | '/org/$orgId/users'
+    | '/org/$orgId/classes/$classId/gradebook'
+    | '/org/$orgId/classes/classsessions/$classSessionId'
+    | '/org/$orgId/classes/classsessions/$classSessionId/quizzes/$quizId/take'
   id:
     | '__root__'
     | '/'
@@ -256,16 +507,37 @@ export interface FileRouteTypes {
     | '/_admin/admin/'
     | '/_auth/org/$orgId/dashboard'
     | '/_auth/org/$orgId/settings'
+    | '/_admin/admin/attendance/'
     | '/_admin/admin/classes/'
+    | '/_admin/admin/corrections/'
+    | '/_admin/admin/gradebook/'
+    | '/_admin/admin/live-rooms/'
+    | '/_admin/admin/offlines/'
     | '/_admin/admin/organizations/'
     | '/_admin/admin/permissions/'
+    | '/_admin/admin/practices/'
+    | '/_admin/admin/questions/'
+    | '/_admin/admin/quizzes/'
     | '/_admin/admin/roles/'
+    | '/_admin/admin/sessions/'
     | '/_admin/admin/users/'
+    | '/_admin/admin/classes/$classId/gradebook'
+    | '/_admin/admin/classes/$classId/live-rooms'
+    | '/_admin/admin/classes/$classId/members'
+    | '/_admin/admin/classes/$classId/offlines'
+    | '/_admin/admin/classes/$classId/practices'
+    | '/_admin/admin/classes/$classId/questions'
+    | '/_admin/admin/classes/$classId/quizzes'
+    | '/_admin/admin/classes/$classId/sessions'
     | '/_auth/org/$orgId/classes/$classId'
+    | '/_auth/org/$orgId/offlines/$offlineId'
     | '/_auth/org/$orgId/classes/'
     | '/_auth/org/$orgId/medias/'
     | '/_auth/org/$orgId/roles/'
     | '/_auth/org/$orgId/users/'
+    | '/_auth/org/$orgId/classes/$classId_/gradebook'
+    | '/_auth/org/$orgId/classes/classsessions/$classSessionId'
+    | '/_auth/org/$orgId/classes/classsessions/$classSessionId_/quizzes/$quizId/take'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -348,11 +620,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminUsersIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/admin/sessions/': {
+      id: '/_admin/admin/sessions/'
+      path: '/admin/sessions'
+      fullPath: '/admin/sessions/'
+      preLoaderRoute: typeof AdminAdminSessionsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/admin/roles/': {
       id: '/_admin/admin/roles/'
       path: '/admin/roles'
       fullPath: '/admin/roles/'
       preLoaderRoute: typeof AdminAdminRolesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/quizzes/': {
+      id: '/_admin/admin/quizzes/'
+      path: '/admin/quizzes'
+      fullPath: '/admin/quizzes/'
+      preLoaderRoute: typeof AdminAdminQuizzesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/questions/': {
+      id: '/_admin/admin/questions/'
+      path: '/admin/questions'
+      fullPath: '/admin/questions/'
+      preLoaderRoute: typeof AdminAdminQuestionsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/practices/': {
+      id: '/_admin/admin/practices/'
+      path: '/admin/practices'
+      fullPath: '/admin/practices/'
+      preLoaderRoute: typeof AdminAdminPracticesIndexRouteImport
       parentRoute: typeof AdminRoute
     }
     '/_admin/admin/permissions/': {
@@ -369,11 +669,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminOrganizationsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/admin/offlines/': {
+      id: '/_admin/admin/offlines/'
+      path: '/admin/offlines'
+      fullPath: '/admin/offlines/'
+      preLoaderRoute: typeof AdminAdminOfflinesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/live-rooms/': {
+      id: '/_admin/admin/live-rooms/'
+      path: '/admin/live-rooms'
+      fullPath: '/admin/live-rooms/'
+      preLoaderRoute: typeof AdminAdminLiveRoomsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/gradebook/': {
+      id: '/_admin/admin/gradebook/'
+      path: '/admin/gradebook'
+      fullPath: '/admin/gradebook/'
+      preLoaderRoute: typeof AdminAdminGradebookIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/corrections/': {
+      id: '/_admin/admin/corrections/'
+      path: '/admin/corrections'
+      fullPath: '/admin/corrections/'
+      preLoaderRoute: typeof AdminAdminCorrectionsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/admin/classes/': {
       id: '/_admin/admin/classes/'
       path: '/admin/classes'
       fullPath: '/admin/classes/'
       preLoaderRoute: typeof AdminAdminClassesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/attendance/': {
+      id: '/_admin/admin/attendance/'
+      path: '/admin/attendance'
+      fullPath: '/admin/attendance/'
+      preLoaderRoute: typeof AdminAdminAttendanceIndexRouteImport
       parentRoute: typeof AdminRoute
     }
     '/_auth/org/$orgId/settings': {
@@ -418,11 +753,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthOrgOrgIdClassesIndexRouteImport
       parentRoute: typeof AuthOrgOrgIdRoute
     }
+    '/_auth/org/$orgId/offlines/$offlineId': {
+      id: '/_auth/org/$orgId/offlines/$offlineId'
+      path: '/offlines/$offlineId'
+      fullPath: '/org/$orgId/offlines/$offlineId'
+      preLoaderRoute: typeof AuthOrgOrgIdOfflinesOfflineIdRouteImport
+      parentRoute: typeof AuthOrgOrgIdRoute
+    }
     '/_auth/org/$orgId/classes/$classId': {
       id: '/_auth/org/$orgId/classes/$classId'
       path: '/classes/$classId'
       fullPath: '/org/$orgId/classes/$classId'
       preLoaderRoute: typeof AuthOrgOrgIdClassesClassIdRouteImport
+      parentRoute: typeof AuthOrgOrgIdRoute
+    }
+    '/_admin/admin/classes/$classId/sessions': {
+      id: '/_admin/admin/classes/$classId/sessions'
+      path: '/admin/classes/$classId/sessions'
+      fullPath: '/admin/classes/$classId/sessions'
+      preLoaderRoute: typeof AdminAdminClassesClassIdSessionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/classes/$classId/quizzes': {
+      id: '/_admin/admin/classes/$classId/quizzes'
+      path: '/admin/classes/$classId/quizzes'
+      fullPath: '/admin/classes/$classId/quizzes'
+      preLoaderRoute: typeof AdminAdminClassesClassIdQuizzesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/classes/$classId/questions': {
+      id: '/_admin/admin/classes/$classId/questions'
+      path: '/admin/classes/$classId/questions'
+      fullPath: '/admin/classes/$classId/questions'
+      preLoaderRoute: typeof AdminAdminClassesClassIdQuestionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/classes/$classId/practices': {
+      id: '/_admin/admin/classes/$classId/practices'
+      path: '/admin/classes/$classId/practices'
+      fullPath: '/admin/classes/$classId/practices'
+      preLoaderRoute: typeof AdminAdminClassesClassIdPracticesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/classes/$classId/offlines': {
+      id: '/_admin/admin/classes/$classId/offlines'
+      path: '/admin/classes/$classId/offlines'
+      fullPath: '/admin/classes/$classId/offlines'
+      preLoaderRoute: typeof AdminAdminClassesClassIdOfflinesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/classes/$classId/members': {
+      id: '/_admin/admin/classes/$classId/members'
+      path: '/admin/classes/$classId/members'
+      fullPath: '/admin/classes/$classId/members'
+      preLoaderRoute: typeof AdminAdminClassesClassIdMembersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/classes/$classId/live-rooms': {
+      id: '/_admin/admin/classes/$classId/live-rooms'
+      path: '/admin/classes/$classId/live-rooms'
+      fullPath: '/admin/classes/$classId/live-rooms'
+      preLoaderRoute: typeof AdminAdminClassesClassIdLiveRoomsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/classes/$classId/gradebook': {
+      id: '/_admin/admin/classes/$classId/gradebook'
+      path: '/admin/classes/$classId/gradebook'
+      fullPath: '/admin/classes/$classId/gradebook'
+      preLoaderRoute: typeof AdminAdminClassesClassIdGradebookRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_auth/org/$orgId/classes/classsessions/$classSessionId': {
+      id: '/_auth/org/$orgId/classes/classsessions/$classSessionId'
+      path: '/classes/classsessions/$classSessionId'
+      fullPath: '/org/$orgId/classes/classsessions/$classSessionId'
+      preLoaderRoute: typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRouteImport
+      parentRoute: typeof AuthOrgOrgIdRoute
+    }
+    '/_auth/org/$orgId/classes/$classId_/gradebook': {
+      id: '/_auth/org/$orgId/classes/$classId_/gradebook'
+      path: '/classes/$classId/gradebook'
+      fullPath: '/org/$orgId/classes/$classId/gradebook'
+      preLoaderRoute: typeof AuthOrgOrgIdClassesClassIdGradebookRouteImport
+      parentRoute: typeof AuthOrgOrgIdRoute
+    }
+    '/_auth/org/$orgId/classes/classsessions/$classSessionId_/quizzes/$quizId/take': {
+      id: '/_auth/org/$orgId/classes/classsessions/$classSessionId_/quizzes/$quizId/take'
+      path: '/classes/classsessions/$classSessionId/quizzes/$quizId/take'
+      fullPath: '/org/$orgId/classes/classsessions/$classSessionId/quizzes/$quizId/take'
+      preLoaderRoute: typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRouteImport
       parentRoute: typeof AuthOrgOrgIdRoute
     }
   }
@@ -431,21 +850,59 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminAdminDashboardRoute: typeof AdminAdminDashboardRoute
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
+  AdminAdminAttendanceIndexRoute: typeof AdminAdminAttendanceIndexRoute
   AdminAdminClassesIndexRoute: typeof AdminAdminClassesIndexRoute
+  AdminAdminCorrectionsIndexRoute: typeof AdminAdminCorrectionsIndexRoute
+  AdminAdminGradebookIndexRoute: typeof AdminAdminGradebookIndexRoute
+  AdminAdminLiveRoomsIndexRoute: typeof AdminAdminLiveRoomsIndexRoute
+  AdminAdminOfflinesIndexRoute: typeof AdminAdminOfflinesIndexRoute
   AdminAdminOrganizationsIndexRoute: typeof AdminAdminOrganizationsIndexRoute
   AdminAdminPermissionsIndexRoute: typeof AdminAdminPermissionsIndexRoute
+  AdminAdminPracticesIndexRoute: typeof AdminAdminPracticesIndexRoute
+  AdminAdminQuestionsIndexRoute: typeof AdminAdminQuestionsIndexRoute
+  AdminAdminQuizzesIndexRoute: typeof AdminAdminQuizzesIndexRoute
   AdminAdminRolesIndexRoute: typeof AdminAdminRolesIndexRoute
+  AdminAdminSessionsIndexRoute: typeof AdminAdminSessionsIndexRoute
   AdminAdminUsersIndexRoute: typeof AdminAdminUsersIndexRoute
+  AdminAdminClassesClassIdGradebookRoute: typeof AdminAdminClassesClassIdGradebookRoute
+  AdminAdminClassesClassIdLiveRoomsRoute: typeof AdminAdminClassesClassIdLiveRoomsRoute
+  AdminAdminClassesClassIdMembersRoute: typeof AdminAdminClassesClassIdMembersRoute
+  AdminAdminClassesClassIdOfflinesRoute: typeof AdminAdminClassesClassIdOfflinesRoute
+  AdminAdminClassesClassIdPracticesRoute: typeof AdminAdminClassesClassIdPracticesRoute
+  AdminAdminClassesClassIdQuestionsRoute: typeof AdminAdminClassesClassIdQuestionsRoute
+  AdminAdminClassesClassIdQuizzesRoute: typeof AdminAdminClassesClassIdQuizzesRoute
+  AdminAdminClassesClassIdSessionsRoute: typeof AdminAdminClassesClassIdSessionsRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAdminDashboardRoute: AdminAdminDashboardRoute,
   AdminAdminIndexRoute: AdminAdminIndexRoute,
+  AdminAdminAttendanceIndexRoute: AdminAdminAttendanceIndexRoute,
   AdminAdminClassesIndexRoute: AdminAdminClassesIndexRoute,
+  AdminAdminCorrectionsIndexRoute: AdminAdminCorrectionsIndexRoute,
+  AdminAdminGradebookIndexRoute: AdminAdminGradebookIndexRoute,
+  AdminAdminLiveRoomsIndexRoute: AdminAdminLiveRoomsIndexRoute,
+  AdminAdminOfflinesIndexRoute: AdminAdminOfflinesIndexRoute,
   AdminAdminOrganizationsIndexRoute: AdminAdminOrganizationsIndexRoute,
   AdminAdminPermissionsIndexRoute: AdminAdminPermissionsIndexRoute,
+  AdminAdminPracticesIndexRoute: AdminAdminPracticesIndexRoute,
+  AdminAdminQuestionsIndexRoute: AdminAdminQuestionsIndexRoute,
+  AdminAdminQuizzesIndexRoute: AdminAdminQuizzesIndexRoute,
   AdminAdminRolesIndexRoute: AdminAdminRolesIndexRoute,
+  AdminAdminSessionsIndexRoute: AdminAdminSessionsIndexRoute,
   AdminAdminUsersIndexRoute: AdminAdminUsersIndexRoute,
+  AdminAdminClassesClassIdGradebookRoute:
+    AdminAdminClassesClassIdGradebookRoute,
+  AdminAdminClassesClassIdLiveRoomsRoute:
+    AdminAdminClassesClassIdLiveRoomsRoute,
+  AdminAdminClassesClassIdMembersRoute: AdminAdminClassesClassIdMembersRoute,
+  AdminAdminClassesClassIdOfflinesRoute: AdminAdminClassesClassIdOfflinesRoute,
+  AdminAdminClassesClassIdPracticesRoute:
+    AdminAdminClassesClassIdPracticesRoute,
+  AdminAdminClassesClassIdQuestionsRoute:
+    AdminAdminClassesClassIdQuestionsRoute,
+  AdminAdminClassesClassIdQuizzesRoute: AdminAdminClassesClassIdQuizzesRoute,
+  AdminAdminClassesClassIdSessionsRoute: AdminAdminClassesClassIdSessionsRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -454,20 +911,31 @@ interface AuthOrgOrgIdRouteChildren {
   AuthOrgOrgIdDashboardRoute: typeof AuthOrgOrgIdDashboardRoute
   AuthOrgOrgIdSettingsRoute: typeof AuthOrgOrgIdSettingsRoute
   AuthOrgOrgIdClassesClassIdRoute: typeof AuthOrgOrgIdClassesClassIdRoute
+  AuthOrgOrgIdOfflinesOfflineIdRoute: typeof AuthOrgOrgIdOfflinesOfflineIdRoute
   AuthOrgOrgIdClassesIndexRoute: typeof AuthOrgOrgIdClassesIndexRoute
   AuthOrgOrgIdMediasIndexRoute: typeof AuthOrgOrgIdMediasIndexRoute
   AuthOrgOrgIdRolesIndexRoute: typeof AuthOrgOrgIdRolesIndexRoute
   AuthOrgOrgIdUsersIndexRoute: typeof AuthOrgOrgIdUsersIndexRoute
+  AuthOrgOrgIdClassesClassIdGradebookRoute: typeof AuthOrgOrgIdClassesClassIdGradebookRoute
+  AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute: typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute
+  AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRoute: typeof AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRoute
 }
 
 const AuthOrgOrgIdRouteChildren: AuthOrgOrgIdRouteChildren = {
   AuthOrgOrgIdDashboardRoute: AuthOrgOrgIdDashboardRoute,
   AuthOrgOrgIdSettingsRoute: AuthOrgOrgIdSettingsRoute,
   AuthOrgOrgIdClassesClassIdRoute: AuthOrgOrgIdClassesClassIdRoute,
+  AuthOrgOrgIdOfflinesOfflineIdRoute: AuthOrgOrgIdOfflinesOfflineIdRoute,
   AuthOrgOrgIdClassesIndexRoute: AuthOrgOrgIdClassesIndexRoute,
   AuthOrgOrgIdMediasIndexRoute: AuthOrgOrgIdMediasIndexRoute,
   AuthOrgOrgIdRolesIndexRoute: AuthOrgOrgIdRolesIndexRoute,
   AuthOrgOrgIdUsersIndexRoute: AuthOrgOrgIdUsersIndexRoute,
+  AuthOrgOrgIdClassesClassIdGradebookRoute:
+    AuthOrgOrgIdClassesClassIdGradebookRoute,
+  AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute:
+    AuthOrgOrgIdClassesClasssessionsClassSessionIdRoute,
+  AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRoute:
+    AuthOrgOrgIdClassesClasssessionsClassSessionIdQuizzesQuizIdTakeRoute,
 }
 
 const AuthOrgOrgIdRouteWithChildren = AuthOrgOrgIdRoute._addFileChildren(

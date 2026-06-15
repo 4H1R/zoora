@@ -1,4 +1,10 @@
 {
+  "time": {
+    "daysShort": "روز",
+    "hoursShort": "س",
+    "minutesShort": "د",
+    "secondsShort": "ث"
+  },
   "common": {
     "brandName": "زورا",
     "getStarted": "شروع کنید",
@@ -20,13 +26,15 @@
     "recording": "ضبط",
     "publish": "انتشار",
     "create": "ایجاد",
+    "edit": "ویرایش",
     "delete": "حذف",
     "deleteConfirm": {
       "title": "آیا مطمئن هستید؟",
       "description": "\"{{name}}\" به‌طور دائم حذف خواهد شد. این عمل قابل بازگشت نیست."
     },
     "default": "پیشفرض",
-    "noResults": "نتیجه‌ای یافت نشد."
+    "noResults": "نتیجه‌ای یافت نشد.",
+    "loading": "در حال بارگذاری…"
   },
   "nav": {
     "overview": "نمای کلی",
@@ -174,7 +182,82 @@
     "nav": {
       "users": "کاربران",
       "roles": "نقش‌ها",
-      "classes": "کلاس‌ها"
+      "classes": "کلاس‌ها",
+      "sessions": "جلسات",
+      "liveRooms": "اتاق‌های زنده",
+      "offlines": "اتاق‌های آفلاین",
+      "practices": "تمرین‌ها"
+    },
+    "classManagement": {
+      "title": "مدیریت کلاس",
+      "sessions": "جلسات",
+      "offlines": "محتوای آفلاین",
+      "liveRooms": "جلسات زنده",
+      "practices": "تمرین‌ها",
+      "quizzes": "آزمون‌ها",
+      "questions": "بانک سوال",
+      "gradebook": "دفتر نمرات",
+      "backToSessions": "بازگشت به جلسات"
+    },
+    "bankPicker": {
+      "placeholder": "انتخاب بانک سوال…"
+    },
+    "classSessionPicker": {
+      "classPlaceholder": "انتخاب کلاس…",
+      "sessionPlaceholder": "انتخاب جلسه…",
+      "selectClassFirst": "ابتدا کلاس را انتخاب کنید"
+    },
+    "attendance": {
+      "title": "حضور و غیاب",
+      "searchPlaceholder": "جستجو در توضیحات…",
+      "student": "دانش‌آموز",
+      "class": "کلاس",
+      "session": "جلسه",
+      "status": "وضعیت",
+      "source": "منبع",
+      "remarks": "توضیحات",
+      "createdAt": "ایجاد",
+      "noResults": "هیچ رکورد حضور و غیابی یافت نشد",
+      "noResultsHint": "جستجو یا فیلترها را تغییر دهید.",
+      "stats": {
+        "total": "کل رکوردها"
+      },
+      "filter": {
+        "class": "کلاس",
+        "session": "جلسه",
+        "status": "وضعیت",
+        "allStatuses": "همه وضعیت‌ها",
+        "clear": "پاک‌سازی فیلترها"
+      },
+      "statuses": {
+        "present": "حاضر",
+        "absent": "غایب",
+        "late": "تأخیر",
+        "excused": "موجه"
+      },
+      "sources": {
+        "auto": "خودکار",
+        "manual": "دستی"
+      },
+      "actions": {
+        "edit": "ویرایش حضور",
+        "delete": "حذف"
+      },
+      "form": {
+        "editTitle": "ویرایش حضور",
+        "editDescription": "وضعیت یا توضیحات این رکورد را به‌روز کنید.",
+        "status": "وضعیت",
+        "statusPlaceholder": "انتخاب وضعیت…",
+        "remarks": "توضیحات",
+        "remarksPlaceholder": "توضیحات اختیاری",
+        "updateSuccess": "حضور و غیاب به‌روز شد",
+        "deleteSuccess": "حضور و غیاب حذف شد"
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "تغییر ستون‌ها"
+      }
     },
     "classes": {
       "title": "کلاس‌ها",
@@ -193,7 +276,9 @@
       },
       "actions": {
         "edit": "ویرایش کلاس",
-        "delete": "حذف"
+        "delete": "حذف",
+        "viewSessions": "مشاهده جلسات",
+        "manageMembers": "مدیریت اعضا"
       },
       "form": {
         "createTitle": "کلاس جدید",
@@ -213,6 +298,552 @@
         "createSuccess": "کلاس ایجاد شد",
         "updateSuccess": "کلاس به‌روز شد",
         "deleteSuccess": "کلاس حذف شد"
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش/پنهان ستون‌ها"
+      }
+    },
+    "classMembers": {
+      "title": "اعضا",
+      "roster": "فهرست اعضا",
+      "backToClasses": "بازگشت به کلاس‌ها",
+      "joined": "عضویت از {{date}}",
+      "actions": {
+        "remove": "حذف از کلاس"
+      },
+      "empty": {
+        "title": "هنوز عضوی وجود ندارد",
+        "hint": "اولین کاربر را با استفاده از فرم بالا به این کلاس اضافه کنید."
+      },
+      "form": {
+        "addTitle": "افزودن کاربر به این کلاس",
+        "userPlaceholder": "جستجوی کاربر…",
+        "addButton": "افزودن به کلاس",
+        "capacityHint": "{{used}} از {{capacity}} ظرفیت استفاده شده",
+        "unlimitedHint": "ظرفیت نامحدود",
+        "addSuccess": "کاربر به کلاس اضافه شد",
+        "removeSuccess": "کاربر از کلاس حذف شد"
+      }
+    },
+    "liveRooms": {
+      "title": "اتاق‌های زنده",
+      "subtitle": "جلسات زنده در تمامی سازمان‌ها.",
+      "searchPlaceholder": "جستجو بر اساس نام اتاق…",
+      "newLiveRoom": "اتاق زنده جدید",
+      "name": "اتاق",
+      "status": "وضعیت",
+      "startedAt": "زمان شروع",
+      "endedAt": "زمان پایان",
+      "createdAt": "ایجاد",
+      "noResults": "اتاق زنده‌ای یافت نشد",
+      "noResultsHint": "اتاق جدید بسازید یا فیلترها را تغییر دهید.",
+      "filter": {
+        "class": "کلاس",
+        "session": "جلسه",
+        "clear": "حذف فیلترها",
+        "selectSessionFirst": "برای مشاهده اتاق‌های زنده یک جلسه انتخاب کنید."
+      },
+      "stats": {
+        "total": "مجموع اتاق‌ها",
+        "active": "فعال اکنون"
+      },
+      "statuses": {
+        "created": "زمان‌بندی‌شده",
+        "active": "فعال",
+        "finished": "پایان‌یافته"
+      },
+      "actions": {
+        "end": "پایان اتاق",
+        "endSuccess": "اتاق پایان یافت",
+        "delete": "حذف",
+        "deleteSuccess": "اتاق حذف شد"
+      },
+      "form": {
+        "createTitle": "اتاق زنده جدید",
+        "createDescription": "اتاق زنده برای یک جلسه کلاس ایجاد کنید.",
+        "class": "کلاس",
+        "classPlaceholder": "انتخاب کلاس…",
+        "session": "جلسه",
+        "sessionPlaceholder": "انتخاب جلسه…",
+        "sessionSelectClassFirst": "ابتدا یک کلاس انتخاب کنید",
+        "maxParticipants": "حداکثر شرکت‌کنندگان",
+        "maxParticipantsPlaceholder": "۱۰۰",
+        "allowMicDefault": "میکروفن به‌صورت پیش‌فرض فعال",
+        "allowCameraDefault": "دوربین به‌صورت پیش‌فرض فعال",
+        "allowScreenShareDefault": "اشتراک‌گذاری صفحه به‌صورت پیش‌فرض فعال",
+        "autoRecord": "ضبط خودکار با شروع اتاق",
+        "createSuccess": "اتاق زنده ایجاد شد"
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش/پنهان ستون‌ها"
+      }
+    },
+    "sessions": {
+      "title": "جلسات کلاس",
+      "subtitle": "جلسات این کلاس را مدیریت کنید.",
+      "searchPlaceholder": "جستجوی جلسات…",
+      "newSession": "جلسه جدید",
+      "backToClasses": "بازگشت به کلاس‌ها",
+      "class": "کلاس",
+      "filter": {
+        "class": "کلاس",
+        "clear": "حذف فیلترها"
+      },
+      "name": "جلسه",
+      "type": "نوع",
+      "startTime": "زمان شروع",
+      "recordable": "قابل ضبط",
+      "createdAt": "ایجاد شده",
+      "yes": "بله",
+      "no": "خیر",
+      "noResults": "جلسه‌ای یافت نشد",
+      "noResultsHint": "اولین جلسه را برای این کلاس ایجاد کنید.",
+      "stats": {
+        "total": "کل جلسات"
+      },
+      "actions": {
+        "edit": "ویرایش جلسه",
+        "delete": "حذف",
+        "manageRooms": "مدیریت اتاق‌ها"
+      },
+      "manageRooms": {
+        "title": "مدیریت اتاق‌ها",
+        "description": "اتاق‌های مرتبط با این جلسه.",
+        "viewAll": "مشاهده همه",
+        "tabs": {
+          "live": "زنده",
+          "offline": "آفلاین",
+          "practice": "تمرین",
+          "quiz": "آزمون‌ها"
+        },
+        "empty": {
+          "live": "اتاق زنده‌ای برای این جلسه وجود ندارد.",
+          "offline": "محتوای آفلاینی برای این جلسه وجود ندارد.",
+          "practice": "تمرینی برای این جلسه وجود ندارد.",
+          "quiz": "آزمونی به این جلسه متصل نشده است."
+        }
+      },
+      "types": {
+        "all": "همه انواع",
+        "live": "زنده",
+        "quiz": "آزمون",
+        "practice": "تمرین"
+      },
+      "form": {
+        "createTitle": "جلسه جدید",
+        "createDescription": "یک جلسه به این کلاس اضافه کنید.",
+        "editTitle": "ویرایش جلسه",
+        "editDescription": "اطلاعات جلسه را به‌روز کنید.",
+        "name": "نام",
+        "namePlaceholder": "نام جلسه",
+        "description": "توضیحات",
+        "descriptionPlaceholder": "توضیحات اختیاری",
+        "startTime": "زمان شروع",
+        "type": "نوع",
+        "typePlaceholder": "انتخاب نوع",
+        "isRecordable": "قابل ضبط",
+        "createSuccess": "جلسه ایجاد شد",
+        "updateSuccess": "جلسه به‌روز شد",
+        "deleteSuccess": "جلسه حذف شد"
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش/پنهان ستون‌ها"
+      }
+    },
+    "offlines": {
+      "title": "اتاق‌های آفلاین",
+      "subtitle": "مدیریت اتاق‌های ضبط‌شده آفلاین در همه کلاس‌ها.",
+      "searchPlaceholder": "جستجوی اتاق‌های آفلاین…",
+      "newRoom": "اتاق آفلاین جدید",
+      "title_column": "عنوان",
+      "class": "کلاس",
+      "session": "جلسه",
+      "creator": "سازنده",
+      "viewCount": "بازدید",
+      "publishedAt": "انتشار",
+      "createdAt": "ایجاد",
+      "noResults": "اتاق آفلاینی یافت نشد",
+      "noResultsHint": "فیلترها یا جستجو را تغییر دهید.",
+      "stats": {
+        "total": "کل اتاق‌های آفلاین"
+      },
+      "actions": {
+        "edit": "ویرایش اتاق",
+        "delete": "حذف"
+      },
+      "filter": {
+        "class": "کلاس",
+        "session": "جلسه",
+        "clear": "حذف فیلترها",
+        "selectSessionFirst": "برای مشاهده اتاق‌های آفلاین یک جلسه انتخاب کنید."
+      },
+      "form": {
+        "createTitle": "اتاق آفلاین جدید",
+        "createDescription": "ایجاد یک اتاق آفلاین جدید.",
+        "editTitle": "ویرایش اتاق آفلاین",
+        "editDescription": "بروزرسانی اطلاعات اتاق آفلاین.",
+        "title": "عنوان",
+        "titlePlaceholder": "عنوان اتاق آفلاین",
+        "description": "توضیحات",
+        "descriptionPlaceholder": "توضیحات اختیاری",
+        "publishedAt": "تاریخ انتشار",
+        "class": "کلاس",
+        "classPlaceholder": "انتخاب کلاس…",
+        "session": "جلسه",
+        "sessionPlaceholder": "انتخاب جلسه…",
+        "sessionSelectClassFirst": "ابتدا کلاس را انتخاب کنید",
+        "createSuccess": "اتاق آفلاین ایجاد شد",
+        "updateSuccess": "اتاق آفلاین بروزرسانی شد",
+        "deleteSuccess": "اتاق آفلاین حذف شد"
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش/پنهان ستون‌ها"
+      }
+    },
+    "practices": {
+      "title": "اتاق‌های تمرین",
+      "subtitle": "مدیریت اتاق‌های تمرین در همه کلاس‌ها.",
+      "searchPlaceholder": "جستجوی تمرین‌ها…",
+      "newPractice": "تمرین جدید",
+      "title_col": "عنوان",
+      "class": "کلاس",
+      "session": "جلسه",
+      "teacher": "مالک",
+      "maxScore": "حداکثر نمره",
+      "startTime": "شروع",
+      "endTime": "پایان",
+      "createdAt": "ایجاد شده",
+      "noResults": "اتاق تمرینی یافت نشد",
+      "noResultsHint": "اولین اتاق تمرین را ایجاد کنید.",
+      "filter": {
+        "class": "کلاس",
+        "session": "جلسه",
+        "clear": "حذف فیلترها",
+        "selectSessionFirst": "برای مشاهده اتاق‌های تمرین یک جلسه انتخاب کنید."
+      },
+      "stats": {
+        "total": "کل تمرین‌ها"
+      },
+      "actions": {
+        "edit": "ویرایش تمرین",
+        "delete": "حذف"
+      },
+      "form": {
+        "createTitle": "تمرین جدید",
+        "createDescription": "یک اتاق تمرین جدید ایجاد کنید.",
+        "editTitle": "ویرایش تمرین",
+        "editDescription": "اطلاعات اتاق تمرین را به‌روز کنید.",
+        "class": "کلاس",
+        "classPlaceholder": "انتخاب کلاس…",
+        "session": "جلسه کلاس",
+        "sessionPlaceholder": "انتخاب جلسه…",
+        "selectClassFirst": "ابتدا یک کلاس انتخاب کنید",
+        "title": "عنوان",
+        "titlePlaceholder": "عنوان تمرین",
+        "content": "محتوا",
+        "contentPlaceholder": "دستورالعمل اختیاری",
+        "maxScore": "حداکثر نمره",
+        "maxScorePlaceholder": "۰ یعنی بدون حداکثر",
+        "startTime": "زمان شروع",
+        "endTime": "زمان پایان",
+        "createSuccess": "تمرین ایجاد شد",
+        "updateSuccess": "تمرین به‌روز شد",
+        "deleteSuccess": "تمرین حذف شد"
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش/پنهان ستون‌ها"
+      }
+    },
+    "quizzes": {
+      "title": "آزمون‌ها",
+      "subtitle": "مدیریت آزمون‌های این کلاس.",
+      "searchPlaceholder": "جستجوی آزمون‌ها…",
+      "newQuiz": "آزمون جدید",
+      "title_col": "عنوان",
+      "class": "کلاس",
+      "session": "جلسه",
+      "teacher": "مالک",
+      "duration": "مدت",
+      "minutesShort": "دقیقه",
+      "totalScore": "نمره کل",
+      "createdAt": "ایجاد شده",
+      "noResults": "آزمونی یافت نشد",
+      "noResultsHint": "اولین آزمون این کلاس را بسازید.",
+      "filter": {
+        "class": "کلاس",
+        "session": "جلسه",
+        "clear": "حذف فیلترها",
+        "selectSessionFirst": "برای مشاهده آزمون‌ها یک جلسه انتخاب کنید."
+      },
+      "stats": {
+        "total": "کل آزمون‌ها"
+      },
+      "actions": {
+        "edit": "ویرایش آزمون",
+        "delete": "حذف",
+        "manageQuestions": "مدیریت سوال‌ها"
+      },
+      "flags": {
+        "noBackNavigation": "بازگشت به سوال‌های قبلی قفل است",
+        "noBackShort": "بدون بازگشت",
+        "shuffleQuestions": "سوال‌ها در هم ریخته می‌شوند",
+        "shuffleShort": "شافل"
+      },
+      "form": {
+        "createTitle": "آزمون جدید",
+        "createDescription": "ایجاد یک آزمون جدید برای این کلاس.",
+        "editTitle": "ویرایش آزمون",
+        "editDescription": "به‌روزرسانی جزئیات آزمون.",
+        "title": "عنوان",
+        "titlePlaceholder": "عنوان آزمون",
+        "description": "توضیحات",
+        "descriptionPlaceholder": "توضیحات اختیاری",
+        "duration": "مدت (دقیقه)",
+        "class": "کلاس",
+        "classPlaceholder": "یک کلاس انتخاب کنید",
+        "session": "جلسه",
+        "sessionPlaceholder": "یک جلسه انتخاب کنید",
+        "sessionHint": "برای این جلسه یک اتاق آزمون ساخته می‌شود.",
+        "startedAt": "زمان شروع",
+        "startedAtHint": "زمانی که اتاق آزمون برای دانش‌آموزان باز می‌شود.",
+        "endedAt": "زمان پایان",
+        "endedAtHint": "زمانی که اتاق آزمون بسته می‌شود.",
+        "endedAtError": "زمان پایان باید بعد از زمان شروع باشد.",
+        "noBackNavigation": "قفل بازگشت به سوال قبل",
+        "noBackNavigationHint": "دانش‌آموز پس از پاسخ نمی‌تواند به سوال‌های قبلی بازگردد.",
+        "shuffleQuestions": "ترتیب تصادفی سوال‌ها",
+        "shuffleQuestionsHint": "هر دانش‌آموز سوال‌ها را با ترتیب تصادفی می‌بیند.",
+        "createSuccess": "آزمون ایجاد شد",
+        "updateSuccess": "آزمون به‌روز شد",
+        "deleteSuccess": "آزمون حذف شد",
+        "linkRoomFailed": "آزمون ساخته شد ولی اتصال به جلسه ناموفق بود"
+      },
+      "questions": {
+        "title": "مدیریت سوال‌ها",
+        "description": "به‌صورت دستی یا تصادفی از بانک سوال انتخاب کنید.",
+        "currentRules": "انتخاب فعلی",
+        "questions": "سوال",
+        "selected": "انتخاب‌شده",
+        "selectQuestions": "انتخاب سوال‌ها",
+        "bank": "بانک سوال",
+        "count": "تعداد سوال‌ها",
+        "empty": "هنوز انتخابی انجام نشده.",
+        "ruleAdded": "انتخاب ذخیره شد",
+        "ruleDeleted": "انتخاب حذف شد",
+        "addManual": "افزودن انتخاب‌شده‌ها",
+        "addRandom": "افزودن قاعده تصادفی",
+        "randomHint": "هنگام اجرا، سیستم به‌تعداد مشخص سوال تصادفی از بانک انتخاب می‌کند.",
+        "tabs": {
+          "manual": "دستی",
+          "random": "تصادفی"
+        },
+        "ruleType": {
+          "manual": "دستی",
+          "random": "تصادفی"
+        }
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش/پنهان ستون‌ها"
+      }
+    },
+    "corrections": {
+      "title": "تصحیح آزمون",
+      "subtitle": "نمره‌گذاری پاسخ‌های تشریحی و مرور پاسخ‌نامه‌ها.",
+      "filter": {
+        "class": "کلاس",
+        "quiz": "آزمون",
+        "quizPlaceholder": "یک آزمون انتخاب کنید",
+        "selectClassFirst": "ابتدا یک کلاس انتخاب کنید.",
+        "selectQuizFirst": "برای مشاهده پاسخ‌ها یک آزمون انتخاب کنید.",
+        "clear": "پاک کردن فیلتر",
+        "status": "وضعیت",
+        "allStatuses": "همه وضعیت‌ها"
+      },
+      "stats": {
+        "total": "پاسخ‌نامه‌ها",
+        "pending": "در انتظار تصحیح",
+        "graded": "تصحیح‌شده"
+      },
+      "student": "دانش‌آموز",
+      "status": "وضعیت",
+      "score": "نمره",
+      "scoreOf": "از {{max}}",
+      "submittedAt": "زمان ارسال",
+      "startedAt": "شروع",
+      "noResults": "پاسخ‌نامه‌ای یافت نشد",
+      "noResultsHint": "پاسخ‌نامه‌های دانش‌آموزان اینجا نمایش داده می‌شود.",
+      "actions": {
+        "grade": "تصحیح",
+        "view": "مشاهده"
+      },
+      "statuses": {
+        "in_progress": "در حال انجام",
+        "submitted": "در انتظار تصحیح",
+        "graded": "تصحیح‌شده"
+      },
+      "dialog": {
+        "title": "تصحیح پاسخ‌نامه",
+        "description": "برای هر پاسخ نمره وارد کنید. نمرات خودکار قابل بازنویسی هستند.",
+        "question": "سوال",
+        "answer": "پاسخ دانش‌آموز",
+        "noAnswer": "بدون پاسخ",
+        "score": "نمره",
+        "totalScore": "نمره کل",
+        "save": "ذخیره نمرات",
+        "saveSuccess": "نمرات ذخیره شد",
+        "saveFailed": "ذخیره نمرات با خطا مواجه شد",
+        "loading": "در حال بارگذاری سوال…",
+        "questionMissing": "سوال یافت نشد",
+        "selectedOptions": "گزینه‌های انتخاب‌شده",
+        "spent": "زمان صرف‌شده",
+        "secondsShort": "ث"
+      }
+    },
+    "questionBanks": {
+      "title": "بانک‌های سوال",
+      "searchPlaceholder": "جستجوی بانک‌ها…",
+      "newBank": "بانک جدید",
+      "noResults": "بانکی یافت نشد",
+      "form": {
+        "createTitle": "بانک سوال جدید",
+        "createDescription": "ایجاد یک بانک سوال برای سازمان.",
+        "name": "نام",
+        "namePlaceholder": "نام بانک",
+        "description": "توضیحات",
+        "descriptionPlaceholder": "توضیحات اختیاری",
+        "createSuccess": "بانک ایجاد شد",
+        "noActiveOrg": "ابتدا یک سازمان از نوار کناری انتخاب کنید."
+      }
+    },
+    "gradebook": {
+      "title": "کارنامه",
+      "newColumn": "ستون جدید",
+      "student": "دانش‌آموز",
+      "noResults": "هنوز ستونی در کارنامه وجود ندارد",
+      "noResultsHint": "برای ثبت نمرات یک ستون ایجاد کنید.",
+      "filter": {
+        "class": "کلاس",
+        "selectClassFirst": "برای مشاهده کارنامه ابتدا کلاس را انتخاب کنید.",
+        "clear": "پاک کردن فیلترها"
+      },
+      "stats": {
+        "columns": "ستون‌ها",
+        "students": "دانش‌آموزان"
+      },
+      "types": {
+        "auto_attendance": "خودکار · حضور",
+        "auto_practice": "خودکار · تمرین",
+        "auto_quiz": "خودکار · آزمون",
+        "manual_grade": "دستی · نمره",
+        "manual_attendance": "دستی · حضور",
+        "manual_text": "دستی · متن"
+      },
+      "form": {
+        "createTitle": "ستون جدید کارنامه",
+        "createDescription": "ستونی برای ثبت نمرات یا حضور اضافه کنید.",
+        "editTitle": "ویرایش ستون",
+        "editDescription": "عنوان یا ترتیب ستون را تغییر دهید.",
+        "title": "عنوان",
+        "titlePlaceholder": "مثلاً آزمون میان‌ترم",
+        "type": "نوع",
+        "orderIndex": "ترتیب",
+        "sourcePlaceholder": "انتخاب منبع…",
+        "source": {
+          "auto_attendance": "جلسه",
+          "auto_practice": "تمرین",
+          "auto_quiz": "آزمون"
+        },
+        "createSuccess": "ستون ایجاد شد",
+        "updateSuccess": "ستون به‌روزرسانی شد",
+        "deleteSuccess": "ستون حذف شد",
+        "cellTitle": "ویرایش نمره",
+        "value": "مقدار",
+        "valuePlaceholder": "مقدار را وارد کنید",
+        "cellUpdateSuccess": "نمره به‌روزرسانی شد"
+      }
+    },
+    "questions": {
+      "title": "بانک سوال",
+      "subtitle": "مدیریت سوال‌های قابل استفاده مجدد.",
+      "searchPlaceholder": "جستجوی سوال‌ها…",
+      "newQuestion": "سوال جدید",
+      "pickBankHint": "برای دیدن سوال‌ها یک بانک انتخاب کنید.",
+      "text": "متن سوال",
+      "type": "نوع",
+      "optionsCount": "گزینه‌ها",
+      "totalScore": "مجموع نمره",
+      "createdAt": "ایجاد شده",
+      "noResults": "سوالی یافت نشد",
+      "noResultsHint": "اولین سوال این بانک را بسازید.",
+      "filter": {
+        "bank": "بانک سوال",
+        "type": "نوع",
+        "allTypes": "همه انواع"
+      },
+      "types": {
+        "descriptive": "تشریحی",
+        "short_answer": "پاسخ کوتاه",
+        "choice": "چندگزینه‌ای"
+      },
+      "stats": {
+        "total": "کل سوال‌ها"
+      },
+      "actions": {
+        "edit": "ویرایش سوال",
+        "delete": "حذف"
+      },
+      "form": {
+        "createTitle": "سوال جدید",
+        "createDescription": "افزودن سوال به یک بانک.",
+        "editTitle": "ویرایش سوال",
+        "editDescription": "به‌روزرسانی جزئیات سوال.",
+        "bank": "بانک سوال",
+        "bankPlaceholder": "انتخاب بانک…",
+        "text": "متن سوال",
+        "textPlaceholder": "متن سوال را وارد کنید…",
+        "type": "نوع",
+        "options": "گزینه‌ها",
+        "maxScore": "حداکثر نمره",
+        "optionValuePlaceholder": "مقدار گزینه",
+        "scorePlaceholder": "نمره",
+        "addOption": "افزودن گزینه",
+        "optionsEmpty": "هنوز گزینه‌ای ندارد.",
+        "optionsHint": "برای چندگزینه‌ای، به گزینه‌های درست نمره مثبت بدهید. برای پاسخ کوتاه، پاسخ‌های قابل قبول را با نمره ذکر کنید.",
+        "hints": {
+          "choice": "حداقل ۲ گزینه اضافه کنید. گزینه‌های درست نمره مثبت می‌گیرند؛ گزینه‌های نادرست می‌توانند ۰ یا منفی باشند.",
+          "short_answer": "پاسخ‌های قابل قبول را با نمره غیرمنفی فهرست کنید.",
+          "descriptive": "حداکثر نمره‌ای که مصحح می‌تواند به این سوال تشریحی بدهد را تعیین کنید."
+        },
+        "errors": {
+          "choice": "سوال چندگزینه‌ای حداقل به ۲ گزینه نیاز دارد.",
+          "shortAnswer": "سوال پاسخ‌کوتاه حداقل به ۱ گزینه نیاز دارد.",
+          "descriptive": "سوال تشریحی به حداکثر نمره نیاز دارد.",
+          "valueRequired": "متن گزینه الزامی است.",
+          "negative": "نمره منفی فقط برای گزینه‌های چندگزینه‌ای مجاز است."
+        },
+        "photos": {
+          "label": "تصاویر",
+          "add": "افزودن تصویر",
+          "empty": "تصویری پیوست نشده.",
+          "notImage": "فقط فایل تصویری مجاز است.",
+          "uploadSuccess": "تصویر بارگذاری شد",
+          "uploadError": "بارگذاری تصویر ناموفق بود"
+        },
+        "createSuccess": "سوال ایجاد شد",
+        "updateSuccess": "سوال به‌روز شد",
+        "deleteSuccess": "سوال حذف شد"
       },
       "toolbar": {
         "sort": "مرتب‌سازی",
@@ -399,6 +1030,7 @@
     "sessions": {
       "newSession": "جلسه جدید",
       "start": "شروع",
+      "join": "ورود",
       "empty": "هنوز جلسه‌ای وجود ندارد",
       "form": {
         "name": "نام",
@@ -492,6 +1124,42 @@
       "settings": "تنظیمات",
       "files": "فایل‌ها"
     },
+    "dashboard": {
+      "overview": "نمای کلی",
+      "welcome": "خوش آمدید",
+      "welcomeName": "خوش آمدید، {{name}}",
+      "viewAll": "مشاهده همه",
+      "stats": {
+        "classes": "کلاس‌ها",
+        "members": "اعضا",
+        "quizzes": "آزمون‌ها"
+      },
+      "actions": {
+        "newClass": "کلاس جدید"
+      },
+      "recentClasses": {
+        "title": "کلاس‌های اخیر",
+        "empty": "هنوز کلاسی وجود ندارد.",
+        "unassigned": "بدون مدرس",
+        "members_one": "{{count}} عضو",
+        "members_other": "{{count}} عضو"
+      },
+      "activity": {
+        "title": "فعالیت‌های اخیر",
+        "empty": "فعالیت اخیری وجود ندارد.",
+        "classCreated": "کلاس جدید",
+        "quizCreated": "آزمون جدید"
+      },
+      "weekly": {
+        "title": "فعالیت این هفته",
+        "total_one": "{{count}} مورد",
+        "total_other": "{{count}} مورد"
+      },
+      "memberEmpty": {
+        "title": "همه‌چیز آماده است",
+        "hint": "کلاس‌ها و فعالیت‌های شما پس از ثبت‌نام اینجا نمایش داده می‌شوند."
+      }
+    },
     "users": {
       "title": "کاربران",
       "searchPlaceholder": "جستجوی کاربران…",
@@ -543,6 +1211,615 @@
       "nameError": "نام باید حداقل ۲ کاراکتر باشد",
       "updateSuccess": "سازمان به‌روزرسانی شد",
       "saving": "در حال ذخیره…"
+    },
+    "class": {
+      "title": "کلاس",
+      "eyebrow": "کلاس",
+      "instructor": "مدرس",
+      "unknownTeacher": "تعیین نشده",
+      "backToClasses": "بازگشت به کلاس‌ها",
+      "stats": {
+        "total": "جلسات",
+        "live": "زنده اکنون",
+        "upcoming": "آینده"
+      },
+      "sessions": {
+        "eyebrow": "جلسات",
+        "title": "جلسات کلاس",
+        "newSession": "جلسه جدید",
+        "open": "باز کردن",
+        "emptyTitle": "هنوز جلسه‌ای وجود ندارد",
+        "emptyHint": "اولین جلسه این کلاس را برنامه‌ریزی کنید."
+      },
+      "students": {
+        "eyebrow": "فهرست",
+        "title": "دانش‌آموزان",
+        "unknownName": "ناشناس",
+        "joinedAt": "عضو شد {{date}}",
+        "emptyTitle": "هیچ دانش‌آموزی ثبت‌نام نکرده است",
+        "emptyHint": "دانش‌آموزانی که به این کلاس می‌پیوندند اینجا نمایش داده می‌شوند.",
+        "addMember": "افزودن عضو",
+        "removeAction": "حذف عضو"
+      },
+      "enrollMember": {
+        "title": "افزودن عضو",
+        "description": "کاربری را برای افزودن به فهرست این کلاس انتخاب کنید.",
+        "userLabel": "کاربر",
+        "userPlaceholder": "انتخاب کاربر",
+        "searchPlaceholder": "جستجو بر اساس نام یا نام کاربری…",
+        "noResults": "کاربری یافت نشد.",
+        "submit": "ثبت‌نام",
+        "success": "عضو افزوده شد.",
+        "errorConflict": "کاربر قبلاً ثبت‌نام کرده یا ظرفیت کلاس پر است.",
+        "errorForbidden": "اجازه افزودن عضو را ندارید.",
+        "errorGeneric": "افزودن عضو ناموفق بود."
+      },
+      "removeMember": {
+        "success": "عضو حذف شد.",
+        "errorForbidden": "اجازه حذف عضو را ندارید.",
+        "errorGeneric": "حذف عضو ناموفق بود."
+      },
+      "gradebook": {
+        "title": "کارنامه",
+        "eyebrow": "کارنامه",
+        "subtitle": "نمرات و حضور و غیاب این کلاس را پیگیری کنید.",
+        "open": "کارنامه",
+        "backToClass": "بازگشت به کلاس",
+        "newColumn": "ستون جدید",
+        "student": "دانش‌آموز",
+        "stats": {
+          "columns": "ستون‌ها",
+          "students": "دانش‌آموزان"
+        },
+        "noResults": "هنوز ستونی در کارنامه نیست",
+        "noResultsHint": "برای شروع ثبت نمرات یک ستون بسازید.",
+        "noAccessTitle": "دسترسی به این کارنامه ندارید",
+        "noAccessHint": "اجازه‌ی مشاهده‌ی کارنامه‌ی این کلاس را ندارید.",
+        "deleteSuccess": "ستون حذف شد",
+        "types": {
+          "auto_attendance": "خودکار · حضور و غیاب",
+          "auto_practice": "خودکار · تمرین",
+          "auto_quiz": "خودکار · آزمون",
+          "manual_grade": "دستی · نمره",
+          "manual_attendance": "دستی · حضور و غیاب",
+          "manual_text": "دستی · متن"
+        }
+      }
+    },
+    "session": {
+      "title": "جلسه",
+      "eyebrow": "جلسه کلاس",
+      "backToClass": "بازگشت به کلاس",
+      "footnote": "خط‌زمانی جلسه",
+      "nav": {
+        "overview": "نمای کلی",
+        "live": "اتاق‌های زنده",
+        "quizzes": "آزمون‌ها",
+        "practices": "تمرین‌ها",
+        "recordings": "ضبط‌ها"
+      },
+      "overview": {
+        "stats": {
+          "live": "اتاق‌های زنده",
+          "quizzes": "آزمون‌ها",
+          "practices": "تمرین‌ها",
+          "offline": "آفلاین"
+        },
+        "units": {
+          "rooms_one": "اتاق زنده",
+          "rooms_other": "اتاق زنده",
+          "quizzes_one": "آزمون",
+          "quizzes_other": "آزمون",
+          "practices_one": "تمرین",
+          "practices_other": "تمرین",
+          "recordings_one": "ضبط",
+          "recordings_other": "ضبط"
+        }
+      },
+      "meta": {
+        "starts": "شروع",
+        "countdown": "شمارش معکوس",
+        "status": "وضعیت",
+        "created": "ایجاد شده",
+        "elapsed": "از زمان شروع",
+        "untilStart": "تا شروع"
+      },
+      "rooms": {
+        "eyebrow": "اتاق‌ها",
+        "title": "فعالیت‌ها",
+        "subtitle": "متصل به این جلسه",
+        "live": "اتاق‌های زنده",
+        "quizzes": "آزمون‌ها",
+        "practices": "تمرین‌ها",
+        "offlines": "ضبط‌ها",
+        "questionBanks": "بانک‌های سوال",
+        "corrections": "تصحیح‌ها"
+      },
+      "workspace": {
+        "eyebrow": "",
+        "title": "مدیریت آزمون‌ها",
+        "subtitle": "آزمون‌ها، تصحیح‌ها و بانک‌های سوال .",
+        "tabs": {
+          "quizzes": "آزمون‌ها",
+          "corrections": "تصحیح‌ها",
+          "banks": "بانک‌های سوال"
+        }
+      },
+      "actions": {
+        "join": "ورود به جلسه زنده",
+        "start": "شروع جلسه زنده",
+        "viewClass": "مشاهده کلاس",
+        "notPermitted": "بدون دسترسی"
+      },
+      "notFound": {
+        "eyebrow": "خطا · ۴۰۴",
+        "title": "جلسه یافت نشد",
+        "description": "این جلسه کلاس وجود ندارد یا شما دسترسی ندارید.",
+        "backToClasses": "بازگشت به کلاس‌ها"
+      },
+      "quizzes": {
+        "eyebrow": "آزمون‌ها",
+        "title": "آزمون‌های جلسه",
+        "cardEyebrow": "آزمون",
+        "newQuiz": "آزمون جدید",
+        "duration": "مدت زمان",
+        "minutesShort": "دقیقه",
+        "totalScore": "نمره",
+        "emptyTitle": "هنوز آزمونی وجود ندارد",
+        "emptyHint": "اولین آزمون این جلسه را بسازید.",
+        "actions": {
+          "edit": "ویرایش آزمون",
+          "delete": "حذف آزمون",
+          "manageQuestions": "مدیریت سوالات",
+          "take": "شرکت در آزمون"
+        },
+        "flags": {
+          "noBackNavigation": "بازگشت به سوال قبلی قفل است",
+          "noBackShort": "بدون بازگشت",
+          "shuffleQuestions": "سوال‌ها در هم ریخته می‌شوند",
+          "shuffleShort": "شافل"
+        },
+        "form": {
+          "createTitle": "آزمون جدید",
+          "createDescription": "یک آزمون برای این جلسه بسازید.",
+          "editTitle": "ویرایش آزمون",
+          "editDescription": "به‌روزرسانی اطلاعات آزمون.",
+          "title": "عنوان",
+          "titlePlaceholder": "عنوان آزمون",
+          "description": "توضیحات",
+          "descriptionPlaceholder": "توضیحات اختیاری",
+          "duration": "مدت زمان (دقیقه)",
+          "startedAt": "زمان شروع",
+          "startedAtHint": "زمانی که اتاق آزمون برای دانش‌آموزان باز می‌شود.",
+          "endedAt": "زمان پایان",
+          "endedAtHint": "زمانی که اتاق آزمون بسته می‌شود.",
+          "endedAtError": "زمان پایان باید بعد از زمان شروع باشد.",
+          "noBackNavigation": "قفل بازگشت به سوال قبل",
+          "noBackNavigationHint": "دانش‌آموز پس از پاسخ نمی‌تواند به سوال‌های قبلی بازگردد.",
+          "shuffleQuestions": "ترتیب تصادفی سوال‌ها",
+          "shuffleQuestionsHint": "هر دانش‌آموز سوال‌ها را با ترتیب تصادفی می‌بیند.",
+          "createSuccess": "آزمون ایجاد شد",
+          "updateSuccess": "آزمون به‌روزرسانی شد",
+          "deleteSuccess": "آزمون حذف شد",
+          "linkRoomFailed": "آزمون ساخته شد اما اتصال به جلسه ناموفق بود"
+        },
+        "take": {
+          "headTitle": "شرکت در آزمون",
+          "eyebrow": "آزمون · شرکت",
+          "backToSession": "بازگشت به جلسه",
+          "begin": "شروع آزمون",
+          "previous": "قبلی",
+          "next": "بعدی",
+          "finish": "پایان آزمون",
+          "finishConfirm": "ارسال پاسخ‌ها",
+          "progress": "سوال {{current}} از {{total}}",
+          "questionN": "سوال {{n}}",
+          "submitting": "در حال ارسال پاسخ‌ها…",
+          "submitted": "آزمون ارسال شد",
+          "submitFailed": "ارسال ناموفق بود. دوباره تلاش کنید.",
+          "startFailed": "شروع آزمون ناموفق بود.",
+          "autoSubmitNote": "زمان به پایان رسید — پاسخ‌ها به‌صورت خودکار ارسال شدند.",
+          "multiSelectHint": "ممکن است چند گزینه صحیح باشد.",
+          "shortPlaceholder": "پاسخ خود را بنویسید…",
+          "descriptivePlaceholder": "پاسخ خود را تایپ کنید…",
+          "noAccess": {
+            "title": "بدون دسترسی",
+            "description": "شما اجازه شرکت در این آزمون را ندارید."
+          },
+          "notFound": {
+            "title": "آزمون یافت نشد",
+            "description": "این آزمون قابل بارگذاری نیست."
+          },
+          "empty": {
+            "title": "بدون سوال",
+            "description": "این آزمون هنوز سوالی ندارد."
+          },
+          "noRoom": {
+            "title": "اتاق آزمون موجود نیست",
+            "description": "این آزمون به جلسه‌ای متصل نیست."
+          },
+          "closed": {
+            "title": "اتاق آزمون بسته است",
+            "description": "بازه برگزاری آزمون باز نیست."
+          },
+          "bankError": {
+            "title": "بارگذاری سوال‌ها ناموفق بود",
+            "description": "بانک سوال‌ها بارگذاری نشد. دوباره تلاش کنید."
+          },
+          "meta": {
+            "questions": "تعداد سوال",
+            "duration": "مدت",
+            "totalScore": "نمره کل",
+            "closesAt": "پایان"
+          },
+          "rules": {
+            "eyebrow": "قوانین",
+            "timer": "محدودیت: {{minutes}} دقیقه از لحظه شروع.",
+            "noBack": "بازگشت به سوال‌های قبلی ممکن نیست.",
+            "backAllowed": "می‌توانید به سوال‌های قبلی برگردید.",
+            "shuffle": "ترتیب سوال‌ها تصادفی است.",
+            "autoSubmit": "در صورت اتمام زمان، پاسخ‌ها خودکار ارسال می‌شوند."
+          },
+          "types": {
+            "choice": "چندگزینه‌ای",
+            "short": "پاسخ کوتاه",
+            "descriptive": "تشریحی"
+          },
+          "confirm": {
+            "title": "ارسال آزمون؟",
+            "description": "{{answered}} از {{total}} سوال را پاسخ داده‌اید. پس از ارسال امکان تغییر نیست."
+          },
+          "result": {
+            "eyebrow": "نتیجه",
+            "submitted": "ارسال‌شده",
+            "graded": "تصحیح‌شده",
+            "earned": "کسب‌شده",
+            "outOf": "از",
+            "percent": "درصد",
+            "totalTime": "زمان کل",
+            "perQuestionEyebrow": "زمان و نمره هر سوال"
+          }
+        }
+      },
+      "corrections": {
+        "eyebrow": "تصحیح‌ها",
+        "title": "تصحیح آزمون‌ها",
+        "subtitle": "پاسخ‌های تشریحی را نمره‌دهی کنید و پاسخ‌های دانش‌آموزان این جلسه را بررسی کنید.",
+        "pickQuiz": "انتخاب آزمون",
+        "noQuizSelected": "بدون آزمون",
+        "emptyTitle": "آزمونی برای تصحیح وجود ندارد",
+        "emptyHint": "ابتدا برای این جلسه آزمونی بسازید — پاسخ‌های ارسال‌شده اینجا نمایش داده می‌شوند.",
+        "noResults": "هنوز پاسخی ثبت نشده",
+        "noResultsHint": "پاسخ‌های دانش‌آموزان پس از تکمیل آزمون اینجا نمایش داده می‌شود.",
+        "stats": {
+          "total": "پاسخ‌ها",
+          "pending": "در انتظار",
+          "graded": "تصحیح‌شده",
+          "maxScore": "حداکثر نمره"
+        },
+        "filter": {
+          "all": "همه",
+          "submitted": "در انتظار",
+          "graded": "تصحیح‌شده",
+          "in_progress": "در حال انجام"
+        },
+        "row": {
+          "score": "نمره",
+          "submitted": "ارسال‌شده",
+          "notSubmitted": "ارسال نشده",
+          "grade": "تصحیح",
+          "regrade": "ویرایش نمره",
+          "gradeHint": "بازکردن پنجره تصحیح",
+          "gradeDisabledHint": "دانش‌آموز هنوز ارسال نکرده است"
+        }
+      },
+      "questionBanks": {
+        "eyebrow": "بانک‌های سوال",
+        "title": "بانک‌های سوال سازمان",
+        "cardEyebrow": "بانک",
+        "newBank": "بانک جدید",
+        "emptyTitle": "هنوز بانک سوالی وجود ندارد",
+        "emptyHint": "یک بانک برای نگه‌داشتن سوال‌های قابل استفاده مجدد بسازید.",
+        "actions": {
+          "manage": "مدیریت سوالات",
+          "edit": "ویرایش بانک",
+          "delete": "حذف بانک"
+        },
+        "form": {
+          "createTitle": "بانک سوال جدید",
+          "createDescription": "یک بانک برای سازمان‌دهی سوالات قابل استفاده مجدد بسازید.",
+          "editTitle": "ویرایش بانک سوال",
+          "editDescription": "به‌روزرسانی نام و توضیحات بانک.",
+          "name": "نام",
+          "namePlaceholder": "نام بانک",
+          "description": "توضیحات",
+          "descriptionPlaceholder": "توضیحات اختیاری",
+          "createSuccess": "بانک ایجاد شد",
+          "updateSuccess": "بانک به‌روزرسانی شد",
+          "deleteSuccess": "بانک حذف شد"
+        },
+        "questions": {
+          "title": "سوالات بانک",
+          "description": "افزودن، ویرایش یا حذف سوالات این بانک.",
+          "count": "سوالات",
+          "add": "افزودن سوال",
+          "options": "گزینه",
+          "emptyTitle": "هنوز سوالی وجود ندارد",
+          "emptyHint": "اولین سوال را به این بانک اضافه کنید.",
+          "deleteSuccess": "سوال حذف شد"
+        }
+      },
+      "practices": {
+        "eyebrow": "تمرین‌ها",
+        "title": "تمرین‌های جلسه",
+        "cardEyebrow": "تمرین",
+        "newPractice": "تمرین جدید",
+        "window": "بازه",
+        "maxScore": "حداکثر نمره",
+        "emptyTitle": "هنوز تمرینی نیست",
+        "emptyHint": "اولین اتاق تمرین این جلسه را بسازید.",
+        "actions": {
+          "edit": "ویرایش تمرین",
+          "delete": "حذف تمرین",
+          "submit": "ارسال"
+        },
+        "form": {
+          "createTitle": "تمرین جدید",
+          "createDescription": "یک اتاق تمرین برای این جلسه بسازید.",
+          "editTitle": "ویرایش تمرین",
+          "editDescription": "جزئیات اتاق تمرین را به‌روزرسانی کنید.",
+          "title": "عنوان",
+          "titlePlaceholder": "عنوان تمرین",
+          "content": "محتوا",
+          "contentPlaceholder": "دستورالعمل اختیاری",
+          "maxScore": "حداکثر نمره",
+          "maxScorePlaceholder": "۰ برای بدون سقف",
+          "startTime": "زمان شروع",
+          "endTime": "زمان پایان",
+          "attachments": "پیوست‌ها",
+          "createSuccess": "تمرین ساخته شد",
+          "updateSuccess": "تمرین به‌روزرسانی شد",
+          "deleteSuccess": "تمرین حذف شد"
+        },
+        "submit": {
+          "title": "ارسال تمرین",
+          "description": "پاسخ خود را بنویسید و برای بررسی ارسال کنید.",
+          "descriptionNamed": "پاسخ خود را برای «{{title}}» ارسال کنید.",
+          "placeholder": "پاسخ خود را بنویسید…",
+          "answer": "پاسخ شما",
+          "attachments": "پیوست‌ها",
+          "submit": "ارسال",
+          "success": "تمرین ارسال شد",
+          "failed": "ارسال نشد. دوباره تلاش کنید."
+        },
+        "emptyHintMember": "هنوز اتاق تمرینی برای این جلسه موجود نیست. بعداً سر بزنید."
+      },
+      "practiceScores": {
+        "eyebrow": "نمرات تمرین",
+        "title": "نمره‌دهی تمرین",
+        "subtitle": "پاسخ‌های تمرین دانش‌آموزان را بررسی و برای این جلسه نمره ثبت کنید.",
+        "noneSelected": "بدون تمرین",
+        "pick": "انتخاب تمرین",
+        "emptyTitle": "تمرینی برای نمره‌دهی نیست",
+        "emptyHint": "یک اتاق تمرین بسازید — پاسخ‌ها پس از ارسال دانش‌آموزان اینجا نمایش داده می‌شوند.",
+        "noResults": "هنوز پاسخی نیست",
+        "noResultsHint": "پاسخ‌های دانش‌آموزان پس از پایان اینجا نمایش داده می‌شود.",
+        "stats": {
+          "total": "پاسخ‌ها",
+          "pending": "در انتظار",
+          "graded": "نمره‌دهی‌شده",
+          "maxScore": "حداکثر نمره"
+        },
+        "filter": {
+          "all": "همه",
+          "pending": "در انتظار",
+          "graded": "نمره‌دهی‌شده"
+        },
+        "statuses": {
+          "graded": "نمره‌دهی‌شده",
+          "pending": "در انتظار"
+        },
+        "row": {
+          "score": "نمره",
+          "submitted": "ارسال‌شده",
+          "notSubmitted": "ارسال‌نشده",
+          "grade": "نمره‌دهی",
+          "regrade": "نمره مجدد"
+        },
+        "dialog": {
+          "title": "نمره‌دهی پاسخ",
+          "description": "پاسخ را بررسی کنید، نمره بدهید و در صورت تمایل نظر بگذارید.",
+          "answer": "پاسخ",
+          "noAnswer": "پاسخی ثبت نشده است.",
+          "score": "نمره",
+          "overMax": "نمره نمی‌تواند از حداکثر ({{max}}) بیشتر باشد.",
+          "comment": "نظر معلم",
+          "commentPlaceholder": "بازخورد اختیاری برای دانش‌آموز…",
+          "save": "ثبت نمره",
+          "saveSuccess": "نمره ثبت شد",
+          "saveFailed": "ثبت نمره ناموفق بود"
+        }
+      },
+      "practiceWorkspace": {
+        "eyebrow": "",
+        "title": "مدیریت تمرین‌ها",
+        "subtitle": "اتاق‌های تمرین و نمره‌دهی",
+        "tabs": {
+          "practices": "تمرین‌ها",
+          "practiceScores": "نمرات تمرین"
+        }
+      },
+      "offlines": {
+        "eyebrow": "آفلاین",
+        "title": "اتاق‌های آفلاین",
+        "newOffline": "اتاق آفلاین جدید",
+        "cardEyebrow": "ضبط‌شده",
+        "views": "بازدید",
+        "published": "انتشار",
+        "notPublished": "پیش‌نویس",
+        "attachments": "پیوست‌ها",
+        "open": "باز کردن",
+        "emptyTitle": "هنوز اتاق آفلاینی نیست",
+        "emptyHint": "برای اشتراک‌گذاری ضبط‌ها و فایل‌های این جلسه یک اتاق آفلاین بسازید.",
+        "emptyHintMember": "هنوز محتوای آفلاینی برای این جلسه به اشتراک گذاشته نشده است.",
+        "actions": { "edit": "ویرایش", "delete": "حذف" },
+        "form": {
+          "createTitle": "اتاق آفلاین جدید",
+          "editTitle": "ویرایش اتاق آفلاین",
+          "createDescription": "ضبط‌ها و فایل‌ها را با این جلسه به اشتراک بگذارید.",
+          "editDescription": "این اتاق آفلاین را به‌روزرسانی کنید.",
+          "title": "عنوان",
+          "titlePlaceholder": "مثلاً ضبط جلسه ۳",
+          "description": "توضیحات",
+          "descriptionPlaceholder": "خلاصه (اختیاری)",
+          "publishedAt": "زمان انتشار",
+          "attachments": "پیوست‌ها",
+          "addAttachment": "افزودن فایل",
+          "uploading": "در حال بارگذاری…",
+          "noAttachments": "هنوز فایلی پیوست نشده است",
+          "createSuccess": "اتاق آفلاین ساخته شد",
+          "updateSuccess": "اتاق آفلاین به‌روزرسانی شد",
+          "deleteSuccess": "اتاق آفلاین حذف شد",
+          "uploadError": "بارگذاری ناموفق بود",
+          "removeError": "حذف فایل ممکن نشد",
+          "saveError": "ذخیره اتاق آفلاین ممکن نشد"
+        }
+      },
+      "offlineWorkspace": {
+        "eyebrow": "آفلاین",
+        "title": "اتاق‌های آفلاین",
+        "subtitle": "ضبط‌ها و فایل‌هایی که دانشجویان هر زمان می‌توانند مرور کنند.",
+        "tabs": { "offlines": "اتاق‌های آفلاین" }
+      },
+      "liveWorkspace": {
+        "eyebrow": "",
+        "title": "کلاس زنده",
+        "subtitle": "اتاق‌های زنده و حضور و غیاب این جلسه",
+        "tabs": {
+          "rooms": "اتاق‌ها",
+          "presence": "حضور و غیاب"
+        }
+      },
+      "liveRooms": {
+        "eyebrow": "اتاق زنده",
+        "title": "اتاق‌های زنده جلسه",
+        "newRoom": "اتاق جدید",
+        "startedAt": "شروع",
+        "endedAt": "پایان",
+        "details": "شرکت‌کنندگان و ضبط‌ها",
+        "recordingsLabel": "ضبط‌ها",
+        "participantsActive": "{{active}}/{{total}} در اتاق",
+        "participantsTotal": "{{total}} پیوسته",
+        "emptyTitle": "هنوز اتاق زنده‌ای نیست",
+        "emptyHint": "اولین اتاق زنده این جلسه را بسازید.",
+        "emptyHintMember": "هنوز اتاق زنده‌ای ساخته نشده است.",
+        "status": {
+          "created": "زمان‌بندی‌شده",
+          "active": "زنده",
+          "finished": "پایان‌یافته"
+        },
+        "actions": {
+          "start": "شروع",
+          "join": "پیوستن",
+          "end": "پایان",
+          "endSuccess": "اتاق زنده پایان یافت"
+        },
+        "form": {
+          "createTitle": "اتاق زنده جدید",
+          "createDescription": "یک اتاق زنده برای این جلسه بسازید.",
+          "maxParticipants": "حداکثر شرکت‌کننده",
+          "allowMic": "اجازه میکروفون به‌صورت پیش‌فرض",
+          "allowCamera": "اجازه دوربین به‌صورت پیش‌فرض",
+          "allowScreen": "اجازه اشتراک صفحه به‌صورت پیش‌فرض",
+          "autoRecord": "ضبط خودکار",
+          "createSuccess": "اتاق زنده ساخته شد",
+          "name": "نام اتاق",
+          "namePlaceholder": "نام اختیاری",
+          "mode": "زمان",
+          "scheduleLater": "زمان‌بندی برای بعد",
+          "startNow": "شروع فوری",
+          "scheduledTime": "زمان شروع زمان‌بندی‌شده",
+          "scheduledTimeHint": "دانشجویان تا زمان شروع جلسه، شمارش معکوس می‌بینند.",
+          "scheduledTimeRequired": "یک تاریخ و زمان در آینده انتخاب کنید.",
+          "createAndStart": "ایجاد و شروع",
+          "createError": "ایجاد اتاق زنده ناموفق بود. دوباره تلاش کنید."
+        },
+        "participants": {
+          "empty": "هنوز شرکت‌کننده‌ای نیست",
+          "inRoom": "در اتاق",
+          "left": "خارج شد"
+        },
+        "recordings": {
+          "title": "ضبط‌ها",
+          "start": "شروع ضبط",
+          "recording": "در حال ضبط…",
+          "startSuccess": "ضبط آغاز شد",
+          "deleteSuccess": "ضبط حذف شد",
+          "empty": "هنوز ضبطی نیست",
+          "status": {
+            "started": "در حال ضبط",
+            "completed": "کامل",
+            "failed": "ناموفق"
+          }
+        }
+      },
+      "attendance": {
+        "eyebrow": "حضور و غیاب",
+        "title": "حضور و غیاب",
+        "auto": "خودکار",
+        "manual": "دستی",
+        "emptyTitle": "هنوز رکوردی نیست",
+        "emptyHint": "از یک اتاق زنده به‌صورت خودکار حضور و غیاب بزنید.",
+        "emptyHintMember": "هنوز حضور و غیابی ثبت نشده است.",
+        "status": {
+          "present": "حاضر",
+          "absent": "غایب",
+          "late": "با تاخیر",
+          "excused": "موجه"
+        },
+        "autoMark": {
+          "eyebrow": "ثبت خودکار",
+          "hint": "بر اساس حضور در اتاق زنده، حضور و غیاب را خودکار ثبت کنید.",
+          "room": "اتاق زنده",
+          "roomPlaceholder": "یک اتاق انتخاب کنید",
+          "minMinutes": "حداقل دقیقه",
+          "run": "ثبت خودکار",
+          "success": "{{marked}} ثبت شد، {{skipped}} نادیده گرفته شد"
+        },
+        "form": {
+          "editTitle": "ویرایش حضور و غیاب",
+          "status": "وضعیت",
+          "remarks": "توضیحات",
+          "remarksPlaceholder": "توضیح اختیاری",
+          "updateSuccess": "به‌روزرسانی شد",
+          "deleteSuccess": "حذف شد"
+        },
+        "roster": {
+          "save": "ذخیره حضور و غیاب",
+          "saving": "در حال ذخیره…",
+          "markAllPresent": "همه حاضر",
+          "markAllAbsent": "همه غایب",
+          "unmarked": "ثبت‌نشده",
+          "unsaved": "{{count}} تغییر ذخیره‌نشده",
+          "saveSuccess": "حضور و غیاب ذخیره شد",
+          "saveError": "ذخیره حضور و غیاب ناموفق بود. دوباره تلاش کنید.",
+          "emptyMembers": "هنوز دانش‌آموزی در این کلاس ثبت‌نام نشده است.",
+          "title": "فهرست کلاس",
+          "hint": "برای هر دانش‌آموز وضعیت را انتخاب و سپس ذخیره کنید."
+        }
+      }
+    },
+    "offline": {
+      "title": "اتاق آفلاین",
+      "back": "بازگشت به جلسه",
+      "views": "بازدید",
+      "published": "انتشار",
+      "created": "ایجاد",
+      "attachments": "پیوست‌ها",
+      "download": "دانلود",
+      "noAttachments": "فایلی به این اتاق پیوست نشده است.",
+      "notFound": "اتاق آفلاین یافت نشد.",
+      "loading": "در حال بارگذاری…"
     },
     "roles": {
       "title": "نقش‌ها",
@@ -642,6 +1919,51 @@
     "recordingNotice": "این جلسه ضبط می‌شود. با ورود، با شرایط ضبط و حفظ حریم خصوصی موافقت می‌کنید.",
     "back": "بازگشت",
     "secureEntry": "ورود امن",
-    "avSettingsNote": "میکروفن و دوربین داخل کلاس تنظیم می‌شوند"
+    "avSettingsNote": "میکروفن و دوربین را پیش از ورود تنظیم کنید",
+    "you": "شما",
+    "joinNow": "ورود به کلاس",
+    "cameraOff": "دوربین خاموش است",
+    "cameraBlocked": "دسترسی به دوربین مسدود شده",
+    "checkDevices": "پیش از ورود، دوربین و میکروفن خود را بررسی کنید",
+    "connecting": "در حال اتصال",
+    "reconnecting": "در حال اتصال مجدد",
+    "peopleCount": "{{count}} نفر",
+    "waitingForHost": "در انتظار شروع جلسه توسط میزبان",
+    "waitingHint": "به محض اینکه استاد کلاس را شروع کند می‌توانید بپیوندید. این صفحه به‌صورت خودکار به‌روزرسانی می‌شود.",
+    "startSession": "شروع جلسه",
+    "startError": "شروع جلسه ممکن نشد. دوباره تلاش کنید.",
+    "scheduledFor": "زمان‌بندی‌شده برای",
+    "startsIn": "شروع تا",
+    "errors": {
+      "screenShare": "اشتراک صفحه شروع نشد. دسترسی مرورگر را بررسی کرده و دوباره تلاش کنید.",
+      "camera": "تغییر وضعیت دوربین ممکن نشد.",
+      "microphone": "تغییر وضعیت میکروفون ممکن نشد."
+    },
+    "controls": {
+      "micOn": "روشن کردن میکروفن",
+      "micOff": "بی‌صدا کردن میکروفن",
+      "cameraOn": "روشن کردن دوربین",
+      "cameraOff": "خاموش کردن دوربین",
+      "shareScreen": "اشتراک صفحه",
+      "stopShare": "توقف اشتراک",
+      "chat": "گفتگو",
+      "people": "افراد"
+    },
+    "chat": {
+      "empty": "هنوز پیامی نیست",
+      "placeholder": "پیام بنویسید…"
+    },
+    "device": {
+      "camera": "دوربین",
+      "microphone": "میکروفن",
+      "unknown": "دستگاه ناشناس"
+    }
+  },
+  "media": {
+    "uploader": {
+      "add": "افزودن فایل",
+      "empty": "برای پیوست فایل کلیک کنید",
+      "uploadError": "بارگذاری ناموفق بود"
+    }
   }
 }

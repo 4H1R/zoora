@@ -4,12 +4,16 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/platform/httpx"
 	"github.com/4H1R/zoora/internal/platform/listparams"
 )
 
+// roomsListConfig is the handler-owned white-list for GET /offlines. Only
+// columns in these slices may be searched/ordered by the client; anything
+// else is silently ignored in favour of the defaults.
 var roomsListConfig = domain.ListConfig{
 	AllowedSearchFields: []string{"title", "description"},
 	AllowedOrderFields:  []string{"created_at", "updated_at", "published_at", "title", "view_count"},
@@ -30,22 +34,23 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 
 	authed := rg.Group("", authMiddleware)
 	{
-		authed.GET("/offlines", h.ListRooms)
+		authed.GET("/offlines", perm(domain.PermOfflinesView), h.ListRooms)
 		authed.POST("/offlines", perm(domain.PermOfflinesCreate), h.CreateRoom)
-		authed.GET("/offlines/:id", idParam, h.GetRoom)
+		authed.GET("/offlines/:id", perm(domain.PermOfflinesView), idParam, h.GetRoom)
 		authed.PUT("/offlines/:id", perm(domain.PermOfflinesUpdate), idParam, h.UpdateRoom)
 		authed.DELETE("/offlines/:id", perm(domain.PermOfflinesDelete), idParam, h.DeleteRoom)
 	}
 }
 
 // ListRooms returns offline rooms visible to the caller.
-// @Summary List offline rooms
-// @Description Returns offline rooms filtered by caller role. Filter by class_id or class_session_id. Search matches: title, description. Orderable: created_at, updated_at, published_at, title, view_count.
+// @Summary List offline rooms (scoped by RBAC)
+// @Description Returns offline rooms filtered by caller role: super-admins see all, org-staff see their organization, creators see their own rooms, members see rooms in classes they are enrolled in. Filter by class_id or class_session_id. Search matches substrings of: title, description. Orderable fields: created_at, updated_at, published_at, title, view_count. include_deleted requires offlines:update_any.
 // @Tags Offlines
 // @Produce json
 // @Security BearerAuth
 // @Param class_id query string false "Filter by class UUID"
 // @Param class_session_id query string false "Filter by class session UUID"
+// @Param include_deleted query bool false "Include soft-deleted rooms (privileged callers only)"
 // @Param search query string false "Substring match on title/description"
 // @Param order_by query string false "One of: created_at, updated_at, published_at, title, view_count"
 // @Param order_dir query string false "asc or desc"
@@ -59,6 +64,13 @@ func (h *Handler) ListRooms(c *gin.Context) {
 	var q domain.ListOfflineRoomsQuery
 	if err := c.ShouldBindQuery(&q); err != nil {
 		_ = c.Error(domain.NewValidationError(map[string]string{"query": err.Error()}))
+		return
+	}
+	if err := httpx.BindUUIDQueries(c, map[string]**uuid.UUID{
+		"class_id":         &q.ClassID,
+		"class_session_id": &q.ClassSessionID,
+	}); err != nil {
+		_ = c.Error(err)
 		return
 	}
 	q.ListParams = listparams.Bind(c, roomsListConfig)

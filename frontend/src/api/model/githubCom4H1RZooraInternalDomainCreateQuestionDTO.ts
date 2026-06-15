@@ -6,9 +6,11 @@
  * OpenAPI spec version: 1.0
  */
 import type { GithubCom4H1RZooraInternalDomainCreateQuestionDTOType } from './githubCom4H1RZooraInternalDomainCreateQuestionDTOType';
+import type { GithubCom4H1RZooraInternalDomainQuestionMetadata } from './githubCom4H1RZooraInternalDomainQuestionMetadata';
 import type { GithubCom4H1RZooraInternalDomainQuestionOption } from './githubCom4H1RZooraInternalDomainQuestionOption';
 
 export interface GithubCom4H1RZooraInternalDomainCreateQuestionDTO {
+  metadata?: GithubCom4H1RZooraInternalDomainQuestionMetadata[];
   options?: GithubCom4H1RZooraInternalDomainQuestionOption[];
   /** @minLength 1 */
   text: string;

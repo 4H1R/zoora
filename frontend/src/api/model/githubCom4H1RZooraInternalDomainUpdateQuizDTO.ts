@@ -9,6 +9,8 @@
 export interface GithubCom4H1RZooraInternalDomainUpdateQuizDTO {
   description?: string;
   duration_minutes?: number;
+  no_back_navigation?: boolean;
+  shuffle_questions?: boolean;
   /** @minLength 2 */
   title?: string;
 }

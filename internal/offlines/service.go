@@ -9,6 +9,14 @@ import (
 	"github.com/4H1R/zoora/internal/domain"
 )
 
+// service implements domain.OfflineService. RBAC hierarchy:
+//
+//	super-admin (caller.IsAdmin): full access
+//	offlines:update_any permission: full access within org
+//	creator     (room.CreatorID == caller.UserID): manage own room
+//	member      (enrolled via class_members of room.ClassID): view only
+//
+// Authorization always happens in the service layer so handlers stay thin.
 type service struct {
 	rooms    domain.OfflineRoomRepository
 	views    domain.OfflineRoomViewRepository
@@ -40,7 +48,17 @@ func canManageRoom(caller domain.Caller, room *domain.OfflineRoom) bool {
 	if caller.IsAdmin {
 		return true
 	}
-	if caller.HasPermission("offlines:update_any") {
+	if caller.HasPermission(domain.PermOfflinesUpdateAny) {
+		return true
+	}
+	return caller.UserID == room.CreatorID
+}
+
+func canDeleteRoom(caller domain.Caller, room *domain.OfflineRoom) bool {
+	if caller.IsAdmin {
+		return true
+	}
+	if caller.HasPermission(domain.PermOfflinesDeleteAny) {
 		return true
 	}
 	return caller.UserID == room.CreatorID
@@ -48,6 +66,9 @@ func canManageRoom(caller domain.Caller, room *domain.OfflineRoom) bool {
 
 func (s *service) canViewRoom(ctx context.Context, caller domain.Caller, room *domain.OfflineRoom) (bool, error) {
 	if canManageRoom(caller, room) {
+		return true, nil
+	}
+	if caller.HasPermission(domain.PermOfflinesViewAny) {
 		return true, nil
 	}
 	return s.members.Exists(ctx, room.ClassID, caller.UserID)
@@ -66,7 +87,7 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreateOfflineRoomDT
 	if err != nil {
 		return nil, err
 	}
-	if !caller.IsAdmin && !caller.HasPermission("offlines:create_any") && caller.UserID != class.UserID {
+	if !caller.IsAdmin && !caller.HasPermission(domain.PermOfflinesCreateAny) && caller.UserID != class.UserID {
 		return nil, domain.ErrForbidden
 	}
 	room := &domain.OfflineRoom{
@@ -149,7 +170,7 @@ func (s *service) DeleteRoom(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if !canManageRoom(caller, room) {
+	if !canDeleteRoom(caller, room) {
 		return domain.ErrForbidden
 	}
 	if err := s.rooms.Delete(ctx, id); err != nil {
@@ -174,9 +195,16 @@ func (s *service) ListRooms(ctx context.Context, q domain.ListOfflineRoomsQuery)
 	return s.rooms.List(ctx, scope, q)
 }
 
+// resolveListScope maps a Caller into a role-resolved OfflineRoomListScope.
+// super-admin: All across orgs. ViewAny / UpdateAny in caller's org: All but
+// constrained to caller.OrgID. Anyone else: their own + classes they're a
+// member of.
 func (s *service) resolveListScope(caller domain.Caller) domain.OfflineRoomListScope {
-	if caller.IsAdmin || caller.HasPermission("offlines:view_any") {
+	if caller.IsAdmin {
 		return domain.OfflineRoomListScope{All: true}
+	}
+	if caller.HasPermission(domain.PermOfflinesViewAny) || caller.HasPermission(domain.PermOfflinesUpdateAny) {
+		return domain.OfflineRoomListScope{All: true, OrganizationID: caller.OrgID}
 	}
 	userID := caller.UserID
 	return domain.OfflineRoomListScope{
@@ -186,5 +214,5 @@ func (s *service) resolveListScope(caller domain.Caller) domain.OfflineRoomListS
 }
 
 func canListDeleted(caller domain.Caller) bool {
-	return caller.IsAdmin || caller.HasPermission("offlines:update_any")
+	return caller.IsAdmin || caller.HasPermission(domain.PermOfflinesUpdateAny)
 }

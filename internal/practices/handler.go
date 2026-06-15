@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/platform/httpx"
@@ -37,15 +38,15 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 
 	authed := rg.Group("", authMiddleware)
 	{
-		authed.GET("/practices", h.ListRooms)
+		authed.GET("/practices", perm(domain.PermPracticesView), h.ListRooms)
 		authed.POST("/practices", perm(domain.PermPracticesCreate), h.CreateRoom)
-		authed.GET("/practices/:id", idParam, h.GetRoom)
+		authed.GET("/practices/:id", perm(domain.PermPracticesView), idParam, h.GetRoom)
 		authed.PUT("/practices/:id", perm(domain.PermPracticesUpdate), idParam, h.UpdateRoom)
 		authed.DELETE("/practices/:id", perm(domain.PermPracticesDelete), idParam, h.DeleteRoom)
 
 		authed.POST("/practices/:id/submissions", perm(domain.PermPracticesSubmit), idParam, h.Submit)
-		authed.GET("/practices/:id/submissions", idParam, h.ListSubmissions)
-		authed.GET("/practices/submissions/:submissionId", submissionIDParam, h.GetSubmission)
+		authed.GET("/practices/:id/submissions", perm(domain.PermPracticesView), idParam, h.ListSubmissions)
+		authed.GET("/practices/submissions/:submissionId", perm(domain.PermPracticesView), submissionIDParam, h.GetSubmission)
 		authed.PUT("/practices/submissions/:submissionId/grade", perm(domain.PermPracticesGrade), submissionIDParam, h.Grade)
 	}
 }
@@ -71,6 +72,13 @@ func (h *Handler) ListRooms(c *gin.Context) {
 	var q domain.ListPracticeRoomsQuery
 	if err := c.ShouldBindQuery(&q); err != nil {
 		_ = c.Error(domain.NewValidationError(map[string]string{"query": err.Error()}))
+		return
+	}
+	if err := httpx.BindUUIDQueries(c, map[string]**uuid.UUID{
+		"class_id":         &q.ClassID,
+		"class_session_id": &q.ClassSessionID,
+	}); err != nil {
+		_ = c.Error(err)
 		return
 	}
 	q.ListParams = listparams.Bind(c, roomsListConfig)

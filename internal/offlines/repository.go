@@ -37,7 +37,11 @@ func (r *roomRepository) Create(ctx context.Context, room *domain.OfflineRoom) e
 
 func (r *roomRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.OfflineRoom, error) {
 	var room domain.OfflineRoom
-	if err := r.baseQuery(ctx).First(&room, "id = ?", id).Error; err != nil {
+	if err := r.baseQuery(ctx).
+		Preload("Creator").
+		Preload("Class").
+		Preload("ClassSession").
+		First(&room, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}
@@ -71,10 +75,19 @@ func (r *roomRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
+// List applies a role-resolved scope produced by the service. OwnerID and
+// MemberUserID are OR'd when both are set, so a teacher who is also enrolled
+// in another class sees both sets in one query.
 func (r *roomRepository) List(ctx context.Context, scope domain.OfflineRoomListScope, q domain.ListOfflineRoomsQuery) ([]domain.OfflineRoom, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.OfflineRoom{})
-	if scope.IncludeDeleted {
+	base := database.DB(ctx, r.db).Model(&domain.OfflineRoom{}).
+		Preload("Creator").
+		Preload("Class").
+		Preload("ClassSession")
+	if q.IncludeDeleted {
 		base = base.Unscoped()
+	}
+	if scope.OrganizationID != nil {
+		base = base.Where("organization_id = ?", *scope.OrganizationID)
 	}
 	if !scope.All {
 		switch {
@@ -137,7 +150,10 @@ func (r *roomRepository) FindByIDIncludingDeleted(ctx context.Context, id uuid.U
 }
 
 func (r *roomRepository) AdminList(ctx context.Context, q domain.AdminListOfflineRoomsQuery) ([]domain.OfflineRoom, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.OfflineRoom{})
+	base := database.DB(ctx, r.db).Model(&domain.OfflineRoom{}).
+		Preload("Creator").
+		Preload("Class").
+		Preload("ClassSession")
 	if q.IncludeDeleted {
 		base = base.Unscoped()
 	}

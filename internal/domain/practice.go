@@ -8,6 +8,13 @@ import (
 	"gorm.io/gorm"
 )
 
+// Polymorphic media association values for practice attachments.
+const (
+	PracticeMediaModelType           = "practice"
+	PracticeSubmissionMediaModelType = "practice_submission"
+	PracticeAttachmentsCollection    = "attachments"
+)
+
 type PracticeRoom struct {
 	ID             uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
 	OrganizationID uuid.UUID      `gorm:"type:uuid;not null;index" json:"organization_id"`
@@ -19,6 +26,7 @@ type PracticeRoom struct {
 	User           *User          `gorm:"foreignKey:UserID" json:"user,omitempty"`
 	Title          string         `gorm:"not null" json:"title"`
 	Content        string         `gorm:"type:text;not null;default:''" json:"content"`
+	Attachments    []uuid.UUID    `gorm:"type:jsonb;serializer:json" json:"attachments"`
 	MaxScore       float64        `gorm:"not null;default:0" json:"max_score"`
 	StartTime      time.Time      `gorm:"not null" json:"start_time"`
 	EndTime        time.Time      `gorm:"not null" json:"end_time"`
@@ -34,6 +42,7 @@ type PracticeSubmission struct {
 	UserID         uuid.UUID      `gorm:"type:uuid;not null;index" json:"user_id"`
 	User           *User          `gorm:"foreignKey:UserID" json:"user,omitempty"`
 	Content        string         `gorm:"type:text;not null;default:''" json:"content"`
+	Attachments    []uuid.UUID    `gorm:"type:jsonb;serializer:json" json:"attachments"`
 	Score          *float64       `json:"score"`
 	TeacherComment string         `gorm:"type:text;not null;default:''" json:"teacher_comment"`
 	SubmittedAt    time.Time      `gorm:"not null" json:"submitted_at"`
@@ -45,24 +54,27 @@ type PracticeSubmission struct {
 // --- DTOs ---
 
 type CreatePracticeRoomDTO struct {
-	ClassSessionID uuid.UUID `json:"class_session_id" binding:"required"`
-	Title          string    `json:"title" binding:"required,min=2"`
-	Content        string    `json:"content"`
-	MaxScore       float64   `json:"max_score" binding:"gte=0"`
-	StartTime      time.Time `json:"start_time" binding:"required"`
-	EndTime        time.Time `json:"end_time" binding:"required,gtfield=StartTime"`
+	ClassSessionID uuid.UUID   `json:"class_session_id" binding:"required"`
+	Title          string      `json:"title" binding:"required,min=2"`
+	Content        string      `json:"content"`
+	Attachments    []uuid.UUID `json:"attachments"`
+	MaxScore       float64     `json:"max_score" binding:"gte=0"`
+	StartTime      time.Time   `json:"start_time" binding:"required"`
+	EndTime        time.Time   `json:"end_time" binding:"required,gtfield=StartTime"`
 }
 
 type UpdatePracticeRoomDTO struct {
-	Title     *string    `json:"title" binding:"omitempty,min=2"`
-	Content   *string    `json:"content"`
-	MaxScore  *float64   `json:"max_score" binding:"omitempty,gte=0"`
-	StartTime *time.Time `json:"start_time"`
-	EndTime   *time.Time `json:"end_time"`
+	Title       *string      `json:"title" binding:"omitempty,min=2"`
+	Content     *string      `json:"content"`
+	Attachments *[]uuid.UUID `json:"attachments"`
+	MaxScore    *float64     `json:"max_score" binding:"omitempty,gte=0"`
+	StartTime   *time.Time   `json:"start_time"`
+	EndTime     *time.Time   `json:"end_time"`
 }
 
 type CreatePracticeSubmissionDTO struct {
-	Content string `json:"content"`
+	Content     string      `json:"content"`
+	Attachments []uuid.UUID `json:"attachments"`
 }
 
 type GradePracticeSubmissionDTO struct {
@@ -72,14 +84,15 @@ type GradePracticeSubmissionDTO struct {
 
 type PracticeRoomListScope struct {
 	All            bool
+	OrganizationID *uuid.UUID
 	OwnerID        *uuid.UUID
 	MemberUserID   *uuid.UUID
 	IncludeDeleted bool
 }
 
 type ListPracticeRoomsQuery struct {
-	ClassID        *uuid.UUID `form:"class_id"`
-	ClassSessionID *uuid.UUID `form:"class_session_id"`
+	ClassID        *uuid.UUID `form:"-"`
+	ClassSessionID *uuid.UUID `form:"-"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }
@@ -89,9 +102,9 @@ type ListPracticeSubmissionsQuery struct {
 }
 
 type AdminListPracticeRoomsQuery struct {
-	ClassID        *uuid.UUID `form:"class_id"`
-	ClassSessionID *uuid.UUID `form:"class_session_id"`
-	UserID         *uuid.UUID `form:"user_id"`
+	ClassID        *uuid.UUID `form:"-"`
+	ClassSessionID *uuid.UUID `form:"-"`
+	UserID         *uuid.UUID `form:"-"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }

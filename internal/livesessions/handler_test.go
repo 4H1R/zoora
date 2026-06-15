@@ -59,8 +59,8 @@ func (m *mockLiveSessionSvc) UpdateRoomConfig(ctx context.Context, id uuid.UUID,
 func (m *mockLiveSessionSvc) Heartbeat(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
-func (m *mockLiveSessionSvc) List(ctx context.Context, p domain.ListParams) ([]domain.LiveRoom, int64, error) {
-	a := m.Called(ctx, p)
+func (m *mockLiveSessionSvc) List(ctx context.Context, q domain.ListLiveRoomsQuery) ([]domain.LiveRoom, int64, error) {
+	a := m.Called(ctx, q)
 	rooms, _ := a.Get(0).([]domain.LiveRoom)
 	return rooms, a.Get(1).(int64), a.Error(2)
 }
@@ -74,13 +74,13 @@ func (m *mockLiveSessionSvc) StopRecording(ctx context.Context, id uuid.UUID) (*
 	r, _ := a.Get(0).(*domain.LiveRecording)
 	return r, a.Error(1)
 }
-func (m *mockLiveSessionSvc) ListRecordings(ctx context.Context, id uuid.UUID) ([]domain.LiveRecording, error) {
-	a := m.Called(ctx, id)
+func (m *mockLiveSessionSvc) ListRecordings(ctx context.Context, id uuid.UUID, q domain.ListLiveRecordingsQuery) ([]domain.LiveRecording, int64, error) {
+	a := m.Called(ctx, id, q)
 	recs, _ := a.Get(0).([]domain.LiveRecording)
-	return recs, a.Error(1)
+	return recs, a.Get(1).(int64), a.Error(2)
 }
-func (m *mockLiveSessionSvc) ListParticipants(ctx context.Context, id uuid.UUID, p domain.ListParams) ([]domain.LiveParticipant, int64, error) {
-	a := m.Called(ctx, id, p)
+func (m *mockLiveSessionSvc) ListParticipants(ctx context.Context, id uuid.UUID, q domain.ListLiveParticipantsQuery) ([]domain.LiveParticipant, int64, error) {
+	a := m.Called(ctx, id, q)
 	ps, _ := a.Get(0).([]domain.LiveParticipant)
 	return ps, a.Get(1).(int64), a.Error(2)
 }
@@ -164,7 +164,7 @@ func TestHandler_CreateRoom_MissingField_400(t *testing.T) {
 
 func TestHandler_List_Success(t *testing.T) {
 	r, svc := newLiveRouter(t)
-	svc.On("List", mock.Anything, mock.AnythingOfType("domain.ListParams")).
+	svc.On("List", mock.Anything, mock.AnythingOfType("domain.ListLiveRoomsQuery")).
 		Return([]domain.LiveRoom{{ID: uuid.New()}}, int64(1), nil)
 
 	w := doReq(t, r, "GET", "/api/v1/live-rooms", nil)

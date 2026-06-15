@@ -2,6 +2,7 @@ package practices
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -42,7 +43,17 @@ func canManageRoom(caller domain.Caller, room *domain.PracticeRoom) bool {
 	if caller.IsAdmin {
 		return true
 	}
-	if caller.HasPermission("practices:update_any") {
+	if caller.HasPermission(domain.PermPracticesUpdateAny) {
+		return true
+	}
+	return caller.UserID == room.UserID
+}
+
+func canDeleteRoom(caller domain.Caller, room *domain.PracticeRoom) bool {
+	if caller.IsAdmin {
+		return true
+	}
+	if caller.HasPermission(domain.PermPracticesDeleteAny) {
 		return true
 	}
 	return caller.UserID == room.UserID
@@ -50,6 +61,9 @@ func canManageRoom(caller domain.Caller, room *domain.PracticeRoom) bool {
 
 func (s *service) canViewRoom(ctx context.Context, caller domain.Caller, room *domain.PracticeRoom) (bool, error) {
 	if canManageRoom(caller, room) {
+		return true, nil
+	}
+	if caller.HasPermission(domain.PermPracticesViewAny) {
 		return true, nil
 	}
 	return s.members.Exists(ctx, room.ClassID, caller.UserID)
@@ -68,7 +82,7 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreatePracticeRoomD
 	if err != nil {
 		return nil, err
 	}
-	if !caller.IsAdmin && !caller.HasPermission("practices:create_any") && caller.UserID != class.UserID {
+	if !caller.IsAdmin && !caller.HasPermission(domain.PermPracticesCreateAny) && caller.UserID != class.UserID {
 		return nil, domain.ErrForbidden
 	}
 	room := &domain.PracticeRoom{
@@ -81,6 +95,7 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreatePracticeRoomD
 		MaxScore:       dto.MaxScore,
 		StartTime:      dto.StartTime,
 		EndTime:        dto.EndTime,
+		Attachments:    dto.Attachments,
 	}
 	if err := s.rooms.Create(ctx, room); err != nil {
 		return nil, err
@@ -139,6 +154,9 @@ func (s *service) UpdateRoom(ctx context.Context, id uuid.UUID, dto domain.Updat
 	if dto.EndTime != nil {
 		room.EndTime = *dto.EndTime
 	}
+	if dto.Attachments != nil {
+		room.Attachments = *dto.Attachments
+	}
 	if err := s.rooms.Update(ctx, room); err != nil {
 		return nil, err
 	}
@@ -154,7 +172,7 @@ func (s *service) DeleteRoom(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if !canManageRoom(caller, room) {
+	if !canDeleteRoom(caller, room) {
 		return domain.ErrForbidden
 	}
 	if err := s.rooms.Delete(ctx, id); err != nil {
@@ -180,8 +198,11 @@ func (s *service) ListRooms(ctx context.Context, q domain.ListPracticeRoomsQuery
 }
 
 func (s *service) resolveListScope(caller domain.Caller) domain.PracticeRoomListScope {
-	if caller.IsAdmin || caller.HasPermission("practices:view_any") {
+	if caller.IsAdmin {
 		return domain.PracticeRoomListScope{All: true}
+	}
+	if caller.HasPermission(domain.PermPracticesViewAny) || caller.HasPermission(domain.PermPracticesUpdateAny) {
+		return domain.PracticeRoomListScope{All: true, OrganizationID: caller.OrgID}
 	}
 	userID := caller.UserID
 	return domain.PracticeRoomListScope{
@@ -191,7 +212,7 @@ func (s *service) resolveListScope(caller domain.Caller) domain.PracticeRoomList
 }
 
 func canListDeleted(caller domain.Caller) bool {
-	return caller.IsAdmin || caller.HasPermission("practices:update_any")
+	return caller.IsAdmin || caller.HasPermission(domain.PermPracticesUpdateAny)
 }
 
 // --- Submissions ---
@@ -218,11 +239,17 @@ func (s *service) Submit(ctx context.Context, roomID uuid.UUID, dto domain.Creat
 			"time": "submissions only accepted between start_time and end_time",
 		})
 	}
+	if existing, err := s.subs.FindByRoomAndUser(ctx, roomID, caller.UserID); err == nil && existing != nil {
+		return nil, domain.ErrConflict
+	} else if err != nil && !errors.Is(err, domain.ErrNotFound) {
+		return nil, err
+	}
 	sub := &domain.PracticeSubmission{
 		PracticeRoomID: roomID,
 		UserID:         caller.UserID,
 		Content:        dto.Content,
 		SubmittedAt:    now,
+		Attachments:    dto.Attachments,
 	}
 	if err := s.subs.Create(ctx, sub); err != nil {
 		return nil, err

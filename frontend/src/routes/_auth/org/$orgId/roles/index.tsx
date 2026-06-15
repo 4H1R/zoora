@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { orgHead } from "@/lib/org-head"
+import { useOrgGuard } from "@/lib/access"
 import { KeyIcon, PlusIcon, ShieldIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -16,6 +17,7 @@ import {
   useGetRoles,
   useGetRolesStats,
 } from "@/api/roles/roles"
+import { useRolePermissions } from "@/components/org/roles/use-role-permissions"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { StatCards } from "@/components/data-table/stat-cards"
@@ -25,6 +27,7 @@ import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { adminSearchSchema, useAdminTable } from "@/lib/data-table"
+import { useRoleName } from "@/lib/permissions"
 
 import { useRoleColumns } from "./-columns"
 import { RoleFormDialog } from "./-role-form-dialog"
@@ -39,7 +42,10 @@ function RolesPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { orgId } = Route.useParams()
-  const {} = Route.useSearch()
+  const { search } = Route.useSearch()
+  const roleName = useRoleName()
+  const { canView, canCreate } = useRolePermissions()
+  const allowed = useOrgGuard("roles:view")
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingRole, setEditingRole] = useState<Role | null>(null)
@@ -59,9 +65,11 @@ function RolesPage() {
     setFormOpen(true)
   }
 
-  const { data, isLoading } = useGetRoles()
+  const { data, isLoading } = useGetRoles({ query: { enabled: canView } })
 
-  const { data: statsData, isLoading: statsLoading } = useGetRolesStats()
+  const { data: statsData, isLoading: statsLoading } = useGetRolesStats({
+    query: { enabled: canView },
+  })
 
   const deleteMutation = useDeleteRolesId({
     mutation: {
@@ -74,8 +82,17 @@ function RolesPage() {
     },
   })
 
-  const roles = (data?.status === 200 && data.data.data) || []
+  const allRoles = (data?.status === 200 && data.data.data) || []
   const stats = (statsData?.status === 200 && statsData.data.data) || undefined
+
+  const q = (search ?? "").trim().toLowerCase()
+  const roles = q
+    ? allRoles.filter((r) => {
+        const raw = (r.name ?? "").toLowerCase()
+        const label = (r.name ? roleName(r.name) : "").toLowerCase()
+        return raw.includes(q) || label.includes(q)
+      })
+    : allRoles
 
   const columns = useRoleColumns({ onEdit: handleEdit, onDelete: handleDelete })
 
@@ -101,15 +118,19 @@ function RolesPage() {
     },
   ]
 
+  if (!allowed) return null
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title={t("org.roles.title")}
         actions={
-          <Button size="sm" onClick={handleCreate}>
-            <PlusIcon data-icon="inline-start" />
-            {t("org.roles.newRole")}
-          </Button>
+          canCreate ? (
+            <Button size="sm" onClick={handleCreate}>
+              <PlusIcon data-icon="inline-start" />
+              {t("org.roles.newRole")}
+            </Button>
+          ) : null
         }
       />
       <StatCards stats={statCards} />

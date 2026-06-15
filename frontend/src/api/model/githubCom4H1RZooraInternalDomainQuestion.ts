@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { GithubCom4H1RZooraInternalDomainQuestionBank } from './githubCom4H1RZooraInternalDomainQuestionBank';
+import type { GithubCom4H1RZooraInternalDomainQuestionMetadata } from './githubCom4H1RZooraInternalDomainQuestionMetadata';
 import type { GithubCom4H1RZooraInternalDomainQuestionOption } from './githubCom4H1RZooraInternalDomainQuestionOption';
 import type { GithubCom4H1RZooraInternalDomainQuestionType } from './githubCom4H1RZooraInternalDomainQuestionType';
 
@@ -14,6 +15,11 @@ export interface GithubCom4H1RZooraInternalDomainQuestion {
   bank_id?: string;
   created_at?: string;
   id?: string;
+  /** IsMultiSelectFlag is populated only by the "take" endpoint after answer
+  keys are stripped, so the client can still render multi-select choice
+  questions without seeing per-option scores. */
+  is_multi_select?: boolean;
+  metadata?: GithubCom4H1RZooraInternalDomainQuestionMetadata[];
   options?: GithubCom4H1RZooraInternalDomainQuestionOption[];
   organization_id?: string;
   text?: string;

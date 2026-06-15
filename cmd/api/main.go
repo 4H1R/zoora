@@ -134,7 +134,7 @@ func main() {
 	userService := users.NewService(userRepo, roleRepo, log)
 	orgService := organizations.NewService(orgRepo, userRepo, log)
 	classService := classes.NewService(classRepo, classSessionRepo, classMemberRepo, log)
-	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, log)
+	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, log)
 	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, log)
 	transactor := database.NewTransactor(db)
 	roleService := roles.NewService(roleRepo, permRepo, transactor, redisClient, log)
@@ -244,9 +244,10 @@ func main() {
 	adminPracticeHandler := practices.NewAdminHandler(practiceService)
 	adminPollHandler := polls.NewAdminHandler(pollService)
 	adminRoleHandler := roles.NewAdminHandler(roleService)
+	adminAttendanceHandler := attendance.NewAdminHandler(attendanceService)
 
 	adminGroup := v1.Group("/admin", authMiddleware, auth.RequireAdmin())
-	admin.RegisterRoutes(adminGroup, adminUserHandler, adminOrgHandler, adminClassHandler, adminQuestionBankHandler, adminQuizHandler, adminLiveSessionHandler, adminOfflineHandler, adminPracticeHandler, adminPollHandler, adminRoleHandler)
+	admin.RegisterRoutes(adminGroup, adminUserHandler, adminOrgHandler, adminClassHandler, adminQuestionBankHandler, adminQuizHandler, adminLiveSessionHandler, adminOfflineHandler, adminPracticeHandler, adminPollHandler, adminRoleHandler, adminAttendanceHandler)
 
 	// router.GET("/ws/:room", websocket.HandleWebSocket(wsHub, jwtService, log))
 

@@ -11,15 +11,21 @@ import (
 	"github.com/4H1R/zoora/internal/domain"
 )
 
+// service implements domain.GradebookService. RBAC hierarchy mirrors classes:
+//
+//	super-admin (caller.IsAdmin): full access
+//	gradebook:*_any permission: full access within org
+//	teacher (class.UserID == caller.UserID): manage gradebook of own class
+//	student (enrolled via class_members): view-only
 type service struct {
-	columns    domain.GradebookColumnRepository
-	cells      domain.GradebookCellRepository
-	classes    domain.ClassRepository
-	members    domain.ClassMemberRepository
-	attendance domain.AttendanceRepository
+	columns      domain.GradebookColumnRepository
+	cells        domain.GradebookCellRepository
+	classes      domain.ClassRepository
+	members      domain.ClassMemberRepository
+	attendance   domain.AttendanceRepository
 	practiceSubs domain.PracticeSubmissionRepository
-	quizSubs   domain.QuizSubmissionRepository
-	logger     *slog.Logger
+	quizSubs     domain.QuizSubmissionRepository
+	logger       *slog.Logger
 }
 
 func NewService(
@@ -44,14 +50,42 @@ func NewService(
 	}
 }
 
-func (s *service) canManageClass(caller domain.Caller, class *domain.Class) bool {
+// canManageGradebook returns true if caller can mutate gradebook columns/cells
+// of the given class. Students never qualify here.
+func canManageGradebook(caller domain.Caller, class *domain.Class) bool {
 	if caller.IsAdmin {
 		return true
 	}
-	if caller.HasPermission("classes:update_any") {
+	if caller.HasPermission(domain.PermGradebookUpdateAny) {
 		return true
 	}
 	return caller.UserID == class.UserID
+}
+
+func canDeleteGradebook(caller domain.Caller, class *domain.Class) bool {
+	if caller.IsAdmin {
+		return true
+	}
+	if caller.HasPermission(domain.PermGradebookDeleteAny) {
+		return true
+	}
+	return caller.UserID == class.UserID
+}
+
+// canViewGradebook returns true if caller can read the gradebook. Managers and
+// org-wide viewers bypass; otherwise the caller must be enrolled.
+func (s *service) canViewGradebook(ctx context.Context, caller domain.Caller, class *domain.Class) (bool, error) {
+	if canManageGradebook(caller, class) {
+		return true, nil
+	}
+	if caller.HasPermission(domain.PermGradebookViewAny) {
+		return true, nil
+	}
+	ok, err := s.members.Exists(ctx, class.ID, caller.UserID)
+	if err != nil {
+		return false, err
+	}
+	return ok, nil
 }
 
 func (s *service) CreateColumn(ctx context.Context, classID uuid.UUID, dto domain.CreateGradebookColumnDTO) (*domain.GradebookColumn, error) {
@@ -63,7 +97,7 @@ func (s *service) CreateColumn(ctx context.Context, classID uuid.UUID, dto domai
 	if err != nil {
 		return nil, err
 	}
-	if !s.canManageClass(caller, class) {
+	if !canManageGradebook(caller, class) {
 		return nil, domain.ErrForbidden
 	}
 	if dto.Type.IsAuto() && dto.SourceID == nil {
@@ -79,6 +113,11 @@ func (s *service) CreateColumn(ctx context.Context, classID uuid.UUID, dto domai
 	if err := s.columns.Create(ctx, col); err != nil {
 		return nil, err
 	}
+	s.logger.Info("gradebook column created",
+		"column_id", col.ID.String(),
+		"class_id", classID.String(),
+		"created_by", caller.UserID.String(),
+	)
 	return col, nil
 }
 
@@ -95,7 +134,7 @@ func (s *service) UpdateColumn(ctx context.Context, columnID uuid.UUID, dto doma
 	if err != nil {
 		return nil, err
 	}
-	if !s.canManageClass(caller, class) {
+	if !canManageGradebook(caller, class) {
 		return nil, domain.ErrForbidden
 	}
 	if dto.Title != nil {
@@ -123,10 +162,18 @@ func (s *service) DeleteColumn(ctx context.Context, columnID uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if !s.canManageClass(caller, class) {
+	if !canDeleteGradebook(caller, class) {
 		return domain.ErrForbidden
 	}
-	return s.columns.Delete(ctx, columnID)
+	if err := s.columns.Delete(ctx, columnID); err != nil {
+		return err
+	}
+	s.logger.Info("gradebook column deleted",
+		"column_id", columnID.String(),
+		"class_id", class.ID.String(),
+		"deleted_by", caller.UserID.String(),
+	)
+	return nil
 }
 
 func (s *service) UpsertCell(ctx context.Context, classID, columnID uuid.UUID, dto domain.UpsertGradebookCellDTO) (*domain.GradebookCell, error) {
@@ -148,7 +195,7 @@ func (s *service) UpsertCell(ctx context.Context, classID, columnID uuid.UUID, d
 	if err != nil {
 		return nil, err
 	}
-	if !s.canManageClass(caller, class) {
+	if !canManageGradebook(caller, class) {
 		return nil, domain.ErrForbidden
 	}
 	cell := &domain.GradebookCell{
@@ -163,6 +210,25 @@ func (s *service) UpsertCell(ctx context.Context, classID, columnID uuid.UUID, d
 	return cell, nil
 }
 
+func (s *service) ListColumns(ctx context.Context, classID uuid.UUID, q domain.ListGradebookColumnsQuery) ([]domain.GradebookColumn, int64, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, 0, domain.ErrForbidden
+	}
+	class, err := s.classes.FindByID(ctx, classID)
+	if err != nil {
+		return nil, 0, err
+	}
+	visible, err := s.canViewGradebook(ctx, caller, class)
+	if err != nil {
+		return nil, 0, err
+	}
+	if !visible {
+		return nil, 0, domain.ErrForbidden
+	}
+	return s.columns.ListByClass(ctx, classID, q)
+}
+
 func (s *service) GetMatrix(ctx context.Context, classID uuid.UUID) (*domain.GradebookMatrix, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
@@ -172,18 +238,15 @@ func (s *service) GetMatrix(ctx context.Context, classID uuid.UUID) (*domain.Gra
 	if err != nil {
 		return nil, err
 	}
-	// Both managers and enrolled students can view the gradebook.
-	if !s.canManageClass(caller, class) {
-		enrolled, err := s.members.Exists(ctx, classID, caller.UserID)
-		if err != nil {
-			return nil, err
-		}
-		if !enrolled {
-			return nil, domain.ErrForbidden
-		}
+	visible, err := s.canViewGradebook(ctx, caller, class)
+	if err != nil {
+		return nil, err
+	}
+	if !visible {
+		return nil, domain.ErrForbidden
 	}
 
-	columns, err := s.columns.ListByClass(ctx, classID)
+	columns, err := s.columns.ListAllByClass(ctx, classID)
 	if err != nil {
 		return nil, err
 	}
@@ -194,11 +257,12 @@ func (s *service) GetMatrix(ctx context.Context, classID uuid.UUID) (*domain.Gra
 	}
 
 	studentIDs := make([]uuid.UUID, len(members))
+	studentByID := make(map[uuid.UUID]*domain.User, len(members))
 	for i, m := range members {
 		studentIDs[i] = m.UserID
+		studentByID[m.UserID] = m.User
 	}
 
-	// Collect manual column IDs for cell fetch.
 	var manualColIDs []uuid.UUID
 	for _, col := range columns {
 		if !col.Type.IsAuto() {
@@ -206,21 +270,18 @@ func (s *service) GetMatrix(ctx context.Context, classID uuid.UUID) (*domain.Gra
 		}
 	}
 
-	// Fetch manual cells.
 	cells, err := s.cells.ListByColumns(ctx, manualColIDs)
 	if err != nil {
 		return nil, err
 	}
 
-	// Index cells by (columnID, studentID).
 	cellIndex := make(map[string]string)
 	for _, c := range cells {
 		key := c.ColumnID.String() + ":" + c.StudentID.String()
 		cellIndex[key] = c.Value
 	}
 
-	// Fetch auto data.
-	autoData := make(map[string]map[uuid.UUID]string) // columnID -> studentID -> value
+	autoData := make(map[string]map[uuid.UUID]string)
 	for _, col := range columns {
 		if !col.Type.IsAuto() || col.SourceID == nil {
 			continue
@@ -237,11 +298,11 @@ func (s *service) GetMatrix(ctx context.Context, classID uuid.UUID) (*domain.Gra
 		autoData[col.ID.String()] = data
 	}
 
-	// Build matrix rows.
 	rows := make([]domain.GradebookMatrixRow, 0, len(studentIDs))
 	for _, sid := range studentIDs {
 		row := domain.GradebookMatrixRow{
 			StudentID: sid,
+			Student:   studentByID[sid],
 			Cells:     make(map[string]string, len(columns)),
 		}
 		for _, col := range columns {
@@ -281,8 +342,6 @@ func (s *service) fetchAutoData(ctx context.Context, col domain.GradebookColumn)
 		}
 
 	case domain.GradebookColumnAutoPractice:
-		// SourceID = PracticeRoomID. Fetch all submissions for that room.
-		// We use a large page to get all students.
 		subs, _, err := s.practiceSubs.ListByRoom(ctx, sourceID, domain.ListParams{Page: 1, PageSize: 1000})
 		if err != nil {
 			return nil, fmt.Errorf("fetching practice submissions for room %s: %w", sourceID, err)
@@ -296,11 +355,6 @@ func (s *service) fetchAutoData(ctx context.Context, col domain.GradebookColumn)
 		}
 
 	case domain.GradebookColumnAutoQuiz:
-		// SourceID = QuizRoomID. We need the QuizID from the room to list submissions.
-		// But QuizSubmission is linked to QuizID. We'll query by quiz via the room's quiz_id.
-		// For simplicity, list submissions by quiz filtering wouldn't work directly.
-		// Instead we use the QuizSubmissionRepository which lists by quizID.
-		// SourceID here is the QuizID (not QuizRoomID) for practicality.
 		subs, _, err := s.quizSubs.ListByQuiz(ctx, sourceID, domain.ListSubmissionsQuery{
 			ListParams: domain.ListParams{Page: 1, PageSize: 1000},
 		})

@@ -3,16 +3,17 @@ import type { NavFn } from "@/lib/data-table"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { orgHead } from "@/lib/org-head"
+import { useOrgGuard } from "@/lib/access"
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table"
 import { LayoutGrid, List, PlusIcon, SearchIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useDebounce } from "use-debounce"
-import { useAccess } from "react-access-engine"
 import { z } from "zod"
 
 import { useGetClasses } from "@/api/classes/classes"
 import { ClassCard, ClassCardSkeleton } from "@/components/class-card"
+import { useClassPermissions } from "@/components/org/classes/use-class-permissions"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { PageHeader } from "@/components/page-header"
@@ -46,22 +47,24 @@ function RouteComponent() {
   const { orgId } = Route.useParams()
   const { search, order_by, order_dir, page } = Route.useSearch()
   const navigate = Route.useNavigate() as unknown as NavFn
+  const { canView, canCreate } = useClassPermissions()
+  const allowed = useOrgGuard(["classes:view", "classes:view_any"])
 
   const currentPage = page ?? 1
 
-  const { data, isPending } = useGetClasses({
-    search: search || undefined,
-    order_by: order_by || undefined,
-    order_dir: order_dir || undefined,
-    page: currentPage,
-  })
+  const { data, isPending } = useGetClasses(
+    {
+      search: search || undefined,
+      order_by: order_by || undefined,
+      order_dir: order_dir || undefined,
+      page: currentPage,
+    },
+    { query: { enabled: canView } }
+  )
 
   const classesData = (data?.status === 200 && data.data.data) || undefined
   const classes = classesData?.items ?? []
   const total = classesData?.total ?? 0
-
-  const { can } = useAccess()
-  const canCreate = can("classes:create") || can("classes:create_any")
 
   const [formOpen, setFormOpen] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>("grid")
@@ -130,6 +133,8 @@ function RouteComponent() {
       </div>
     )
   }
+
+  if (!allowed) return null
 
   return (
     <div className="flex flex-col gap-6">

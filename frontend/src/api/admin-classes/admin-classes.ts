@@ -38,6 +38,11 @@ import type {
   GetAdminClasses403,
   GetAdminClasses500,
   GetAdminClassesParams,
+  GetAdminSessions200,
+  GetAdminSessions401,
+  GetAdminSessions403,
+  GetAdminSessions500,
+  GetAdminSessionsParams,
   GithubCom4H1RZooraInternalDomainAdminCreateClassDTO,
   GithubCom4H1RZooraInternalDomainAdminUpdateClassDTO,
   GithubCom4H1RZooraInternalDomainResponse,
@@ -631,3 +636,140 @@ export const useDeleteAdminClassesId = <TError = ErrorType<DeleteAdminClassesId4
       > => {
       return useMutation(getDeleteAdminClassesIdMutationOptions(options), queryClient);
     }
+    /**
+ * Cross-org list. Search matches substrings of: name, description. Orderable fields: created_at, updated_at, name, start_time. Filters: class_id, include_deleted.
+ * @summary [Admin] List class sessions
+ */
+export type getAdminSessionsResponse200 = {
+  data: GetAdminSessions200
+  status: 200
+}
+
+export type getAdminSessionsResponse401 = {
+  data: GetAdminSessions401
+  status: 401
+}
+
+export type getAdminSessionsResponse403 = {
+  data: GetAdminSessions403
+  status: 403
+}
+
+export type getAdminSessionsResponse500 = {
+  data: GetAdminSessions500
+  status: 500
+}
+
+export type getAdminSessionsResponseSuccess = (getAdminSessionsResponse200) & {
+  headers: Headers;
+};
+export type getAdminSessionsResponseError = (getAdminSessionsResponse401 | getAdminSessionsResponse403 | getAdminSessionsResponse500) & {
+  headers: Headers;
+};
+
+export type getAdminSessionsResponse = (getAdminSessionsResponseSuccess | getAdminSessionsResponseError)
+
+export const getGetAdminSessionsUrl = (params?: GetAdminSessionsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/admin/sessions?${stringifiedParams}` : `/admin/sessions`
+}
+
+export const getAdminSessions = async (params?: GetAdminSessionsParams, options?: RequestInit): Promise<getAdminSessionsResponse> => {
+
+  return customInstance<getAdminSessionsResponse>(getGetAdminSessionsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminSessionsQueryKey = (params?: GetAdminSessionsParams,) => {
+    return [
+    `/admin/sessions`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminSessionsQueryOptions = <TData = Awaited<ReturnType<typeof getAdminSessions>>, TError = ErrorType<GetAdminSessions401 | GetAdminSessions403 | GetAdminSessions500>>(params?: GetAdminSessionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSessions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminSessionsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminSessions>>> = ({ signal }) => getAdminSessions(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminSessions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminSessionsQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminSessions>>>
+export type GetAdminSessionsQueryError = ErrorType<GetAdminSessions401 | GetAdminSessions403 | GetAdminSessions500>
+
+
+export function useGetAdminSessions<TData = Awaited<ReturnType<typeof getAdminSessions>>, TError = ErrorType<GetAdminSessions401 | GetAdminSessions403 | GetAdminSessions500>>(
+ params: undefined |  GetAdminSessionsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSessions>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminSessions>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminSessions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminSessions<TData = Awaited<ReturnType<typeof getAdminSessions>>, TError = ErrorType<GetAdminSessions401 | GetAdminSessions403 | GetAdminSessions500>>(
+ params?: GetAdminSessionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSessions>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminSessions>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminSessions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminSessions<TData = Awaited<ReturnType<typeof getAdminSessions>>, TError = ErrorType<GetAdminSessions401 | GetAdminSessions403 | GetAdminSessions500>>(
+ params?: GetAdminSessionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSessions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary [Admin] List class sessions
+ */
+
+export function useGetAdminSessions<TData = Awaited<ReturnType<typeof getAdminSessions>>, TError = ErrorType<GetAdminSessions401 | GetAdminSessions403 | GetAdminSessions500>>(
+ params?: GetAdminSessionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSessions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminSessionsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+

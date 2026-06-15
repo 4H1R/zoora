@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	lkproto "github.com/livekit/protocol/livekit"
 
 	"github.com/4H1R/zoora/internal/domain"
 	lk "github.com/4H1R/zoora/internal/platform/livekit"
@@ -55,10 +57,10 @@ func (s *service) canUpdateRoom(caller domain.Caller, class *domain.Class) bool 
 	if caller.IsAdmin {
 		return true
 	}
-	if caller.HasPermission("livesessions:update_any") {
+	if caller.HasPermission(domain.PermLiveSessionsUpdateAny) {
 		return true
 	}
-	if caller.HasPermission("livesessions:update") && caller.UserID == class.UserID {
+	if caller.HasPermission(domain.PermLiveSessionsUpdate) && caller.UserID == class.UserID {
 		return true
 	}
 	return false
@@ -68,17 +70,17 @@ func (s *service) canManageRoom(caller domain.Caller, class *domain.Class) bool 
 	if caller.IsAdmin {
 		return true
 	}
-	if caller.HasPermission("livesessions:manage_any") {
+	if caller.HasPermission(domain.PermLiveSessionsManageAny) {
 		return true
 	}
-	if caller.HasPermission("livesessions:manage") && caller.UserID == class.UserID {
+	if caller.HasPermission(domain.PermLiveSessionsManage) && caller.UserID == class.UserID {
 		return true
 	}
 	return false
 }
 
 func (s *service) canViewRoom(ctx context.Context, caller domain.Caller, class *domain.Class) (bool, error) {
-	if caller.IsAdmin || caller.HasPermission("livesessions:view_any") {
+	if caller.IsAdmin || caller.HasPermission(domain.PermLiveSessionsViewAny) {
 		return true, nil
 	}
 	if s.canManageRoom(caller, class) {
@@ -108,8 +110,11 @@ func (s *service) loadRoomWithClass(ctx context.Context, roomID uuid.UUID) (*dom
 	return room, session, class, nil
 }
 
+// resolveListScope maps a Caller into the role-resolved LiveRoomListScope the
+// repository understands. Typed filters from the request query are layered on
+// top by the caller, not here.
 func (s *service) resolveListScope(caller domain.Caller) domain.LiveRoomListScope {
-	if caller.IsAdmin || caller.HasPermission("livesessions:view_any") {
+	if caller.IsAdmin || caller.HasPermission(domain.PermLiveSessionsViewAny) {
 		return domain.LiveRoomListScope{All: true}
 	}
 	userID := caller.UserID
@@ -138,16 +143,19 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreateLiveRoomDTO) 
 
 	cfg := dto.Config
 	if cfg.MaxParticipants <= 0 {
-		cfg = domain.DefaultLiveRoomConfig()
+		// Backfill only the participant cap; preserve caller-supplied flags.
+		cfg.MaxParticipants = domain.DefaultLiveRoomConfig().MaxParticipants
 	}
 
-	roomName := fmt.Sprintf("session-%s", dto.ClassSessionID.String())
-
+	roomID := uuid.New()
 	room := &domain.LiveRoom{
-		ClassSessionID:  dto.ClassSessionID,
-		LiveKitRoomName: roomName,
-		Status:          domain.LiveRoomStatusCreated,
-		Config:          cfg,
+		ID:                 roomID,
+		ClassSessionID:     dto.ClassSessionID,
+		Name:               strings.TrimSpace(dto.Name),
+		LiveKitRoomName:    fmt.Sprintf("session-%s-%s", dto.ClassSessionID.String(), roomID.String()),
+		Status:             domain.LiveRoomStatusCreated,
+		ScheduledStartTime: dto.ScheduledStartTime,
+		Config:             cfg,
 	}
 
 	err = s.tx.RunInTx(ctx, func(txCtx context.Context) error {
@@ -212,7 +220,7 @@ func (s *service) JoinRoom(ctx context.Context, roomID uuid.UUID) (*domain.JoinL
 	}
 
 	isManager := s.canManageRoom(caller, class)
-	hasJoinAny := caller.HasPermission("livesessions:join_any")
+	hasJoinAny := caller.HasPermission(domain.PermLiveSessionsJoinAny)
 	if !isManager && !hasJoinAny {
 		enrolled, err := s.members.Exists(ctx, class.ID, caller.UserID)
 		if err != nil {
@@ -224,11 +232,31 @@ func (s *service) JoinRoom(ctx context.Context, roomID uuid.UUID) (*domain.JoinL
 	}
 
 	isModerator := isManager || hasJoinAny
-	canPublish := isModerator || room.Config.AllowMicDefault || room.Config.AllowCameraDefault
+
+	// A scheduled room sits in "created" until someone starts it (the prejoin
+	// lobby calls join, never start). The host joining auto-starts it so the
+	// LiveKit room actually exists; everyone else must wait for the host.
+	if room.Status == domain.LiveRoomStatusCreated {
+		if isModerator {
+			if _, err := s.startRoomInternal(ctx, room); err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, domain.NewValidationError(map[string]string{"status": "room not started yet"})
+		}
+	}
+
+	// Defensive: guarantee the LiveKit room exists before issuing a token
+	// (idempotent — returns the existing room if already created).
+	if _, err := s.livekit.CreateRoom(ctx, room.LiveKitRoomName, uint32(room.Config.MaxParticipants)); err != nil {
+		return nil, fmt.Errorf("livesessions.service.JoinRoom livekit: %w", err)
+	}
+
+	sources := publishSources(isModerator, room.Config)
 	roomAdmin := isModerator
 
 	identity := caller.UserID.String()
-	token, err := s.livekit.GenerateToken(room.LiveKitRoomName, identity, identity, canPublish, roomAdmin)
+	token, err := s.livekit.GenerateToken(room.LiveKitRoomName, identity, identity, sources, roomAdmin)
 	if err != nil {
 		return nil, fmt.Errorf("livesessions.service.JoinRoom token: %w", err)
 	}
@@ -300,9 +328,24 @@ func (s *service) StartRoom(ctx context.Context, roomID uuid.UUID) (*domain.Live
 		return nil, domain.NewValidationError(map[string]string{"status": "room must be in created state to start"})
 	}
 
-	_, err = s.livekit.CreateRoom(ctx, room.LiveKitRoomName, uint32(room.Config.MaxParticipants))
-	if err != nil {
-		return nil, fmt.Errorf("livesessions.service.StartRoom livekit: %w", err)
+	if _, err := s.startRoomInternal(ctx, room); err != nil {
+		return nil, err
+	}
+
+	s.logger.Info("live room started",
+		"room_id", room.ID.String(),
+		"started_by", caller.UserID.String(),
+	)
+	return room, nil
+}
+
+// startRoomInternal creates the LiveKit room, promotes the DB row to active and
+// kicks off auto-recording. Callers must have already verified manage rights and
+// that the room is in the created state. Shared by StartRoom and JoinRoom (host
+// auto-start) so the two paths can never drift.
+func (s *service) startRoomInternal(ctx context.Context, room *domain.LiveRoom) (*domain.LiveRoom, error) {
+	if _, err := s.livekit.CreateRoom(ctx, room.LiveKitRoomName, uint32(room.Config.MaxParticipants)); err != nil {
+		return nil, fmt.Errorf("livesessions.service.startRoomInternal livekit: %w", err)
 	}
 
 	now := time.Now()
@@ -330,12 +373,32 @@ func (s *service) StartRoom(ctx context.Context, roomID uuid.UUID) (*domain.Live
 			}
 		}
 	}
-
-	s.logger.Info("live room started",
-		"room_id", room.ID.String(),
-		"started_by", caller.UserID.String(),
-	)
 	return room, nil
+}
+
+// publishSources maps a caller's role + the room config into the LiveKit track
+// sources they may publish. Moderators get everything; others get only what the
+// room config allows. An empty result yields a subscribe-only (view) token.
+func publishSources(isModerator bool, cfg domain.LiveRoomConfig) []lkproto.TrackSource {
+	if isModerator {
+		return []lkproto.TrackSource{
+			lkproto.TrackSource_CAMERA,
+			lkproto.TrackSource_MICROPHONE,
+			lkproto.TrackSource_SCREEN_SHARE,
+			lkproto.TrackSource_SCREEN_SHARE_AUDIO,
+		}
+	}
+	var sources []lkproto.TrackSource
+	if cfg.AllowCameraDefault {
+		sources = append(sources, lkproto.TrackSource_CAMERA)
+	}
+	if cfg.AllowMicDefault {
+		sources = append(sources, lkproto.TrackSource_MICROPHONE)
+	}
+	if cfg.AllowScreenShareDefault {
+		sources = append(sources, lkproto.TrackSource_SCREEN_SHARE, lkproto.TrackSource_SCREEN_SHARE_AUDIO)
+	}
+	return sources
 }
 
 func (s *service) endRoomInternal(ctx context.Context, room *domain.LiveRoom) (*domain.LiveRoom, error) {
@@ -438,13 +501,20 @@ func (s *service) Heartbeat(ctx context.Context, roomID uuid.UUID) error {
 	return s.rooms.Update(ctx, room)
 }
 
-func (s *service) List(ctx context.Context, p domain.ListParams) ([]domain.LiveRoom, int64, error) {
+func (s *service) List(ctx context.Context, q domain.ListLiveRoomsQuery) ([]domain.LiveRoom, int64, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, 0, domain.ErrForbidden
 	}
 	scope := s.resolveListScope(caller)
-	return s.rooms.List(ctx, scope, p)
+	scope.Status = q.Status
+	scope.ClassID = q.ClassID
+	scope.ClassSessionID = q.ClassSessionID
+	// Soft-deleted rooms are an admin/manager-only view.
+	if q.IncludeDeleted && (caller.IsAdmin || caller.HasPermission(domain.PermLiveSessionsViewAny)) {
+		scope.IncludeDeleted = true
+	}
+	return s.rooms.List(ctx, scope, q.ListParams)
 }
 
 func (s *service) StartRecording(ctx context.Context, roomID uuid.UUID) (*domain.LiveRecording, error) {
@@ -516,26 +586,26 @@ func (s *service) StopRecording(ctx context.Context, recordingID uuid.UUID) (*do
 	return rec, nil
 }
 
-func (s *service) ListRecordings(ctx context.Context, roomID uuid.UUID) ([]domain.LiveRecording, error) {
+func (s *service) ListRecordings(ctx context.Context, roomID uuid.UUID, q domain.ListLiveRecordingsQuery) ([]domain.LiveRecording, int64, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
-		return nil, domain.ErrForbidden
+		return nil, 0, domain.ErrForbidden
 	}
 	_, _, class, err := s.loadRoomWithClass(ctx, roomID)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	ok, err = s.canViewRoom(ctx, caller, class)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if !ok {
-		return nil, domain.ErrForbidden
+		return nil, 0, domain.ErrForbidden
 	}
-	return s.recordings.ListByRoom(ctx, roomID)
+	return s.recordings.ListByRoom(ctx, roomID, q)
 }
 
-func (s *service) ListParticipants(ctx context.Context, roomID uuid.UUID, p domain.ListParams) ([]domain.LiveParticipant, int64, error) {
+func (s *service) ListParticipants(ctx context.Context, roomID uuid.UUID, q domain.ListLiveParticipantsQuery) ([]domain.LiveParticipant, int64, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, 0, domain.ErrForbidden
@@ -551,7 +621,7 @@ func (s *service) ListParticipants(ctx context.Context, roomID uuid.UUID, p doma
 	if !ok {
 		return nil, 0, domain.ErrForbidden
 	}
-	return s.participants.ListByRoom(ctx, roomID, p)
+	return s.participants.ListByRoom(ctx, roomID, q)
 }
 
 func (s *service) AutoCloseStaleRooms(ctx context.Context) error {

@@ -12,11 +12,27 @@ export type GetAdminLiveRoomsParams = {
  */
 status?: string;
 /**
+ * Filter by teacher UUID
+ */
+user_id?: string;
+/**
+ * Filter by class UUID
+ */
+class_id?: string;
+/**
+ * Filter by class session UUID
+ */
+class_session_id?: string;
+/**
  * Include soft-deleted rooms
  */
 include_deleted?: boolean;
 /**
- * One of: created_at, updated_at, status
+ * Substring match on livekit_room_name
+ */
+search?: string;
+/**
+ * One of: created_at, updated_at, status, actual_start_time, actual_end_time
  */
 order_by?: string;
 /**

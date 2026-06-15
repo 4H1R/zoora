@@ -52,6 +52,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * Cross-org list. Search matches substrings of: livekit_room_name. Orderable fields: created_at, updated_at, status, actual_start_time, actual_end_time. Filters: status, user_id (teacher), class_id, class_session_id, include_deleted.
  * @summary [Admin] List live rooms
  */
 export type getAdminLiveRoomsResponse200 = {

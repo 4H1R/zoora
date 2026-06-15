@@ -2,7 +2,10 @@ package questionbanks
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -12,22 +15,52 @@ import (
 type service struct {
 	repo      domain.QuestionBankRepository
 	questions domain.QuestionRepository
+	media     domain.MediaRepository
 	logger    *slog.Logger
 }
 
 func NewService(
 	repo domain.QuestionBankRepository,
 	questions domain.QuestionRepository,
+	media domain.MediaRepository,
 	logger *slog.Logger,
 ) domain.QuestionBankService {
-	return &service{repo: repo, questions: questions, logger: logger}
+	return &service{repo: repo, questions: questions, media: media, logger: logger}
+}
+
+func (s *service) validateMetadataMedia(ctx context.Context, items []domain.QuestionMetadata) error {
+	if err := domain.ValidateQuestionMetadata(items); err != nil {
+		return err
+	}
+	for i, item := range items {
+		m, err := s.media.FindByID(ctx, item.MediaID)
+		if err != nil {
+			if errors.Is(err, domain.ErrNotFound) {
+				return domain.NewValidationError(map[string]string{
+					fmt.Sprintf("metadata[%d].media_id", i): "media not found",
+				})
+			}
+			return err
+		}
+		if m.ModelType != domain.QuestionMediaModelType {
+			return domain.NewValidationError(map[string]string{
+				fmt.Sprintf("metadata[%d].media_id", i): "media must belong to a question",
+			})
+		}
+		if item.Type == domain.QuestionMetadataPhoto && !strings.HasPrefix(m.MimeType, "image/") {
+			return domain.NewValidationError(map[string]string{
+				fmt.Sprintf("metadata[%d].media_id", i): "media is not an image",
+			})
+		}
+	}
+	return nil
 }
 
 func canManageBank(caller domain.Caller, bank *domain.QuestionBank) bool {
 	if caller.IsAdmin {
 		return true
 	}
-	if caller.HasPermission("question_banks:update_any") {
+	if caller.HasPermission(domain.PermQuestionBanksUpdateAny) {
 		if caller.OrgID != nil && bank.OrganizationID != *caller.OrgID {
 			return false
 		}
@@ -36,17 +69,52 @@ func canManageBank(caller domain.Caller, bank *domain.QuestionBank) bool {
 	return false
 }
 
+func canDeleteBank(caller domain.Caller, bank *domain.QuestionBank) bool {
+	if caller.IsAdmin {
+		return true
+	}
+	if caller.HasPermission(domain.PermQuestionBanksDeleteAny) {
+		if caller.OrgID != nil && bank.OrganizationID != *caller.OrgID {
+			return false
+		}
+		return true
+	}
+	return false
+}
+
+func canViewBank(caller domain.Caller, bank *domain.QuestionBank) bool {
+	if canManageBank(caller, bank) {
+		return true
+	}
+	if caller.HasPermission(domain.PermQuestionBanksViewAny) {
+		if caller.OrgID != nil && bank.OrganizationID != *caller.OrgID {
+			return false
+		}
+		return true
+	}
+	return caller.OrgID != nil && bank.OrganizationID == *caller.OrgID
+}
+
 func (s *service) Create(ctx context.Context, dto domain.CreateQuestionBankDTO) (*domain.QuestionBank, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	if !caller.IsAdmin && !caller.HasPermission("question_banks:update_any") {
+	if !caller.IsAdmin &&
+		!caller.HasPermission(domain.PermQuestionBanksCreate) &&
+		!caller.HasPermission(domain.PermQuestionBanksCreateAny) &&
+		!caller.HasPermission(domain.PermQuestionBanksUpdateAny) {
+		return nil, domain.ErrForbidden
+	}
+	if caller.OrgID == nil && !caller.IsAdmin {
 		return nil, domain.ErrForbidden
 	}
 	bank := &domain.QuestionBank{
 		Name:        dto.Name,
 		Description: dto.Description,
+	}
+	if caller.OrgID != nil {
+		bank.OrganizationID = *caller.OrgID
 	}
 	if err := s.repo.Create(ctx, bank); err != nil {
 		return nil, err
@@ -59,13 +127,16 @@ func (s *service) Create(ctx context.Context, dto domain.CreateQuestionBankDTO) 
 }
 
 func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*domain.QuestionBank, error) {
-	_, ok := domain.CallerFromCtx(ctx)
+	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
 	bank, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+	if !canViewBank(caller, bank) {
+		return nil, domain.ErrForbidden
 	}
 	return bank, nil
 }
@@ -103,7 +174,7 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if !canManageBank(caller, bank) {
+	if !canDeleteBank(caller, bank) {
 		return domain.ErrForbidden
 	}
 	if err := s.repo.Delete(ctx, id); err != nil {
@@ -127,6 +198,9 @@ func (s *service) List(ctx context.Context, p domain.ListParams) ([]domain.Quest
 	if caller.OrgID == nil {
 		return nil, 0, domain.ErrForbidden
 	}
+	if caller.HasPermission(domain.PermQuestionBanksViewAny) || caller.HasPermission(domain.PermQuestionBanksUpdateAny) {
+		return s.repo.AdminList(ctx, domain.AdminListQuestionBanksQuery{OrganizationID: caller.OrgID, ListParams: p})
+	}
 	return s.repo.List(ctx, *caller.OrgID, p)
 }
 
@@ -144,12 +218,23 @@ func (s *service) CreateQuestion(ctx context.Context, bankID uuid.UUID, dto doma
 	if !canManageBank(caller, bank) {
 		return nil, domain.ErrForbidden
 	}
+	if err := domain.ValidateQuestionOptions(dto.Type, dto.Options); err != nil {
+		return nil, err
+	}
+	if err := s.validateMetadataMedia(ctx, dto.Metadata); err != nil {
+		return nil, err
+	}
+	metadata := dto.Metadata
+	if metadata == nil {
+		metadata = []domain.QuestionMetadata{}
+	}
 	question := &domain.Question{
 		BankID:         bankID,
 		OrganizationID: bank.OrganizationID,
 		Text:           dto.Text,
 		Type:           dto.Type,
 		Options:        dto.Options,
+		Metadata:       metadata,
 	}
 	if err := s.questions.Create(ctx, question); err != nil {
 		return nil, err
@@ -158,13 +243,20 @@ func (s *service) CreateQuestion(ctx context.Context, bankID uuid.UUID, dto doma
 }
 
 func (s *service) GetQuestion(ctx context.Context, id uuid.UUID) (*domain.Question, error) {
-	_, ok := domain.CallerFromCtx(ctx)
+	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
 	question, err := s.questions.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+	bank, err := s.repo.FindByID(ctx, question.BankID)
+	if err != nil {
+		return nil, err
+	}
+	if !canViewBank(caller, bank) {
+		return nil, domain.ErrForbidden
 	}
 	return question, nil
 }
@@ -194,6 +286,17 @@ func (s *service) UpdateQuestion(ctx context.Context, id uuid.UUID, dto domain.U
 	if dto.Options != nil {
 		question.Options = dto.Options
 	}
+	if dto.Options != nil || dto.Type != nil {
+		if err := domain.ValidateQuestionOptions(question.Type, question.Options); err != nil {
+			return nil, err
+		}
+	}
+	if dto.Metadata != nil {
+		if err := s.validateMetadataMedia(ctx, dto.Metadata); err != nil {
+			return nil, err
+		}
+		question.Metadata = dto.Metadata
+	}
 	if err := s.questions.Update(ctx, question); err != nil {
 		return nil, err
 	}
@@ -213,7 +316,7 @@ func (s *service) DeleteQuestion(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if !canManageBank(caller, bank) {
+	if !canDeleteBank(caller, bank) {
 		return domain.ErrForbidden
 	}
 	return s.questions.Delete(ctx, id)
@@ -227,6 +330,9 @@ func (s *service) ListQuestions(ctx context.Context, bankID uuid.UUID, q domain.
 	bank, err := s.repo.FindByID(ctx, bankID)
 	if err != nil {
 		return nil, 0, err
+	}
+	if !canViewBank(caller, bank) {
+		return nil, 0, domain.ErrForbidden
 	}
 	if !canManageBank(caller, bank) {
 		q.IncludeDeleted = false

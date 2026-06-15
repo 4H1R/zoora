@@ -49,17 +49,6 @@ func (r *roomRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Li
 	return &room, nil
 }
 
-func (r *roomRepository) FindByClassSessionID(ctx context.Context, sessionID uuid.UUID) (*domain.LiveRoom, error) {
-	var room domain.LiveRoom
-	if err := r.baseQuery(ctx).First(&room, "class_session_id = ?", sessionID).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, domain.ErrNotFound
-		}
-		return nil, fmt.Errorf("livesessions.roomRepository.FindByClassSessionID: %w", err)
-	}
-	return &room, nil
-}
-
 func (r *roomRepository) Update(ctx context.Context, room *domain.LiveRoom) error {
 	result := database.DB(ctx, r.db).Save(room)
 	if result.Error != nil {
@@ -86,27 +75,55 @@ func (r *roomRepository) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 func (r *roomRepository) List(ctx context.Context, scope domain.LiveRoomListScope, p domain.ListParams) ([]domain.LiveRoom, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.LiveRoom{})
+	db := database.DB(ctx, r.db)
+	base := db.Model(&domain.LiveRoom{}).
+		Preload("ClassSession").
+		Preload("ClassSession.Class")
+	if scope.IncludeDeleted {
+		base = base.Unscoped()
+	}
+
+	// RBAC + class filters resolve against class_sessions/classes. Use
+	// IN-subqueries instead of JOIN+DISTINCT — GORM's Count emits
+	// COUNT(DISTINCT live_rooms.*) which PostgreSQL rejects.
 	if !scope.All {
-		if scope.TeacherID != nil || scope.MemberUserID != nil {
-			base = base.Joins("JOIN class_sessions cs ON cs.id = live_rooms.class_session_id").
-				Joins("JOIN classes c ON c.id = cs.class_id")
-		}
 		switch {
 		case scope.TeacherID != nil && scope.MemberUserID != nil:
-			base = base.Where(
-				"c.user_id = ? OR c.id IN (SELECT class_id FROM class_members WHERE user_id = ?)",
-				*scope.TeacherID, *scope.MemberUserID,
-			)
+			sub := db.Table("class_sessions cs").
+				Select("cs.id").
+				Joins("JOIN classes c ON c.id = cs.class_id").
+				Where(
+					"c.user_id = ? OR c.id IN (SELECT class_id FROM class_members WHERE user_id = ?)",
+					*scope.TeacherID, *scope.MemberUserID,
+				)
+			base = base.Where("live_rooms.class_session_id IN (?)", sub)
 		case scope.TeacherID != nil:
-			base = base.Where("c.user_id = ?", *scope.TeacherID)
+			sub := db.Table("class_sessions cs").
+				Select("cs.id").
+				Joins("JOIN classes c ON c.id = cs.class_id").
+				Where("c.user_id = ?", *scope.TeacherID)
+			base = base.Where("live_rooms.class_session_id IN (?)", sub)
 		case scope.MemberUserID != nil:
-			base = base.Where(
-				"c.id IN (SELECT class_id FROM class_members WHERE user_id = ?)",
-				*scope.MemberUserID,
-			)
+			sub := db.Table("class_sessions cs").
+				Select("cs.id").
+				Where("cs.class_id IN (SELECT class_id FROM class_members WHERE user_id = ?)", *scope.MemberUserID)
+			base = base.Where("live_rooms.class_session_id IN (?)", sub)
 		}
 	}
+
+	if scope.ClassID != nil {
+		sub := db.Table("class_sessions").
+			Select("id").
+			Where("class_id = ?", *scope.ClassID)
+		base = base.Where("live_rooms.class_session_id IN (?)", sub)
+	}
+	if scope.Status != nil {
+		base = base.Where("live_rooms.status = ?", *scope.Status)
+	}
+	if scope.ClassSessionID != nil {
+		base = base.Where("live_rooms.class_session_id = ?", *scope.ClassSessionID)
+	}
+
 	var rooms []domain.LiveRoom
 	total, err := listparams.Paginate(base, p, &rooms)
 	if err != nil {
@@ -128,13 +145,37 @@ func (r *roomRepository) FindActiveRoomsWithStaleHost(ctx context.Context, stale
 }
 
 func (r *roomRepository) AdminList(ctx context.Context, q domain.AdminListLiveRoomsQuery) ([]domain.LiveRoom, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.LiveRoom{})
+	db := database.DB(ctx, r.db)
+	base := db.Model(&domain.LiveRoom{}).
+		Preload("ClassSession").
+		Preload("ClassSession.Class")
 	if q.IncludeDeleted {
 		base = base.Unscoped()
+	}
+
+	// Class/teacher filters target class_sessions/classes. Use subqueries instead
+	// of JOIN+DISTINCT because GORM's Count emits COUNT(DISTINCT live_rooms.*)
+	// which PostgreSQL rejects.
+	if q.UserID != nil {
+		sub := db.Table("class_sessions cs").
+			Select("cs.id").
+			Joins("JOIN classes c ON c.id = cs.class_id").
+			Where("c.user_id = ?", *q.UserID)
+		base = base.Where("live_rooms.class_session_id IN (?)", sub)
+	}
+	if q.ClassID != nil {
+		sub := db.Table("class_sessions").
+			Select("id").
+			Where("class_id = ?", *q.ClassID)
+		base = base.Where("live_rooms.class_session_id IN (?)", sub)
 	}
 	if q.Status != nil {
 		base = base.Where("live_rooms.status = ?", *q.Status)
 	}
+	if q.ClassSessionID != nil {
+		base = base.Where("live_rooms.class_session_id = ?", *q.ClassSessionID)
+	}
+
 	var rooms []domain.LiveRoom
 	total, err := listparams.Paginate(base, q.ListParams, &rooms)
 	if err != nil {
@@ -204,11 +245,21 @@ func (r *participantRepository) Update(ctx context.Context, p *domain.LivePartic
 	return nil
 }
 
-func (r *participantRepository) ListByRoom(ctx context.Context, roomID uuid.UUID, p domain.ListParams) ([]domain.LiveParticipant, int64, error) {
+func (r *participantRepository) ListByRoom(ctx context.Context, roomID uuid.UUID, q domain.ListLiveParticipantsQuery) ([]domain.LiveParticipant, int64, error) {
 	base := database.DB(ctx, r.db).Model(&domain.LiveParticipant{}).
 		Where("live_room_id = ?", roomID)
+	if q.ActiveOnly != nil {
+		if *q.ActiveOnly {
+			base = base.Where("left_at IS NULL")
+		} else {
+			base = base.Where("left_at IS NOT NULL")
+		}
+	}
+	if q.UserID != nil {
+		base = base.Where("user_id = ?", *q.UserID)
+	}
 	var participants []domain.LiveParticipant
-	total, err := listparams.Paginate(base, p, &participants)
+	total, err := listparams.Paginate(base, q.ListParams, &participants)
 	if err != nil {
 		return nil, 0, fmt.Errorf("livesessions.participantRepository.ListByRoom: %w", err)
 	}
@@ -289,14 +340,16 @@ func (r *recordingRepository) Update(ctx context.Context, rec *domain.LiveRecord
 	return nil
 }
 
-func (r *recordingRepository) ListByRoom(ctx context.Context, roomID uuid.UUID) ([]domain.LiveRecording, error) {
-	var recs []domain.LiveRecording
-	err := database.DB(ctx, r.db).Model(&domain.LiveRecording{}).
-		Where("live_room_id = ?", roomID).
-		Order("started_at DESC").
-		Find(&recs).Error
-	if err != nil {
-		return nil, fmt.Errorf("livesessions.recordingRepository.ListByRoom: %w", err)
+func (r *recordingRepository) ListByRoom(ctx context.Context, roomID uuid.UUID, q domain.ListLiveRecordingsQuery) ([]domain.LiveRecording, int64, error) {
+	base := database.DB(ctx, r.db).Model(&domain.LiveRecording{}).
+		Where("live_room_id = ?", roomID)
+	if q.Status != nil {
+		base = base.Where("status = ?", *q.Status)
 	}
-	return recs, nil
+	var recs []domain.LiveRecording
+	total, err := listparams.Paginate(base, q.ListParams, &recs)
+	if err != nil {
+		return nil, 0, fmt.Errorf("livesessions.recordingRepository.ListByRoom: %w", err)
+	}
+	return recs, total, nil
 }

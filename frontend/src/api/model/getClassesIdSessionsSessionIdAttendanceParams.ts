@@ -5,16 +5,25 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
+import type { GetClassesIdSessionsSessionIdAttendanceStatus } from './getClassesIdSessionsSessionIdAttendanceStatus';
 
 export type GetClassesIdSessionsSessionIdAttendanceParams = {
 /**
- * Filter by status: present|absent|late|excused
+ * Filter by status
  */
-status?: string;
+status?: GetClassesIdSessionsSessionIdAttendanceStatus;
 /**
  * Filter by user UUID
  */
 user_id?: string;
+/**
+ * Filter auto-marked vs manual
+ */
+is_auto_marked?: boolean;
+/**
+ * Substring match on remarks
+ */
+search?: string;
 /**
  * One of: created_at, updated_at, status
  */

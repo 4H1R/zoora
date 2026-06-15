@@ -7,7 +7,18 @@ import (
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/platform/httpx"
+	"github.com/4H1R/zoora/internal/platform/listparams"
 )
+
+// columnsListConfig is the handler-owned white-list for GET
+// /classes/:id/gradebook/columns. Only columns in these slices can be searched
+// or ordered by the client; anything else falls back to defaults.
+var columnsListConfig = domain.ListConfig{
+	AllowedSearchFields: []string{"title"},
+	AllowedOrderFields:  []string{"created_at", "updated_at", "title", "order_index"},
+	DefaultOrderBy:      "order_index",
+	DefaultOrderDir:     "asc",
+}
 
 type Handler struct {
 	svc domain.GradebookService
@@ -23,11 +34,12 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 
 	authed := rg.Group("", authMiddleware)
 	{
-		authed.GET("/classes/:id/gradebook", idParam, h.GetMatrix)
-		authed.POST("/classes/:id/gradebook/columns", perm(domain.PermClassesUpdate), idParam, h.CreateColumn)
-		authed.PUT("/classes/:id/gradebook/columns/:columnId", perm(domain.PermClassesUpdate), idParam, columnIDParam, h.UpdateColumn)
-		authed.DELETE("/classes/:id/gradebook/columns/:columnId", perm(domain.PermClassesUpdate), idParam, columnIDParam, h.DeleteColumn)
-		authed.POST("/classes/:id/gradebook/columns/:columnId/cells", perm(domain.PermClassesUpdate), idParam, columnIDParam, h.UpsertCell)
+		authed.GET("/classes/:id/gradebook", perm(domain.PermGradebookView), idParam, h.GetMatrix)
+		authed.GET("/classes/:id/gradebook/columns", perm(domain.PermGradebookView), idParam, h.ListColumns)
+		authed.POST("/classes/:id/gradebook/columns", perm(domain.PermGradebookCreate), idParam, h.CreateColumn)
+		authed.PUT("/classes/:id/gradebook/columns/:columnId", perm(domain.PermGradebookUpdate), idParam, columnIDParam, h.UpdateColumn)
+		authed.DELETE("/classes/:id/gradebook/columns/:columnId", perm(domain.PermGradebookDelete), idParam, columnIDParam, h.DeleteColumn)
+		authed.POST("/classes/:id/gradebook/columns/:columnId/cells", perm(domain.PermGradebookUpdate), idParam, columnIDParam, h.UpsertCell)
 	}
 }
 
@@ -49,6 +61,38 @@ func (h *Handler) GetMatrix(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, matrix)
+}
+
+// ListColumns returns paginated gradebook columns for a class.
+// @Summary List gradebook columns
+// @Description Search matches substrings of: title. Orderable fields: created_at, updated_at, title, order_index. Filters: type.
+// @Tags Gradebook
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Class UUID"
+// @Param type query string false "Filter by column type" Enums(auto_attendance,auto_practice,auto_quiz,manual_grade,manual_attendance,manual_text)
+// @Param search query string false "Substring match on title"
+// @Param order_by query string false "One of: created_at, updated_at, title, order_index"
+// @Param order_dir query string false "asc or desc"
+// @Param page query int false "1-based page number"
+// @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.GradebookColumn}}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /classes/{id}/gradebook/columns [get]
+func (h *Handler) ListColumns(c *gin.Context) {
+	var q domain.ListGradebookColumnsQuery
+	if err := c.ShouldBindQuery(&q); err != nil {
+		_ = c.Error(domain.NewValidationError(map[string]string{"query": err.Error()}))
+		return
+	}
+	q.ListParams = listparams.Bind(c, columnsListConfig)
+	cols, total, err := h.svc.ListColumns(c.Request.Context(), httpx.UUIDParam(c, "id"), q)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(cols, total, q.ListParams))
 }
 
 // CreateColumn creates a gradebook column for a class.

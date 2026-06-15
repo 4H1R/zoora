@@ -15,8 +15,8 @@ import (
 
 type Client struct {
 	roomClient *lksdk.RoomServiceClient
-	host      string
-	publicURL string
+	host       string
+	publicURL  string
 	apiKey     string
 	apiSecret  string
 	logger     *slog.Logger
@@ -70,13 +70,22 @@ func (c *Client) DeleteRoom(ctx context.Context, roomName string) error {
 	return nil
 }
 
-func (c *Client) GenerateToken(roomName, identity, name string, canPublish, roomAdmin bool) (string, error) {
+// GenerateToken mints a join token. Publishable sources are granted explicitly
+// via CanPublishSources so room config (mic/camera/screen) is actually enforced
+// — an empty slice means subscribe-only. Passing sources also guarantees screen
+// share is authorized for moderators (previously CanPublish-only left it implicit).
+func (c *Client) GenerateToken(roomName, identity, name string, sources []livekit.TrackSource, roomAdmin bool) (string, error) {
 	at := auth.NewAccessToken(c.apiKey, c.apiSecret)
 	grant := &auth.VideoGrant{
 		RoomJoin: true,
 		Room:     roomName,
 	}
-	grant.SetCanPublish(canPublish)
+	if len(sources) > 0 {
+		grant.SetCanPublish(true)
+		grant.SetCanPublishSources(sources)
+	} else {
+		grant.SetCanPublish(false)
+	}
 	grant.SetCanSubscribe(true)
 	if roomAdmin {
 		grant.RoomAdmin = true

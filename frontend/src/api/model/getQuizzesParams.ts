@@ -12,6 +12,10 @@ export type GetQuizzesParams = {
  */
 class_id?: string;
 /**
+ * Filter by class session UUID (matches quizzes with a quiz_room in that session)
+ */
+class_session_id?: string;
+/**
  * Substring match on title/description
  */
 search?: string;

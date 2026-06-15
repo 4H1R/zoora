@@ -37,7 +37,7 @@ func (r *quizRepository) Create(ctx context.Context, quiz *domain.Quiz) error {
 
 func (r *quizRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Quiz, error) {
 	var quiz domain.Quiz
-	if err := r.baseQuery(ctx).First(&quiz, "id = ?", id).Error; err != nil {
+	if err := r.baseQuery(ctx).Preload("User").Preload("Class").First(&quiz, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}
@@ -72,12 +72,22 @@ func (r *quizRepository) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 func (r *quizRepository) List(ctx context.Context, scope domain.QuizListScope, p domain.ListParams) ([]domain.Quiz, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.Quiz{})
+	db := database.DB(ctx, r.db)
+	base := db.Model(&domain.Quiz{}).Preload("User").Preload("Class")
 	if scope.IncludeDeleted {
 		base = base.Unscoped()
 	}
+	if scope.OrganizationID != nil {
+		base = base.Where("organization_id = ?", *scope.OrganizationID)
+	}
 	if scope.ClassID != nil {
 		base = base.Where("class_id = ?", *scope.ClassID)
+	}
+	if scope.ClassSessionID != nil {
+		sub := db.Table("quiz_rooms").
+			Select("quiz_id").
+			Where("class_session_id = ?", *scope.ClassSessionID)
+		base = base.Where("id IN (?)", sub)
 	}
 	if !scope.All {
 		switch {
@@ -126,12 +136,19 @@ func (r *quizRepository) FindByIDIncludingDeleted(ctx context.Context, id uuid.U
 }
 
 func (r *quizRepository) AdminList(ctx context.Context, q domain.AdminListQuizzesQuery) ([]domain.Quiz, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.Quiz{})
+	db := database.DB(ctx, r.db)
+	base := db.Model(&domain.Quiz{}).Preload("User").Preload("Class")
 	if q.IncludeDeleted {
 		base = base.Unscoped()
 	}
 	if q.ClassID != nil {
 		base = base.Where("class_id = ?", *q.ClassID)
+	}
+	if q.ClassSessionID != nil {
+		sub := db.Table("quiz_rooms").
+			Select("quiz_id").
+			Where("class_session_id = ?", *q.ClassSessionID)
+		base = base.Where("id IN (?)", sub)
 	}
 	if q.UserID != nil {
 		base = base.Where("user_id = ?", *q.UserID)
@@ -280,7 +297,7 @@ func (r *roomRepository) ListBySessionID(ctx context.Context, sessionID uuid.UUI
 func (r *roomRepository) FindOpenByQuizID(ctx context.Context, quizID uuid.UUID) (*domain.QuizRoom, error) {
 	var room domain.QuizRoom
 	if err := database.DB(ctx, r.db).Model(&domain.QuizRoom{}).
-		Where("quiz_id = ? AND started_at IS NOT NULL AND ended_at IS NULL", quizID).
+		Where("quiz_id = ? AND started_at IS NOT NULL AND started_at <= NOW() AND (ended_at IS NULL OR ended_at > NOW())", quizID).
 		First(&room).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
@@ -311,7 +328,9 @@ func (r *submissionRepository) Create(ctx context.Context, sub *domain.QuizSubmi
 
 func (r *submissionRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.QuizSubmission, error) {
 	var sub domain.QuizSubmission
-	if err := database.DB(ctx, r.db).Model(&domain.QuizSubmission{}).First(&sub, "id = ?", id).Error; err != nil {
+	if err := database.DB(ctx, r.db).Model(&domain.QuizSubmission{}).
+		Preload("User").
+		First(&sub, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}
@@ -345,7 +364,9 @@ func (r *submissionRepository) FindByQuizAndUser(ctx context.Context, quizID, us
 }
 
 func (r *submissionRepository) ListByQuiz(ctx context.Context, quizID uuid.UUID, q domain.ListSubmissionsQuery) ([]domain.QuizSubmission, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.QuizSubmission{}).Where("quiz_id = ?", quizID)
+	base := database.DB(ctx, r.db).Model(&domain.QuizSubmission{}).
+		Preload("User").
+		Where("quiz_id = ?", quizID)
 	if q.UserID != nil {
 		base = base.Where("user_id = ?", *q.UserID)
 	}

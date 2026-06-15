@@ -21,6 +21,10 @@ func NewRepository(db *gorm.DB) domain.AttendanceRepository {
 	return &repository{db: db}
 }
 
+func (r *repository) baseQuery(ctx context.Context) *gorm.DB {
+	return database.DB(ctx, r.db).Model(&domain.Attendance{})
+}
+
 func (r *repository) Create(ctx context.Context, a *domain.Attendance) error {
 	if err := database.DB(ctx, r.db).Create(a).Error; err != nil {
 		if database.IsUniqueViolation(err) {
@@ -33,7 +37,11 @@ func (r *repository) Create(ctx context.Context, a *domain.Attendance) error {
 
 func (r *repository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Attendance, error) {
 	var a domain.Attendance
-	if err := database.DB(ctx, r.db).First(&a, "id = ?", id).Error; err != nil {
+	if err := r.baseQuery(ctx).
+		Preload("User").
+		Preload("Class").
+		Preload("ClassSession").
+		First(&a, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}
@@ -68,13 +76,15 @@ func (r *repository) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 func (r *repository) ListBySession(ctx context.Context, sessionID uuid.UUID, q domain.ListAttendanceQuery) ([]domain.Attendance, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.Attendance{}).
-		Where("class_session_id = ?", sessionID)
+	base := r.baseQuery(ctx).Preload("User").Where("class_session_id = ?", sessionID)
 	if q.Status != nil {
 		base = base.Where("status = ?", *q.Status)
 	}
 	if q.UserID != nil {
 		base = base.Where("user_id = ?", *q.UserID)
+	}
+	if q.IsAutoMarked != nil {
+		base = base.Where("is_auto_marked = ?", *q.IsAutoMarked)
 	}
 	var items []domain.Attendance
 	total, err := listparams.Paginate(base, q.ListParams, &items)
@@ -84,9 +94,37 @@ func (r *repository) ListBySession(ctx context.Context, sessionID uuid.UUID, q d
 	return items, total, nil
 }
 
+func (r *repository) AdminList(ctx context.Context, q domain.AdminListAttendanceQuery) ([]domain.Attendance, int64, error) {
+	base := r.baseQuery(ctx).Preload("User").Preload("Class").Preload("ClassSession")
+	if q.Status != nil {
+		base = base.Where("status = ?", *q.Status)
+	}
+	if q.IsAutoMarked != nil {
+		base = base.Where("is_auto_marked = ?", *q.IsAutoMarked)
+	}
+	if q.UserID != nil {
+		base = base.Where("user_id = ?", *q.UserID)
+	}
+	if q.ClassID != nil {
+		base = base.Where("class_id = ?", *q.ClassID)
+	}
+	if q.ClassSessionID != nil {
+		base = base.Where("class_session_id = ?", *q.ClassSessionID)
+	}
+	if q.OrganizationID != nil {
+		base = base.Where("organization_id = ?", *q.OrganizationID)
+	}
+	var items []domain.Attendance
+	total, err := listparams.Paginate(base, q.ListParams, &items)
+	if err != nil {
+		return nil, 0, fmt.Errorf("attendance.repository.AdminList: %w", err)
+	}
+	return items, total, nil
+}
+
 func (r *repository) FindBySessionAndUser(ctx context.Context, sessionID, userID uuid.UUID) (*domain.Attendance, error) {
 	var a domain.Attendance
-	if err := database.DB(ctx, r.db).
+	if err := r.baseQuery(ctx).
 		Where("class_session_id = ? AND user_id = ?", sessionID, userID).
 		First(&a).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

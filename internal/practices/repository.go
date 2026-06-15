@@ -37,7 +37,11 @@ func (r *roomRepository) Create(ctx context.Context, room *domain.PracticeRoom) 
 
 func (r *roomRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.PracticeRoom, error) {
 	var room domain.PracticeRoom
-	if err := r.baseQuery(ctx).First(&room, "id = ?", id).Error; err != nil {
+	if err := r.baseQuery(ctx).
+		Preload("User").
+		Preload("Class").
+		Preload("ClassSession").
+		First(&room, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}
@@ -72,9 +76,15 @@ func (r *roomRepository) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 func (r *roomRepository) List(ctx context.Context, scope domain.PracticeRoomListScope, q domain.ListPracticeRoomsQuery) ([]domain.PracticeRoom, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.PracticeRoom{})
+	base := database.DB(ctx, r.db).Model(&domain.PracticeRoom{}).
+		Preload("User").
+		Preload("Class").
+		Preload("ClassSession")
 	if scope.IncludeDeleted {
 		base = base.Unscoped()
+	}
+	if scope.OrganizationID != nil {
+		base = base.Where("organization_id = ?", *scope.OrganizationID)
 	}
 	if !scope.All {
 		switch {
@@ -129,7 +139,10 @@ func (r *roomRepository) FindByIDIncludingDeleted(ctx context.Context, id uuid.U
 }
 
 func (r *roomRepository) AdminList(ctx context.Context, q domain.AdminListPracticeRoomsQuery) ([]domain.PracticeRoom, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.PracticeRoom{})
+	base := database.DB(ctx, r.db).Model(&domain.PracticeRoom{}).
+		Preload("User").
+		Preload("Class").
+		Preload("ClassSession")
 	if q.IncludeDeleted {
 		base = base.Unscoped()
 	}

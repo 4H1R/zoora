@@ -64,8 +64,14 @@ type MediaRepository interface {
 	ListByModel(ctx context.Context, modelType string, modelID uuid.UUID, collection string) ([]Media, error)
 }
 
+type PresignDownloadResponse struct {
+	URL string `json:"url"`
+	Key string `json:"key"`
+}
+
 type MediaService interface {
 	PresignUpload(ctx context.Context, dto PresignUploadDTO) (*PresignUploadResponse, error)
+	PresignDownload(ctx context.Context, id uuid.UUID) (*PresignDownloadResponse, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*Media, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	ListByModel(ctx context.Context, modelType string, modelID uuid.UUID, collection string) ([]Media, error)

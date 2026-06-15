@@ -113,6 +113,26 @@ func TestHandler_ListRooms_Success(t *testing.T) {
 	svc.AssertExpectations(t)
 }
 
+func TestHandler_ListRooms_ClassIDQueryParsed(t *testing.T) {
+	r, svc := newOfflineRouter(t)
+	classID := uuid.New()
+	svc.On("ListRooms", mock.Anything, mock.MatchedBy(func(q domain.ListOfflineRoomsQuery) bool {
+		return q.ClassID != nil && *q.ClassID == classID
+	})).Return([]domain.OfflineRoom{}, int64(0), nil)
+
+	w := do(t, r, "GET", "/api/v1/offlines?class_id="+classID.String()+"&page=1", nil)
+	assert.Equal(t, http.StatusOK, w.Code)
+	svc.AssertExpectations(t)
+}
+
+func TestHandler_ListRooms_MalformedClassID_Maps400(t *testing.T) {
+	r, svc := newOfflineRouter(t)
+
+	w := do(t, r, "GET", "/api/v1/offlines?class_id=not-a-uuid", nil)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	svc.AssertNotCalled(t, "ListRooms")
+}
+
 func TestHandler_ListRooms_Forbidden(t *testing.T) {
 	r, svc := newOfflineRouter(t)
 	svc.On("ListRooms", mock.Anything, mock.Anything).
@@ -259,6 +279,26 @@ func TestAdminHandler_List_Forbidden(t *testing.T) {
 
 	w := do(t, r, "GET", "/admin/offlines", nil)
 	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestAdminHandler_List_ClassIDQueryParsed(t *testing.T) {
+	r, svc := newOfflineAdminRouter(t)
+	classID := uuid.New()
+	svc.On("AdminList", mock.Anything, mock.MatchedBy(func(q domain.AdminListOfflineRoomsQuery) bool {
+		return q.ClassID != nil && *q.ClassID == classID
+	})).Return([]domain.OfflineRoom{}, int64(0), nil)
+
+	w := do(t, r, "GET", "/admin/offlines?class_id="+classID.String()+"&page=1", nil)
+	assert.Equal(t, http.StatusOK, w.Code)
+	svc.AssertExpectations(t)
+}
+
+func TestAdminHandler_List_MalformedClassID_Maps400(t *testing.T) {
+	r, svc := newOfflineAdminRouter(t)
+
+	w := do(t, r, "GET", "/admin/offlines?class_id=not-a-uuid", nil)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	svc.AssertNotCalled(t, "AdminList")
 }
 
 func TestAdminHandler_HardDelete_Success(t *testing.T) {

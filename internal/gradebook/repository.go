@@ -11,6 +11,7 @@ import (
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/platform/database"
+	"github.com/4H1R/zoora/internal/platform/listparams"
 )
 
 type columnRepository struct {
@@ -19,6 +20,10 @@ type columnRepository struct {
 
 func NewColumnRepository(db *gorm.DB) domain.GradebookColumnRepository {
 	return &columnRepository{db: db}
+}
+
+func (r *columnRepository) baseQuery(ctx context.Context) *gorm.DB {
+	return database.DB(ctx, r.db).Model(&domain.GradebookColumn{})
 }
 
 func (r *columnRepository) Create(ctx context.Context, col *domain.GradebookColumn) error {
@@ -33,7 +38,7 @@ func (r *columnRepository) Create(ctx context.Context, col *domain.GradebookColu
 
 func (r *columnRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.GradebookColumn, error) {
 	var col domain.GradebookColumn
-	if err := database.DB(ctx, r.db).First(&col, "id = ?", id).Error; err != nil {
+	if err := r.baseQuery(ctx).First(&col, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}
@@ -64,13 +69,26 @@ func (r *columnRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (r *columnRepository) ListByClass(ctx context.Context, classID uuid.UUID) ([]domain.GradebookColumn, error) {
+func (r *columnRepository) ListByClass(ctx context.Context, classID uuid.UUID, q domain.ListGradebookColumnsQuery) ([]domain.GradebookColumn, int64, error) {
+	base := database.DB(ctx, r.db).Model(&domain.GradebookColumn{}).Where("class_id = ?", classID)
+	if q.Type != nil {
+		base = base.Where("type = ?", *q.Type)
+	}
+	var cols []domain.GradebookColumn
+	total, err := listparams.Paginate(base, q.ListParams, &cols)
+	if err != nil {
+		return nil, 0, fmt.Errorf("gradebook.columnRepository.ListByClass: %w", err)
+	}
+	return cols, total, nil
+}
+
+func (r *columnRepository) ListAllByClass(ctx context.Context, classID uuid.UUID) ([]domain.GradebookColumn, error) {
 	var cols []domain.GradebookColumn
 	if err := database.DB(ctx, r.db).
 		Where("class_id = ?", classID).
 		Order("order_index ASC, created_at ASC").
 		Find(&cols).Error; err != nil {
-		return nil, fmt.Errorf("gradebook.columnRepository.ListByClass: %w", err)
+		return nil, fmt.Errorf("gradebook.columnRepository.ListAllByClass: %w", err)
 	}
 	return cols, nil
 }

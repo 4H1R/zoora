@@ -210,13 +210,26 @@ func (r *sessionRepository) ListByClass(ctx context.Context, classID uuid.UUID, 
 		base = base.Unscoped()
 	}
 	base = base.Where("class_id = ?", classID)
-	if q.Type != nil {
-		base = base.Where("type = ?", *q.Type)
-	}
 	var sessions []domain.ClassSession
 	total, err := listparams.Paginate(base, q.ListParams, &sessions)
 	if err != nil {
 		return nil, 0, fmt.Errorf("classes.sessionRepository.ListByClass: %w", err)
+	}
+	return sessions, total, nil
+}
+
+func (r *sessionRepository) AdminList(ctx context.Context, q domain.AdminListClassSessionsQuery) ([]domain.ClassSession, int64, error) {
+	base := database.DB(ctx, r.db).Model(&domain.ClassSession{}).Preload("Class")
+	if q.IncludeDeleted {
+		base = base.Unscoped()
+	}
+	if q.ClassID != nil {
+		base = base.Where("class_id = ?", *q.ClassID)
+	}
+	var sessions []domain.ClassSession
+	total, err := listparams.Paginate(base, q.ListParams, &sessions)
+	if err != nil {
+		return nil, 0, fmt.Errorf("classes.sessionRepository.AdminList: %w", err)
 	}
 	return sessions, total, nil
 }
@@ -300,6 +313,7 @@ func (r *memberRepository) CountByClass(ctx context.Context, classID uuid.UUID) 
 func (r *memberRepository) ListAllByClass(ctx context.Context, classID uuid.UUID) ([]domain.ClassMember, error) {
 	var members []domain.ClassMember
 	if err := database.DB(ctx, r.db).Model(&domain.ClassMember{}).
+		Preload("User").
 		Where("class_id = ?", classID).
 		Find(&members).Error; err != nil {
 		return nil, fmt.Errorf("classes.memberRepository.ListAllByClass: %w", err)
@@ -309,6 +323,7 @@ func (r *memberRepository) ListAllByClass(ctx context.Context, classID uuid.UUID
 
 func (r *memberRepository) ListByClass(ctx context.Context, classID uuid.UUID, p domain.ListParams) ([]domain.ClassMember, int64, error) {
 	base := database.DB(ctx, r.db).Model(&domain.ClassMember{}).
+		Preload("User").
 		Where("class_id = ?", classID)
 	var members []domain.ClassMember
 	total, err := listparams.Paginate(base, p, &members)

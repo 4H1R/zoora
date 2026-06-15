@@ -8,10 +8,6 @@
 
 export type GetClassesIdSessionsParams = {
 /**
- * Filter by type: live|quiz|practice
- */
-type?: string;
-/**
  * Substring match on name/description
  */
 search?: string;

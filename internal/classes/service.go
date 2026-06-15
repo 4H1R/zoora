@@ -215,12 +215,10 @@ func (s *service) CreateSession(ctx context.Context, classID uuid.UUID, dto doma
 		return nil, domain.ErrForbidden
 	}
 	session := &domain.ClassSession{
-		ClassID:      classID,
-		Name:         dto.Name,
-		Description:  dto.Description,
-		StartTime:    dto.StartTime,
-		Type:         dto.Type,
-		IsRecordable: dto.IsRecordable,
+		ClassID:     classID,
+		Name:        dto.Name,
+		Description: dto.Description,
+		StartTime:   dto.StartTime,
 	}
 	if err := s.sessions.Create(ctx, session); err != nil {
 		return nil, err
@@ -275,12 +273,6 @@ func (s *service) UpdateSession(ctx context.Context, id uuid.UUID, dto domain.Up
 	}
 	if dto.StartTime != nil {
 		session.StartTime = *dto.StartTime
-	}
-	if dto.Type != nil {
-		session.Type = *dto.Type
-	}
-	if dto.IsRecordable != nil {
-		session.IsRecordable = *dto.IsRecordable
 	}
 	if err := s.sessions.Update(ctx, session); err != nil {
 		return nil, err

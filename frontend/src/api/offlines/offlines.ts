@@ -61,8 +61,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * Returns offline rooms filtered by caller role. Filter by class_id or class_session_id. Search matches: title, description. Orderable: created_at, updated_at, published_at, title, view_count.
- * @summary List offline rooms
+ * Returns offline rooms filtered by caller role: super-admins see all, org-staff see their organization, creators see their own rooms, members see rooms in classes they are enrolled in. Filter by class_id or class_session_id. Search matches substrings of: title, description. Orderable fields: created_at, updated_at, published_at, title, view_count. include_deleted requires offlines:update_any.
+ * @summary List offline rooms (scoped by RBAC)
  */
 export type getOfflinesResponse200 = {
   data: GetOfflines200
@@ -177,7 +177,7 @@ export function useGetOfflines<TData = Awaited<ReturnType<typeof getOfflines>>, 
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary List offline rooms
+ * @summary List offline rooms (scoped by RBAC)
  */
 
 export function useGetOfflines<TData = Awaited<ReturnType<typeof getOfflines>>, TError = ErrorType<GetOfflines401 | GetOfflines403 | GetOfflines500>>(

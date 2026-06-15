@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/platform/httpx"
@@ -13,6 +14,13 @@ import (
 var adminBanksListConfig = domain.ListConfig{
 	AllowedSearchFields: []string{"name", "description"},
 	AllowedOrderFields:  []string{"created_at", "updated_at", "name"},
+	DefaultOrderBy:      "created_at",
+	DefaultOrderDir:     "desc",
+}
+
+var adminQuestionsListConfig = domain.ListConfig{
+	AllowedSearchFields: []string{"text"},
+	AllowedOrderFields:  []string{"created_at", "updated_at", "type"},
 	DefaultOrderBy:      "created_at",
 	DefaultOrderDir:     "desc",
 }
@@ -33,7 +41,49 @@ func (h *AdminHandler) RegisterAdminRoutes(group *gin.RouterGroup) {
 	group.POST("/question-banks", h.Create)
 	group.PUT("/question-banks/:id", idParam, h.Update)
 	group.DELETE("/question-banks/:id", idParam, h.HardDelete)
+	group.GET("/questions", h.ListQuestions)
 	group.DELETE("/question-banks/questions/:questionId", questionIDParam, h.HardDeleteQuestion)
+}
+
+// ListQuestions returns questions across all banks/orgs with optional filters.
+// @Summary [Admin] List questions
+// @Description Cross-bank list. Search matches: text. Orderable: created_at, updated_at, type. Filters: bank_id, organization_id, type, include_deleted.
+// @Tags Admin/QuestionBanks
+// @Produce json
+// @Security BearerAuth
+// @Param bank_id query string false "Filter by question bank UUID"
+// @Param organization_id query string false "Filter by organization UUID"
+// @Param type query string false "Filter by question type (descriptive, short_answer, choice)"
+// @Param include_deleted query bool false "Include soft-deleted rows"
+// @Param search query string false "Substring match on text"
+// @Param order_by query string false "One of: created_at, updated_at, type"
+// @Param order_dir query string false "asc or desc"
+// @Param page query int false "1-based page number"
+// @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.Question}}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 500 {object} domain.Response{error=domain.ErrorBody}
+// @Router /admin/questions [get]
+func (h *AdminHandler) ListQuestions(c *gin.Context) {
+	var q domain.AdminListQuestionsQuery
+	if err := c.ShouldBindQuery(&q); err != nil {
+		_ = c.Error(domain.NewValidationError(map[string]string{"query": err.Error()}))
+		return
+	}
+	if err := httpx.BindUUIDQueries(c, map[string]**uuid.UUID{
+		"bank_id":         &q.BankID,
+		"organization_id": &q.OrganizationID,
+	}); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	q.ListParams = listparams.Bind(c, adminQuestionsListConfig)
+	questions, total, err := h.svc.AdminListQuestions(c.Request.Context(), q)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(questions, total, q.ListParams))
 }
 
 // Create creates a question bank in any organization.
@@ -113,6 +163,12 @@ func (h *AdminHandler) List(c *gin.Context) {
 	var q domain.AdminListQuestionBanksQuery
 	if err := c.ShouldBindQuery(&q); err != nil {
 		_ = c.Error(domain.NewValidationError(map[string]string{"query": err.Error()}))
+		return
+	}
+	if err := httpx.BindUUIDQueries(c, map[string]**uuid.UUID{
+		"organization_id": &q.OrganizationID,
+	}); err != nil {
+		_ = c.Error(err)
 		return
 	}
 	q.ListParams = listparams.Bind(c, adminBanksListConfig)

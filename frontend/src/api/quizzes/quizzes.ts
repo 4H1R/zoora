@@ -39,6 +39,10 @@ import type {
   GetQuizzesId401,
   GetQuizzesId403,
   GetQuizzesId404,
+  GetQuizzesIdQuestions200,
+  GetQuizzesIdQuestions401,
+  GetQuizzesIdQuestions403,
+  GetQuizzesIdQuestions404,
   GetQuizzesIdRooms200,
   GetQuizzesIdRooms401,
   GetQuizzesIdRooms403,
@@ -1699,6 +1703,136 @@ export const useDeleteQuizzesId = <TError = ErrorType<DeleteQuizzesId401 | Delet
       return useMutation(getDeleteQuizzesIdMutationOptions(options), queryClient);
     }
     /**
+ * Returns the resolved, ordered list of questions for a quiz, composed from its rules. Choice options keep id+value but lose score; short_answer/descriptive options are stripped. Requires the caller to be able to view the quiz (enrollment or manage permission).
+ * @summary List quiz questions for taking
+ */
+export type getQuizzesIdQuestionsResponse200 = {
+  data: GetQuizzesIdQuestions200
+  status: 200
+}
+
+export type getQuizzesIdQuestionsResponse401 = {
+  data: GetQuizzesIdQuestions401
+  status: 401
+}
+
+export type getQuizzesIdQuestionsResponse403 = {
+  data: GetQuizzesIdQuestions403
+  status: 403
+}
+
+export type getQuizzesIdQuestionsResponse404 = {
+  data: GetQuizzesIdQuestions404
+  status: 404
+}
+
+export type getQuizzesIdQuestionsResponseSuccess = (getQuizzesIdQuestionsResponse200) & {
+  headers: Headers;
+};
+export type getQuizzesIdQuestionsResponseError = (getQuizzesIdQuestionsResponse401 | getQuizzesIdQuestionsResponse403 | getQuizzesIdQuestionsResponse404) & {
+  headers: Headers;
+};
+
+export type getQuizzesIdQuestionsResponse = (getQuizzesIdQuestionsResponseSuccess | getQuizzesIdQuestionsResponseError)
+
+export const getGetQuizzesIdQuestionsUrl = (id: string,) => {
+
+
+
+
+  return `/quizzes/${id}/questions`
+}
+
+export const getQuizzesIdQuestions = async (id: string, options?: RequestInit): Promise<getQuizzesIdQuestionsResponse> => {
+
+  return customInstance<getQuizzesIdQuestionsResponse>(getGetQuizzesIdQuestionsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetQuizzesIdQuestionsQueryKey = (id: string,) => {
+    return [
+    `/quizzes/${id}/questions`
+    ] as const;
+    }
+
+
+export const getGetQuizzesIdQuestionsQueryOptions = <TData = Awaited<ReturnType<typeof getQuizzesIdQuestions>>, TError = ErrorType<GetQuizzesIdQuestions401 | GetQuizzesIdQuestions403 | GetQuizzesIdQuestions404>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdQuestions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetQuizzesIdQuestionsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzesIdQuestions>>> = ({ signal }) => getQuizzesIdQuestions(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdQuestions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetQuizzesIdQuestionsQueryResult = NonNullable<Awaited<ReturnType<typeof getQuizzesIdQuestions>>>
+export type GetQuizzesIdQuestionsQueryError = ErrorType<GetQuizzesIdQuestions401 | GetQuizzesIdQuestions403 | GetQuizzesIdQuestions404>
+
+
+export function useGetQuizzesIdQuestions<TData = Awaited<ReturnType<typeof getQuizzesIdQuestions>>, TError = ErrorType<GetQuizzesIdQuestions401 | GetQuizzesIdQuestions403 | GetQuizzesIdQuestions404>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdQuestions>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getQuizzesIdQuestions>>,
+          TError,
+          Awaited<ReturnType<typeof getQuizzesIdQuestions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesIdQuestions<TData = Awaited<ReturnType<typeof getQuizzesIdQuestions>>, TError = ErrorType<GetQuizzesIdQuestions401 | GetQuizzesIdQuestions403 | GetQuizzesIdQuestions404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdQuestions>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getQuizzesIdQuestions>>,
+          TError,
+          Awaited<ReturnType<typeof getQuizzesIdQuestions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesIdQuestions<TData = Awaited<ReturnType<typeof getQuizzesIdQuestions>>, TError = ErrorType<GetQuizzesIdQuestions401 | GetQuizzesIdQuestions403 | GetQuizzesIdQuestions404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdQuestions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List quiz questions for taking
+ */
+
+export function useGetQuizzesIdQuestions<TData = Awaited<ReturnType<typeof getQuizzesIdQuestions>>, TError = ErrorType<GetQuizzesIdQuestions401 | GetQuizzesIdQuestions403 | GetQuizzesIdQuestions404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdQuestions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetQuizzesIdQuestionsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary List quiz rooms
  */
 export type getQuizzesIdRoomsResponse200 = {

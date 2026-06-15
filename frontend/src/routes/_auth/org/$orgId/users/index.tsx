@@ -4,13 +4,14 @@ import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { orgHead } from "@/lib/org-head"
+import { useOrgGuard } from "@/lib/access"
 import { PlusIcon, UsersIcon } from "lucide-react"
 import { useState } from "react"
-import { Can } from "react-access-engine"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { getGetUsersQueryKey, useDeleteUsersId, useGetUsers } from "@/api/users/users"
+import { useUserPermissions } from "@/components/org/users/use-user-permissions"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { StatCards } from "@/components/data-table/stat-cards"
@@ -35,10 +36,13 @@ function UsersPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { orgId } = Route.useParams()
-  const { page, page_size } = Route.useSearch()
+  const { search, order_by, order_dir, page, page_size } = Route.useSearch()
+  const { canView, canCreate } = useUserPermissions()
+  const allowed = useOrgGuard(["users:view", "users:view_any"])
 
   const currentPage = page ?? 1
   const pageSize = page_size ?? 8
+  const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
@@ -58,10 +62,16 @@ function UsersPage() {
     setFormOpen(true)
   }
 
-  const { data, isLoading } = useGetUsers({
-    page: currentPage,
-    page_size: pageSize,
-  })
+  const { data, isLoading } = useGetUsers(
+    {
+      search: search || undefined,
+      order_by: order_by || undefined,
+      order_dir: order_dir || undefined,
+      page: currentPage,
+      page_size: pageSize,
+    },
+    { query: { enabled: canView } }
+  )
 
   const { rolesMap } = useRolesMap()
 
@@ -85,7 +95,7 @@ function UsersPage() {
     data: users,
     columns,
     rowCount: total,
-    sorting: [],
+    sorting,
   })
 
   const statCards = [
@@ -97,17 +107,19 @@ function UsersPage() {
     },
   ]
 
+  if (!allowed) return null
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title={t("org.users.title")}
         actions={
-          <Can perform="users:create">
+          canCreate ? (
             <Button size="sm" onClick={handleCreate}>
               <PlusIcon data-icon="inline-start" />
               {t("org.users.newUser")}
             </Button>
-          </Can>
+          ) : null
         }
       />
       <StatCards stats={statCards} />

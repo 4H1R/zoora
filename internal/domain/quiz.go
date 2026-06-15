@@ -24,18 +24,21 @@ func (t QuizRuleType) Valid() bool {
 }
 
 type Quiz struct {
-	ID              uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	OrganizationID  uuid.UUID      `gorm:"type:uuid;not null;index" json:"organization_id"`
-	UserID          uuid.UUID      `gorm:"type:uuid;not null;index" json:"user_id"`
-	User            *User          `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	ClassID         uuid.UUID      `gorm:"type:uuid;not null;index" json:"class_id"`
-	Class           *Class         `gorm:"foreignKey:ClassID" json:"class,omitempty"`
-	Title           string         `gorm:"not null" json:"title"`
-	Description     string         `json:"description"`
-	DurationMinutes int            `gorm:"not null" json:"duration_minutes"`
-	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedAt       time.Time      `json:"updated_at"`
-	DeletedAt       gorm.DeletedAt `gorm:"index" json:"-"`
+	ID               uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	OrganizationID   uuid.UUID      `gorm:"type:uuid;not null;index" json:"organization_id"`
+	UserID           uuid.UUID      `gorm:"type:uuid;not null;index" json:"user_id"`
+	User             *User          `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	ClassID          uuid.UUID      `gorm:"type:uuid;not null;index" json:"class_id"`
+	Class            *Class         `gorm:"foreignKey:ClassID" json:"class,omitempty"`
+	Title            string         `gorm:"not null" json:"title"`
+	Description      string         `json:"description"`
+	DurationMinutes  int            `gorm:"not null" json:"duration_minutes"`
+	TotalScore       float64        `gorm:"not null;default:0" json:"total_score"`
+	NoBackNavigation bool           `gorm:"not null;default:false" json:"no_back_navigation"`
+	ShuffleQuestions bool           `gorm:"not null;default:false" json:"shuffle_questions"`
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
+	DeletedAt        gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 type QuizRule struct {
@@ -67,16 +70,20 @@ type QuizRoom struct {
 // --- DTOs ---
 
 type CreateQuizDTO struct {
-	ClassID         uuid.UUID `json:"class_id" binding:"required"`
-	Title           string    `json:"title" binding:"required,min=2"`
-	Description     string    `json:"description"`
-	DurationMinutes int       `json:"duration_minutes" binding:"required,gt=0"`
+	ClassID          uuid.UUID `json:"class_id" binding:"required"`
+	Title            string    `json:"title" binding:"required,min=2"`
+	Description      string    `json:"description"`
+	DurationMinutes  int       `json:"duration_minutes" binding:"required,gt=0"`
+	NoBackNavigation bool      `json:"no_back_navigation"`
+	ShuffleQuestions bool      `json:"shuffle_questions"`
 }
 
 type UpdateQuizDTO struct {
-	Title           *string `json:"title" binding:"omitempty,min=2"`
-	Description     *string `json:"description"`
-	DurationMinutes *int    `json:"duration_minutes" binding:"omitempty,gt=0"`
+	Title            *string `json:"title" binding:"omitempty,min=2"`
+	Description      *string `json:"description"`
+	DurationMinutes  *int    `json:"duration_minutes" binding:"omitempty,gt=0"`
+	NoBackNavigation *bool   `json:"no_back_navigation"`
+	ShuffleQuestions *bool   `json:"shuffle_questions"`
 }
 
 type CreateQuizRuleDTO struct {
@@ -96,18 +103,32 @@ type UpdateQuizRuleDTO struct {
 }
 
 type CreateQuizRoomDTO struct {
-	ClassSessionID uuid.UUID `json:"class_session_id" binding:"required"`
+	ClassSessionID uuid.UUID  `json:"class_session_id" binding:"required"`
+	StartedAt      *time.Time `json:"started_at" binding:"required"`
+	EndedAt        *time.Time `json:"ended_at" binding:"required"`
+}
+
+func (d CreateQuizRoomDTO) Validate() error {
+	if d.StartedAt == nil || d.EndedAt == nil {
+		return NewValidationError(map[string]string{"window": "started_at and ended_at are required"})
+	}
+	if !d.EndedAt.After(*d.StartedAt) {
+		return NewValidationError(map[string]string{"window": "ended_at must be after started_at"})
+	}
+	return nil
 }
 
 type ListQuizzesQuery struct {
-	ClassID        *uuid.UUID `form:"class_id"`
+	ClassID        *uuid.UUID `form:"-"`
+	ClassSessionID *uuid.UUID `form:"-"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }
 
 type AdminListQuizzesQuery struct {
-	ClassID        *uuid.UUID `form:"class_id"`
-	UserID         *uuid.UUID `form:"user_id"`
+	ClassID        *uuid.UUID `form:"-"`
+	ClassSessionID *uuid.UUID `form:"-"`
+	UserID         *uuid.UUID `form:"-"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }
@@ -117,7 +138,7 @@ type ListQuizRulesQuery struct {
 }
 
 type ListQuizRoomsQuery struct {
-	QuizID     *uuid.UUID `form:"quiz_id"`
+	QuizID     *uuid.UUID `form:"-"`
 	ListParams ListParams `form:"-"`
 }
 
@@ -162,9 +183,24 @@ type QuizSubmission struct {
 	UpdatedAt   time.Time          `json:"updated_at"`
 }
 
-// IsRoomOpen returns true when a quiz room is accepting submissions.
+// IsRoomOpen returns true when the quiz room window contains now.
+// StartedAt/EndedAt define the scheduled availability window.
+// A nil EndedAt is treated as open-ended (manual close).
 func (r *QuizRoom) IsRoomOpen() bool {
-	return r.StartedAt != nil && r.EndedAt == nil
+	return r.IsRoomOpenAt(time.Now())
+}
+
+func (r *QuizRoom) IsRoomOpenAt(t time.Time) bool {
+	if r.StartedAt == nil {
+		return false
+	}
+	if t.Before(*r.StartedAt) {
+		return false
+	}
+	if r.EndedAt != nil && !t.Before(*r.EndedAt) {
+		return false
+	}
+	return true
 }
 
 type StartQuizSubmissionDTO struct {
@@ -192,7 +228,7 @@ type GradeSubmissionDTO struct {
 }
 
 type ListSubmissionsQuery struct {
-	UserID     *uuid.UUID `form:"user_id"`
+	UserID     *uuid.UUID `form:"-"`
 	Status     *string    `form:"status"`
 	ListParams ListParams `form:"-"`
 }
@@ -205,9 +241,11 @@ const SubmissionGracePeriod = 30 // seconds
 
 type QuizListScope struct {
 	All            bool
+	OrganizationID *uuid.UUID
 	OwnerID        *uuid.UUID
 	MemberUserID   *uuid.UUID
 	ClassID        *uuid.UUID
+	ClassSessionID *uuid.UUID
 	IncludeDeleted bool
 }
 
@@ -270,6 +308,7 @@ type QuizService interface {
 	EndRoom(ctx context.Context, id uuid.UUID) (*QuizRoom, error)
 	ListRooms(ctx context.Context, quizID uuid.UUID, q ListQuizRoomsQuery) ([]QuizRoom, int64, error)
 
+	ListQuestionsForTaking(ctx context.Context, quizID uuid.UUID) ([]Question, error)
 	StartSubmission(ctx context.Context, quizID uuid.UUID, dto StartQuizSubmissionDTO) (*QuizSubmission, error)
 	SubmitQuiz(ctx context.Context, submissionID uuid.UUID, dto SubmitQuizDTO) (*QuizSubmission, error)
 	GetSubmission(ctx context.Context, id uuid.UUID) (*QuizSubmission, error)

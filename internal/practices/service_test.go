@@ -119,6 +119,11 @@ func (m *mockSessionRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.
 	}
 	return a.Get(0).(*domain.ClassSession), a.Error(1)
 }
+func (m *mockSessionRepo) AdminList(ctx context.Context, q domain.AdminListClassSessionsQuery) ([]domain.ClassSession, int64, error) {
+	a := m.Called(ctx, q)
+	ss, _ := a.Get(0).([]domain.ClassSession)
+	return ss, a.Get(1).(int64), a.Error(2)
+}
 
 type mockClassRepo struct{ mock.Mock }
 
@@ -415,6 +420,7 @@ func TestSubmit_Member_InWindow_Success(t *testing.T) {
 			EndTime:   time.Now().Add(1 * time.Hour),
 		}, nil)
 	memberRepo.On("Exists", ctx, classID, userID).Return(true, nil)
+	subRepo.On("FindByRoomAndUser", ctx, roomID, userID).Return(nil, domain.ErrNotFound)
 	subRepo.On("Create", ctx, mock.AnythingOfType("*domain.PracticeSubmission")).Return(nil)
 
 	sub, err := svc.Submit(ctx, roomID, domain.CreatePracticeSubmissionDTO{Content: "my work"})
@@ -682,4 +688,81 @@ func TestAdminHardDelete_NonAdmin_Forbidden(t *testing.T) {
 	ctx := callerCtx(uuid.New(), false)
 	err := svc.AdminHardDelete(ctx, uuid.New())
 	assert.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+func TestCreateRoom_PersistsAttachments(t *testing.T) {
+	svc, roomRepo, _, sessionRepo, classRepo, _ := newTestService(t)
+
+	userID := uuid.New()
+	classID := uuid.New()
+	sessionID := uuid.New()
+	mediaID := uuid.New()
+	ctx := callerCtx(userID, false, "practices:create")
+
+	sessionRepo.On("FindByID", ctx, sessionID).
+		Return(&domain.ClassSession{ID: sessionID, ClassID: classID}, nil)
+	classRepo.On("FindByID", ctx, classID).
+		Return(&domain.Class{ID: classID, OrganizationID: uuid.New(), UserID: userID}, nil)
+	roomRepo.On("Create", ctx, mock.AnythingOfType("*domain.PracticeRoom")).Return(nil)
+
+	room, err := svc.CreateRoom(ctx, domain.CreatePracticeRoomDTO{
+		ClassSessionID: sessionID,
+		Title:          "HW",
+		StartTime:      time.Now(),
+		EndTime:        time.Now().Add(time.Hour),
+		Attachments:    []uuid.UUID{mediaID},
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, []uuid.UUID{mediaID}, room.Attachments)
+}
+
+func TestUpdateRoom_ReplacesAttachments(t *testing.T) {
+	svc, roomRepo, _, _, _, _ := newTestService(t)
+
+	userID := uuid.New()
+	roomID := uuid.New()
+	oldMedia := uuid.New()
+	newMedia := uuid.New()
+	ctx := callerCtx(userID, false, "practices:update")
+
+	roomRepo.On("FindByID", ctx, roomID).
+		Return(&domain.PracticeRoom{ID: roomID, UserID: userID, Attachments: []uuid.UUID{oldMedia}}, nil)
+	roomRepo.On("Update", ctx, mock.AnythingOfType("*domain.PracticeRoom")).Return(nil)
+
+	newAttachments := []uuid.UUID{newMedia}
+	room, err := svc.UpdateRoom(ctx, roomID, domain.UpdatePracticeRoomDTO{
+		Attachments: &newAttachments,
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, []uuid.UUID{newMedia}, room.Attachments)
+}
+
+func TestSubmit_PersistsAttachments(t *testing.T) {
+	svc, roomRepo, subRepo, _, _, memberRepo := newTestService(t)
+
+	userID := uuid.New()
+	roomID := uuid.New()
+	classID := uuid.New()
+	mediaID := uuid.New()
+	ctx := callerCtx(userID, false, "practices:submit")
+
+	roomRepo.On("FindByID", ctx, roomID).Return(&domain.PracticeRoom{
+		ID:        roomID,
+		ClassID:   classID,
+		StartTime: time.Now().Add(-time.Hour),
+		EndTime:   time.Now().Add(time.Hour),
+	}, nil)
+	memberRepo.On("Exists", ctx, classID, userID).Return(true, nil)
+	subRepo.On("FindByRoomAndUser", ctx, roomID, userID).Return(nil, domain.ErrNotFound)
+	subRepo.On("Create", ctx, mock.AnythingOfType("*domain.PracticeSubmission")).Return(nil)
+
+	sub, err := svc.Submit(ctx, roomID, domain.CreatePracticeSubmissionDTO{
+		Content:     "my answer",
+		Attachments: []uuid.UUID{mediaID},
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, []uuid.UUID{mediaID}, sub.Attachments)
 }

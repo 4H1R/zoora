@@ -3,6 +3,7 @@ package quizzes
 import (
 	"context"
 	"log/slog"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -47,7 +48,17 @@ func canManageQuiz(caller domain.Caller, quiz *domain.Quiz) bool {
 	if caller.IsAdmin {
 		return true
 	}
-	if caller.HasPermission("quizzes:update_any") {
+	if caller.HasPermission(domain.PermQuizzesUpdateAny) {
+		return true
+	}
+	return caller.UserID == quiz.UserID
+}
+
+func canDeleteQuiz(caller domain.Caller, quiz *domain.Quiz) bool {
+	if caller.IsAdmin {
+		return true
+	}
+	if caller.HasPermission(domain.PermQuizzesDeleteAny) {
 		return true
 	}
 	return caller.UserID == quiz.UserID
@@ -55,6 +66,9 @@ func canManageQuiz(caller domain.Caller, quiz *domain.Quiz) bool {
 
 func (s *service) canViewQuiz(ctx context.Context, caller domain.Caller, quiz *domain.Quiz) (bool, error) {
 	if canManageQuiz(caller, quiz) {
+		return true, nil
+	}
+	if caller.HasPermission(domain.PermQuizzesViewAny) {
 		return true, nil
 	}
 	ok, err := s.members.Exists(ctx, quiz.ClassID, caller.UserID)
@@ -77,11 +91,14 @@ func (s *service) Create(ctx context.Context, dto domain.CreateQuizDTO) (*domain
 		return nil, domain.ErrForbidden
 	}
 	quiz := &domain.Quiz{
-		UserID:          caller.UserID,
-		ClassID:         dto.ClassID,
-		Title:           dto.Title,
-		Description:     dto.Description,
-		DurationMinutes: dto.DurationMinutes,
+		OrganizationID:   class.OrganizationID,
+		UserID:           caller.UserID,
+		ClassID:          dto.ClassID,
+		Title:            dto.Title,
+		Description:      dto.Description,
+		DurationMinutes:  dto.DurationMinutes,
+		NoBackNavigation: dto.NoBackNavigation,
+		ShuffleQuestions: dto.ShuffleQuestions,
 	}
 	if err := s.repo.Create(ctx, quiz); err != nil {
 		return nil, err
@@ -134,6 +151,12 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateQui
 	if dto.DurationMinutes != nil {
 		quiz.DurationMinutes = *dto.DurationMinutes
 	}
+	if dto.NoBackNavigation != nil {
+		quiz.NoBackNavigation = *dto.NoBackNavigation
+	}
+	if dto.ShuffleQuestions != nil {
+		quiz.ShuffleQuestions = *dto.ShuffleQuestions
+	}
 	if err := s.repo.Update(ctx, quiz); err != nil {
 		return nil, err
 	}
@@ -149,7 +172,7 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if !canManageQuiz(caller, quiz) {
+	if !canDeleteQuiz(caller, quiz) {
 		return domain.ErrForbidden
 	}
 	if err := s.repo.Delete(ctx, id); err != nil {
@@ -169,6 +192,7 @@ func (s *service) List(ctx context.Context, q domain.ListQuizzesQuery) ([]domain
 	}
 	scope := s.resolveListScope(caller)
 	scope.ClassID = q.ClassID
+	scope.ClassSessionID = q.ClassSessionID
 	if canManage(caller) {
 		scope.IncludeDeleted = q.IncludeDeleted
 	}
@@ -179,8 +203,8 @@ func (s *service) resolveListScope(caller domain.Caller) domain.QuizListScope {
 	if caller.IsAdmin {
 		return domain.QuizListScope{All: true}
 	}
-	if caller.HasPermission("quizzes:update_any") {
-		return domain.QuizListScope{All: true}
+	if caller.HasPermission(domain.PermQuizzesViewAny) || caller.HasPermission(domain.PermQuizzesUpdateAny) {
+		return domain.QuizListScope{All: true, OrganizationID: caller.OrgID}
 	}
 	userID := caller.UserID
 	return domain.QuizListScope{
@@ -190,14 +214,14 @@ func (s *service) resolveListScope(caller domain.Caller) domain.QuizListScope {
 }
 
 func canManage(caller domain.Caller) bool {
-	return caller.IsAdmin || caller.HasPermission("quizzes:update_any")
+	return caller.IsAdmin || caller.HasPermission(domain.PermQuizzesUpdateAny)
 }
 
 func canManageClass(caller domain.Caller, class *domain.Class) bool {
 	if caller.IsAdmin {
 		return true
 	}
-	if caller.HasPermission("quizzes:update_any") {
+	if caller.HasPermission(domain.PermClassesUpdateAny) {
 		return true
 	}
 	return caller.UserID == class.UserID
@@ -217,16 +241,23 @@ func (s *service) CreateRule(ctx context.Context, quizID uuid.UUID, dto domain.C
 	if !canManageQuiz(caller, quiz) {
 		return nil, domain.ErrForbidden
 	}
+	questionIDs := dto.QuestionIDs
+	if questionIDs == nil {
+		questionIDs = []uuid.UUID{}
+	}
 	rule := &domain.QuizRule{
 		QuizID:      quizID,
 		Type:        dto.Type,
 		BankID:      dto.BankID,
-		QuestionIDs: dto.QuestionIDs,
+		QuestionIDs: questionIDs,
 		Count:       dto.Count,
 		IsDynamic:   dto.IsDynamic,
 	}
 	if err := s.rules.Create(ctx, rule); err != nil {
 		return nil, err
+	}
+	if err := s.recomputeQuizTotal(ctx, quizID); err != nil {
+		s.logger.Warn("failed to recompute quiz total", "quiz_id", quizID.String(), "err", err)
 	}
 	return rule, nil
 }
@@ -288,6 +319,9 @@ func (s *service) UpdateRule(ctx context.Context, id uuid.UUID, dto domain.Updat
 	if err := s.rules.Update(ctx, rule); err != nil {
 		return nil, err
 	}
+	if err := s.recomputeQuizTotal(ctx, rule.QuizID); err != nil {
+		s.logger.Warn("failed to recompute quiz total", "quiz_id", rule.QuizID.String(), "err", err)
+	}
 	return rule, nil
 }
 
@@ -307,7 +341,66 @@ func (s *service) DeleteRule(ctx context.Context, id uuid.UUID) error {
 	if !canManageQuiz(caller, quiz) {
 		return domain.ErrForbidden
 	}
-	return s.rules.Delete(ctx, id)
+	if err := s.rules.Delete(ctx, id); err != nil {
+		return err
+	}
+	if err := s.recomputeQuizTotal(ctx, rule.QuizID); err != nil {
+		s.logger.Warn("failed to recompute quiz total", "quiz_id", rule.QuizID.String(), "err", err)
+	}
+	return nil
+}
+
+// recomputeQuizTotal aggregates the max score of every question wired into
+// the quiz's rules and persists it on the quiz row.
+func (s *service) recomputeQuizTotal(ctx context.Context, quizID uuid.UUID) error {
+	rules, _, err := s.rules.ListByQuiz(ctx, quizID, domain.ListParams{Page: 1, PageSize: 10000})
+	if err != nil {
+		return err
+	}
+	var total float64
+	for _, r := range rules {
+		switch r.Type {
+		case domain.QuizRuleTypeManual:
+			if len(r.QuestionIDs) == 0 {
+				continue
+			}
+			qs, err := s.questions.FindByIDs(ctx, r.QuestionIDs)
+			if err != nil {
+				return err
+			}
+			for i := range qs {
+				total += qs[i].MaxScore()
+			}
+		case domain.QuizRuleTypeRandom:
+			if r.BankID == nil || r.Count == 0 {
+				continue
+			}
+			all, err := s.questions.ListAllByBank(ctx, *r.BankID)
+			if err != nil {
+				return err
+			}
+			if len(all) == 0 {
+				continue
+			}
+			var sum float64
+			for i := range all {
+				sum += all[i].MaxScore()
+			}
+			total += (sum / float64(len(all))) * float64(r.Count)
+		}
+	}
+	// Round to 2 decimals — random rules use weighted average that
+	// otherwise produces noisy repeating decimals like 41.857142857142854.
+	total = math.Round(total*100) / 100
+	quiz, err := s.repo.FindByID(ctx, quizID)
+	if err != nil {
+		return err
+	}
+	if quiz.TotalScore == total {
+		return nil
+	}
+	quiz.TotalScore = total
+	return s.repo.Update(ctx, quiz)
 }
 
 func (s *service) ListRules(ctx context.Context, quizID uuid.UUID, q domain.ListQuizRulesQuery) ([]domain.QuizRule, int64, error) {
@@ -336,6 +429,9 @@ func (s *service) CreateRoom(ctx context.Context, quizID uuid.UUID, dto domain.C
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
+	if err := dto.Validate(); err != nil {
+		return nil, err
+	}
 	quiz, err := s.repo.FindByID(ctx, quizID)
 	if err != nil {
 		return nil, err
@@ -346,6 +442,8 @@ func (s *service) CreateRoom(ctx context.Context, quizID uuid.UUID, dto domain.C
 	room := &domain.QuizRoom{
 		QuizID:         quizID,
 		ClassSessionID: dto.ClassSessionID,
+		StartedAt:      dto.StartedAt,
+		EndedAt:        dto.EndedAt,
 	}
 	if err := s.rooms.Create(ctx, room); err != nil {
 		return nil, err
@@ -398,11 +496,14 @@ func (s *service) StartRoom(ctx context.Context, id uuid.UUID) (*domain.QuizRoom
 	if !canManageQuiz(caller, quiz) {
 		return nil, domain.ErrForbidden
 	}
-	if room.StartedAt != nil {
+	now := time.Now()
+	// Allow early open: only override StartedAt when it lies in the future.
+	if room.StartedAt == nil || now.Before(*room.StartedAt) {
+		room.StartedAt = &now
+	}
+	if room.EndedAt != nil && !room.EndedAt.After(now) {
 		return nil, domain.ErrConflict
 	}
-	now := time.Now()
-	room.StartedAt = &now
 	if err := s.rooms.Update(ctx, room); err != nil {
 		return nil, err
 	}
@@ -429,10 +530,10 @@ func (s *service) EndRoom(ctx context.Context, id uuid.UUID) (*domain.QuizRoom, 
 	if !canManageQuiz(caller, quiz) {
 		return nil, domain.ErrForbidden
 	}
-	if room.EndedAt != nil {
+	now := time.Now()
+	if room.EndedAt != nil && !room.EndedAt.After(now) {
 		return nil, domain.ErrConflict
 	}
-	now := time.Now()
 	room.EndedAt = &now
 	if err := s.rooms.Update(ctx, room); err != nil {
 		return nil, err

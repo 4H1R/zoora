@@ -1354,7 +1354,7 @@ export const useDeleteClassesIdMembersUserId = <TError = ErrorType<DeleteClasses
       return useMutation(getDeleteClassesIdMembersUserIdMutationOptions(options), queryClient);
     }
     /**
- * Search matches substrings of: name, description. Orderable fields: created_at, updated_at, name, start_time. Filter by session type: live|quiz|practice.
+ * Search matches substrings of: name, description. Orderable fields: created_at, updated_at, name, start_time.
  * @summary List class sessions
  */
 export type getClassesIdSessionsResponse200 = {

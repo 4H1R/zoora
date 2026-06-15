@@ -10,6 +10,8 @@ export interface GithubCom4H1RZooraInternalDomainCreateQuizDTO {
   class_id: string;
   description?: string;
   duration_minutes: number;
+  no_back_navigation?: boolean;
+  shuffle_questions?: boolean;
   /** @minLength 2 */
   title: string;
 }

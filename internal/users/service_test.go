@@ -27,6 +27,13 @@ func (m *mockUserRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.User
 	}
 	return args.Get(0).(*domain.User), args.Error(1)
 }
+func (m *mockUserRepo) FindByIDWithPermissions(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.User), args.Error(1)
+}
 func (m *mockUserRepo) FindByUsername(ctx context.Context, username string) (*domain.User, error) {
 	args := m.Called(ctx, username)
 	if args.Get(0) == nil {
@@ -40,8 +47,8 @@ func (m *mockUserRepo) Update(ctx context.Context, user *domain.User) error {
 func (m *mockUserRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
-func (m *mockUserRepo) List(ctx context.Context, q domain.ListUsersQuery) ([]domain.User, int64, error) {
-	args := m.Called(ctx, q)
+func (m *mockUserRepo) List(ctx context.Context, scope domain.UserListScope, p domain.ListParams) ([]domain.User, int64, error) {
+	args := m.Called(ctx, scope, p)
 	return args.Get(0).([]domain.User), args.Get(1).(int64), args.Error(2)
 }
 func (m *mockUserRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
@@ -153,7 +160,7 @@ func TestGetProfile(t *testing.T) {
 
 	userID := uuid.New()
 	expected := &domain.User{ID: userID, Name: "Test"}
-	repo.On("FindByID", ctx, userID).Return(expected, nil)
+	repo.On("FindByIDWithPermissions", ctx, userID).Return(expected, nil)
 
 	svc := users.NewService(repo, &mockRoleRepo{}, logger)
 
@@ -186,7 +193,7 @@ func TestList_NoCaller_Forbidden(t *testing.T) {
 
 	svc := users.NewService(repo, &mockRoleRepo{}, logger)
 
-	_, _, err := svc.List(ctx, domain.ListUsersQuery{})
+	_, _, err := svc.List(ctx, domain.ListParams{})
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 
@@ -196,29 +203,32 @@ func TestList_AdminGetsAll(t *testing.T) {
 	repo := &mockUserRepo{}
 
 	userList := []domain.User{{Name: "User 1"}}
-	repo.On("List", ctx, mock.MatchedBy(func(q domain.ListUsersQuery) bool {
-		return q.ListParams.Page == 1 && q.ListParams.PageSize == domain.DefaultPageSize
-	})).Return(userList, int64(1), nil)
+	repo.On("List", ctx, mock.MatchedBy(func(scope domain.UserListScope) bool {
+		return scope.All && scope.OrganizationID == nil
+	}), mock.AnythingOfType("domain.ListParams")).Return(userList, int64(1), nil)
 
 	svc := users.NewService(repo, &mockRoleRepo{}, logger)
 
-	result, total, err := svc.List(ctx, domain.ListUsersQuery{})
+	result, total, err := svc.List(ctx, domain.ListParams{Page: 1, PageSize: domain.DefaultPageSize})
 	assert.NoError(t, err)
 	assert.Len(t, result, 1)
 	assert.Equal(t, int64(1), total)
 }
 
-func TestList_AnyCallerGetsAll(t *testing.T) {
-	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New()})
+func TestList_NonAdminScopedToOrg(t *testing.T) {
+	orgID := uuid.New()
+	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New(), OrgID: &orgID})
 	logger := slog.Default()
 	repo := &mockUserRepo{}
 
 	userList := []domain.User{{Name: "User 1"}}
-	repo.On("List", ctx, mock.AnythingOfType("domain.ListUsersQuery")).Return(userList, int64(1), nil)
+	repo.On("List", ctx, mock.MatchedBy(func(scope domain.UserListScope) bool {
+		return !scope.All && scope.OrganizationID != nil && *scope.OrganizationID == orgID
+	}), mock.AnythingOfType("domain.ListParams")).Return(userList, int64(1), nil)
 
 	svc := users.NewService(repo, &mockRoleRepo{}, logger)
 
-	result, total, err := svc.List(ctx, domain.ListUsersQuery{})
+	result, total, err := svc.List(ctx, domain.ListParams{Page: 1, PageSize: domain.DefaultPageSize})
 	assert.NoError(t, err)
 	assert.Len(t, result, 1)
 	assert.Equal(t, int64(1), total)

@@ -34,6 +34,9 @@ import type {
   GetMediaId200,
   GetMediaId401,
   GetMediaId404,
+  GetMediaIdDownloadUrl200,
+  GetMediaIdDownloadUrl401,
+  GetMediaIdDownloadUrl404,
   GetMediaParams,
   GithubCom4H1RZooraInternalDomainPresignUploadDTO,
   GithubCom4H1RZooraInternalDomainResponse,
@@ -504,3 +507,128 @@ export const useDeleteMediaId = <TError = ErrorType<DeleteMediaId401 | DeleteMed
       > => {
       return useMutation(getDeleteMediaIdMutationOptions(options), queryClient);
     }
+    /**
+ * Returns a presigned URL that grants temporary read access to the underlying S3 object.
+ * @summary Get presigned download URL
+ */
+export type getMediaIdDownloadUrlResponse200 = {
+  data: GetMediaIdDownloadUrl200
+  status: 200
+}
+
+export type getMediaIdDownloadUrlResponse401 = {
+  data: GetMediaIdDownloadUrl401
+  status: 401
+}
+
+export type getMediaIdDownloadUrlResponse404 = {
+  data: GetMediaIdDownloadUrl404
+  status: 404
+}
+
+export type getMediaIdDownloadUrlResponseSuccess = (getMediaIdDownloadUrlResponse200) & {
+  headers: Headers;
+};
+export type getMediaIdDownloadUrlResponseError = (getMediaIdDownloadUrlResponse401 | getMediaIdDownloadUrlResponse404) & {
+  headers: Headers;
+};
+
+export type getMediaIdDownloadUrlResponse = (getMediaIdDownloadUrlResponseSuccess | getMediaIdDownloadUrlResponseError)
+
+export const getGetMediaIdDownloadUrlUrl = (id: string,) => {
+
+
+
+
+  return `/media/${id}/download-url`
+}
+
+export const getMediaIdDownloadUrl = async (id: string, options?: RequestInit): Promise<getMediaIdDownloadUrlResponse> => {
+
+  return customInstance<getMediaIdDownloadUrlResponse>(getGetMediaIdDownloadUrlUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMediaIdDownloadUrlQueryKey = (id: string,) => {
+    return [
+    `/media/${id}/download-url`
+    ] as const;
+    }
+
+
+export const getGetMediaIdDownloadUrlQueryOptions = <TData = Awaited<ReturnType<typeof getMediaIdDownloadUrl>>, TError = ErrorType<GetMediaIdDownloadUrl401 | GetMediaIdDownloadUrl404>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaIdDownloadUrl>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMediaIdDownloadUrlQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMediaIdDownloadUrl>>> = ({ signal }) => getMediaIdDownloadUrl(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMediaIdDownloadUrl>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMediaIdDownloadUrlQueryResult = NonNullable<Awaited<ReturnType<typeof getMediaIdDownloadUrl>>>
+export type GetMediaIdDownloadUrlQueryError = ErrorType<GetMediaIdDownloadUrl401 | GetMediaIdDownloadUrl404>
+
+
+export function useGetMediaIdDownloadUrl<TData = Awaited<ReturnType<typeof getMediaIdDownloadUrl>>, TError = ErrorType<GetMediaIdDownloadUrl401 | GetMediaIdDownloadUrl404>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaIdDownloadUrl>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMediaIdDownloadUrl>>,
+          TError,
+          Awaited<ReturnType<typeof getMediaIdDownloadUrl>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMediaIdDownloadUrl<TData = Awaited<ReturnType<typeof getMediaIdDownloadUrl>>, TError = ErrorType<GetMediaIdDownloadUrl401 | GetMediaIdDownloadUrl404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaIdDownloadUrl>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMediaIdDownloadUrl>>,
+          TError,
+          Awaited<ReturnType<typeof getMediaIdDownloadUrl>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMediaIdDownloadUrl<TData = Awaited<ReturnType<typeof getMediaIdDownloadUrl>>, TError = ErrorType<GetMediaIdDownloadUrl401 | GetMediaIdDownloadUrl404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaIdDownloadUrl>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get presigned download URL
+ */
+
+export function useGetMediaIdDownloadUrl<TData = Awaited<ReturnType<typeof getMediaIdDownloadUrl>>, TError = ErrorType<GetMediaIdDownloadUrl401 | GetMediaIdDownloadUrl404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaIdDownloadUrl>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMediaIdDownloadUrlQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+

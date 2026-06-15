@@ -2,6 +2,7 @@ import type { GithubCom4H1RZooraInternalDomainRole as Role } from "@/api/model"
 import type { ColumnDef } from "@tanstack/react-table"
 
 import { EllipsisVerticalIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import { useAccess } from "react-access-engine"
 import { useTranslation } from "react-i18next"
 
 import { Badge } from "@/components/ui/badge"
@@ -26,22 +27,32 @@ interface RoleRowActionsProps {
 
 function RoleRowActions({ role, onEdit, onDelete }: RoleRowActionsProps) {
   const { t } = useTranslation()
+  const { can } = useAccess()
 
   if (role.is_preset) return null
 
+  const canEdit = can("roles:update")
+  const canDelete = can("roles:delete")
+
+  if (!canEdit && !canDelete) return null
+
   return (
     <div className="flex items-center justify-end gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
-      <Button variant="ghost" size="icon-xs" onClick={() => onEdit(role)}>
-        <PencilIcon />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon-xs"
-        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-        onClick={() => onDelete(role)}
-      >
-        <Trash2Icon />
-      </Button>
+      {canEdit && (
+        <Button variant="ghost" size="icon-xs" onClick={() => onEdit(role)}>
+          <PencilIcon />
+        </Button>
+      )}
+      {canDelete && (
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+          onClick={() => onDelete(role)}
+        >
+          <Trash2Icon />
+        </Button>
+      )}
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
@@ -51,19 +62,23 @@ function RoleRowActions({ role, onEdit, onDelete }: RoleRowActionsProps) {
           }
         />
         <DropdownMenuContent align="end" className="min-w-44">
-          <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => onEdit(role)}>
-              <PencilIcon data-icon="inline-start" />
-              {t("org.roles.actions.edit")}
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuGroup>
-            <DropdownMenuItem variant="destructive" onClick={() => onDelete(role)}>
-              <Trash2Icon data-icon="inline-start" />
-              {t("org.roles.actions.delete")}
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
+          {canEdit && (
+            <DropdownMenuGroup>
+              <DropdownMenuItem onClick={() => onEdit(role)}>
+                <PencilIcon data-icon="inline-start" />
+                {t("org.roles.actions.edit")}
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          )}
+          {canEdit && canDelete && <DropdownMenuSeparator />}
+          {canDelete && (
+            <DropdownMenuGroup>
+              <DropdownMenuItem variant="destructive" onClick={() => onDelete(role)}>
+                <Trash2Icon data-icon="inline-start" />
+                {t("org.roles.actions.delete")}
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

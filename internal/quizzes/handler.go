@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/platform/httpx"
@@ -51,28 +52,29 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 
 	authed := rg.Group("", authMiddleware)
 	{
-		authed.GET("/quizzes", h.List)
+		authed.GET("/quizzes", perm(domain.PermQuizzesView), h.List)
 		authed.POST("/quizzes", perm(domain.PermQuizzesCreate), h.Create)
-		authed.GET("/quizzes/:id", idParam, h.Get)
+		authed.GET("/quizzes/:id", perm(domain.PermQuizzesView), idParam, h.Get)
 		authed.PUT("/quizzes/:id", perm(domain.PermQuizzesUpdate), idParam, h.Update)
 		authed.DELETE("/quizzes/:id", perm(domain.PermQuizzesDelete), idParam, h.Delete)
 
-		authed.GET("/quizzes/:id/rules", idParam, h.ListRules)
+		authed.GET("/quizzes/:id/rules", perm(domain.PermQuizzesView), idParam, h.ListRules)
 		authed.POST("/quizzes/:id/rules", perm(domain.PermQuizzesUpdate), idParam, h.CreateRule)
-		authed.GET("/quizzes/rules/:ruleId", ruleIDParam, h.GetRule)
+		authed.GET("/quizzes/rules/:ruleId", perm(domain.PermQuizzesView), ruleIDParam, h.GetRule)
 		authed.PUT("/quizzes/rules/:ruleId", perm(domain.PermQuizzesUpdate), ruleIDParam, h.UpdateRule)
 		authed.DELETE("/quizzes/rules/:ruleId", perm(domain.PermQuizzesDelete), ruleIDParam, h.DeleteRule)
 
-		authed.GET("/quizzes/:id/rooms", idParam, h.ListRooms)
+		authed.GET("/quizzes/:id/rooms", perm(domain.PermQuizzesView), idParam, h.ListRooms)
 		authed.POST("/quizzes/:id/rooms", perm(domain.PermQuizzesUpdate), idParam, h.CreateRoom)
-		authed.GET("/quizzes/rooms/:roomId", roomIDParam, h.GetRoom)
+		authed.GET("/quizzes/rooms/:roomId", perm(domain.PermQuizzesView), roomIDParam, h.GetRoom)
 		authed.POST("/quizzes/rooms/:roomId/start", perm(domain.PermQuizzesUpdate), roomIDParam, h.StartRoom)
 		authed.POST("/quizzes/rooms/:roomId/end", perm(domain.PermQuizzesUpdate), roomIDParam, h.EndRoom)
 
-		authed.POST("/quizzes/:id/submissions", idParam, h.StartSubmission)
-		authed.GET("/quizzes/:id/submissions", idParam, h.ListSubmissions)
-		authed.POST("/quizzes/submissions/:submissionId/submit", submissionIDParam, h.SubmitQuiz)
-		authed.GET("/quizzes/submissions/:submissionId", submissionIDParam, h.GetSubmission)
+		authed.GET("/quizzes/:id/questions", perm(domain.PermQuizzesView), idParam, h.ListQuestionsForTaking)
+		authed.POST("/quizzes/:id/submissions", perm(domain.PermQuizzesView), idParam, h.StartSubmission)
+		authed.GET("/quizzes/:id/submissions", perm(domain.PermQuizzesView), idParam, h.ListSubmissions)
+		authed.POST("/quizzes/submissions/:submissionId/submit", perm(domain.PermQuizzesView), submissionIDParam, h.SubmitQuiz)
+		authed.GET("/quizzes/submissions/:submissionId", perm(domain.PermQuizzesView), submissionIDParam, h.GetSubmission)
 		authed.POST("/quizzes/submissions/:submissionId/grade", perm(domain.PermQuizzesUpdate), submissionIDParam, h.GradeSubmission)
 	}
 }
@@ -84,6 +86,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 // @Produce json
 // @Security BearerAuth
 // @Param class_id query string false "Filter by class UUID"
+// @Param class_session_id query string false "Filter by class session UUID (matches quizzes with a quiz_room in that session)"
 // @Param search query string false "Substring match on title/description"
 // @Param order_by query string false "One of: created_at, updated_at, title, duration_minutes"
 // @Param order_dir query string false "asc or desc"
@@ -97,6 +100,13 @@ func (h *Handler) List(c *gin.Context) {
 	var q domain.ListQuizzesQuery
 	if err := c.ShouldBindQuery(&q); err != nil {
 		_ = c.Error(domain.NewValidationError(map[string]string{"query": err.Error()}))
+		return
+	}
+	if err := httpx.BindUUIDQueries(c, map[string]**uuid.UUID{
+		"class_id":         &q.ClassID,
+		"class_session_id": &q.ClassSessionID,
+	}); err != nil {
+		_ = c.Error(err)
 		return
 	}
 	q.ListParams = listparams.Bind(c, quizzesListConfig)
@@ -436,6 +446,28 @@ func (h *Handler) EndRoom(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, room)
 }
 
+// ListQuestionsForTaking returns the ordered question list a student sees
+// while taking the quiz, with answer keys stripped.
+// @Summary List quiz questions for taking
+// @Description Returns the resolved, ordered list of questions for a quiz, composed from its rules. Choice options keep id+value but lose score; short_answer/descriptive options are stripped. Requires the caller to be able to view the quiz (enrollment or manage permission).
+// @Tags Quizzes
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Quiz UUID"
+// @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.Question}}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /quizzes/{id}/questions [get]
+func (h *Handler) ListQuestionsForTaking(c *gin.Context) {
+	questions, err := h.svc.ListQuestionsForTaking(c.Request.Context(), httpx.UUIDParam(c, "id"))
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(questions, int64(len(questions)), domain.ListParams{Page: 1, PageSize: len(questions)}))
+}
+
 // --- Submissions ---
 
 // StartSubmission begins a quiz attempt for the caller.
@@ -536,6 +568,10 @@ func (h *Handler) ListSubmissions(c *gin.Context) {
 	var q domain.ListSubmissionsQuery
 	if err := c.ShouldBindQuery(&q); err != nil {
 		_ = c.Error(domain.NewValidationError(map[string]string{"query": err.Error()}))
+		return
+	}
+	if err := httpx.BindUUIDQueries(c, map[string]**uuid.UUID{"user_id": &q.UserID}); err != nil {
+		_ = c.Error(err)
 		return
 	}
 	q.ListParams = listparams.Bind(c, submissionsListConfig)

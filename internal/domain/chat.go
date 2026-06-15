@@ -142,13 +142,13 @@ type ToggleReactionDTO struct {
 }
 
 type ListMessagesQuery struct {
-	ParentMessageID *uuid.UUID `form:"parent_message_id"`
+	ParentMessageID *uuid.UUID `form:"-"`
 	ListParams      ListParams `form:"-"`
 }
 
 type ListChatsQuery struct {
 	ModelType  string     `form:"model_type"`
-	ModelID    *uuid.UUID `form:"model_id"`
+	ModelID    *uuid.UUID `form:"-"`
 	Status     *ChatStatus `form:"status"`
 	ListParams ListParams  `form:"-"`
 }

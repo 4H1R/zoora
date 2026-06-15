@@ -32,6 +32,11 @@ import type {
   GetClassesIdGradebook401,
   GetClassesIdGradebook403,
   GetClassesIdGradebook404,
+  GetClassesIdGradebookColumns200,
+  GetClassesIdGradebookColumns401,
+  GetClassesIdGradebookColumns403,
+  GetClassesIdGradebookColumns404,
+  GetClassesIdGradebookColumnsParams,
   GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTO,
   GithubCom4H1RZooraInternalDomainResponse,
   GithubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO,
@@ -178,6 +183,151 @@ export function useGetClassesIdGradebook<TData = Awaited<ReturnType<typeof getCl
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetClassesIdGradebookQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * Search matches substrings of: title. Orderable fields: created_at, updated_at, title, order_index. Filters: type.
+ * @summary List gradebook columns
+ */
+export type getClassesIdGradebookColumnsResponse200 = {
+  data: GetClassesIdGradebookColumns200
+  status: 200
+}
+
+export type getClassesIdGradebookColumnsResponse401 = {
+  data: GetClassesIdGradebookColumns401
+  status: 401
+}
+
+export type getClassesIdGradebookColumnsResponse403 = {
+  data: GetClassesIdGradebookColumns403
+  status: 403
+}
+
+export type getClassesIdGradebookColumnsResponse404 = {
+  data: GetClassesIdGradebookColumns404
+  status: 404
+}
+
+export type getClassesIdGradebookColumnsResponseSuccess = (getClassesIdGradebookColumnsResponse200) & {
+  headers: Headers;
+};
+export type getClassesIdGradebookColumnsResponseError = (getClassesIdGradebookColumnsResponse401 | getClassesIdGradebookColumnsResponse403 | getClassesIdGradebookColumnsResponse404) & {
+  headers: Headers;
+};
+
+export type getClassesIdGradebookColumnsResponse = (getClassesIdGradebookColumnsResponseSuccess | getClassesIdGradebookColumnsResponseError)
+
+export const getGetClassesIdGradebookColumnsUrl = (id: string,
+    params?: GetClassesIdGradebookColumnsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/classes/${id}/gradebook/columns?${stringifiedParams}` : `/classes/${id}/gradebook/columns`
+}
+
+export const getClassesIdGradebookColumns = async (id: string,
+    params?: GetClassesIdGradebookColumnsParams, options?: RequestInit): Promise<getClassesIdGradebookColumnsResponse> => {
+
+  return customInstance<getClassesIdGradebookColumnsResponse>(getGetClassesIdGradebookColumnsUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetClassesIdGradebookColumnsQueryKey = (id: string,
+    params?: GetClassesIdGradebookColumnsParams,) => {
+    return [
+    `/classes/${id}/gradebook/columns`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetClassesIdGradebookColumnsQueryOptions = <TData = Awaited<ReturnType<typeof getClassesIdGradebookColumns>>, TError = ErrorType<GetClassesIdGradebookColumns401 | GetClassesIdGradebookColumns403 | GetClassesIdGradebookColumns404>>(id: string,
+    params?: GetClassesIdGradebookColumnsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdGradebookColumns>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetClassesIdGradebookColumnsQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClassesIdGradebookColumns>>> = ({ signal }) => getClassesIdGradebookColumns(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClassesIdGradebookColumns>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetClassesIdGradebookColumnsQueryResult = NonNullable<Awaited<ReturnType<typeof getClassesIdGradebookColumns>>>
+export type GetClassesIdGradebookColumnsQueryError = ErrorType<GetClassesIdGradebookColumns401 | GetClassesIdGradebookColumns403 | GetClassesIdGradebookColumns404>
+
+
+export function useGetClassesIdGradebookColumns<TData = Awaited<ReturnType<typeof getClassesIdGradebookColumns>>, TError = ErrorType<GetClassesIdGradebookColumns401 | GetClassesIdGradebookColumns403 | GetClassesIdGradebookColumns404>>(
+ id: string,
+    params: undefined |  GetClassesIdGradebookColumnsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdGradebookColumns>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getClassesIdGradebookColumns>>,
+          TError,
+          Awaited<ReturnType<typeof getClassesIdGradebookColumns>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClassesIdGradebookColumns<TData = Awaited<ReturnType<typeof getClassesIdGradebookColumns>>, TError = ErrorType<GetClassesIdGradebookColumns401 | GetClassesIdGradebookColumns403 | GetClassesIdGradebookColumns404>>(
+ id: string,
+    params?: GetClassesIdGradebookColumnsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdGradebookColumns>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getClassesIdGradebookColumns>>,
+          TError,
+          Awaited<ReturnType<typeof getClassesIdGradebookColumns>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClassesIdGradebookColumns<TData = Awaited<ReturnType<typeof getClassesIdGradebookColumns>>, TError = ErrorType<GetClassesIdGradebookColumns401 | GetClassesIdGradebookColumns403 | GetClassesIdGradebookColumns404>>(
+ id: string,
+    params?: GetClassesIdGradebookColumnsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdGradebookColumns>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List gradebook columns
+ */
+
+export function useGetClassesIdGradebookColumns<TData = Awaited<ReturnType<typeof getClassesIdGradebookColumns>>, TError = ErrorType<GetClassesIdGradebookColumns401 | GetClassesIdGradebookColumns403 | GetClassesIdGradebookColumns404>>(
+ id: string,
+    params?: GetClassesIdGradebookColumnsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdGradebookColumns>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetClassesIdGradebookColumnsQueryOptions(id,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

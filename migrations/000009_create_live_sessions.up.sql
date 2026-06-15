@@ -11,7 +11,6 @@ CREATE TABLE live_rooms (
     updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at        TIMESTAMPTZ,
     CONSTRAINT fk_live_rooms_class_session FOREIGN KEY (class_session_id) REFERENCES class_sessions (id) ON DELETE CASCADE,
-    CONSTRAINT uq_live_rooms_class_session UNIQUE (class_session_id),
     CONSTRAINT uq_live_rooms_livekit_room_name UNIQUE (livekit_room_name),
     CONSTRAINT chk_live_rooms_status CHECK (status IN ('created', 'active', 'finished'))
 );

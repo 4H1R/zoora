@@ -1,4 +1,10 @@
 {
+  "time": {
+    "daysShort": "d",
+    "hoursShort": "h",
+    "minutesShort": "m",
+    "secondsShort": "s"
+  },
   "common": {
     "brandName": "Zoora",
     "getStarted": "Get started",
@@ -20,13 +26,15 @@
     "recording": "Recording",
     "publish": "Publish",
     "create": "Create",
+    "edit": "Edit",
     "delete": "Delete",
     "deleteConfirm": {
       "title": "Are you sure?",
       "description": "This will permanently delete \"{{name}}\". This action cannot be undone."
     },
     "default": "Default",
-    "noResults": "No results."
+    "noResults": "No results.",
+    "loading": "Loading…"
   },
   "nav": {
     "overview": "Overview",
@@ -174,7 +182,82 @@
     "nav": {
       "users": "Users",
       "roles": "Roles",
-      "classes": "Classes"
+      "classes": "Classes",
+      "sessions": "Sessions",
+      "liveRooms": "Live Rooms",
+      "offlines": "Offline Rooms",
+      "practices": "Practices"
+    },
+    "classManagement": {
+      "title": "Class Management",
+      "sessions": "Sessions",
+      "offlines": "Offline Content",
+      "liveRooms": "Live Sessions",
+      "practices": "Practices",
+      "quizzes": "Quizzes",
+      "questions": "Question Bank",
+      "gradebook": "Gradebook",
+      "backToSessions": "Back to sessions"
+    },
+    "bankPicker": {
+      "placeholder": "Select question bank…"
+    },
+    "classSessionPicker": {
+      "classPlaceholder": "Select class…",
+      "sessionPlaceholder": "Select session…",
+      "selectClassFirst": "Select a class first"
+    },
+    "attendance": {
+      "title": "Attendance",
+      "searchPlaceholder": "Search by remarks…",
+      "student": "Student",
+      "class": "Class",
+      "session": "Session",
+      "status": "Status",
+      "source": "Source",
+      "remarks": "Remarks",
+      "createdAt": "Created",
+      "noResults": "No attendance records found",
+      "noResultsHint": "Try adjusting your search or filters.",
+      "stats": {
+        "total": "Total records"
+      },
+      "filter": {
+        "class": "Class",
+        "session": "Session",
+        "status": "Status",
+        "allStatuses": "All statuses",
+        "clear": "Clear filters"
+      },
+      "statuses": {
+        "present": "Present",
+        "absent": "Absent",
+        "late": "Late",
+        "excused": "Excused"
+      },
+      "sources": {
+        "auto": "Auto",
+        "manual": "Manual"
+      },
+      "actions": {
+        "edit": "Edit attendance",
+        "delete": "Delete"
+      },
+      "form": {
+        "editTitle": "Edit attendance",
+        "editDescription": "Update status or remarks for this record.",
+        "status": "Status",
+        "statusPlaceholder": "Select status…",
+        "remarks": "Remarks",
+        "remarksPlaceholder": "Optional remarks",
+        "updateSuccess": "Attendance updated",
+        "deleteSuccess": "Attendance deleted"
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
     },
     "classes": {
       "title": "Classes",
@@ -193,7 +276,9 @@
       },
       "actions": {
         "edit": "Edit class",
-        "delete": "Delete"
+        "delete": "Delete",
+        "viewSessions": "View sessions",
+        "manageMembers": "Manage members"
       },
       "form": {
         "createTitle": "New class",
@@ -213,6 +298,552 @@
         "createSuccess": "Class created",
         "updateSuccess": "Class updated",
         "deleteSuccess": "Class deleted"
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
+    },
+    "classMembers": {
+      "title": "Members",
+      "roster": "Roster",
+      "backToClasses": "Back to classes",
+      "joined": "Joined {{date}}",
+      "actions": {
+        "remove": "Remove from class"
+      },
+      "empty": {
+        "title": "No members yet",
+        "hint": "Add the first user to this class using the form above."
+      },
+      "form": {
+        "addTitle": "Add a user to this class",
+        "userPlaceholder": "Search user…",
+        "addButton": "Add to class",
+        "capacityHint": "{{used}} of {{capacity}} seats used",
+        "unlimitedHint": "Unlimited capacity",
+        "addSuccess": "User added to class",
+        "removeSuccess": "User removed from class"
+      }
+    },
+    "liveRooms": {
+      "title": "Live Rooms",
+      "subtitle": "Cross-organization live sessions.",
+      "searchPlaceholder": "Search by room name…",
+      "newLiveRoom": "New live room",
+      "name": "Room",
+      "status": "Status",
+      "startedAt": "Started",
+      "endedAt": "Ended",
+      "createdAt": "Created",
+      "noResults": "No live rooms found",
+      "noResultsHint": "Create one or adjust your filters.",
+      "filter": {
+        "class": "Class",
+        "session": "Session",
+        "clear": "Clear filters",
+        "selectSessionFirst": "Select a session to view live rooms."
+      },
+      "stats": {
+        "total": "Total rooms",
+        "active": "Active now"
+      },
+      "statuses": {
+        "created": "Scheduled",
+        "active": "Active",
+        "finished": "Finished"
+      },
+      "actions": {
+        "end": "End room",
+        "endSuccess": "Room ended",
+        "delete": "Delete",
+        "deleteSuccess": "Room deleted"
+      },
+      "form": {
+        "createTitle": "New live room",
+        "createDescription": "Provision a live room for a class session.",
+        "class": "Class",
+        "classPlaceholder": "Select class…",
+        "session": "Session",
+        "sessionPlaceholder": "Select session…",
+        "sessionSelectClassFirst": "Select a class first",
+        "maxParticipants": "Max participants",
+        "maxParticipantsPlaceholder": "100",
+        "allowMicDefault": "Allow mic by default",
+        "allowCameraDefault": "Allow camera by default",
+        "allowScreenShareDefault": "Allow screen share by default",
+        "autoRecord": "Auto record when room starts",
+        "createSuccess": "Live room created"
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
+    },
+    "sessions": {
+      "title": "Class Sessions",
+      "subtitle": "Manage sessions for this class.",
+      "searchPlaceholder": "Search sessions…",
+      "newSession": "New session",
+      "backToClasses": "Back to classes",
+      "class": "Class",
+      "filter": {
+        "class": "Class",
+        "clear": "Clear filters"
+      },
+      "name": "Session",
+      "type": "Type",
+      "startTime": "Start time",
+      "recordable": "Recordable",
+      "createdAt": "Created",
+      "yes": "Yes",
+      "no": "No",
+      "noResults": "No sessions found",
+      "noResultsHint": "Create the first session for this class.",
+      "stats": {
+        "total": "Total sessions"
+      },
+      "actions": {
+        "edit": "Edit session",
+        "delete": "Delete",
+        "manageRooms": "Manage Rooms"
+      },
+      "manageRooms": {
+        "title": "Manage Rooms",
+        "description": "Rooms linked to this session.",
+        "viewAll": "View all",
+        "tabs": {
+          "live": "Live",
+          "offline": "Offline",
+          "practice": "Practice",
+          "quiz": "Quizzes"
+        },
+        "empty": {
+          "live": "No live rooms for this session.",
+          "offline": "No offline rooms for this session.",
+          "practice": "No practices for this session.",
+          "quiz": "No quizzes linked to this session."
+        }
+      },
+      "types": {
+        "all": "All types",
+        "live": "Live",
+        "quiz": "Quiz",
+        "practice": "Practice"
+      },
+      "form": {
+        "createTitle": "New session",
+        "createDescription": "Add a session to this class.",
+        "editTitle": "Edit session",
+        "editDescription": "Update session details.",
+        "name": "Name",
+        "namePlaceholder": "Session name",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional description",
+        "startTime": "Start time",
+        "type": "Type",
+        "typePlaceholder": "Select type",
+        "isRecordable": "Recordable",
+        "createSuccess": "Session created",
+        "updateSuccess": "Session updated",
+        "deleteSuccess": "Session deleted"
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
+    },
+    "offlines": {
+      "title": "Offline Rooms",
+      "subtitle": "Manage recorded offline rooms across all classes.",
+      "searchPlaceholder": "Search offline rooms…",
+      "newRoom": "New offline room",
+      "title_column": "Title",
+      "class": "Class",
+      "session": "Session",
+      "creator": "Creator",
+      "viewCount": "Views",
+      "publishedAt": "Published",
+      "createdAt": "Created",
+      "noResults": "No offline rooms found",
+      "noResultsHint": "Try adjusting your search or filters.",
+      "stats": {
+        "total": "Total offline rooms"
+      },
+      "actions": {
+        "edit": "Edit room",
+        "delete": "Delete"
+      },
+      "filter": {
+        "class": "Class",
+        "session": "Session",
+        "clear": "Clear filters",
+        "selectSessionFirst": "Select a session to view offline rooms."
+      },
+      "form": {
+        "createTitle": "New offline room",
+        "createDescription": "Create a new offline room.",
+        "editTitle": "Edit offline room",
+        "editDescription": "Update offline room details.",
+        "title": "Title",
+        "titlePlaceholder": "Offline room title",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional description",
+        "publishedAt": "Published at",
+        "class": "Class",
+        "classPlaceholder": "Select class…",
+        "session": "Session",
+        "sessionPlaceholder": "Select session…",
+        "sessionSelectClassFirst": "Select a class first",
+        "createSuccess": "Offline room created",
+        "updateSuccess": "Offline room updated",
+        "deleteSuccess": "Offline room deleted"
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
+    },
+    "practices": {
+      "title": "Practice Rooms",
+      "subtitle": "Manage practice rooms across all classes.",
+      "searchPlaceholder": "Search practices…",
+      "newPractice": "New practice",
+      "title_col": "Title",
+      "class": "Class",
+      "session": "Session",
+      "teacher": "Owner",
+      "maxScore": "Max score",
+      "startTime": "Start",
+      "endTime": "End",
+      "createdAt": "Created",
+      "noResults": "No practice rooms found",
+      "noResultsHint": "Create the first practice room.",
+      "filter": {
+        "class": "Class",
+        "session": "Session",
+        "clear": "Clear filters",
+        "selectSessionFirst": "Select a session to view practice rooms."
+      },
+      "stats": {
+        "total": "Total practices"
+      },
+      "actions": {
+        "edit": "Edit practice",
+        "delete": "Delete"
+      },
+      "form": {
+        "createTitle": "New practice",
+        "createDescription": "Create a new practice room.",
+        "editTitle": "Edit practice",
+        "editDescription": "Update practice room details.",
+        "class": "Class",
+        "classPlaceholder": "Select class…",
+        "session": "Class session",
+        "sessionPlaceholder": "Select session…",
+        "selectClassFirst": "Pick a class first",
+        "title": "Title",
+        "titlePlaceholder": "Practice title",
+        "content": "Content",
+        "contentPlaceholder": "Optional instructions",
+        "maxScore": "Max score",
+        "maxScorePlaceholder": "0 for no maximum",
+        "startTime": "Start time",
+        "endTime": "End time",
+        "createSuccess": "Practice created",
+        "updateSuccess": "Practice updated",
+        "deleteSuccess": "Practice deleted"
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
+    },
+    "quizzes": {
+      "title": "Quizzes",
+      "subtitle": "Manage quizzes for this class.",
+      "searchPlaceholder": "Search quizzes…",
+      "newQuiz": "New quiz",
+      "title_col": "Title",
+      "class": "Class",
+      "session": "Session",
+      "teacher": "Owner",
+      "duration": "Duration",
+      "minutesShort": "min",
+      "totalScore": "Total score",
+      "createdAt": "Created",
+      "noResults": "No quizzes found",
+      "noResultsHint": "Create the first quiz for this class.",
+      "filter": {
+        "class": "Class",
+        "session": "Session",
+        "clear": "Clear filters",
+        "selectSessionFirst": "Select a session to view quizzes."
+      },
+      "stats": {
+        "total": "Total quizzes"
+      },
+      "actions": {
+        "edit": "Edit quiz",
+        "delete": "Delete",
+        "manageQuestions": "Manage questions"
+      },
+      "flags": {
+        "noBackNavigation": "Back navigation locked",
+        "noBackShort": "No back",
+        "shuffleQuestions": "Questions are shuffled",
+        "shuffleShort": "Shuffle"
+      },
+      "form": {
+        "createTitle": "New quiz",
+        "createDescription": "Create a new quiz for this class.",
+        "editTitle": "Edit quiz",
+        "editDescription": "Update quiz details.",
+        "title": "Title",
+        "titlePlaceholder": "Quiz title",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional description",
+        "duration": "Duration (minutes)",
+        "class": "Class",
+        "classPlaceholder": "Select a class",
+        "session": "Session",
+        "sessionPlaceholder": "Select a session",
+        "sessionHint": "A quiz room will be created for this session.",
+        "startedAt": "Opens at",
+        "startedAtHint": "When the quiz room opens for students.",
+        "endedAt": "Closes at",
+        "endedAtHint": "When the quiz room closes.",
+        "endedAtError": "Close time must be after open time.",
+        "noBackNavigation": "Lock back navigation",
+        "noBackNavigationHint": "Students cannot return to previous questions once answered.",
+        "shuffleQuestions": "Shuffle questions",
+        "shuffleQuestionsHint": "Each student sees questions in a randomized order.",
+        "createSuccess": "Quiz created",
+        "updateSuccess": "Quiz updated",
+        "deleteSuccess": "Quiz deleted",
+        "linkRoomFailed": "Quiz created but session room linking failed"
+      },
+      "questions": {
+        "title": "Manage questions",
+        "description": "Pick questions manually or generate randomly from a bank.",
+        "currentRules": "Current selection",
+        "questions": "questions",
+        "selected": "selected",
+        "selectQuestions": "Select questions",
+        "bank": "Question bank",
+        "count": "Number of questions",
+        "empty": "No selection yet.",
+        "ruleAdded": "Selection saved",
+        "ruleDeleted": "Selection removed",
+        "addManual": "Add selected",
+        "addRandom": "Add random rule",
+        "randomHint": "At runtime, the system picks this many random questions from the bank.",
+        "tabs": {
+          "manual": "Manual",
+          "random": "Random"
+        },
+        "ruleType": {
+          "manual": "Manual",
+          "random": "Random"
+        }
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      }
+    },
+    "corrections": {
+      "title": "Quiz Corrections",
+      "subtitle": "Grade descriptive answers and review submissions.",
+      "filter": {
+        "class": "Class",
+        "quiz": "Quiz",
+        "quizPlaceholder": "Select a quiz",
+        "selectClassFirst": "Select a class to load quizzes.",
+        "selectQuizFirst": "Select a quiz to view submissions.",
+        "clear": "Clear filters",
+        "status": "Status",
+        "allStatuses": "All statuses"
+      },
+      "stats": {
+        "total": "Submissions",
+        "pending": "Awaiting grading",
+        "graded": "Graded"
+      },
+      "student": "Student",
+      "status": "Status",
+      "score": "Score",
+      "scoreOf": "of {{max}}",
+      "submittedAt": "Submitted",
+      "startedAt": "Started",
+      "noResults": "No submissions found",
+      "noResultsHint": "Submissions from students will appear here.",
+      "actions": {
+        "grade": "Grade",
+        "view": "View"
+      },
+      "statuses": {
+        "in_progress": "In progress",
+        "submitted": "Awaiting grading",
+        "graded": "Graded"
+      },
+      "dialog": {
+        "title": "Grade submission",
+        "description": "Set a score for each answer. Auto-graded answers can be overridden.",
+        "question": "Question",
+        "answer": "Student answer",
+        "noAnswer": "No answer",
+        "score": "Score",
+        "totalScore": "Total score",
+        "save": "Save grades",
+        "saveSuccess": "Grades saved",
+        "saveFailed": "Failed to save grades",
+        "loading": "Loading question…",
+        "questionMissing": "Question not found",
+        "selectedOptions": "Selected options",
+        "spent": "Time spent",
+        "secondsShort": "s"
+      }
+    },
+    "questionBanks": {
+      "title": "Question Banks",
+      "searchPlaceholder": "Search question banks…",
+      "newBank": "New bank",
+      "noResults": "No banks found",
+      "form": {
+        "createTitle": "New question bank",
+        "createDescription": "Create a new organization-wide question bank.",
+        "name": "Name",
+        "namePlaceholder": "Bank name",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional description",
+        "createSuccess": "Bank created",
+        "noActiveOrg": "Select an organization from the sidebar before creating a bank."
+      }
+    },
+    "gradebook": {
+      "title": "Gradebook",
+      "newColumn": "New column",
+      "student": "Student",
+      "noResults": "No gradebook columns yet",
+      "noResultsHint": "Create a column to start tracking grades.",
+      "filter": {
+        "class": "Class",
+        "selectClassFirst": "Select a class to view its gradebook.",
+        "clear": "Clear filters"
+      },
+      "stats": {
+        "columns": "Columns",
+        "students": "Students"
+      },
+      "types": {
+        "auto_attendance": "Auto · Attendance",
+        "auto_practice": "Auto · Practice",
+        "auto_quiz": "Auto · Quiz",
+        "manual_grade": "Manual · Grade",
+        "manual_attendance": "Manual · Attendance",
+        "manual_text": "Manual · Text"
+      },
+      "form": {
+        "createTitle": "New gradebook column",
+        "createDescription": "Add a column to track grades or attendance.",
+        "editTitle": "Edit column",
+        "editDescription": "Update the column title or order.",
+        "title": "Title",
+        "titlePlaceholder": "e.g. Midterm exam",
+        "type": "Type",
+        "orderIndex": "Order index",
+        "sourcePlaceholder": "Select source…",
+        "source": {
+          "auto_attendance": "Session",
+          "auto_practice": "Practice",
+          "auto_quiz": "Quiz"
+        },
+        "createSuccess": "Column created",
+        "updateSuccess": "Column updated",
+        "deleteSuccess": "Column deleted",
+        "cellTitle": "Edit grade",
+        "value": "Value",
+        "valuePlaceholder": "Enter value",
+        "cellUpdateSuccess": "Grade updated"
+      }
+    },
+    "questions": {
+      "title": "Question Bank",
+      "subtitle": "Manage reusable questions.",
+      "searchPlaceholder": "Search questions…",
+      "newQuestion": "New question",
+      "pickBankHint": "Pick a question bank to view its questions.",
+      "text": "Question",
+      "type": "Type",
+      "optionsCount": "Options",
+      "totalScore": "Total score",
+      "createdAt": "Created",
+      "noResults": "No questions found",
+      "noResultsHint": "Add the first question to this bank.",
+      "filter": {
+        "bank": "Question bank",
+        "type": "Type",
+        "allTypes": "All types"
+      },
+      "types": {
+        "descriptive": "Descriptive",
+        "short_answer": "Short answer",
+        "choice": "Multiple choice"
+      },
+      "stats": {
+        "total": "Total questions"
+      },
+      "actions": {
+        "edit": "Edit question",
+        "delete": "Delete"
+      },
+      "form": {
+        "createTitle": "New question",
+        "createDescription": "Add a question to a bank.",
+        "editTitle": "Edit question",
+        "editDescription": "Update question details.",
+        "bank": "Question bank",
+        "bankPlaceholder": "Select a bank…",
+        "text": "Question text",
+        "textPlaceholder": "Enter the question…",
+        "type": "Type",
+        "options": "Options",
+        "maxScore": "Maximum score",
+        "optionValuePlaceholder": "Option value",
+        "scorePlaceholder": "Score",
+        "addOption": "Add option",
+        "optionsEmpty": "No options yet.",
+        "optionsHint": "For multiple-choice, give correct options a positive score. For short answer, list accepted values with their scores.",
+        "hints": {
+          "choice": "Add at least 2 options. Correct options get a positive score; distractors can be 0 or negative.",
+          "short_answer": "List accepted answers with a non-negative score each.",
+          "descriptive": "Set the maximum score graders can award for this open-ended question."
+        },
+        "errors": {
+          "choice": "Choice questions need at least 2 options.",
+          "shortAnswer": "Short-answer questions need at least 1 option.",
+          "descriptive": "Descriptive questions need a maximum score.",
+          "valueRequired": "Option text is required.",
+          "negative": "Negative scores are only allowed for multiple-choice options."
+        },
+        "photos": {
+          "label": "Photos",
+          "add": "Add photo",
+          "empty": "No photos attached.",
+          "notImage": "Only image files are allowed.",
+          "uploadSuccess": "Photo uploaded",
+          "uploadError": "Photo upload failed"
+        },
+        "createSuccess": "Question created",
+        "updateSuccess": "Question updated",
+        "deleteSuccess": "Question deleted"
       },
       "toolbar": {
         "sort": "Sort",
@@ -399,6 +1030,7 @@
     "sessions": {
       "newSession": "New session",
       "start": "Start",
+      "join": "Join",
       "empty": "No sessions yet",
       "form": {
         "name": "Name",
@@ -460,6 +1092,42 @@
       "settings": "Settings",
       "files": "Files"
     },
+    "dashboard": {
+      "overview": "Overview",
+      "welcome": "Welcome back",
+      "welcomeName": "Welcome back, {{name}}",
+      "viewAll": "View all",
+      "stats": {
+        "classes": "Classes",
+        "members": "Members",
+        "quizzes": "Quizzes"
+      },
+      "actions": {
+        "newClass": "New class"
+      },
+      "recentClasses": {
+        "title": "Recent classes",
+        "empty": "No classes yet.",
+        "unassigned": "Unassigned",
+        "members_one": "{{count}} member",
+        "members_other": "{{count}} members"
+      },
+      "activity": {
+        "title": "Recent activity",
+        "empty": "No recent activity.",
+        "classCreated": "New class",
+        "quizCreated": "New quiz"
+      },
+      "weekly": {
+        "title": "This week's activity",
+        "total_one": "{{count}} item",
+        "total_other": "{{count}} items"
+      },
+      "memberEmpty": {
+        "title": "You're all set",
+        "hint": "Your classes and activity will show up here once you're enrolled."
+      }
+    },
     "users": {
       "title": "Users",
       "searchPlaceholder": "Search users…",
@@ -511,6 +1179,615 @@
       "nameError": "Name must be at least 2 characters",
       "updateSuccess": "Organization updated",
       "saving": "Saving…"
+    },
+    "class": {
+      "title": "Class",
+      "eyebrow": "Class",
+      "instructor": "Instructor",
+      "unknownTeacher": "Unassigned",
+      "backToClasses": "Back to classes",
+      "stats": {
+        "total": "Sessions",
+        "live": "Live now",
+        "upcoming": "Upcoming"
+      },
+      "sessions": {
+        "eyebrow": "Sessions",
+        "title": "Class sessions",
+        "newSession": "New session",
+        "open": "Open",
+        "emptyTitle": "No sessions yet",
+        "emptyHint": "Schedule the first session for this class to get started."
+      },
+      "students": {
+        "eyebrow": "Roster",
+        "title": "Students",
+        "unknownName": "Unknown",
+        "joinedAt": "Joined {{date}}",
+        "emptyTitle": "No students enrolled",
+        "emptyHint": "Students who join this class will appear here.",
+        "addMember": "Add member",
+        "removeAction": "Remove member"
+      },
+      "enrollMember": {
+        "title": "Enroll a member",
+        "description": "Pick a user to add to this class roster.",
+        "userLabel": "User",
+        "userPlaceholder": "Select a user",
+        "searchPlaceholder": "Search by name or username…",
+        "noResults": "No users found.",
+        "submit": "Enroll",
+        "success": "Member enrolled.",
+        "errorConflict": "User already enrolled or class is full.",
+        "errorForbidden": "You don't have permission to enroll members.",
+        "errorGeneric": "Could not enroll member."
+      },
+      "removeMember": {
+        "success": "Member removed.",
+        "errorForbidden": "You don't have permission to remove members.",
+        "errorGeneric": "Could not remove member."
+      },
+      "gradebook": {
+        "title": "Gradebook",
+        "eyebrow": "Gradebook",
+        "subtitle": "Track grades and attendance for this class.",
+        "open": "Gradebook",
+        "backToClass": "Back to class",
+        "newColumn": "New column",
+        "student": "Student",
+        "stats": {
+          "columns": "Columns",
+          "students": "Students"
+        },
+        "noResults": "No gradebook columns yet",
+        "noResultsHint": "Create a column to start tracking grades.",
+        "noAccessTitle": "No access to this gradebook",
+        "noAccessHint": "You don't have permission to view this class gradebook.",
+        "deleteSuccess": "Column deleted",
+        "types": {
+          "auto_attendance": "Auto · Attendance",
+          "auto_practice": "Auto · Practice",
+          "auto_quiz": "Auto · Quiz",
+          "manual_grade": "Manual · Grade",
+          "manual_attendance": "Manual · Attendance",
+          "manual_text": "Manual · Text"
+        }
+      }
+    },
+    "session": {
+      "title": "Session",
+      "eyebrow": "Class session",
+      "backToClass": "Back to class",
+      "footnote": "Session timeline",
+      "nav": {
+        "overview": "Overview",
+        "live": "Live Rooms",
+        "quizzes": "Quizzes",
+        "practices": "Practices",
+        "recordings": "Recordings"
+      },
+      "overview": {
+        "stats": {
+          "live": "Live rooms",
+          "quizzes": "Quizzes",
+          "practices": "Practices",
+          "offline": "Offline"
+        },
+        "units": {
+          "rooms_one": "live room",
+          "rooms_other": "live rooms",
+          "quizzes_one": "quiz",
+          "quizzes_other": "quizzes",
+          "practices_one": "practice",
+          "practices_other": "practices",
+          "recordings_one": "recording",
+          "recordings_other": "recordings"
+        }
+      },
+      "meta": {
+        "starts": "Starts",
+        "countdown": "Countdown",
+        "status": "Status",
+        "created": "Created",
+        "elapsed": "Elapsed since start",
+        "untilStart": "Until start"
+      },
+      "rooms": {
+        "eyebrow": "Rooms",
+        "title": "Activities",
+        "subtitle": "Linked to this session",
+        "live": "Live rooms",
+        "quizzes": "Quizzes",
+        "practices": "Practices",
+        "offlines": "Recordings",
+        "questionBanks": "Question banks",
+        "corrections": "Corrections"
+      },
+      "workspace": {
+        "eyebrow": "",
+        "title": "Manage Quizzes",
+        "subtitle": "Quizzes, corrections, and question banks",
+        "tabs": {
+          "quizzes": "Quizzes",
+          "corrections": "Corrections",
+          "banks": "Question banks"
+        }
+      },
+      "actions": {
+        "join": "Join live",
+        "start": "Start live",
+        "viewClass": "View class",
+        "notPermitted": "No access"
+      },
+      "notFound": {
+        "eyebrow": "Error · 404",
+        "title": "Session not found",
+        "description": "The class session you're looking for does not exist or you don't have access.",
+        "backToClasses": "Back to classes"
+      },
+      "quizzes": {
+        "eyebrow": "Quizzes",
+        "title": "Session quizzes",
+        "cardEyebrow": "Quiz",
+        "newQuiz": "New quiz",
+        "duration": "Duration",
+        "minutesShort": "min",
+        "totalScore": "Score",
+        "emptyTitle": "No quizzes yet",
+        "emptyHint": "Create the first quiz for this session.",
+        "actions": {
+          "edit": "Edit quiz",
+          "delete": "Delete quiz",
+          "manageQuestions": "Manage questions",
+          "take": "Take quiz"
+        },
+        "flags": {
+          "noBackNavigation": "Back navigation locked",
+          "noBackShort": "No back",
+          "shuffleQuestions": "Questions are shuffled",
+          "shuffleShort": "Shuffle"
+        },
+        "form": {
+          "createTitle": "New quiz",
+          "createDescription": "Create a quiz for this session.",
+          "editTitle": "Edit quiz",
+          "editDescription": "Update quiz details.",
+          "title": "Title",
+          "titlePlaceholder": "Quiz title",
+          "description": "Description",
+          "descriptionPlaceholder": "Optional description",
+          "duration": "Duration (minutes)",
+          "startedAt": "Opens at",
+          "startedAtHint": "When the quiz room opens for students.",
+          "endedAt": "Closes at",
+          "endedAtHint": "When the quiz room closes.",
+          "endedAtError": "Close time must be after open time.",
+          "noBackNavigation": "Lock back navigation",
+          "noBackNavigationHint": "Students cannot return to previous questions once answered.",
+          "shuffleQuestions": "Shuffle questions",
+          "shuffleQuestionsHint": "Each student sees questions in a randomized order.",
+          "createSuccess": "Quiz created",
+          "updateSuccess": "Quiz updated",
+          "deleteSuccess": "Quiz deleted",
+          "linkRoomFailed": "Quiz created but session room linking failed"
+        },
+        "take": {
+          "headTitle": "Take quiz",
+          "eyebrow": "Quiz · Take",
+          "backToSession": "Back to session",
+          "begin": "Begin quiz",
+          "previous": "Previous",
+          "next": "Next",
+          "finish": "Finish quiz",
+          "finishConfirm": "Submit answers",
+          "progress": "Question {{current}} of {{total}}",
+          "questionN": "Question {{n}}",
+          "submitting": "Submitting answers…",
+          "submitted": "Quiz submitted",
+          "submitFailed": "Could not submit. Retrying may help.",
+          "startFailed": "Could not start the quiz.",
+          "autoSubmitNote": "Time up — answers submitted automatically.",
+          "multiSelectHint": "Multiple answers may be correct.",
+          "shortPlaceholder": "Type your answer…",
+          "descriptivePlaceholder": "Write your response…",
+          "noAccess": {
+            "title": "No access",
+            "description": "You do not have permission to take this quiz."
+          },
+          "notFound": {
+            "title": "Quiz not found",
+            "description": "This quiz could not be loaded."
+          },
+          "empty": {
+            "title": "No questions",
+            "description": "This quiz has no questions yet."
+          },
+          "noRoom": {
+            "title": "No quiz room",
+            "description": "This quiz is not linked to a session room."
+          },
+          "closed": {
+            "title": "Quiz room closed",
+            "description": "The quiz window is not currently open."
+          },
+          "bankError": {
+            "title": "Could not load questions",
+            "description": "Question banks failed to load. Try again."
+          },
+          "meta": {
+            "questions": "Questions",
+            "duration": "Duration",
+            "totalScore": "Total score",
+            "closesAt": "Closes"
+          },
+          "rules": {
+            "eyebrow": "Rules",
+            "timer": "Limit: {{minutes}} minutes from the moment you begin.",
+            "noBack": "You cannot return to previous questions.",
+            "backAllowed": "You may revisit previous questions.",
+            "shuffle": "Questions appear in a random order.",
+            "autoSubmit": "If time runs out, your answers submit automatically."
+          },
+          "types": {
+            "choice": "Choice",
+            "short": "Short answer",
+            "descriptive": "Descriptive"
+          },
+          "confirm": {
+            "title": "Submit quiz?",
+            "description": "You have answered {{answered}} of {{total}} questions. You cannot change answers after submitting."
+          },
+          "result": {
+            "eyebrow": "Result",
+            "submitted": "Submitted",
+            "graded": "Graded",
+            "earned": "Earned",
+            "outOf": "Out of",
+            "percent": "Percent",
+            "totalTime": "Total time",
+            "perQuestionEyebrow": "Per-question time & score"
+          }
+        }
+      },
+      "corrections": {
+        "eyebrow": "Corrections",
+        "title": "Quiz corrections",
+        "subtitle": "Grade descriptive answers and review student submissions for this session.",
+        "pickQuiz": "Choose quiz",
+        "noQuizSelected": "no quiz",
+        "emptyTitle": "No quizzes to correct",
+        "emptyHint": "Create a quiz for this session — submissions will surface here once students respond.",
+        "noResults": "No submissions yet",
+        "noResultsHint": "Student submissions will appear here as they finish.",
+        "stats": {
+          "total": "Submissions",
+          "pending": "Awaiting",
+          "graded": "Graded",
+          "maxScore": "Max score"
+        },
+        "filter": {
+          "all": "All",
+          "submitted": "Awaiting",
+          "graded": "Graded",
+          "in_progress": "In progress"
+        },
+        "row": {
+          "score": "Score",
+          "submitted": "Submitted",
+          "notSubmitted": "not submitted",
+          "grade": "Grade",
+          "regrade": "Re-grade",
+          "gradeHint": "Open the grading dialog",
+          "gradeDisabledHint": "Student has not submitted yet"
+        }
+      },
+      "questionBanks": {
+        "eyebrow": "Question banks",
+        "title": "Organization question banks",
+        "cardEyebrow": "Bank",
+        "newBank": "New bank",
+        "emptyTitle": "No question banks yet",
+        "emptyHint": "Create a bank to store reusable questions.",
+        "actions": {
+          "manage": "Manage questions",
+          "edit": "Edit bank",
+          "delete": "Delete bank"
+        },
+        "form": {
+          "createTitle": "New question bank",
+          "createDescription": "Create a bank to organize reusable questions.",
+          "editTitle": "Edit question bank",
+          "editDescription": "Update bank name and description.",
+          "name": "Name",
+          "namePlaceholder": "Bank name",
+          "description": "Description",
+          "descriptionPlaceholder": "Optional description",
+          "createSuccess": "Bank created",
+          "updateSuccess": "Bank updated",
+          "deleteSuccess": "Bank deleted"
+        },
+        "questions": {
+          "title": "Bank questions",
+          "description": "Add, edit, or remove questions in this bank.",
+          "count": "Questions",
+          "add": "Add question",
+          "options": "options",
+          "emptyTitle": "No questions yet",
+          "emptyHint": "Add the first question to this bank.",
+          "deleteSuccess": "Question deleted"
+        }
+      },
+      "practices": {
+        "eyebrow": "Practices",
+        "title": "Session practices",
+        "cardEyebrow": "Practice",
+        "newPractice": "New practice",
+        "window": "Window",
+        "maxScore": "Max score",
+        "emptyTitle": "No practices yet",
+        "emptyHint": "Create the first practice room for this session.",
+        "actions": {
+          "edit": "Edit practice",
+          "delete": "Delete practice",
+          "submit": "Submit"
+        },
+        "form": {
+          "createTitle": "New practice",
+          "createDescription": "Create a practice room for this session.",
+          "editTitle": "Edit practice",
+          "editDescription": "Update practice room details.",
+          "title": "Title",
+          "titlePlaceholder": "Practice title",
+          "content": "Content",
+          "contentPlaceholder": "Optional instructions",
+          "maxScore": "Max score",
+          "maxScorePlaceholder": "0 for no maximum",
+          "startTime": "Start time",
+          "endTime": "End time",
+          "attachments": "Attachments",
+          "createSuccess": "Practice created",
+          "updateSuccess": "Practice updated",
+          "deleteSuccess": "Practice deleted"
+        },
+        "submit": {
+          "title": "Submit practice",
+          "description": "Write your response and submit it for review.",
+          "descriptionNamed": "Submit your response for \"{{title}}\".",
+          "placeholder": "Type your response…",
+          "answer": "Your answer",
+          "attachments": "Attachments",
+          "submit": "Submit",
+          "success": "Practice submitted",
+          "failed": "Could not submit. Try again."
+        },
+        "emptyHintMember": "No practice rooms are available for this session yet. Check back later."
+      },
+      "practiceScores": {
+        "eyebrow": "Practice scores",
+        "title": "Practice scoring",
+        "subtitle": "Review student practice submissions and assign scores for this session.",
+        "noneSelected": "no practice",
+        "pick": "Choose practice",
+        "emptyTitle": "No practices to score",
+        "emptyHint": "Create a practice room — submissions will surface here once students respond.",
+        "noResults": "No submissions yet",
+        "noResultsHint": "Student submissions will appear here as they finish.",
+        "stats": {
+          "total": "Submissions",
+          "pending": "Awaiting",
+          "graded": "Graded",
+          "maxScore": "Max score"
+        },
+        "filter": {
+          "all": "All",
+          "pending": "Awaiting",
+          "graded": "Graded"
+        },
+        "statuses": {
+          "graded": "Graded",
+          "pending": "Awaiting"
+        },
+        "row": {
+          "score": "Score",
+          "submitted": "Submitted",
+          "notSubmitted": "not submitted",
+          "grade": "Score",
+          "regrade": "Re-score"
+        },
+        "dialog": {
+          "title": "Score submission",
+          "description": "Review the response, assign a score, and leave an optional comment.",
+          "answer": "Response",
+          "noAnswer": "No response provided.",
+          "score": "Score",
+          "overMax": "Score cannot exceed max ({{max}}).",
+          "comment": "Teacher comment",
+          "commentPlaceholder": "Optional feedback for the student…",
+          "save": "Save score",
+          "saveSuccess": "Score saved",
+          "saveFailed": "Could not save score"
+        }
+      },
+      "practiceWorkspace": {
+        "eyebrow": "",
+        "title": "Manage Practices",
+        "subtitle": "Practice rooms and scoring",
+        "tabs": {
+          "practices": "Practices",
+          "practiceScores": "Practice scores"
+        }
+      },
+      "offlines": {
+        "eyebrow": "On-demand",
+        "title": "Offline Rooms",
+        "newOffline": "New offline room",
+        "cardEyebrow": "Recording",
+        "views": "Views",
+        "published": "Published",
+        "notPublished": "Draft",
+        "attachments": "Attachments",
+        "open": "Open",
+        "emptyTitle": "No offline rooms yet",
+        "emptyHint": "Create an offline room to share recordings and files for this session.",
+        "emptyHintMember": "No offline content has been shared for this session yet.",
+        "actions": { "edit": "Edit", "delete": "Delete" },
+        "form": {
+          "createTitle": "New offline room",
+          "editTitle": "Edit offline room",
+          "createDescription": "Share recordings and files with this session.",
+          "editDescription": "Update this offline room.",
+          "title": "Title",
+          "titlePlaceholder": "e.g. Session 3 recording",
+          "description": "Description",
+          "descriptionPlaceholder": "Optional summary",
+          "publishedAt": "Publish at",
+          "attachments": "Attachments",
+          "addAttachment": "Add file",
+          "uploading": "Uploading…",
+          "noAttachments": "No files attached yet",
+          "createSuccess": "Offline room created",
+          "updateSuccess": "Offline room updated",
+          "deleteSuccess": "Offline room deleted",
+          "uploadError": "Upload failed",
+          "removeError": "Could not remove file",
+          "saveError": "Could not save offline room"
+        }
+      },
+      "offlineWorkspace": {
+        "eyebrow": "On-demand",
+        "title": "Offline Rooms",
+        "subtitle": "Recordings and files students can review any time.",
+        "tabs": { "offlines": "Offline rooms" }
+      },
+      "liveWorkspace": {
+        "eyebrow": "",
+        "title": "Live Room",
+        "subtitle": "Live rooms and attendance for this session",
+        "tabs": {
+          "rooms": "Live rooms",
+          "presence": "Presence"
+        }
+      },
+      "liveRooms": {
+        "eyebrow": "Live room",
+        "title": "Session live rooms",
+        "newRoom": "New room",
+        "startedAt": "Started",
+        "endedAt": "Ended",
+        "details": "Participants & recordings",
+        "recordingsLabel": "Recordings",
+        "participantsActive": "{{active}}/{{total}} in room",
+        "participantsTotal": "{{total}} joined",
+        "emptyTitle": "No live rooms yet",
+        "emptyHint": "Create the first live room for this session.",
+        "emptyHintMember": "No live rooms have been created yet.",
+        "status": {
+          "created": "Scheduled",
+          "active": "Live",
+          "finished": "Ended"
+        },
+        "actions": {
+          "start": "Start",
+          "join": "Join",
+          "end": "End",
+          "endSuccess": "Live room ended"
+        },
+        "form": {
+          "createTitle": "New live room",
+          "createDescription": "Create a live room for this session.",
+          "maxParticipants": "Max participants",
+          "allowMic": "Allow mic by default",
+          "allowCamera": "Allow camera by default",
+          "allowScreen": "Allow screen share by default",
+          "autoRecord": "Auto-record",
+          "createSuccess": "Live room created",
+          "name": "Room name",
+          "namePlaceholder": "Optional name",
+          "mode": "When",
+          "scheduleLater": "Schedule for later",
+          "startNow": "Start now",
+          "scheduledTime": "Scheduled start time",
+          "scheduledTimeHint": "Students see a countdown until you start the session.",
+          "scheduledTimeRequired": "Pick a future date and time.",
+          "createAndStart": "Create & start",
+          "createError": "Could not create the live room. Try again."
+        },
+        "participants": {
+          "empty": "No participants yet",
+          "inRoom": "In room",
+          "left": "Left"
+        },
+        "recordings": {
+          "title": "Recordings",
+          "start": "Start recording",
+          "recording": "Recording…",
+          "startSuccess": "Recording started",
+          "deleteSuccess": "Recording deleted",
+          "empty": "No recordings yet",
+          "status": {
+            "started": "Recording",
+            "completed": "Completed",
+            "failed": "Failed"
+          }
+        }
+      },
+      "attendance": {
+        "eyebrow": "Presence",
+        "title": "Attendance",
+        "auto": "Auto",
+        "manual": "Manual",
+        "emptyTitle": "No attendance yet",
+        "emptyHint": "Auto-mark attendance from a live room.",
+        "emptyHintMember": "No attendance has been recorded yet.",
+        "status": {
+          "present": "Present",
+          "absent": "Absent",
+          "late": "Late",
+          "excused": "Excused"
+        },
+        "autoMark": {
+          "eyebrow": "Auto-mark",
+          "hint": "Mark attendance automatically from who attended a live room.",
+          "room": "Live room",
+          "roomPlaceholder": "Select a room",
+          "minMinutes": "Min minutes",
+          "run": "Auto-mark",
+          "success": "Marked {{marked}}, skipped {{skipped}}"
+        },
+        "form": {
+          "editTitle": "Edit attendance",
+          "status": "Status",
+          "remarks": "Remarks",
+          "remarksPlaceholder": "Optional note",
+          "updateSuccess": "Attendance updated",
+          "deleteSuccess": "Attendance deleted"
+        },
+        "roster": {
+          "save": "Save attendance",
+          "saving": "Saving…",
+          "markAllPresent": "All present",
+          "markAllAbsent": "All absent",
+          "unmarked": "Unmarked",
+          "unsaved": "{{count}} unsaved",
+          "saveSuccess": "Attendance saved",
+          "saveError": "Could not save attendance. Try again.",
+          "emptyMembers": "No students enrolled in this class yet.",
+          "title": "Class roster",
+          "hint": "Tap a status for each student, then save."
+        }
+      }
+    },
+    "offline": {
+      "title": "Offline Room",
+      "back": "Back to session",
+      "views": "Views",
+      "published": "Published",
+      "created": "Created",
+      "attachments": "Attachments",
+      "download": "Download",
+      "noAttachments": "No files attached to this room.",
+      "notFound": "Offline room not found.",
+      "loading": "Loading…"
     },
     "roles": {
       "title": "Roles",
@@ -642,6 +1919,51 @@
     "recordingNotice": "This session is being recorded. By joining, you agree to the recording and privacy terms.",
     "back": "Back",
     "secureEntry": "Secure entry",
-    "avSettingsNote": "Mic and camera are configured inside the class"
+    "avSettingsNote": "Adjust mic and camera before joining",
+    "you": "You",
+    "joinNow": "Join now",
+    "cameraOff": "Camera is off",
+    "cameraBlocked": "Camera access blocked",
+    "checkDevices": "Check your camera and microphone before joining",
+    "connecting": "Connecting",
+    "reconnecting": "Reconnecting",
+    "peopleCount": "{{count}} people",
+    "waitingForHost": "Waiting for the host to start",
+    "waitingHint": "You'll be able to join as soon as your teacher starts the class. This page updates automatically.",
+    "startSession": "Start session",
+    "startError": "Couldn't start the session. Please try again.",
+    "scheduledFor": "Scheduled for",
+    "startsIn": "Starts in",
+    "errors": {
+      "screenShare": "Couldn't start screen sharing. Check your browser permissions and try again.",
+      "camera": "Couldn't toggle your camera.",
+      "microphone": "Couldn't toggle your microphone."
+    },
+    "controls": {
+      "micOn": "Turn on microphone",
+      "micOff": "Mute microphone",
+      "cameraOn": "Turn on camera",
+      "cameraOff": "Turn off camera",
+      "shareScreen": "Share screen",
+      "stopShare": "Stop sharing",
+      "chat": "Chat",
+      "people": "People"
+    },
+    "chat": {
+      "empty": "No messages yet",
+      "placeholder": "Type a message…"
+    },
+    "device": {
+      "camera": "Camera",
+      "microphone": "Microphone",
+      "unknown": "Unknown device"
+    }
+  },
+  "media": {
+    "uploader": {
+      "add": "Add files",
+      "empty": "Click to attach files",
+      "uploadError": "Upload failed"
+    }
   }
 }
