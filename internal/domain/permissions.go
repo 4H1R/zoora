@@ -10,8 +10,10 @@ const (
 	PermUsersCreate    PermissionName = "users:create"
 	PermUsersUpdate    PermissionName = "users:update"
 	PermUsersUpdateAny PermissionName = "users:update_any"
-	PermUsersDelete    PermissionName = "users:delete"
-	PermUsersDeleteAny PermissionName = "users:delete_any"
+	PermUsersDelete     PermissionName = "users:delete"
+	PermUsersDeleteAny  PermissionName = "users:delete_any"
+	PermUsersDisable    PermissionName = "users:disable"
+	PermUsersDisableAny PermissionName = "users:disable_any"
 	// Roles
 	PermRolesView   PermissionName = "roles:view"
 	PermRolesCreate PermissionName = "roles:create"
@@ -146,6 +148,7 @@ var AllPermissions = []PermissionName{
 	// Users
 	PermUsersView, PermUsersViewAny, PermUsersCreate,
 	PermUsersUpdate, PermUsersUpdateAny, PermUsersDelete, PermUsersDeleteAny,
+	PermUsersDisable, PermUsersDisableAny,
 	// Roles
 	PermRolesView, PermRolesCreate, PermRolesUpdate, PermRolesDelete,
 	// Organizations

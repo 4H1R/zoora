@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -238,5 +239,69 @@ func (s *service) RemoveRole(ctx context.Context, userID uuid.UUID) (*domain.Use
 	}
 
 	s.logger.Info("role removed", "user_id", userID.String())
+	return user, nil
+}
+
+// disableScopeCheck enforces the shared guards for Disable/Enable: caller must
+// exist, cannot target themselves, must share the org when not admin, and a
+// non-admin can never lock out an admin.
+func (s *service) disableScopeCheck(ctx context.Context, id uuid.UUID) (domain.Caller, *domain.User, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return domain.Caller{}, nil, domain.ErrForbidden
+	}
+	if caller.UserID == id {
+		return domain.Caller{}, nil, domain.ErrForbidden
+	}
+	user, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return domain.Caller{}, nil, err
+	}
+	if !caller.IsAdmin {
+		if caller.OrgID == nil || user.OrganizationID == nil || *user.OrganizationID != *caller.OrgID {
+			return domain.Caller{}, nil, domain.ErrForbidden
+		}
+		if user.IsAdmin {
+			return domain.Caller{}, nil, domain.ErrForbidden
+		}
+	}
+	return caller, user, nil
+}
+
+func (s *service) Disable(ctx context.Context, id uuid.UUID, dto domain.DisableUserDTO) (*domain.User, error) {
+	caller, user, err := s.disableScopeCheck(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if user.DisabledAt != nil {
+		return user, nil // idempotent: preserve original timestamp
+	}
+	now := time.Now()
+	by := caller.UserID
+	user.DisabledAt = &now
+	user.DisabledBy = &by
+	if dto.Reason != "" {
+		reason := dto.Reason
+		user.DisabledReason = &reason
+	}
+	if err := s.repo.Update(ctx, user); err != nil {
+		return nil, err
+	}
+	s.logger.Info("user disabled", "user_id", id.String(), "disabled_by", caller.UserID.String())
+	return user, nil
+}
+
+func (s *service) Enable(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+	caller, user, err := s.disableScopeCheck(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	user.DisabledAt = nil
+	user.DisabledBy = nil
+	user.DisabledReason = nil
+	if err := s.repo.Update(ctx, user); err != nil {
+		return nil, err
+	}
+	s.logger.Info("user enabled", "user_id", id.String(), "enabled_by", caller.UserID.String())
 	return user, nil
 }

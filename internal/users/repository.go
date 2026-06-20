@@ -158,6 +158,13 @@ func (r *repository) AdminList(ctx context.Context, q domain.AdminListUsersQuery
 	if q.IsAdmin != nil {
 		base = base.Where("is_admin = ?", *q.IsAdmin)
 	}
+	if q.Disabled != nil {
+		if *q.Disabled {
+			base = base.Where("disabled_at IS NOT NULL")
+		} else {
+			base = base.Where("disabled_at IS NULL")
+		}
+	}
 	var users []domain.User
 	total, err := listparams.Paginate(base, q.ListParams, &users)
 	if err != nil {

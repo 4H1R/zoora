@@ -46,6 +46,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		// Role assignment on a user.
 		authed.PUT("/users/:id/role", perm(domain.PermRolesUpdate), idParam, h.AssignRole)
 		authed.DELETE("/users/:id/role", perm(domain.PermRolesUpdate), idParam, h.RemoveRole)
+
+		// Disable / enable (reversible lockout). Self-disable is blocked in the
+		// service; the self-or-any pattern mirrors delete for consistency.
+		authed.POST("/users/:id/disable", auth.RequireSelfOrPermission(domain.PermUsersDisable, domain.PermUsersDisableAny, "id"), idParam, h.DisableUser)
+		authed.POST("/users/:id/enable", auth.RequireSelfOrPermission(domain.PermUsersDisable, domain.PermUsersDisableAny, "id"), idParam, h.EnableUser)
 	}
 }
 
@@ -170,6 +175,56 @@ func (h *Handler) DeleteUser(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, nil)
+}
+
+// DisableUser disables a user, blocking login while preserving history.
+// @Summary Disable user
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "User UUID"
+// @Param body body domain.DisableUserDTO true "Disable reason"
+// @Success 200 {object} domain.Response{data=domain.User}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 500 {object} domain.Response{error=domain.ErrorBody}
+// @Router /users/{id}/disable [post]
+func (h *Handler) DisableUser(c *gin.Context) {
+	var dto domain.DisableUserDTO
+	if err := httpx.Bind(c, &dto); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	user, err := h.svc.Disable(c.Request.Context(), httpx.UUIDParam(c, "id"), dto)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, user)
+}
+
+// EnableUser re-enables a previously disabled user.
+// @Summary Enable user
+// @Tags Users
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "User UUID"
+// @Success 200 {object} domain.Response{data=domain.User}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 500 {object} domain.Response{error=domain.ErrorBody}
+// @Router /users/{id}/enable [post]
+func (h *Handler) EnableUser(c *gin.Context) {
+	user, err := h.svc.Enable(c.Request.Context(), httpx.UUIDParam(c, "id"))
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, user)
 }
 
 // GetProfile returns the authenticated user's profile.

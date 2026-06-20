@@ -58,6 +58,11 @@ func Middleware(jwt *JWTService, rdb *redis.Client, roleRepo domain.RoleReposito
 				c.Abort()
 				return
 			}
+			if user.DisabledAt != nil {
+				domain.ErrorResponse(c, domain.ErrUnauthorized)
+				c.Abort()
+				return
+			}
 			caller.OrgID = user.OrganizationID
 			caller.IsAdmin = user.IsAdmin
 			caller.RoleID = user.RoleID

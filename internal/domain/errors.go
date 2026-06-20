@@ -13,6 +13,7 @@ var (
 	ErrConflict     = errors.New("resource already exists")
 	ErrValidation   = errors.New("validation failed")
 	ErrInternal     = errors.New("internal server error")
+	ErrUserDisabled = errors.New("account is disabled")
 )
 
 // ValidationError carries per-field validation failures.

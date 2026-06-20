@@ -64,6 +64,11 @@ func (s *service) Login(ctx context.Context, dto domain.LoginDTO) (*domain.User,
 		return nil, "", domain.ErrUnauthorized
 	}
 
+	if user.DisabledAt != nil {
+		s.logger.Warn("disabled user login blocked", "user_id", user.ID.String())
+		return nil, "", domain.ErrUserDisabled
+	}
+
 	token, err := s.jwtService.GenerateToken(user.ID)
 	if err != nil {
 		return nil, "", fmt.Errorf("auth.Login generate token: %w", err)

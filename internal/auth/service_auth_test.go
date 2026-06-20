@@ -12,6 +12,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/4H1R/zoora/internal/auth"
 	"github.com/4H1R/zoora/internal/config"
@@ -135,6 +136,37 @@ func TestLogin_UserNotFound_ReturnsUnauthorized(t *testing.T) {
 	})
 
 	assert.ErrorIs(t, err, domain.ErrUnauthorized)
+	assert.Nil(t, resultUser)
+	assert.Empty(t, token)
+	userRepo.AssertExpectations(t)
+}
+
+func TestLogin_DisabledUserRejected(t *testing.T) {
+	ctx := context.Background()
+	cfg := &config.Config{JWTSecret: "test-secret", JWTExpiry: time.Hour}
+	jwtService := auth.NewJWTService(cfg)
+
+	userRepo := &mockUserRepo{}
+	now := time.Now()
+	hashed, hashErr := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
+	assert.NoError(t, hashErr)
+	user := &domain.User{
+		ID:         uuid.New(),
+		Username:   "disabled",
+		Name:       "Disabled User",
+		Password:   string(hashed),
+		DisabledAt: &now,
+	}
+	userRepo.On("FindByUsername", ctx, "disabled").Return(user, nil)
+
+	svc := auth.NewAuthService(userRepo, jwtService, newTestRedis(t), slog.Default())
+
+	resultUser, token, err := svc.Login(ctx, domain.LoginDTO{
+		Username: "disabled",
+		Password: "password123",
+	})
+
+	assert.ErrorIs(t, err, domain.ErrUserDisabled)
 	assert.Nil(t, resultUser)
 	assert.Empty(t, token)
 	userRepo.AssertExpectations(t)

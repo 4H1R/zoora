@@ -45,6 +45,8 @@ func (h *AdminHandler) RegisterAdminRoutes(group *gin.RouterGroup) {
 	group.DELETE("/users/:id", idParam, h.HardDelete)
 	group.POST("/users/:id/password", idParam, h.ForceResetPassword)
 	group.POST("/users/:id/revoke-sessions", idParam, h.RevokeSessions)
+	group.POST("/users/:id/disable", idParam, h.Disable)
+	group.POST("/users/:id/enable", idParam, h.Enable)
 }
 
 // List returns a filtered, paginated list of users across all organizations.
@@ -55,6 +57,7 @@ func (h *AdminHandler) RegisterAdminRoutes(group *gin.RouterGroup) {
 // @Param organization_id query string false "Filter by organization UUID"
 // @Param role_id query string false "Filter by role UUID"
 // @Param is_admin query bool false "Filter by admin flag"
+// @Param disabled query bool false "Filter by disabled state"
 // @Param include_deleted query bool false "Include soft-deleted users"
 // @Param search query string false "Substring match on username/name"
 // @Param order_by query string false "One of: created_at, updated_at, username, name"
@@ -213,6 +216,56 @@ func (h *AdminHandler) ForceResetPassword(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, nil)
+}
+
+// Disable disables any user across organizations.
+// @Summary [Admin] Disable user
+// @Tags Admin/Users
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "User UUID"
+// @Param body body domain.DisableUserDTO true "Disable reason"
+// @Success 200 {object} domain.Response{data=domain.User}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 500 {object} domain.Response{error=domain.ErrorBody}
+// @Router /admin/users/{id}/disable [post]
+func (h *AdminHandler) Disable(c *gin.Context) {
+	var dto domain.DisableUserDTO
+	if err := httpx.Bind(c, &dto); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	user, err := h.svc.Disable(c.Request.Context(), httpx.UUIDParam(c, "id"), dto)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, user)
+}
+
+// Enable re-enables any user across organizations.
+// @Summary [Admin] Enable user
+// @Tags Admin/Users
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "User UUID"
+// @Success 200 {object} domain.Response{data=domain.User}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 500 {object} domain.Response{error=domain.ErrorBody}
+// @Router /admin/users/{id}/enable [post]
+func (h *AdminHandler) Enable(c *gin.Context) {
+	user, err := h.svc.Enable(c.Request.Context(), httpx.UUIDParam(c, "id"))
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, user)
 }
 
 // RevokeSessions invalidates all outstanding JWTs for the target user.

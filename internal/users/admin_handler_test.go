@@ -98,6 +98,16 @@ func (m *mockUserSvc) RemoveRole(ctx context.Context, userID uuid.UUID) (*domain
 	u, _ := a.Get(0).(*domain.User)
 	return u, a.Error(1)
 }
+func (m *mockUserSvc) Disable(ctx context.Context, id uuid.UUID, dto domain.DisableUserDTO) (*domain.User, error) {
+	a := m.Called(ctx, id, dto)
+	u, _ := a.Get(0).(*domain.User)
+	return u, a.Error(1)
+}
+func (m *mockUserSvc) Enable(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+	a := m.Called(ctx, id)
+	u, _ := a.Get(0).(*domain.User)
+	return u, a.Error(1)
+}
 
 // mockAuthSvc satisfies domain.AuthService for the revoke-sessions handler.
 type mockAuthSvc struct{ mock.Mock }

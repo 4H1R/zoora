@@ -63,6 +63,8 @@ func mapError(err error) (int, string) {
 	switch {
 	case errors.Is(err, ErrNotFound):
 		return http.StatusNotFound, "NOT_FOUND"
+	case errors.Is(err, ErrUserDisabled):
+		return http.StatusForbidden, "USER_DISABLED"
 	case errors.Is(err, ErrForbidden):
 		return http.StatusForbidden, "FORBIDDEN"
 	case errors.Is(err, ErrUnauthorized):

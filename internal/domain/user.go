@@ -20,6 +20,9 @@ type User struct {
 	CreatedAt      time.Time      `json:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at"`
 	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`
+	DisabledAt     *time.Time     `gorm:"index" json:"disabled_at,omitempty"`
+	DisabledBy     *uuid.UUID     `gorm:"type:uuid" json:"disabled_by,omitempty"`
+	DisabledReason *string        `json:"disabled_reason,omitempty"`
 }
 
 type CreateUserDTO struct {
@@ -87,12 +90,17 @@ type AdminListUsersQuery struct {
 	OrganizationID *uuid.UUID `form:"-"`
 	RoleID         *uuid.UUID `form:"-"`
 	IsAdmin        *bool      `form:"is_admin"`
+	Disabled       *bool      `form:"disabled"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }
 
 type AssignRoleDTO struct {
 	RoleID uuid.UUID `json:"role_id" binding:"required"`
+}
+
+type DisableUserDTO struct {
+	Reason string `json:"reason" binding:"omitempty,max=500"`
 }
 
 type UserRepository interface {
@@ -122,6 +130,8 @@ type UserService interface {
 	ChangePassword(ctx context.Context, id uuid.UUID, dto ChangePasswordDTO) error
 	AssignRole(ctx context.Context, userID uuid.UUID, dto AssignRoleDTO) (*User, error)
 	RemoveRole(ctx context.Context, userID uuid.UUID) (*User, error)
+	Disable(ctx context.Context, id uuid.UUID, dto DisableUserDTO) (*User, error)
+	Enable(ctx context.Context, id uuid.UUID) (*User, error)
 
 	// Admin surface.
 	AdminGetByID(ctx context.Context, id uuid.UUID) (*User, error)

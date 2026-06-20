@@ -10,6 +10,7 @@ var StaffPermissions = []PermissionName{
 	// Users
 	PermUsersView, PermUsersViewAny, PermUsersCreate,
 	PermUsersUpdate, PermUsersUpdateAny, PermUsersDelete, PermUsersDeleteAny,
+	PermUsersDisable, PermUsersDisableAny,
 	// Roles
 	PermRolesView, PermRolesCreate, PermRolesUpdate, PermRolesDelete,
 	// Organizations

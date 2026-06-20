@@ -3,6 +3,7 @@ package users_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"log/slog"
 
@@ -319,5 +320,93 @@ func TestChangePassword_Success(t *testing.T) {
 		NewPassword:     "newStrongPass1!",
 	})
 	assert.NoError(t, err)
+	repo.AssertExpectations(t)
+}
+
+func TestService_Disable_SetsFields(t *testing.T) {
+	repo := &mockUserRepo{}
+	svc := users.NewService(repo, &mockRoleRepo{}, slog.Default())
+
+	targetID := uuid.New()
+	callerID := uuid.New()
+	target := &domain.User{ID: targetID}
+	repo.On("FindByID", mock.Anything, targetID).Return(target, nil)
+	repo.On("Update", mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
+		return u.DisabledAt != nil && u.DisabledBy != nil && *u.DisabledBy == callerID &&
+			u.DisabledReason != nil && *u.DisabledReason == "left the org"
+	})).Return(nil)
+
+	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: callerID, IsAdmin: true})
+	got, err := svc.Disable(ctx, targetID, domain.DisableUserDTO{Reason: "left the org"})
+
+	assert.NoError(t, err)
+	assert.NotNil(t, got.DisabledAt)
+	repo.AssertExpectations(t)
+}
+
+func TestService_Disable_CannotDisableSelf(t *testing.T) {
+	repo := &mockUserRepo{}
+	svc := users.NewService(repo, &mockRoleRepo{}, slog.Default())
+
+	id := uuid.New()
+	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: id, IsAdmin: true})
+	_, err := svc.Disable(ctx, id, domain.DisableUserDTO{})
+
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+	repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+}
+
+func TestService_Disable_NonAdminCannotDisableAdmin(t *testing.T) {
+	repo := &mockUserRepo{}
+	svc := users.NewService(repo, &mockRoleRepo{}, slog.Default())
+
+	orgID := uuid.New()
+	targetID := uuid.New()
+	target := &domain.User{ID: targetID, IsAdmin: true, OrganizationID: &orgID}
+	repo.On("FindByID", mock.Anything, targetID).Return(target, nil)
+
+	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New(), IsAdmin: false, OrgID: &orgID})
+	_, err := svc.Disable(ctx, targetID, domain.DisableUserDTO{})
+
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+	repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+}
+
+func TestService_Disable_Idempotent(t *testing.T) {
+	repo := &mockUserRepo{}
+	svc := users.NewService(repo, &mockRoleRepo{}, slog.Default())
+
+	now := time.Now()
+	targetID := uuid.New()
+	target := &domain.User{ID: targetID, DisabledAt: &now}
+	repo.On("FindByID", mock.Anything, targetID).Return(target, nil)
+
+	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New(), IsAdmin: true})
+	got, err := svc.Disable(ctx, targetID, domain.DisableUserDTO{})
+
+	assert.NoError(t, err)
+	assert.Equal(t, &now, got.DisabledAt)
+	repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+}
+
+func TestService_Enable_ClearsFields(t *testing.T) {
+	repo := &mockUserRepo{}
+	svc := users.NewService(repo, &mockRoleRepo{}, slog.Default())
+
+	now := time.Now()
+	by := uuid.New()
+	reason := "x"
+	targetID := uuid.New()
+	target := &domain.User{ID: targetID, DisabledAt: &now, DisabledBy: &by, DisabledReason: &reason}
+	repo.On("FindByID", mock.Anything, targetID).Return(target, nil)
+	repo.On("Update", mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
+		return u.DisabledAt == nil && u.DisabledBy == nil && u.DisabledReason == nil
+	})).Return(nil)
+
+	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New(), IsAdmin: true})
+	got, err := svc.Enable(ctx, targetID)
+
+	assert.NoError(t, err)
+	assert.Nil(t, got.DisabledAt)
 	repo.AssertExpectations(t)
 }
