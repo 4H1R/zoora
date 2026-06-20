@@ -117,6 +117,7 @@ type JoinLiveRoomResponse struct {
 // All short-circuits role scoping but typed filters (status/class/etc.) still apply.
 type LiveRoomListScope struct {
 	All            bool
+	OrganizationID *uuid.UUID
 	TeacherID      *uuid.UUID
 	MemberUserID   *uuid.UUID
 	Status         *LiveRoomStatus

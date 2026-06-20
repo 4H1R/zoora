@@ -52,6 +52,10 @@ func (m *mockUserRepo) List(ctx context.Context, scope domain.UserListScope, p d
 	args := m.Called(ctx, scope, p)
 	return args.Get(0).([]domain.User), args.Get(1).(int64), args.Error(2)
 }
+func (m *mockUserRepo) StatusCounts(ctx context.Context, scope domain.UserListScope) (domain.UserStatusCounts, error) {
+	args := m.Called(ctx, scope)
+	return args.Get(0).(domain.UserStatusCounts), args.Error(1)
+}
 func (m *mockUserRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
@@ -194,7 +198,7 @@ func TestList_NoCaller_Forbidden(t *testing.T) {
 
 	svc := users.NewService(repo, &mockRoleRepo{}, logger)
 
-	_, _, err := svc.List(ctx, domain.ListParams{})
+	_, _, err := svc.List(ctx, domain.ListParams{}, nil)
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 
@@ -210,26 +214,54 @@ func TestList_AdminGetsAll(t *testing.T) {
 
 	svc := users.NewService(repo, &mockRoleRepo{}, logger)
 
-	result, total, err := svc.List(ctx, domain.ListParams{Page: 1, PageSize: domain.DefaultPageSize})
+	result, total, err := svc.List(ctx, domain.ListParams{Page: 1, PageSize: domain.DefaultPageSize}, nil)
 	assert.NoError(t, err)
 	assert.Len(t, result, 1)
 	assert.Equal(t, int64(1), total)
 }
 
-func TestList_NonAdminScopedToOrg(t *testing.T) {
+func TestList_ViewAnyScopedToOrg(t *testing.T) {
 	orgID := uuid.New()
-	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New(), OrgID: &orgID})
+	ctx := domain.WithCaller(context.Background(), domain.Caller{
+		UserID:      uuid.New(),
+		OrgID:       &orgID,
+		Permissions: []string{string(domain.PermUsersViewAny)},
+	})
 	logger := slog.Default()
 	repo := &mockUserRepo{}
 
 	userList := []domain.User{{Name: "User 1"}}
 	repo.On("List", ctx, mock.MatchedBy(func(scope domain.UserListScope) bool {
-		return !scope.All && scope.OrganizationID != nil && *scope.OrganizationID == orgID
+		return !scope.All && scope.OrganizationID != nil && *scope.OrganizationID == orgID && scope.UserID == nil
 	}), mock.AnythingOfType("domain.ListParams")).Return(userList, int64(1), nil)
 
 	svc := users.NewService(repo, &mockRoleRepo{}, logger)
 
-	result, total, err := svc.List(ctx, domain.ListParams{Page: 1, PageSize: domain.DefaultPageSize})
+	result, total, err := svc.List(ctx, domain.ListParams{Page: 1, PageSize: domain.DefaultPageSize}, nil)
+	assert.NoError(t, err)
+	assert.Len(t, result, 1)
+	assert.Equal(t, int64(1), total)
+}
+
+func TestList_ViewOnlyScopedToSelf(t *testing.T) {
+	orgID := uuid.New()
+	callerID := uuid.New()
+	ctx := domain.WithCaller(context.Background(), domain.Caller{
+		UserID:      callerID,
+		OrgID:       &orgID,
+		Permissions: []string{string(domain.PermUsersView)},
+	})
+	logger := slog.Default()
+	repo := &mockUserRepo{}
+
+	userList := []domain.User{{Name: "Me"}}
+	repo.On("List", ctx, mock.MatchedBy(func(scope domain.UserListScope) bool {
+		return !scope.All && scope.OrganizationID == nil && scope.UserID != nil && *scope.UserID == callerID
+	}), mock.AnythingOfType("domain.ListParams")).Return(userList, int64(1), nil)
+
+	svc := users.NewService(repo, &mockRoleRepo{}, logger)
+
+	result, total, err := svc.List(ctx, domain.ListParams{Page: 1, PageSize: domain.DefaultPageSize}, nil)
 	assert.NoError(t, err)
 	assert.Len(t, result, 1)
 	assert.Equal(t, int64(1), total)

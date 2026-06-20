@@ -1079,7 +1079,7 @@
       }
     },
     "roleAdmin": "Platform admin",
-    "roleStaff": "Owner",
+    "roleStaff": "Manager",
     "roleMember": "Member"
   },
   "classes": {
@@ -1274,6 +1274,11 @@
       "createdAt": "Created",
       "noResults": "No users found",
       "noResultsHint": "Try adjusting your search or create a new user.",
+      "tabs": {
+        "all": "All",
+        "active": "Active",
+        "disabled": "Disabled"
+      },
       "stats": {
         "total": "Total users"
       },
@@ -2022,8 +2027,9 @@
   },
   "roles": {
     "presets": {
-      "Staff": "Staff",
-      "Teacher": "Teacher"
+      "Manager": "Manager",
+      "Teacher": "Teacher",
+      "Student": "Student"
     }
   },
   "permissions": {

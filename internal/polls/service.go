@@ -28,13 +28,7 @@ func NewService(
 }
 
 func canManagePoll(caller domain.Caller, poll *domain.Poll) bool {
-	if caller.IsAdmin {
-		return true
-	}
-	if caller.HasPermission("polls:update_any") {
-		return true
-	}
-	return caller.UserID == poll.UserID
+	return caller.CanManage(poll.UserID, domain.PermPollsUpdateAny)
 }
 
 func (s *service) Create(ctx context.Context, dto domain.CreatePollDTO) (*domain.Poll, error) {
@@ -127,7 +121,7 @@ func (s *service) List(ctx context.Context, q domain.ListPollsQuery) ([]domain.P
 	scope := s.resolveListScope(caller)
 	scope.ModelType = q.ModelType
 	scope.ModelID = q.ModelID
-	if caller.IsAdmin || caller.HasPermission("polls:update_any") {
+	if caller.HasAny(domain.PermPollsUpdateAny) {
 		scope.IncludeDeleted = q.IncludeDeleted
 	}
 	return s.repo.List(ctx, scope, q.ListParams)
@@ -137,7 +131,7 @@ func (s *service) resolveListScope(caller domain.Caller) domain.PollListScope {
 	if caller.IsAdmin {
 		return domain.PollListScope{AllOrgs: true}
 	}
-	if caller.HasPermission("polls:update_any") {
+	if caller.HasPermission(domain.PermPollsUpdateAny) {
 		return domain.PollListScope{}
 	}
 	userID := caller.UserID
@@ -196,4 +190,3 @@ func (s *service) ListAnswers(ctx context.Context, pollID uuid.UUID, q domain.Li
 	}
 	return s.answers.ListByPoll(ctx, pollID, q)
 }
-

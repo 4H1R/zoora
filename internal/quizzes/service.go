@@ -47,23 +47,11 @@ func NewService(
 }
 
 func canManageQuiz(caller domain.Caller, quiz *domain.Quiz) bool {
-	if caller.IsAdmin {
-		return true
-	}
-	if caller.HasPermission(domain.PermQuizzesUpdateAny) {
-		return true
-	}
-	return caller.UserID == quiz.UserID
+	return caller.CanManage(quiz.UserID, domain.PermQuizzesUpdateAny)
 }
 
 func canDeleteQuiz(caller domain.Caller, quiz *domain.Quiz) bool {
-	if caller.IsAdmin {
-		return true
-	}
-	if caller.HasPermission(domain.PermQuizzesDeleteAny) {
-		return true
-	}
-	return caller.UserID == quiz.UserID
+	return caller.CanManage(quiz.UserID, domain.PermQuizzesDeleteAny)
 }
 
 func (s *service) canViewQuiz(ctx context.Context, caller domain.Caller, quiz *domain.Quiz) (bool, error) {
@@ -307,17 +295,11 @@ func (s *service) resolveListScope(caller domain.Caller) domain.QuizListScope {
 }
 
 func canManage(caller domain.Caller) bool {
-	return caller.IsAdmin || caller.HasPermission(domain.PermQuizzesUpdateAny)
+	return caller.HasAny(domain.PermQuizzesUpdateAny)
 }
 
 func canManageClass(caller domain.Caller, class *domain.Class) bool {
-	if caller.IsAdmin {
-		return true
-	}
-	if caller.HasPermission(domain.PermClassesUpdateAny) {
-		return true
-	}
-	return caller.UserID == class.UserID
+	return caller.CanManage(class.UserID, domain.PermClassesUpdateAny)
 }
 
 // --- Rules ---

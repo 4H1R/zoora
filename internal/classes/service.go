@@ -18,10 +18,10 @@ import (
 //
 // Authorization always happens in the service layer so handlers stay thin.
 type service struct {
-	repo       domain.ClassRepository
-	sessions   domain.ClassSessionRepository
-	members    domain.ClassMemberRepository
-	logger     *slog.Logger
+	repo     domain.ClassRepository
+	sessions domain.ClassSessionRepository
+	members  domain.ClassMemberRepository
+	logger   *slog.Logger
 }
 
 func NewService(
@@ -36,23 +36,11 @@ func NewService(
 // canManageClass returns true if caller can mutate the given class (update,
 // add sessions, enroll others). Students never qualify here.
 func canManageClass(caller domain.Caller, class *domain.Class) bool {
-	if caller.IsAdmin {
-		return true
-	}
-	if caller.HasPermission(domain.PermClassesUpdateAny) {
-		return true
-	}
-	return caller.UserID == class.UserID
+	return caller.CanManage(class.UserID, domain.PermClassesUpdateAny)
 }
 
 func canDeleteClass(caller domain.Caller, class *domain.Class) bool {
-	if caller.IsAdmin {
-		return true
-	}
-	if caller.HasPermission(domain.PermClassesDeleteAny) {
-		return true
-	}
-	return caller.UserID == class.UserID
+	return caller.CanManage(class.UserID, domain.PermClassesDeleteAny)
 }
 
 // canViewClass returns true if caller can read the class. Admins/staff

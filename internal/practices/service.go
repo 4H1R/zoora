@@ -40,23 +40,11 @@ func NewService(
 }
 
 func canManageRoom(caller domain.Caller, room *domain.PracticeRoom) bool {
-	if caller.IsAdmin {
-		return true
-	}
-	if caller.HasPermission(domain.PermPracticesUpdateAny) {
-		return true
-	}
-	return caller.UserID == room.UserID
+	return caller.CanManage(room.UserID, domain.PermPracticesUpdateAny)
 }
 
 func canDeleteRoom(caller domain.Caller, room *domain.PracticeRoom) bool {
-	if caller.IsAdmin {
-		return true
-	}
-	if caller.HasPermission(domain.PermPracticesDeleteAny) {
-		return true
-	}
-	return caller.UserID == room.UserID
+	return caller.CanManage(room.UserID, domain.PermPracticesDeleteAny)
 }
 
 func (s *service) canViewRoom(ctx context.Context, caller domain.Caller, room *domain.PracticeRoom) (bool, error) {
@@ -212,7 +200,7 @@ func (s *service) resolveListScope(caller domain.Caller) domain.PracticeRoomList
 }
 
 func canListDeleted(caller domain.Caller) bool {
-	return caller.IsAdmin || caller.HasPermission(domain.PermPracticesUpdateAny)
+	return caller.HasAny(domain.PermPracticesUpdateAny)
 }
 
 // --- Submissions ---

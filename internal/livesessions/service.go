@@ -54,29 +54,11 @@ func NewService(
 }
 
 func (s *service) canUpdateRoom(caller domain.Caller, class *domain.Class) bool {
-	if caller.IsAdmin {
-		return true
-	}
-	if caller.HasPermission(domain.PermLiveSessionsUpdateAny) {
-		return true
-	}
-	if caller.HasPermission(domain.PermLiveSessionsUpdate) && caller.UserID == class.UserID {
-		return true
-	}
-	return false
+	return caller.CanManageOwned(class.UserID, domain.PermLiveSessionsUpdate, domain.PermLiveSessionsUpdateAny)
 }
 
 func (s *service) canManageRoom(caller domain.Caller, class *domain.Class) bool {
-	if caller.IsAdmin {
-		return true
-	}
-	if caller.HasPermission(domain.PermLiveSessionsManageAny) {
-		return true
-	}
-	if caller.HasPermission(domain.PermLiveSessionsManage) && caller.UserID == class.UserID {
-		return true
-	}
-	return false
+	return caller.CanManageOwned(class.UserID, domain.PermLiveSessionsManage, domain.PermLiveSessionsManageAny)
 }
 
 func (s *service) canViewRoom(ctx context.Context, caller domain.Caller, class *domain.Class) (bool, error) {
@@ -114,8 +96,11 @@ func (s *service) loadRoomWithClass(ctx context.Context, roomID uuid.UUID) (*dom
 // repository understands. Typed filters from the request query are layered on
 // top by the caller, not here.
 func (s *service) resolveListScope(caller domain.Caller) domain.LiveRoomListScope {
-	if caller.IsAdmin || caller.HasPermission(domain.PermLiveSessionsViewAny) {
+	if caller.IsAdmin {
 		return domain.LiveRoomListScope{All: true}
+	}
+	if caller.HasPermission(domain.PermLiveSessionsViewAny) {
+		return domain.LiveRoomListScope{All: true, OrganizationID: caller.OrgID}
 	}
 	userID := caller.UserID
 	return domain.LiveRoomListScope{

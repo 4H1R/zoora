@@ -22,12 +22,12 @@ func NewService(repo domain.UserRepository, roleRepo domain.RoleRepository, logg
 	return &service{repo: repo, roleRepo: roleRepo, logger: logger}
 }
 
-func (s *service) isStaffRole(ctx context.Context, roleID uuid.UUID) bool {
+func (s *service) isManagerRole(ctx context.Context, roleID uuid.UUID) bool {
 	role, err := s.roleRepo.FindByID(ctx, roleID)
 	if err != nil {
 		return false
 	}
-	return role.IsPreset && role.Name == domain.PresetRoleStaff
+	return role.IsPreset && role.Name == domain.PresetRoleManager
 }
 
 func (s *service) Create(ctx context.Context, dto domain.CreateUserDTO) (*domain.User, error) {
@@ -47,7 +47,7 @@ func (s *service) Create(ctx context.Context, dto domain.CreateUserDTO) (*domain
 	if dto.RoleID != nil {
 		if !caller.IsAdmin && !caller.HasPermission(domain.PermRolesUpdate) {
 			dto.RoleID = nil
-		} else if !caller.IsAdmin && s.isStaffRole(ctx, *dto.RoleID) {
+		} else if !caller.IsAdmin && s.isManagerRole(ctx, *dto.RoleID) {
 			return nil, domain.ErrForbidden
 		}
 	}
@@ -103,7 +103,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateUse
 		user.Name = *dto.Name
 	}
 	if dto.RoleID != nil && (caller.IsAdmin || caller.HasPermission(domain.PermRolesUpdate)) {
-		if !caller.IsAdmin && s.isStaffRole(ctx, *dto.RoleID) {
+		if !caller.IsAdmin && s.isManagerRole(ctx, *dto.RoleID) {
 			return nil, domain.ErrForbidden
 		}
 		user.RoleID = dto.RoleID
@@ -139,23 +139,39 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (s *service) List(ctx context.Context, p domain.ListParams) ([]domain.User, int64, error) {
+func (s *service) List(ctx context.Context, p domain.ListParams, disabled *bool) ([]domain.User, int64, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, 0, domain.ErrForbidden
 	}
 	scope := s.resolveListScope(caller)
+	scope.Disabled = disabled
 	return s.repo.List(ctx, scope, p)
 }
 
+// StatusCounts returns the caller-scoped user totals split by lockout state,
+// backing the all/active/disabled tabs. Scope mirrors List exactly so the
+// counts match what the list can show.
+func (s *service) StatusCounts(ctx context.Context) (domain.UserStatusCounts, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return domain.UserStatusCounts{}, domain.ErrForbidden
+	}
+	return s.repo.StatusCounts(ctx, s.resolveListScope(caller))
+}
+
 // resolveListScope maps a Caller into the role-resolved UserListScope the
-// repository understands. Super-admins see all rows; everyone else is
-// scoped to their organization.
+// repository understands. Super-admins see all rows; users:view_any sees the
+// whole organization; plain users:view is scoped to the caller's own row.
 func (s *service) resolveListScope(caller domain.Caller) domain.UserListScope {
 	if caller.IsAdmin {
 		return domain.UserListScope{All: true}
 	}
-	return domain.UserListScope{OrganizationID: caller.OrgID}
+	if caller.HasPermission(domain.PermUsersViewAny) {
+		return domain.UserListScope{OrganizationID: caller.OrgID}
+	}
+	uid := caller.UserID
+	return domain.UserListScope{UserID: &uid}
 }
 
 func (s *service) GetProfile(ctx context.Context, id uuid.UUID) (*domain.User, error) {

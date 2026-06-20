@@ -167,12 +167,12 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 		return nil
 	}
 
-	// 3. Preset roles (Staff + Teacher) — global, no org
+	// 3. Preset roles (Manager + Teacher) — global, no org
 	presetDefs := []struct {
 		Name  string
 		Perms []domain.PermissionName
 	}{
-		{domain.PresetRoleStaff, domain.StaffPermissions},
+		{domain.PresetRoleManager, domain.ManagerPermissions},
 		{domain.PresetRoleTeacher, domain.TeacherPermissions},
 		{domain.PresetRoleStudent, domain.StudentPermissions},
 	}
@@ -211,16 +211,16 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 	for i, org := range orgs {
 		ou := &orgUsers{}
 
-		// First org: staff1 = staff (acts as teacher).
+		// First org: manager1 = manager (acts as teacher).
 		if i == 0 {
 			staff := factory.NewUser(org.ID, func(u *domain.User) {
 				u.OrganizationID = &org.ID
-				u.Username = "staff1"
-				u.Name = "Staff User"
-				u.RoleID = &presetRoles[domain.PresetRoleStaff].ID
+				u.Username = "manager1"
+				u.Name = "Manager User"
+				u.RoleID = &presetRoles[domain.PresetRoleManager].ID
 			})
 			if err := db.WithContext(ctx).Create(staff).Error; err != nil {
-				return nil, fmt.Errorf("creating staff1: %w", err)
+				return nil, fmt.Errorf("creating manager1: %w", err)
 			}
 			ou.teachers = append(ou.teachers, staff)
 			counts.Users++
@@ -691,6 +691,6 @@ func printSummary(c *seedCounts) {
 	fmt.Printf("  GradebookCells:       %d\n", c.GradebookCells)
 	fmt.Println("\nLogins:")
 	fmt.Println("  admin1 / password   (super admin)")
-	fmt.Println("  staff1 / password   (Staff preset in Zoora Demo org)")
+	fmt.Println("  manager1 / password (Manager preset in Zoora Demo org)")
 	fmt.Println("  user1 / password    (Student in Zoora Demo org)")
 }

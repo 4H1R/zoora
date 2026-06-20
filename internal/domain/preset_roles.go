@@ -1,12 +1,12 @@
 package domain
 
 const (
-	PresetRoleStaff   = "Staff"
+	PresetRoleManager = "Manager"
 	PresetRoleTeacher = "Teacher"
 	PresetRoleStudent = "Student"
 )
 
-var StaffPermissions = []PermissionName{
+var ManagerPermissions = []PermissionName{
 	// Users
 	PermUsersView, PermUsersViewAny, PermUsersCreate,
 	PermUsersUpdate, PermUsersUpdateAny, PermUsersDelete, PermUsersDeleteAny,

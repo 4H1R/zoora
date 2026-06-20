@@ -1306,6 +1306,11 @@
       "createdAt": "تاریخ ایجاد",
       "noResults": "کاربری یافت نشد",
       "noResultsHint": "جستجوی خود را تغییر دهید یا کاربر جدید بسازید.",
+      "tabs": {
+        "all": "همه",
+        "active": "فعال",
+        "disabled": "بایگانی"
+      },
       "stats": {
         "total": "کل کاربران"
       },
@@ -2022,8 +2027,9 @@
   },
   "roles": {
     "presets": {
-      "Staff": "کارمند",
-      "Teacher": "مدرس"
+      "Manager": "مدیر",
+      "Teacher": "مدرس",
+      "Student": "دانش‌آموز"
     }
   },
   "permissions": {

@@ -105,8 +105,13 @@ func (r *repository) List(ctx context.Context, scope domain.UserListScope, p dom
 	if scope.IncludeDeleted {
 		base = base.Unscoped()
 	}
-	if !scope.All && scope.OrganizationID != nil {
-		base = base.Where("organization_id = ?", *scope.OrganizationID)
+	base = applyUserScope(base, scope)
+	if scope.Disabled != nil {
+		if *scope.Disabled {
+			base = base.Where("disabled_at IS NOT NULL")
+		} else {
+			base = base.Where("disabled_at IS NULL")
+		}
 	}
 	var users []domain.User
 	total, err := listparams.Paginate(base, p, &users)
@@ -114,6 +119,43 @@ func (r *repository) List(ctx context.Context, scope domain.UserListScope, p dom
 		return nil, 0, fmt.Errorf("users.repository.List: %w", err)
 	}
 	return users, total, nil
+}
+
+// StatusCounts returns the caller-scoped user totals broken down by lockout
+// state. The scope's Disabled filter is intentionally ignored so the tab
+// counts stay stable regardless of which tab is active.
+func (r *repository) StatusCounts(ctx context.Context, scope domain.UserListScope) (domain.UserStatusCounts, error) {
+	base := database.DB(ctx, r.db).Model(&domain.User{})
+	if scope.IncludeDeleted {
+		base = base.Unscoped()
+	}
+	base = applyUserScope(base, scope)
+
+	var counts domain.UserStatusCounts
+	if err := base.Session(&gorm.Session{}).Count(&counts.All).Error; err != nil {
+		return counts, fmt.Errorf("users.repository.StatusCounts all: %w", err)
+	}
+	if err := base.Session(&gorm.Session{}).Where("disabled_at IS NULL").Count(&counts.Active).Error; err != nil {
+		return counts, fmt.Errorf("users.repository.StatusCounts active: %w", err)
+	}
+	counts.Disabled = counts.All - counts.Active
+	return counts, nil
+}
+
+// applyUserScope narrows a query to the caller's role-resolved row set:
+// All short-circuits scoping, otherwise UserID (self) or OrganizationID
+// (org-wide) constrains the result. Shared by List and StatusCounts.
+func applyUserScope(q *gorm.DB, scope domain.UserListScope) *gorm.DB {
+	if scope.All {
+		return q
+	}
+	switch {
+	case scope.UserID != nil:
+		return q.Where("id = ?", *scope.UserID)
+	case scope.OrganizationID != nil:
+		return q.Where("organization_id = ?", *scope.OrganizationID)
+	}
+	return q
 }
 
 // HardDelete removes the row permanently, bypassing soft-delete.

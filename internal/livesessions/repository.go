@@ -111,6 +111,13 @@ func (r *roomRepository) List(ctx context.Context, scope domain.LiveRoomListScop
 		}
 	}
 
+	if scope.OrganizationID != nil {
+		sub := db.Table("class_sessions cs").
+			Select("cs.id").
+			Joins("JOIN classes c ON c.id = cs.class_id").
+			Where("c.organization_id = ?", *scope.OrganizationID)
+		base = base.Where("live_rooms.class_session_id IN (?)", sub)
+	}
 	if scope.ClassID != nil {
 		sub := db.Table("class_sessions").
 			Select("id").

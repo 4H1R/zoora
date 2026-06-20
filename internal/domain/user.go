@@ -80,7 +80,19 @@ type AdminForceResetPasswordDTO struct {
 type UserListScope struct {
 	All            bool
 	OrganizationID *uuid.UUID
+	UserID         *uuid.UUID
 	IncludeDeleted bool
+	// Disabled filters by lockout state: nil = all, false = active only,
+	// true = disabled only. Not applied to status-count queries.
+	Disabled *bool
+}
+
+// UserStatusCounts breaks the caller-scoped user set down by lockout state.
+// All = Active + Disabled. Backs the status tabs on GET /users.
+type UserStatusCounts struct {
+	All      int64 `json:"all"`
+	Active   int64 `json:"active"`
+	Disabled int64 `json:"disabled"`
 }
 
 // AdminListUsersQuery is the query for GET /admin/users. Typed filters
@@ -111,6 +123,7 @@ type UserRepository interface {
 	Update(ctx context.Context, user *User) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, scope UserListScope, p ListParams) ([]User, int64, error)
+	StatusCounts(ctx context.Context, scope UserListScope) (UserStatusCounts, error)
 
 	// Admin-only operations.
 	HardDelete(ctx context.Context, id uuid.UUID) error
@@ -124,7 +137,8 @@ type UserService interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*User, error)
 	Update(ctx context.Context, id uuid.UUID, dto UpdateUserDTO) (*User, error)
 	Delete(ctx context.Context, id uuid.UUID) error
-	List(ctx context.Context, p ListParams) ([]User, int64, error)
+	List(ctx context.Context, p ListParams, disabled *bool) ([]User, int64, error)
+	StatusCounts(ctx context.Context) (UserStatusCounts, error)
 	GetProfile(ctx context.Context, id uuid.UUID) (*User, error)
 	UpdateProfile(ctx context.Context, id uuid.UUID, dto UpdateProfileDTO) (*User, error)
 	ChangePassword(ctx context.Context, id uuid.UUID, dto ChangePasswordDTO) error

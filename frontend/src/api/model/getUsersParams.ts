@@ -27,4 +27,8 @@ page?: number;
  * Items per page (default 20)
  */
 page_size?: number;
+/**
+ * Filter by lockout state: true = disabled only, false = active only, omit = all
+ */
+disabled?: boolean;
 };
