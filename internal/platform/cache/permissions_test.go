@@ -48,7 +48,9 @@ func TestGetRolePermissionsRejectsCorruptJSON(t *testing.T) {
 	t.Cleanup(func() { _ = rdb.Close() })
 
 	roleID := uuid.New()
-	server.Set(rolePermissionKey(roleID), "{not-json")
+	if err := server.Set(rolePermissionKey(roleID), "{not-json"); err != nil {
+		t.Fatalf("server.Set() error = %v", err)
+	}
 
 	if _, err := GetRolePermissions(ctx, rdb, roleID); err == nil {
 		t.Fatal("GetRolePermissions() error = nil for corrupt JSON")
