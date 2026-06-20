@@ -55,23 +55,11 @@ func NewService(
 // canManageGradebook returns true if caller can mutate gradebook columns/cells
 // of the given class. Students never qualify here.
 func canManageGradebook(caller domain.Caller, class *domain.Class) bool {
-	if caller.IsAdmin {
-		return true
-	}
-	if caller.HasPermission(domain.PermGradebookUpdateAny) {
-		return true
-	}
-	return caller.UserID == class.UserID
+	return caller.CanManage(class.UserID, domain.PermGradebookUpdateAny)
 }
 
 func canDeleteGradebook(caller domain.Caller, class *domain.Class) bool {
-	if caller.IsAdmin {
-		return true
-	}
-	if caller.HasPermission(domain.PermGradebookDeleteAny) {
-		return true
-	}
-	return caller.UserID == class.UserID
+	return caller.CanManage(class.UserID, domain.PermGradebookDeleteAny)
 }
 
 // canViewGradebook returns true if caller can read the gradebook. Managers and

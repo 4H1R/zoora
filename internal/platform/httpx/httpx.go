@@ -39,6 +39,20 @@ func QueryInt(c *gin.Context, key string, defaultVal int) int {
 	return v
 }
 
+// BoolQuery parses an optional tri-state bool query param. Returns nil when
+// absent/empty or unparseable (treated as "no filter"), otherwise the value.
+func BoolQuery(c *gin.Context, key string) *bool {
+	raw := c.Query(key)
+	if raw == "" {
+		return nil
+	}
+	v, err := strconv.ParseBool(raw)
+	if err != nil {
+		return nil
+	}
+	return &v
+}
+
 // Pagination pulls offset/limit from query with sane defaults + caps.
 func Pagination(c *gin.Context) (offset, limit int) {
 	offset = QueryInt(c, "offset", 0)

@@ -167,12 +167,12 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 		return nil
 	}
 
-	// 3. Preset roles (Staff + Teacher) — global, no org
+	// 3. Preset roles (Manager + Teacher) — global, no org
 	presetDefs := []struct {
 		Name  string
 		Perms []domain.PermissionName
 	}{
-		{domain.PresetRoleStaff, domain.StaffPermissions},
+		{domain.PresetRoleManager, domain.ManagerPermissions},
 		{domain.PresetRoleTeacher, domain.TeacherPermissions},
 		{domain.PresetRoleStudent, domain.StudentPermissions},
 	}
@@ -189,38 +189,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 		counts.Roles++
 	}
 
-	// 4. Org-scoped Student role
-	studentPermNames := []domain.PermissionName{
-		domain.PermLiveSessionsView, domain.PermLiveSessionsJoin,
-		domain.PermRecordingsView,
-		domain.PermClassesView, domain.PermClassesJoin,
-		domain.PermUsersView,
-		domain.PermQuizzesView,
-		domain.PermPollsView,
-		// View-only access so members see the same session tabs as staff
-		// (Practices, Recordings, Live presence) — no create/grade rights.
-		domain.PermPracticesView,
-		domain.PermOfflinesView,
-		domain.PermAttendanceView,
-	}
-	studentPermIDs := resolvePermIDs(studentPermNames)
-
-	studentRolesByOrg := make(map[uuid.UUID]*domain.Role)
-	for _, org := range orgs {
-		studentRole := factory.NewRole(&org.ID, func(r *domain.Role) {
-			r.Name = "Student"
-		})
-		if err := db.WithContext(ctx).Create(studentRole).Error; err != nil {
-			return nil, fmt.Errorf("creating student role: %w", err)
-		}
-		if err := assignPerms(studentRole.ID, studentPermIDs); err != nil {
-			return nil, fmt.Errorf("assigning student permissions: %w", err)
-		}
-		studentRolesByOrg[org.ID] = studentRole
-		counts.Roles++
-	}
-
-	// 5. Users
+	// 4. Users
 	type orgUsers struct {
 		teachers []*domain.User
 		students []*domain.User
@@ -242,22 +211,22 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 	for i, org := range orgs {
 		ou := &orgUsers{}
 
-		// First org: staff1 = staff (acts as teacher).
+		// First org: manager1 = manager (acts as teacher).
 		if i == 0 {
 			staff := factory.NewUser(org.ID, func(u *domain.User) {
 				u.OrganizationID = &org.ID
-				u.Username = "staff1"
-				u.Name = "Staff User"
-				u.RoleID = &presetRoles[domain.PresetRoleStaff].ID
+				u.Username = "manager1"
+				u.Name = "Manager User"
+				u.RoleID = &presetRoles[domain.PresetRoleManager].ID
 			})
 			if err := db.WithContext(ctx).Create(staff).Error; err != nil {
-				return nil, fmt.Errorf("creating staff1: %w", err)
+				return nil, fmt.Errorf("creating manager1: %w", err)
 			}
 			ou.teachers = append(ou.teachers, staff)
 			counts.Users++
 
 			// Fixed user1 — debug student in Zoora Demo org
-			studentRole := studentRolesByOrg[org.ID]
+			studentRole := presetRoles[domain.PresetRoleStudent]
 			user1 := factory.NewUser(org.ID, func(u *domain.User) {
 				u.OrganizationID = &org.ID
 				u.Username = "user1"
@@ -283,7 +252,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 		counts.Users++
 
 		// 4 students per org
-		studentRole := studentRolesByOrg[org.ID]
+		studentRole := presetRoles[domain.PresetRoleStudent]
 		for s := 0; s < 4; s++ {
 			st := factory.NewUser(org.ID, func(u *domain.User) {
 				u.OrganizationID = &org.ID
@@ -722,6 +691,6 @@ func printSummary(c *seedCounts) {
 	fmt.Printf("  GradebookCells:       %d\n", c.GradebookCells)
 	fmt.Println("\nLogins:")
 	fmt.Println("  admin1 / password   (super admin)")
-	fmt.Println("  staff1 / password   (Staff preset in Zoora Demo org)")
+	fmt.Println("  manager1 / password (Manager preset in Zoora Demo org)")
 	fmt.Println("  user1 / password    (Student in Zoora Demo org)")
 }

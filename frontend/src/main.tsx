@@ -27,6 +27,9 @@ const router = createRouter({
   // This will ensure that the loader is always called when the route is preloaded or visited
   defaultPreloadStaleTime: 0,
   scrollRestoration: true,
+  // Render unmatched routes full-screen at the root (root.notFoundComponent)
+  // instead of nested inside whatever layout partially matched.
+  notFoundMode: "root",
 })
 
 // Register things for typesafety

@@ -45,7 +45,7 @@ func (s *service) CreateChat(ctx context.Context, dto domain.CreateChatDTO) (*do
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	if !caller.IsAdmin && !caller.HasPermission("chats:manage") {
+	if !caller.IsAdmin && !caller.HasPermission(domain.PermChatsManage) {
 		return nil, domain.ErrForbidden
 	}
 
@@ -100,7 +100,7 @@ func (s *service) UpdateChat(ctx context.Context, id uuid.UUID, dto domain.Updat
 		return nil, err
 	}
 
-	if !caller.IsAdmin && !caller.HasPermission("chats:manage") {
+	if !caller.IsAdmin && !caller.HasPermission(domain.PermChatsManage) {
 		member, mErr := s.memberRepo.FindByChatAndUser(ctx, id, caller.UserID)
 		if mErr != nil || member.Role != domain.ChatMemberRoleAdmin {
 			return nil, domain.ErrForbidden
@@ -131,7 +131,7 @@ func (s *service) DeleteChat(ctx context.Context, id uuid.UUID) error {
 	if !ok {
 		return domain.ErrForbidden
 	}
-	if !caller.IsAdmin && !caller.HasPermission("chats:manage") {
+	if !caller.IsAdmin && !caller.HasPermission(domain.PermChatsManage) {
 		return domain.ErrForbidden
 	}
 
@@ -162,7 +162,7 @@ func (s *service) AddMember(ctx context.Context, chatID uuid.UUID, dto domain.Ad
 		return nil, err
 	}
 
-	if !caller.IsAdmin && !caller.HasPermission("chats:manage") {
+	if !caller.IsAdmin && !caller.HasPermission(domain.PermChatsManage) {
 		member, mErr := s.memberRepo.FindByChatAndUser(ctx, chatID, caller.UserID)
 		if mErr != nil || member.Role != domain.ChatMemberRoleAdmin {
 			return nil, domain.ErrForbidden
@@ -193,7 +193,7 @@ func (s *service) RemoveMember(ctx context.Context, chatID, userID uuid.UUID) er
 		return domain.ErrForbidden
 	}
 
-	if !caller.IsAdmin && !caller.HasPermission("chats:manage") && caller.UserID != userID {
+	if !caller.IsAdmin && !caller.HasPermission(domain.PermChatsManage) && caller.UserID != userID {
 		member, mErr := s.memberRepo.FindByChatAndUser(ctx, chatID, caller.UserID)
 		if mErr != nil || member.Role != domain.ChatMemberRoleAdmin {
 			return domain.ErrForbidden
@@ -341,7 +341,7 @@ func (s *service) DeleteMessage(ctx context.Context, id uuid.UUID) error {
 	}
 
 	if msg.SenderID == nil || *msg.SenderID != caller.UserID {
-		if !caller.IsAdmin && !caller.HasPermission("chats:manage") {
+		if !caller.IsAdmin && !caller.HasPermission(domain.PermChatsManage) {
 			chat, cErr := s.chatRepo.FindByID(ctx, msg.ChatID)
 			if cErr != nil {
 				return cErr
@@ -458,7 +458,7 @@ func (s *service) ArchiveByModel(ctx context.Context, modelType string, modelID 
 // Access control helpers
 
 func (s *service) checkAccess(ctx context.Context, chat *domain.Chat, caller domain.Caller) error {
-	if caller.IsAdmin || caller.HasPermission("chats:manage") {
+	if caller.IsAdmin || caller.HasPermission(domain.PermChatsManage) {
 		return nil
 	}
 	if chat.ModelType == "live_session" {
@@ -475,7 +475,7 @@ func (s *service) checkAccess(ctx context.Context, chat *domain.Chat, caller dom
 }
 
 func (s *service) checkWriteAccess(ctx context.Context, chat *domain.Chat, caller domain.Caller) error {
-	if caller.IsAdmin || caller.HasPermission("chats:manage") {
+	if caller.IsAdmin || caller.HasPermission(domain.PermChatsManage) {
 		return nil
 	}
 	if chat.ModelType == "live_session" {

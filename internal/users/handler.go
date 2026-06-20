@@ -39,6 +39,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		// CRUD with self-vs-any permission pattern.
 		authed.POST("/users", perm(domain.PermUsersCreate), h.CreateUser)
 		authed.GET("/users", auth.RequireAnyPermission(domain.PermUsersView, domain.PermUsersViewAny), h.ListUsers)
+		authed.GET("/users/counts", auth.RequireAnyPermission(domain.PermUsersView, domain.PermUsersViewAny), h.ListUserStatusCounts)
 		authed.GET("/users/:id", auth.RequireSelfOrPermission(domain.PermUsersView, domain.PermUsersViewAny, "id"), idParam, h.GetUserByID)
 		authed.PUT("/users/:id", auth.RequireSelfOrPermission(domain.PermUsersUpdate, domain.PermUsersUpdateAny, "id"), idParam, h.UpdateUser)
 		authed.DELETE("/users/:id", auth.RequireSelfOrPermission(domain.PermUsersDelete, domain.PermUsersDeleteAny, "id"), idParam, h.DeleteUser)
@@ -113,6 +114,7 @@ func (h *Handler) GetUserByID(c *gin.Context) {
 // @Param order_dir query string false "asc or desc"
 // @Param page query int false "1-based page number"
 // @Param page_size query int false "Items per page (default 20)"
+// @Param disabled query bool false "Filter by lockout state: true = disabled only, false = active only, omit = all"
 // @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.User}}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 403 {object} domain.Response{error=domain.ErrorBody}
@@ -120,12 +122,32 @@ func (h *Handler) GetUserByID(c *gin.Context) {
 // @Router /users [get]
 func (h *Handler) ListUsers(c *gin.Context) {
 	p := listparams.Bind(c, usersListConfig)
-	users, total, err := h.svc.List(c.Request.Context(), p)
+	users, total, err := h.svc.List(c.Request.Context(), p, httpx.BoolQuery(c, "disabled"))
 	if err != nil {
 		_ = c.Error(err)
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(users, total, p))
+}
+
+// ListUserStatusCounts returns caller-scoped user totals by lockout state.
+// @Summary User status counts
+// @Description Returns all/active/disabled user counts scoped by caller role. Backs the status tabs on the users list.
+// @Tags Users
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} domain.Response{data=domain.UserStatusCounts}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 500 {object} domain.Response{error=domain.ErrorBody}
+// @Router /users/counts [get]
+func (h *Handler) ListUserStatusCounts(c *gin.Context) {
+	counts, err := h.svc.StatusCounts(c.Request.Context())
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, counts)
 }
 
 // UpdateUser updates a user by ID.

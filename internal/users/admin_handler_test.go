@@ -44,10 +44,14 @@ func (m *mockUserSvc) Update(ctx context.Context, id uuid.UUID, dto domain.Updat
 func (m *mockUserSvc) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
-func (m *mockUserSvc) List(ctx context.Context, p domain.ListParams) ([]domain.User, int64, error) {
-	a := m.Called(ctx, p)
+func (m *mockUserSvc) List(ctx context.Context, p domain.ListParams, disabled *bool) ([]domain.User, int64, error) {
+	a := m.Called(ctx, p, disabled)
 	us, _ := a.Get(0).([]domain.User)
 	return us, a.Get(1).(int64), a.Error(2)
+}
+func (m *mockUserSvc) StatusCounts(ctx context.Context) (domain.UserStatusCounts, error) {
+	a := m.Called(ctx)
+	return a.Get(0).(domain.UserStatusCounts), a.Error(1)
 }
 func (m *mockUserSvc) GetProfile(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	a := m.Called(ctx, id)

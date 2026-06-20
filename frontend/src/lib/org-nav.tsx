@@ -12,7 +12,6 @@ import {
   SettingsIcon,
   ShieldIcon,
   UsersIcon,
-  VideoIcon,
 } from "lucide-react"
 
 type NavItemSpec = {
@@ -65,12 +64,6 @@ export function buildOrgNavGroups(
           url: `/org/${orgId}/attendance`,
           icon: <CalendarCheckIcon />,
           perms: ["attendance:view_own"],
-        },
-        {
-          title: t("org.nav.recordings"),
-          url: `/org/${orgId}/offlines`,
-          icon: <VideoIcon />,
-          perms: ["offlines:view", "offlines:view_any"],
         },
       ],
     },

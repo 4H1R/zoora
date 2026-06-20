@@ -38,6 +38,10 @@ import type {
   GetUsers401,
   GetUsers403,
   GetUsers500,
+  GetUsersCounts200,
+  GetUsersCounts401,
+  GetUsersCounts403,
+  GetUsersCounts500,
   GetUsersId200,
   GetUsersId401,
   GetUsersId403,
@@ -341,6 +345,136 @@ export const usePostUsers = <TError = ErrorType<PostUsers400 | PostUsers401 | Po
       return useMutation(getPostUsersMutationOptions(options), queryClient);
     }
     /**
+ * Returns all/active/disabled user counts scoped by caller role. Backs the status tabs on the users list.
+ * @summary User status counts
+ */
+export type getUsersCountsResponse200 = {
+  data: GetUsersCounts200
+  status: 200
+}
+
+export type getUsersCountsResponse401 = {
+  data: GetUsersCounts401
+  status: 401
+}
+
+export type getUsersCountsResponse403 = {
+  data: GetUsersCounts403
+  status: 403
+}
+
+export type getUsersCountsResponse500 = {
+  data: GetUsersCounts500
+  status: 500
+}
+
+export type getUsersCountsResponseSuccess = (getUsersCountsResponse200) & {
+  headers: Headers;
+};
+export type getUsersCountsResponseError = (getUsersCountsResponse401 | getUsersCountsResponse403 | getUsersCountsResponse500) & {
+  headers: Headers;
+};
+
+export type getUsersCountsResponse = (getUsersCountsResponseSuccess | getUsersCountsResponseError)
+
+export const getGetUsersCountsUrl = () => {
+
+
+
+
+  return `/users/counts`
+}
+
+export const getUsersCounts = async ( options?: RequestInit): Promise<getUsersCountsResponse> => {
+
+  return customInstance<getUsersCountsResponse>(getGetUsersCountsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetUsersCountsQueryKey = () => {
+    return [
+    `/users/counts`
+    ] as const;
+    }
+
+
+export const getGetUsersCountsQueryOptions = <TData = Awaited<ReturnType<typeof getUsersCounts>>, TError = ErrorType<GetUsersCounts401 | GetUsersCounts403 | GetUsersCounts500>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersCounts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUsersCountsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUsersCounts>>> = ({ signal }) => getUsersCounts({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUsersCounts>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetUsersCountsQueryResult = NonNullable<Awaited<ReturnType<typeof getUsersCounts>>>
+export type GetUsersCountsQueryError = ErrorType<GetUsersCounts401 | GetUsersCounts403 | GetUsersCounts500>
+
+
+export function useGetUsersCounts<TData = Awaited<ReturnType<typeof getUsersCounts>>, TError = ErrorType<GetUsersCounts401 | GetUsersCounts403 | GetUsersCounts500>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersCounts>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUsersCounts>>,
+          TError,
+          Awaited<ReturnType<typeof getUsersCounts>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUsersCounts<TData = Awaited<ReturnType<typeof getUsersCounts>>, TError = ErrorType<GetUsersCounts401 | GetUsersCounts403 | GetUsersCounts500>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersCounts>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUsersCounts>>,
+          TError,
+          Awaited<ReturnType<typeof getUsersCounts>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUsersCounts<TData = Awaited<ReturnType<typeof getUsersCounts>>, TError = ErrorType<GetUsersCounts401 | GetUsersCounts403 | GetUsersCounts500>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersCounts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary User status counts
+ */
+
+export function useGetUsersCounts<TData = Awaited<ReturnType<typeof getUsersCounts>>, TError = ErrorType<GetUsersCounts401 | GetUsersCounts403 | GetUsersCounts500>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersCounts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetUsersCountsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary Get my profile
  */
 export type getUsersMeResponse200 = {

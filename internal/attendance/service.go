@@ -51,7 +51,7 @@ func canManageAttendance(caller domain.Caller, class *domain.Class) bool {
 	if caller.IsAdmin {
 		return true
 	}
-	if caller.HasPermission("attendance:create_any") || caller.HasPermission("attendance:update_any") {
+	if caller.HasPermission(domain.PermAttendanceCreateAny) || caller.HasPermission(domain.PermAttendanceUpdateAny) {
 		return true
 	}
 	return caller.UserID == class.UserID
@@ -344,7 +344,7 @@ func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*domain.Attendance
 	if err != nil {
 		return nil, err
 	}
-	if caller.IsAdmin || caller.HasPermission("attendance:view_any") {
+	if caller.IsAdmin || caller.HasPermission(domain.PermAttendanceViewAny) {
 		return a, nil
 	}
 	class, err := s.classes.FindByID(ctx, a.ClassID)
@@ -373,7 +373,7 @@ func (s *service) ListBySession(ctx context.Context, classID, sessionID uuid.UUI
 	if session.ClassID != classID {
 		return nil, 0, domain.ErrNotFound
 	}
-	if !caller.IsAdmin && !caller.HasPermission("attendance:view_any") && caller.UserID != class.UserID {
+	if !caller.IsAdmin && !caller.HasPermission(domain.PermAttendanceViewAny) && caller.UserID != class.UserID {
 		enrolled, err := s.members.Exists(ctx, classID, caller.UserID)
 		if err != nil {
 			return nil, 0, err

@@ -643,19 +643,36 @@ func TestManage_NonOwner_Forbidden(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 
-func TestViewAny_ListReturnsAll(t *testing.T) {
+func TestViewAny_ListReturnsAll_ScopedToOrg(t *testing.T) {
 	svc, roomRepo, _, _, _, _, _, _ := newTestService(t)
+	orgID := uuid.New()
 	ctx := domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      uuid.New(),
+		OrgID:       &orgID,
 		Permissions: []string{"livesessions:view_any"},
 	})
-	roomRepo.On("List", mock.Anything, domain.LiveRoomListScope{All: true}, mock.Anything).
+	// view_any is org-wide, NOT cross-tenant: the resolved scope must carry the
+	// caller's OrgID so the repo filters live rooms to that organization only.
+	roomRepo.On("List", mock.Anything, domain.LiveRoomListScope{All: true, OrganizationID: &orgID}, mock.Anything).
 		Return([]domain.LiveRoom{{ID: testRoomID}}, int64(1), nil)
 
 	rooms, total, err := svc.List(ctx, domain.ListLiveRoomsQuery{})
 	assert.NoError(t, err)
 	assert.Len(t, rooms, 1)
 	assert.Equal(t, int64(1), total)
+	roomRepo.AssertExpectations(t)
+}
+
+func TestAdmin_ListReturnsAll_NoOrgFilter(t *testing.T) {
+	svc, roomRepo, _, _, _, _, _, _ := newTestService(t)
+	// Admins are cross-tenant by design: no OrganizationID on the scope.
+	roomRepo.On("List", mock.Anything, domain.LiveRoomListScope{All: true}, mock.Anything).
+		Return([]domain.LiveRoom{{ID: testRoomID}}, int64(1), nil)
+
+	rooms, _, err := svc.List(adminCtx(), domain.ListLiveRoomsQuery{})
+	assert.NoError(t, err)
+	assert.Len(t, rooms, 1)
+	roomRepo.AssertExpectations(t)
 }
 
 func TestViewAny_GetRoom_NonMember_Success(t *testing.T) {

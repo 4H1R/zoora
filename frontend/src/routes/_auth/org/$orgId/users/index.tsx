@@ -7,11 +7,12 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { getGetUsersQueryKey, useDeleteUsersId, useGetUsers } from "@/api/users/users"
+import { getGetUsersCountsQueryKey, getGetUsersQueryKey, useGetUsers, useGetUsersCounts, useDeleteUsersId } from "@/api/users/users"
 import { useDisableUser, useEnableUser } from "@/api/users/users-disable"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { StatCards } from "@/components/data-table/stat-cards"
+import { StatusTabs } from "@/components/data-table/status-tabs"
 import { TableFilter } from "@/components/data-table/table-filter"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { DisableConfirmDialog } from "@/components/form/disable-confirm-dialog"
@@ -37,10 +38,12 @@ function UsersPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { orgId } = Route.useParams()
-  const { search, order_by, order_dir, page, page_size } = Route.useSearch()
+  const { search, status, order_by, order_dir, page, page_size } = Route.useSearch()
   const { canView, canCreate } = useUserPermissions()
   const allowed = useOrgGuard(["users:view", "users:view_any"])
 
+  const statusFilter = status ?? "all"
+  const disabled = statusFilter === "active" ? false : statusFilter === "disabled" ? true : undefined
   const currentPage = page ?? 1
   const pageSize = page_size ?? 8
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
@@ -75,11 +78,15 @@ function UsersPage() {
       search: search || undefined,
       order_by: order_by || undefined,
       order_dir: order_dir || undefined,
+      disabled,
       page: currentPage,
       page_size: pageSize,
     },
     { query: { enabled: canView } }
   )
+
+  const { data: countsData } = useGetUsersCounts({ query: { enabled: canView } })
+  const counts = (countsData?.status === 200 && countsData.data.data) || undefined
 
   const { rolesMap } = useRolesMap()
 
@@ -88,6 +95,7 @@ function UsersPage() {
       onSuccess: () => {
         toast.success(t("org.users.form.deleteSuccess"))
         queryClient.invalidateQueries({ queryKey: getGetUsersQueryKey() })
+        queryClient.invalidateQueries({ queryKey: getGetUsersCountsQueryKey() })
         setDeleteTarget(null)
       },
     },
@@ -131,6 +139,12 @@ function UsersPage() {
     sorting,
   })
 
+  const statusTabs = [
+    { value: "all", label: t("org.users.tabs.all"), count: counts?.all },
+    { value: "active", label: t("org.users.tabs.active"), count: counts?.active },
+    { value: "disabled", label: t("org.users.tabs.disabled"), count: counts?.disabled },
+  ]
+
   const statCards = [
     {
       icon: <UsersIcon />,
@@ -156,6 +170,7 @@ function UsersPage() {
         }
       />
       <StatCards stats={statCards} />
+      <StatusTabs tabs={statusTabs} />
       <TableFilter
         table={table}
         searchPlaceholder={t("org.users.searchPlaceholder")}

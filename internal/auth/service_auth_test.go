@@ -63,6 +63,10 @@ func (m *mockUserRepo) List(ctx context.Context, scope domain.UserListScope, p d
 	args := m.Called(ctx, scope, p)
 	return args.Get(0).([]domain.User), args.Get(1).(int64), args.Error(2)
 }
+func (m *mockUserRepo) StatusCounts(ctx context.Context, scope domain.UserListScope) (domain.UserStatusCounts, error) {
+	args := m.Called(ctx, scope)
+	return args.Get(0).(domain.UserStatusCounts), args.Error(1)
+}
 func (m *mockUserRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }

@@ -7,6 +7,8 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools"
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 
+import { ErrorScreen } from "@/components/error-screen"
+import { NotFound } from "@/components/not-found"
 import { DirectionProvider } from "@/components/ui/direction"
 import { Toaster } from "@/components/ui/sonner"
 import { languages } from "@/i18n"
@@ -16,6 +18,8 @@ export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
 }>()({
   component: RootComponent,
+  errorComponent: ErrorScreen,
+  notFoundComponent: NotFound,
 })
 
 function RootComponent() {
@@ -40,8 +44,8 @@ function RootComponent() {
       <HeadContent />
       <Outlet />
       <Toaster />
-      <ReactQueryDevtools buttonPosition="bottom-left" />
-      <TanStackRouterDevtools position="bottom-right" />
+      {/*<ReactQueryDevtools buttonPosition="bottom-left" />
+      <TanStackRouterDevtools position="bottom-right" />*/}
     </DirectionProvider>
   )
 }

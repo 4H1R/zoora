@@ -98,7 +98,7 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	if !ok {
 		return domain.ErrForbidden
 	}
-	if !caller.IsAdmin && !caller.HasPermission("media:delete_any") {
+	if !caller.IsAdmin && !caller.HasPermission(domain.PermMediaDeleteAny) {
 		return domain.ErrForbidden
 	}
 	return s.repo.Delete(ctx, id)
