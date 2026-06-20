@@ -2,26 +2,27 @@ import type { GithubCom4H1RZooraInternalDomainUser as User } from "@/api/model"
 
 import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
-
-import { orgHead } from "@/lib/org-head"
-import { useOrgGuard } from "@/lib/access"
 import { PlusIcon, UsersIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { getGetUsersQueryKey, useDeleteUsersId, useGetUsers } from "@/api/users/users"
-import { useUserPermissions } from "@/components/org/users/use-user-permissions"
+import { useDisableUser, useEnableUser } from "@/api/users/users-disable"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { StatCards } from "@/components/data-table/stat-cards"
 import { TableFilter } from "@/components/data-table/table-filter"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
+import { DisableConfirmDialog } from "@/components/form/disable-confirm-dialog"
+import { useUserPermissions } from "@/components/org/users/use-user-permissions"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { useRolesMap } from "@/hooks/use-roles-map"
+import { useOrgGuard } from "@/lib/access"
 import { adminSearchSchema, useAdminTable } from "@/lib/data-table"
+import { orgHead } from "@/lib/org-head"
 
 import { useUserColumns } from "./-columns"
 import { UserFormDialog } from "./-user-form-dialog"
@@ -47,6 +48,8 @@ function UsersPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null)
+  const [disableTarget, setDisableTarget] = useState<User | null>(null)
+  const [disableReason, setDisableReason] = useState("")
 
   const handleEdit = (user: User) => {
     setEditingUser(user)
@@ -55,6 +58,11 @@ function UsersPage() {
 
   const handleDelete = (user: User) => {
     setDeleteTarget(user)
+  }
+
+  const handleDisable = (user: User) => {
+    setDisableReason("")
+    setDisableTarget(user)
   }
 
   const handleCreate = () => {
@@ -85,11 +93,36 @@ function UsersPage() {
     },
   })
 
+  const disableMutation = useDisableUser({
+    onSuccess: () => {
+      toast.success(t("org.users.form.disableSuccess"))
+      queryClient.invalidateQueries({ queryKey: getGetUsersQueryKey() })
+      setDisableTarget(null)
+    },
+  })
+
+  const enableMutation = useEnableUser({
+    onSuccess: () => {
+      toast.success(t("org.users.form.enableSuccess"))
+      queryClient.invalidateQueries({ queryKey: getGetUsersQueryKey() })
+    },
+  })
+
+  const handleEnable = (user: User) => {
+    if (user.id) enableMutation.mutate({ id: user.id })
+  }
+
   const usersData = (data?.status === 200 && data.data.data) || undefined
   const users = usersData?.items ?? []
   const total = usersData?.total ?? 0
 
-  const columns = useUserColumns({ onEdit: handleEdit, onDelete: handleDelete, rolesMap })
+  const columns = useUserColumns({
+    onEdit: handleEdit,
+    onDelete: handleDelete,
+    onDisable: handleDisable,
+    onEnable: handleEnable,
+    rolesMap,
+  })
 
   const table = useAdminTable({
     data: users,
@@ -155,6 +188,20 @@ function UsersPage() {
           if (deleteTarget?.id) deleteMutation.mutate({ id: deleteTarget.id })
         }}
         isLoading={deleteMutation.isPending}
+      />
+
+      <DisableConfirmDialog
+        open={!!disableTarget}
+        onOpenChange={(open: boolean) => {
+          if (!open) setDisableTarget(null)
+        }}
+        resourceName={disableTarget?.name ?? ""}
+        reason={disableReason}
+        onReasonChange={setDisableReason}
+        onConfirm={() => {
+          if (disableTarget?.id) disableMutation.mutate({ id: disableTarget.id, reason: disableReason })
+        }}
+        isLoading={disableMutation.isPending}
       />
     </div>
   )

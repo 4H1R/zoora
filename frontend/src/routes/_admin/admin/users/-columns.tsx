@@ -1,10 +1,19 @@
 import type { GithubCom4H1RZooraInternalDomainUser as User } from "@/api/model"
 import type { ColumnDef } from "@tanstack/react-table"
 
-import { CheckIcon, EllipsisVerticalIcon, MinusIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import {
+  BanIcon,
+  CheckIcon,
+  CircleCheckIcon,
+  EllipsisVerticalIcon,
+  MinusIcon,
+  PencilIcon,
+  Trash2Icon,
+} from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { useOrgColumn } from "@/components/data-table/org-column"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -21,10 +30,13 @@ interface UserRowActionsProps {
   user: User
   onEdit: (user: User) => void
   onDelete: (user: User) => void
+  onDisable: (user: User) => void
+  onEnable: (user: User) => void
 }
 
-function UserRowActions({ user, onEdit, onDelete }: UserRowActionsProps) {
+function UserRowActions({ user, onEdit, onDelete, onDisable, onEnable }: UserRowActionsProps) {
   const { t } = useTranslation()
+  const isDisabled = !!user.disabled_at
 
   return (
     <div className="flex items-center justify-end gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
@@ -56,6 +68,20 @@ function UserRowActions({ user, onEdit, onDelete }: UserRowActionsProps) {
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
+            {isDisabled ? (
+              <DropdownMenuItem onClick={() => onEnable(user)}>
+                <CircleCheckIcon data-icon="inline-start" />
+                {t("admin.users.actions.enable")}
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onClick={() => onDisable(user)}>
+                <BanIcon data-icon="inline-start" />
+                {t("admin.users.actions.disable")}
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
             <DropdownMenuItem variant="destructive" onClick={() => onDelete(user)}>
               <Trash2Icon data-icon="inline-start" />
               {t("admin.users.actions.delete")}
@@ -70,9 +96,11 @@ function UserRowActions({ user, onEdit, onDelete }: UserRowActionsProps) {
 interface UseUserColumnsOptions {
   onEdit: (user: User) => void
   onDelete: (user: User) => void
+  onDisable: (user: User) => void
+  onEnable: (user: User) => void
 }
 
-export function useUserColumns({ onEdit, onDelete }: UseUserColumnsOptions): ColumnDef<User>[] {
+export function useUserColumns({ onEdit, onDelete, onDisable, onEnable }: UseUserColumnsOptions): ColumnDef<User>[] {
   const { t } = useTranslation()
   const formatDate = useFormatDate()
   const orgColumn = useOrgColumn<User>(t("admin.users.organization"))
@@ -92,7 +120,10 @@ export function useUserColumns({ onEdit, onDelete }: UseUserColumnsOptions): Col
             {getInitials(row.original.name ?? "")}
           </div>
           <div className="min-w-0">
-            <div className="truncate text-sm font-medium">{row.original.name}</div>
+            <div className="flex items-center gap-2">
+              <div className="truncate text-sm font-medium">{row.original.name}</div>
+              {row.original.disabled_at && <Badge variant="secondary">{t("admin.users.disabled")}</Badge>}
+            </div>
           </div>
         </div>
       ),
@@ -129,7 +160,15 @@ export function useUserColumns({ onEdit, onDelete }: UseUserColumnsOptions): Col
     {
       id: "actions",
       header: "",
-      cell: ({ row }) => <UserRowActions user={row.original} onEdit={onEdit} onDelete={onDelete} />,
+      cell: ({ row }) => (
+        <UserRowActions
+          user={row.original}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onDisable={onDisable}
+          onEnable={onEnable}
+        />
+      ),
       enableSorting: false,
       enableHiding: false,
     },

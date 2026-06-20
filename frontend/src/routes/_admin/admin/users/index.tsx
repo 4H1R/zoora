@@ -8,11 +8,13 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { getGetAdminUsersQueryKey, useDeleteAdminUsersId, useGetAdminUsers } from "@/api/admin-users/admin-users"
+import { useDisableAdminUser, useEnableAdminUser } from "@/api/users/users-disable"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { StatCards } from "@/components/data-table/stat-cards"
 import { TableFilter } from "@/components/data-table/table-filter"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
+import { DisableConfirmDialog } from "@/components/form/disable-confirm-dialog"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -40,6 +42,8 @@ function UsersPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null)
+  const [disableTarget, setDisableTarget] = useState<User | null>(null)
+  const [disableReason, setDisableReason] = useState("")
 
   const handleEdit = (user: User) => {
     setEditingUser(user)
@@ -48,6 +52,11 @@ function UsersPage() {
 
   const handleDelete = (user: User) => {
     setDeleteTarget(user)
+  }
+
+  const handleDisable = (user: User) => {
+    setDisableReason("")
+    setDisableTarget(user)
   }
 
   const handleCreate = () => {
@@ -74,12 +83,36 @@ function UsersPage() {
     },
   })
 
+  const disableMutation = useDisableAdminUser({
+    onSuccess: () => {
+      toast.success(t("admin.users.form.disableSuccess"))
+      queryClient.invalidateQueries({ queryKey: getGetAdminUsersQueryKey() })
+      setDisableTarget(null)
+    },
+  })
+
+  const enableMutation = useEnableAdminUser({
+    onSuccess: () => {
+      toast.success(t("admin.users.form.enableSuccess"))
+      queryClient.invalidateQueries({ queryKey: getGetAdminUsersQueryKey() })
+    },
+  })
+
+  const handleEnable = (user: User) => {
+    if (user.id) enableMutation.mutate({ id: user.id })
+  }
+
   const usersData = (data?.status === 200 && data.data.data) || undefined
   const users = usersData?.items ?? []
   const total = usersData?.total ?? 0
 
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
-  const columns = useUserColumns({ onEdit: handleEdit, onDelete: handleDelete })
+  const columns = useUserColumns({
+    onEdit: handleEdit,
+    onDelete: handleDelete,
+    onDisable: handleDisable,
+    onEnable: handleEnable,
+  })
 
   const table = useAdminTable({
     data: users,
@@ -141,6 +174,20 @@ function UsersPage() {
           if (deleteTarget?.id) deleteMutation.mutate({ id: deleteTarget.id })
         }}
         isLoading={deleteMutation.isPending}
+      />
+
+      <DisableConfirmDialog
+        open={!!disableTarget}
+        onOpenChange={(open: boolean) => {
+          if (!open) setDisableTarget(null)
+        }}
+        resourceName={disableTarget?.name ?? ""}
+        reason={disableReason}
+        onReasonChange={setDisableReason}
+        onConfirm={() => {
+          if (disableTarget?.id) disableMutation.mutate({ id: disableTarget.id, reason: disableReason })
+        }}
+        isLoading={disableMutation.isPending}
       />
     </div>
   )

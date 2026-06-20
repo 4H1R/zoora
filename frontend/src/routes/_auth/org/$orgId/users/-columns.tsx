@@ -1,9 +1,10 @@
 import type { GithubCom4H1RZooraInternalDomainUser as User } from "@/api/model"
 import type { ColumnDef } from "@tanstack/react-table"
 
-import { EllipsisVerticalIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import { BanIcon, CircleCheckIcon, EllipsisVerticalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -21,14 +22,18 @@ interface UserRowActionsProps {
   user: User
   onEdit: (user: User) => void
   onDelete: (user: User) => void
+  onDisable: (user: User) => void
+  onEnable: (user: User) => void
 }
 
-function UserRowActions({ user, onEdit, onDelete }: UserRowActionsProps) {
+function UserRowActions({ user, onEdit, onDelete, onDisable, onEnable }: UserRowActionsProps) {
   const { t } = useTranslation()
   const canEdit = useCanSelfOr("users:update", "users:update_any", user.id)
   const canDelete = useCanSelfOr("users:delete", "users:delete_any", user.id)
+  const canDisable = useCanSelfOr("users:disable", "users:disable_any", user.id)
+  const isDisabled = !!user.disabled_at
 
-  if (!canEdit && !canDelete) return null
+  if (!canEdit && !canDelete && !canDisable) return null
 
   return (
     <div className="flex items-center justify-end gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
@@ -64,6 +69,22 @@ function UserRowActions({ user, onEdit, onDelete }: UserRowActionsProps) {
               </DropdownMenuItem>
             </DropdownMenuGroup>
           )}
+          {canDisable && (canEdit || canDelete) && <DropdownMenuSeparator />}
+          {canDisable && (
+            <DropdownMenuGroup>
+              {isDisabled ? (
+                <DropdownMenuItem onClick={() => onEnable(user)}>
+                  <CircleCheckIcon data-icon="inline-start" />
+                  {t("org.users.actions.enable")}
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={() => onDisable(user)}>
+                  <BanIcon data-icon="inline-start" />
+                  {t("org.users.actions.disable")}
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuGroup>
+          )}
           {canEdit && canDelete && <DropdownMenuSeparator />}
           {canDelete && (
             <DropdownMenuGroup>
@@ -82,10 +103,18 @@ function UserRowActions({ user, onEdit, onDelete }: UserRowActionsProps) {
 interface UseUserColumnsOptions {
   onEdit: (user: User) => void
   onDelete: (user: User) => void
+  onDisable: (user: User) => void
+  onEnable: (user: User) => void
   rolesMap: Record<string, string>
 }
 
-export function useUserColumns({ onEdit, onDelete, rolesMap }: UseUserColumnsOptions): ColumnDef<User>[] {
+export function useUserColumns({
+  onEdit,
+  onDelete,
+  onDisable,
+  onEnable,
+  rolesMap,
+}: UseUserColumnsOptions): ColumnDef<User>[] {
   const { t } = useTranslation()
   const formatDate = useFormatDate()
 
@@ -104,7 +133,10 @@ export function useUserColumns({ onEdit, onDelete, rolesMap }: UseUserColumnsOpt
             {getInitials(row.original.name ?? "")}
           </div>
           <div className="min-w-0">
-            <div className="truncate text-sm font-medium">{row.original.name}</div>
+            <div className="flex items-center gap-2">
+              <div className="truncate text-sm font-medium">{row.original.name}</div>
+              {row.original.disabled_at && <Badge variant="secondary">{t("org.users.disabled")}</Badge>}
+            </div>
           </div>
         </div>
       ),
@@ -137,7 +169,15 @@ export function useUserColumns({ onEdit, onDelete, rolesMap }: UseUserColumnsOpt
     {
       id: "actions",
       header: "",
-      cell: ({ row }) => <UserRowActions user={row.original} onEdit={onEdit} onDelete={onDelete} />,
+      cell: ({ row }) => (
+        <UserRowActions
+          user={row.original}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onDisable={onDisable}
+          onEnable={onEnable}
+        />
+      ),
       enableSorting: false,
       enableHiding: false,
     },

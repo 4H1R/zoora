@@ -10,6 +10,14 @@ const SEGMENT_KEYS: Record<string, string> = {
   permissions: "admin.permissions.title",
   roles: "admin.nav.roles",
   users: "admin.nav.users",
+  sessions: "admin.sessions.title",
+  quizzes: "admin.quizzes.title",
+  practices: "admin.practices.title",
+  offlines: "admin.offlines.title",
+  "live-rooms": "admin.liveRooms.title",
+  attendance: "admin.attendance.title",
+  questions: "admin.questions.title",
+  gradebook: "admin.gradebook.title",
 }
 
 export function AdminBreadcrumb({ className }: { className?: string }) {
