@@ -534,7 +534,6 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 				counts.ChatMembers++
 			}
 			// messages
-			var msgs []*domain.Message
 			tid := teacher.ID
 			welcome := factory.NewMessage(chat.ID, &tid, func(m *domain.Message) {
 				m.Content = "Welcome to the class!"
@@ -542,7 +541,6 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 			if err := db.WithContext(ctx).Create(welcome).Error; err != nil {
 				return nil, fmt.Errorf("creating message: %w", err)
 			}
-			msgs = append(msgs, welcome)
 			counts.Messages++
 			for _, student := range ou.students {
 				sid := student.ID
@@ -550,7 +548,6 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 				if err := db.WithContext(ctx).Create(reply).Error; err != nil {
 					return nil, fmt.Errorf("creating message: %w", err)
 				}
-				msgs = append(msgs, reply)
 				counts.Messages++
 			}
 			// reactions on welcome message
