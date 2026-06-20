@@ -2,6 +2,8 @@ import type {
   GithubCom4H1RZooraInternalDomainPracticeRoom as PracticeRoom,
   GithubCom4H1RZooraInternalDomainPracticeSubmission as PracticeSubmission,
 } from "@/api/model"
+import type { SortOption } from "@/components/data-table/sort-picker"
+import type { SectionSort } from "@/lib/use-section-list"
 
 import {
   CheckCheckIcon,
@@ -12,14 +14,17 @@ import {
   HourglassIcon,
   PencilIcon,
 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { useGetPractices, useGetPracticesIdSubmissions } from "@/api/practices/practices"
+import { SortPicker } from "@/components/data-table/sort-picker"
+import { SectionPagination } from "@/components/org/session/section-pagination"
 import { Eyebrow } from "@/components/eyebrow"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getEntityColor, getInitials } from "@/lib/data-table"
+import { DEFAULT_PAGE_SIZE } from "@/lib/list"
 import { formatScore } from "@/lib/score"
 import { formatSessionDate } from "@/lib/session-status"
 import { cn } from "@/lib/utils"
@@ -42,8 +47,21 @@ export function PracticeScoresSection({ classSessionId }: PracticeScoresSectionP
 
   const [practiceId, setPracticeId] = useState<string | undefined>(undefined)
   const [status, setStatus] = useState<StatusFilter>("all")
+  const [sort, setSort] = useState<SectionSort | undefined>(undefined)
+  const [page, setPage] = useState(1)
   const [gradeOpen, setGradeOpen] = useState(false)
   const [active, setActive] = useState<PracticeSubmission | null>(null)
+
+  const sortOptions: SortOption[] = [
+    { id: "submitted_at", label: t("org.session.controls.sortFields.submitted_at") },
+    { id: "created_at", label: t("org.session.controls.sortFields.created_at") },
+    { id: "score", label: t("org.session.controls.sortFields.score") },
+  ]
+
+  // Switching practice or sort returns to the first page.
+  useEffect(() => {
+    setPage(1)
+  }, [practiceId, sort?.id, sort?.desc])
 
   const practicesQ = useGetPractices(
     { class_session_id: classSessionId },
@@ -58,12 +76,17 @@ export function PracticeScoresSection({ classSessionId }: PracticeScoresSectionP
 
   const subsQ = useGetPracticesIdSubmissions(
     effectiveId ?? "",
-    undefined,
+    {
+      order_by: sort?.id,
+      order_dir: sort ? (sort.desc ? "desc" : "asc") : undefined,
+      page,
+    },
     { query: { enabled: !!effectiveId && canGrade } }
   )
   const subsData = (subsQ.data?.status === 200 && subsQ.data.data.data) || undefined
   const allSubmissions = subsData?.items ?? []
   const total = subsData?.total ?? allSubmissions.length
+  const pageSize = subsData?.page_size ?? DEFAULT_PAGE_SIZE
 
   const gradedCount = allSubmissions.filter(isGraded).length
   const pendingCount = allSubmissions.length - gradedCount
@@ -122,11 +145,21 @@ export function PracticeScoresSection({ classSessionId }: PracticeScoresSectionP
             loading={isLoadingSubs}
           />
 
-          <StatusFilterBar
-            value={status}
-            onChange={setStatus}
-            counts={{ all: allSubmissions.length, pending: pendingCount, graded: gradedCount }}
-          />
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <StatusFilterBar
+                value={status}
+                onChange={setStatus}
+                counts={{ all: allSubmissions.length, pending: pendingCount, graded: gradedCount }}
+              />
+            </div>
+            <SortPicker
+              options={sortOptions}
+              value={sort}
+              onChange={setSort}
+              label={t("org.session.controls.sort")}
+            />
+          </div>
 
           {isLoadingSubs ? (
             <div className="flex flex-col gap-3">
@@ -137,21 +170,24 @@ export function PracticeScoresSection({ classSessionId }: PracticeScoresSectionP
           ) : submissions.length === 0 ? (
             <NoSubmissions />
           ) : (
-            <ul className="flex flex-col gap-3">
-              {submissions.map((s, i) => (
-                <SubmissionRow
-                  key={s.id ?? i}
-                  submission={s}
-                  index={i}
-                  lang={i18n.language}
-                  maxScore={maxScore}
-                  onGrade={() => {
-                    setActive(s)
-                    setGradeOpen(true)
-                  }}
-                />
-              ))}
-            </ul>
+            <>
+              <ul className="flex flex-col gap-3">
+                {submissions.map((s, i) => (
+                  <SubmissionRow
+                    key={s.id ?? i}
+                    submission={s}
+                    index={(page - 1) * pageSize + i}
+                    lang={i18n.language}
+                    maxScore={maxScore}
+                    onGrade={() => {
+                      setActive(s)
+                      setGradeOpen(true)
+                    }}
+                  />
+                ))}
+              </ul>
+              <SectionPagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
+            </>
           )}
         </>
       )}

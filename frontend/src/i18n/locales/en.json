@@ -1425,7 +1425,11 @@
           "start_time": "Start time",
           "end_time": "End time",
           "published_at": "Published",
-          "view_count": "Views"
+          "view_count": "Views",
+          "started_at": "Started",
+          "submitted_at": "Submitted",
+          "total_score": "Score",
+          "score": "Score"
         }
       },
       "nav": {

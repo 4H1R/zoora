@@ -1,4 +1,6 @@
 import type { GithubCom4H1RZooraInternalDomainAttendance as Attendance } from "@/api/model"
+import type { GetClassesIdSessionsSessionIdAttendanceStatus as AttendanceStatus } from "@/api/model"
+import type { SortOption } from "@/components/data-table/sort-picker"
 
 import { useQueryClient } from "@tanstack/react-query"
 import {
@@ -24,6 +26,9 @@ import {
 } from "@/api/attendance/attendance"
 import { useGetClassesId, useGetClassesIdMembers } from "@/api/classes/classes"
 import { useGetLiveRooms } from "@/api/live-sessions/live-sessions"
+import { SectionNoResults } from "@/components/org/session/section-no-results"
+import { SectionPagination } from "@/components/org/session/section-pagination"
+import { SectionToolbar } from "@/components/org/session/section-toolbar"
 import { Eyebrow } from "@/components/eyebrow"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -32,6 +37,8 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getEntityColor, getInitials } from "@/lib/data-table"
+import { DEFAULT_PAGE_SIZE } from "@/lib/list"
+import { useSectionList } from "@/lib/use-section-list"
 import { cn } from "@/lib/utils"
 
 import { AttendanceEditDialog } from "./AttendanceEditDialog"
@@ -229,13 +236,35 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
   })
   const members = (membersQuery.data?.status === 200 && membersQuery.data.data.data?.items) || []
 
+  const list = useSectionList({ defaultSort: { id: "status", desc: false } })
+  const sortOptions: SortOption[] = [
+    { id: "status", label: t("org.session.controls.sortFields.status") },
+    { id: "created_at", label: t("org.session.controls.sortFields.created_at") },
+    { id: "updated_at", label: t("org.session.controls.sortFields.updated_at") },
+  ]
+
+  // Roster view shows the full, unfiltered roll; the plain list view honours the
+  // search / status / sort / page controls.
+  const attendanceParams = canViewRoster
+    ? { order_by: "status", order_dir: "asc" }
+    : {
+        search: list.params.search,
+        status: (list.status as AttendanceStatus | undefined) ?? undefined,
+        order_by: list.params.order_by ?? "status",
+        order_dir: list.params.order_dir ?? "asc",
+        page: list.params.page,
+      }
+
   const query = useGetClassesIdSessionsSessionIdAttendance(
     classId,
     classSessionId,
-    { order_by: "status", order_dir: "asc" },
+    attendanceParams,
     { query: { enabled: canView && !!classId } }
   )
-  const records = (query.data?.status === 200 && query.data.data.data?.items) || []
+  const attendanceData = (query.data?.status === 200 && query.data.data.data) || undefined
+  const records = attendanceData?.items ?? []
+  const total = attendanceData?.total ?? 0
+  const pageSize = attendanceData?.page_size ?? DEFAULT_PAGE_SIZE
 
   const deleteMutation = useDeleteAttendanceAttendanceId({
     mutation: {
@@ -262,6 +291,42 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
 
       {canCreate ? <AutoMarkControl classId={classId} classSessionId={classSessionId} /> : null}
 
+      {!canViewRoster && !loading && (records.length > 0 || list.isFiltered) ? (
+        <SectionToolbar
+          searchValue={list.searchInput}
+          onSearchChange={list.setSearchInput}
+          sortOptions={sortOptions}
+          sort={list.sort}
+          onSortChange={list.setSort}
+        >
+          <Select
+            value={list.status ?? "all"}
+            onValueChange={(v) => list.setStatus(v && v !== "all" ? v : undefined)}
+          >
+            <SelectTrigger className="h-8 w-auto gap-1.5 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-xs">
+                {t("org.session.controls.status.all")}
+              </SelectItem>
+              <SelectItem value="present" className="text-xs">
+                {t("org.session.attendance.status.present")}
+              </SelectItem>
+              <SelectItem value="absent" className="text-xs">
+                {t("org.session.attendance.status.absent")}
+              </SelectItem>
+              <SelectItem value="late" className="text-xs">
+                {t("org.session.attendance.status.late")}
+              </SelectItem>
+              <SelectItem value="excused" className="text-xs">
+                {t("org.session.attendance.status.excused")}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </SectionToolbar>
+      ) : null}
+
       {loading ? (
         <div className="flex flex-col gap-2">
           <Skeleton className="h-16 w-full rounded-2xl" />
@@ -277,28 +342,40 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
           canMark={canMark}
         />
       ) : records.length === 0 ? (
-        <div className="bg-card ring-foreground/10 flex flex-col items-center gap-3 rounded-2xl px-6 py-16 text-center ring-1">
-          <UserCheckIcon className="text-muted-foreground size-8" />
-          <h3 className="text-foreground text-lg font-semibold tracking-tight">
-            {t("org.session.attendance.emptyTitle")}
-          </h3>
-          <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
-            {canCreate ? t("org.session.attendance.emptyHint") : t("org.session.attendance.emptyHintMember")}
-          </p>
-        </div>
+        list.isFiltered ? (
+          <SectionNoResults />
+        ) : (
+          <div className="bg-card ring-foreground/10 flex flex-col items-center gap-3 rounded-2xl px-6 py-16 text-center ring-1">
+            <UserCheckIcon className="text-muted-foreground size-8" />
+            <h3 className="text-foreground text-lg font-semibold tracking-tight">
+              {t("org.session.attendance.emptyTitle")}
+            </h3>
+            <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
+              {canCreate ? t("org.session.attendance.emptyHint") : t("org.session.attendance.emptyHintMember")}
+            </p>
+          </div>
+        )
       ) : (
-        <div className="flex flex-col gap-2">
-          {records.map((a) => (
-            <AttendanceRow
-              key={a.id}
-              attendance={a}
-              canEdit={canEdit}
-              canDelete={canDelete}
-              onEdit={setEditing}
-              onDelete={setDeleting}
-            />
-          ))}
-        </div>
+        <>
+          <div className="flex flex-col gap-2">
+            {records.map((a) => (
+              <AttendanceRow
+                key={a.id}
+                attendance={a}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={setEditing}
+                onDelete={setDeleting}
+              />
+            ))}
+          </div>
+          <SectionPagination
+            page={list.page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={list.setPage}
+          />
+        </>
       )}
 
       <AttendanceEditDialog

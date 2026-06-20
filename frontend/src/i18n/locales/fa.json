@@ -1457,7 +1457,11 @@
           "start_time": "زمان شروع",
           "end_time": "زمان پایان",
           "published_at": "تاریخ انتشار",
-          "view_count": "بازدیدها"
+          "view_count": "بازدیدها",
+          "started_at": "زمان آغاز",
+          "submitted_at": "زمان ارسال",
+          "total_score": "نمره",
+          "score": "نمره"
         }
       },
       "nav": {
