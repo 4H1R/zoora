@@ -3,7 +3,6 @@ CREATE TABLE organizations (
     name VARCHAR(255) NOT NULL,
     description TEXT NOT NULL DEFAULT '',
     status      VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'trial', 'suspended', 'archived')),
-    total_users INT NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ

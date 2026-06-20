@@ -33,13 +33,51 @@ func (r *repository) Create(ctx context.Context, org *domain.Organization) error
 
 func (r *repository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Organization, error) {
 	var org domain.Organization
-	if err := database.DB(ctx, r.db).First(&org, "id = ?", id).Error; err != nil {
+	db := database.DB(ctx, r.db)
+	if err := db.First(&org, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}
 		return nil, fmt.Errorf("organizations.repository.FindByID: %w", err)
 	}
+	var count int64
+	if err := db.Model(&domain.User{}).Where("organization_id = ?", id).Count(&count).Error; err != nil {
+		return nil, fmt.Errorf("organizations.repository.FindByID: %w", err)
+	}
+	org.TotalUsers = int(count)
 	return &org, nil
+}
+
+// fillUserCounts populates the computed TotalUsers field (live count of
+// non-deleted users) for each org in a single grouped query.
+func (r *repository) fillUserCounts(ctx context.Context, orgs []domain.Organization) error {
+	if len(orgs) == 0 {
+		return nil
+	}
+	ids := make([]uuid.UUID, len(orgs))
+	for i := range orgs {
+		ids[i] = orgs[i].ID
+	}
+	type orgCount struct {
+		OrganizationID uuid.UUID
+		Count          int64
+	}
+	var rows []orgCount
+	if err := database.DB(ctx, r.db).Model(&domain.User{}).
+		Select("organization_id, COUNT(*) AS count").
+		Where("organization_id IN ?", ids).
+		Group("organization_id").
+		Scan(&rows).Error; err != nil {
+		return err
+	}
+	counts := make(map[uuid.UUID]int64, len(rows))
+	for _, row := range rows {
+		counts[row.OrganizationID] = row.Count
+	}
+	for i := range orgs {
+		orgs[i].TotalUsers = int(counts[orgs[i].ID])
+	}
+	return nil
 }
 
 func (r *repository) Update(ctx context.Context, org *domain.Organization) error {
@@ -102,7 +140,7 @@ func (r *repository) GetStats(ctx context.Context) (*domain.OrganizationStats, e
 	}
 	stats.DeletedOrganizations = stats.TotalOrganizations - nonDeleted
 
-	if err := db.Model(&domain.Organization{}).Select("COALESCE(SUM(total_users), 0)").Scan(&stats.TotalUsers).Error; err != nil {
+	if err := db.Model(&domain.User{}).Count(&stats.TotalUsers).Error; err != nil {
 		return nil, fmt.Errorf("organizations.repository.GetStats: %w", err)
 	}
 	return &stats, nil
@@ -121,6 +159,9 @@ func (r *repository) AdminList(ctx context.Context, q domain.AdminListOrganizati
 	var orgs []domain.Organization
 	total, err := listparams.Paginate(base, q.ListParams, &orgs)
 	if err != nil {
+		return nil, 0, fmt.Errorf("organizations.repository.AdminList: %w", err)
+	}
+	if err := r.fillUserCounts(ctx, orgs); err != nil {
 		return nil, 0, fmt.Errorf("organizations.repository.AdminList: %w", err)
 	}
 	return orgs, total, nil
@@ -167,6 +208,9 @@ func (r *repository) List(ctx context.Context, f domain.OrganizationFilter) ([]d
 		return nil, 0, fmt.Errorf("organizations.repository.List: %w", err)
 	}
 	if err := base.Session(&gorm.Session{}).Offset(f.Offset).Limit(f.Limit).Order("created_at DESC").Find(&orgs).Error; err != nil {
+		return nil, 0, fmt.Errorf("organizations.repository.List: %w", err)
+	}
+	if err := r.fillUserCounts(ctx, orgs); err != nil {
 		return nil, 0, fmt.Errorf("organizations.repository.List: %w", err)
 	}
 	return orgs, total, nil
