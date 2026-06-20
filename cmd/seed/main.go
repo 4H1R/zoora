@@ -174,6 +174,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 	}{
 		{domain.PresetRoleStaff, domain.StaffPermissions},
 		{domain.PresetRoleTeacher, domain.TeacherPermissions},
+		{domain.PresetRoleStudent, domain.StudentPermissions},
 	}
 	presetRoles := make(map[string]*domain.Role)
 	for _, def := range presetDefs {

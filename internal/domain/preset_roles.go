@@ -3,6 +3,7 @@ package domain
 const (
 	PresetRoleStaff   = "Staff"
 	PresetRoleTeacher = "Teacher"
+	PresetRoleStudent = "Student"
 )
 
 var StaffPermissions = []PermissionName{
@@ -65,4 +66,18 @@ var TeacherPermissions = []PermissionName{
 	PermPollsCreate, PermPollsUpdate, PermPollsView,
 	PermOfflinesView, PermOfflinesCreate, PermOfflinesUpdate, PermOfflinesDelete,
 	PermAttendanceView, PermAttendanceCreate, PermAttendanceUpdate, PermAttendanceDelete,
+}
+
+// StudentPermissions is the default permission set for learners. It grants the
+// ability to view their own classes/recordings, join live sessions, and take
+// exams + see their own grades/attendance via the self-scoped endpoints.
+var StudentPermissions = []PermissionName{
+	PermClassesView, PermClassesJoin,
+	PermLiveSessionsView, PermLiveSessionsJoin,
+	PermRecordingsView, PermRecordingsDownload,
+	PermOfflinesView,
+	PermMediaView,
+	PermQuizzesView, PermQuizzesTake,
+	PermGradebookViewOwn,
+	PermAttendanceViewOwn,
 }
