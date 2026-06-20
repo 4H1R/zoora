@@ -249,6 +249,48 @@ type QuizListScope struct {
 	IncludeDeleted bool
 }
 
+// --- Student self-scoped exams ("my exams") ---
+
+// MyExamState is the derived status of an exam for a specific student.
+type MyExamState string
+
+const (
+	// MyExamStateUpcoming: a room is scheduled but not open yet, no submission.
+	MyExamStateUpcoming MyExamState = "upcoming"
+	// MyExamStateOpen: a room is open now and the student has not submitted.
+	MyExamStateOpen MyExamState = "open"
+	// MyExamStateSubmitted: submitted, awaiting grading.
+	MyExamStateSubmitted MyExamState = "submitted"
+	// MyExamStateGraded: graded; Score is populated.
+	MyExamStateGraded MyExamState = "graded"
+)
+
+// MyExamRoom is the room a student should use to take/continue an exam.
+type MyExamRoom struct {
+	ID             uuid.UUID  `json:"id"`
+	ClassSessionID uuid.UUID  `json:"class_session_id"`
+	StartedAt      *time.Time `json:"started_at"`
+	EndedAt        *time.Time `json:"ended_at"`
+	IsOpen         bool       `json:"is_open"`
+}
+
+// MyExam is one exam as seen by a student, with availability + their own result.
+type MyExam struct {
+	QuizID          uuid.UUID   `json:"quiz_id"`
+	Title           string      `json:"title"`
+	ClassID         uuid.UUID   `json:"class_id"`
+	ClassName       string      `json:"class_name"`
+	DurationMinutes int         `json:"duration_minutes"`
+	TotalScore      float64     `json:"total_score"`
+	State           MyExamState `json:"state"`
+	// Room is the open room if one exists, else the next upcoming room, else nil.
+	Room *MyExamRoom `json:"room,omitempty"`
+	// Score is populated only when State == graded.
+	Score *float64 `json:"score,omitempty"`
+	// SubmittedAt is populated when the student has submitted.
+	SubmittedAt *time.Time `json:"submitted_at,omitempty"`
+}
+
 // --- Interfaces ---
 
 type QuizRepository interface {
@@ -257,6 +299,9 @@ type QuizRepository interface {
 	Update(ctx context.Context, quiz *Quiz) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, scope QuizListScope, p ListParams) ([]Quiz, int64, error)
+	// ListByMemberWithRooms returns quizzes whose class the given user is a
+	// member of, with Class preloaded, ordered by created_at desc.
+	ListByMemberWithRooms(ctx context.Context, userID uuid.UUID, p ListParams) ([]Quiz, int64, error)
 
 	HardDelete(ctx context.Context, id uuid.UUID) error
 	FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*Quiz, error)
@@ -295,6 +340,7 @@ type QuizService interface {
 	Update(ctx context.Context, id uuid.UUID, dto UpdateQuizDTO) (*Quiz, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, q ListQuizzesQuery) ([]Quiz, int64, error)
+	ListMine(ctx context.Context, p ListParams) ([]MyExam, int64, error)
 
 	CreateRule(ctx context.Context, quizID uuid.UUID, dto CreateQuizRuleDTO) (*QuizRule, error)
 	GetRule(ctx context.Context, id uuid.UUID) (*QuizRule, error)

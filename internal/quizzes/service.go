@@ -2,6 +2,8 @@ package quizzes
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log/slog"
 	"math"
 	"time"
@@ -197,6 +199,97 @@ func (s *service) List(ctx context.Context, q domain.ListQuizzesQuery) ([]domain
 		scope.IncludeDeleted = q.IncludeDeleted
 	}
 	return s.repo.List(ctx, scope, q.ListParams)
+}
+
+func (s *service) ListMine(ctx context.Context, p domain.ListParams) ([]domain.MyExam, int64, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, 0, domain.ErrForbidden
+	}
+
+	quizzes, total, err := s.repo.ListByMemberWithRooms(ctx, caller.UserID, p)
+	if err != nil {
+		return nil, 0, fmt.Errorf("listing my exams: %w", err)
+	}
+
+	now := time.Now()
+	exams := make([]domain.MyExam, 0, len(quizzes))
+	for i := range quizzes {
+		q := quizzes[i]
+
+		ex := domain.MyExam{
+			QuizID:          q.ID,
+			Title:           q.Title,
+			ClassID:         q.ClassID,
+			DurationMinutes: q.DurationMinutes,
+			TotalScore:      q.TotalScore,
+		}
+		if q.Class != nil {
+			ex.ClassName = q.Class.Name
+		}
+
+		// Pick the room to surface: prefer an open room, else the next upcoming.
+		rooms, _, err := s.rooms.ListByQuiz(ctx, q.ID, domain.ListParams{Page: 1, PageSize: 10000})
+		if err != nil {
+			return nil, 0, fmt.Errorf("listing rooms for exam %s: %w", q.ID, err)
+		}
+		var open *domain.QuizRoom
+		var nextUpcoming *domain.QuizRoom
+		for j := range rooms {
+			rm := rooms[j]
+			if rm.IsRoomOpenAt(now) {
+				r := rm
+				open = &r
+				break
+			}
+			if rm.StartedAt != nil && rm.StartedAt.After(now) {
+				if nextUpcoming == nil || rm.StartedAt.Before(*nextUpcoming.StartedAt) {
+					r := rm
+					nextUpcoming = &r
+				}
+			}
+		}
+		chosen := open
+		if chosen == nil {
+			chosen = nextUpcoming
+		}
+		if chosen != nil {
+			ex.Room = &domain.MyExamRoom{
+				ID:             chosen.ID,
+				ClassSessionID: chosen.ClassSessionID,
+				StartedAt:      chosen.StartedAt,
+				EndedAt:        chosen.EndedAt,
+				IsOpen:         chosen.IsRoomOpenAt(now),
+			}
+		}
+
+		// Caller's own submission decides submitted/graded.
+		sub, err := s.submissions.FindByQuizAndUser(ctx, q.ID, caller.UserID)
+		switch {
+		case err == nil && sub != nil:
+			switch sub.Status {
+			case domain.SubmissionStatusGraded:
+				score := sub.TotalScore
+				ex.State = domain.MyExamStateGraded
+				ex.Score = &score
+			default:
+				ex.State = domain.MyExamStateSubmitted
+			}
+			ex.SubmittedAt = sub.SubmittedAt
+		case errors.Is(err, domain.ErrNotFound):
+			if ex.Room != nil && ex.Room.IsOpen {
+				ex.State = domain.MyExamStateOpen
+			} else {
+				ex.State = domain.MyExamStateUpcoming
+			}
+		default:
+			return nil, 0, fmt.Errorf("loading submission for exam %s: %w", q.ID, err)
+		}
+
+		exams = append(exams, ex)
+	}
+
+	return exams, total, nil
 }
 
 func (s *service) resolveListScope(caller domain.Caller) domain.QuizListScope {

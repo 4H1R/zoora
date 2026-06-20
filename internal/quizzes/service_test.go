@@ -39,6 +39,11 @@ func (m *mQuizRepo) List(ctx context.Context, scope domain.QuizListScope, p doma
 	qs, _ := a.Get(0).([]domain.Quiz)
 	return qs, a.Get(1).(int64), a.Error(2)
 }
+func (m *mQuizRepo) ListByMemberWithRooms(ctx context.Context, userID uuid.UUID, p domain.ListParams) ([]domain.Quiz, int64, error) {
+	a := m.Called(ctx, userID, p)
+	qs, _ := a.Get(0).([]domain.Quiz)
+	return qs, a.Get(1).(int64), a.Error(2)
+}
 func (m *mQuizRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
@@ -727,4 +732,56 @@ func TestQuizService_ListQuestionsForTaking_SanitizesAnswersAndDeduplicates(t *t
 	assert.Equal(t, "A", questions[0].Options[0].Value)
 	assert.Equal(t, []domain.QuestionOption{}, questions[1].Options)
 	assert.Equal(t, 0.0, questions[2].Options[0].Score)
+}
+
+// --- ListMine (my exams) tests ---
+
+func TestQuizService_ListMine_DerivesStates(t *testing.T) {
+	studentID := uuid.New()
+	q1, q2 := uuid.New(), uuid.New()
+	c1 := uuid.New()
+	r1, s1 := uuid.New(), uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	openQuiz := domain.Quiz{ID: q1, Title: "Open", ClassID: c1, Class: &domain.Class{Name: "Math"}, DurationMinutes: 30, TotalScore: 20}
+	gradedQuiz := domain.Quiz{ID: q2, Title: "Done", ClassID: c1, Class: &domain.Class{Name: "Math"}, DurationMinutes: 30, TotalScore: 20}
+
+	d.quizRepo.On("ListByMemberWithRooms", mock.Anything, studentID, mock.Anything).
+		Return([]domain.Quiz{openQuiz, gradedQuiz}, int64(2), nil)
+
+	start := time.Now().Add(-time.Minute)
+	end := time.Now().Add(time.Hour)
+	d.roomRepo.On("ListByQuiz", mock.Anything, q1, mock.Anything).
+		Return([]domain.QuizRoom{{ID: r1, ClassSessionID: s1, StartedAt: &start, EndedAt: &end}}, int64(1), nil)
+	d.roomRepo.On("ListByQuiz", mock.Anything, q2, mock.Anything).
+		Return([]domain.QuizRoom{}, int64(0), nil)
+
+	submittedAt := time.Now()
+	d.subRepo.On("FindByQuizAndUser", mock.Anything, q1, studentID).
+		Return(nil, domain.ErrNotFound)
+	d.subRepo.On("FindByQuizAndUser", mock.Anything, q2, studentID).
+		Return(&domain.QuizSubmission{Status: domain.SubmissionStatusGraded, TotalScore: 18, SubmittedAt: &submittedAt}, nil)
+
+	svc := d.service()
+	exams, total, err := svc.ListMine(ctx, domain.ListParams{Page: 1, PageSize: 20})
+	assert.NoError(t, err)
+	assert.Equal(t, int64(2), total)
+	assert.Len(t, exams, 2)
+
+	assert.Equal(t, domain.MyExamStateOpen, exams[0].State)
+	assert.NotNil(t, exams[0].Room)
+	assert.True(t, exams[0].Room.IsOpen)
+	assert.Equal(t, "Math", exams[0].ClassName)
+
+	assert.Equal(t, domain.MyExamStateGraded, exams[1].State)
+	assert.NotNil(t, exams[1].Score)
+	assert.Equal(t, 18.0, *exams[1].Score)
+}
+
+func TestQuizService_ListMine_NoCaller_Forbidden(t *testing.T) {
+	d := newDeps()
+	svc := d.service()
+	_, _, err := svc.ListMine(context.Background(), domain.ListParams{Page: 1, PageSize: 20})
+	assert.ErrorIs(t, err, domain.ErrForbidden)
 }

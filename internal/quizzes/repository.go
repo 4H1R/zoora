@@ -113,6 +113,22 @@ func (r *quizRepository) List(ctx context.Context, scope domain.QuizListScope, p
 	return quizzes, total, nil
 }
 
+func (r *quizRepository) ListByMemberWithRooms(ctx context.Context, userID uuid.UUID, p domain.ListParams) ([]domain.Quiz, int64, error) {
+	db := database.DB(ctx, r.db)
+	base := db.Model(&domain.Quiz{}).
+		Preload("Class").
+		Where(
+			"class_id IN (SELECT class_id FROM class_members WHERE user_id = ?)",
+			userID,
+		)
+	var quizzes []domain.Quiz
+	total, err := listparams.Paginate(base, p, &quizzes)
+	if err != nil {
+		return nil, 0, fmt.Errorf("quizzes.repository.ListByMemberWithRooms: %w", err)
+	}
+	return quizzes, total, nil
+}
+
 func (r *quizRepository) HardDelete(ctx context.Context, id uuid.UUID) error {
 	result := database.DB(ctx, r.db).Unscoped().Delete(&domain.Quiz{}, "id = ?", id)
 	if result.Error != nil {
