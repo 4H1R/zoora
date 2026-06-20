@@ -189,38 +189,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 		counts.Roles++
 	}
 
-	// 4. Org-scoped Student role
-	studentPermNames := []domain.PermissionName{
-		domain.PermLiveSessionsView, domain.PermLiveSessionsJoin,
-		domain.PermRecordingsView,
-		domain.PermClassesView, domain.PermClassesJoin,
-		domain.PermUsersView,
-		domain.PermQuizzesView,
-		domain.PermPollsView,
-		// View-only access so members see the same session tabs as staff
-		// (Practices, Recordings, Live presence) — no create/grade rights.
-		domain.PermPracticesView,
-		domain.PermOfflinesView,
-		domain.PermAttendanceView,
-	}
-	studentPermIDs := resolvePermIDs(studentPermNames)
-
-	studentRolesByOrg := make(map[uuid.UUID]*domain.Role)
-	for _, org := range orgs {
-		studentRole := factory.NewRole(&org.ID, func(r *domain.Role) {
-			r.Name = "Student"
-		})
-		if err := db.WithContext(ctx).Create(studentRole).Error; err != nil {
-			return nil, fmt.Errorf("creating student role: %w", err)
-		}
-		if err := assignPerms(studentRole.ID, studentPermIDs); err != nil {
-			return nil, fmt.Errorf("assigning student permissions: %w", err)
-		}
-		studentRolesByOrg[org.ID] = studentRole
-		counts.Roles++
-	}
-
-	// 5. Users
+	// 4. Users
 	type orgUsers struct {
 		teachers []*domain.User
 		students []*domain.User
@@ -257,7 +226,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 			counts.Users++
 
 			// Fixed user1 — debug student in Zoora Demo org
-			studentRole := studentRolesByOrg[org.ID]
+			studentRole := presetRoles[domain.PresetRoleStudent]
 			user1 := factory.NewUser(org.ID, func(u *domain.User) {
 				u.OrganizationID = &org.ID
 				u.Username = "user1"
@@ -283,7 +252,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 		counts.Users++
 
 		// 4 students per org
-		studentRole := studentRolesByOrg[org.ID]
+		studentRole := presetRoles[domain.PresetRoleStudent]
 		for s := 0; s < 4; s++ {
 			st := factory.NewUser(org.ID, func(u *domain.User) {
 				u.OrganizationID = &org.ID
