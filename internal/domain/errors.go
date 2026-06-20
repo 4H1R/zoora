@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 )
 
@@ -42,3 +43,23 @@ func (e *ValidationError) Error() string {
 }
 
 func (e *ValidationError) Unwrap() error { return ErrValidation }
+
+// MapError maps a domain sentinel error to an HTTP status and stable error code.
+func MapError(err error) (int, string) {
+	switch {
+	case errors.Is(err, ErrNotFound):
+		return http.StatusNotFound, "NOT_FOUND"
+	case errors.Is(err, ErrUserDisabled):
+		return http.StatusForbidden, "USER_DISABLED"
+	case errors.Is(err, ErrForbidden):
+		return http.StatusForbidden, "FORBIDDEN"
+	case errors.Is(err, ErrUnauthorized):
+		return http.StatusUnauthorized, "UNAUTHORIZED"
+	case errors.Is(err, ErrConflict):
+		return http.StatusConflict, "CONFLICT"
+	case errors.Is(err, ErrValidation):
+		return http.StatusBadRequest, "VALIDATION_ERROR"
+	default:
+		return http.StatusInternalServerError, "INTERNAL_ERROR"
+	}
+}

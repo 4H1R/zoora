@@ -26,7 +26,7 @@ func ErrorHandler(logger *slog.Logger) gin.HandlerFunc {
 		}
 
 		err := c.Errors.Last().Err
-		status, code := mapError(err)
+		status, code := domain.MapError(err)
 		body := &domain.ErrorBody{Code: code, Message: err.Error()}
 
 		var ve *domain.ValidationError
@@ -44,22 +44,5 @@ func ErrorHandler(logger *slog.Logger) gin.HandlerFunc {
 		}
 
 		c.AbortWithStatusJSON(status, domain.Response{Success: false, Error: body})
-	}
-}
-
-func mapError(err error) (int, string) {
-	switch {
-	case errors.Is(err, domain.ErrNotFound):
-		return http.StatusNotFound, "NOT_FOUND"
-	case errors.Is(err, domain.ErrForbidden):
-		return http.StatusForbidden, "FORBIDDEN"
-	case errors.Is(err, domain.ErrUnauthorized):
-		return http.StatusUnauthorized, "UNAUTHORIZED"
-	case errors.Is(err, domain.ErrConflict):
-		return http.StatusConflict, "CONFLICT"
-	case errors.Is(err, domain.ErrValidation):
-		return http.StatusBadRequest, "VALIDATION_ERROR"
-	default:
-		return http.StatusInternalServerError, "INTERNAL_ERROR"
 	}
 }

@@ -2,7 +2,6 @@ package domain
 
 import (
 	"errors"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -49,7 +48,7 @@ func SuccessResponse(c *gin.Context, status int, data interface{}) {
 }
 
 func ErrorResponse(c *gin.Context, err error) {
-	status, code := mapError(err)
+	status, code := MapError(err)
 	body := &ErrorBody{Code: code, Message: err.Error()}
 
 	var ve *ValidationError
@@ -57,23 +56,4 @@ func ErrorResponse(c *gin.Context, err error) {
 		body.Fields = ve.Fields
 	}
 	c.JSON(status, Response{Success: false, Error: body})
-}
-
-func mapError(err error) (int, string) {
-	switch {
-	case errors.Is(err, ErrNotFound):
-		return http.StatusNotFound, "NOT_FOUND"
-	case errors.Is(err, ErrUserDisabled):
-		return http.StatusForbidden, "USER_DISABLED"
-	case errors.Is(err, ErrForbidden):
-		return http.StatusForbidden, "FORBIDDEN"
-	case errors.Is(err, ErrUnauthorized):
-		return http.StatusUnauthorized, "UNAUTHORIZED"
-	case errors.Is(err, ErrConflict):
-		return http.StatusConflict, "CONFLICT"
-	case errors.Is(err, ErrValidation):
-		return http.StatusBadRequest, "VALIDATION_ERROR"
-	default:
-		return http.StatusInternalServerError, "INTERNAL_ERROR"
-	}
 }
