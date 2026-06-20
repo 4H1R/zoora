@@ -1,7 +1,6 @@
 import type { GithubCom4H1RZooraInternalDomainUser } from "@/api/model"
 import type { NavGroup } from "@/components/layout/nav-main"
 
-import { useParams, useRouterState } from "@tanstack/react-router"
 import {
   Building2Icon,
   CalendarIcon,
@@ -27,8 +26,6 @@ import { AppSidebar as AppSidebarShared } from "@/components/layout/app-sidebar"
 import { Sidebar } from "@/components/ui/sidebar"
 import { useAdminStore } from "@/stores/admin"
 
-const CLASS_ID_RE = /^\/admin\/classes\/([^/]+)(?:\/|$)/
-
 export function AppSidebar({
   user,
   ...props
@@ -37,32 +34,38 @@ export function AppSidebar({
 }) {
   const { t } = useTranslation()
   const { activeOrganization, setActiveOrganization } = useAdminStore()
-  const pathname = useRouterState({ select: (s) => s.location.pathname })
-  const params = useParams({ strict: false }) as { classId?: string }
-
-  const classIdMatch = pathname.match(CLASS_ID_RE)
-  const activeClassId = params.classId ?? classIdMatch?.[1]
 
   const navGroups: NavGroup[] = [
     {
-      label: t("admin.platform"),
+      label: t("admin.nav.overview"),
       items: [
         { title: t("admin.dashboard.title"), url: "/admin/dashboard", icon: <LayoutDashboardIcon /> },
+        { title: t("admin.organizations"), url: "/admin/organizations", icon: <Building2Icon /> },
+      ],
+    },
+    {
+      label: t("admin.nav.teaching"),
+      items: [
         { title: t("admin.nav.classes"), url: "/admin/classes", icon: <SchoolIcon /> },
         { title: t("admin.nav.sessions"), url: "/admin/sessions", icon: <CalendarIcon /> },
-        { title: t("admin.organizations"), url: "/admin/organizations", icon: <Building2Icon /> },
+        { title: t("admin.attendance.title"), url: "/admin/attendance", icon: <ClipboardCheckIcon /> },
+        { title: t("admin.gradebook.title"), url: "/admin/gradebook", icon: <TrophyIcon /> },
+      ],
+    },
+    {
+      label: t("admin.nav.rooms"),
+      items: [
         { title: t("admin.offlines.title"), url: "/admin/offlines", icon: <FileVideoIcon /> },
         { title: t("admin.liveRooms.title"), url: "/admin/live-rooms", icon: <VideoIcon /> },
         { title: t("admin.practices.title"), url: "/admin/practices", icon: <DumbbellIcon /> },
+      ],
+    },
+    {
+      label: t("admin.nav.assessments"),
+      items: [
         { title: t("admin.quizzes.title"), url: "/admin/quizzes", icon: <ClipboardListIcon /> },
-        {
-          title: t("admin.corrections.title"),
-          url: "/admin/corrections",
-          icon: <CheckSquareIcon />,
-        },
+        { title: t("admin.corrections.title"), url: "/admin/corrections", icon: <CheckSquareIcon /> },
         { title: t("admin.questions.title"), url: "/admin/questions", icon: <HelpCircleIcon /> },
-        { title: t("admin.attendance.title"), url: "/admin/attendance", icon: <ClipboardCheckIcon /> },
-        { title: t("admin.gradebook.title"), url: "/admin/gradebook", icon: <TrophyIcon /> },
       ],
     },
     {
@@ -74,50 +77,6 @@ export function AppSidebar({
       ],
     },
   ]
-
-  if (activeClassId) {
-    navGroups.push({
-      label: t("admin.classManagement.title"),
-      indent: true,
-      items: [
-        {
-          title: t("admin.classManagement.sessions"),
-          url: `/admin/classes/${activeClassId}/sessions`,
-          icon: <CalendarIcon />,
-        },
-        {
-          title: t("admin.classManagement.offlines"),
-          url: `/admin/classes/${activeClassId}/offlines`,
-          icon: <FileVideoIcon />,
-        },
-        {
-          title: t("admin.classManagement.liveRooms"),
-          url: `/admin/classes/${activeClassId}/live-rooms`,
-          icon: <VideoIcon />,
-        },
-        {
-          title: t("admin.classManagement.practices"),
-          url: `/admin/classes/${activeClassId}/practices`,
-          icon: <DumbbellIcon />,
-        },
-        {
-          title: t("admin.classManagement.quizzes"),
-          url: `/admin/classes/${activeClassId}/quizzes`,
-          icon: <ClipboardListIcon />,
-        },
-        {
-          title: t("admin.classManagement.questions"),
-          url: `/admin/classes/${activeClassId}/questions`,
-          icon: <HelpCircleIcon />,
-        },
-        {
-          title: t("admin.classManagement.gradebook"),
-          url: `/admin/classes/${activeClassId}/gradebook`,
-          icon: <TrophyIcon />,
-        },
-      ],
-    })
-  }
 
   return (
     <AppSidebarShared

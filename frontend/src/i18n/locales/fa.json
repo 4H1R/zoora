@@ -180,6 +180,10 @@
       "organization": "سازمان"
     },
     "nav": {
+      "overview": "نمای کلی",
+      "teaching": "آموزش",
+      "rooms": "اتاق‌ها",
+      "assessments": "ارزیابی‌ها",
       "users": "کاربران",
       "roles": "نقش‌ها",
       "classes": "کلاس‌ها",

@@ -180,6 +180,10 @@
       "organization": "Organization"
     },
     "nav": {
+      "overview": "Overview",
+      "teaching": "Teaching",
+      "rooms": "Rooms",
+      "assessments": "Assessments",
       "users": "Users",
       "roles": "Roles",
       "classes": "Classes",
