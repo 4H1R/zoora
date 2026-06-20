@@ -18,6 +18,23 @@
     "toggleTheme": "Toggle theme",
     "toggleLang": "Switch language"
   },
+  "errorPages": {
+    "notFound": {
+      "eyebrow": "Error 404 — page not found",
+      "title": "Page not found",
+      "description": "The page you're looking for isn't here. It may have been moved, ended, or never existed at all. Let's get you back to class.",
+      "home": "Back to home",
+      "back": "Go back"
+    },
+    "serverError": {
+      "eyebrow": "Error 500 — something broke",
+      "title": "We lost the signal",
+      "description": "An unexpected error interrupted the session. Our team has been notified. You can try again, or head back to safe ground.",
+      "retry": "Try again",
+      "home": "Back to home",
+      "details": "Technical details"
+    }
+  },
   "time": {
     "daysShort": "d",
     "hoursShort": "h",

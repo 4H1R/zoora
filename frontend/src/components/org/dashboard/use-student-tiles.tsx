@@ -3,7 +3,6 @@ import {
   CalendarCheckIcon,
   ClipboardListIcon,
   GraduationCapIcon,
-  VideoIcon,
 } from "lucide-react"
 import { useAccess } from "react-access-engine"
 import { useTranslation } from "react-i18next"
@@ -48,15 +47,6 @@ export function useStudentTiles(orgId: string): DashboardTileSpec[] {
       label: t("org.portal.tiles.courses"),
       icon: <BookOpenIcon />,
       to: "/org/$orgId/classes",
-      params: { orgId },
-    })
-  }
-  if (can("offlines:view") || can("offlines:view_any")) {
-    tiles.push({
-      key: "recordings",
-      label: t("org.portal.tiles.recordings"),
-      icon: <VideoIcon />,
-      to: "/org/$orgId/offlines",
       params: { orgId },
     })
   }
