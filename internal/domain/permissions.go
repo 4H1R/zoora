@@ -70,6 +70,7 @@ const (
 	PermQuizzesUpdateAny PermissionName = "quizzes:update_any"
 	PermQuizzesDelete    PermissionName = "quizzes:delete"
 	PermQuizzesDeleteAny PermissionName = "quizzes:delete_any"
+	PermQuizzesTake      PermissionName = "quizzes:take"
 	// Polls
 	PermPollsView      PermissionName = "polls:view"
 	PermPollsViewAny   PermissionName = "polls:view_any"
@@ -117,6 +118,7 @@ const (
 	PermGradebookUpdateAny PermissionName = "gradebook:update_any"
 	PermGradebookDelete    PermissionName = "gradebook:delete"
 	PermGradebookDeleteAny PermissionName = "gradebook:delete_any"
+	PermGradebookViewOwn   PermissionName = "gradebook:view_own"
 	// Offlines
 	PermOfflinesView      PermissionName = "offlines:view"
 	PermOfflinesViewAny   PermissionName = "offlines:view_any"
@@ -135,6 +137,7 @@ const (
 	PermAttendanceUpdateAny PermissionName = "attendance:update_any"
 	PermAttendanceDelete    PermissionName = "attendance:delete"
 	PermAttendanceDeleteAny PermissionName = "attendance:delete_any"
+	PermAttendanceViewOwn   PermissionName = "attendance:view_own"
 )
 
 // AllPermissions is the authoritative list of every permission in the system.
@@ -162,7 +165,7 @@ var AllPermissions = []PermissionName{
 	PermQuestionBanksUpdate, PermQuestionBanksUpdateAny, PermQuestionBanksDelete, PermQuestionBanksDeleteAny,
 	// Quizzes
 	PermQuizzesView, PermQuizzesViewAny, PermQuizzesCreate, PermQuizzesCreateAny,
-	PermQuizzesUpdate, PermQuizzesUpdateAny, PermQuizzesDelete, PermQuizzesDeleteAny,
+	PermQuizzesUpdate, PermQuizzesUpdateAny, PermQuizzesDelete, PermQuizzesDeleteAny, PermQuizzesTake,
 	// Polls
 	PermPollsView, PermPollsViewAny, PermPollsCreate, PermPollsCreateAny,
 	PermPollsUpdate, PermPollsUpdateAny, PermPollsDelete, PermPollsDeleteAny,
@@ -179,11 +182,11 @@ var AllPermissions = []PermissionName{
 	PermPracticesSubmit, PermPracticesGrade,
 	// Gradebook
 	PermGradebookView, PermGradebookViewAny, PermGradebookCreate, PermGradebookCreateAny,
-	PermGradebookUpdate, PermGradebookUpdateAny, PermGradebookDelete, PermGradebookDeleteAny,
+	PermGradebookUpdate, PermGradebookUpdateAny, PermGradebookDelete, PermGradebookDeleteAny, PermGradebookViewOwn,
 	// Offlines
 	PermOfflinesView, PermOfflinesViewAny, PermOfflinesCreate, PermOfflinesCreateAny,
 	PermOfflinesUpdate, PermOfflinesUpdateAny, PermOfflinesDelete, PermOfflinesDeleteAny,
 	// Attendance
 	PermAttendanceView, PermAttendanceViewAny, PermAttendanceCreate, PermAttendanceCreateAny,
-	PermAttendanceUpdate, PermAttendanceUpdateAny, PermAttendanceDelete, PermAttendanceDeleteAny,
+	PermAttendanceUpdate, PermAttendanceUpdateAny, PermAttendanceDelete, PermAttendanceDeleteAny, PermAttendanceViewOwn,
 }

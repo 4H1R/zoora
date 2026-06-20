@@ -68,6 +68,7 @@ export const GithubCom4H1RZooraInternalDomainPermissionName = {
   PermQuizzesUpdateAny: 'quizzes:update_any',
   PermQuizzesDelete: 'quizzes:delete',
   PermQuizzesDeleteAny: 'quizzes:delete_any',
+  PermQuizzesTake: 'quizzes:take',
   PermPollsView: 'polls:view',
   PermPollsViewAny: 'polls:view_any',
   PermPollsCreate: 'polls:create',
@@ -110,6 +111,7 @@ export const GithubCom4H1RZooraInternalDomainPermissionName = {
   PermGradebookUpdateAny: 'gradebook:update_any',
   PermGradebookDelete: 'gradebook:delete',
   PermGradebookDeleteAny: 'gradebook:delete_any',
+  PermGradebookViewOwn: 'gradebook:view_own',
   PermOfflinesView: 'offlines:view',
   PermOfflinesViewAny: 'offlines:view_any',
   PermOfflinesCreate: 'offlines:create',
@@ -126,4 +128,5 @@ export const GithubCom4H1RZooraInternalDomainPermissionName = {
   PermAttendanceUpdateAny: 'attendance:update_any',
   PermAttendanceDelete: 'attendance:delete',
   PermAttendanceDeleteAny: 'attendance:delete_any',
+  PermAttendanceViewOwn: 'attendance:view_own',
 } as const;
