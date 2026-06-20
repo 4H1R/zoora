@@ -58,7 +58,7 @@ type OrganizationStats struct {
 
 // AdminListOrganizationsQuery is the query for GET /admin/organizations.
 type AdminListOrganizationsQuery struct {
-	Status         *OrganizationStatus `form:"status"`
+	Status         *OrganizationStatus `form:"status" binding:"omitempty,oneof=active trial suspended archived"`
 	IncludeDeleted bool                `form:"include_deleted"`
 	ListParams     ListParams          `form:"-"`
 }

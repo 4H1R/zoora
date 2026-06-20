@@ -411,6 +411,29 @@ func TestQuizService_StartSubmission_RoomNotOpen_ValidationError(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrValidation)
 }
 
+func TestQuizService_StartSubmission_RoomForDifferentQuiz_NotFound(t *testing.T) {
+	studentID := uuid.New()
+	quizID := uuid.New()
+	otherQuizID := uuid.New()
+	classID := uuid.New()
+	roomID := uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	now := time.Now()
+	d.quizRepo.On("FindByID", ctx, quizID).
+		Return(&domain.Quiz{ID: quizID, ClassID: classID}, nil)
+	d.memberRepo.On("Exists", ctx, classID, studentID).Return(true, nil)
+	d.roomRepo.On("FindByID", ctx, roomID).
+		Return(&domain.QuizRoom{ID: roomID, QuizID: otherQuizID, StartedAt: &now}, nil)
+
+	svc := d.service()
+	_, err := svc.StartSubmission(ctx, quizID, domain.StartQuizSubmissionDTO{QuizRoomID: roomID})
+	assert.ErrorIs(t, err, domain.ErrNotFound)
+	d.subRepo.AssertNotCalled(t, "FindByQuizAndUser")
+	d.subRepo.AssertNotCalled(t, "Create")
+}
+
 func TestQuizService_StartSubmission_AlreadyExists_Conflict(t *testing.T) {
 	studentID := uuid.New()
 	quizID := uuid.New()
@@ -648,4 +671,60 @@ func TestQuizService_SubmitQuiz_MultipleChoiceScoring(t *testing.T) {
 	// 1 + 1.5 + (-0.5) = 2.0
 	assert.Equal(t, 2.0, result.Answers[0].EarnedScore)
 	assert.Equal(t, 2.0, result.TotalScore)
+}
+
+func TestQuizService_ListQuestionsForTaking_SanitizesAnswersAndDeduplicates(t *testing.T) {
+	studentID := uuid.New()
+	quizID := uuid.New()
+	classID := uuid.New()
+	manualQID := uuid.New()
+	shortQID := uuid.New()
+	randomQID := uuid.New()
+	bankID := uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	d.quizRepo.On("FindByID", ctx, quizID).
+		Return(&domain.Quiz{ID: quizID, ClassID: classID, UserID: uuid.New()}, nil)
+	d.memberRepo.On("Exists", ctx, classID, studentID).Return(true, nil)
+	d.ruleRepo.On("ListByQuiz", ctx, quizID, domain.ListParams{Page: 1, PageSize: 10000}).
+		Return([]domain.QuizRule{
+			{ID: uuid.New(), QuizID: quizID, Type: domain.QuizRuleTypeManual, QuestionIDs: []uuid.UUID{manualQID, shortQID, manualQID}},
+			{ID: uuid.New(), QuizID: quizID, Type: domain.QuizRuleTypeRandom, BankID: &bankID, Count: 1},
+		}, int64(2), nil)
+	d.questionRepo.On("FindByIDs", ctx, []uuid.UUID{manualQID, shortQID, manualQID}).
+		Return([]domain.Question{
+			{
+				ID: manualQID, Type: domain.QuestionTypeChoice,
+				Options: []domain.QuestionOption{
+					{ID: "a", Value: "A", Score: 10},
+					{ID: "b", Value: "B", Score: 0},
+				},
+			},
+			{
+				ID: shortQID, Type: domain.QuestionTypeShortAnswer,
+				Options: []domain.QuestionOption{{ID: "answer", Value: "secret", Score: 5}},
+			},
+		}, nil)
+	d.questionRepo.On("RandomByBank", ctx, bankID, 1).
+		Return([]domain.Question{
+			{
+				ID: randomQID, Type: domain.QuestionTypeChoice,
+				Options: []domain.QuestionOption{{ID: "r", Value: "Random", Score: 7}},
+			},
+		}, nil)
+
+	svc := d.service()
+	questions, err := svc.ListQuestionsForTaking(ctx, quizID)
+
+	assert.NoError(t, err)
+	assert.Len(t, questions, 3)
+	assert.Equal(t, manualQID, questions[0].ID)
+	assert.Equal(t, shortQID, questions[1].ID)
+	assert.Equal(t, randomQID, questions[2].ID)
+	assert.Equal(t, 0.0, questions[0].Options[0].Score)
+	assert.Equal(t, "a", questions[0].Options[0].ID)
+	assert.Equal(t, "A", questions[0].Options[0].Value)
+	assert.Equal(t, []domain.QuestionOption{}, questions[1].Options)
+	assert.Equal(t, 0.0, questions[2].Options[0].Score)
 }

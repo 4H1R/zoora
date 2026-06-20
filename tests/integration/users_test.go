@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"log/slog"
@@ -41,25 +40,25 @@ func TestAdminCreatesUser(t *testing.T) {
 	jwtService := auth.NewJWTService(cfg)
 
 	orgRepo := organizations.NewRepository(db)
-	orgSvc := organizations.NewService(orgRepo, nil, logger)
-	org, err := orgSvc.Create(context.Background(), domain.CreateOrganizationDTO{Name: "Test Uni"})
-	require.NoError(t, err)
+	org := &domain.Organization{Name: "Test Uni"}
+	require.NoError(t, orgRepo.Create(context.Background(), org))
 
 	userRepo := users.NewRepository(db)
 	roleRepo := roles.NewRoleRepository(db)
+	admin := seedUser(t, userRepo, &org.ID, "users-admin", true)
 
-	userSvc := users.NewService(userRepo, logger)
+	userSvc := users.NewService(userRepo, roleRepo, logger)
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	v1 := router.Group("/api/v1")
 
-	authMiddleware := auth.Middleware(jwtService, nil, roleRepo, nil)
+	authMiddleware := auth.Middleware(jwtService, nil, roleRepo, userRepo)
 	perm := auth.RequirePermission
 	handler := users.NewHandler(userSvc)
 	handler.RegisterRoutes(v1, authMiddleware, perm)
 
-	adminToken, _ := jwtService.GenerateToken(uuid.New(), nil, true)
+	adminToken, _ := jwtService.GenerateToken(admin.ID)
 
 	body, _ := json.Marshal(domain.CreateUserDTO{
 		OrganizationID: &org.ID,

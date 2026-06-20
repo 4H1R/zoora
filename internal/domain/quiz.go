@@ -42,29 +42,29 @@ type Quiz struct {
 }
 
 type QuizRule struct {
-	ID          uuid.UUID    `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	QuizID      uuid.UUID    `gorm:"type:uuid;not null;index" json:"quiz_id"`
-	Quiz        *Quiz        `gorm:"foreignKey:QuizID" json:"quiz,omitempty"`
-	Type        QuizRuleType `gorm:"type:varchar(20);not null" json:"type"`
-	BankID      *uuid.UUID   `gorm:"type:uuid" json:"bank_id,omitempty"`
+	ID          uuid.UUID     `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	QuizID      uuid.UUID     `gorm:"type:uuid;not null;index" json:"quiz_id"`
+	Quiz        *Quiz         `gorm:"foreignKey:QuizID" json:"quiz,omitempty"`
+	Type        QuizRuleType  `gorm:"type:varchar(20);not null" json:"type"`
+	BankID      *uuid.UUID    `gorm:"type:uuid" json:"bank_id,omitempty"`
 	Bank        *QuestionBank `gorm:"foreignKey:BankID" json:"bank,omitempty"`
-	QuestionIDs []uuid.UUID  `gorm:"type:jsonb;serializer:json" json:"question_ids,omitempty"`
-	Count       int          `gorm:"not null;default:0" json:"count"`
-	IsDynamic   bool         `gorm:"not null;default:false" json:"is_dynamic"`
-	CreatedAt   time.Time    `json:"created_at"`
-	UpdatedAt   time.Time    `json:"updated_at"`
+	QuestionIDs []uuid.UUID   `gorm:"type:jsonb;serializer:json" json:"question_ids,omitempty"`
+	Count       int           `gorm:"not null;default:0" json:"count"`
+	IsDynamic   bool          `gorm:"not null;default:false" json:"is_dynamic"`
+	CreatedAt   time.Time     `json:"created_at"`
+	UpdatedAt   time.Time     `json:"updated_at"`
 }
 
 type QuizRoom struct {
-	ID             uuid.UUID  `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	QuizID         uuid.UUID  `gorm:"type:uuid;not null;index" json:"quiz_id"`
-	Quiz           *Quiz      `gorm:"foreignKey:QuizID" json:"quiz,omitempty"`
-	ClassSessionID uuid.UUID  `gorm:"type:uuid;not null;index" json:"class_session_id"`
+	ID             uuid.UUID     `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	QuizID         uuid.UUID     `gorm:"type:uuid;not null;index" json:"quiz_id"`
+	Quiz           *Quiz         `gorm:"foreignKey:QuizID" json:"quiz,omitempty"`
+	ClassSessionID uuid.UUID     `gorm:"type:uuid;not null;index" json:"class_session_id"`
 	ClassSession   *ClassSession `gorm:"foreignKey:ClassSessionID" json:"class_session,omitempty"`
-	StartedAt      *time.Time `json:"started_at"`
-	EndedAt        *time.Time `json:"ended_at"`
-	CreatedAt      time.Time  `json:"created_at"`
-	UpdatedAt      time.Time  `json:"updated_at"`
+	StartedAt      *time.Time    `json:"started_at"`
+	EndedAt        *time.Time    `json:"ended_at"`
+	CreatedAt      time.Time     `json:"created_at"`
+	UpdatedAt      time.Time     `json:"updated_at"`
 }
 
 // --- DTOs ---
@@ -170,9 +170,9 @@ type SubmissionAnswer struct {
 
 type QuizSubmission struct {
 	ID          uuid.UUID          `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	QuizID      uuid.UUID          `gorm:"type:uuid;not null;index" json:"quiz_id"`
+	QuizID      uuid.UUID          `gorm:"type:uuid;not null;index;uniqueIndex:idx_quiz_submissions_quiz_user" json:"quiz_id"`
 	Quiz        *Quiz              `gorm:"foreignKey:QuizID" json:"quiz,omitempty"`
-	UserID      uuid.UUID          `gorm:"type:uuid;not null;index" json:"user_id"`
+	UserID      uuid.UUID          `gorm:"type:uuid;not null;index;uniqueIndex:idx_quiz_submissions_quiz_user" json:"user_id"`
 	User        *User              `gorm:"foreignKey:UserID" json:"user,omitempty"`
 	Status      SubmissionStatus   `gorm:"type:varchar(20);not null;default:'in_progress'" json:"status"`
 	Answers     []SubmissionAnswer `gorm:"type:jsonb;serializer:json" json:"answers"`

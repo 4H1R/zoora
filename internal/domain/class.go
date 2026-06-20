@@ -15,23 +15,23 @@ type Class struct {
 	ID             uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
 	OrganizationID uuid.UUID      `gorm:"type:uuid;not null;index" json:"organization_id"`
 	UserID         uuid.UUID      `gorm:"type:uuid;not null;index" json:"user_id"`
-	User        *User          `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	Name        string         `gorm:"not null" json:"name"`
-	Description string         `json:"description"`
-	TotalUsers  int            `gorm:"not null;default:0" json:"total_users"` // capacity; 0 = unlimited
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
+	User           *User          `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	Name           string         `gorm:"not null" json:"name"`
+	Description    string         `json:"description"`
+	TotalUsers     int            `gorm:"not null;default:0" json:"total_users"` // capacity; 0 = unlimited
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 // ClassSession مدل سازمان‌دهنده روم‌های مختلف در یک کلاس
 type ClassSession struct {
-	ID          uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	ClassID     uuid.UUID      `gorm:"type:uuid;not null;index" json:"class_id"`
-	Class       *Class         `gorm:"foreignKey:ClassID" json:"class,omitempty"`
-	Name        string         `gorm:"not null" json:"name"`
-	Description string         `json:"description"`
-	StartTime   time.Time      `gorm:"not null" json:"start_time"`
+	ID          uuid.UUID `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	ClassID     uuid.UUID `gorm:"type:uuid;not null;index" json:"class_id"`
+	Class       *Class    `gorm:"foreignKey:ClassID" json:"class,omitempty"`
+	Name        string    `gorm:"not null" json:"name"`
+	Description string    `json:"description"`
+	StartTime   time.Time `gorm:"not null" json:"start_time"`
 
 	QuizRooms     []QuizRoom     `gorm:"foreignKey:ClassSessionID" json:"quiz_rooms,omitempty"`
 	LiveRooms     []LiveRoom     `gorm:"foreignKey:ClassSessionID" json:"live_rooms,omitempty"`
@@ -48,9 +48,9 @@ type ClassSession struct {
 // enrollments. No soft-delete: unenrolling is a hard delete.
 type ClassMember struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	ClassID   uuid.UUID `gorm:"type:uuid;not null;index" json:"class_id"`
+	ClassID   uuid.UUID `gorm:"type:uuid;not null;index;uniqueIndex:idx_class_members_class_user" json:"class_id"`
 	Class     *Class    `gorm:"foreignKey:ClassID" json:"class,omitempty"`
-	UserID    uuid.UUID `gorm:"type:uuid;not null;index" json:"user_id"`
+	UserID    uuid.UUID `gorm:"type:uuid;not null;index;uniqueIndex:idx_class_members_class_user" json:"user_id"`
 	User      *User     `gorm:"foreignKey:UserID" json:"user,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 }

@@ -182,11 +182,11 @@ func TestIntegration_OrgRepo_ListAll_IncludeDeleted(t *testing.T) {
 
 	bigPage := domain.ListParams{Page: 1, PageSize: 50}
 
-	_, total, err := orgRepo.ListAll(ctx, domain.AdminListOrganizationsQuery{ListParams: bigPage})
+	_, total, err := orgRepo.AdminList(ctx, domain.AdminListOrganizationsQuery{ListParams: bigPage})
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), total)
 
-	orgs, total, err := orgRepo.ListAll(ctx, domain.AdminListOrganizationsQuery{IncludeDeleted: true, ListParams: bigPage})
+	orgs, total, err := orgRepo.AdminList(ctx, domain.AdminListOrganizationsQuery{IncludeDeleted: true, ListParams: bigPage})
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), total)
 	assert.Len(t, orgs, 2)
@@ -204,11 +204,8 @@ func TestIntegration_OrgRepo_CountActiveAndDeleted(t *testing.T) {
 		}
 	}
 
-	active, err := orgRepo.CountActive(ctx)
+	stats, err := orgRepo.GetStats(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, int64(2), active)
-
-	deleted, err := orgRepo.CountDeleted(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, int64(1), deleted)
+	assert.Equal(t, int64(2), stats.ActiveCount)
+	assert.Equal(t, int64(1), stats.DeletedOrganizations)
 }

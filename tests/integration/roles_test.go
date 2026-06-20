@@ -22,6 +22,7 @@ import (
 	"github.com/4H1R/zoora/internal/organizations"
 	"github.com/4H1R/zoora/internal/platform/database"
 	"github.com/4H1R/zoora/internal/roles"
+	"github.com/4H1R/zoora/internal/users"
 	"github.com/4H1R/zoora/tests/testutil"
 )
 
@@ -35,8 +36,8 @@ func TestRoleCreationAndAssignment(t *testing.T) {
 		&domain.RolePermission{},
 	))
 
-	perms := []string{
-		"users:view", "users:create", "users:view_any",
+	perms := []domain.PermissionName{
+		domain.PermUsersView, domain.PermUsersCreate, domain.PermUsersViewAny,
 	}
 	for _, p := range perms {
 		db.Create(&domain.Permission{Name: p})
@@ -48,9 +49,10 @@ func TestRoleCreationAndAssignment(t *testing.T) {
 	jwtService := auth.NewJWTService(cfg)
 
 	orgRepo := organizations.NewRepository(db)
-	orgSvc := organizations.NewService(orgRepo, nil, logger)
-	org, err := orgSvc.Create(context.Background(), domain.CreateOrganizationDTO{Name: "Test Org"})
-	require.NoError(t, err)
+	org := &domain.Organization{Name: "Test Org"}
+	require.NoError(t, orgRepo.Create(context.Background(), org))
+	userRepo := users.NewRepository(db)
+	admin := seedUser(t, userRepo, &org.ID, "role-admin", true)
 
 	roleRepo := roles.NewRoleRepository(db)
 	permRepo := roles.NewPermissionRepository(db)
@@ -62,11 +64,11 @@ func TestRoleCreationAndAssignment(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	v1 := router.Group("/api/v1")
-	authMiddleware := auth.Middleware(jwtService, nil, roleRepo, nil)
-	perm := func(string) gin.HandlerFunc { return func(*gin.Context) {} }
+	authMiddleware := auth.Middleware(jwtService, nil, roleRepo, userRepo)
+	perm := func(domain.PermissionName) gin.HandlerFunc { return func(c *gin.Context) { c.Next() } }
 	roleHandler.RegisterRoutes(v1, authMiddleware, perm)
 
-	adminToken, _ := jwtService.GenerateToken(uuid.New(), &org.ID, true)
+	adminToken, _ := jwtService.GenerateToken(admin.ID)
 
 	var dbPerms []domain.Permission
 	require.NoError(t, db.Find(&dbPerms).Error)
@@ -76,8 +78,9 @@ func TestRoleCreationAndAssignment(t *testing.T) {
 	}
 
 	body, _ := json.Marshal(domain.CreateRoleDTO{
-		Name:          "Teacher",
-		PermissionIDs: permIDs,
+		OrganizationID: &org.ID,
+		Name:           "Teacher",
+		PermissionIDs:  permIDs,
 	})
 
 	w := httptest.NewRecorder()
