@@ -19,6 +19,7 @@ CREATE TABLE questions (
     text TEXT NOT NULL,
     type VARCHAR(20) NOT NULL,
     options JSONB NOT NULL DEFAULT '[]',
+    metadata JSONB NOT NULL DEFAULT '[]',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,

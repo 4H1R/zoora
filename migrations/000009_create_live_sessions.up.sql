@@ -1,7 +1,9 @@
 CREATE TABLE live_rooms (
     id                UUID PRIMARY KEY DEFAULT uuidv7(),
     class_session_id  UUID NOT NULL,
+    name                 VARCHAR(255) NOT NULL DEFAULT '',
     livekit_room_name VARCHAR(255) NOT NULL,
+    scheduled_start_time TIMESTAMPTZ,
     status            VARCHAR(20) NOT NULL DEFAULT 'created',
     config            JSONB NOT NULL DEFAULT '{"allow_mic_default":true,"allow_camera_default":true,"allow_screen_share_default":false,"auto_record":false,"max_participants":100}',
     actual_start_time TIMESTAMPTZ,
