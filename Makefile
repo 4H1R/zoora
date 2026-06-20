@@ -1,7 +1,8 @@
 EXEC := docker compose exec -T app
 EXEC_TTY := docker compose exec app
+PROD := docker compose --env-file .env.prod -f docker-compose.prod.yml
 
-.PHONY: up down build restart ps logs run-api run-worker migrate-up migrate-reset migrate-create test test-integration lint swagger seed shell
+.PHONY: up down build restart ps logs run-api run-worker migrate-up migrate-reset migrate-create test test-integration lint swagger seed shell prod
 
 up:
 	docker compose up -d
@@ -58,3 +59,6 @@ seed:
 
 shell:
 	$(EXEC_TTY) bash
+
+prod:
+	$(PROD) up -d --build
