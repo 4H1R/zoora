@@ -1,4 +1,17 @@
-#make lint
-#make generate
-#cd frontend && pnpm typecheck && pnpm format
-#git add .
+set -e
+
+# 1. Regenerate API spec (swagger) + frontend client (orval)
+echo "▶ generate (swagger + orval)"
+make generate
+
+# Re-stage regenerated frontend client so it lands in this commit
+# (docs/ is gitignored, so the swagger spec is not staged)
+git add frontend/src/api
+
+# 2. Backend checks (lint)
+echo "▶ backend lint"
+make lint
+
+# 3. Frontend TypeScript check
+echo "▶ frontend typecheck"
+cd frontend && pnpm typecheck
