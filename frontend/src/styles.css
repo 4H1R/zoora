@@ -35,12 +35,32 @@
   }
   html[dir="rtl"] {
     font-family: "Vazirmatn Variable", "Geist Variable", sans-serif;
+    /* lead RTL font utilities (font-sans / font-heading) with Vazirmatn too */
+    --font-sans: "Vazirmatn Variable", "Geist Variable", sans-serif;
+  }
+  /*
+   * Persian/Arabic is a cursive script — letters join. Any letter-spacing
+   * (tracking-* utilities, incl. arbitrary values like tracking-[0.3em]) forces
+   * gaps that break those joins and looks broken. Neutralize for RTL.
+   * Latin labels lean on caps+tracking for emphasis; Persian uses weight/size
+   * instead — see the Eyebrow primitive.
+   */
+  html[dir="rtl"] [class*="tracking-"] {
+    letter-spacing: 0 !important;
+  }
+  /*
+   * Geist Mono has no Persian glyphs, so letters fall back to Vazirmatn — but the
+   * space character still renders in the mono primary, giving fat word gaps. Mono
+   * has no meaning in Persian typography; route font-mono to the sans stack for RTL.
+   */
+  html[dir="rtl"] .font-mono {
+    font-family: var(--font-sans);
   }
 }
 
 @theme inline {
   --font-heading: var(--font-sans);
-  --font-sans: "Geist Variable", sans-serif;
+  --font-sans: "Geist Variable", "Vazirmatn Variable", sans-serif;
   --font-mono: "Geist Mono Variable", "Vazirmatn Variable", ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
 
   --color-sidebar-ring: var(--sidebar-ring);
@@ -99,6 +119,12 @@
   --tracking-caps: 0.06em;
 
   --animate-pulse-dot: pulse-dot 1.4s ease-in-out infinite;
+  --animate-float: float 6s var(--ease-in-out) infinite;
+  --animate-float-slow: float 8.5s var(--ease-in-out) infinite;
+  --animate-reveal: reveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-aurora: aurora 22s ease-in-out infinite;
+  --animate-aurora-slow: aurora 30s ease-in-out infinite reverse;
+  --animate-sheen: sheen 7s ease-in-out infinite;
 
   @keyframes pulse-dot {
     0%,
@@ -108,6 +134,61 @@
     50% {
       opacity: 0.35;
     }
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: var(--float-base, translateY(0));
+    }
+    50% {
+      transform: var(--float-lift, translateY(-9px));
+    }
+  }
+
+  @keyframes reveal {
+    from {
+      opacity: 0;
+      transform: translateY(1.5rem);
+      filter: blur(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0);
+    }
+  }
+
+  @keyframes aurora {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    33% {
+      transform: translate3d(6%, -8%, 0) scale(1.15);
+    }
+    66% {
+      transform: translate3d(-7%, 5%, 0) scale(0.92);
+    }
+  }
+
+  @keyframes sheen {
+    0%,
+    100% {
+      opacity: 0.4;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
 

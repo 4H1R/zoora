@@ -1,4 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="7" fill="#16a34a"></rect>
-  <text x="16" y="22" text-anchor="middle" font-family="Geist, system-ui, sans-serif" font-weight="700" font-size="18" letter-spacing="-0.04em" fill="#ffffff">E</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="z" x1="6" y1="4" x2="42" y2="46" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2fbd68"/>
+      <stop offset="0.55" stop-color="#16a34a"/>
+      <stop offset="1" stop-color="#15803d"/>
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" rx="13" fill="url(#z)"/>
+  <path d="M14 16 H34 L14 32 H34" stroke="#ffffff" stroke-width="5.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </svg>

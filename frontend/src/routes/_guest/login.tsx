@@ -21,7 +21,7 @@ function LoginComponent() {
       <GridBackground />
       <header className="bg-background relative z-10 flex items-center justify-between px-6 py-5.5 md:px-8">
         <Link to="/" className="flex items-center">
-          <Logo className="h-5.5" />
+          <Logo className="text-xl" />
         </Link>
         <div className="flex items-center gap-2">
           <ThemeToggle />

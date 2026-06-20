@@ -40,8 +40,8 @@ function RootComponent() {
       <HeadContent />
       <Outlet />
       <Toaster />
-      {/*<ReactQueryDevtools buttonPosition="bottom-left" />
-      <TanStackRouterDevtools position="bottom-right" />*/}
+      <ReactQueryDevtools buttonPosition="bottom-left" />
+      <TanStackRouterDevtools position="bottom-right" />
     </DirectionProvider>
   )
 }
