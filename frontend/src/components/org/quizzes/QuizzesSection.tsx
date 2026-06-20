@@ -1,4 +1,5 @@
 import type { GithubCom4H1RZooraInternalDomainQuiz as Quiz } from "@/api/model"
+import type { SortOption } from "@/components/data-table/sort-picker"
 
 import { useQueryClient } from "@tanstack/react-query"
 import { Link, useParams } from "@tanstack/react-router"
@@ -25,13 +26,18 @@ import {
   useGetQuizzes,
 } from "@/api/quizzes/quizzes"
 import { QuizQuestionsDialog } from "@/components/admin/quizzes/QuizQuestionsDialog"
+import { SectionNoResults } from "@/components/org/session/section-no-results"
+import { SectionPagination } from "@/components/org/session/section-pagination"
+import { SectionToolbar } from "@/components/org/session/section-toolbar"
 import { Eyebrow } from "@/components/eyebrow"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useCanSelfOr } from "@/lib/access"
+import { DEFAULT_PAGE_SIZE } from "@/lib/list"
 import { formatScore } from "@/lib/score"
 import { formatSessionDate } from "@/lib/session-status"
+import { useSectionList } from "@/lib/use-section-list"
 
 import { QuizFormDialog } from "./QuizFormDialog"
 import { useQuizPermissions } from "./use-quiz-permissions"
@@ -233,12 +239,21 @@ export function QuizzesSection({ classId, classSessionId }: QuizzesSectionProps)
   const { canView, canCreate } = useQuizPermissions()
   const { orgId } = useParams({ strict: false }) as { orgId?: string }
 
+  const list = useSectionList()
+  const sortOptions: SortOption[] = [
+    { id: "created_at", label: t("org.session.controls.sortFields.created_at") },
+    { id: "title", label: t("org.session.controls.sortFields.title") },
+    { id: "duration_minutes", label: t("org.session.controls.sortFields.duration_minutes") },
+  ]
+
   const quizzesQuery = useGetQuizzes(
-    { class_session_id: classSessionId },
+    { class_session_id: classSessionId, ...list.params },
     { query: { enabled: canView } }
   )
-  const quizzes =
-    (quizzesQuery.data?.status === 200 && quizzesQuery.data.data.data?.items) || []
+  const quizzesData = (quizzesQuery.data?.status === 200 && quizzesQuery.data.data.data) || undefined
+  const quizzes = quizzesData?.items ?? []
+  const total = quizzesData?.total ?? 0
+  const pageSize = quizzesData?.page_size ?? DEFAULT_PAGE_SIZE
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null)
@@ -280,6 +295,16 @@ export function QuizzesSection({ classId, classSessionId }: QuizzesSectionProps)
         ) : null}
       </div>
 
+      {quizzes.length > 0 || list.isFiltered ? (
+        <SectionToolbar
+          searchValue={list.searchInput}
+          onSearchChange={list.setSearchInput}
+          sortOptions={sortOptions}
+          sort={list.sort}
+          onSortChange={list.setSort}
+        />
+      ) : null}
+
       {quizzesQuery.isPending ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <QuizCardSkeleton />
@@ -287,31 +312,43 @@ export function QuizzesSection({ classId, classSessionId }: QuizzesSectionProps)
           <QuizCardSkeleton />
         </div>
       ) : quizzes.length === 0 ? (
-        <EmptyState canCreate={canCreate} onCreate={openCreate} />
+        list.isFiltered ? (
+          <SectionNoResults />
+        ) : (
+          <EmptyState canCreate={canCreate} onCreate={openCreate} />
+        )
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {quizzes.map((q, i) => (
-            <QuizCard
-              key={q.id}
-              quiz={q}
-              index={i}
-              orgId={orgId ?? ""}
-              classSessionId={classSessionId}
-              onEdit={(quiz) => {
-                setEditingQuiz(quiz)
-                setFormOpen(true)
-              }}
-              onManageQuestions={(quiz) => {
-                setQuestionsQuiz(quiz)
-                setQuestionsOpen(true)
-              }}
-              onDelete={(quiz) => {
-                setDeletingQuiz(quiz)
-                setDeleteOpen(true)
-              }}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {quizzes.map((q, i) => (
+              <QuizCard
+                key={q.id}
+                quiz={q}
+                index={(list.page - 1) * pageSize + i}
+                orgId={orgId ?? ""}
+                classSessionId={classSessionId}
+                onEdit={(quiz) => {
+                  setEditingQuiz(quiz)
+                  setFormOpen(true)
+                }}
+                onManageQuestions={(quiz) => {
+                  setQuestionsQuiz(quiz)
+                  setQuestionsOpen(true)
+                }}
+                onDelete={(quiz) => {
+                  setDeletingQuiz(quiz)
+                  setDeleteOpen(true)
+                }}
+              />
+            ))}
+          </div>
+          <SectionPagination
+            page={list.page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={list.setPage}
+          />
+        </>
       )}
 
       <QuizFormDialog

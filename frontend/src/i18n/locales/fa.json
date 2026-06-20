@@ -1430,6 +1430,36 @@
       "eyebrow": "جلسه کلاس",
       "backToClass": "بازگشت به کلاس",
       "footnote": "خط‌زمانی جلسه",
+      "controls": {
+        "searchPlaceholder": "جستجو…",
+        "sort": "مرتب‌سازی",
+        "showing": "{{from}}–{{to}} از {{total}}",
+        "prev": "قبلی",
+        "next": "بعدی",
+        "noResultsTitle": "نتیجه‌ای یافت نشد",
+        "noResultsHint": "جستجو یا فیلتر دیگری را امتحان کنید.",
+        "status": {
+          "label": "وضعیت",
+          "all": "همه وضعیت‌ها",
+          "created": "زمان‌بندی‌شده",
+          "active": "زنده",
+          "finished": "پایان‌یافته"
+        },
+        "sortFields": {
+          "created_at": "تاریخ ایجاد",
+          "updated_at": "آخرین بروزرسانی",
+          "title": "عنوان",
+          "name": "نام",
+          "duration_minutes": "مدت",
+          "status": "وضعیت",
+          "actual_start_time": "زمان شروع",
+          "actual_end_time": "زمان پایان",
+          "start_time": "زمان شروع",
+          "end_time": "زمان پایان",
+          "published_at": "تاریخ انتشار",
+          "view_count": "بازدیدها"
+        }
+      },
       "nav": {
         "overview": "نمای کلی",
         "live": "اتاق‌های زنده",

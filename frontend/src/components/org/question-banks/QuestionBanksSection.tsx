@@ -1,4 +1,5 @@
 import type { GithubCom4H1RZooraInternalDomainQuestionBank as Bank } from "@/api/model"
+import type { SortOption } from "@/components/data-table/sort-picker"
 
 import { useQueryClient } from "@tanstack/react-query"
 import {
@@ -18,11 +19,16 @@ import {
   useDeleteQuestionBanksId,
   useGetQuestionBanks,
 } from "@/api/question-banks/question-banks"
+import { SectionNoResults } from "@/components/org/session/section-no-results"
+import { SectionPagination } from "@/components/org/session/section-pagination"
+import { SectionToolbar } from "@/components/org/session/section-toolbar"
 import { Eyebrow } from "@/components/eyebrow"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { DEFAULT_PAGE_SIZE } from "@/lib/list"
 import { formatSessionDate } from "@/lib/session-status"
+import { useSectionList } from "@/lib/use-section-list"
 
 import { QuestionBankFormDialog } from "./QuestionBankFormDialog"
 import { QuestionBankQuestionsDialog } from "./QuestionBankQuestionsDialog"
@@ -154,8 +160,17 @@ export function QuestionBanksSection() {
   const queryClient = useQueryClient()
   const { canView, canCreate, canEdit, canDelete } = useBankPermissions()
 
-  const banksQuery = useGetQuestionBanks(undefined, { query: { enabled: canView } })
-  const banks: Bank[] = (banksQuery.data?.status === 200 && banksQuery.data.data.data?.items) || []
+  const list = useSectionList()
+  const sortOptions: SortOption[] = [
+    { id: "created_at", label: t("org.session.controls.sortFields.created_at") },
+    { id: "name", label: t("org.session.controls.sortFields.name") },
+  ]
+
+  const banksQuery = useGetQuestionBanks({ ...list.params }, { query: { enabled: canView } })
+  const banksData = (banksQuery.data?.status === 200 && banksQuery.data.data.data) || undefined
+  const banks: Bank[] = banksData?.items ?? []
+  const total = banksData?.total ?? 0
+  const pageSize = banksData?.page_size ?? DEFAULT_PAGE_SIZE
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingBank, setEditingBank] = useState<Bank | null>(null)
@@ -199,6 +214,16 @@ export function QuestionBanksSection() {
         ) : null}
       </div>
 
+      {banks.length > 0 || list.isFiltered ? (
+        <SectionToolbar
+          searchValue={list.searchInput}
+          onSearchChange={list.setSearchInput}
+          sortOptions={sortOptions}
+          sort={list.sort}
+          onSortChange={list.setSort}
+        />
+      ) : null}
+
       {banksQuery.isPending ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <BankCardSkeleton />
@@ -206,31 +231,43 @@ export function QuestionBanksSection() {
           <BankCardSkeleton />
         </div>
       ) : banks.length === 0 ? (
-        <EmptyState canCreate={canCreate} onCreate={openCreate} />
+        list.isFiltered ? (
+          <SectionNoResults />
+        ) : (
+          <EmptyState canCreate={canCreate} onCreate={openCreate} />
+        )
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {banks.map((b, i) => (
-            <BankCard
-              key={b.id}
-              bank={b}
-              index={i}
-              canEdit={canEdit}
-              canDelete={canDelete}
-              onEdit={(bank) => {
-                setEditingBank(bank)
-                setFormOpen(true)
-              }}
-              onManage={(bank) => {
-                setManagingBank(bank)
-                setQuestionsOpen(true)
-              }}
-              onDelete={(bank) => {
-                setDeletingBank(bank)
-                setDeleteOpen(true)
-              }}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {banks.map((b, i) => (
+              <BankCard
+                key={b.id}
+                bank={b}
+                index={(list.page - 1) * pageSize + i}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={(bank) => {
+                  setEditingBank(bank)
+                  setFormOpen(true)
+                }}
+                onManage={(bank) => {
+                  setManagingBank(bank)
+                  setQuestionsOpen(true)
+                }}
+                onDelete={(bank) => {
+                  setDeletingBank(bank)
+                  setDeleteOpen(true)
+                }}
+              />
+            ))}
+          </div>
+          <SectionPagination
+            page={list.page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={list.setPage}
+          />
+        </>
       )}
 
       <QuestionBankFormDialog

@@ -1,4 +1,5 @@
 import type { GithubCom4H1RZooraInternalDomainOfflineRoom as OfflineRoom } from "@/api/model"
+import type { SortOption } from "@/components/data-table/sort-picker"
 
 import { useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
@@ -8,12 +9,17 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { getGetOfflinesQueryKey, useDeleteOfflinesId, useGetOfflines } from "@/api/offlines/offlines"
+import { SectionNoResults } from "@/components/org/session/section-no-results"
+import { SectionPagination } from "@/components/org/session/section-pagination"
+import { SectionToolbar } from "@/components/org/session/section-toolbar"
 import { Eyebrow } from "@/components/eyebrow"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useCanSelfOr } from "@/lib/access"
+import { DEFAULT_PAGE_SIZE } from "@/lib/list"
 import { formatSessionDate } from "@/lib/session-status"
+import { useSectionList } from "@/lib/use-section-list"
 
 import { OfflineFormDialog } from "./OfflineFormDialog"
 import { useOfflinePermissions } from "./use-offline-permissions"
@@ -161,8 +167,22 @@ export function OfflinesSection({ classSessionId, orgId }: OfflinesSectionProps)
   const queryClient = useQueryClient()
   const { canView, canCreate } = useOfflinePermissions()
 
-  const offlinesQuery = useGetOfflines({ class_session_id: classSessionId }, { query: { enabled: canView } })
-  const rooms = (offlinesQuery.data?.status === 200 && offlinesQuery.data.data.data?.items) || []
+  const list = useSectionList()
+  const sortOptions: SortOption[] = [
+    { id: "created_at", label: t("org.session.controls.sortFields.created_at") },
+    { id: "title", label: t("org.session.controls.sortFields.title") },
+    { id: "published_at", label: t("org.session.controls.sortFields.published_at") },
+    { id: "view_count", label: t("org.session.controls.sortFields.view_count") },
+  ]
+
+  const offlinesQuery = useGetOfflines(
+    { class_session_id: classSessionId, ...list.params },
+    { query: { enabled: canView } }
+  )
+  const offlinesData = (offlinesQuery.data?.status === 200 && offlinesQuery.data.data.data) || undefined
+  const rooms = offlinesData?.items ?? []
+  const total = offlinesData?.total ?? 0
+  const pageSize = offlinesData?.page_size ?? DEFAULT_PAGE_SIZE
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingRoom, setEditingRoom] = useState<OfflineRoom | null>(null)
@@ -202,6 +222,16 @@ export function OfflinesSection({ classSessionId, orgId }: OfflinesSectionProps)
         ) : null}
       </div>
 
+      {rooms.length > 0 || list.isFiltered ? (
+        <SectionToolbar
+          searchValue={list.searchInput}
+          onSearchChange={list.setSearchInput}
+          sortOptions={sortOptions}
+          sort={list.sort}
+          onSortChange={list.setSort}
+        />
+      ) : null}
+
       {offlinesQuery.isPending ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <OfflineCardSkeleton />
@@ -209,26 +239,38 @@ export function OfflinesSection({ classSessionId, orgId }: OfflinesSectionProps)
           <OfflineCardSkeleton />
         </div>
       ) : rooms.length === 0 ? (
-        <EmptyState canCreate={canCreate} onCreate={openCreate} />
+        list.isFiltered ? (
+          <SectionNoResults />
+        ) : (
+          <EmptyState canCreate={canCreate} onCreate={openCreate} />
+        )
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {rooms.map((r, i) => (
-            <OfflineCard
-              key={r.id}
-              room={r}
-              index={i}
-              orgId={orgId}
-              onEdit={(room) => {
-                setEditingRoom(room)
-                setFormOpen(true)
-              }}
-              onDelete={(room) => {
-                setDeletingRoom(room)
-                setDeleteOpen(true)
-              }}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {rooms.map((r, i) => (
+              <OfflineCard
+                key={r.id}
+                room={r}
+                index={(list.page - 1) * pageSize + i}
+                orgId={orgId}
+                onEdit={(room) => {
+                  setEditingRoom(room)
+                  setFormOpen(true)
+                }}
+                onDelete={(room) => {
+                  setDeletingRoom(room)
+                  setDeleteOpen(true)
+                }}
+              />
+            ))}
+          </div>
+          <SectionPagination
+            page={list.page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={list.setPage}
+          />
+        </>
       )}
 
       <OfflineFormDialog

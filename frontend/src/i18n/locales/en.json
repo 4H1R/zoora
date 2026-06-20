@@ -1398,6 +1398,36 @@
       "eyebrow": "Class session",
       "backToClass": "Back to class",
       "footnote": "Session timeline",
+      "controls": {
+        "searchPlaceholder": "Search…",
+        "sort": "Sort",
+        "showing": "{{from}}–{{to}} of {{total}}",
+        "prev": "Previous",
+        "next": "Next",
+        "noResultsTitle": "No matches",
+        "noResultsHint": "Try a different search or filter.",
+        "status": {
+          "label": "Status",
+          "all": "All statuses",
+          "created": "Scheduled",
+          "active": "Live",
+          "finished": "Ended"
+        },
+        "sortFields": {
+          "created_at": "Created",
+          "updated_at": "Updated",
+          "title": "Title",
+          "name": "Name",
+          "duration_minutes": "Duration",
+          "status": "Status",
+          "actual_start_time": "Start time",
+          "actual_end_time": "End time",
+          "start_time": "Start time",
+          "end_time": "End time",
+          "published_at": "Published",
+          "view_count": "Views"
+        }
+      },
       "nav": {
         "overview": "Overview",
         "live": "Live Rooms",

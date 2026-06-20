@@ -104,9 +104,11 @@ function countdownLabel(iso: string | undefined, now: number): string {
 }
 
 function itemsCount(payload: unknown): number {
-  const p = payload as { status?: number; data?: { data?: { items?: unknown[] } } } | undefined
+  const p = payload as
+    | { status?: number; data?: { data?: { total?: number; items?: unknown[] } } }
+    | undefined
   if (!p || p.status !== 200) return 0
-  return p.data?.data?.items?.length ?? 0
+  return p.data?.data?.total ?? p.data?.data?.items?.length ?? 0
 }
 
 // ── Descriptors ──────────────────────────────────────────────────────────────

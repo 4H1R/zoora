@@ -1,4 +1,5 @@
 import type { GithubCom4H1RZooraInternalDomainPracticeRoom as PracticeRoom } from "@/api/model"
+import type { SortOption } from "@/components/data-table/sort-picker"
 
 import { useQueryClient } from "@tanstack/react-query"
 import {
@@ -21,13 +22,18 @@ import {
   useGetPractices,
 } from "@/api/practices/practices"
 import { MediaAttachmentList } from "@/components/media/MediaAttachmentList"
+import { SectionNoResults } from "@/components/org/session/section-no-results"
+import { SectionPagination } from "@/components/org/session/section-pagination"
+import { SectionToolbar } from "@/components/org/session/section-toolbar"
 import { Eyebrow } from "@/components/eyebrow"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useCanSelfOr } from "@/lib/access"
+import { DEFAULT_PAGE_SIZE } from "@/lib/list"
 import { formatScore } from "@/lib/score"
 import { formatSessionDate } from "@/lib/session-status"
+import { useSectionList } from "@/lib/use-section-list"
 
 import { PracticeFormDialog } from "./PracticeFormDialog"
 import { PracticeSubmitDialog } from "./PracticeSubmitDialog"
@@ -187,12 +193,22 @@ export function PracticesSection({ classSessionId }: PracticesSectionProps) {
   const queryClient = useQueryClient()
   const { canView, canCreate, canSubmit } = usePracticePermissions()
 
+  const list = useSectionList()
+  const sortOptions: SortOption[] = [
+    { id: "created_at", label: t("org.session.controls.sortFields.created_at") },
+    { id: "title", label: t("org.session.controls.sortFields.title") },
+    { id: "start_time", label: t("org.session.controls.sortFields.start_time") },
+    { id: "end_time", label: t("org.session.controls.sortFields.end_time") },
+  ]
+
   const practicesQuery = useGetPractices(
-    { class_session_id: classSessionId },
+    { class_session_id: classSessionId, ...list.params },
     { query: { enabled: canView } }
   )
-  const practices =
-    (practicesQuery.data?.status === 200 && practicesQuery.data.data.data?.items) || []
+  const practicesData = (practicesQuery.data?.status === 200 && practicesQuery.data.data.data) || undefined
+  const practices = practicesData?.items ?? []
+  const total = practicesData?.total ?? 0
+  const pageSize = practicesData?.page_size ?? DEFAULT_PAGE_SIZE
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingPractice, setEditingPractice] = useState<PracticeRoom | null>(null)
@@ -234,6 +250,16 @@ export function PracticesSection({ classSessionId }: PracticesSectionProps) {
         ) : null}
       </div>
 
+      {practices.length > 0 || list.isFiltered ? (
+        <SectionToolbar
+          searchValue={list.searchInput}
+          onSearchChange={list.setSearchInput}
+          sortOptions={sortOptions}
+          sort={list.sort}
+          onSortChange={list.setSort}
+        />
+      ) : null}
+
       {practicesQuery.isPending ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <PracticeCardSkeleton />
@@ -241,30 +267,42 @@ export function PracticesSection({ classSessionId }: PracticesSectionProps) {
           <PracticeCardSkeleton />
         </div>
       ) : practices.length === 0 ? (
-        <EmptyState canCreate={canCreate} onCreate={openCreate} />
+        list.isFiltered ? (
+          <SectionNoResults />
+        ) : (
+          <EmptyState canCreate={canCreate} onCreate={openCreate} />
+        )
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {practices.map((p, i) => (
-            <PracticeCard
-              key={p.id}
-              practice={p}
-              index={i}
-              canSubmit={canSubmit}
-              onEdit={(practice) => {
-                setEditingPractice(practice)
-                setFormOpen(true)
-              }}
-              onDelete={(practice) => {
-                setDeletingPractice(practice)
-                setDeleteOpen(true)
-              }}
-              onSubmit={(practice) => {
-                setSubmitPractice(practice)
-                setSubmitOpen(true)
-              }}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {practices.map((p, i) => (
+              <PracticeCard
+                key={p.id}
+                practice={p}
+                index={(list.page - 1) * pageSize + i}
+                canSubmit={canSubmit}
+                onEdit={(practice) => {
+                  setEditingPractice(practice)
+                  setFormOpen(true)
+                }}
+                onDelete={(practice) => {
+                  setDeletingPractice(practice)
+                  setDeleteOpen(true)
+                }}
+                onSubmit={(practice) => {
+                  setSubmitPractice(practice)
+                  setSubmitOpen(true)
+                }}
+              />
+            ))}
+          </div>
+          <SectionPagination
+            page={list.page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={list.setPage}
+          />
+        </>
       )}
 
       <PracticeFormDialog

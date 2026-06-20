@@ -1,4 +1,5 @@
 import type { GithubCom4H1RZooraInternalDomainLiveRoom as LiveRoom } from "@/api/model"
+import type { SortOption } from "@/components/data-table/sort-picker"
 
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
@@ -14,11 +15,17 @@ import {
   usePostLiveRoomsIdEnd,
   usePostLiveRoomsIdStart,
 } from "@/api/live-sessions/live-sessions"
+import { SectionNoResults } from "@/components/org/session/section-no-results"
+import { SectionPagination } from "@/components/org/session/section-pagination"
+import { SectionToolbar } from "@/components/org/session/section-toolbar"
 import { Eyebrow } from "@/components/eyebrow"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { DEFAULT_PAGE_SIZE } from "@/lib/list"
 import { formatSessionDate } from "@/lib/session-status"
+import { useSectionList } from "@/lib/use-section-list"
 import { cn } from "@/lib/utils"
 
 import { LiveRoomFormDialog } from "./LiveRoomFormDialog"
@@ -219,8 +226,22 @@ export function LiveRoomsSection({ classSessionId }: { classSessionId: string })
   const canViewAny = canView || canJoin
   const [formOpen, setFormOpen] = useState(false)
 
-  const query = useGetLiveRooms({ class_session_id: classSessionId }, { query: { enabled: canViewAny } })
-  const rooms = (query.data?.status === 200 && query.data.data.data?.items) || []
+  const list = useSectionList()
+  const sortOptions: SortOption[] = [
+    { id: "created_at", label: t("org.session.controls.sortFields.created_at") },
+    { id: "status", label: t("org.session.controls.sortFields.status") },
+    { id: "actual_start_time", label: t("org.session.controls.sortFields.actual_start_time") },
+    { id: "actual_end_time", label: t("org.session.controls.sortFields.actual_end_time") },
+  ]
+
+  const query = useGetLiveRooms(
+    { class_session_id: classSessionId, status: list.status, ...list.params },
+    { query: { enabled: canViewAny } }
+  )
+  const roomsData = (query.data?.status === 200 && query.data.data.data) || undefined
+  const rooms = roomsData?.items ?? []
+  const total = roomsData?.total ?? 0
+  const pageSize = roomsData?.page_size ?? DEFAULT_PAGE_SIZE
 
   if (!canViewAny) return null
 
@@ -239,6 +260,39 @@ export function LiveRoomsSection({ classSessionId }: { classSessionId: string })
         ) : null}
       </div>
 
+      {rooms.length > 0 || list.isFiltered ? (
+        <SectionToolbar
+          searchValue={list.searchInput}
+          onSearchChange={list.setSearchInput}
+          sortOptions={sortOptions}
+          sort={list.sort}
+          onSortChange={list.setSort}
+        >
+          <Select
+            value={list.status ?? "all"}
+            onValueChange={(v) => list.setStatus(v && v !== "all" ? v : undefined)}
+          >
+            <SelectTrigger className="h-8 w-auto gap-1.5 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-xs">
+                {t("org.session.controls.status.all")}
+              </SelectItem>
+              <SelectItem value="created" className="text-xs">
+                {t("org.session.controls.status.created")}
+              </SelectItem>
+              <SelectItem value="active" className="text-xs">
+                {t("org.session.controls.status.active")}
+              </SelectItem>
+              <SelectItem value="finished" className="text-xs">
+                {t("org.session.controls.status.finished")}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </SectionToolbar>
+      ) : null}
+
       {query.isPending ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <CardSkeleton />
@@ -246,27 +300,45 @@ export function LiveRoomsSection({ classSessionId }: { classSessionId: string })
           <CardSkeleton />
         </div>
       ) : rooms.length === 0 ? (
-        <div className="bg-card ring-foreground/10 flex flex-col items-center gap-3 rounded-2xl px-6 py-16 text-center ring-1">
-          <VideoIcon className="text-muted-foreground size-8" />
-          <h3 className="text-foreground text-lg font-semibold tracking-tight">
-            {t("org.session.liveRooms.emptyTitle")}
-          </h3>
-          <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
-            {canCreate ? t("org.session.liveRooms.emptyHint") : t("org.session.liveRooms.emptyHintMember")}
-          </p>
-          {canCreate ? (
-            <Button className="mt-2" onClick={() => setFormOpen(true)}>
-              <PlusIcon className="size-4" />
-              {t("org.session.liveRooms.newRoom")}
-            </Button>
-          ) : null}
-        </div>
+        list.isFiltered ? (
+          <SectionNoResults />
+        ) : (
+          <div className="bg-card ring-foreground/10 flex flex-col items-center gap-3 rounded-2xl px-6 py-16 text-center ring-1">
+            <VideoIcon className="text-muted-foreground size-8" />
+            <h3 className="text-foreground text-lg font-semibold tracking-tight">
+              {t("org.session.liveRooms.emptyTitle")}
+            </h3>
+            <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
+              {canCreate ? t("org.session.liveRooms.emptyHint") : t("org.session.liveRooms.emptyHintMember")}
+            </p>
+            {canCreate ? (
+              <Button className="mt-2" onClick={() => setFormOpen(true)}>
+                <PlusIcon className="size-4" />
+                {t("org.session.liveRooms.newRoom")}
+              </Button>
+            ) : null}
+          </div>
+        )
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {rooms.map((room, i) => (
-            <LiveRoomCard key={room.id} room={room} index={i} canJoin={canJoin} canManage={canManage || canCreate} />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {rooms.map((room, i) => (
+              <LiveRoomCard
+                key={room.id}
+                room={room}
+                index={(list.page - 1) * pageSize + i}
+                canJoin={canJoin}
+                canManage={canManage || canCreate}
+              />
+            ))}
+          </div>
+          <SectionPagination
+            page={list.page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={list.setPage}
+          />
+        </>
       )}
 
       <LiveRoomFormDialog open={formOpen} onOpenChange={setFormOpen} classSessionId={classSessionId} />
