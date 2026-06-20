@@ -164,11 +164,21 @@ func main() {
 	healthChecker := health.NewChecker(db, redisClient, storageClient)
 
 	router := gin.New()
+	// Behind Traefik in the container network; trust private ranges so
+	// X-Forwarded-For / client IP resolve correctly.
+	if err := router.SetTrustedProxies([]string{
+		"10.0.0.0/8",
+		"172.16.0.0/12",
+		"192.168.0.0/16",
+	}); err != nil {
+		log.Error("failed to set trusted proxies", "error", err)
+		os.Exit(1)
+	}
 	router.Use(
 		middleware.Recovery(log),
 		middleware.ErrorHandler(log),
 		middleware.Logging(log),
-		middleware.CORS([]string{"*"}),
+		middleware.CORS(cfg.CORSAllowedOrigins),
 		middleware.GlobalRateLimit(redisClient),
 	)
 

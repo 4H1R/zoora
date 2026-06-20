@@ -40,6 +40,37 @@ func TestLoadFailsWhenRequiredValuesAreMissing(t *testing.T) {
 	}
 }
 
+func TestLoadCORSAllowedOriginsFromEnv(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv("CORS_ALLOWED_ORIGINS", "https://app.example.com,https://admin.example.com")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	want := []string{"https://app.example.com", "https://admin.example.com"}
+	if len(cfg.CORSAllowedOrigins) != len(want) {
+		t.Fatalf("CORSAllowedOrigins = %v, want %v", cfg.CORSAllowedOrigins, want)
+	}
+	for i := range want {
+		if cfg.CORSAllowedOrigins[i] != want[i] {
+			t.Fatalf("origin[%d] = %q, want %q", i, cfg.CORSAllowedOrigins[i], want[i])
+		}
+	}
+}
+
+func TestLoadCORSAllowedOriginsDefaultsToWildcard(t *testing.T) {
+	setRequiredEnv(t)
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if len(cfg.CORSAllowedOrigins) != 1 || cfg.CORSAllowedOrigins[0] != "*" {
+		t.Fatalf("default CORSAllowedOrigins = %v, want [*]", cfg.CORSAllowedOrigins)
+	}
+}
+
 func setRequiredEnv(t *testing.T) {
 	t.Helper()
 	t.Setenv("DATABASE_URL", "postgres://user:pass@localhost:5432/zoora")

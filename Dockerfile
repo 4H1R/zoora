@@ -1,25 +1,21 @@
-FROM golang:1.22-alpine AS builder
+# syntax=docker/dockerfile:1
 
+FROM golang:1.25-alpine AS builder
 WORKDIR /app
-
 RUN apk add --no-cache git
-
 COPY go.mod go.sum ./
 RUN go mod download
-
 COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /out/api ./cmd/api
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /out/worker ./cmd/worker
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /out/seed ./cmd/seed
 
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /api ./cmd/api
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /worker ./cmd/worker
-
-FROM alpine:3.19
-
-RUN apk add --no-cache ca-certificates tzdata
-
-COPY --from=builder /api /usr/local/bin/api
-COPY --from=builder /worker /usr/local/bin/worker
+FROM alpine:3.20
+RUN apk add --no-cache ca-certificates tzdata wget && adduser -D -u 10001 app
+COPY --from=builder /out/api /usr/local/bin/api
+COPY --from=builder /out/worker /usr/local/bin/worker
+COPY --from=builder /out/seed /usr/local/bin/seed
 COPY migrations /migrations
-
+USER app
 EXPOSE 8080
-
 CMD ["api"]
