@@ -20,6 +20,10 @@ role_id?: string;
  */
 is_admin?: boolean;
 /**
+ * Filter by disabled state
+ */
+disabled?: boolean;
+/**
  * Include soft-deleted users
  */
 include_deleted?: boolean;

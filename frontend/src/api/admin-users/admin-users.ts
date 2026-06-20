@@ -42,6 +42,7 @@ import type {
   GithubCom4H1RZooraInternalDomainAdminCreateUserDTO,
   GithubCom4H1RZooraInternalDomainAdminForceResetPasswordDTO,
   GithubCom4H1RZooraInternalDomainAdminUpdateUserDTO,
+  GithubCom4H1RZooraInternalDomainDisableUserDTO,
   GithubCom4H1RZooraInternalDomainResponse,
   PostAdminUsers201,
   PostAdminUsers400,
@@ -49,6 +50,17 @@ import type {
   PostAdminUsers403,
   PostAdminUsers409,
   PostAdminUsers500,
+  PostAdminUsersIdDisable200,
+  PostAdminUsersIdDisable400,
+  PostAdminUsersIdDisable401,
+  PostAdminUsersIdDisable403,
+  PostAdminUsersIdDisable404,
+  PostAdminUsersIdDisable500,
+  PostAdminUsersIdEnable200,
+  PostAdminUsersIdEnable401,
+  PostAdminUsersIdEnable403,
+  PostAdminUsersIdEnable404,
+  PostAdminUsersIdEnable500,
   PostAdminUsersIdPassword400,
   PostAdminUsersIdPassword401,
   PostAdminUsersIdPassword403,
@@ -671,6 +683,219 @@ export const useDeleteAdminUsersId = <TError = ErrorType<DeleteAdminUsersId401 |
         TContext
       > => {
       return useMutation(getDeleteAdminUsersIdMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary [Admin] Disable user
+ */
+export type postAdminUsersIdDisableResponse200 = {
+  data: PostAdminUsersIdDisable200
+  status: 200
+}
+
+export type postAdminUsersIdDisableResponse400 = {
+  data: PostAdminUsersIdDisable400
+  status: 400
+}
+
+export type postAdminUsersIdDisableResponse401 = {
+  data: PostAdminUsersIdDisable401
+  status: 401
+}
+
+export type postAdminUsersIdDisableResponse403 = {
+  data: PostAdminUsersIdDisable403
+  status: 403
+}
+
+export type postAdminUsersIdDisableResponse404 = {
+  data: PostAdminUsersIdDisable404
+  status: 404
+}
+
+export type postAdminUsersIdDisableResponse500 = {
+  data: PostAdminUsersIdDisable500
+  status: 500
+}
+
+export type postAdminUsersIdDisableResponseSuccess = (postAdminUsersIdDisableResponse200) & {
+  headers: Headers;
+};
+export type postAdminUsersIdDisableResponseError = (postAdminUsersIdDisableResponse400 | postAdminUsersIdDisableResponse401 | postAdminUsersIdDisableResponse403 | postAdminUsersIdDisableResponse404 | postAdminUsersIdDisableResponse500) & {
+  headers: Headers;
+};
+
+export type postAdminUsersIdDisableResponse = (postAdminUsersIdDisableResponseSuccess | postAdminUsersIdDisableResponseError)
+
+export const getPostAdminUsersIdDisableUrl = (id: string,) => {
+
+
+
+
+  return `/admin/users/${id}/disable`
+}
+
+export const postAdminUsersIdDisable = async (id: string,
+    githubCom4H1RZooraInternalDomainDisableUserDTO: GithubCom4H1RZooraInternalDomainDisableUserDTO, options?: RequestInit): Promise<postAdminUsersIdDisableResponse> => {
+
+  return customInstance<postAdminUsersIdDisableResponse>(getPostAdminUsersIdDisableUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainDisableUserDTO,)
+  }
+);}
+
+
+
+
+export const getPostAdminUsersIdDisableMutationOptions = <TError = ErrorType<PostAdminUsersIdDisable400 | PostAdminUsersIdDisable401 | PostAdminUsersIdDisable403 | PostAdminUsersIdDisable404 | PostAdminUsersIdDisable500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminUsersIdDisable>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainDisableUserDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAdminUsersIdDisable>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainDisableUserDTO}, TContext> => {
+
+const mutationKey = ['postAdminUsersIdDisable'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAdminUsersIdDisable>>, {id: string;data: GithubCom4H1RZooraInternalDomainDisableUserDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postAdminUsersIdDisable(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAdminUsersIdDisableMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminUsersIdDisable>>>
+    export type PostAdminUsersIdDisableMutationBody = GithubCom4H1RZooraInternalDomainDisableUserDTO
+    export type PostAdminUsersIdDisableMutationError = ErrorType<PostAdminUsersIdDisable400 | PostAdminUsersIdDisable401 | PostAdminUsersIdDisable403 | PostAdminUsersIdDisable404 | PostAdminUsersIdDisable500>
+
+    /**
+ * @summary [Admin] Disable user
+ */
+export const usePostAdminUsersIdDisable = <TError = ErrorType<PostAdminUsersIdDisable400 | PostAdminUsersIdDisable401 | PostAdminUsersIdDisable403 | PostAdminUsersIdDisable404 | PostAdminUsersIdDisable500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminUsersIdDisable>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainDisableUserDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAdminUsersIdDisable>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainDisableUserDTO},
+        TContext
+      > => {
+      return useMutation(getPostAdminUsersIdDisableMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary [Admin] Enable user
+ */
+export type postAdminUsersIdEnableResponse200 = {
+  data: PostAdminUsersIdEnable200
+  status: 200
+}
+
+export type postAdminUsersIdEnableResponse401 = {
+  data: PostAdminUsersIdEnable401
+  status: 401
+}
+
+export type postAdminUsersIdEnableResponse403 = {
+  data: PostAdminUsersIdEnable403
+  status: 403
+}
+
+export type postAdminUsersIdEnableResponse404 = {
+  data: PostAdminUsersIdEnable404
+  status: 404
+}
+
+export type postAdminUsersIdEnableResponse500 = {
+  data: PostAdminUsersIdEnable500
+  status: 500
+}
+
+export type postAdminUsersIdEnableResponseSuccess = (postAdminUsersIdEnableResponse200) & {
+  headers: Headers;
+};
+export type postAdminUsersIdEnableResponseError = (postAdminUsersIdEnableResponse401 | postAdminUsersIdEnableResponse403 | postAdminUsersIdEnableResponse404 | postAdminUsersIdEnableResponse500) & {
+  headers: Headers;
+};
+
+export type postAdminUsersIdEnableResponse = (postAdminUsersIdEnableResponseSuccess | postAdminUsersIdEnableResponseError)
+
+export const getPostAdminUsersIdEnableUrl = (id: string,) => {
+
+
+
+
+  return `/admin/users/${id}/enable`
+}
+
+export const postAdminUsersIdEnable = async (id: string, options?: RequestInit): Promise<postAdminUsersIdEnableResponse> => {
+
+  return customInstance<postAdminUsersIdEnableResponse>(getPostAdminUsersIdEnableUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getPostAdminUsersIdEnableMutationOptions = <TError = ErrorType<PostAdminUsersIdEnable401 | PostAdminUsersIdEnable403 | PostAdminUsersIdEnable404 | PostAdminUsersIdEnable500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminUsersIdEnable>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAdminUsersIdEnable>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['postAdminUsersIdEnable'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAdminUsersIdEnable>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  postAdminUsersIdEnable(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAdminUsersIdEnableMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminUsersIdEnable>>>
+
+    export type PostAdminUsersIdEnableMutationError = ErrorType<PostAdminUsersIdEnable401 | PostAdminUsersIdEnable403 | PostAdminUsersIdEnable404 | PostAdminUsersIdEnable500>
+
+    /**
+ * @summary [Admin] Enable user
+ */
+export const usePostAdminUsersIdEnable = <TError = ErrorType<PostAdminUsersIdEnable401 | PostAdminUsersIdEnable403 | PostAdminUsersIdEnable404 | PostAdminUsersIdEnable500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminUsersIdEnable>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAdminUsersIdEnable>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getPostAdminUsersIdEnableMutationOptions(options), queryClient);
     }
     /**
  * @summary [Admin] Force-reset user password

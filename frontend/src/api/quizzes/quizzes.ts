@@ -57,6 +57,11 @@ import type {
   GetQuizzesIdSubmissions401,
   GetQuizzesIdSubmissions403,
   GetQuizzesIdSubmissionsParams,
+  GetQuizzesMe200,
+  GetQuizzesMe401,
+  GetQuizzesMe403,
+  GetQuizzesMe500,
+  GetQuizzesMeParams,
   GetQuizzesParams,
   GetQuizzesRoomsRoomId200,
   GetQuizzesRoomsRoomId401,
@@ -373,6 +378,143 @@ export const usePostQuizzes = <TError = ErrorType<PostQuizzes400 | PostQuizzes40
       return useMutation(getPostQuizzesMutationOptions(options), queryClient);
     }
     /**
+ * Exams for classes the caller belongs to, with availability (open/upcoming room) and the caller's own submission state + score. Orderable fields: created_at, updated_at, title, duration_minutes.
+ * @summary List my exams
+ */
+export type getQuizzesMeResponse200 = {
+  data: GetQuizzesMe200
+  status: 200
+}
+
+export type getQuizzesMeResponse401 = {
+  data: GetQuizzesMe401
+  status: 401
+}
+
+export type getQuizzesMeResponse403 = {
+  data: GetQuizzesMe403
+  status: 403
+}
+
+export type getQuizzesMeResponse500 = {
+  data: GetQuizzesMe500
+  status: 500
+}
+
+export type getQuizzesMeResponseSuccess = (getQuizzesMeResponse200) & {
+  headers: Headers;
+};
+export type getQuizzesMeResponseError = (getQuizzesMeResponse401 | getQuizzesMeResponse403 | getQuizzesMeResponse500) & {
+  headers: Headers;
+};
+
+export type getQuizzesMeResponse = (getQuizzesMeResponseSuccess | getQuizzesMeResponseError)
+
+export const getGetQuizzesMeUrl = (params?: GetQuizzesMeParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/quizzes/me?${stringifiedParams}` : `/quizzes/me`
+}
+
+export const getQuizzesMe = async (params?: GetQuizzesMeParams, options?: RequestInit): Promise<getQuizzesMeResponse> => {
+
+  return customInstance<getQuizzesMeResponse>(getGetQuizzesMeUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetQuizzesMeQueryKey = (params?: GetQuizzesMeParams,) => {
+    return [
+    `/quizzes/me`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetQuizzesMeQueryOptions = <TData = Awaited<ReturnType<typeof getQuizzesMe>>, TError = ErrorType<GetQuizzesMe401 | GetQuizzesMe403 | GetQuizzesMe500>>(params?: GetQuizzesMeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetQuizzesMeQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzesMe>>> = ({ signal }) => getQuizzesMe(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuizzesMe>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetQuizzesMeQueryResult = NonNullable<Awaited<ReturnType<typeof getQuizzesMe>>>
+export type GetQuizzesMeQueryError = ErrorType<GetQuizzesMe401 | GetQuizzesMe403 | GetQuizzesMe500>
+
+
+export function useGetQuizzesMe<TData = Awaited<ReturnType<typeof getQuizzesMe>>, TError = ErrorType<GetQuizzesMe401 | GetQuizzesMe403 | GetQuizzesMe500>>(
+ params: undefined |  GetQuizzesMeParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesMe>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getQuizzesMe>>,
+          TError,
+          Awaited<ReturnType<typeof getQuizzesMe>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesMe<TData = Awaited<ReturnType<typeof getQuizzesMe>>, TError = ErrorType<GetQuizzesMe401 | GetQuizzesMe403 | GetQuizzesMe500>>(
+ params?: GetQuizzesMeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesMe>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getQuizzesMe>>,
+          TError,
+          Awaited<ReturnType<typeof getQuizzesMe>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesMe<TData = Awaited<ReturnType<typeof getQuizzesMe>>, TError = ErrorType<GetQuizzesMe401 | GetQuizzesMe403 | GetQuizzesMe500>>(
+ params?: GetQuizzesMeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List my exams
+ */
+
+export function useGetQuizzesMe<TData = Awaited<ReturnType<typeof getQuizzesMe>>, TError = ErrorType<GetQuizzesMe401 | GetQuizzesMe403 | GetQuizzesMe500>>(
+ params?: GetQuizzesMeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetQuizzesMeQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary Get quiz room
  */
 export type getQuizzesRoomsRoomIdResponse200 = {

@@ -50,6 +50,7 @@ import type {
   GithubCom4H1RZooraInternalDomainAssignRoleDTO,
   GithubCom4H1RZooraInternalDomainChangePasswordDTO,
   GithubCom4H1RZooraInternalDomainCreateUserDTO,
+  GithubCom4H1RZooraInternalDomainDisableUserDTO,
   GithubCom4H1RZooraInternalDomainResponse,
   GithubCom4H1RZooraInternalDomainUpdateProfileDTO,
   GithubCom4H1RZooraInternalDomainUpdateUserDTO,
@@ -58,6 +59,17 @@ import type {
   PostUsers401,
   PostUsers403,
   PostUsers500,
+  PostUsersIdDisable200,
+  PostUsersIdDisable400,
+  PostUsersIdDisable401,
+  PostUsersIdDisable403,
+  PostUsersIdDisable404,
+  PostUsersIdDisable500,
+  PostUsersIdEnable200,
+  PostUsersIdEnable401,
+  PostUsersIdEnable403,
+  PostUsersIdEnable404,
+  PostUsersIdEnable500,
   PostUsersMePassword400,
   PostUsersMePassword401,
   PostUsersMePassword500,
@@ -996,6 +1008,219 @@ export const useDeleteUsersId = <TError = ErrorType<DeleteUsersId401 | DeleteUse
         TContext
       > => {
       return useMutation(getDeleteUsersIdMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Disable user
+ */
+export type postUsersIdDisableResponse200 = {
+  data: PostUsersIdDisable200
+  status: 200
+}
+
+export type postUsersIdDisableResponse400 = {
+  data: PostUsersIdDisable400
+  status: 400
+}
+
+export type postUsersIdDisableResponse401 = {
+  data: PostUsersIdDisable401
+  status: 401
+}
+
+export type postUsersIdDisableResponse403 = {
+  data: PostUsersIdDisable403
+  status: 403
+}
+
+export type postUsersIdDisableResponse404 = {
+  data: PostUsersIdDisable404
+  status: 404
+}
+
+export type postUsersIdDisableResponse500 = {
+  data: PostUsersIdDisable500
+  status: 500
+}
+
+export type postUsersIdDisableResponseSuccess = (postUsersIdDisableResponse200) & {
+  headers: Headers;
+};
+export type postUsersIdDisableResponseError = (postUsersIdDisableResponse400 | postUsersIdDisableResponse401 | postUsersIdDisableResponse403 | postUsersIdDisableResponse404 | postUsersIdDisableResponse500) & {
+  headers: Headers;
+};
+
+export type postUsersIdDisableResponse = (postUsersIdDisableResponseSuccess | postUsersIdDisableResponseError)
+
+export const getPostUsersIdDisableUrl = (id: string,) => {
+
+
+
+
+  return `/users/${id}/disable`
+}
+
+export const postUsersIdDisable = async (id: string,
+    githubCom4H1RZooraInternalDomainDisableUserDTO: GithubCom4H1RZooraInternalDomainDisableUserDTO, options?: RequestInit): Promise<postUsersIdDisableResponse> => {
+
+  return customInstance<postUsersIdDisableResponse>(getPostUsersIdDisableUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      githubCom4H1RZooraInternalDomainDisableUserDTO,)
+  }
+);}
+
+
+
+
+export const getPostUsersIdDisableMutationOptions = <TError = ErrorType<PostUsersIdDisable400 | PostUsersIdDisable401 | PostUsersIdDisable403 | PostUsersIdDisable404 | PostUsersIdDisable500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postUsersIdDisable>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainDisableUserDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postUsersIdDisable>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainDisableUserDTO}, TContext> => {
+
+const mutationKey = ['postUsersIdDisable'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postUsersIdDisable>>, {id: string;data: GithubCom4H1RZooraInternalDomainDisableUserDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postUsersIdDisable(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostUsersIdDisableMutationResult = NonNullable<Awaited<ReturnType<typeof postUsersIdDisable>>>
+    export type PostUsersIdDisableMutationBody = GithubCom4H1RZooraInternalDomainDisableUserDTO
+    export type PostUsersIdDisableMutationError = ErrorType<PostUsersIdDisable400 | PostUsersIdDisable401 | PostUsersIdDisable403 | PostUsersIdDisable404 | PostUsersIdDisable500>
+
+    /**
+ * @summary Disable user
+ */
+export const usePostUsersIdDisable = <TError = ErrorType<PostUsersIdDisable400 | PostUsersIdDisable401 | PostUsersIdDisable403 | PostUsersIdDisable404 | PostUsersIdDisable500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postUsersIdDisable>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainDisableUserDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postUsersIdDisable>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainDisableUserDTO},
+        TContext
+      > => {
+      return useMutation(getPostUsersIdDisableMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Enable user
+ */
+export type postUsersIdEnableResponse200 = {
+  data: PostUsersIdEnable200
+  status: 200
+}
+
+export type postUsersIdEnableResponse401 = {
+  data: PostUsersIdEnable401
+  status: 401
+}
+
+export type postUsersIdEnableResponse403 = {
+  data: PostUsersIdEnable403
+  status: 403
+}
+
+export type postUsersIdEnableResponse404 = {
+  data: PostUsersIdEnable404
+  status: 404
+}
+
+export type postUsersIdEnableResponse500 = {
+  data: PostUsersIdEnable500
+  status: 500
+}
+
+export type postUsersIdEnableResponseSuccess = (postUsersIdEnableResponse200) & {
+  headers: Headers;
+};
+export type postUsersIdEnableResponseError = (postUsersIdEnableResponse401 | postUsersIdEnableResponse403 | postUsersIdEnableResponse404 | postUsersIdEnableResponse500) & {
+  headers: Headers;
+};
+
+export type postUsersIdEnableResponse = (postUsersIdEnableResponseSuccess | postUsersIdEnableResponseError)
+
+export const getPostUsersIdEnableUrl = (id: string,) => {
+
+
+
+
+  return `/users/${id}/enable`
+}
+
+export const postUsersIdEnable = async (id: string, options?: RequestInit): Promise<postUsersIdEnableResponse> => {
+
+  return customInstance<postUsersIdEnableResponse>(getPostUsersIdEnableUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getPostUsersIdEnableMutationOptions = <TError = ErrorType<PostUsersIdEnable401 | PostUsersIdEnable403 | PostUsersIdEnable404 | PostUsersIdEnable500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postUsersIdEnable>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postUsersIdEnable>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['postUsersIdEnable'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postUsersIdEnable>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  postUsersIdEnable(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostUsersIdEnableMutationResult = NonNullable<Awaited<ReturnType<typeof postUsersIdEnable>>>
+
+    export type PostUsersIdEnableMutationError = ErrorType<PostUsersIdEnable401 | PostUsersIdEnable403 | PostUsersIdEnable404 | PostUsersIdEnable500>
+
+    /**
+ * @summary Enable user
+ */
+export const usePostUsersIdEnable = <TError = ErrorType<PostUsersIdEnable401 | PostUsersIdEnable403 | PostUsersIdEnable404 | PostUsersIdEnable500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postUsersIdEnable>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postUsersIdEnable>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getPostUsersIdEnableMutationOptions(options), queryClient);
     }
     /**
  * @summary Assign role to user

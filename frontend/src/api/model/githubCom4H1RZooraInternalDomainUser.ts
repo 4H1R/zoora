@@ -9,6 +9,9 @@ import type { GithubCom4H1RZooraInternalDomainRole } from './githubCom4H1RZooraI
 
 export interface GithubCom4H1RZooraInternalDomainUser {
   created_at?: string;
+  disabled_at?: string;
+  disabled_by?: string;
+  disabled_reason?: string;
   id?: string;
   is_admin?: boolean;
   name?: string;

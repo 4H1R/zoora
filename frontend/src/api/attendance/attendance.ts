@@ -32,6 +32,9 @@ import type {
   GetAttendanceId401,
   GetAttendanceId403,
   GetAttendanceId404,
+  GetAttendanceMe200,
+  GetAttendanceMe401,
+  GetAttendanceMeParams,
   GetClassesIdSessionsSessionIdAttendance200,
   GetClassesIdSessionsSessionIdAttendance401,
   GetClassesIdSessionsSessionIdAttendance403,
@@ -71,6 +74,132 @@ import type { ErrorType } from '.././mutator/custom-instance';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
+/**
+ * @summary List my attendance
+ */
+export type getAttendanceMeResponse200 = {
+  data: GetAttendanceMe200
+  status: 200
+}
+
+export type getAttendanceMeResponse401 = {
+  data: GetAttendanceMe401
+  status: 401
+}
+
+export type getAttendanceMeResponseSuccess = (getAttendanceMeResponse200) & {
+  headers: Headers;
+};
+export type getAttendanceMeResponseError = (getAttendanceMeResponse401) & {
+  headers: Headers;
+};
+
+export type getAttendanceMeResponse = (getAttendanceMeResponseSuccess | getAttendanceMeResponseError)
+
+export const getGetAttendanceMeUrl = (params?: GetAttendanceMeParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/attendance/me?${stringifiedParams}` : `/attendance/me`
+}
+
+export const getAttendanceMe = async (params?: GetAttendanceMeParams, options?: RequestInit): Promise<getAttendanceMeResponse> => {
+
+  return customInstance<getAttendanceMeResponse>(getGetAttendanceMeUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAttendanceMeQueryKey = (params?: GetAttendanceMeParams,) => {
+    return [
+    `/attendance/me`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAttendanceMeQueryOptions = <TData = Awaited<ReturnType<typeof getAttendanceMe>>, TError = ErrorType<GetAttendanceMe401>>(params?: GetAttendanceMeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendanceMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAttendanceMeQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAttendanceMe>>> = ({ signal }) => getAttendanceMe(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAttendanceMe>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAttendanceMeQueryResult = NonNullable<Awaited<ReturnType<typeof getAttendanceMe>>>
+export type GetAttendanceMeQueryError = ErrorType<GetAttendanceMe401>
+
+
+export function useGetAttendanceMe<TData = Awaited<ReturnType<typeof getAttendanceMe>>, TError = ErrorType<GetAttendanceMe401>>(
+ params: undefined |  GetAttendanceMeParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendanceMe>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAttendanceMe>>,
+          TError,
+          Awaited<ReturnType<typeof getAttendanceMe>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAttendanceMe<TData = Awaited<ReturnType<typeof getAttendanceMe>>, TError = ErrorType<GetAttendanceMe401>>(
+ params?: GetAttendanceMeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendanceMe>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAttendanceMe>>,
+          TError,
+          Awaited<ReturnType<typeof getAttendanceMe>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAttendanceMe<TData = Awaited<ReturnType<typeof getAttendanceMe>>, TError = ErrorType<GetAttendanceMe401>>(
+ params?: GetAttendanceMeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendanceMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List my attendance
+ */
+
+export function useGetAttendanceMe<TData = Awaited<ReturnType<typeof getAttendanceMe>>, TError = ErrorType<GetAttendanceMe401>>(
+ params?: GetAttendanceMeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAttendanceMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAttendanceMeQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
 
 
 

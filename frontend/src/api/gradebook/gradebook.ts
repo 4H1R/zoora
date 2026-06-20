@@ -37,6 +37,8 @@ import type {
   GetClassesIdGradebookColumns403,
   GetClassesIdGradebookColumns404,
   GetClassesIdGradebookColumnsParams,
+  GetGradebookMe200,
+  GetGradebookMe401,
   GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTO,
   GithubCom4H1RZooraInternalDomainResponse,
   GithubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO,
@@ -753,3 +755,122 @@ export const usePostClassesIdGradebookColumnsColumnIdCells = <TError = ErrorType
       > => {
       return useMutation(getPostClassesIdGradebookColumnsColumnIdCellsMutationOptions(options), queryClient);
     }
+    /**
+ * @summary Get my grades
+ */
+export type getGradebookMeResponse200 = {
+  data: GetGradebookMe200
+  status: 200
+}
+
+export type getGradebookMeResponse401 = {
+  data: GetGradebookMe401
+  status: 401
+}
+
+export type getGradebookMeResponseSuccess = (getGradebookMeResponse200) & {
+  headers: Headers;
+};
+export type getGradebookMeResponseError = (getGradebookMeResponse401) & {
+  headers: Headers;
+};
+
+export type getGradebookMeResponse = (getGradebookMeResponseSuccess | getGradebookMeResponseError)
+
+export const getGetGradebookMeUrl = () => {
+
+
+
+
+  return `/gradebook/me`
+}
+
+export const getGradebookMe = async ( options?: RequestInit): Promise<getGradebookMeResponse> => {
+
+  return customInstance<getGradebookMeResponse>(getGetGradebookMeUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetGradebookMeQueryKey = () => {
+    return [
+    `/gradebook/me`
+    ] as const;
+    }
+
+
+export const getGetGradebookMeQueryOptions = <TData = Awaited<ReturnType<typeof getGradebookMe>>, TError = ErrorType<GetGradebookMe401>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGradebookMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetGradebookMeQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getGradebookMe>>> = ({ signal }) => getGradebookMe({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getGradebookMe>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetGradebookMeQueryResult = NonNullable<Awaited<ReturnType<typeof getGradebookMe>>>
+export type GetGradebookMeQueryError = ErrorType<GetGradebookMe401>
+
+
+export function useGetGradebookMe<TData = Awaited<ReturnType<typeof getGradebookMe>>, TError = ErrorType<GetGradebookMe401>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGradebookMe>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getGradebookMe>>,
+          TError,
+          Awaited<ReturnType<typeof getGradebookMe>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetGradebookMe<TData = Awaited<ReturnType<typeof getGradebookMe>>, TError = ErrorType<GetGradebookMe401>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGradebookMe>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getGradebookMe>>,
+          TError,
+          Awaited<ReturnType<typeof getGradebookMe>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetGradebookMe<TData = Awaited<ReturnType<typeof getGradebookMe>>, TError = ErrorType<GetGradebookMe401>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGradebookMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get my grades
+ */
+
+export function useGetGradebookMe<TData = Awaited<ReturnType<typeof getGradebookMe>>, TError = ErrorType<GetGradebookMe401>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGradebookMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetGradebookMeQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+

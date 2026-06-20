@@ -17,6 +17,8 @@ export const GithubCom4H1RZooraInternalDomainPermissionName = {
   PermUsersUpdateAny: 'users:update_any',
   PermUsersDelete: 'users:delete',
   PermUsersDeleteAny: 'users:delete_any',
+  PermUsersDisable: 'users:disable',
+  PermUsersDisableAny: 'users:disable_any',
   PermRolesView: 'roles:view',
   PermRolesCreate: 'roles:create',
   PermRolesUpdate: 'roles:update',
