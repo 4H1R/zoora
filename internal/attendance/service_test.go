@@ -45,6 +45,11 @@ func (m *mAttRepo) FindBySessionAndUser(ctx context.Context, sessionID, userID u
 	}
 	return a.Get(0).(*domain.Attendance), a.Error(1)
 }
+func (m *mAttRepo) ListByUser(ctx context.Context, userID uuid.UUID, p domain.ListParams) ([]domain.Attendance, int64, error) {
+	a := m.Called(ctx, userID, p)
+	res, _ := a.Get(0).([]domain.Attendance)
+	return res, a.Get(1).(int64), a.Error(2)
+}
 func (m *mAttRepo) AdminList(ctx context.Context, q domain.AdminListAttendanceQuery) ([]domain.Attendance, int64, error) {
 	a := m.Called(ctx, q)
 	res, _ := a.Get(0).([]domain.Attendance)
@@ -259,4 +264,35 @@ func TestMark_CreatesWhenMissing(t *testing.T) {
 	assert.NotNil(t, a)
 	repo.AssertCalled(t, "Create", mock.Anything, mock.AnythingOfType("*domain.Attendance"))
 	repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+}
+
+func TestListMine_Summarizes(t *testing.T) {
+	studentID := uuid.New()
+	repo := &mAttRepo{}
+	classes := &mClassRepo{}
+	sessions := &mSessRepo{}
+
+	repo.On("ListByUser", mock.Anything, studentID, mock.Anything).
+		Return([]domain.Attendance{
+			{Status: domain.AttendanceStatusPresent},
+			{Status: domain.AttendanceStatusPresent},
+			{Status: domain.AttendanceStatusAbsent},
+			{Status: domain.AttendanceStatusLate},
+		}, int64(4), nil)
+
+	svc := newSvc(repo, classes, sessions)
+	res, err := svc.ListMine(ownerCtx(studentID), domain.ListParams{Page: 1, PageSize: 50})
+
+	assert.NoError(t, err)
+	assert.Equal(t, 2, res.Summary.Present)
+	assert.Equal(t, 1, res.Summary.Absent)
+	assert.Equal(t, 1, res.Summary.Late)
+	assert.Equal(t, 0, res.Summary.Excused)
+	assert.Len(t, res.Items, 4)
+}
+
+func TestListMine_NoCaller_Forbidden(t *testing.T) {
+	svc := newSvc(&mAttRepo{}, &mClassRepo{}, &mSessRepo{})
+	_, err := svc.ListMine(context.Background(), domain.ListParams{Page: 1, PageSize: 50})
+	assert.ErrorIs(t, err, domain.ErrForbidden)
 }

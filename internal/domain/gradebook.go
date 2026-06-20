@@ -92,6 +92,22 @@ type ListGradebookColumnsQuery struct {
 	ListParams ListParams           `form:"-"`
 }
 
+// --- Student self-scoped grades ("my grades") ---
+
+// MyGradebookClass is one class's report card for a single student.
+type MyGradebookClass struct {
+	ClassID   uuid.UUID         `json:"class_id"`
+	ClassName string            `json:"class_name"`
+	Columns   []GradebookColumn `json:"columns"`
+	// Cells maps column_id -> the student's value for that column.
+	Cells map[string]string `json:"cells"`
+}
+
+// MyGradebook is the student's report card across all their classes.
+type MyGradebook struct {
+	Classes []MyGradebookClass `json:"classes"`
+}
+
 // --- Interfaces ---
 
 type GradebookColumnRepository interface {
@@ -115,4 +131,5 @@ type GradebookService interface {
 	UpsertCell(ctx context.Context, classID, columnID uuid.UUID, dto UpsertGradebookCellDTO) (*GradebookCell, error)
 	ListColumns(ctx context.Context, classID uuid.UUID, q ListGradebookColumnsQuery) ([]GradebookColumn, int64, error)
 	GetMatrix(ctx context.Context, classID uuid.UUID) (*GradebookMatrix, error)
+	GetMine(ctx context.Context) (*MyGradebook, error)
 }

@@ -2,7 +2,18 @@ import type { AppPermission } from "@/lib/access"
 import type { NavGroup } from "@/components/layout/nav-main"
 import type { TFunction } from "i18next"
 
-import { FileIcon, LayoutDashboardIcon, SchoolIcon, SettingsIcon, ShieldIcon, UsersIcon } from "lucide-react"
+import {
+  CalendarCheckIcon,
+  ClipboardListIcon,
+  FileIcon,
+  GraduationCapIcon,
+  LayoutDashboardIcon,
+  SchoolIcon,
+  SettingsIcon,
+  ShieldIcon,
+  UsersIcon,
+  VideoIcon,
+} from "lucide-react"
 
 type NavItemSpec = {
   title: string
@@ -31,6 +42,35 @@ export function buildOrgNavGroups(
           url: `/org/${orgId}/classes`,
           icon: <SchoolIcon />,
           perms: ["classes:view", "classes:view_any"],
+        },
+      ],
+    },
+    {
+      label: t("org.nav.learning"),
+      items: [
+        {
+          title: t("org.nav.exams"),
+          url: `/org/${orgId}/exams`,
+          icon: <ClipboardListIcon />,
+          perms: ["quizzes:view", "quizzes:take"],
+        },
+        {
+          title: t("org.nav.grades"),
+          url: `/org/${orgId}/grades`,
+          icon: <GraduationCapIcon />,
+          perms: ["gradebook:view_own"],
+        },
+        {
+          title: t("org.nav.attendance"),
+          url: `/org/${orgId}/attendance`,
+          icon: <CalendarCheckIcon />,
+          perms: ["attendance:view_own"],
+        },
+        {
+          title: t("org.nav.recordings"),
+          url: `/org/${orgId}/offlines`,
+          icon: <VideoIcon />,
+          perms: ["offlines:view", "offlines:view_any"],
         },
       ],
     },

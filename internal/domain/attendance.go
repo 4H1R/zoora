@@ -103,6 +103,22 @@ type AdminUpdateAttendanceDTO struct {
 	Remarks *string           `json:"remarks"`
 }
 
+// --- Student self-scoped attendance ("my attendance") ---
+
+// MyAttendanceSummary counts the caller's records by status.
+type MyAttendanceSummary struct {
+	Present int `json:"present"`
+	Absent  int `json:"absent"`
+	Late    int `json:"late"`
+	Excused int `json:"excused"`
+}
+
+// MyAttendance is the caller's attendance history + summary across classes.
+type MyAttendance struct {
+	Summary MyAttendanceSummary `json:"summary"`
+	Items   []Attendance        `json:"items"`
+}
+
 type AttendanceRepository interface {
 	Create(ctx context.Context, a *Attendance) error
 	FindByID(ctx context.Context, id uuid.UUID) (*Attendance, error)
@@ -110,6 +126,9 @@ type AttendanceRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	ListBySession(ctx context.Context, sessionID uuid.UUID, q ListAttendanceQuery) ([]Attendance, int64, error)
 	FindBySessionAndUser(ctx context.Context, sessionID, userID uuid.UUID) (*Attendance, error)
+	// ListByUser returns all attendance records for a user across classes,
+	// with Class + ClassSession preloaded, newest first.
+	ListByUser(ctx context.Context, userID uuid.UUID, p ListParams) ([]Attendance, int64, error)
 
 	// Admin-only.
 	AdminList(ctx context.Context, q AdminListAttendanceQuery) ([]Attendance, int64, error)
@@ -123,6 +142,7 @@ type AttendanceService interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (*Attendance, error)
 	ListBySession(ctx context.Context, classID, sessionID uuid.UUID, q ListAttendanceQuery) ([]Attendance, int64, error)
+	ListMine(ctx context.Context, p ListParams) (*MyAttendance, error)
 
 	// Admin surface. Require caller.IsAdmin.
 	AdminList(ctx context.Context, q AdminListAttendanceQuery) ([]Attendance, int64, error)

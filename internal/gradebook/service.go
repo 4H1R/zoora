@@ -2,8 +2,10 @@ package gradebook
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
+	"maps"
 	"time"
 
 	"github.com/google/uuid"
@@ -323,6 +325,49 @@ func (s *service) GetMatrix(ctx context.Context, classID uuid.UUID) (*domain.Gra
 		Columns: columns,
 		Rows:    rows,
 	}, nil
+}
+
+// GetMine builds the caller's own report card across every class they are
+// enrolled in. It reuses GetMatrix per class (which resolves auto-computed
+// columns too) and extracts only the caller's row.
+func (s *service) GetMine(ctx context.Context) (*domain.MyGradebook, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	uid := caller.UserID
+
+	classes, _, err := s.classes.List(ctx, domain.ClassListScope{MemberUserID: &uid}, domain.ListParams{Page: 1, PageSize: 10000})
+	if err != nil {
+		return nil, fmt.Errorf("listing my classes: %w", err)
+	}
+
+	out := &domain.MyGradebook{Classes: make([]domain.MyGradebookClass, 0, len(classes))}
+	for i := range classes {
+		cl := classes[i]
+		matrix, err := s.GetMatrix(ctx, cl.ID)
+		if err != nil {
+			// Skip classes the student can't view rather than failing the whole card.
+			if errors.Is(err, domain.ErrForbidden) {
+				continue
+			}
+			return nil, fmt.Errorf("building report card for class %s: %w", cl.ID, err)
+		}
+		own := make(map[string]string, len(matrix.Columns))
+		for r := range matrix.Rows {
+			if matrix.Rows[r].StudentID == uid {
+				maps.Copy(own, matrix.Rows[r].Cells)
+				break
+			}
+		}
+		out.Classes = append(out.Classes, domain.MyGradebookClass{
+			ClassID:   cl.ID,
+			ClassName: cl.Name,
+			Columns:   matrix.Columns,
+			Cells:     own,
+		})
+	}
+	return out, nil
 }
 
 func (s *service) fetchAutoData(ctx context.Context, col domain.GradebookColumn) (map[uuid.UUID]string, error) {

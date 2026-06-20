@@ -149,8 +149,9 @@ func newQuizHandlerRouter(t *testing.T) (*gin.Engine, *mockQuizSvc) {
 	r.Use(middleware.ErrorHandler(slog.Default()))
 	noop := func(c *gin.Context) { c.Next() }
 	perm := func(domain.PermissionName) gin.HandlerFunc { return noop }
+	permAny := func(...domain.PermissionName) gin.HandlerFunc { return noop }
 	v1 := r.Group("/api/v1")
-	h.RegisterRoutes(v1, noop, perm)
+	h.RegisterRoutes(v1, noop, perm, permAny)
 	return r, svc
 }
 

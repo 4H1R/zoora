@@ -192,6 +192,7 @@ func main() {
 	authHandler.RegisterRoutes(v1, middleware.AuthRateLimit(redisClient))
 
 	perm := auth.RequirePermission
+	permAny := auth.RequireAnyPermission
 
 	orgHandler := organizations.NewHandler(orgService)
 	orgHandler.RegisterRoutes(v1, authMiddleware, perm)
@@ -209,7 +210,7 @@ func main() {
 	questionBankHandler.RegisterRoutes(v1, authMiddleware, perm)
 
 	quizHandler := quizzes.NewHandler(quizService)
-	quizHandler.RegisterRoutes(v1, authMiddleware, perm)
+	quizHandler.RegisterRoutes(v1, authMiddleware, perm, permAny)
 	mediaHandler := media.NewHandler(mediaService)
 	mediaHandler.RegisterRoutes(v1, authMiddleware, perm)
 

@@ -37,6 +37,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 
 	authed := rg.Group("", authMiddleware)
 	{
+		authed.GET("/attendance/me", perm(domain.PermAttendanceViewOwn), h.ListMine)
 		authed.GET("/classes/:id/sessions/:sessionId/attendance", perm(domain.PermAttendanceView), idParam, sessionIDParam, h.List)
 		authed.POST("/classes/:id/sessions/:sessionId/attendance", perm(domain.PermAttendanceCreate), idParam, sessionIDParam, h.Mark)
 		authed.POST("/classes/:id/sessions/:sessionId/attendance/bulk", perm(domain.PermAttendanceCreate), idParam, sessionIDParam, h.BulkMark)
@@ -45,6 +46,27 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		authed.PUT("/attendance/:attendanceId", perm(domain.PermAttendanceUpdate), attendanceIDParam, h.Update)
 		authed.DELETE("/attendance/:attendanceId", perm(domain.PermAttendanceDelete), attendanceIDParam, h.Delete)
 	}
+}
+
+// ListMine returns the caller's own attendance history + summary across classes.
+// @Summary List my attendance
+// @Tags Attendance
+// @Produce json
+// @Security BearerAuth
+// @Param order_by query string false "One of: created_at, updated_at, status"
+// @Param order_dir query string false "asc or desc"
+// @Param page query int false "1-based page number"
+// @Success 200 {object} domain.Response{data=domain.MyAttendance}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Router /attendance/me [get]
+func (h *Handler) ListMine(c *gin.Context) {
+	p := listparams.Bind(c, attendanceListConfig)
+	res, err := h.svc.ListMine(c.Request.Context(), p)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, res)
 }
 
 // List returns attendance records for a session.

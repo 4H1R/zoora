@@ -144,6 +144,11 @@ func (m *mAttendanceRepo) ListBySession(ctx context.Context, sessionID uuid.UUID
 	items, _ := a.Get(0).([]domain.Attendance)
 	return items, a.Get(1).(int64), a.Error(2)
 }
+func (m *mAttendanceRepo) ListByUser(ctx context.Context, userID uuid.UUID, p domain.ListParams) ([]domain.Attendance, int64, error) {
+	a := m.Called(ctx, userID, p)
+	items, _ := a.Get(0).([]domain.Attendance)
+	return items, a.Get(1).(int64), a.Error(2)
+}
 func (m *mAttendanceRepo) FindBySessionAndUser(ctx context.Context, sessionID, userID uuid.UUID) (*domain.Attendance, error) {
 	a := m.Called(ctx, sessionID, userID)
 	if a.Get(0) == nil {

@@ -44,7 +44,12 @@ func NewHandler(svc domain.QuizService) *Handler {
 	return &Handler{svc: svc}
 }
 
-func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.HandlerFunc, perm func(domain.PermissionName) gin.HandlerFunc) {
+func (h *Handler) RegisterRoutes(
+	rg *gin.RouterGroup,
+	authMiddleware gin.HandlerFunc,
+	perm func(domain.PermissionName) gin.HandlerFunc,
+	permAny func(...domain.PermissionName) gin.HandlerFunc,
+) {
 	idParam := httpx.RequireUUIDParam("id")
 	ruleIDParam := httpx.RequireUUIDParam("ruleId")
 	roomIDParam := httpx.RequireUUIDParam("roomId")
@@ -52,6 +57,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 
 	authed := rg.Group("", authMiddleware)
 	{
+		// Self-scoped student route — must precede /quizzes/:id so "me" isn't a UUID param.
+		authed.GET("/quizzes/me", permAny(domain.PermQuizzesView, domain.PermQuizzesTake), h.ListMine)
+
 		authed.GET("/quizzes", perm(domain.PermQuizzesView), h.List)
 		authed.POST("/quizzes", perm(domain.PermQuizzesCreate), h.Create)
 		authed.GET("/quizzes/:id", perm(domain.PermQuizzesView), idParam, h.Get)
@@ -64,19 +72,43 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		authed.PUT("/quizzes/rules/:ruleId", perm(domain.PermQuizzesUpdate), ruleIDParam, h.UpdateRule)
 		authed.DELETE("/quizzes/rules/:ruleId", perm(domain.PermQuizzesDelete), ruleIDParam, h.DeleteRule)
 
-		authed.GET("/quizzes/:id/rooms", perm(domain.PermQuizzesView), idParam, h.ListRooms)
+		authed.GET("/quizzes/:id/rooms", permAny(domain.PermQuizzesView, domain.PermQuizzesTake), idParam, h.ListRooms)
 		authed.POST("/quizzes/:id/rooms", perm(domain.PermQuizzesUpdate), idParam, h.CreateRoom)
-		authed.GET("/quizzes/rooms/:roomId", perm(domain.PermQuizzesView), roomIDParam, h.GetRoom)
+		authed.GET("/quizzes/rooms/:roomId", permAny(domain.PermQuizzesView, domain.PermQuizzesTake), roomIDParam, h.GetRoom)
 		authed.POST("/quizzes/rooms/:roomId/start", perm(domain.PermQuizzesUpdate), roomIDParam, h.StartRoom)
 		authed.POST("/quizzes/rooms/:roomId/end", perm(domain.PermQuizzesUpdate), roomIDParam, h.EndRoom)
 
-		authed.GET("/quizzes/:id/questions", perm(domain.PermQuizzesView), idParam, h.ListQuestionsForTaking)
-		authed.POST("/quizzes/:id/submissions", perm(domain.PermQuizzesView), idParam, h.StartSubmission)
+		authed.GET("/quizzes/:id/questions", permAny(domain.PermQuizzesView, domain.PermQuizzesTake), idParam, h.ListQuestionsForTaking)
+		authed.POST("/quizzes/:id/submissions", permAny(domain.PermQuizzesView, domain.PermQuizzesTake), idParam, h.StartSubmission)
 		authed.GET("/quizzes/:id/submissions", perm(domain.PermQuizzesView), idParam, h.ListSubmissions)
-		authed.POST("/quizzes/submissions/:submissionId/submit", perm(domain.PermQuizzesView), submissionIDParam, h.SubmitQuiz)
-		authed.GET("/quizzes/submissions/:submissionId", perm(domain.PermQuizzesView), submissionIDParam, h.GetSubmission)
+		authed.POST("/quizzes/submissions/:submissionId/submit", permAny(domain.PermQuizzesView, domain.PermQuizzesTake), submissionIDParam, h.SubmitQuiz)
+		authed.GET("/quizzes/submissions/:submissionId", permAny(domain.PermQuizzesView, domain.PermQuizzesTake), submissionIDParam, h.GetSubmission)
 		authed.POST("/quizzes/submissions/:submissionId/grade", perm(domain.PermQuizzesUpdate), submissionIDParam, h.GradeSubmission)
 	}
+}
+
+// ListMine returns the caller's own exams across all their classes.
+// @Summary List my exams
+// @Description Exams for classes the caller belongs to, with availability (open/upcoming room) and the caller's own submission state + score. Orderable fields: created_at, updated_at, title, duration_minutes.
+// @Tags Quizzes
+// @Produce json
+// @Security BearerAuth
+// @Param order_by query string false "One of: created_at, updated_at, title, duration_minutes"
+// @Param order_dir query string false "asc or desc"
+// @Param page query int false "1-based page number"
+// @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.MyExam}}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 500 {object} domain.Response{error=domain.ErrorBody}
+// @Router /quizzes/me [get]
+func (h *Handler) ListMine(c *gin.Context) {
+	p := listparams.Bind(c, quizzesListConfig)
+	exams, total, err := h.svc.ListMine(c.Request.Context(), p)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(exams, total, p))
 }
 
 // List returns quizzes visible to the caller.

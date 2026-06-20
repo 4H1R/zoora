@@ -1,4 +1,23 @@
 {
+  "comingSoon": {
+    "status": "In private beta — launching 2026",
+    "kicker": "Virtual classrooms, reimagined",
+    "titleLine1": "Class is almost",
+    "titleLine2": "in session",
+    "subtitle": "Zoora is a live video classroom built for teaching that actually feels alive — low-latency rooms, recordings, and tools made for educators. We are putting on the finishing touches.",
+    "emailPlaceholder": "you@school.edu",
+    "notify": "Notify me",
+    "joining": "Joining…",
+    "consent": "No spam. One email when we open the doors.",
+    "success": "You're on the list. We'll be in touch.",
+    "invalidEmail": "Enter a valid email address.",
+    "feature1": "Low-latency rooms",
+    "feature2": "Built-in recordings",
+    "feature3": "Made for educators",
+    "footerNote": "Crafted for teachers and their students.",
+    "toggleTheme": "Toggle theme",
+    "toggleLang": "Switch language"
+  },
   "time": {
     "daysShort": "d",
     "hoursShort": "h",
@@ -33,8 +52,19 @@
       "description": "This will permanently delete \"{{name}}\". This action cannot be undone."
     },
     "default": "Default",
+    "unsavedChanges": "You have unsaved changes",
+    "reset": "Reset",
+    "saving": "Saving…",
     "noResults": "No results.",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "disable": "Disable",
+    "enable": "Enable",
+    "disableConfirm": {
+      "title": "Disable user",
+      "description": "{{name}} won't be able to log in or use the platform. Their data is kept and you can re-enable them later.",
+      "reasonLabel": "Reason (optional)",
+      "reasonPlaceholder": "Why are you disabling this user?"
+    }
   },
   "nav": {
     "overview": "Overview",
@@ -146,7 +176,9 @@
       },
       "actions": {
         "edit": "Edit user",
-        "delete": "Delete"
+        "delete": "Delete",
+        "disable": "Disable",
+        "enable": "Enable"
       },
       "form": {
         "createTitle": "New user",
@@ -170,14 +202,17 @@
         "organization": "Organization",
         "organizationPlaceholder": "Select organization…",
         "passwordOptional": "optional",
-        "passwordOptionalPlaceholder": "Leave blank to keep current"
+        "passwordOptionalPlaceholder": "Leave blank to keep current",
+        "disableSuccess": "User disabled",
+        "enableSuccess": "User enabled"
       },
       "toolbar": {
         "sort": "Sort",
         "columns": "Columns",
         "toggleColumns": "Toggle columns"
       },
-      "organization": "Organization"
+      "organization": "Organization",
+      "disabled": "Disabled"
     },
     "nav": {
       "overview": "Overview",
@@ -1094,7 +1129,87 @@
       "users": "Users",
       "roles": "Roles & Permissions",
       "settings": "Settings",
-      "files": "Files"
+      "files": "Files",
+      "learning": "Learning",
+      "exams": "Exams",
+      "grades": "Grades",
+      "attendance": "Attendance",
+      "recordings": "Recordings"
+    },
+    "portal": {
+      "tiles": {
+        "exams": "Exams",
+        "grades": "Report Card",
+        "attendance": "Attendance",
+        "courses": "My Courses",
+        "recordings": "Recordings"
+      },
+      "widgets": {
+        "upcomingExams": "Upcoming exams",
+        "latestGrades": "Latest grades",
+        "noExams": "No upcoming exams",
+        "noGrades": "No grades yet",
+        "viewAll": "View all"
+      }
+    },
+    "exams": {
+      "title": "My Exams",
+      "empty": "You have no exams yet.",
+      "duration": "{{count}} min",
+      "state": {
+        "upcoming": "Upcoming",
+        "open": "Open now",
+        "submitted": "Submitted",
+        "graded": "Graded"
+      },
+      "start": "Start exam",
+      "continue": "Continue",
+      "score": "Score: {{score}} / {{total}}",
+      "opensAt": "Opens {{date}}"
+    },
+    "grades": {
+      "title": "Report Card",
+      "empty": "No grades recorded yet.",
+      "noColumns": "No graded items in this class yet."
+    },
+    "attendance": {
+      "title": "My Attendance",
+      "empty": "No attendance records yet.",
+      "summary": {
+        "present": "Present",
+        "absent": "Absent",
+        "late": "Late",
+        "excused": "Excused"
+      },
+      "status": {
+        "present": "Present",
+        "absent": "Absent",
+        "late": "Late",
+        "excused": "Excused"
+      }
+    },
+    "files": {
+      "comingSoon": {
+        "badge": "Coming soon",
+        "title": "A home for every file",
+        "description": "Centralized storage for your organization is on the way — upload, organize, and share documents across every class from one place.",
+        "features": {
+          "upload": {
+            "title": "Drag & drop uploads",
+            "desc": "Add files in seconds, straight from your desktop."
+          },
+          "organize": {
+            "title": "Class-scoped folders",
+            "desc": "Keep materials neatly grouped by class and member."
+          },
+          "share": {
+            "title": "Secure sharing",
+            "desc": "Permission-aware links that respect your roles."
+          }
+        },
+        "status": "In active development",
+        "back": "Back to dashboard"
+      }
     },
     "dashboard": {
       "overview": "Overview",
@@ -1147,7 +1262,9 @@
       },
       "actions": {
         "edit": "Edit user",
-        "delete": "Delete"
+        "delete": "Delete",
+        "disable": "Disable",
+        "enable": "Enable"
       },
       "form": {
         "createTitle": "New user",
@@ -1165,13 +1282,16 @@
         "noRole": "No Role",
         "createSuccess": "User created",
         "updateSuccess": "User updated",
-        "deleteSuccess": "User deleted"
+        "deleteSuccess": "User deleted",
+        "disableSuccess": "User disabled",
+        "enableSuccess": "User enabled"
       },
       "toolbar": {
         "sort": "Sort",
         "columns": "Columns",
         "toggleColumns": "Toggle columns"
-      }
+      },
+      "disabled": "Disabled"
     },
     "settings": {
       "title": "Organization Settings",
@@ -1182,7 +1302,22 @@
       "descriptionPlaceholder": "Brief description of your organization",
       "nameError": "Name must be at least 2 characters",
       "updateSuccess": "Organization updated",
-      "saving": "Saving…"
+      "general": "General",
+      "generalHint": "Your organization's public name and description.",
+      "details": "Details",
+      "detailsHint": "Read-only metadata about your organization.",
+      "members": "Members",
+      "member": "member",
+      "members_plural": "members",
+      "created": "Created",
+      "updated": "Last updated",
+      "orgId": "Organization ID",
+      "copyId": "Copy ID",
+      "copied": "Copied to clipboard",
+      "statusActive": "Active",
+      "statusTrial": "Trial",
+      "statusSuspended": "Suspended",
+      "statusArchived": "Archived"
     },
     "class": {
       "title": "Class",
@@ -1634,7 +1769,10 @@
         "emptyTitle": "No offline rooms yet",
         "emptyHint": "Create an offline room to share recordings and files for this session.",
         "emptyHintMember": "No offline content has been shared for this session yet.",
-        "actions": { "edit": "Edit", "delete": "Delete" },
+        "actions": {
+          "edit": "Edit",
+          "delete": "Delete"
+        },
         "form": {
           "createTitle": "New offline room",
           "editTitle": "Edit offline room",
@@ -1661,7 +1799,9 @@
         "eyebrow": "On-demand",
         "title": "Offline Rooms",
         "subtitle": "Recordings and files students can review any time.",
-        "tabs": { "offlines": "Offline rooms" }
+        "tabs": {
+          "offlines": "Offline rooms"
+        }
       },
       "liveWorkspace": {
         "eyebrow": "",
@@ -1890,12 +2030,15 @@
     "actions": {
       "view": "View",
       "view_any": "View Any",
+      "view_own": "View Own",
       "create": "Create",
       "create_any": "Create Any",
       "update": "Update",
       "update_any": "Update Any",
       "delete": "Delete",
       "delete_any": "Delete Any",
+      "disable": "Disable",
+      "disable_any": "Disable Any",
       "join": "Join",
       "join_any": "Join Any",
       "manage": "Manage",
@@ -1903,6 +2046,7 @@
       "download": "Download",
       "write": "Write",
       "submit": "Submit",
+      "take": "Take",
       "grade": "Grade"
     }
   },

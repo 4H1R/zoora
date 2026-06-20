@@ -3,6 +3,7 @@ package attendance
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 
 	"github.com/google/uuid"
@@ -384,4 +385,30 @@ func (s *service) ListBySession(ctx context.Context, classID, sessionID uuid.UUI
 		q.UserID = &userID
 	}
 	return s.repo.ListBySession(ctx, sessionID, q)
+}
+
+// ListMine returns the caller's own attendance history + a status summary.
+func (s *service) ListMine(ctx context.Context, p domain.ListParams) (*domain.MyAttendance, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	rows, _, err := s.repo.ListByUser(ctx, caller.UserID, p)
+	if err != nil {
+		return nil, fmt.Errorf("listing my attendance: %w", err)
+	}
+	res := &domain.MyAttendance{Items: rows}
+	for i := range rows {
+		switch rows[i].Status {
+		case domain.AttendanceStatusPresent:
+			res.Summary.Present++
+		case domain.AttendanceStatusAbsent:
+			res.Summary.Absent++
+		case domain.AttendanceStatusLate:
+			res.Summary.Late++
+		case domain.AttendanceStatusExcused:
+			res.Summary.Excused++
+		}
+	}
+	return res, nil
 }

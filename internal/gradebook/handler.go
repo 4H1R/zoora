@@ -34,6 +34,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 
 	authed := rg.Group("", authMiddleware)
 	{
+		authed.GET("/gradebook/me", perm(domain.PermGradebookViewOwn), h.GetMine)
 		authed.GET("/classes/:id/gradebook", perm(domain.PermGradebookView), idParam, h.GetMatrix)
 		authed.GET("/classes/:id/gradebook/columns", perm(domain.PermGradebookView), idParam, h.ListColumns)
 		authed.POST("/classes/:id/gradebook/columns", perm(domain.PermGradebookCreate), idParam, h.CreateColumn)
@@ -41,6 +42,23 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		authed.DELETE("/classes/:id/gradebook/columns/:columnId", perm(domain.PermGradebookDelete), idParam, columnIDParam, h.DeleteColumn)
 		authed.POST("/classes/:id/gradebook/columns/:columnId/cells", perm(domain.PermGradebookUpdate), idParam, columnIDParam, h.UpsertCell)
 	}
+}
+
+// GetMine returns the caller's own report card across their classes.
+// @Summary Get my grades
+// @Tags Gradebook
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} domain.Response{data=domain.MyGradebook}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Router /gradebook/me [get]
+func (h *Handler) GetMine(c *gin.Context) {
+	rc, err := h.svc.GetMine(c.Request.Context())
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, rc)
 }
 
 // GetMatrix returns the full gradebook grid for a class.

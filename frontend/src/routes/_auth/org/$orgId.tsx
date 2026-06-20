@@ -27,6 +27,9 @@ const SEGMENT_KEYS: Record<string, string> = {
   roles: "org.nav.roles",
   settings: "org.nav.settings",
   files: "org.nav.files",
+  exams: "org.nav.exams",
+  grades: "org.nav.grades",
+  attendance: "org.nav.attendance",
 }
 
 function RouteComponent() {

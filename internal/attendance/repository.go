@@ -75,6 +75,19 @@ func (r *repository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
+func (r *repository) ListByUser(ctx context.Context, userID uuid.UUID, p domain.ListParams) ([]domain.Attendance, int64, error) {
+	base := r.baseQuery(ctx).
+		Preload("Class").
+		Preload("ClassSession").
+		Where("user_id = ?", userID)
+	var items []domain.Attendance
+	total, err := listparams.Paginate(base, p, &items)
+	if err != nil {
+		return nil, 0, fmt.Errorf("attendance.repository.ListByUser: %w", err)
+	}
+	return items, total, nil
+}
+
 func (r *repository) ListBySession(ctx context.Context, sessionID uuid.UUID, q domain.ListAttendanceQuery) ([]domain.Attendance, int64, error) {
 	base := r.baseQuery(ctx).Preload("User").Where("class_session_id = ?", sessionID)
 	if q.Status != nil {
