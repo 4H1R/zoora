@@ -51,7 +51,9 @@ const editSchema = z.object({
   shuffle_questions: z.boolean(),
 })
 
+type CreateInput = z.input<typeof createSchema>
 type CreateValues = z.infer<typeof createSchema>
+type EditInput = z.input<typeof editSchema>
 type EditValues = z.infer<typeof editSchema>
 
 const buildCreateDefaults = (classId?: string): CreateValues => ({
@@ -131,7 +133,7 @@ function CreateDialog({
   onInvalidate,
   t,
 }: CreateDialogProps) {
-  const form = useForm<CreateValues>({
+  const form = useForm<CreateInput, unknown, CreateValues>({
     resolver: zodResolver(createSchema),
     defaultValues: buildCreateDefaults(defaultClassId),
   })
@@ -241,7 +243,7 @@ interface EditDialogProps {
 }
 
 function EditDialog({ open, onOpenChange, quiz, onInvalidate, t }: EditDialogProps) {
-  const form = useForm<EditValues>({
+  const form = useForm<EditInput, unknown, EditValues>({
     resolver: zodResolver(editSchema),
     defaultValues: quizToEditValues(quiz),
   })

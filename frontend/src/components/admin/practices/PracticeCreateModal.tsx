@@ -48,7 +48,9 @@ const editSchema = z
     message: "end_time must be after start_time",
   })
 
+type CreateInput = z.input<typeof createSchema>
 type CreateValues = z.infer<typeof createSchema>
+type EditInput = z.input<typeof editSchema>
 type EditValues = z.infer<typeof editSchema>
 
 interface PracticeCreateModalProps {
@@ -78,7 +80,7 @@ export function PracticeCreateModal({
   const queryClient = useQueryClient()
   const isEdit = !!practice
 
-  const createForm = useForm<CreateValues>({
+  const createForm = useForm<CreateInput, unknown, CreateValues>({
     resolver: zodResolver(createSchema),
     defaultValues: {
       class_id: "",
@@ -91,7 +93,7 @@ export function PracticeCreateModal({
     },
   })
 
-  const editForm = useForm<EditValues>({
+  const editForm = useForm<EditInput, unknown, EditValues>({
     resolver: zodResolver(editSchema),
     defaultValues: {
       title: "",

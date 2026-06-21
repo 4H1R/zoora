@@ -14,7 +14,9 @@ import { Textarea } from "@/components/ui/textarea"
 export interface QuizCoreValues {
   title: string
   description?: string
-  duration_minutes: number
+  // `unknown` because callers feed in the zod *input* type, where
+  // `z.coerce.number()` fields are typed `unknown` before coercion.
+  duration_minutes: unknown
   no_back_navigation: boolean
   shuffle_questions: boolean
 }
@@ -25,7 +27,7 @@ export interface QuizScheduleValues {
 }
 
 interface QuizCoreFieldsProps {
-  // Loose type so callers with stricter generics can pass register without casts.
+  // Loose register so callers with stricter generics can pass it without casts.
   register: UseFormRegister<any>
   errors: FieldErrors<QuizCoreValues>
   prefix: string

@@ -37,6 +37,7 @@ const schema = z
     message: "end_after_start",
   })
 
+type ValuesInput = z.input<typeof schema>
 type Values = z.infer<typeof schema>
 
 const defaults: Values = {
@@ -83,7 +84,7 @@ export function PracticeFormDialog({
   const [attachments, setAttachments] = useState<PendingAttachment[]>([])
   const [newModelId, setNewModelId] = useState(() => crypto.randomUUID())
 
-  const form = useForm<Values>({
+  const form = useForm<ValuesInput, unknown, Values>({
     resolver: zodResolver(schema),
     defaultValues: defaults,
   })

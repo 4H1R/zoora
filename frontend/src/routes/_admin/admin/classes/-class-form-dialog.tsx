@@ -34,7 +34,9 @@ const editSchema = z.object({
   total_users: z.coerce.number().min(0).optional(),
 })
 
+type ClassCreateInput = z.input<typeof createSchema>
 type ClassCreateValues = z.infer<typeof createSchema>
+type ClassEditInput = z.input<typeof editSchema>
 type ClassEditValues = z.infer<typeof editSchema>
 
 interface ClassFormDialogProps {
@@ -48,12 +50,12 @@ export function ClassFormDialog({ open, onOpenChange, cls }: ClassFormDialogProp
   const queryClient = useQueryClient()
   const isEdit = !!cls
 
-  const createForm = useForm<ClassCreateValues>({
+  const createForm = useForm<ClassCreateInput, unknown, ClassCreateValues>({
     resolver: zodResolver(createSchema),
     defaultValues: { name: "", description: "", total_users: 0, organization_id: "", user_id: "" },
   })
 
-  const editForm = useForm<ClassEditValues>({
+  const editForm = useForm<ClassEditInput, unknown, ClassEditValues>({
     resolver: zodResolver(editSchema),
     defaultValues: { name: "", description: "", total_users: 0 },
   })

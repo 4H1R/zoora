@@ -21,6 +21,7 @@ const schema = z.object({
   user_id: z.string().uuid().optional(),
 })
 
+type FormInput = z.input<typeof schema>
 type FormValues = z.infer<typeof schema>
 
 interface CreateClassDialogProps {
@@ -34,7 +35,7 @@ export function CreateClassDialog({ open, onOpenChange }: CreateClassDialogProps
   const { can } = useAccess()
   const canCreateAny = can("classes:create_any")
 
-  const form = useForm<FormValues>({
+  const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { name: "", description: "", total_users: 0, user_id: undefined },
   })

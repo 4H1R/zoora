@@ -45,7 +45,9 @@ const createSchema = z
 
 const editSchema = z.object(coreFields)
 
+type CreateInput = z.input<typeof createSchema>
 type CreateValues = z.infer<typeof createSchema>
+type EditInput = z.input<typeof editSchema>
 type EditValues = z.infer<typeof editSchema>
 
 const createDefaults: CreateValues = {
@@ -124,7 +126,7 @@ function CreateDialog({
   onInvalidate,
   t,
 }: CreateDialogProps) {
-  const form = useForm<CreateValues>({
+  const form = useForm<CreateInput, unknown, CreateValues>({
     resolver: zodResolver(createSchema),
     defaultValues: createDefaults,
   })
@@ -206,7 +208,7 @@ interface EditDialogProps {
 }
 
 function EditDialog({ open, onOpenChange, quiz, onInvalidate, t }: EditDialogProps) {
-  const form = useForm<EditValues>({
+  const form = useForm<EditInput, unknown, EditValues>({
     resolver: zodResolver(editSchema),
     defaultValues: quizToEditValues(quiz),
   })

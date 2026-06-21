@@ -24,6 +24,7 @@ const schema = z.object({
   allow_screen_share_default: z.boolean().optional(),
 })
 
+type FormInput = z.input<typeof schema>
 type FormValues = z.infer<typeof schema>
 
 interface LiveRoomCreateModalProps {
@@ -52,7 +53,7 @@ export function LiveRoomCreateModal({
   const { t } = useTranslation()
   const queryClient = useQueryClient()
 
-  const form = useForm<FormValues>({
+  const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
     defaultValues: DEFAULTS,
   })

@@ -52,6 +52,7 @@ const baseSchema = z.object({
   metadata: z.array(metadataSchema),
 })
 
+type FormInput = z.input<typeof baseSchema>
 type FormValues = z.infer<typeof baseSchema>
 type FormOption = FormValues["options"][number]
 type FormMetadata = FormValues["metadata"][number]
@@ -108,7 +109,7 @@ export function QuestionCreateModal({
   const queryClient = useQueryClient()
   const isEdit = !!question
 
-  const form = useForm<FormValues>({
+  const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(baseSchema),
     defaultValues: {
       bank_id: "",

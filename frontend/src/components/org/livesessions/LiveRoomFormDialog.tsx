@@ -30,6 +30,7 @@ const schema = z.object({
   allow_screen_share_default: z.boolean().optional(),
 })
 
+type FormInput = z.input<typeof schema>
 type FormValues = z.infer<typeof schema>
 
 const DEFAULTS: FormValues = {
@@ -54,7 +55,7 @@ export function LiveRoomFormDialog({ open, onOpenChange, classSessionId }: LiveR
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
-  const form = useForm<FormValues>({
+  const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
     defaultValues: DEFAULTS,
   })
