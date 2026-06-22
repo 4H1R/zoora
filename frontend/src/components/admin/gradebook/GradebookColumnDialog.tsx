@@ -68,7 +68,7 @@ const createSchema = z
       if (AUTO_TYPES.has(v.type)) return !!v.source_id
       return true
     },
-    { path: ["source_id"], message: "required" }
+    { path: ["source_id"], params: { i18n: "validation.required" } }
   )
 
 const editSchema = z.object({

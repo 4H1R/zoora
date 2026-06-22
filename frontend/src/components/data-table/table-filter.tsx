@@ -3,15 +3,13 @@ import type { NavFn } from "@/lib/data-table"
 import type { Table } from "@tanstack/react-table"
 
 import { useNavigate, useSearch } from "@tanstack/react-router"
-import { ColumnsIcon, SearchIcon } from "lucide-react"
+import { SearchIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useDebounce } from "use-debounce"
 
+import { ColumnsToggle } from "@/components/data-table/columns-toggle"
 import { SortPicker } from "@/components/data-table/sort-picker"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 interface TableFilterProps<TData> {
   searchPlaceholder?: string
@@ -95,38 +93,7 @@ export function TableFilter<TData>({
           })
         }
       />
-      <Popover>
-        <PopoverTrigger
-          render={
-            <Button variant="outline" size="sm" className="h-9 gap-1.5 px-2.5 text-xs font-medium">
-              <ColumnsIcon className="size-3.5" />
-              {columnsLabel}
-            </Button>
-          }
-        />
-        <PopoverContent align="end" className="w-44 p-1.5">
-          <p className="text-muted-foreground px-1.5 py-1 text-[11px] font-medium tracking-wider uppercase">
-            {toggleColumnsLabel}
-          </p>
-          <div className="mt-0.5 flex flex-col">
-            {table
-              .getAllColumns()
-              .filter((col) => col.getCanHide())
-              .map((col) => (
-                <label
-                  key={col.id}
-                  className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1.5 text-sm"
-                >
-                  <Checkbox
-                    checked={col.getIsVisible()}
-                    onCheckedChange={(checked) => col.toggleVisibility(!!checked)}
-                  />
-                  {typeof col.columnDef.header === "string" ? col.columnDef.header : col.id}
-                </label>
-              ))}
-          </div>
-        </PopoverContent>
-      </Popover>
+      <ColumnsToggle table={table} columnsLabel={columnsLabel} toggleColumnsLabel={toggleColumnsLabel} />
     </div>
   )
 }

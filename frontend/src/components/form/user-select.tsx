@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { useDebounce } from "use-debounce"
 
 import { useGetAdminUsers } from "@/api/admin-users/admin-users"
+import { useGetUsers } from "@/api/users/users"
 import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -15,18 +16,43 @@ interface UserSelectProps {
   placeholder?: string
   className?: string
   organizationId?: string
+  /**
+   * "admin" hits the platform-admin /admin/users endpoint (cross-org, requires IsAdmin).
+   * "org" (default) hits /users, auto-scoped to the caller's organization (org Manager).
+   */
+  scope?: "admin" | "org"
 }
 
-export function UserSelect({ value, onChange, placeholder, className, organizationId }: UserSelectProps) {
+export function UserSelect({
+  value,
+  onChange,
+  placeholder,
+  className,
+  organizationId,
+  scope = "org",
+}: UserSelectProps) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [debouncedSearch] = useDebounce(search, 300)
 
-  const { data } = useGetAdminUsers({
-    search: debouncedSearch || undefined,
-    organization_id: organizationId || undefined,
-  })
+  const isAdmin = scope === "admin"
+
+  const adminQuery = useGetAdminUsers(
+    {
+      search: debouncedSearch || undefined,
+      organization_id: organizationId || undefined,
+    },
+    { query: { enabled: isAdmin } },
+  )
+  const orgQuery = useGetUsers(
+    {
+      search: debouncedSearch || undefined,
+    },
+    { query: { enabled: !isAdmin } },
+  )
+
+  const data = isAdmin ? adminQuery.data : orgQuery.data
   const usersData = (data?.status === 200 && data.data.data) || undefined
   const users = usersData?.items ?? []
 
@@ -63,13 +89,15 @@ export function UserSelect({ value, onChange, placeholder, className, organizati
                     }
                   }}
                 >
-                  <CheckIcon className={cn("me-2 size-4", value === user.id ? "opacity-100" : "opacity-0")} />
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="truncate text-sm">{user.name}</div>
                     {user.username && (
                       <div className="text-muted-foreground truncate font-mono text-xs">{user.username}</div>
                     )}
                   </div>
+                  <CheckIcon
+                    className={cn("ms-2 size-4 shrink-0", value === user.id ? "opacity-100" : "opacity-0")}
+                  />
                 </CommandItem>
               ))}
             </CommandGroup>

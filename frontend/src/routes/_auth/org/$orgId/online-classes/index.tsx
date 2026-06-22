@@ -1,20 +1,24 @@
-import type { NavFn } from "@/lib/data-table"
-
 import { createFileRoute } from "@tanstack/react-router"
-import { ChevronLeft, ChevronRight, SearchIcon, VideoIcon } from "lucide-react"
-import { useEffect, useState } from "react"
+import { ChevronLeft, ChevronRight, VideoIcon } from "lucide-react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { useDebounce } from "use-debounce"
 import { z } from "zod"
 
 import { useGetLiveRooms } from "@/api/live-sessions/live-sessions"
+import { ColumnsToggle } from "@/components/data-table/columns-toggle"
+import { DataTable } from "@/components/data-table/data-table"
 import { LiveRoomCard, LiveRoomCardSkeleton } from "@/components/live-room-card"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Card } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui/empty-state"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { ViewModeToggle, type ViewMode } from "@/components/view-mode-toggle"
 import { useOrgGuard } from "@/lib/access"
+import { useAdminTable } from "@/lib/data-table"
 import { orgHead } from "@/lib/org-head"
+
+import { useLiveRoomColumns } from "./-columns"
 
 // Backend page size for GET /live-rooms (domain.DefaultPageSize).
 const PAGE_SIZE = 20
@@ -25,8 +29,9 @@ const STATUS_TABS = ["all", "active", "created", "finished"] as const
 type StatusTab = (typeof STATUS_TABS)[number]
 
 const onlineClassesSearchSchema = z.object({
-  search: z.string().optional(),
   status: z.enum(STATUS_TABS).optional().default("active"),
+  order_by: z.string().optional(),
+  order_dir: z.enum(["asc", "desc"]).optional(),
   page: z.number().int().positive().optional().default(1),
 })
 
@@ -38,8 +43,8 @@ export const Route = createFileRoute("/_auth/org/$orgId/online-classes/")({
 
 function RouteComponent() {
   const { t } = useTranslation()
-  const { search, status, page } = Route.useSearch()
-  const navigate = Route.useNavigate() as unknown as NavFn
+  const { status, order_by, order_dir, page } = Route.useSearch()
+  const navigate = Route.useNavigate()
   const allowed = useOrgGuard(["live_sessions:view", "live_sessions:view_any"])
 
   const currentPage = page ?? 1
@@ -47,10 +52,10 @@ function RouteComponent() {
 
   const { data, isPending } = useGetLiveRooms(
     {
-      search: search || undefined,
       status: activeTab === "all" ? undefined : activeTab,
-      order_by: "scheduled_start_time",
-      order_dir: "desc",
+      // URL drives sort; default to the soonest-scheduled-first ordering.
+      order_by: order_by || "scheduled_start_time",
+      order_dir: order_dir || "desc",
       page: currentPage,
     },
     {
@@ -67,14 +72,27 @@ function RouteComponent() {
   const rooms = roomsData?.items ?? []
   const total = roomsData?.total ?? 0
 
-  const [localSearch, setLocalSearch] = useState(search ?? "")
-  const [debouncedSearch] = useDebounce(localSearch, 300)
-
-  useEffect(() => {
-    navigate({ search: (prev) => ({ ...prev, search: debouncedSearch || undefined, page: 1 }) })
-  }, [debouncedSearch])
+  const [viewMode, setViewMode] = useState<ViewMode>("grid")
+  const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
+  const columns = useLiveRoomColumns()
+  const table = useAdminTable({ data: rooms, columns, rowCount: total, sorting })
 
   const renderContent = () => {
+    if (viewMode === "table") {
+      return (
+        <Card className="gap-0 overflow-hidden p-0">
+          <div className="overflow-x-auto">
+            <DataTable
+              table={table}
+              isLoading={isPending}
+              emptyTitle={t("onlineClassesPage.noResults")}
+              emptyHint={t("onlineClassesPage.noResultsHint")}
+            />
+          </div>
+        </Card>
+      )
+    }
+
     if (isPending) {
       return (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -87,11 +105,11 @@ function RouteComponent() {
 
     if (rooms.length === 0) {
       return (
-        <div className="text-muted-foreground flex flex-col items-center gap-2 py-16 text-center">
-          <VideoIcon className="size-8 opacity-40" />
-          <p className="text-sm font-medium">{t("onlineClassesPage.noResults")}</p>
-          <p className="text-xs">{t("onlineClassesPage.noResultsHint")}</p>
-        </div>
+        <EmptyState
+          icon={VideoIcon}
+          title={t("onlineClassesPage.noResults")}
+          description={t("onlineClassesPage.noResultsHint")}
+        />
       )
     }
 
@@ -110,17 +128,7 @@ function RouteComponent() {
     <div className="flex flex-col gap-6">
       <PageHeader title={t("onlineClassesPage.title")} />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative max-w-xs flex-1">
-          <SearchIcon className="text-muted-foreground pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2" />
-          <Input
-            placeholder={t("onlineClassesPage.searchPlaceholder")}
-            value={localSearch}
-            onChange={(e) => setLocalSearch(e.target.value)}
-            className="ps-9"
-          />
-        </div>
-
+      <div className="flex flex-row items-center justify-between gap-3">
         <ToggleGroup
           value={[activeTab]}
           onValueChange={(values) => {
@@ -142,6 +150,17 @@ function RouteComponent() {
             {t("onlineClassesPage.tabs.finished")}
           </ToggleGroupItem>
         </ToggleGroup>
+
+        <div className="flex items-center gap-2">
+          {viewMode === "table" && (
+            <ColumnsToggle
+              table={table}
+              columnsLabel={t("onlineClassesPage.toolbar.columns")}
+              toggleColumnsLabel={t("onlineClassesPage.toolbar.toggleColumns")}
+            />
+          )}
+          <ViewModeToggle value={viewMode} onChange={setViewMode} />
+        </div>
       </div>
 
       {renderContent()}

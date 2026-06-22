@@ -19,6 +19,7 @@ import { UserSelect } from "@/components/form/user-select"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Spinner } from "@/components/ui/spinner"
 import { getEntityColor, getInitials, useFormatDate } from "@/lib/data-table"
 import { cn } from "@/lib/utils"
@@ -145,11 +146,11 @@ function ClassMembersPage() {
           {t("common.loading")}
         </Card>
       ) : members.length === 0 ? (
-        <Card className="flex flex-col items-center justify-center gap-2 border-dashed p-10 text-center">
-          <UsersIcon className="text-muted-foreground/50 size-10" />
-          <div className="text-sm font-medium">{t("admin.classMembers.empty.title")}</div>
-          <div className="text-muted-foreground text-xs">{t("admin.classMembers.empty.hint")}</div>
-        </Card>
+        <EmptyState
+          icon={UsersIcon}
+          title={t("admin.classMembers.empty.title")}
+          description={t("admin.classMembers.empty.hint")}
+        />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {members.map((m) => (

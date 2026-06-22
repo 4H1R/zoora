@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_auth/org/$orgId/settings")({
 })
 
 const settingsSchema = z.object({
-  name: z.string().min(2, "org.settings.nameError"),
+  name: z.string().min(2),
   description: z.string().optional(),
 })
 
@@ -231,9 +231,7 @@ function RouteComponent() {
               aria-invalid={!!errors.name}
               {...register("name")}
             />
-            {errors.name && (
-              <FieldError>{t(errors.name.message ?? "org.settings.nameError")}</FieldError>
-            )}
+            {errors.name && <FieldError>{errors.name.message}</FieldError>}
           </Field>
 
           <Field>

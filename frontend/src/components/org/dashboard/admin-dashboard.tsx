@@ -7,7 +7,7 @@ import { Eyebrow } from "@/components/eyebrow"
 import { TileGrid } from "@/components/org/dashboard/tile-grid"
 import { useDashboardTiles } from "@/components/org/dashboard/use-dashboard-tiles"
 import { useGreeting } from "@/components/org/dashboard/use-greeting"
-import { Card } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui/empty-state"
 
 export function AdminDashboard() {
   const { t } = useTranslation()
@@ -57,13 +57,11 @@ export function AdminDashboard() {
       {tiles.length > 0 ? (
         <TileGrid tiles={tiles} />
       ) : (
-        <Card className="flex flex-col items-center gap-2 px-6 py-12 text-center">
-          <div className="bg-primary/10 text-primary mb-1 flex size-12 items-center justify-center rounded-xl">
-            <GraduationCapIcon className="size-6" />
-          </div>
-          <p className="text-sm font-medium">{t("org.dashboard.memberEmpty.title")}</p>
-          <p className="text-muted-foreground max-w-sm text-sm">{t("org.dashboard.memberEmpty.hint")}</p>
-        </Card>
+        <EmptyState
+          icon={GraduationCapIcon}
+          title={t("org.dashboard.memberEmpty.title")}
+          description={t("org.dashboard.memberEmpty.hint")}
+        />
       )}
     </div>
   )

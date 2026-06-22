@@ -39,7 +39,6 @@ export function usePracticeHubColumns({
           <span className="truncate text-sm font-medium">{row.original.title}</span>
         </div>
       ),
-      enableSorting: false,
       enableHiding: false,
     },
     {

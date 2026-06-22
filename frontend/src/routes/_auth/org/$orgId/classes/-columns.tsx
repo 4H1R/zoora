@@ -39,14 +39,10 @@ export function useClassColumns(orgId: string): ColumnDef<GithubCom4H1RZooraInte
               >
                 {cls.name}
               </Link>
-              <p className="text-muted-foreground truncate text-xs">
-                {cls.id?.slice(0, 8).toUpperCase()}
-              </p>
             </div>
           </div>
         )
       },
-      enableSorting: false,
     },
     {
       accessorKey: "user",
@@ -84,6 +80,8 @@ export function useClassColumns(orgId: string): ColumnDef<GithubCom4H1RZooraInte
     {
       id: "actions",
       header: "",
+      enableSorting: false,
+      enableHiding: false,
       cell: ({ row }) => {
         const cls = row.original
         return (
@@ -99,7 +97,6 @@ export function useClassColumns(orgId: string): ColumnDef<GithubCom4H1RZooraInte
           </div>
         )
       },
-      enableSorting: false,
     },
   ]
 }

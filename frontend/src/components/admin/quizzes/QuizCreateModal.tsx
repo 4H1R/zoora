@@ -40,7 +40,7 @@ const createSchema = z
   })
   .refine((v) => new Date(v.ended_at).getTime() > new Date(v.started_at).getTime(), {
     path: ["ended_at"],
-    message: "end_after_start",
+    params: { i18n: "validation.endAfterStart" },
   })
 
 const editSchema = z.object({
@@ -151,8 +151,8 @@ function CreateDialog({
           try {
             await postQuizzesIdRooms(quizId, {
               class_session_id: sessionId,
-              started_at: new Date(form.getValues("started_at")).toISOString(),
-              ended_at: new Date(form.getValues("ended_at")).toISOString(),
+              started_at: form.getValues("started_at"),
+              ended_at: form.getValues("ended_at"),
             })
           } catch {
             toast.error(t(`${TRANSLATION_PREFIX}.linkRoomFailed`))
@@ -221,7 +221,7 @@ function CreateDialog({
         </Field>
 
         <QuizCoreFields register={form.register} errors={errors} prefix={TRANSLATION_PREFIX} />
-        <QuizScheduleFields register={form.register} errors={errors} prefix={TRANSLATION_PREFIX} />
+        <QuizScheduleFields control={form.control as never} errors={errors} prefix={TRANSLATION_PREFIX} />
         <QuizFlagsFields
           prefix={TRANSLATION_PREFIX}
           noBackNavigation={noBack}

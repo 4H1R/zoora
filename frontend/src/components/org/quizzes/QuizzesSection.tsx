@@ -32,6 +32,7 @@ import { SectionToolbar } from "@/components/org/session/section-toolbar"
 import { Eyebrow } from "@/components/eyebrow"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useCanSelfOr } from "@/lib/access"
 import { DEFAULT_PAGE_SIZE } from "@/lib/list"
@@ -202,32 +203,6 @@ function QuizCardSkeleton() {
   )
 }
 
-interface EmptyStateProps {
-  canCreate: boolean
-  onCreate: () => void
-}
-
-function EmptyState({ canCreate, onCreate }: EmptyStateProps) {
-  const { t } = useTranslation()
-  return (
-    <div className="bg-card ring-foreground/10 flex flex-col items-center gap-3 rounded-2xl px-6 py-16 text-center ring-1">
-      <ClipboardListIcon className="text-muted-foreground size-8" />
-      <h3 className="text-foreground text-lg font-semibold tracking-tight">
-        {t("org.session.quizzes.emptyTitle")}
-      </h3>
-      <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
-        {t("org.session.quizzes.emptyHint")}
-      </p>
-      {canCreate ? (
-        <Button className="mt-2" onClick={onCreate}>
-          <PlusIcon className="size-4" />
-          {t("org.session.quizzes.newQuiz")}
-        </Button>
-      ) : null}
-    </div>
-  )
-}
-
 interface QuizzesSectionProps {
   classId: string
   classSessionId: string
@@ -315,7 +290,18 @@ export function QuizzesSection({ classId, classSessionId }: QuizzesSectionProps)
         list.isFiltered ? (
           <SectionNoResults />
         ) : (
-          <EmptyState canCreate={canCreate} onCreate={openCreate} />
+          <EmptyState
+            icon={ClipboardListIcon}
+            title={t("org.session.quizzes.emptyTitle")}
+            description={t("org.session.quizzes.emptyHint")}
+          >
+            {canCreate ? (
+              <Button onClick={openCreate}>
+                <PlusIcon className="size-4" />
+                {t("org.session.quizzes.newQuiz")}
+              </Button>
+            ) : null}
+          </EmptyState>
         )
       ) : (
         <>

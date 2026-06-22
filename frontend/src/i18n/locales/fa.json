@@ -43,6 +43,16 @@
   },
   "common": {
     "brandName": "زورا",
+    "dateTimePicker": {
+      "placeholder": "انتخاب تاریخ",
+      "hour": "ساعت",
+      "minute": "دقیقه",
+      "time": "زمان",
+      "now": "اکنون",
+      "clear": "پاک کردن"
+    },
+    "gridView": "نمای شبکه‌ای",
+    "tableView": "نمای جدول",
     "getStarted": "شروع کنید",
     "learnMore": "بیشتر بدانید",
     "search": "جستجو…",
@@ -1105,7 +1115,6 @@
   },
   "onlineClassesPage": {
     "title": "کلاس‌های آنلاین",
-    "searchPlaceholder": "جستجوی کلاس‌های آنلاین…",
     "noResults": "کلاس آنلاینی یافت نشد",
     "noResultsHint": "موردی با فیلتر فعلی مطابقت ندارد.",
     "join": "ورود",
@@ -1122,10 +1131,21 @@
       "notStarted": "شروع‌نشده",
       "finished": "پایان‌یافته"
     },
+    "table": {
+      "room": "اتاق",
+      "class": "کلاس",
+      "host": "میزبان",
+      "status": "وضعیت"
+    },
     "status": {
       "live": "زنده",
       "notStarted": "شروع‌نشده",
       "finished": "پایان‌یافته"
+    },
+    "toolbar": {
+      "sort": "مرتب‌سازی",
+      "columns": "ستون‌ها",
+      "toggleColumns": "نمایش ستون‌ها"
     }
   },
   "classesPage": {
@@ -1158,6 +1178,11 @@
       "teacher": "مدرس",
       "teacherPlaceholder": "انتخاب مدرس…",
       "createSuccess": "کلاس ایجاد شد"
+    },
+    "toolbar": {
+      "sort": "مرتب‌سازی",
+      "columns": "ستون‌ها",
+      "toggleColumns": "نمایش ستون‌ها"
     }
   },
   "login": {
@@ -1182,8 +1207,6 @@
     "rememberMe": "مرا در این دستگاه وارد نگه دار",
     "submit": "ورود",
     "submitting": "در حال ورود…",
-    "usernameError": "نام کاربری باید حداقل ۳ کاراکتر باشد",
-    "passwordError": "رمز عبور باید حداقل ۸ کاراکتر باشد",
     "success": "خوش آمدید! در حال انتقال…",
     "error": "نام کاربری یا رمز عبور نامعتبر است",
     "separator": "یا ادامه با",
@@ -1261,6 +1284,17 @@
         "grade": "نمره‌دهی",
         "view": "مشاهده",
         "viewSubmissions": "مشاهده ارسال‌ها"
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش ستون‌ها"
+      },
+      "table": {
+        "class": "درس",
+        "due": "مهلت",
+        "status": "وضعیت",
+        "score": "نمره"
       }
     },
     "portal": {
@@ -1292,15 +1326,33 @@
       "start": "شروع آزمون",
       "continue": "ادامه",
       "score": "نمره: {{score}} از {{total}}",
-      "opensAt": "شروع {{date}}"
+      "opensAt": "شروع {{date}}",
+      "searchPlaceholder": "جستجوی آزمون‌ها…",
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش ستون‌ها"
+      },
+      "table": {
+        "title": "آزمون",
+        "class": "درس",
+        "state": "وضعیت",
+        "duration": "مدت"
+      }
     },
     "calendar": {
       "title": "تقویم",
+      "subtitle": "برنامهٔ شما در یک نگاه",
+      "jumpToday": "امروز",
+      "legendTitle": "نوع رویدادها",
+      "monthCount_one": "{{count}} رویداد در این بازه",
+      "monthCount_other": "{{count}} رویداد در این بازه",
       "selectedDay": "روز انتخاب‌شده",
       "todayBadge": "امروز",
       "eventCount_one": "{{count}} رویداد",
       "eventCount_other": "{{count}} رویداد",
       "empty": "رویدادی در این روز وجود ندارد.",
+      "emptyHint": "روز دیگری را انتخاب کنید تا برنامه‌اش را ببینید.",
       "legend": {
         "live": "زنده",
         "quiz": "آزمون",
@@ -1311,7 +1363,18 @@
     "grades": {
       "title": "کارنامه",
       "empty": "هنوز نمره‌ای ثبت نشده است.",
-      "noColumns": "هنوز موردی برای این درس ثبت نشده."
+      "noColumns": "هنوز موردی برای این درس ثبت نشده.",
+      "searchPlaceholder": "جستجوی نمرات…",
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش ستون‌ها"
+      },
+      "table": {
+        "class": "درس",
+        "item": "مورد",
+        "score": "نمره"
+      }
     },
     "attendance": {
       "title": "حضور و غیاب من",
@@ -1327,6 +1390,18 @@
         "absent": "غایب",
         "late": "تأخیر",
         "excused": "موجه"
+      },
+      "searchPlaceholder": "جستجوی حضور و غیاب…",
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش ستون‌ها"
+      },
+      "table": {
+        "class": "درس",
+        "session": "جلسه",
+        "date": "تاریخ",
+        "status": "وضعیت"
       }
     },
     "files": {
@@ -1458,7 +1533,6 @@
       "namePlaceholder": "نام سازمان",
       "description": "توضیحات",
       "descriptionPlaceholder": "توضیحات مختصر درباره سازمان شما",
-      "nameError": "نام باید حداقل ۲ کاراکتر باشد",
       "updateSuccess": "سازمان به‌روزرسانی شد",
       "general": "عمومی",
       "generalHint": "نام و توضیحات عمومی سازمان شما.",
@@ -2270,6 +2344,68 @@
       "add": "افزودن فایل",
       "empty": "برای پیوست فایل کلیک کنید",
       "uploadError": "بارگذاری ناموفق بود"
+    }
+  },
+  "validation": {
+    "required": "فیلد {{attribute}} الزامی است.",
+    "invalid": "فیلد {{attribute}} نامعتبر است.",
+    "email": "فیلد {{attribute}} باید یک ایمیل معتبر باشد.",
+    "url": "فیلد {{attribute}} باید یک URL معتبر باشد.",
+    "uuid": "{{attribute}} انتخاب شده، معتبر نیست.",
+    "regex": "فرمت {{attribute}} معتبر نیست.",
+    "enum": "{{attribute}} انتخاب شده نامعتبر است.",
+    "integer": "فیلد {{attribute}} باید عدد صحیح باشد.",
+    "numeric": "فیلد {{attribute}} باید عدد باشد.",
+    "string": "فیلد {{attribute}} باید رشته باشد.",
+    "array": "فیلد {{attribute}} باید آرایه باشد.",
+    "multiple_of": "فیلد {{attribute}} باید مضربی از {{value}} باشد.",
+    "min": {
+      "string": "فیلد {{attribute}} نباید کمتر از {{min}} کاراکتر باشد.",
+      "numeric": "فیلد {{attribute}} نباید کوچکتر از {{min}} باشد.",
+      "array": "فیلد {{attribute}} نباید کمتر از {{min}} آیتم داشته باشد."
+    },
+    "max": {
+      "string": "فیلد {{attribute}} نباید بیشتر از {{max}} کاراکتر باشد.",
+      "numeric": "فیلد {{attribute}} نباید بزرگتر از {{max}} باشد.",
+      "array": "فیلد {{attribute}} نباید بیشتر از {{max}} آیتم داشته باشد."
+    },
+    "endAfterStart": "زمان پایان باید بعد از زمان شروع باشد.",
+    "attributes": {
+      "name": "نام",
+      "title": "عنوان",
+      "description": "توضیحات",
+      "username": "نام کاربری",
+      "password": "رمز عبور",
+      "email": "ایمیل",
+      "content": "محتوا",
+      "text": "متن",
+      "value": "مقدار",
+      "remarks": "ملاحظات",
+      "duration_minutes": "مدت زمان (دقیقه)",
+      "max_participants": "حداکثر شرکت‌کنندگان",
+      "max_score": "حداکثر نمره",
+      "total_users": "تعداد کاربران",
+      "order_index": "ترتیب",
+      "score": "نمره",
+      "start_time": "زمان شروع",
+      "end_time": "زمان پایان",
+      "started_at": "زمان شروع",
+      "ended_at": "زمان پایان",
+      "scheduled_start_time": "زمان شروع برنامه‌ریزی‌شده",
+      "published_at": "زمان انتشار",
+      "organization_id": "سازمان",
+      "user_id": "کاربر",
+      "class_id": "کلاس",
+      "class_session_id": "جلسه کلاس",
+      "bank_id": "بانک سوال",
+      "source_id": "منبع",
+      "role_id": "نقش",
+      "role": "نقش",
+      "media_id": "رسانه",
+      "permission_ids": "دسترسی‌ها",
+      "status": "وضعیت",
+      "mode": "حالت",
+      "type": "نوع"
     }
   }
 }

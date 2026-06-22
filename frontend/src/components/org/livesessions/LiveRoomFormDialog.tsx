@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { CalendarClockIcon, RadioIcon } from "lucide-react"
 import { useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -15,6 +15,7 @@ import {
 } from "@/api/live-sessions/live-sessions"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
 import { Checkbox } from "@/components/ui/checkbox"
+import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
@@ -161,7 +162,18 @@ export function LiveRoomFormDialog({ open, onOpenChange, classSessionId }: LiveR
         {mode === "schedule" ? (
           <Field data-invalid={!!errors.scheduled_start_time || undefined}>
             <FieldLabel>{t("org.session.liveRooms.form.scheduledTime")}</FieldLabel>
-            <Input type="datetime-local" {...form.register("scheduled_start_time")} />
+            <Controller
+              control={form.control}
+              name="scheduled_start_time"
+              render={({ field, fieldState }) => (
+                <DateTimePicker
+                  value={field.value || undefined}
+                  onChange={(v) => field.onChange(v ?? "")}
+                  invalid={fieldState.invalid}
+                  minDate={new Date()}
+                />
+              )}
+            />
             <FieldError errors={[errors.scheduled_start_time]} />
             <p className="text-muted-foreground text-xs">{t("org.session.liveRooms.form.scheduledTimeHint")}</p>
           </Field>

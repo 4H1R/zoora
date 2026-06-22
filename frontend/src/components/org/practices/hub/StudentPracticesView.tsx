@@ -1,23 +1,27 @@
 import type { GithubCom4H1RZooraInternalDomainPracticeRoomView as PracticeRoomView } from "@/api/model"
 
 import { useNavigate } from "@tanstack/react-router"
-import { CalendarClockIcon, NotebookPenIcon, SearchIcon } from "lucide-react"
+import { CalendarClockIcon, NotebookPenIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { useGetPractices } from "@/api/practices/practices"
+import { DataTable } from "@/components/data-table/data-table"
+import { DataTablePagination } from "@/components/data-table/data-table-pagination"
+import { TableFilter } from "@/components/data-table/table-filter"
 import { PracticeSubmitDialog } from "@/components/org/practices/PracticeSubmitDialog"
 import { usePracticePermissions } from "@/components/org/practices/use-practice-permissions"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ViewModeToggle, type ViewMode } from "@/components/view-mode-toggle"
+import { useAdminTable } from "@/lib/data-table"
 import { formatScore } from "@/lib/score"
 import { formatSessionDate } from "@/lib/session-status"
-import { cn } from "@/lib/utils"
 import { Route } from "@/routes/_auth/org/$orgId/practices/index"
 
+import { usePracticeStudentColumns } from "./practice-student-columns"
 import { PracticeStatusBadge } from "./practice-status-badge"
 
 const STATUS_FILTERS = ["all", "to_submit", "submitted", "graded", "upcoming", "missed"] as const
@@ -25,66 +29,53 @@ const STATUS_FILTERS = ["all", "to_submit", "submitted", "graded", "upcoming", "
 export function StudentPracticesView() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const { search, status, page } = Route.useSearch()
+  const { search, status, order_by, order_dir, page } = Route.useSearch()
   const { canSubmit } = usePracticePermissions()
 
   const activeStatus = status ?? "to_submit"
   const currentPage = page ?? 1
+  const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
 
+  const [viewMode, setViewMode] = useState<ViewMode>("grid")
   const [submitTarget, setSubmitTarget] = useState<PracticeRoomView | null>(null)
 
   const { data, isLoading } = useGetPractices({
     search: search || undefined,
     status: activeStatus === "all" ? undefined : activeStatus,
+    order_by: order_by || undefined,
+    order_dir: order_dir || undefined,
     page: currentPage,
   })
 
   const listData = (data?.status === 200 && data.data.data) || undefined
   const items = listData?.items ?? []
   const total = listData?.total ?? 0
-  const pageSize = listData?.page_size || 8
-  const totalPages = Math.ceil(total / pageSize)
+
+  const columns = usePracticeStudentColumns({ canSubmit, onSubmit: setSubmitTarget })
+  const table = useAdminTable({ data: items, columns, rowCount: total, sorting })
 
   const setStatus = (value: string) =>
     navigate({ to: ".", search: (prev) => ({ ...prev, status: value === "all" ? undefined : value, page: 1 }) })
 
-  const setSearch = (value: string) =>
-    navigate({ to: ".", search: (prev) => ({ ...prev, search: value || undefined, page: 1 }) })
+  const renderContent = () => {
+    if (viewMode === "table") {
+      return (
+        <Card className="gap-0 overflow-hidden p-0">
+          <div className="overflow-x-auto">
+            <DataTable
+              table={table}
+              isLoading={isLoading}
+              emptyIcon={<NotebookPenIcon className="size-8 opacity-40" />}
+              emptyTitle={t("org.practices.noResults")}
+              emptyHint={t("org.practices.noResultsHint")}
+            />
+          </div>
+          <DataTablePagination table={table} />
+        </Card>
+      )
+    }
 
-  const setPage = (value: number) =>
-    navigate({ to: ".", search: (prev) => ({ ...prev, page: value }) })
-
-  return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <PageHeader title={t("org.practices.title")} />
-        <p className="text-muted-foreground text-sm">{t("org.practices.subtitle")}</p>
-      </div>
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-1.5">
-          {STATUS_FILTERS.map((value) => (
-            <Button
-              key={value}
-              size="sm"
-              variant={activeStatus === value ? "default" : "outline"}
-              onClick={() => setStatus(value)}
-            >
-              {value === "all" ? t("org.practices.filter.all") : t(`org.practices.status.${value}`)}
-            </Button>
-          ))}
-        </div>
-        <div className="relative sm:w-64">
-          <SearchIcon className="text-muted-foreground pointer-events-none absolute inset-y-0 start-2.5 my-auto size-4" />
-          <Input
-            defaultValue={search ?? ""}
-            placeholder={t("org.practices.searchPlaceholder")}
-            onChange={(e) => setSearch(e.target.value)}
-            className="ps-8"
-          />
-        </div>
-      </div>
-
+    return (
       <Card className="gap-0 overflow-hidden p-0">
         {isLoading ? (
           <div className="divide-y">
@@ -111,10 +102,7 @@ export function StudentPracticesView() {
               const graded = practice.status === "graded"
               const showSubmit = canSubmit && practice.can_submit
               return (
-                <li
-                  key={practice.id}
-                  className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:gap-4"
-                >
+                <li key={practice.id} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:gap-4">
                   <div className="bg-primary/10 text-primary hidden size-9 shrink-0 items-center justify-center rounded-lg sm:flex">
                     <NotebookPenIcon className="size-4" />
                   </div>
@@ -152,31 +140,45 @@ export function StudentPracticesView() {
             })}
           </ul>
         )}
-
-        {totalPages > 1 && (
-          <div className="bg-muted/30 flex items-center justify-between border-t px-4 py-3 text-sm">
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={currentPage <= 1}
-              onClick={() => setPage(currentPage - 1)}
-            >
-              {t("common.previous")}
-            </Button>
-            <span className={cn("text-muted-foreground tabular-nums")}>
-              {currentPage} / {totalPages}
-            </span>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={currentPage >= totalPages}
-              onClick={() => setPage(currentPage + 1)}
-            >
-              {t("common.next")}
-            </Button>
-          </div>
-        )}
+        <DataTablePagination table={table} />
       </Card>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-1">
+        <PageHeader title={t("org.practices.title")} />
+        <p className="text-muted-foreground text-sm">{t("org.practices.subtitle")}</p>
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex-1">
+          <TableFilter
+            table={table}
+            searchPlaceholder={t("org.practices.searchPlaceholder")}
+            sortLabel={t("org.practices.toolbar.sort")}
+            columnsLabel={t("org.practices.toolbar.columns")}
+            toggleColumnsLabel={t("org.practices.toolbar.toggleColumns")}
+          >
+            <div className="flex flex-wrap gap-1.5">
+              {STATUS_FILTERS.map((value) => (
+                <Button
+                  key={value}
+                  size="sm"
+                  variant={activeStatus === value ? "default" : "outline"}
+                  onClick={() => setStatus(value)}
+                >
+                  {value === "all" ? t("org.practices.filter.all") : t(`org.practices.status.${value}`)}
+                </Button>
+              ))}
+            </div>
+          </TableFilter>
+        </div>
+        <ViewModeToggle value={viewMode} onChange={setViewMode} />
+      </div>
+
+      {renderContent()}
 
       <PracticeSubmitDialog
         open={!!submitTarget}

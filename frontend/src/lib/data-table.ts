@@ -1,7 +1,13 @@
 import type { ColumnDef, OnChangeFn, SortingState, Table, VisibilityState } from "@tanstack/react-table"
 
 import { useNavigate } from "@tanstack/react-router"
-import { getCoreRowModel, useReactTable } from "@tanstack/react-table"
+import {
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table"
 import { useState } from "react"
 import { z } from "zod"
 
@@ -90,5 +96,56 @@ export function useAdminTable<TData>({ data, columns, rowCount, sorting }: UseAd
       setColumnVisibility((prev) => (typeof updater === "function" ? updater(prev) : updater))
     },
     state: { sorting, columnVisibility },
+  })
+}
+
+// ── useClientTable ───────────────────────────────────────────────────────────
+
+interface UseClientTableOptions<TData> {
+  data: TData[]
+  columns: ColumnDef<TData>[]
+  sorting: SortingState
+  /** URL search term (`search` param). Filters client-side via the global filter. */
+  globalFilter?: string
+  /** 1-based page from the URL `page` param. */
+  page?: number
+  /** Page size from the URL `page_size` param. */
+  pageSize?: number
+}
+
+// Client-side sibling of useAdminTable: same URL-driven TableFilter /
+// DataTablePagination wiring, but the data lives entirely in the browser.
+// Use for "me"-style endpoints that return a full (small) list with no
+// server pagination/search/sort. Filtering, sorting and paging all happen
+// over the in-memory array; URL stays the source of truth.
+export function useClientTable<TData>({
+  data,
+  columns,
+  sorting,
+  globalFilter,
+  page,
+  pageSize = 8,
+}: UseClientTableOptions<TData>): Table<TData> {
+  const navigate = useNavigate() as unknown as NavFn
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+
+  return useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    globalFilterFn: "includesString",
+    onSortingChange: createSortingHandler(navigate, sorting),
+    onColumnVisibilityChange: (updater) => {
+      setColumnVisibility((prev) => (typeof updater === "function" ? updater(prev) : updater))
+    },
+    state: {
+      sorting,
+      globalFilter: globalFilter ?? "",
+      columnVisibility,
+      pagination: { pageIndex: Math.max(0, (page ?? 1) - 1), pageSize },
+    },
   })
 }

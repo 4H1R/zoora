@@ -150,7 +150,7 @@ export const getGetLiveRoomsUrl = (params?: GetLiveRoomsParams,) => {
 }
 
 /**
- * Returns rooms filtered by caller role: super-admins / livesessions:view_any see all, teachers see their classes' rooms, students see rooms in classes they are enrolled in. Search matches substrings of: name, livekit_room_name. Orderable fields: created_at, updated_at, status, scheduled_start_time, actual_start_time, actual_end_time. Filters: status, class_id, class_session_id.
+ * Returns rooms filtered by caller role: super-admins / livesessions:view_any see all, teachers see their classes' rooms, students see rooms in classes they are enrolled in. Orderable fields: created_at, updated_at, status, scheduled_start_time, actual_start_time, actual_end_time. Filters: status, class_id, class_session_id.
  * @summary List live rooms (scoped by RBAC)
  */
 export const getLiveRooms = async (params?: GetLiveRoomsParams, options?: RequestInit): Promise<getLiveRoomsResponse> => {

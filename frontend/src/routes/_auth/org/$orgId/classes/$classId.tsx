@@ -33,6 +33,7 @@ import { useClassPermissions } from "@/components/org/classes/use-class-permissi
 import { Eyebrow } from "@/components/eyebrow"
 import { SessionStatusPill } from "@/components/session/status-pill"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import { UserAvatar } from "@/components/user-avatar"
 import { useOrgGuard } from "@/lib/access"
@@ -298,7 +299,6 @@ function RouteComponent() {
   }
 
   const teacherName = cls?.user?.name ?? ""
-  const shortId = (cls?.id ?? "").slice(0, 8).toUpperCase()
 
   return (
     <div className="relative isolate flex flex-col gap-10 pb-16">
@@ -313,17 +313,14 @@ function RouteComponent() {
           <ArrowLeftIcon className="size-3.5" />
           {t("org.class.backToClasses")}
         </Link>
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            render={<Link to="/org/$orgId/classes/$classId/gradebook" params={{ orgId, classId }} />}
-          >
-            <TrophyIcon className="size-4" />
-            {t("org.class.gradebook.open")}
-          </Button>
-          <span className="text-muted-foreground font-mono text-xs tracking-[0.25em]">№ {shortId || "—"}</span>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          render={<Link to="/org/$orgId/classes/$classId/gradebook" params={{ orgId, classId }} />}
+        >
+          <TrophyIcon className="size-4" />
+          {t("org.class.gradebook.open")}
+        </Button>
       </div>
 
       <header className="flex flex-col gap-5">
@@ -374,21 +371,18 @@ function RouteComponent() {
             <SessionCardSkeleton />
           </div>
         ) : sessions.length === 0 ? (
-          <div className="bg-card ring-foreground/10 flex flex-col items-center gap-3 rounded-2xl px-6 py-16 text-center ring-1">
-            <CalendarClockIcon className="text-muted-foreground size-8" />
-            <h3 className="text-foreground text-lg font-semibold tracking-tight">
-              {t("org.class.sessions.emptyTitle")}
-            </h3>
-            <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
-              {t("org.class.sessions.emptyHint")}
-            </p>
+          <EmptyState
+            icon={CalendarClockIcon}
+            title={t("org.class.sessions.emptyTitle")}
+            description={t("org.class.sessions.emptyHint")}
+          >
             {canCreateSession ? (
-              <Button onClick={() => setFormOpen(true)} className="mt-2">
+              <Button onClick={() => setFormOpen(true)}>
                 <PlusIcon className="size-4" />
                 {t("org.class.sessions.newSession")}
               </Button>
             ) : null}
-          </div>
+          </EmptyState>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {sessions.map((s, i) => (
@@ -423,19 +417,16 @@ function RouteComponent() {
               <StudentCardSkeleton />
             </div>
           ) : members.length === 0 ? (
-            <div className="bg-card ring-foreground/10 flex flex-col items-center gap-3 rounded-2xl px-6 py-16 text-center ring-1">
-              <UsersIcon className="text-muted-foreground size-8" />
-              <h3 className="text-foreground text-lg font-semibold tracking-tight">
-                {t("org.class.students.emptyTitle")}
-              </h3>
-              <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
-                {t("org.class.students.emptyHint")}
-              </p>
-              <Button onClick={() => setEnrollOpen(true)} className="mt-2">
+            <EmptyState
+              icon={UsersIcon}
+              title={t("org.class.students.emptyTitle")}
+              description={t("org.class.students.emptyHint")}
+            >
+              <Button onClick={() => setEnrollOpen(true)}>
                 <PlusIcon className="size-4" />
                 {t("org.class.students.addMember")}
               </Button>
-            </div>
+            </EmptyState>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {members.map((m, i) => (

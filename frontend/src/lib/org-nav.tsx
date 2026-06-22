@@ -20,7 +20,10 @@ export function buildOrgNavGroups(
 ): NavGroup[] {
   const groups: NavGroupSpec[] = [
     { label: t("org.panel"), keys: ["dashboard", "calendar", "classes"] },
-    { label: t("org.nav.learning"), keys: ["exams", "practices", "grades", "attendance"] },
+    {
+      label: t("org.nav.learning"),
+      keys: ["online-classes", "exams", "practices", "grades", "attendance"],
+    },
     { label: t("org.nav.management"), keys: ["users", "roles", "settings", "files"] },
   ]
 

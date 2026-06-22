@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
 import { FileIcon, Loader2Icon, Trash2Icon, UploadIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -13,6 +13,7 @@ import { usePostMediaPresign } from "@/api/media/media"
 import { getGetOfflinesQueryKey, usePostOfflines, usePutOfflinesId } from "@/api/offlines/offlines"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
 import { Button } from "@/components/ui/button"
+import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -31,21 +32,6 @@ const schema = z.object({
 type Values = z.infer<typeof schema>
 
 const defaults: Values = { title: "", description: "", published_at: "" }
-
-function isoToLocalInput(iso?: string): string {
-  if (!iso) return ""
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return ""
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
-
-function localInputToISO(value?: string): string | undefined {
-  if (!value) return undefined
-  const d = new Date(value)
-  if (isNaN(d.getTime())) return undefined
-  return d.toISOString()
-}
 
 interface OfflineFormDialogProps {
   open: boolean
@@ -70,7 +56,7 @@ export function OfflineFormDialog({ open, onOpenChange, room, classSessionId }: 
     setPendingFiles([])
     form.reset(
       room
-        ? { title: room.title ?? "", description: room.description ?? "", published_at: isoToLocalInput(room.published_at) }
+        ? { title: room.title ?? "", description: room.description ?? "", published_at: room.published_at ?? "" }
         : defaults
     )
   }, [open, room])
@@ -84,7 +70,7 @@ export function OfflineFormDialog({ open, onOpenChange, room, classSessionId }: 
   const isLoading = createMutation.isPending || updateMutation.isPending || uploading
 
   const onSubmit = form.handleSubmit(async (values) => {
-    const published_at = localInputToISO(values.published_at)
+    const published_at = values.published_at || undefined
     if (isEdit && room?.id) {
       try {
         await updateMutation.mutateAsync({
@@ -161,7 +147,18 @@ export function OfflineFormDialog({ open, onOpenChange, room, classSessionId }: 
         </Field>
         <Field>
           <FieldLabel>{t(`${PREFIX}.publishedAt`)}</FieldLabel>
-          <Input type="datetime-local" {...form.register("published_at")} />
+          <Controller
+            control={form.control}
+            name="published_at"
+            render={({ field, fieldState }) => (
+              <DateTimePicker
+                value={field.value || undefined}
+                onChange={(v) => field.onChange(v ?? "")}
+                invalid={fieldState.invalid}
+                clearable
+              />
+            )}
+          />
         </Field>
         <Field>
           <FieldLabel>{t(`${PREFIX}.attachments`)}</FieldLabel>

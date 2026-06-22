@@ -9,8 +9,9 @@ import { SortPicker } from "@/components/data-table/sort-picker"
 import { Input } from "@/components/ui/input"
 
 interface SectionToolbarProps {
-  searchValue: string
-  onSearchChange: (value: string) => void
+  /** Omit search props to hide the search input (e.g. sections whose API has no search). */
+  searchValue?: string
+  onSearchChange?: (value: string) => void
   searchPlaceholder?: string
   sortOptions: SortOption[]
   sort?: SectionSort
@@ -32,15 +33,17 @@ export function SectionToolbar({
   const { t } = useTranslation()
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <div className="relative w-full sm:max-w-xs">
-        <SearchIcon className="text-muted-foreground pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2" />
-        <Input
-          value={searchValue}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder={searchPlaceholder ?? t("org.session.controls.searchPlaceholder")}
-          className="ps-9"
-        />
-      </div>
+      {onSearchChange ? (
+        <div className="relative w-full sm:max-w-xs">
+          <SearchIcon className="text-muted-foreground pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2" />
+          <Input
+            value={searchValue ?? ""}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder={searchPlaceholder ?? t("org.session.controls.searchPlaceholder")}
+            className="ps-9"
+          />
+        </div>
+      ) : null}
       <div className="flex items-center gap-2">
         {children}
         <SortPicker

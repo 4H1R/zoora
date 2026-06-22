@@ -3,7 +3,7 @@ import type { GithubCom4H1RZooraInternalDomainPracticeRoom as PracticeRoom } fro
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -18,6 +18,7 @@ import {
   type PendingAttachment,
 } from "@/components/media/MediaAttachmentUploader"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
+import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -34,7 +35,7 @@ const schema = z
   })
   .refine((v) => new Date(v.end_time) > new Date(v.start_time), {
     path: ["end_time"],
-    message: "end_after_start",
+    params: { i18n: "validation.endAfterStart" },
   })
 
 type ValuesInput = z.input<typeof schema>
@@ -48,20 +49,12 @@ const defaults: Values = {
   end_time: "",
 }
 
-function isoToLocalInput(iso?: string): string {
-  if (!iso) return ""
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return ""
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
-
 const practiceToValues = (practice: PracticeRoom): Values => ({
   title: practice.title ?? "",
   content: practice.content ?? "",
   max_score: practice.max_score ?? 0,
-  start_time: isoToLocalInput(practice.start_time),
-  end_time: isoToLocalInput(practice.end_time),
+  start_time: practice.start_time ?? "",
+  end_time: practice.end_time ?? "",
 })
 
 interface PracticeFormDialogProps {
@@ -128,8 +121,8 @@ export function PracticeFormDialog({
       title: values.title,
       content: values.content,
       max_score: values.max_score,
-      start_time: new Date(values.start_time).toISOString(),
-      end_time: new Date(values.end_time).toISOString(),
+      start_time: values.start_time,
+      end_time: values.end_time,
       attachments: attachments.map((a) => a.media_id),
     }
     if (isEdit && practice?.id) {
@@ -189,12 +182,32 @@ export function PracticeFormDialog({
         </Field>
         <Field data-invalid={!!errors.start_time || undefined}>
           <FieldLabel>{t(`${TRANSLATION_PREFIX}.startTime`)}</FieldLabel>
-          <Input type="datetime-local" {...form.register("start_time")} />
+          <Controller
+            control={form.control}
+            name="start_time"
+            render={({ field, fieldState }) => (
+              <DateTimePicker
+                value={field.value || undefined}
+                onChange={(v) => field.onChange(v ?? "")}
+                invalid={fieldState.invalid}
+              />
+            )}
+          />
           <FieldError errors={[errors.start_time]} />
         </Field>
         <Field data-invalid={!!errors.end_time || undefined}>
           <FieldLabel>{t(`${TRANSLATION_PREFIX}.endTime`)}</FieldLabel>
-          <Input type="datetime-local" {...form.register("end_time")} />
+          <Controller
+            control={form.control}
+            name="end_time"
+            render={({ field, fieldState }) => (
+              <DateTimePicker
+                value={field.value || undefined}
+                onChange={(v) => field.onChange(v ?? "")}
+                invalid={fieldState.invalid}
+              />
+            )}
+          />
           <FieldError errors={[errors.end_time]} />
         </Field>
       </FieldGroup>

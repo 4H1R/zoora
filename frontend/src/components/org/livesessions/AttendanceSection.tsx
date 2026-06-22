@@ -33,6 +33,7 @@ import { Eyebrow } from "@/components/eyebrow"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -345,15 +346,11 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
         list.isFiltered ? (
           <SectionNoResults />
         ) : (
-          <div className="bg-card ring-foreground/10 flex flex-col items-center gap-3 rounded-2xl px-6 py-16 text-center ring-1">
-            <UserCheckIcon className="text-muted-foreground size-8" />
-            <h3 className="text-foreground text-lg font-semibold tracking-tight">
-              {t("org.session.attendance.emptyTitle")}
-            </h3>
-            <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
-              {canCreate ? t("org.session.attendance.emptyHint") : t("org.session.attendance.emptyHintMember")}
-            </p>
-          </div>
+          <EmptyState
+            icon={UserCheckIcon}
+            title={t("org.session.attendance.emptyTitle")}
+            description={canCreate ? t("org.session.attendance.emptyHint") : t("org.session.attendance.emptyHintMember")}
+          />
         )
       ) : (
         <>

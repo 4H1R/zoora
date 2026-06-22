@@ -25,6 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 
 import { useBankPermissions } from "./use-bank-permissions"
@@ -129,25 +130,22 @@ export function QuestionBankQuestionsDialog({
               </div>
             </div>
 
-            <ul className="divide-border max-h-[28rem] divide-y overflow-y-auto rounded-md border">
-              {isLoading ? (
-                <>
-                  <li className="px-3 py-3"><Skeleton className="h-5 w-3/5" /></li>
-                  <li className="px-3 py-3"><Skeleton className="h-5 w-2/5" /></li>
-                  <li className="px-3 py-3"><Skeleton className="h-5 w-1/2" /></li>
-                </>
-              ) : questions.length === 0 ? (
-                <li className="flex flex-col items-center gap-2 px-6 py-10 text-center">
-                  <HelpCircleIcon className="text-muted-foreground size-7" />
-                  <p className="text-foreground text-sm font-medium">
-                    {t("org.session.questionBanks.questions.emptyTitle")}
-                  </p>
-                  <p className="text-muted-foreground text-xs">
-                    {t("org.session.questionBanks.questions.emptyHint")}
-                  </p>
-                </li>
-              ) : (
-                questions.map((q) => (
+            {!isLoading && questions.length === 0 ? (
+              <EmptyState
+                icon={HelpCircleIcon}
+                title={t("org.session.questionBanks.questions.emptyTitle")}
+                description={t("org.session.questionBanks.questions.emptyHint")}
+              />
+            ) : (
+              <ul className="divide-border max-h-[28rem] divide-y overflow-y-auto rounded-md border">
+                {isLoading ? (
+                  <>
+                    <li className="px-3 py-3"><Skeleton className="h-5 w-3/5" /></li>
+                    <li className="px-3 py-3"><Skeleton className="h-5 w-2/5" /></li>
+                    <li className="px-3 py-3"><Skeleton className="h-5 w-1/2" /></li>
+                  </>
+                ) : (
+                  questions.map((q) => (
                   <li key={q.id} className="group/qrow flex items-start gap-3 px-3 py-3">
                     <div className="min-w-0 flex-1">
                       <div className="line-clamp-2 text-sm leading-snug">{q.text}</div>
@@ -188,8 +186,9 @@ export function QuestionBankQuestionsDialog({
                     </div>
                   </li>
                 ))
-              )}
-            </ul>
+                )}
+              </ul>
+            )}
           </div>
         </DialogContent>
       </Dialog>

@@ -1,12 +1,15 @@
 import type {
+  Control,
   FieldError as RHFFieldError,
   FieldErrors,
   UseFormRegister,
 } from "react-hook-form"
 
+import { Controller } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
 import { BooleanFieldGroup, BooleanFieldRow } from "@/components/form/boolean-field-row"
+import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -60,30 +63,47 @@ export function QuizCoreFields({ register, errors, prefix }: QuizCoreFieldsProps
 }
 
 interface QuizScheduleFieldsProps {
-  register: UseFormRegister<any>
+  // Loose control so callers with stricter generics can pass it without casts.
+  control: Control<any, any, any>
   errors: FieldErrors<QuizScheduleValues>
   prefix: string
 }
 
-export function QuizScheduleFields({ register, errors, prefix }: QuizScheduleFieldsProps) {
+export function QuizScheduleFields({ control, errors, prefix }: QuizScheduleFieldsProps) {
   const { t } = useTranslation()
   const endedAtError = errors.ended_at as RHFFieldError | undefined
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <Field data-invalid={!!errors.started_at || undefined}>
         <FieldLabel>{t(`${prefix}.startedAt`)}</FieldLabel>
-        <Input type="datetime-local" {...register("started_at")} />
+        <Controller
+          control={control}
+          name="started_at"
+          render={({ field, fieldState }) => (
+            <DateTimePicker
+              value={field.value || undefined}
+              onChange={(v) => field.onChange(v ?? "")}
+              invalid={fieldState.invalid}
+            />
+          )}
+        />
         <p className="text-muted-foreground text-xs">{t(`${prefix}.startedAtHint`)}</p>
         <FieldError errors={[errors.started_at as RHFFieldError | undefined]} />
       </Field>
       <Field data-invalid={!!endedAtError || undefined}>
         <FieldLabel>{t(`${prefix}.endedAt`)}</FieldLabel>
-        <Input type="datetime-local" {...register("ended_at")} />
-        {endedAtError?.message === "end_after_start" ? (
-          <p className="text-destructive text-xs">{t(`${prefix}.endedAtError`)}</p>
-        ) : (
-          <p className="text-muted-foreground text-xs">{t(`${prefix}.endedAtHint`)}</p>
-        )}
+        <Controller
+          control={control}
+          name="ended_at"
+          render={({ field, fieldState }) => (
+            <DateTimePicker
+              value={field.value || undefined}
+              onChange={(v) => field.onChange(v ?? "")}
+              invalid={fieldState.invalid}
+            />
+          )}
+        />
+        <p className="text-muted-foreground text-xs">{t(`${prefix}.endedAtHint`)}</p>
         <FieldError errors={[endedAtError]} />
       </Field>
     </div>

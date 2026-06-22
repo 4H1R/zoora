@@ -14,6 +14,7 @@ import {
 } from "@/api/live-sessions/live-sessions"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatSessionDate } from "@/lib/session-status"
 import { cn } from "@/lib/utils"
@@ -98,10 +99,7 @@ export function LiveRoomRecordings({ roomId, isActive, canManage }: LiveRoomReco
       {query.isPending ? (
         <Skeleton className="h-12 w-full rounded-xl" />
       ) : recordings.length === 0 ? (
-        <div className="text-muted-foreground flex flex-col items-center gap-2 rounded-xl border border-dashed py-8 text-center">
-          <FilmIcon className="size-5" />
-          <span className="text-sm">{t("org.session.liveRooms.recordings.empty")}</span>
-        </div>
+        <EmptyState icon={FilmIcon} title={t("org.session.liveRooms.recordings.empty")} />
       ) : (
         <ul className="flex flex-col gap-1.5">
           {recordings.map((r) => {

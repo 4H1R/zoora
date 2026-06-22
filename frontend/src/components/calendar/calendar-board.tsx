@@ -45,7 +45,7 @@ export function CalendarBoard({
               <span
                 key={type}
                 className={cn(
-                  "h-1 w-1 rounded-full",
+                  "h-1.5 w-1.5 rounded-full",
                   // On the selected (filled) cell, colored dots wash out — show
                   // them in the foreground color so they stay legible.
                   selected ? "bg-primary-foreground" : eventDotColor(type)

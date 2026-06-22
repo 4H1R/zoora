@@ -19,8 +19,8 @@ import { Spinner } from "@/components/ui/spinner"
 import { cn } from "@/lib/utils"
 
 const loginSchema = z.object({
-  username: z.string().min(3, "login.usernameError"),
-  password: z.string().min(8, "login.passwordError"),
+  username: z.string().min(3),
+  password: z.string().min(8),
 })
 
 type LoginFormValues = z.infer<typeof loginSchema>
@@ -92,7 +92,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
               aria-invalid={!!errors.username}
               {...register("username")}
             />
-            {errors.username && <FieldError>{t(errors.username.message ?? "login.usernameError")}</FieldError>}
+            {errors.username && <FieldError>{errors.username.message}</FieldError>}
           </Field>
 
           <Field data-invalid={!!errors.password || undefined}>
@@ -117,7 +117,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
                 {showPassword ? <EyeOff /> : <Eye />}
               </InputGroupButton>
             </InputGroup>
-            {errors.password && <FieldError>{t("login.passwordError")}</FieldError>}
+            {errors.password && <FieldError>{errors.password.message}</FieldError>}
           </Field>
 
           <Button type="submit" disabled={isPending} className="mt-2 h-10.5 w-full text-sm font-semibold">

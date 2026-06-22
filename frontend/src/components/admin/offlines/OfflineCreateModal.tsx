@@ -3,7 +3,7 @@ import type { GithubCom4H1RZooraInternalDomainOfflineRoom as OfflineRoom } from 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
 import { useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -12,6 +12,7 @@ import { getGetAdminOfflinesQueryKey } from "@/api/admin-offlines/admin-offlines
 import { getGetOfflinesQueryKey, usePostOfflines, usePutOfflinesId } from "@/api/offlines/offlines"
 import { ClassPicker, SessionPicker } from "@/components/admin/forms/ClassSessionPicker"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
+import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -41,21 +42,6 @@ interface OfflineCreateModalProps {
   defaultSessionId?: string
 }
 
-function isoToLocalInput(iso?: string): string {
-  if (!iso) return ""
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return ""
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
-
-function localInputToISO(value?: string): string | undefined {
-  if (!value) return undefined
-  const d = new Date(value)
-  if (isNaN(d.getTime())) return undefined
-  return d.toISOString()
-}
-
 export function OfflineCreateModal({
   open,
   onOpenChange,
@@ -83,7 +69,7 @@ export function OfflineCreateModal({
       editForm.reset({
         title: room.title ?? "",
         description: room.description ?? "",
-        published_at: isoToLocalInput(room.published_at),
+        published_at: room.published_at ?? "",
       })
     } else {
       createForm.reset({
@@ -132,7 +118,7 @@ export function OfflineCreateModal({
         class_session_id: values.class_session_id,
         title: values.title,
         description: values.description,
-        published_at: localInputToISO(values.published_at),
+        published_at: values.published_at || undefined,
       },
     })
   })
@@ -144,7 +130,7 @@ export function OfflineCreateModal({
       data: {
         title: values.title,
         description: values.description,
-        published_at: localInputToISO(values.published_at),
+        published_at: values.published_at || undefined,
       },
     })
   })
@@ -185,7 +171,18 @@ export function OfflineCreateModal({
             </Field>
             <Field>
               <FieldLabel>{t("admin.offlines.form.publishedAt")}</FieldLabel>
-              <Input type="datetime-local" {...editForm.register("published_at")} />
+              <Controller
+                control={editForm.control}
+                name="published_at"
+                render={({ field, fieldState }) => (
+                  <DateTimePicker
+                    value={field.value || undefined}
+                    onChange={(v) => field.onChange(v ?? "")}
+                    invalid={fieldState.invalid}
+                    clearable
+                  />
+                )}
+              />
             </Field>
           </>
         ) : (
@@ -230,7 +227,18 @@ export function OfflineCreateModal({
             </Field>
             <Field>
               <FieldLabel>{t("admin.offlines.form.publishedAt")}</FieldLabel>
-              <Input type="datetime-local" {...createForm.register("published_at")} />
+              <Controller
+                control={createForm.control}
+                name="published_at"
+                render={({ field, fieldState }) => (
+                  <DateTimePicker
+                    value={field.value || undefined}
+                    onChange={(v) => field.onChange(v ?? "")}
+                    invalid={fieldState.invalid}
+                    clearable
+                  />
+                )}
+              />
             </Field>
           </>
         )}

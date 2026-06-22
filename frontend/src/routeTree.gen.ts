@@ -18,6 +18,7 @@ import { Route as GuestLoginRouteImport } from './routes/_guest/login'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin/index'
 import { Route as AuthOrgOrgIdRouteImport } from './routes/_auth/org/$orgId'
 import { Route as AdminAdminDashboardRouteImport } from './routes/_admin/admin/dashboard'
+import { Route as AuthOrgOrgIdIndexRouteImport } from './routes/_auth/org/$orgId/index'
 import { Route as AdminAdminUsersIndexRouteImport } from './routes/_admin/admin/users/index'
 import { Route as AdminAdminSessionsIndexRouteImport } from './routes/_admin/admin/sessions/index'
 import { Route as AdminAdminRolesIndexRouteImport } from './routes/_admin/admin/roles/index'
@@ -101,6 +102,11 @@ const AdminAdminDashboardRoute = AdminAdminDashboardRouteImport.update({
   id: '/admin/dashboard',
   path: '/admin/dashboard',
   getParentRoute: () => AdminRoute,
+} as any)
+const AuthOrgOrgIdIndexRoute = AuthOrgOrgIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthOrgOrgIdRoute,
 } as any)
 const AdminAdminUsersIndexRoute = AdminAdminUsersIndexRouteImport.update({
   id: '/admin/users/',
@@ -360,6 +366,7 @@ export interface FileRoutesByFullPath {
   '/admin/roles/': typeof AdminAdminRolesIndexRoute
   '/admin/sessions/': typeof AdminAdminSessionsIndexRoute
   '/admin/users/': typeof AdminAdminUsersIndexRoute
+  '/org/$orgId/': typeof AuthOrgOrgIdIndexRoute
   '/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
   '/admin/classes/$classId/live-rooms': typeof AdminAdminClassesClassIdLiveRoomsRoute
   '/admin/classes/$classId/members': typeof AdminAdminClassesClassIdMembersRoute
@@ -390,7 +397,6 @@ export interface FileRoutesByTo {
   '/login': typeof GuestLoginRoute
   '/live/$liveId': typeof LiveLiveIdRoute
   '/admin/dashboard': typeof AdminAdminDashboardRoute
-  '/org/$orgId': typeof AuthOrgOrgIdRouteWithChildren
   '/admin': typeof AdminAdminIndexRoute
   '/org/$orgId/calendar': typeof AuthOrgOrgIdCalendarRoute
   '/org/$orgId/dashboard': typeof AuthOrgOrgIdDashboardRoute
@@ -409,6 +415,7 @@ export interface FileRoutesByTo {
   '/admin/roles': typeof AdminAdminRolesIndexRoute
   '/admin/sessions': typeof AdminAdminSessionsIndexRoute
   '/admin/users': typeof AdminAdminUsersIndexRoute
+  '/org/$orgId': typeof AuthOrgOrgIdIndexRoute
   '/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
   '/admin/classes/$classId/live-rooms': typeof AdminAdminClassesClassIdLiveRoomsRoute
   '/admin/classes/$classId/members': typeof AdminAdminClassesClassIdMembersRoute
@@ -462,6 +469,7 @@ export interface FileRoutesById {
   '/_admin/admin/roles/': typeof AdminAdminRolesIndexRoute
   '/_admin/admin/sessions/': typeof AdminAdminSessionsIndexRoute
   '/_admin/admin/users/': typeof AdminAdminUsersIndexRoute
+  '/_auth/org/$orgId/': typeof AuthOrgOrgIdIndexRoute
   '/_admin/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
   '/_admin/admin/classes/$classId/live-rooms': typeof AdminAdminClassesClassIdLiveRoomsRoute
   '/_admin/admin/classes/$classId/members': typeof AdminAdminClassesClassIdMembersRoute
@@ -513,6 +521,7 @@ export interface FileRouteTypes {
     | '/admin/roles/'
     | '/admin/sessions/'
     | '/admin/users/'
+    | '/org/$orgId/'
     | '/admin/classes/$classId/gradebook'
     | '/admin/classes/$classId/live-rooms'
     | '/admin/classes/$classId/members'
@@ -543,7 +552,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/live/$liveId'
     | '/admin/dashboard'
-    | '/org/$orgId'
     | '/admin'
     | '/org/$orgId/calendar'
     | '/org/$orgId/dashboard'
@@ -562,6 +570,7 @@ export interface FileRouteTypes {
     | '/admin/roles'
     | '/admin/sessions'
     | '/admin/users'
+    | '/org/$orgId'
     | '/admin/classes/$classId/gradebook'
     | '/admin/classes/$classId/live-rooms'
     | '/admin/classes/$classId/members'
@@ -614,6 +623,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/roles/'
     | '/_admin/admin/sessions/'
     | '/_admin/admin/users/'
+    | '/_auth/org/$orgId/'
     | '/_admin/admin/classes/$classId/gradebook'
     | '/_admin/admin/classes/$classId/live-rooms'
     | '/_admin/admin/classes/$classId/members'
@@ -712,6 +722,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/dashboard'
       preLoaderRoute: typeof AdminAdminDashboardRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/_auth/org/$orgId/': {
+      id: '/_auth/org/$orgId/'
+      path: '/'
+      fullPath: '/org/$orgId/'
+      preLoaderRoute: typeof AuthOrgOrgIdIndexRouteImport
+      parentRoute: typeof AuthOrgOrgIdRoute
     }
     '/_admin/admin/users/': {
       id: '/_admin/admin/users/'
@@ -1067,6 +1084,7 @@ interface AuthOrgOrgIdRouteChildren {
   AuthOrgOrgIdCalendarRoute: typeof AuthOrgOrgIdCalendarRoute
   AuthOrgOrgIdDashboardRoute: typeof AuthOrgOrgIdDashboardRoute
   AuthOrgOrgIdSettingsRoute: typeof AuthOrgOrgIdSettingsRoute
+  AuthOrgOrgIdIndexRoute: typeof AuthOrgOrgIdIndexRoute
   AuthOrgOrgIdClassesClassIdRoute: typeof AuthOrgOrgIdClassesClassIdRoute
   AuthOrgOrgIdOfflinesOfflineIdRoute: typeof AuthOrgOrgIdOfflinesOfflineIdRoute
   AuthOrgOrgIdAttendanceIndexRoute: typeof AuthOrgOrgIdAttendanceIndexRoute
@@ -1089,6 +1107,7 @@ const AuthOrgOrgIdRouteChildren: AuthOrgOrgIdRouteChildren = {
   AuthOrgOrgIdCalendarRoute: AuthOrgOrgIdCalendarRoute,
   AuthOrgOrgIdDashboardRoute: AuthOrgOrgIdDashboardRoute,
   AuthOrgOrgIdSettingsRoute: AuthOrgOrgIdSettingsRoute,
+  AuthOrgOrgIdIndexRoute: AuthOrgOrgIdIndexRoute,
   AuthOrgOrgIdClassesClassIdRoute: AuthOrgOrgIdClassesClassIdRoute,
   AuthOrgOrgIdOfflinesOfflineIdRoute: AuthOrgOrgIdOfflinesOfflineIdRoute,
   AuthOrgOrgIdAttendanceIndexRoute: AuthOrgOrgIdAttendanceIndexRoute,

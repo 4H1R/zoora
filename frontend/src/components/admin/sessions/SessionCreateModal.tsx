@@ -3,7 +3,7 @@ import type { GithubCom4H1RZooraInternalDomainClassSession as Session } from "@/
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
 import { useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -15,6 +15,7 @@ import {
   usePutClassesSessionsSessionId,
 } from "@/api/classes/classes"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
+import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -32,14 +33,6 @@ interface SessionCreateModalProps {
   onOpenChange: (open: boolean) => void
   classId: string
   session?: Session | null
-}
-
-function isoToLocalInput(iso?: string): string {
-  if (!iso) return ""
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return ""
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 export function SessionCreateModal({ open, onOpenChange, classId, session }: SessionCreateModalProps) {
@@ -62,7 +55,7 @@ export function SessionCreateModal({ open, onOpenChange, classId, session }: Ses
       form.reset({
         name: session.name ?? "",
         description: session.description ?? "",
-        start_time: isoToLocalInput(session.start_time),
+        start_time: session.start_time ?? "",
       })
     } else {
       form.reset({ name: "", description: "", start_time: "" })
@@ -98,14 +91,13 @@ export function SessionCreateModal({ open, onOpenChange, classId, session }: Ses
   const errors = form.formState.errors
 
   const onSubmit = form.handleSubmit((values) => {
-    const startISO = new Date(values.start_time).toISOString()
     if (isEdit && session?.id) {
       updateMutation.mutate({
         sessionId: session.id,
         data: {
           name: values.name,
           description: values.description,
-          start_time: startISO,
+          start_time: values.start_time,
         },
       })
     } else {
@@ -114,7 +106,7 @@ export function SessionCreateModal({ open, onOpenChange, classId, session }: Ses
         data: {
           name: values.name,
           description: values.description,
-          start_time: startISO,
+          start_time: values.start_time,
         },
       })
     }
@@ -153,7 +145,17 @@ export function SessionCreateModal({ open, onOpenChange, classId, session }: Ses
 
         <Field data-invalid={!!errors.start_time || undefined}>
           <FieldLabel>{t("admin.sessions.form.startTime")}</FieldLabel>
-          <Input type="datetime-local" {...form.register("start_time")} />
+          <Controller
+            control={form.control}
+            name="start_time"
+            render={({ field, fieldState }) => (
+              <DateTimePicker
+                value={field.value || undefined}
+                onChange={(v) => field.onChange(v ?? "")}
+                invalid={fieldState.invalid}
+              />
+            )}
+          />
           <FieldError errors={[errors.start_time]} />
         </Field>
       </FieldGroup>

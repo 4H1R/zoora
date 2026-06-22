@@ -15,22 +15,20 @@ import { useDirection } from "@/components/ui/direction"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { buildAccess } from "@/lib/access"
 import { buildOrgNavGroups } from "@/lib/org-nav"
+import { ORG_ROUTES } from "@/lib/org-routes"
 
 export const Route = createFileRoute("/_auth/org/$orgId")({
   component: RouteComponent,
 })
 
+// Map each top-level path segment to its i18n label for the breadcrumb. Derived
+// from ORG_ROUTES (the single source of truth shared with the sidebar nav) so it
+// can never drift out of sync — adding a route there auto-labels its breadcrumb.
 const SEGMENT_KEYS: Record<string, string> = {
-  dashboard: "org.nav.dashboard",
-  classes: "org.nav.classes",
+  ...Object.fromEntries(
+    Object.values(ORG_ROUTES).map((spec) => [spec.segment, spec.i18nKey])
+  ),
   members: "org.nav.members",
-  users: "org.nav.users",
-  roles: "org.nav.roles",
-  settings: "org.nav.settings",
-  files: "org.nav.files",
-  exams: "org.nav.exams",
-  grades: "org.nav.grades",
-  attendance: "org.nav.attendance",
 }
 
 function RouteComponent() {

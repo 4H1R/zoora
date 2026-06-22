@@ -1,27 +1,23 @@
-import type { NavFn } from "@/lib/data-table"
-
 import { createFileRoute } from "@tanstack/react-router"
-
-import { orgHead } from "@/lib/org-head"
-import { useOrgGuard } from "@/lib/access"
-import { getCoreRowModel, useReactTable } from "@tanstack/react-table"
-import { LayoutGrid, List, PlusIcon, SearchIcon } from "lucide-react"
-import { useEffect, useState } from "react"
+import { LayoutGrid, PlusIcon } from "lucide-react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { useDebounce } from "use-debounce"
 import { z } from "zod"
 
 import { useGetClasses } from "@/api/classes/classes"
 import { ClassCard, ClassCardSkeleton } from "@/components/class-card"
-import { useClassPermissions } from "@/components/org/classes/use-class-permissions"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
+import { TableFilter } from "@/components/data-table/table-filter"
+import { useClassPermissions } from "@/components/org/classes/use-class-permissions"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { createSortingHandler } from "@/lib/data-table"
+import { EmptyState } from "@/components/ui/empty-state"
+import { ViewModeToggle, type ViewMode } from "@/components/view-mode-toggle"
+import { useOrgGuard } from "@/lib/access"
+import { useAdminTable } from "@/lib/data-table"
+import { orgHead } from "@/lib/org-head"
 
 import { useClassColumns } from "./-columns"
 import { CreateClassDialog } from "./-create-class-dialog"
@@ -40,13 +36,10 @@ export const Route = createFileRoute("/_auth/org/$orgId/classes/")({
   component: RouteComponent,
 })
 
-type ViewMode = "grid" | "table"
-
 function RouteComponent() {
   const { t } = useTranslation()
   const { orgId } = Route.useParams()
   const { search, order_by, order_dir, page } = Route.useSearch()
-  const navigate = Route.useNavigate() as unknown as NavFn
   const { canView, canCreate } = useClassPermissions()
   const allowed = useOrgGuard(["classes:view", "classes:view_any"])
 
@@ -68,26 +61,10 @@ function RouteComponent() {
 
   const [formOpen, setFormOpen] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>("grid")
-  const [localSearch, setLocalSearch] = useState(search ?? "")
-  const [debouncedSearch] = useDebounce(localSearch, 300)
-
-  useEffect(() => {
-    navigate({ search: (prev) => ({ ...prev, search: debouncedSearch || undefined, page: 1 }) })
-  }, [debouncedSearch])
 
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
   const columns = useClassColumns(orgId)
-
-  const table = useReactTable({
-    data: classes,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    rowCount: total,
-    manualPagination: true,
-    manualSorting: true,
-    onSortingChange: createSortingHandler(navigate, sorting),
-    state: { sorting },
-  })
+  const table = useAdminTable({ data: classes, columns, rowCount: total, sorting })
 
   const renderContent = () => {
     if (viewMode === "table") {
@@ -118,10 +95,11 @@ function RouteComponent() {
 
     if (classes.length === 0) {
       return (
-        <div className="text-muted-foreground flex flex-col items-center gap-2 py-16 text-center">
-          <p className="text-sm font-medium">{t("classesPage.noResults")}</p>
-          <p className="text-xs">{t("classesPage.noResultsHint")}</p>
-        </div>
+        <EmptyState
+          icon={LayoutGrid}
+          title={t("classesPage.noResults")}
+          description={t("classesPage.noResultsHint")}
+        />
       )
     }
 
@@ -151,31 +129,16 @@ function RouteComponent() {
       />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative max-w-xs flex-1">
-          <SearchIcon className="text-muted-foreground pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2" />
-          <Input
-            placeholder={t("classesPage.searchPlaceholder")}
-            value={localSearch}
-            onChange={(e) => setLocalSearch(e.target.value)}
-            className="ps-9"
+        <div className="flex-1">
+          <TableFilter
+            table={table}
+            searchPlaceholder={t("classesPage.searchPlaceholder")}
+            sortLabel={t("classesPage.toolbar.sort")}
+            columnsLabel={t("classesPage.toolbar.columns")}
+            toggleColumnsLabel={t("classesPage.toolbar.toggleColumns")}
           />
         </div>
-
-        <ToggleGroup
-          value={[viewMode]}
-          onValueChange={(values) => {
-            const next = values.find((v) => v !== viewMode)
-            if (next) setViewMode(next as ViewMode)
-          }}
-          className="border-border rounded-lg border"
-        >
-          <ToggleGroupItem value="grid" aria-label={t("classesPage.gridView")} className="px-2.5">
-            <LayoutGrid className="size-4" />
-          </ToggleGroupItem>
-          <ToggleGroupItem value="table" aria-label={t("classesPage.tableView")} className="px-2.5">
-            <List className="size-4" />
-          </ToggleGroupItem>
-        </ToggleGroup>
+        <ViewModeToggle value={viewMode} onChange={setViewMode} />
       </div>
 
       {renderContent()}

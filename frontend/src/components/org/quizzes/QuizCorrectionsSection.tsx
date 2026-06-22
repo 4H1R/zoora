@@ -22,6 +22,7 @@ import { SortPicker } from "@/components/data-table/sort-picker"
 import { SectionPagination } from "@/components/org/session/section-pagination"
 import { Eyebrow } from "@/components/eyebrow"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getEntityColor, getInitials, useFormatDate } from "@/lib/data-table"
 import { DEFAULT_PAGE_SIZE } from "@/lib/list"
@@ -122,7 +123,11 @@ export function QuizCorrectionsSection({ classSessionId }: QuizCorrectionsSectio
       </div>
 
       {noQuizzes ? (
-        <EmptyState />
+        <EmptyState
+          icon={ClipboardListIcon}
+          title={t("org.session.corrections.emptyTitle")}
+          description={t("org.session.corrections.emptyHint")}
+        />
       ) : (
         <>
           <QuizSelector
@@ -163,7 +168,11 @@ export function QuizCorrectionsSection({ classSessionId }: QuizCorrectionsSectio
               <SubmissionRowSkeleton />
             </div>
           ) : submissions.length === 0 ? (
-            <NoSubmissions />
+            <EmptyState
+              icon={CheckSquareIcon}
+              title={t("org.session.corrections.noResults")}
+              description={t("org.session.corrections.noResultsHint")}
+            />
           ) : (
             <>
               <ul className="flex flex-col gap-3">
@@ -198,36 +207,6 @@ export function QuizCorrectionsSection({ classSessionId }: QuizCorrectionsSectio
         quizMaxScore={quizMaxScore}
       />
     </section>
-  )
-}
-
-function EmptyState() {
-  const { t } = useTranslation()
-  return (
-    <div className="bg-card border-border flex flex-col items-center gap-3 rounded-2xl border px-6 py-16 text-center shadow-sm dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/10">
-      <ClipboardListIcon className="text-muted-foreground size-8" />
-      <h3 className="text-foreground text-lg font-semibold tracking-tight">
-        {t("org.session.corrections.emptyTitle")}
-      </h3>
-      <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
-        {t("org.session.corrections.emptyHint")}
-      </p>
-    </div>
-  )
-}
-
-function NoSubmissions() {
-  const { t } = useTranslation()
-  return (
-    <div className="bg-card border-border flex flex-col items-center gap-2 rounded-2xl border px-6 py-12 text-center shadow-sm dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/10">
-      <CheckSquareIcon className="text-muted-foreground size-7 opacity-60" />
-      <h3 className="text-foreground text-base font-semibold tracking-tight">
-        {t("org.session.corrections.noResults")}
-      </h3>
-      <p className="text-muted-foreground max-w-sm text-xs leading-relaxed">
-        {t("org.session.corrections.noResultsHint")}
-      </p>
-    </div>
   )
 }
 

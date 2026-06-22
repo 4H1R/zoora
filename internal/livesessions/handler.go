@@ -13,10 +13,9 @@ import (
 
 // liveRoomsListConfig is the handler-owned white-list for GET /live-rooms.
 var liveRoomsListConfig = domain.ListConfig{
-	AllowedSearchFields: []string{"name", "livekit_room_name"},
-	AllowedOrderFields:  []string{"created_at", "updated_at", "status", "scheduled_start_time", "actual_start_time", "actual_end_time"},
-	DefaultOrderBy:      "created_at",
-	DefaultOrderDir:     "desc",
+	AllowedOrderFields: []string{"created_at", "updated_at", "status", "scheduled_start_time", "actual_start_time", "actual_end_time"},
+	DefaultOrderBy:     "created_at",
+	DefaultOrderDir:    "desc",
 }
 
 // participantsListConfig gates GET /live-rooms/:id/participants.
@@ -93,7 +92,7 @@ func (h *Handler) CreateRoom(c *gin.Context) {
 
 // List returns live rooms visible to the caller.
 // @Summary List live rooms (scoped by RBAC)
-// @Description Returns rooms filtered by caller role: super-admins / livesessions:view_any see all, teachers see their classes' rooms, students see rooms in classes they are enrolled in. Search matches substrings of: name, livekit_room_name. Orderable fields: created_at, updated_at, status, scheduled_start_time, actual_start_time, actual_end_time. Filters: status, class_id, class_session_id.
+// @Description Returns rooms filtered by caller role: super-admins / livesessions:view_any see all, teachers see their classes' rooms, students see rooms in classes they are enrolled in. Orderable fields: created_at, updated_at, status, scheduled_start_time, actual_start_time, actual_end_time. Filters: status, class_id, class_session_id.
 // @Tags LiveSessions
 // @Produce json
 // @Security BearerAuth
@@ -101,7 +100,6 @@ func (h *Handler) CreateRoom(c *gin.Context) {
 // @Param class_id query string false "Filter by class UUID"
 // @Param class_session_id query string false "Filter by class session UUID"
 // @Param include_deleted query bool false "Include soft-deleted rooms (managers only)"
-// @Param search query string false "Substring match on name or livekit_room_name"
 // @Param order_by query string false "One of: created_at, updated_at, status, scheduled_start_time, actual_start_time, actual_end_time"
 // @Param order_dir query string false "asc or desc"
 // @Param page query int false "1-based page number"

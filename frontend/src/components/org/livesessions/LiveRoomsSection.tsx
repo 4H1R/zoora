@@ -21,6 +21,7 @@ import { SectionToolbar } from "@/components/org/session/section-toolbar"
 import { Eyebrow } from "@/components/eyebrow"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DEFAULT_PAGE_SIZE } from "@/lib/list"
@@ -262,8 +263,6 @@ export function LiveRoomsSection({ classSessionId }: { classSessionId: string })
 
       {rooms.length > 0 || list.isFiltered ? (
         <SectionToolbar
-          searchValue={list.searchInput}
-          onSearchChange={list.setSearchInput}
           sortOptions={sortOptions}
           sort={list.sort}
           onSortChange={list.setSort}
@@ -303,21 +302,18 @@ export function LiveRoomsSection({ classSessionId }: { classSessionId: string })
         list.isFiltered ? (
           <SectionNoResults />
         ) : (
-          <div className="bg-card ring-foreground/10 flex flex-col items-center gap-3 rounded-2xl px-6 py-16 text-center ring-1">
-            <VideoIcon className="text-muted-foreground size-8" />
-            <h3 className="text-foreground text-lg font-semibold tracking-tight">
-              {t("org.session.liveRooms.emptyTitle")}
-            </h3>
-            <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
-              {canCreate ? t("org.session.liveRooms.emptyHint") : t("org.session.liveRooms.emptyHintMember")}
-            </p>
+          <EmptyState
+            icon={VideoIcon}
+            title={t("org.session.liveRooms.emptyTitle")}
+            description={canCreate ? t("org.session.liveRooms.emptyHint") : t("org.session.liveRooms.emptyHintMember")}
+          >
             {canCreate ? (
-              <Button className="mt-2" onClick={() => setFormOpen(true)}>
+              <Button onClick={() => setFormOpen(true)}>
                 <PlusIcon className="size-4" />
                 {t("org.session.liveRooms.newRoom")}
               </Button>
             ) : null}
-          </div>
+          </EmptyState>
         )
       ) : (
         <>

@@ -3,7 +3,7 @@ import type { GithubCom4H1RZooraInternalDomainPracticeRoom as PracticeRoom } fro
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
 import { useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -16,6 +16,7 @@ import {
 } from "@/api/practices/practices"
 import { ClassPicker, SessionPicker } from "@/components/admin/forms/ClassSessionPicker"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
+import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -32,7 +33,7 @@ const createSchema = z
   })
   .refine((v) => new Date(v.end_time) > new Date(v.start_time), {
     path: ["end_time"],
-    message: "end_time must be after start_time",
+    params: { i18n: "validation.endAfterStart" },
   })
 
 const editSchema = z
@@ -45,7 +46,7 @@ const editSchema = z
   })
   .refine((v) => new Date(v.end_time) > new Date(v.start_time), {
     path: ["end_time"],
-    message: "end_time must be after start_time",
+    params: { i18n: "validation.endAfterStart" },
   })
 
 type CreateInput = z.input<typeof createSchema>
@@ -59,14 +60,6 @@ interface PracticeCreateModalProps {
   practice?: PracticeRoom | null
   defaultClassId?: string
   defaultSessionId?: string
-}
-
-function isoToLocalInput(iso?: string): string {
-  if (!iso) return ""
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return ""
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 export function PracticeCreateModal({
@@ -111,8 +104,8 @@ export function PracticeCreateModal({
         title: practice.title ?? "",
         content: practice.content ?? "",
         max_score: practice.max_score ?? 0,
-        start_time: isoToLocalInput(practice.start_time),
-        end_time: isoToLocalInput(practice.end_time),
+        start_time: practice.start_time ?? "",
+        end_time: practice.end_time ?? "",
       })
     } else {
       createForm.reset({
@@ -164,8 +157,8 @@ export function PracticeCreateModal({
         title: values.title,
         content: values.content,
         max_score: values.max_score,
-        start_time: new Date(values.start_time).toISOString(),
-        end_time: new Date(values.end_time).toISOString(),
+        start_time: values.start_time,
+        end_time: values.end_time,
       },
     })
   })
@@ -178,8 +171,8 @@ export function PracticeCreateModal({
         title: values.title,
         content: values.content,
         max_score: values.max_score,
-        start_time: new Date(values.start_time).toISOString(),
-        end_time: new Date(values.end_time).toISOString(),
+        start_time: values.start_time,
+        end_time: values.end_time,
       },
     })
   })
@@ -233,12 +226,32 @@ export function PracticeCreateModal({
             </Field>
             <Field data-invalid={!!editErrors.start_time || undefined}>
               <FieldLabel>{t("admin.practices.form.startTime")}</FieldLabel>
-              <Input type="datetime-local" {...editForm.register("start_time")} />
+              <Controller
+                control={editForm.control}
+                name="start_time"
+                render={({ field, fieldState }) => (
+                  <DateTimePicker
+                    value={field.value || undefined}
+                    onChange={(v) => field.onChange(v ?? "")}
+                    invalid={fieldState.invalid}
+                  />
+                )}
+              />
               <FieldError errors={[editErrors.start_time]} />
             </Field>
             <Field data-invalid={!!editErrors.end_time || undefined}>
               <FieldLabel>{t("admin.practices.form.endTime")}</FieldLabel>
-              <Input type="datetime-local" {...editForm.register("end_time")} />
+              <Controller
+                control={editForm.control}
+                name="end_time"
+                render={({ field, fieldState }) => (
+                  <DateTimePicker
+                    value={field.value || undefined}
+                    onChange={(v) => field.onChange(v ?? "")}
+                    invalid={fieldState.invalid}
+                  />
+                )}
+              />
               <FieldError errors={[editErrors.end_time]} />
             </Field>
           </>
@@ -297,12 +310,32 @@ export function PracticeCreateModal({
             </Field>
             <Field data-invalid={!!createErrors.start_time || undefined}>
               <FieldLabel>{t("admin.practices.form.startTime")}</FieldLabel>
-              <Input type="datetime-local" {...createForm.register("start_time")} />
+              <Controller
+                control={createForm.control}
+                name="start_time"
+                render={({ field, fieldState }) => (
+                  <DateTimePicker
+                    value={field.value || undefined}
+                    onChange={(v) => field.onChange(v ?? "")}
+                    invalid={fieldState.invalid}
+                  />
+                )}
+              />
               <FieldError errors={[createErrors.start_time]} />
             </Field>
             <Field data-invalid={!!createErrors.end_time || undefined}>
               <FieldLabel>{t("admin.practices.form.endTime")}</FieldLabel>
-              <Input type="datetime-local" {...createForm.register("end_time")} />
+              <Controller
+                control={createForm.control}
+                name="end_time"
+                render={({ field, fieldState }) => (
+                  <DateTimePicker
+                    value={field.value || undefined}
+                    onChange={(v) => field.onChange(v ?? "")}
+                    invalid={fieldState.invalid}
+                  />
+                )}
+              />
               <FieldError errors={[createErrors.end_time]} />
             </Field>
           </>

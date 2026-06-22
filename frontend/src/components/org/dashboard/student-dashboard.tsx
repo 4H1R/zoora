@@ -14,8 +14,8 @@ import { Eyebrow } from "@/components/eyebrow"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
 
 import { TileGrid } from "./tile-grid"
 import { useDashboardTiles } from "./use-dashboard-tiles"
@@ -200,13 +200,11 @@ export function StudentDashboard({ orgId }: { orgId: string }) {
       {tiles.length > 0 ? <TileGrid tiles={tiles} /> : null}
 
       {tiles.length === 0 && !examsLoading && !gradesLoading && upcomingExams.length === 0 && latestGrades.length === 0 ? (
-        <Card className="flex flex-col items-center gap-2 px-6 py-12 text-center">
-          <div className="bg-muted text-muted-foreground mb-1 flex size-12 items-center justify-center rounded-xl">
-            <GraduationCapIcon className={cn("size-6")} />
-          </div>
-          <p className="text-sm font-medium">{t("org.dashboard.memberEmpty.title")}</p>
-          <p className="text-muted-foreground max-w-sm text-sm">{t("org.dashboard.memberEmpty.hint")}</p>
-        </Card>
+        <EmptyState
+          icon={GraduationCapIcon}
+          title={t("org.dashboard.memberEmpty.title")}
+          description={t("org.dashboard.memberEmpty.hint")}
+        />
       ) : null}
     </div>
   )

@@ -43,6 +43,16 @@
   },
   "common": {
     "brandName": "Zoora",
+    "dateTimePicker": {
+      "placeholder": "Pick a date",
+      "hour": "Hour",
+      "minute": "Minute",
+      "time": "Time",
+      "now": "Now",
+      "clear": "Clear"
+    },
+    "gridView": "Grid view",
+    "tableView": "Table view",
     "getStarted": "Get started",
     "learnMore": "Learn more",
     "search": "Search…",
@@ -1125,8 +1135,6 @@
     "rememberMe": "Keep me signed in on this device",
     "submit": "Sign in",
     "submitting": "Signing in…",
-    "usernameError": "Username must be at least 3 characters",
-    "passwordError": "Password must be at least 8 characters",
     "success": "Welcome back! Redirecting…",
     "error": "Invalid username or password",
     "separator": "or continue with",
@@ -1204,6 +1212,17 @@
         "grade": "Grade",
         "view": "View",
         "viewSubmissions": "View submissions"
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      },
+      "table": {
+        "class": "Class",
+        "due": "Due",
+        "status": "Status",
+        "score": "Score"
       }
     },
     "portal": {
@@ -1235,15 +1254,33 @@
       "start": "Start exam",
       "continue": "Continue",
       "score": "Score: {{score}} / {{total}}",
-      "opensAt": "Opens {{date}}"
+      "opensAt": "Opens {{date}}",
+      "searchPlaceholder": "Search exams…",
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      },
+      "table": {
+        "title": "Exam",
+        "class": "Class",
+        "state": "Status",
+        "duration": "Duration"
+      }
     },
     "calendar": {
       "title": "Calendar",
+      "subtitle": "Your schedule, at a glance",
+      "jumpToday": "Today",
+      "legendTitle": "Event types",
+      "monthCount_one": "{{count}} event this period",
+      "monthCount_other": "{{count}} events this period",
       "selectedDay": "Selected day",
       "todayBadge": "Today",
       "eventCount_one": "{{count}} event",
       "eventCount_other": "{{count}} events",
       "empty": "No events on this day.",
+      "emptyHint": "Pick another day to see what's scheduled.",
       "legend": {
         "live": "Live",
         "quiz": "Quiz",
@@ -1254,7 +1291,18 @@
     "grades": {
       "title": "Report Card",
       "empty": "No grades recorded yet.",
-      "noColumns": "No graded items in this class yet."
+      "noColumns": "No graded items in this class yet.",
+      "searchPlaceholder": "Search grades…",
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      },
+      "table": {
+        "class": "Class",
+        "item": "Item",
+        "score": "Score"
+      }
     },
     "attendance": {
       "title": "My Attendance",
@@ -1270,6 +1318,18 @@
         "absent": "Absent",
         "late": "Late",
         "excused": "Excused"
+      },
+      "searchPlaceholder": "Search attendance…",
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
+      },
+      "table": {
+        "class": "Class",
+        "session": "Session",
+        "date": "Date",
+        "status": "Status"
       }
     },
     "files": {
@@ -1401,7 +1461,6 @@
       "namePlaceholder": "Organization name",
       "description": "Description",
       "descriptionPlaceholder": "Brief description of your organization",
-      "nameError": "Name must be at least 2 characters",
       "updateSuccess": "Organization updated",
       "general": "General",
       "generalHint": "Your organization's public name and description.",
@@ -2108,7 +2167,6 @@
   },
   "onlineClassesPage": {
     "title": "Online Classes",
-    "searchPlaceholder": "Search online classes…",
     "noResults": "No online classes found",
     "noResultsHint": "Nothing matches the current filter.",
     "join": "Join",
@@ -2125,10 +2183,21 @@
       "notStarted": "Not started",
       "finished": "Finished"
     },
+    "table": {
+      "room": "Room",
+      "class": "Class",
+      "host": "Host",
+      "status": "Status"
+    },
     "status": {
       "live": "LIVE",
       "notStarted": "Not started",
       "finished": "Finished"
+    },
+    "toolbar": {
+      "sort": "Sort",
+      "columns": "Columns",
+      "toggleColumns": "Toggle columns"
     }
   },
   "classesPage": {
@@ -2161,6 +2230,11 @@
       "teacher": "Teacher",
       "teacherPlaceholder": "Select teacher…",
       "createSuccess": "Class created"
+    },
+    "toolbar": {
+      "sort": "Sort",
+      "columns": "Columns",
+      "toggleColumns": "Toggle columns"
     }
   },
   "roles": {
@@ -2270,6 +2344,68 @@
       "add": "Add files",
       "empty": "Click to attach files",
       "uploadError": "Upload failed"
+    }
+  },
+  "validation": {
+    "required": "The {{attribute}} field is required.",
+    "invalid": "The {{attribute}} field is invalid.",
+    "email": "The {{attribute}} field must be a valid email address.",
+    "url": "The {{attribute}} field must be a valid URL.",
+    "uuid": "The selected {{attribute}} is invalid.",
+    "regex": "The {{attribute}} field format is invalid.",
+    "enum": "The selected {{attribute}} is invalid.",
+    "integer": "The {{attribute}} field must be an integer.",
+    "numeric": "The {{attribute}} field must be a number.",
+    "string": "The {{attribute}} field must be a string.",
+    "array": "The {{attribute}} field must be an array.",
+    "multiple_of": "The {{attribute}} field must be a multiple of {{value}}.",
+    "min": {
+      "string": "The {{attribute}} field must be at least {{min}} characters.",
+      "numeric": "The {{attribute}} field must be at least {{min}}.",
+      "array": "The {{attribute}} field must have at least {{min}} items."
+    },
+    "max": {
+      "string": "The {{attribute}} field must not be greater than {{max}} characters.",
+      "numeric": "The {{attribute}} field must not be greater than {{max}}.",
+      "array": "The {{attribute}} field must not have more than {{max}} items."
+    },
+    "endAfterStart": "The end time must be after the start time.",
+    "attributes": {
+      "name": "name",
+      "title": "title",
+      "description": "description",
+      "username": "username",
+      "password": "password",
+      "email": "email",
+      "content": "content",
+      "text": "text",
+      "value": "value",
+      "remarks": "remarks",
+      "duration_minutes": "duration (minutes)",
+      "max_participants": "max participants",
+      "max_score": "max score",
+      "total_users": "total users",
+      "order_index": "order",
+      "score": "score",
+      "start_time": "start time",
+      "end_time": "end time",
+      "started_at": "start time",
+      "ended_at": "end time",
+      "scheduled_start_time": "scheduled start time",
+      "published_at": "publish time",
+      "organization_id": "organization",
+      "user_id": "user",
+      "class_id": "class",
+      "class_session_id": "class session",
+      "bank_id": "question bank",
+      "source_id": "source",
+      "role_id": "role",
+      "role": "role",
+      "media_id": "media",
+      "permission_ids": "permissions",
+      "status": "status",
+      "mode": "mode",
+      "type": "type"
     }
   }
 }

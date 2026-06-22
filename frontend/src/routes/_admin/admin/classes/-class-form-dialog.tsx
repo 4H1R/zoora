@@ -201,6 +201,7 @@ export function ClassFormDialog({ open, onOpenChange, cls }: ClassFormDialogProp
             <Field data-invalid={!!createErrors.user_id || undefined}>
               <FieldLabel>{t("admin.classes.form.teacher")}</FieldLabel>
               <UserSelect
+                scope="admin"
                 value={selectedUserId || undefined}
                 onChange={(id) => createForm.setValue("user_id", id, { shouldValidate: true })}
                 placeholder={t("admin.classes.form.teacherPlaceholder")}

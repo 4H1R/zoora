@@ -225,7 +225,9 @@ export function QuestionCreateModal({
       })
     } else {
       if (!values.bank_id) {
-        form.setError("bank_id", { message: "required" })
+        form.setError("bank_id", {
+          message: t("validation.required", { attribute: t("validation.attributes.bank_id") }),
+        })
         return
       }
       createMutation.mutate({
