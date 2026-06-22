@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,6 +31,12 @@ func main() {
 		log.Fatalf("connecting to database: %v", err)
 	}
 
+	loc := chooseLocale()
+	// Publish the resolved choice to the env the factory reads, so interactive
+	// and SEED_LANG-driven runs both flow through the same config source.
+	os.Setenv(factory.SeedLangEnv, string(loc))
+	fmt.Printf("Seeding in %s.\n", localeLabel(loc))
+
 	ctx := context.Background()
 
 	if err := truncateAll(db, ctx); err != nil {
@@ -41,6 +49,34 @@ func main() {
 	}
 
 	printSummary(counts)
+}
+
+// chooseLocale resolves the seed language. SEED_LANG (en/fa) takes priority for
+// non-interactive runs; otherwise it prompts on stdin. Empty input (or EOF, as
+// happens under `docker compose exec -T`) defaults to Persian.
+func chooseLocale() factory.Locale {
+	if v := strings.TrimSpace(os.Getenv("SEED_LANG")); v != "" {
+		return parseLocale(v)
+	}
+	fmt.Print("Seed data language? [P]ersian (default) / [E]nglish: ")
+	line, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+	return parseLocale(line)
+}
+
+func parseLocale(s string) factory.Locale {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "e", "en", "eng", "english":
+		return factory.LocaleEn
+	default:
+		return factory.LocaleFa
+	}
+}
+
+func localeLabel(l factory.Locale) string {
+	if l == factory.LocaleEn {
+		return "English"
+	}
+	return "Persian"
 }
 
 type seedCounts struct {
@@ -124,8 +160,8 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 
 	// 1. Organizations
 	demoOrg := factory.NewOrganization(func(o *domain.Organization) {
-		o.Name = "Zoora Demo"
-		o.Description = "Demo organization for development"
+		o.Name = factory.T("Zoora Demo", "زورا دمو")
+		o.Description = factory.T("Demo organization for development", "سازمان نمونه برای توسعه")
 	})
 	randomOrg := factory.NewOrganization()
 	orgs := []*domain.Organization{demoOrg, randomOrg}
@@ -200,7 +236,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 	admin := factory.NewUser(uuid.Nil, func(u *domain.User) {
 		u.OrganizationID = nil
 		u.Username = "admin1"
-		u.Name = "Admin User"
+		u.Name = factory.T("Admin User", "کاربر مدیر کل")
 		u.IsAdmin = true
 	})
 	if err := db.WithContext(ctx).Create(admin).Error; err != nil {
@@ -216,7 +252,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 			staff := factory.NewUser(org.ID, func(u *domain.User) {
 				u.OrganizationID = &org.ID
 				u.Username = "manager1"
-				u.Name = "Manager User"
+				u.Name = factory.T("Manager User", "کاربر مدیر")
 				u.RoleID = &presetRoles[domain.PresetRoleManager].ID
 			})
 			if err := db.WithContext(ctx).Create(staff).Error; err != nil {
@@ -230,7 +266,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 			user1 := factory.NewUser(org.ID, func(u *domain.User) {
 				u.OrganizationID = &org.ID
 				u.Username = "user1"
-				u.Name = "User One"
+				u.Name = factory.T("User One", "کاربر یک")
 				u.RoleID = &studentRole.ID
 			})
 			if err := db.WithContext(ctx).Create(user1).Error; err != nil {
@@ -437,7 +473,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 						selectedIDs = []string{q.Options[0].ID}
 						earned = q.Options[0].Score
 					} else if q.Type == domain.QuestionTypeShortAnswer {
-						value = "Sample answer"
+						value = factory.T("Sample answer", "پاسخ نمونه")
 						earned = 2.0
 					}
 					totalScore += earned
@@ -462,12 +498,12 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 
 			// 15. Poll attached to class
 			poll := factory.NewPoll(teacher.ID, "class", class.ID, func(p *domain.Poll) {
-				p.Name = "Class feedback"
+				p.Name = factory.T("Class feedback", "بازخورد کلاس")
 				p.AllowedAnswersCount = 1
 				p.Options = []domain.PollOption{
-					{Label: "Great", Value: "great"},
-					{Label: "Okay", Value: "okay"},
-					{Label: "Bad", Value: "bad"},
+					{Label: factory.T("Great", "عالی"), Value: "great"},
+					{Label: factory.T("Okay", "متوسط"), Value: "okay"},
+					{Label: factory.T("Bad", "ضعیف"), Value: "bad"},
 				}
 			})
 			if err := db.WithContext(ctx).Create(poll).Error; err != nil {
@@ -484,7 +520,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 
 			// 16. Chat for class + members + messages + reactions
 			chat := factory.NewChat("class", class.ID, func(c *domain.Chat) {
-				c.Name = class.Name + " Chat"
+				c.Name = class.Name + factory.T(" Chat", " گفتگو")
 			})
 			if err := db.WithContext(ctx).Create(chat).Error; err != nil {
 				return nil, fmt.Errorf("creating chat: %w", err)
@@ -506,7 +542,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 			// messages
 			tid := teacher.ID
 			welcome := factory.NewMessage(chat.ID, &tid, func(m *domain.Message) {
-				m.Content = "Welcome to the class!"
+				m.Content = factory.T("Welcome to the class!", "به کلاس خوش آمدید!")
 			})
 			if err := db.WithContext(ctx).Create(welcome).Error; err != nil {
 				return nil, fmt.Errorf("creating message: %w", err)
@@ -559,7 +595,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 			// 17b. A scheduled (not-yet-started) live room so the lobby's
 			// host-start / student-wait + countdown flow has seed data.
 			scheduledRoom := factory.NewLiveRoom(liveSession.ID, func(lr *domain.LiveRoom) {
-				lr.Name = "Scheduled session"
+				lr.Name = factory.T("Scheduled session", "جلسه زمان‌بندی‌شده")
 				lr.Status = domain.LiveRoomStatusCreated
 				at := time.Now().Add(24 * time.Hour)
 				lr.ScheduledStartTime = &at
@@ -621,10 +657,10 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 				Title string
 				Type  domain.GradebookColumnType
 			}{
-				{"Attendance", domain.GradebookColumnAutoAttendance},
-				{"Quiz Score", domain.GradebookColumnAutoQuiz},
-				{"Midterm", domain.GradebookColumnManualGrade},
-				{"Notes", domain.GradebookColumnManualText},
+				{factory.T("Attendance", "حضور و غیاب"), domain.GradebookColumnAutoAttendance},
+				{factory.T("Quiz Score", "نمره آزمون"), domain.GradebookColumnAutoQuiz},
+				{factory.T("Midterm", "میان‌ترم"), domain.GradebookColumnManualGrade},
+				{factory.T("Notes", "یادداشت‌ها"), domain.GradebookColumnManualText},
 			}
 			for idx, cd := range colDefs {
 				col := factory.NewGradebookColumn(class.ID, cd.Type, func(c *domain.GradebookColumn) {
@@ -643,7 +679,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 				for _, student := range ou.students {
 					value := fmt.Sprintf("%d", 70+int(student.ID.ID())%30)
 					if cd.Type == domain.GradebookColumnManualText {
-						value = "OK"
+						value = factory.T("OK", "خوب")
 					}
 					cell := factory.NewGradebookCell(col.ID, student.ID, value)
 					if err := db.WithContext(ctx).Create(cell).Error; err != nil {

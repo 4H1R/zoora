@@ -38,6 +38,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { adminHead } from "@/lib/admin-head"
+import { useFormatDate } from "@/lib/format-date"
 import { useRoleName } from "@/lib/permissions"
 
 export const Route = createFileRoute("/_admin/admin/dashboard")({
@@ -45,18 +46,10 @@ export const Route = createFileRoute("/_admin/admin/dashboard")({
   component: RouteComponent,
 })
 
-function formatDate(dateStr?: string) {
-  if (!dateStr) return "—"
-  return new Date(dateStr).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  })
-}
-
 function RecentUsersCard({ users, loading }: { users: User[]; loading: boolean }) {
   const { t } = useTranslation()
   const roleName = useRoleName()
+  const formatDate = useFormatDate()
 
   return (
     <Card className="gap-0 overflow-hidden p-0">
@@ -106,6 +99,7 @@ function RecentUsersCard({ users, loading }: { users: User[]; loading: boolean }
 
 function RecentOrgsCard({ orgs, loading }: { orgs: Organization[]; loading: boolean }) {
   const { t } = useTranslation()
+  const formatDate = useFormatDate()
 
   const statusVariant = (status?: string): "default" | "secondary" | "destructive" | "outline" => {
     if (status === "active") return "default"

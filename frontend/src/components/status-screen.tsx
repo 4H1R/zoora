@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next"
 import { BackgroundFX } from "@/components/background-fx"
 import { Logo } from "@/components/logo"
 import { languages } from "@/i18n"
+import { formatDate } from "@/lib/format-date"
 import { useThemeStore } from "@/stores/theme"
 
 /**
@@ -21,6 +22,10 @@ export function StatusScreen({ tone = "brand", children }: { tone?: "brand" | "a
 
   const lang = i18n.language in languages ? i18n.language : "fa"
   const nextLang = lang === "fa" ? "en" : "fa"
+
+  // Localized current year — Persian (Jalali) calendar for fa, Gregorian for en;
+  // the active locale drives the calendar automatically.
+  const year = formatDate(new Date(), lang, "year")
 
   return (
     <main className="relative flex min-h-svh flex-col overflow-hidden bg-background text-foreground">
@@ -62,7 +67,7 @@ export function StatusScreen({ tone = "brand", children }: { tone?: "brand" | "a
         className="animate-reveal relative z-10 flex items-center justify-center px-6 py-6 font-mono text-[0.7rem] tracking-caps text-muted-foreground/60 uppercase sm:justify-between sm:px-10"
         style={{ animationDelay: "700ms" }}
       >
-        <span>© 2026 {t("common.brandName")}</span>
+        <span>© {year} {t("common.brandName")}</span>
         <span className="hidden sm:inline">{t("comingSoon.footerNote")}</span>
       </footer>
     </main>

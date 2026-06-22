@@ -20,7 +20,7 @@ func NewAttendance(orgID, classID, sessionID, userID uuid.UUID, opts ...func(*do
 		UserID:         userID,
 		Status:         statuses[nextID()%uint64(len(statuses))],
 		IsAutoMarked:   fake.Bool(),
-		Remarks:        fake.Sentence(6),
+		Remarks:        fakeSentence(6),
 	}
 	for _, o := range opts {
 		o(a)

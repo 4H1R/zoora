@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next"
 import { useGetOrganizationsId } from "@/api/organizations/organizations"
 import { useGetUsersMe } from "@/api/users/users"
 import { LanguageSwitcher } from "@/components/language-switcher"
+// import { LiveClock } from "@/components/live-clock"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { SidebarBreadcrumb } from "@/components/layout/sidebar-breadcrumb"
 import { SplashScreen } from "@/components/splash-screen"
@@ -71,6 +72,7 @@ function RouteComponent() {
               segmentKeys={SEGMENT_KEYS}
             />
             <div className="ms-auto flex items-center gap-2">
+              {/* <LiveClock className="me-1 hidden sm:flex" /> */}
               <LanguageSwitcher />
               <ThemeToggle />
             </div>

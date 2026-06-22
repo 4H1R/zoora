@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/4H1R/zoora/internal/platform/authz"
 	"github.com/4H1R/zoora/internal/domain"
 )
 
@@ -27,6 +28,7 @@ type service struct {
 	attendance   domain.AttendanceRepository
 	practiceSubs domain.PracticeSubmissionRepository
 	quizSubs     domain.QuizSubmissionRepository
+	resolver     *authz.Resolver
 	logger       *slog.Logger
 }
 
@@ -38,6 +40,7 @@ func NewService(
 	attendance domain.AttendanceRepository,
 	practiceSubs domain.PracticeSubmissionRepository,
 	quizSubs domain.QuizSubmissionRepository,
+	resolver *authz.Resolver,
 	logger *slog.Logger,
 ) domain.GradebookService {
 	return &service{
@@ -48,6 +51,7 @@ func NewService(
 		attendance:   attendance,
 		practiceSubs: practiceSubs,
 		quizSubs:     quizSubs,
+		resolver:     resolver,
 		logger:       logger,
 	}
 }
@@ -62,20 +66,12 @@ func canDeleteGradebook(caller domain.Caller, class *domain.Class) bool {
 	return caller.CanManage(class.UserID, domain.PermGradebookDeleteAny)
 }
 
-// canViewGradebook returns true if caller can read the gradebook. Managers and
-// org-wide viewers bypass; otherwise the caller must be enrolled.
-func (s *service) canViewGradebook(ctx context.Context, caller domain.Caller, class *domain.Class) (bool, error) {
-	if canManageGradebook(caller, class) {
-		return true, nil
-	}
-	if caller.HasPermission(domain.PermGradebookViewAny) {
-		return true, nil
-	}
-	ok, err := s.members.Exists(ctx, class.ID, caller.UserID)
-	if err != nil {
-		return false, err
-	}
-	return ok, nil
+// viewScope resolves how much of the gradebook the caller may read: admins and
+// gradebook:view_any holders get the whole org (ScopeAll), the class owner gets
+// the class matrix (ScopeClass), enrolled students get only their own row
+// (ScopeOwn), and everyone else is denied (ScopeNone).
+func (s *service) viewScope(ctx context.Context, caller domain.Caller, class *domain.Class) (authz.Scope, error) {
+	return s.resolver.Scope(ctx, caller, class, domain.PermGradebookViewAny)
 }
 
 func (s *service) CreateColumn(ctx context.Context, classID uuid.UUID, dto domain.CreateGradebookColumnDTO) (*domain.GradebookColumn, error) {
@@ -209,11 +205,11 @@ func (s *service) ListColumns(ctx context.Context, classID uuid.UUID, q domain.L
 	if err != nil {
 		return nil, 0, err
 	}
-	visible, err := s.canViewGradebook(ctx, caller, class)
+	scope, err := s.viewScope(ctx, caller, class)
 	if err != nil {
 		return nil, 0, err
 	}
-	if !visible {
+	if scope == authz.ScopeNone {
 		return nil, 0, domain.ErrForbidden
 	}
 	return s.columns.ListByClass(ctx, classID, q)
@@ -228,13 +224,21 @@ func (s *service) GetMatrix(ctx context.Context, classID uuid.UUID) (*domain.Gra
 	if err != nil {
 		return nil, err
 	}
-	visible, err := s.canViewGradebook(ctx, caller, class)
+	scope, err := s.viewScope(ctx, caller, class)
 	if err != nil {
 		return nil, err
 	}
-	if !visible {
+	if scope == authz.ScopeNone {
 		return nil, domain.ErrForbidden
 	}
+	return s.buildMatrix(ctx, caller, class, scope)
+}
+
+// buildMatrix assembles the matrix for an already-resolved class+scope. Callers
+// (GetMatrix, GetMine) are responsible for loading the class and resolving the
+// caller's scope first, so the class is not re-fetched here.
+func (s *service) buildMatrix(ctx context.Context, caller domain.Caller, class *domain.Class, scope authz.Scope) (*domain.GradebookMatrix, error) {
+	classID := class.ID
 
 	columns, err := s.columns.ListAllByClass(ctx, classID)
 	if err != nil {
@@ -244,6 +248,17 @@ func (s *service) GetMatrix(ctx context.Context, classID uuid.UUID) (*domain.Gra
 	members, err := s.members.ListAllByClass(ctx, classID)
 	if err != nil {
 		return nil, err
+	}
+
+	// An enrolled student may only see their own row, never classmates' grades.
+	if scope == authz.ScopeOwn {
+		own := make([]domain.ClassMember, 0, 1)
+		for _, m := range members {
+			if m.UserID == caller.UserID {
+				own = append(own, m)
+			}
+		}
+		members = own
 	}
 
 	studentIDs := make([]uuid.UUID, len(members))
@@ -333,9 +348,18 @@ func (s *service) GetMine(ctx context.Context) (*domain.MyGradebook, error) {
 	out := &domain.MyGradebook{Classes: make([]domain.MyGradebookClass, 0, len(classes))}
 	for i := range classes {
 		cl := classes[i]
-		matrix, err := s.GetMatrix(ctx, cl.ID)
+		// The class is already loaded from List above, so resolve scope and build
+		// the matrix directly instead of GetMatrix re-fetching it by ID.
+		scope, err := s.viewScope(ctx, caller, &cl)
 		if err != nil {
+			return nil, fmt.Errorf("resolving scope for class %s: %w", cl.ID, err)
+		}
+		if scope == authz.ScopeNone {
 			// Skip classes the student can't view rather than failing the whole card.
+			continue
+		}
+		matrix, err := s.buildMatrix(ctx, caller, &cl, scope)
+		if err != nil {
 			if errors.Is(err, domain.ErrForbidden) {
 				continue
 			}

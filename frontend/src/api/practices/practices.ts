@@ -142,7 +142,7 @@ export const getGetPracticesUrl = (params?: GetPracticesParams,) => {
 }
 
 /**
- * Returns practice rooms filtered by caller role. Filter by class_id or class_session_id. Search matches: title, content. Orderable: created_at, updated_at, start_time, end_time, title.
+ * Returns practices visible to the caller, enriched per-viewer (status, my_submission) and with manager stats when permitted. Filter by class_id, class_session_id, status (upcoming|to_submit|submitted|graded|missed), window (upcoming|open|ended), needs_grading. Search matches: title, content. Orderable: created_at, updated_at, start_time, end_time, title.
  * @summary List practice rooms
  */
 export const getPractices = async (params?: GetPracticesParams, options?: RequestInit): Promise<getPracticesResponse> => {

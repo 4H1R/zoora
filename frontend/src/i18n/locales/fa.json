@@ -980,7 +980,10 @@
     "logOut": "خروج",
     "pagination": {
       "rowsPerPage": "ردیف در صفحه",
-      "showing": "{{from}}–{{to}} از {{total}}"
+      "showing": "{{from}}–{{to}} از {{total}}",
+      "pageOf": "صفحه {{page}} از {{total}}",
+      "previous": "قبلی",
+      "next": "بعدی"
     },
     "orgs": {
       "title": "سازمان‌ها",
@@ -1100,6 +1103,31 @@
       }
     }
   },
+  "onlineClassesPage": {
+    "title": "کلاس‌های آنلاین",
+    "searchPlaceholder": "جستجوی کلاس‌های آنلاین…",
+    "noResults": "کلاس آنلاینی یافت نشد",
+    "noResultsHint": "موردی با فیلتر فعلی مطابقت ندارد.",
+    "join": "ورود",
+    "start": "شروع",
+    "notStartedYet": "هنوز شروع نشده",
+    "unknownHost": "میزبان نامشخص",
+    "notScheduled": "زمان‌بندی نشده",
+    "startsIn": "شروع تا {{time}}",
+    "startedLabel": "در حال برگزاری",
+    "endedLabel": "پایان‌یافته",
+    "tabs": {
+      "all": "همه",
+      "live": "زنده",
+      "notStarted": "شروع‌نشده",
+      "finished": "پایان‌یافته"
+    },
+    "status": {
+      "live": "زنده",
+      "notStarted": "شروع‌نشده",
+      "finished": "پایان‌یافته"
+    }
+  },
   "classesPage": {
     "title": "کلاس‌ها",
     "searchPlaceholder": "جستجوی کلاس‌ها…",
@@ -1172,7 +1200,9 @@
     "panel": "سازمان",
     "nav": {
       "dashboard": "داشبورد",
+      "calendar": "تقویم",
       "classes": "کلاس‌ها",
+      "onlineClasses": "کلاس‌های آنلاین",
       "members": "اعضا",
       "management": "مدیریت",
       "users": "کاربران",
@@ -1181,9 +1211,57 @@
       "files": "فایل‌ها",
       "learning": "یادگیری",
       "exams": "آزمون‌ها",
+      "practices": "تکالیف",
       "grades": "نمرات",
       "attendance": "حضور و غیاب",
       "recordings": "ضبط‌ها"
+    },
+    "practices": {
+      "title": "تکالیف",
+      "subtitle": "تکالیف همه کلاس‌های شما",
+      "searchPlaceholder": "جستجوی تکالیف",
+      "noResults": "تکلیفی یافت نشد",
+      "noResultsHint": "فیلتر دیگری را امتحان کنید",
+      "due": "مهلت",
+      "noDueDate": "بدون مهلت",
+      "stats": {
+        "total": "کل",
+        "toSubmit": "برای ارسال",
+        "needsGrading": "نیازمند نمره‌دهی"
+      },
+      "status": {
+        "upcoming": "آینده",
+        "to_submit": "برای ارسال",
+        "submitted": "ارسال‌شده",
+        "graded": "نمره‌داده‌شده",
+        "missed": "از دست رفته"
+      },
+      "filter": {
+        "all": "همه",
+        "needsGrading": "نیازمند نمره‌دهی",
+        "windowAll": "همه بازه‌ها",
+        "window": {
+          "upcoming": "آینده",
+          "open": "باز",
+          "ended": "پایان‌یافته"
+        }
+      },
+      "manager": {
+        "class": "کلاس",
+        "teacher": "مدرس",
+        "submitted": "ارسال‌شده",
+        "graded": "نمره‌داده‌شده",
+        "completion": "تکمیل",
+        "submissions": "{{submitted}} / {{members}}",
+        "submissionsTitle": "ارسال‌ها",
+        "noSubmissions": "هنوز ارسالی نیست"
+      },
+      "actions": {
+        "submit": "ارسال",
+        "grade": "نمره‌دهی",
+        "view": "مشاهده",
+        "viewSubmissions": "مشاهده ارسال‌ها"
+      }
     },
     "portal": {
       "tiles": {
@@ -1215,6 +1293,20 @@
       "continue": "ادامه",
       "score": "نمره: {{score}} از {{total}}",
       "opensAt": "شروع {{date}}"
+    },
+    "calendar": {
+      "title": "تقویم",
+      "selectedDay": "روز انتخاب‌شده",
+      "todayBadge": "امروز",
+      "eventCount_one": "{{count}} رویداد",
+      "eventCount_other": "{{count}} رویداد",
+      "empty": "رویدادی در این روز وجود ندارد.",
+      "legend": {
+        "live": "زنده",
+        "quiz": "آزمون",
+        "practice": "تمرین",
+        "offline": "آفلاین"
+      }
     },
     "grades": {
       "title": "کارنامه",
@@ -1264,6 +1356,18 @@
       "overview": "نمای کلی",
       "welcome": "خوش آمدید",
       "welcomeName": "خوش آمدید، {{name}}",
+      "greeting": {
+        "morning": "صبح بخیر",
+        "afternoon": "ظهر بخیر",
+        "evening": "عصر بخیر",
+        "night": "شب بخیر"
+      },
+      "greetingName": {
+        "morning": "صبح بخیر، {{name}}",
+        "afternoon": "ظهر بخیر، {{name}}",
+        "evening": "عصر بخیر، {{name}}",
+        "night": "شب بخیر، {{name}}"
+      },
       "viewAll": "مشاهده همه",
       "stats": {
         "classes": "کلاس‌ها",
@@ -2072,8 +2176,7 @@
       "roles": "نقش‌ها",
       "organizations": "سازمان‌ها",
       "classes": "کلاس‌ها",
-      "livesessions": "جلسات زنده",
-      "recordings": "ضبط‌ها",
+      "live_sessions": "جلسات زنده",
       "question_banks": "بانک‌های سوال",
       "quizzes": "آزمون‌ها",
       "polls": "نظرسنجی‌ها",
@@ -2087,7 +2190,6 @@
     "actions": {
       "view": "مشاهده",
       "view_any": "مشاهده همه",
-      "view_own": "مشاهده موارد خود",
       "create": "ایجاد",
       "create_any": "ایجاد برای همه",
       "update": "ویرایش",
@@ -2100,7 +2202,6 @@
       "join_any": "پیوستن به هر جلسه",
       "manage": "مدیریت",
       "manage_any": "مدیریت همه",
-      "download": "دانلود",
       "write": "نوشتن",
       "submit": "ارسال",
       "take": "شرکت در آزمون",

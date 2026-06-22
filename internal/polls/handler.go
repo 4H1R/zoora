@@ -37,14 +37,14 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 
 	authed := rg.Group("", authMiddleware)
 	{
-		authed.GET("/polls", h.List)
+		authed.GET("/polls", perm(domain.PermPollsView), h.List)
 		authed.POST("/polls", perm(domain.PermPollsCreate), h.Create)
-		authed.GET("/polls/:id", idParam, h.Get)
+		authed.GET("/polls/:id", perm(domain.PermPollsView), idParam, h.Get)
 		authed.PUT("/polls/:id", perm(domain.PermPollsUpdate), idParam, h.Update)
 		authed.DELETE("/polls/:id", perm(domain.PermPollsDelete), idParam, h.Delete)
 
-		authed.POST("/polls/:id/answer", idParam, h.Answer)
-		authed.GET("/polls/:id/answers", idParam, h.ListAnswers)
+		authed.POST("/polls/:id/answer", perm(domain.PermPollsView), idParam, h.Answer)
+		authed.GET("/polls/:id/answers", perm(domain.PermPollsView), idParam, h.ListAnswers)
 	}
 }
 

@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_auth/org/$orgId/grades/")({
 
 function RouteComponent() {
   const { t } = useTranslation()
-  const allowed = useOrgGuard(["gradebook:view_own"])
+  const allowed = useOrgGuard(["gradebook:view"])
 
   const gradesQ = useGetGradebookMe({ query: { enabled: allowed } })
   const gradebook = (gradesQ.data?.status === 200 && gradesQ.data.data.data) || undefined

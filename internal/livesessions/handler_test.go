@@ -171,6 +171,23 @@ func TestHandler_List_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
+func TestHandler_List_WhitelistsScheduledStartAndName(t *testing.T) {
+	r, svc := newLiveRouter(t)
+	var captured domain.ListLiveRoomsQuery
+	svc.On("List", mock.Anything, mock.MatchedBy(func(q domain.ListLiveRoomsQuery) bool {
+		captured = q
+		return true
+	})).Return([]domain.LiveRoom{}, int64(0), nil)
+
+	w := doReq(t, r, "GET", "/api/v1/live-rooms?order_by=scheduled_start_time&order_dir=asc&search=algebra", nil)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "scheduled_start_time", captured.ListParams.OrderBy,
+		"scheduled_start_time must be an allowed order field")
+	assert.Equal(t, "asc", captured.ListParams.OrderDir)
+	assert.Contains(t, captured.ListParams.SearchFields, "name",
+		"name must be an allowed search field")
+}
+
 func TestHandler_GetRoom_InvalidUUID_400(t *testing.T) {
 	r, _ := newLiveRouter(t)
 	w := doReq(t, r, "GET", "/api/v1/live-rooms/not-a-uuid", nil)

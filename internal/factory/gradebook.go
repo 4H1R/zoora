@@ -1,8 +1,6 @@
 package factory
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 
 	"github.com/4H1R/zoora/internal/domain"
@@ -12,7 +10,7 @@ func NewGradebookColumn(classID uuid.UUID, colType domain.GradebookColumnType, o
 	id := nextID()
 	c := &domain.GradebookColumn{
 		ClassID:    classID,
-		Title:      fmt.Sprintf("Column %d", id),
+		Title:      fakeGradebookColumnTitle(id),
 		Type:       colType,
 		OrderIndex: int(id % 100),
 	}

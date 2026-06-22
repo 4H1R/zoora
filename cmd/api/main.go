@@ -16,6 +16,8 @@ import (
 	"github.com/4H1R/zoora/internal/admin"
 	"github.com/4H1R/zoora/internal/attendance"
 	"github.com/4H1R/zoora/internal/auth"
+	"github.com/4H1R/zoora/internal/platform/authz"
+	"github.com/4H1R/zoora/internal/calendar"
 	"github.com/4H1R/zoora/internal/chat"
 	"github.com/4H1R/zoora/internal/classes"
 	"github.com/4H1R/zoora/internal/gradebook"
@@ -131,12 +133,23 @@ func main() {
 
 	authMiddleware := auth.Middleware(jwtService, redisClient, roleRepo, userRepo)
 
+	authzResolver := authz.NewResolver(classMemberRepo)
+
 	userService := users.NewService(userRepo, roleRepo, log)
 	orgService := organizations.NewService(orgRepo, userRepo, log)
 	classService := classes.NewService(classRepo, classSessionRepo, classMemberRepo, log)
 	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, log)
 	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, log)
 	transactor := database.NewTransactor(db)
+
+	// Reconcile the permissions table + preset-role grants with the code-defined
+	// source of truth so renaming/removing a permission constant takes effect on
+	// an existing DB without a destructive reseed.
+	if err := roles.SyncPermissions(context.Background(), db, transactor, roleRepo, permRepo, redisClient, log); err != nil {
+		log.Error("failed to sync permissions", "error", err)
+		os.Exit(1)
+	}
+
 	roleService := roles.NewService(roleRepo, permRepo, transactor, redisClient, log)
 	authBusinessService := auth.NewAuthService(userRepo, jwtService, redisClient, log)
 	mediaService := media.NewService(mediaRepo, storageClient, log)
@@ -155,7 +168,8 @@ func main() {
 	attendanceRepo := attendance.NewRepository(db)
 	attendanceService := attendance.NewService(
 		attendanceRepo, classRepo, classSessionRepo, classMemberRepo,
-		liveRoomRepo, liveParticipantRepo, offlineViewRepo, offlineRoomRepo, log,
+		liveRoomRepo, liveParticipantRepo, offlineViewRepo, offlineRoomRepo,
+		authzResolver, log,
 	)
 
 	// wsHub := websocket.NewHub(log)
@@ -217,6 +231,11 @@ func main() {
 	liveSessionHandler := livesessions.NewHandler(liveSessionService)
 	liveSessionHandler.RegisterRoutes(v1, authMiddleware, perm)
 
+	calendarRepo := calendar.NewRepository(db)
+	calendarService := calendar.NewService(calendarRepo, log)
+	calendarHandler := calendar.NewHandler(calendarService)
+	calendarHandler.RegisterRoutes(v1, authMiddleware)
+
 	offlineHandler := offlines.NewHandler(offlineService)
 	offlineHandler.RegisterRoutes(v1, authMiddleware, perm)
 
@@ -238,7 +257,7 @@ func main() {
 		gradebookColRepo, gradebookCellRepo,
 		classRepo, classMemberRepo,
 		attendanceRepo, practiceSubRepo, quizSubmissionRepo,
-		log,
+		authzResolver, log,
 	)
 	gradebookHandler := gradebook.NewHandler(gradebookService)
 	gradebookHandler.RegisterRoutes(v1, authMiddleware, perm)

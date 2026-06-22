@@ -32,28 +32,15 @@ const (
 	PermClassesDeleteAny PermissionName = "classes:delete_any"
 	PermClassesJoin      PermissionName = "classes:join"
 	// Live Sessions
-	PermLiveSessionsView      PermissionName = "livesessions:view"
-	PermLiveSessionsViewAny   PermissionName = "livesessions:view_any"
-	PermLiveSessionsCreate    PermissionName = "livesessions:create"
-	PermLiveSessionsCreateAny PermissionName = "livesessions:create_any"
-	PermLiveSessionsUpdate    PermissionName = "livesessions:update"
-	PermLiveSessionsUpdateAny PermissionName = "livesessions:update_any"
-	PermLiveSessionsDelete    PermissionName = "livesessions:delete"
-	PermLiveSessionsDeleteAny PermissionName = "livesessions:delete_any"
-	PermLiveSessionsJoin      PermissionName = "livesessions:join"
-	PermLiveSessionsJoinAny   PermissionName = "livesessions:join_any"
-	PermLiveSessionsManage    PermissionName = "livesessions:manage"
-	PermLiveSessionsManageAny PermissionName = "livesessions:manage_any"
-	// Recordings
-	PermRecordingsView      PermissionName = "recordings:view"
-	PermRecordingsViewAny   PermissionName = "recordings:view_any"
-	PermRecordingsCreate    PermissionName = "recordings:create"
-	PermRecordingsCreateAny PermissionName = "recordings:create_any"
-	PermRecordingsUpdate    PermissionName = "recordings:update"
-	PermRecordingsUpdateAny PermissionName = "recordings:update_any"
-	PermRecordingsDelete    PermissionName = "recordings:delete"
-	PermRecordingsDeleteAny PermissionName = "recordings:delete_any"
-	PermRecordingsDownload  PermissionName = "recordings:download"
+	PermLiveSessionsView      PermissionName = "live_sessions:view"
+	PermLiveSessionsViewAny   PermissionName = "live_sessions:view_any"
+	PermLiveSessionsCreate    PermissionName = "live_sessions:create"
+	PermLiveSessionsUpdate    PermissionName = "live_sessions:update"
+	PermLiveSessionsUpdateAny PermissionName = "live_sessions:update_any"
+	PermLiveSessionsJoin      PermissionName = "live_sessions:join"
+	PermLiveSessionsJoinAny   PermissionName = "live_sessions:join_any"
+	PermLiveSessionsManage    PermissionName = "live_sessions:manage"
+	PermLiveSessionsManageAny PermissionName = "live_sessions:manage_any"
 	// Question Banks
 	PermQuestionBanksView      PermissionName = "question_banks:view"
 	PermQuestionBanksViewAny   PermissionName = "question_banks:view_any"
@@ -67,7 +54,6 @@ const (
 	PermQuizzesView      PermissionName = "quizzes:view"
 	PermQuizzesViewAny   PermissionName = "quizzes:view_any"
 	PermQuizzesCreate    PermissionName = "quizzes:create"
-	PermQuizzesCreateAny PermissionName = "quizzes:create_any"
 	PermQuizzesUpdate    PermissionName = "quizzes:update"
 	PermQuizzesUpdateAny PermissionName = "quizzes:update_any"
 	PermQuizzesDelete    PermissionName = "quizzes:delete"
@@ -75,29 +61,20 @@ const (
 	PermQuizzesTake      PermissionName = "quizzes:take"
 	// Polls
 	PermPollsView      PermissionName = "polls:view"
-	PermPollsViewAny   PermissionName = "polls:view_any"
 	PermPollsCreate    PermissionName = "polls:create"
-	PermPollsCreateAny PermissionName = "polls:create_any"
 	PermPollsUpdate    PermissionName = "polls:update"
 	PermPollsUpdateAny PermissionName = "polls:update_any"
 	PermPollsDelete    PermissionName = "polls:delete"
-	PermPollsDeleteAny PermissionName = "polls:delete_any"
 	// Chats
-	PermChatsView      PermissionName = "chats:view"
-	PermChatsViewAny   PermissionName = "chats:view_any"
-	PermChatsCreate    PermissionName = "chats:create"
-	PermChatsCreateAny PermissionName = "chats:create_any"
-	PermChatsUpdate    PermissionName = "chats:update"
-	PermChatsUpdateAny PermissionName = "chats:update_any"
-	PermChatsDelete    PermissionName = "chats:delete"
-	PermChatsDeleteAny PermissionName = "chats:delete_any"
-	PermChatsWrite     PermissionName = "chats:write"
-	PermChatsManage    PermissionName = "chats:manage"
+	PermChatsView   PermissionName = "chats:view"
+	PermChatsCreate PermissionName = "chats:create"
+	PermChatsUpdate PermissionName = "chats:update"
+	PermChatsDelete PermissionName = "chats:delete"
+	PermChatsWrite  PermissionName = "chats:write"
+	PermChatsManage PermissionName = "chats:manage"
 	// Media
 	PermMediaView      PermissionName = "media:view"
-	PermMediaViewAny   PermissionName = "media:view_any"
 	PermMediaCreate    PermissionName = "media:create"
-	PermMediaCreateAny PermissionName = "media:create_any"
 	PermMediaDelete    PermissionName = "media:delete"
 	PermMediaDeleteAny PermissionName = "media:delete_any"
 	// Practices
@@ -115,12 +92,10 @@ const (
 	PermGradebookView      PermissionName = "gradebook:view"
 	PermGradebookViewAny   PermissionName = "gradebook:view_any"
 	PermGradebookCreate    PermissionName = "gradebook:create"
-	PermGradebookCreateAny PermissionName = "gradebook:create_any"
 	PermGradebookUpdate    PermissionName = "gradebook:update"
 	PermGradebookUpdateAny PermissionName = "gradebook:update_any"
 	PermGradebookDelete    PermissionName = "gradebook:delete"
 	PermGradebookDeleteAny PermissionName = "gradebook:delete_any"
-	PermGradebookViewOwn   PermissionName = "gradebook:view_own"
 	// Offlines
 	PermOfflinesView      PermissionName = "offlines:view"
 	PermOfflinesViewAny   PermissionName = "offlines:view_any"
@@ -138,8 +113,6 @@ const (
 	PermAttendanceUpdate    PermissionName = "attendance:update"
 	PermAttendanceUpdateAny PermissionName = "attendance:update_any"
 	PermAttendanceDelete    PermissionName = "attendance:delete"
-	PermAttendanceDeleteAny PermissionName = "attendance:delete_any"
-	PermAttendanceViewOwn   PermissionName = "attendance:view_own"
 )
 
 // AllPermissions is the authoritative list of every permission in the system.
@@ -157,39 +130,34 @@ var AllPermissions = []PermissionName{
 	PermClassesView, PermClassesViewAny, PermClassesCreate, PermClassesCreateAny,
 	PermClassesUpdate, PermClassesUpdateAny, PermClassesDelete, PermClassesDeleteAny, PermClassesJoin,
 	// Live Sessions
-	PermLiveSessionsView, PermLiveSessionsViewAny, PermLiveSessionsCreate, PermLiveSessionsCreateAny,
-	PermLiveSessionsUpdate, PermLiveSessionsUpdateAny, PermLiveSessionsDelete, PermLiveSessionsDeleteAny,
+	PermLiveSessionsView, PermLiveSessionsViewAny, PermLiveSessionsCreate,
+	PermLiveSessionsUpdate, PermLiveSessionsUpdateAny,
 	PermLiveSessionsJoin, PermLiveSessionsJoinAny, PermLiveSessionsManage, PermLiveSessionsManageAny,
-	// Recordings
-	PermRecordingsView, PermRecordingsViewAny, PermRecordingsCreate, PermRecordingsCreateAny,
-	PermRecordingsUpdate, PermRecordingsUpdateAny, PermRecordingsDelete, PermRecordingsDeleteAny, PermRecordingsDownload,
 	// Question Banks
 	PermQuestionBanksView, PermQuestionBanksViewAny, PermQuestionBanksCreate, PermQuestionBanksCreateAny,
 	PermQuestionBanksUpdate, PermQuestionBanksUpdateAny, PermQuestionBanksDelete, PermQuestionBanksDeleteAny,
 	// Quizzes
-	PermQuizzesView, PermQuizzesViewAny, PermQuizzesCreate, PermQuizzesCreateAny,
+	PermQuizzesView, PermQuizzesViewAny, PermQuizzesCreate,
 	PermQuizzesUpdate, PermQuizzesUpdateAny, PermQuizzesDelete, PermQuizzesDeleteAny, PermQuizzesTake,
 	// Polls
-	PermPollsView, PermPollsViewAny, PermPollsCreate, PermPollsCreateAny,
-	PermPollsUpdate, PermPollsUpdateAny, PermPollsDelete, PermPollsDeleteAny,
+	PermPollsView, PermPollsCreate,
+	PermPollsUpdate, PermPollsUpdateAny, PermPollsDelete,
 	// Chats
-	PermChatsView, PermChatsViewAny, PermChatsCreate, PermChatsCreateAny,
-	PermChatsUpdate, PermChatsUpdateAny, PermChatsDelete, PermChatsDeleteAny,
+	PermChatsView, PermChatsCreate, PermChatsUpdate, PermChatsDelete,
 	PermChatsWrite, PermChatsManage,
 	// Media
-	PermMediaView, PermMediaViewAny, PermMediaCreate, PermMediaCreateAny,
-	PermMediaDelete, PermMediaDeleteAny,
+	PermMediaView, PermMediaCreate, PermMediaDelete, PermMediaDeleteAny,
 	// Practices
 	PermPracticesView, PermPracticesViewAny, PermPracticesCreate, PermPracticesCreateAny,
 	PermPracticesUpdate, PermPracticesUpdateAny, PermPracticesDelete, PermPracticesDeleteAny,
 	PermPracticesSubmit, PermPracticesGrade,
 	// Gradebook
-	PermGradebookView, PermGradebookViewAny, PermGradebookCreate, PermGradebookCreateAny,
-	PermGradebookUpdate, PermGradebookUpdateAny, PermGradebookDelete, PermGradebookDeleteAny, PermGradebookViewOwn,
+	PermGradebookView, PermGradebookViewAny, PermGradebookCreate,
+	PermGradebookUpdate, PermGradebookUpdateAny, PermGradebookDelete, PermGradebookDeleteAny,
 	// Offlines
 	PermOfflinesView, PermOfflinesViewAny, PermOfflinesCreate, PermOfflinesCreateAny,
 	PermOfflinesUpdate, PermOfflinesUpdateAny, PermOfflinesDelete, PermOfflinesDeleteAny,
 	// Attendance
 	PermAttendanceView, PermAttendanceViewAny, PermAttendanceCreate, PermAttendanceCreateAny,
-	PermAttendanceUpdate, PermAttendanceUpdateAny, PermAttendanceDelete, PermAttendanceDeleteAny, PermAttendanceViewOwn,
+	PermAttendanceUpdate, PermAttendanceUpdateAny, PermAttendanceDelete,
 }

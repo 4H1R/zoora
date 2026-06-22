@@ -4,11 +4,14 @@ import { useTranslation } from "react-i18next"
 
 import { StatusGlyph, StatusScreen } from "@/components/status-screen"
 import { Button } from "@/components/ui/button"
+import { useSeo } from "@/hooks/use-seo"
 
 /** Rendered for unmatched routes via the root route's `notFoundComponent`. */
 export function NotFound() {
   const { t } = useTranslation()
   const router = useRouter()
+
+  useSeo("errorPages.notFound.title", "errorPages.notFound.description")
 
   return (
     <StatusScreen tone="brand">
@@ -21,10 +24,7 @@ export function NotFound() {
         {t("errorPages.notFound.title")}
       </h1>
 
-      <p
-        className="animate-reveal mt-5 max-w-md text-base leading-relaxed text-muted-foreground text-pretty"
-        style={{ animationDelay: "400ms" }}
-      >
+      <p className="mt-3 max-w-sm text-sm text-muted-foreground">
         {t("errorPages.notFound.description")}
       </p>
 

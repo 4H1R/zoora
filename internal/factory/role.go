@@ -23,7 +23,7 @@ func NewRole(orgID *uuid.UUID, opts ...func(*domain.Role)) *domain.Role {
 	id := nextID()
 	r := &domain.Role{
 		OrganizationID: orgID,
-		Name:           fmt.Sprintf("%s Role %d", fake.JobTitle(), id),
+		Name:           fakeRoleName(id),
 	}
 	for _, o := range opts {
 		o(r)

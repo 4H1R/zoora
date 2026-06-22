@@ -360,7 +360,7 @@ func adminCtx() context.Context {
 func teacherCtx() context.Context {
 	return domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      testTeacherID,
-		Permissions: []string{"livesessions:manage", "livesessions:create", "livesessions:view", "livesessions:update", "livesessions:join"},
+		Permissions: []string{"live_sessions:manage", "live_sessions:create", "live_sessions:view", "live_sessions:update", "live_sessions:join"},
 	})
 }
 
@@ -611,7 +611,7 @@ func TestLeaveRoom_Success(t *testing.T) {
 func manageAnyCtx() context.Context {
 	return domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      uuid.New(),
-		Permissions: []string{"livesessions:manage_any", "livesessions:view_any", "livesessions:update_any"},
+		Permissions: []string{"live_sessions:manage_any", "live_sessions:view_any", "live_sessions:update_any"},
 	})
 }
 
@@ -632,7 +632,7 @@ func TestManageAny_NonOwner_CanManageRoom(t *testing.T) {
 func TestManage_NonOwner_Forbidden(t *testing.T) {
 	ctx := domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      uuid.New(),
-		Permissions: []string{"livesessions:manage"},
+		Permissions: []string{"live_sessions:manage"},
 	})
 	svc, roomRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
@@ -649,7 +649,7 @@ func TestViewAny_ListReturnsAll_ScopedToOrg(t *testing.T) {
 	ctx := domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      uuid.New(),
 		OrgID:       &orgID,
-		Permissions: []string{"livesessions:view_any"},
+		Permissions: []string{"live_sessions:view_any"},
 	})
 	// view_any is org-wide, NOT cross-tenant: the resolved scope must carry the
 	// caller's OrgID so the repo filters live rooms to that organization only.
@@ -678,7 +678,7 @@ func TestAdmin_ListReturnsAll_NoOrgFilter(t *testing.T) {
 func TestViewAny_GetRoom_NonMember_Success(t *testing.T) {
 	ctx := domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      uuid.New(),
-		Permissions: []string{"livesessions:view_any"},
+		Permissions: []string{"live_sessions:view_any"},
 	})
 	svc, roomRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
@@ -701,7 +701,7 @@ func TestUpdateAny_NonOwner_CanUpdateConfig(t *testing.T) {
 
 	ctx := domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      uuid.New(),
-		Permissions: []string{"livesessions:update_any"},
+		Permissions: []string{"live_sessions:update_any"},
 	})
 	cfg := domain.DefaultLiveRoomConfig()
 	cfg.MaxParticipants = 50
@@ -717,7 +717,7 @@ func TestUpdate_NonOwner_Forbidden(t *testing.T) {
 
 	ctx := domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      uuid.New(),
-		Permissions: []string{"livesessions:update"},
+		Permissions: []string{"live_sessions:update"},
 	})
 	cfg := domain.DefaultLiveRoomConfig()
 	_, err := svc.UpdateRoomConfig(ctx, testRoomID, domain.UpdateLiveRoomConfigDTO{Config: &cfg})

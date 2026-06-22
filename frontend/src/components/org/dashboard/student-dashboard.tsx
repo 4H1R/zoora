@@ -18,7 +18,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 
 import { TileGrid } from "./tile-grid"
-import { useStudentTiles } from "./use-student-tiles"
+import { useDashboardTiles } from "./use-dashboard-tiles"
+import { useGreeting } from "./use-greeting"
 
 // examStateBadgeVariant maps a derived exam state to a shadcn Badge variant,
 // using theme tokens only: open = primary, graded = secondary, others = outline.
@@ -44,11 +45,12 @@ type LatestGrade = {
 
 export function StudentDashboard({ orgId }: { orgId: string }) {
   const { t } = useTranslation()
-  const tiles = useStudentTiles(orgId)
+  const tiles = useDashboardTiles(orgId)
 
   const { data: meData } = useGetUsersMe()
   const me = (meData?.status === 200 && meData.data.data) || undefined
   const firstName = (me?.name ?? "").trim().split(/\s+/)[0] || me?.username || ""
+  const greeting = useGreeting(firstName)
 
   const examsQ = useGetQuizzesMe()
   const allExams: MyExam[] = (examsQ.data?.status === 200 && examsQ.data.data.data?.items) || []
@@ -87,9 +89,7 @@ export function StudentDashboard({ orgId }: { orgId: string }) {
       {/* Hero */}
       <div className="flex flex-col gap-1.5">
         <Eyebrow className="text-primary">{t("org.dashboard.overview")}</Eyebrow>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          {firstName ? t("org.dashboard.welcomeName", { name: firstName }) : t("org.dashboard.welcome")}
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{greeting}</h1>
       </div>
 
       {/* Widgets */}

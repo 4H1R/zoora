@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react"
 
+import { formatDate } from "./format-date"
+
 export type SessionStatus = "scheduled" | "live" | "ended"
 
 export const LIVE_WINDOW_MS = 1000 * 60 * 60 * 2
@@ -22,31 +24,13 @@ export function getSessionStatus(startIso: string | undefined, now: number): Ses
   return "ended"
 }
 
+// Thin delegate to the date-formatting source of truth (./format-date).
 export function formatSessionDate(
   iso: string | undefined,
   locale: string,
   variant: "short" | "long" = "short"
 ): string {
-  if (!iso) return "—"
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return "—"
-  if (variant === "long") {
-    return d.toLocaleString(locale, {
-      weekday: "short",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  }
-  return d.toLocaleString(locale, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
+  return formatDate(iso, locale, variant === "long" ? "datetime-long" : "datetime")
 }
 
 export function formatCountdown(targetIso: string | undefined, now: number): string {

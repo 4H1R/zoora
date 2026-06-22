@@ -2,7 +2,6 @@ package factory
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,8 +12,8 @@ import (
 func NewChat(modelType string, modelID uuid.UUID, opts ...func(*domain.Chat)) *domain.Chat {
 	id := nextID()
 	c := &domain.Chat{
-		Name:        fmt.Sprintf("%s Chat %d", fake.Noun(), id),
-		Description: fake.Sentence(6),
+		Name:        fakeChatName(id),
+		Description: fakeSentence(6),
 		ModelType:   modelType,
 		ModelID:     modelID,
 		Status:      domain.ChatStatusActive,
@@ -43,7 +42,7 @@ func NewMessage(chatID uuid.UUID, senderID *uuid.UUID, opts ...func(*domain.Mess
 		ChatID:      chatID,
 		SenderID:    senderID,
 		MessageType: domain.MessageTypeText,
-		Content:     fake.Sentence(fake.IntRange(4, 12)),
+		Content:     fakeSentence(fake.IntRange(4, 12)),
 		Attachments: json.RawMessage(`[]`),
 		EmojiCounts: json.RawMessage(`{}`),
 	}

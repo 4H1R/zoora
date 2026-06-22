@@ -78,7 +78,8 @@ func (r *roomRepository) List(ctx context.Context, scope domain.LiveRoomListScop
 	db := database.DB(ctx, r.db)
 	base := db.Model(&domain.LiveRoom{}).
 		Preload("ClassSession").
-		Preload("ClassSession.Class")
+		Preload("ClassSession.Class").
+		Preload("ClassSession.Class.User")
 	if scope.IncludeDeleted {
 		base = base.Unscoped()
 	}

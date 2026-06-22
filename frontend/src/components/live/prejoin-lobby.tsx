@@ -42,6 +42,7 @@ import {
 import { Spinner } from "@/components/ui/spinner"
 import { UserAvatar } from "@/components/user-avatar"
 import { userHasAny } from "@/lib/access"
+import { formatDate } from "@/lib/format-date"
 import { formatCountdown, useNow } from "@/lib/session-status"
 import { cn } from "@/lib/utils"
 
@@ -62,10 +63,9 @@ export function PreJoinLobby({ room, liveId, onJoined }: PreJoinLobbyProps) {
   // The /live route renders outside the org AccessProvider, so the useAccess
   // hooks aren't available — userHasAny reads permissions straight off /users/me.
   const isModerator = userHasAny(me, [
-    "livesessions:manage",
-    "livesessions:manage_any",
-    "livesessions:create",
-    "livesessions:create_any",
+    "live_sessions:manage",
+    "live_sessions:manage_any",
+    "live_sessions:create",
   ])
   const now = useNow(1000)
 
@@ -128,14 +128,9 @@ export function PreJoinLobby({ room, liveId, onJoined }: PreJoinLobbyProps) {
   // Students can't enter a not-yet-started (created) room; only the host can.
   const isWaiting = isCreated && !isModerator
 
-  // Format in the active app language (was hard-coded to the browser default,
-  // so Persian users saw English dates).
-  const startTime = scheduledIso
-    ? new Date(scheduledIso).toLocaleTimeString(i18n.language, { hour: "2-digit", minute: "2-digit" })
-    : undefined
-  const startDate = scheduledIso
-    ? new Date(scheduledIso).toLocaleDateString(i18n.language, { weekday: "long", month: "long", day: "numeric" })
-    : undefined
+  // Format in the active app language so Persian users get Jalali dates.
+  const startTime = scheduledIso ? formatDate(scheduledIso, i18n.language, "time") : undefined
+  const startDate = scheduledIso ? formatDate(scheduledIso, i18n.language, "weekday-long") : undefined
 
   const handleJoin = () => {
     joinMutation.mutate(

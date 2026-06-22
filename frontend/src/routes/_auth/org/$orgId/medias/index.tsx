@@ -9,7 +9,7 @@ export const Route = createFileRoute("/_auth/org/$orgId/medias/")({
 })
 
 function RouteComponent() {
-  const allowed = useOrgGuard(["media:view", "media:view_any"])
+  const allowed = useOrgGuard(["media:view"])
   if (!allowed) return null
   return <div>Hello "/_auth/org/$orgId/medias/"!</div>
 }

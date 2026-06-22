@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -108,12 +109,81 @@ func (r *roomRepository) List(ctx context.Context, scope domain.PracticeRoomList
 	if q.ClassSessionID != nil {
 		base = base.Where("class_session_id = ?", *q.ClassSessionID)
 	}
+
+	now := time.Now()
+	notSubmitted := "NOT EXISTS (SELECT 1 FROM practice_submissions ps WHERE ps.practice_room_id = practice_rooms.id AND ps.user_id = ? AND ps.deleted_at IS NULL)"
+	if q.StudentStatus != nil {
+		switch *q.StudentStatus {
+		case domain.PracticeStatusUpcoming:
+			base = base.Where("start_time > ?", now)
+		case domain.PracticeStatusToSubmit:
+			base = base.Where("start_time <= ? AND end_time >= ?", now, now).
+				Where(notSubmitted, q.ViewerID)
+		case domain.PracticeStatusSubmitted:
+			base = base.Where("EXISTS (SELECT 1 FROM practice_submissions ps WHERE ps.practice_room_id = practice_rooms.id AND ps.user_id = ? AND ps.deleted_at IS NULL AND ps.score IS NULL)", q.ViewerID)
+		case domain.PracticeStatusGraded:
+			base = base.Where("EXISTS (SELECT 1 FROM practice_submissions ps WHERE ps.practice_room_id = practice_rooms.id AND ps.user_id = ? AND ps.deleted_at IS NULL AND ps.score IS NOT NULL)", q.ViewerID)
+		case domain.PracticeStatusMissed:
+			base = base.Where("end_time < ?", now).Where(notSubmitted, q.ViewerID)
+		}
+	}
+	if q.WindowState != nil {
+		switch *q.WindowState {
+		case "upcoming":
+			base = base.Where("start_time > ?", now)
+		case "open":
+			base = base.Where("start_time <= ? AND end_time >= ?", now, now)
+		case "ended":
+			base = base.Where("end_time < ?", now)
+		}
+	}
+	if q.NeedsGrading != nil && *q.NeedsGrading {
+		base = base.Where("EXISTS (SELECT 1 FROM practice_submissions ps WHERE ps.practice_room_id = practice_rooms.id AND ps.deleted_at IS NULL AND ps.score IS NULL)")
+	}
+
 	var rooms []domain.PracticeRoom
 	total, err := listparams.Paginate(base, q.ListParams, &rooms)
 	if err != nil {
 		return nil, 0, fmt.Errorf("practices.roomRepository.List: %w", err)
 	}
 	return rooms, total, nil
+}
+
+func (r *roomRepository) MemberCountsByClasses(ctx context.Context, classIDs []uuid.UUID) (map[uuid.UUID]int64, error) {
+	out := make(map[uuid.UUID]int64, len(classIDs))
+	if len(classIDs) == 0 {
+		return out, nil
+	}
+	type row struct {
+		ClassID uuid.UUID
+		Count   int64
+	}
+	var rows []row
+	if err := database.DB(ctx, r.db).Table("class_members").
+		Select("class_id, COUNT(*) AS count").
+		Where("class_id IN ?", classIDs).
+		Group("class_id").
+		Scan(&rows).Error; err != nil {
+		return nil, fmt.Errorf("practices.roomRepository.MemberCountsByClasses: %w", err)
+	}
+	for _, rw := range rows {
+		out[rw.ClassID] = rw.Count
+	}
+	return out, nil
+}
+
+func (r *roomRepository) ViewerMemberClasses(ctx context.Context, userID uuid.UUID, classIDs []uuid.UUID) ([]uuid.UUID, error) {
+	if len(classIDs) == 0 {
+		return nil, nil
+	}
+	var ids []uuid.UUID
+	if err := database.DB(ctx, r.db).Table("class_members").
+		Where("user_id = ? AND class_id IN ?", userID, classIDs).
+		Distinct().
+		Pluck("class_id", &ids).Error; err != nil {
+		return nil, fmt.Errorf("practices.roomRepository.ViewerMemberClasses: %w", err)
+	}
+	return ids, nil
 }
 
 func (r *roomRepository) HardDelete(ctx context.Context, id uuid.UUID) error {
@@ -232,6 +302,46 @@ func (r *submissionRepository) FindByRoomAndUser(ctx context.Context, roomID, us
 		return nil, fmt.Errorf("practices.submissionRepository.FindByRoomAndUser: %w", err)
 	}
 	return &sub, nil
+}
+
+func (r *submissionRepository) ListByRoomsAndUser(ctx context.Context, roomIDs []uuid.UUID, userID uuid.UUID) ([]domain.PracticeSubmission, error) {
+	if len(roomIDs) == 0 {
+		return nil, nil
+	}
+	var subs []domain.PracticeSubmission
+	if err := r.baseQuery(ctx).
+		Where("practice_room_id IN ? AND user_id = ?", roomIDs, userID).
+		Find(&subs).Error; err != nil {
+		return nil, fmt.Errorf("practices.submissionRepository.ListByRoomsAndUser: %w", err)
+	}
+	return subs, nil
+}
+
+func (r *submissionRepository) CountsByRooms(ctx context.Context, roomIDs []uuid.UUID) (map[uuid.UUID]domain.PracticeRoomStats, error) {
+	out := make(map[uuid.UUID]domain.PracticeRoomStats, len(roomIDs))
+	if len(roomIDs) == 0 {
+		return out, nil
+	}
+	type row struct {
+		PracticeRoomID uuid.UUID
+		Submitted      int64
+		Graded         int64
+	}
+	var rows []row
+	if err := r.baseQuery(ctx).
+		Select("practice_room_id, COUNT(*) AS submitted, COUNT(score) AS graded").
+		Where("practice_room_id IN ?", roomIDs).
+		Group("practice_room_id").
+		Scan(&rows).Error; err != nil {
+		return nil, fmt.Errorf("practices.submissionRepository.CountsByRooms: %w", err)
+	}
+	for _, rw := range rows {
+		out[rw.PracticeRoomID] = domain.PracticeRoomStats{
+			SubmittedCount: rw.Submitted,
+			GradedCount:    rw.Graded,
+		}
+	}
+	return out, nil
 }
 
 func (r *submissionRepository) ListByRoom(ctx context.Context, roomID uuid.UUID, p domain.ListParams) ([]domain.PracticeSubmission, int64, error) {

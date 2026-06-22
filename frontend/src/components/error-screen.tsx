@@ -7,11 +7,14 @@ import { useTranslation } from "react-i18next"
 import { Eyebrow } from "@/components/eyebrow"
 import { StatusGlyph, StatusScreen } from "@/components/status-screen"
 import { Button } from "@/components/ui/button"
+import { useSeo } from "@/hooks/use-seo"
 
 /** Rendered for thrown render/loader errors via the root route's `errorComponent`. */
 export function ErrorScreen({ error, reset }: ErrorComponentProps) {
   const { t } = useTranslation()
   const router = useRouter()
+
+  useSeo("errorPages.serverError.title", "errorPages.serverError.description")
 
   const handleRetry = () => {
     router.invalidate()

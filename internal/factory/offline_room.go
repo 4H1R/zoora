@@ -1,7 +1,6 @@
 package factory
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,8 +16,8 @@ func NewOfflineRoom(orgID, classID, sessionID, creatorID uuid.UUID, opts ...func
 		ClassID:        classID,
 		ClassSessionID: sessionID,
 		CreatorID:      creatorID,
-		Title:          fmt.Sprintf("%s Recording %d", fake.Noun(), id),
-		Description:    fake.Sentence(8),
+		Title:          fakeOfflineRoomTitle(id),
+		Description:    fakeSentence(8),
 		PublishedAt:    &now,
 		ViewCount:      int64(fake.IntRange(0, 500)),
 	}

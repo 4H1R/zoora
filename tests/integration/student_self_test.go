@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/4H1R/zoora/internal/attendance"
+	"github.com/4H1R/zoora/internal/platform/authz"
 	"github.com/4H1R/zoora/internal/classes"
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/gradebook"
@@ -140,11 +141,11 @@ func TestIntegration_GradebookService_GetMine(t *testing.T) {
 	require.NoError(t, cellRepo.Upsert(ctx, &domain.GradebookCell{ColumnID: col.ID, StudentID: student.ID, Value: "18"}))
 	require.NoError(t, cellRepo.Upsert(ctx, &domain.GradebookCell{ColumnID: col.ID, StudentID: other.ID, Value: "11"}))
 
-	svc := gradebook.NewService(columnRepo, cellRepo, classRepo, memberRepo, nil, nil, nil, slog.Default())
+	svc := gradebook.NewService(columnRepo, cellRepo, classRepo, memberRepo, nil, nil, nil, authz.NewResolver(memberRepo), slog.Default())
 
 	callerCtx := domain.WithCaller(ctx, domain.Caller{
 		UserID:      student.ID,
-		Permissions: []string{string(domain.PermGradebookViewOwn)},
+		Permissions: []string{string(domain.PermGradebookView)},
 	})
 
 	rc, err := svc.GetMine(callerCtx)
@@ -214,10 +215,10 @@ func TestIntegration_Attendance_ListMine(t *testing.T) {
 	assert.Len(t, rows, 4)
 
 	// Service-level summary.
-	svc := attendance.NewService(attRepo, classRepo, sessRepo, nil, nil, nil, nil, nil, slog.Default())
+	svc := attendance.NewService(attRepo, classRepo, sessRepo, nil, nil, nil, nil, nil, authz.NewResolver(nil), slog.Default())
 	callerCtx := domain.WithCaller(ctx, domain.Caller{
 		UserID:      student.ID,
-		Permissions: []string{string(domain.PermAttendanceViewOwn)},
+		Permissions: []string{string(domain.PermAttendanceView)},
 	})
 	res, err := svc.ListMine(callerCtx, domain.ListParams{Page: 1, PageSize: 50})
 	require.NoError(t, err)

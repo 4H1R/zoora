@@ -173,16 +173,103 @@ func (s *service) DeleteRoom(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (s *service) ListRooms(ctx context.Context, q domain.ListPracticeRoomsQuery) ([]domain.PracticeRoom, int64, error) {
+func (s *service) ListRooms(ctx context.Context, q domain.ListPracticeRoomsQuery) ([]domain.PracticeRoomView, int64, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, 0, domain.ErrForbidden
 	}
 	scope := s.resolveListScope(caller)
+	q.ViewerID = caller.UserID
 	if !canListDeleted(caller) {
 		q.IncludeDeleted = false
 	}
-	return s.rooms.List(ctx, scope, q)
+	rooms, total, err := s.rooms.List(ctx, scope, q)
+	if err != nil {
+		return nil, 0, err
+	}
+	if len(rooms) == 0 {
+		return []domain.PracticeRoomView{}, total, nil
+	}
+
+	roomIDs := make([]uuid.UUID, len(rooms))
+	classIDSet := make(map[uuid.UUID]struct{})
+	for i, r := range rooms {
+		roomIDs[i] = r.ID
+		classIDSet[r.ClassID] = struct{}{}
+	}
+	classIDs := make([]uuid.UUID, 0, len(classIDSet))
+	for id := range classIDSet {
+		classIDs = append(classIDs, id)
+	}
+
+	mySubsList, err := s.subs.ListByRoomsAndUser(ctx, roomIDs, caller.UserID)
+	if err != nil {
+		return nil, 0, err
+	}
+	mySubs := make(map[uuid.UUID]*domain.PracticeSubmission, len(mySubsList))
+	for i := range mySubsList {
+		mySubs[mySubsList[i].PracticeRoomID] = &mySubsList[i]
+	}
+
+	isManager := caller.HasAny(domain.PermPracticesViewAny, domain.PermPracticesUpdateAny, domain.PermPracticesGrade)
+	var stats map[uuid.UUID]domain.PracticeRoomStats
+	var memberCounts map[uuid.UUID]int64
+	if isManager {
+		if stats, err = s.subs.CountsByRooms(ctx, roomIDs); err != nil {
+			return nil, 0, err
+		}
+		if memberCounts, err = s.rooms.MemberCountsByClasses(ctx, classIDs); err != nil {
+			return nil, 0, err
+		}
+	}
+
+	memberClassIDs, err := s.rooms.ViewerMemberClasses(ctx, caller.UserID, classIDs)
+	if err != nil {
+		return nil, 0, err
+	}
+	memberClasses := make(map[uuid.UUID]bool, len(memberClassIDs))
+	for _, id := range memberClassIDs {
+		memberClasses[id] = true
+	}
+
+	now := time.Now()
+	views := make([]domain.PracticeRoomView, len(rooms))
+	for i := range rooms {
+		r := rooms[i]
+		sub := mySubs[r.ID]
+		v := domain.PracticeRoomView{
+			PracticeRoom: r,
+			MySubmission: sub,
+			Mine:         sub != nil,
+			Status:       derivePracticeStatus(now, r, sub),
+			CanGrade:     canManageRoom(caller, &r),
+		}
+		v.CanSubmit = memberClasses[r.ClassID] && !v.CanGrade && sub == nil &&
+			!now.Before(r.StartTime) && !now.After(r.EndTime)
+		if v.CanGrade && stats != nil {
+			st := stats[r.ID]
+			st.MemberCount = memberCounts[r.ClassID]
+			v.Stats = &st
+		}
+		views[i] = v
+	}
+	return views, total, nil
+}
+
+func derivePracticeStatus(now time.Time, r domain.PracticeRoom, sub *domain.PracticeSubmission) string {
+	if sub != nil {
+		if sub.Score != nil {
+			return domain.PracticeStatusGraded
+		}
+		return domain.PracticeStatusSubmitted
+	}
+	if now.Before(r.StartTime) {
+		return domain.PracticeStatusUpcoming
+	}
+	if now.After(r.EndTime) {
+		return domain.PracticeStatusMissed
+	}
+	return domain.PracticeStatusToSubmit
 }
 
 func (s *service) resolveListScope(caller domain.Caller) domain.PracticeRoomListScope {

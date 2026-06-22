@@ -55,7 +55,7 @@ generate: swagger
 	cd frontend && pnpm generate
 
 seed:
-	$(EXEC) go run cmd/seed/main.go
+	$(EXEC_TTY) go run cmd/seed/main.go
 
 shell:
 	$(EXEC_TTY) bash

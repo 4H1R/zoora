@@ -13,7 +13,7 @@ func NewUser(orgID uuid.UUID, opts ...func(*domain.User)) *domain.User {
 	u := &domain.User{
 		OrganizationID: &orgID,
 		Username:       fmt.Sprintf("%s%d", fake.Username(), id),
-		Name:           fake.Name(),
+		Name:           fakeName(),
 		Password:       DefaultHashedPassword,
 	}
 	for _, o := range opts {

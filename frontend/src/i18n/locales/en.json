@@ -980,7 +980,10 @@
     "logOut": "Log out",
     "pagination": {
       "rowsPerPage": "Rows per page",
-      "showing": "{{from}}–{{to}} of {{total}}"
+      "showing": "{{from}}–{{to}} of {{total}}",
+      "pageOf": "Page {{page}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next"
     },
     "orgs": {
       "title": "Organizations",
@@ -1140,7 +1143,9 @@
     "panel": "Organization",
     "nav": {
       "dashboard": "Dashboard",
+      "calendar": "Calendar",
       "classes": "Classes",
+      "onlineClasses": "Online Classes",
       "members": "Members",
       "management": "Management",
       "users": "Users",
@@ -1149,9 +1154,57 @@
       "files": "Files",
       "learning": "Learning",
       "exams": "Exams",
+      "practices": "Practices",
       "grades": "Grades",
       "attendance": "Attendance",
       "recordings": "Recordings"
+    },
+    "practices": {
+      "title": "Practices",
+      "subtitle": "Homework across all your classes",
+      "searchPlaceholder": "Search practices",
+      "noResults": "No practices found",
+      "noResultsHint": "Try a different filter",
+      "due": "Due",
+      "noDueDate": "No deadline",
+      "stats": {
+        "total": "Total",
+        "toSubmit": "To submit",
+        "needsGrading": "Needs grading"
+      },
+      "status": {
+        "upcoming": "Upcoming",
+        "to_submit": "To submit",
+        "submitted": "Submitted",
+        "graded": "Graded",
+        "missed": "Missed"
+      },
+      "filter": {
+        "all": "All",
+        "needsGrading": "Needs grading",
+        "windowAll": "All windows",
+        "window": {
+          "upcoming": "Upcoming",
+          "open": "Open",
+          "ended": "Ended"
+        }
+      },
+      "manager": {
+        "class": "Class",
+        "teacher": "Teacher",
+        "submitted": "Submitted",
+        "graded": "Graded",
+        "completion": "Completion",
+        "submissions": "{{submitted}} / {{members}}",
+        "submissionsTitle": "Submissions",
+        "noSubmissions": "No submissions yet"
+      },
+      "actions": {
+        "submit": "Submit",
+        "grade": "Grade",
+        "view": "View",
+        "viewSubmissions": "View submissions"
+      }
     },
     "portal": {
       "tiles": {
@@ -1183,6 +1236,20 @@
       "continue": "Continue",
       "score": "Score: {{score}} / {{total}}",
       "opensAt": "Opens {{date}}"
+    },
+    "calendar": {
+      "title": "Calendar",
+      "selectedDay": "Selected day",
+      "todayBadge": "Today",
+      "eventCount_one": "{{count}} event",
+      "eventCount_other": "{{count}} events",
+      "empty": "No events on this day.",
+      "legend": {
+        "live": "Live",
+        "quiz": "Quiz",
+        "practice": "Practice",
+        "offline": "Offline"
+      }
     },
     "grades": {
       "title": "Report Card",
@@ -1232,6 +1299,18 @@
       "overview": "Overview",
       "welcome": "Welcome back",
       "welcomeName": "Welcome back, {{name}}",
+      "greeting": {
+        "morning": "Good morning",
+        "afternoon": "Good afternoon",
+        "evening": "Good evening",
+        "night": "Good evening"
+      },
+      "greetingName": {
+        "morning": "Good morning, {{name}}",
+        "afternoon": "Good afternoon, {{name}}",
+        "evening": "Good evening, {{name}}",
+        "night": "Good evening, {{name}}"
+      },
       "viewAll": "View all",
       "stats": {
         "classes": "Classes",
@@ -2027,6 +2106,31 @@
       }
     }
   },
+  "onlineClassesPage": {
+    "title": "Online Classes",
+    "searchPlaceholder": "Search online classes…",
+    "noResults": "No online classes found",
+    "noResultsHint": "Nothing matches the current filter.",
+    "join": "Join",
+    "start": "Start",
+    "notStartedYet": "Not started yet",
+    "unknownHost": "Unknown host",
+    "notScheduled": "Not scheduled",
+    "startsIn": "Starts in {{time}}",
+    "startedLabel": "In progress",
+    "endedLabel": "Ended",
+    "tabs": {
+      "all": "All",
+      "live": "Live",
+      "notStarted": "Not started",
+      "finished": "Finished"
+    },
+    "status": {
+      "live": "LIVE",
+      "notStarted": "Not started",
+      "finished": "Finished"
+    }
+  },
   "classesPage": {
     "title": "Classes",
     "searchPlaceholder": "Search classes…",
@@ -2072,8 +2176,7 @@
       "roles": "Roles",
       "organizations": "Organizations",
       "classes": "Classes",
-      "livesessions": "Live Sessions",
-      "recordings": "Recordings",
+      "live_sessions": "Live Sessions",
       "question_banks": "Question Banks",
       "quizzes": "Quizzes",
       "polls": "Polls",
@@ -2087,7 +2190,6 @@
     "actions": {
       "view": "View",
       "view_any": "View Any",
-      "view_own": "View Own",
       "create": "Create",
       "create_any": "Create Any",
       "update": "Update",
@@ -2100,7 +2202,6 @@
       "join_any": "Join Any",
       "manage": "Manage",
       "manage_any": "Manage Any",
-      "download": "Download",
       "write": "Write",
       "submit": "Submit",
       "take": "Take",

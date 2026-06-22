@@ -1,7 +1,6 @@
 package factory
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,8 +14,8 @@ func NewQuiz(orgID, userID, classID uuid.UUID, opts ...func(*domain.Quiz)) *doma
 		OrganizationID:   orgID,
 		UserID:           userID,
 		ClassID:          classID,
-		Title:            fmt.Sprintf("%s Quiz %d", fake.Noun(), id),
-		Description:      fake.Sentence(8),
+		Title:            fakeQuizTitle(id),
+		Description:      fakeSentence(8),
 		DurationMinutes:  fake.IntRange(10, 60),
 		NoBackNavigation: fake.Bool(),
 		ShuffleQuestions: fake.Bool(),

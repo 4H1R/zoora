@@ -1,7 +1,6 @@
 package factory
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,8 +17,8 @@ func NewPracticeRoom(orgID, classID, sessionID, userID uuid.UUID, opts ...func(*
 		ClassID:        classID,
 		ClassSessionID: sessionID,
 		UserID:         userID,
-		Title:          fmt.Sprintf("%s Practice %d", fake.Noun(), id),
-		Content:        fake.Sentence(12),
+		Title:          fakePracticeTitle(id),
+		Content:        fakeSentence(12),
 		MaxScore:       float64(fake.IntRange(10, 100)),
 		StartTime:      start,
 		EndTime:        end,
@@ -36,9 +35,9 @@ func NewPracticeSubmission(roomID, userID uuid.UUID, opts ...func(*domain.Practi
 	s := &domain.PracticeSubmission{
 		PracticeRoomID: roomID,
 		UserID:         userID,
-		Content:        fake.Sentence(10),
+		Content:        fakeSentence(10),
 		Score:          &score,
-		TeacherComment: fake.Sentence(6),
+		TeacherComment: fakeSentence(6),
 		SubmittedAt:    time.Now(),
 		Attachments:    []uuid.UUID{},
 	}

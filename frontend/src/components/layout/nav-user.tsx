@@ -4,13 +4,19 @@ import { LogOutIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { useLogout } from "@/api/auth/logout"
+import { useRoleName } from "@/lib/permissions"
 
 export function NavUser({ user }: { user?: GithubCom4H1RZooraInternalDomainUser }) {
   const { t } = useTranslation()
   const logout = useLogout()
+  const roleName = useRoleName()
   const displayName = user?.name ?? user?.username ?? "—"
   const fallback = displayName.slice(0, 2).toUpperCase()
-  const role = user?.is_admin ? t("admin.roleAdmin") : (user?.role?.name ?? t("admin.roleMember"))
+  const role = user?.is_admin
+    ? t("admin.roleAdmin")
+    : user?.role?.name
+      ? roleName(user.role.name)
+      : t("admin.roleMember")
 
   return (
     <div className="flex items-center gap-2.5 border-t pt-2.5">

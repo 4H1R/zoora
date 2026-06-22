@@ -54,7 +54,7 @@ const DECK = [
 function RouteComponent() {
   const { t } = useTranslation()
   const { orgId } = Route.useParams()
-  const allowed = useOrgGuard(["media:view", "media:view_any"])
+  const allowed = useOrgGuard(["media:view"])
   if (!allowed) return null
 
   return (

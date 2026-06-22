@@ -34,7 +34,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 
 	authed := rg.Group("", authMiddleware)
 	{
-		authed.GET("/gradebook/me", perm(domain.PermGradebookViewOwn), h.GetMine)
+		authed.GET("/gradebook/me", perm(domain.PermGradebookView), h.GetMine)
 		authed.GET("/classes/:id/gradebook", perm(domain.PermGradebookView), idParam, h.GetMatrix)
 		authed.GET("/classes/:id/gradebook/columns", perm(domain.PermGradebookView), idParam, h.ListColumns)
 		authed.POST("/classes/:id/gradebook/columns", perm(domain.PermGradebookCreate), idParam, h.CreateColumn)

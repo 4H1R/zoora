@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/4H1R/zoora/internal/platform/authz"
 	"github.com/4H1R/zoora/internal/domain"
 )
 
@@ -20,6 +21,7 @@ type service struct {
 	participants domain.LiveParticipantRepository
 	offlineViews domain.OfflineRoomViewRepository
 	offlineRooms domain.OfflineRoomRepository
+	resolver     *authz.Resolver
 	logger       *slog.Logger
 }
 
@@ -32,6 +34,7 @@ func NewService(
 	participants domain.LiveParticipantRepository,
 	offlineViews domain.OfflineRoomViewRepository,
 	offlineRooms domain.OfflineRoomRepository,
+	resolver *authz.Resolver,
 	logger *slog.Logger,
 ) domain.AttendanceService {
 	return &service{
@@ -43,6 +46,7 @@ func NewService(
 		participants: participants,
 		offlineViews: offlineViews,
 		offlineRooms: offlineRooms,
+		resolver:     resolver,
 		logger:       logger,
 	}
 }
@@ -344,14 +348,17 @@ func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*domain.Attendance
 	if err != nil {
 		return nil, err
 	}
-	if caller.IsAdmin || caller.HasPermission(domain.PermAttendanceViewAny) {
-		return a, nil
-	}
 	class, err := s.classes.FindByID(ctx, a.ClassID)
 	if err != nil {
 		return nil, err
 	}
-	if caller.UserID == class.UserID || caller.UserID == a.UserID {
+	scope, err := s.resolver.Scope(ctx, caller, class, domain.PermAttendanceViewAny)
+	if err != nil {
+		return nil, err
+	}
+	// Org-wide and class-wide viewers see any row; everyone else (enrolled
+	// student) may only see their own attendance row.
+	if scope == authz.ScopeAll || scope == authz.ScopeClass || caller.UserID == a.UserID {
 		return a, nil
 	}
 	return nil, domain.ErrForbidden
@@ -373,14 +380,15 @@ func (s *service) ListBySession(ctx context.Context, classID, sessionID uuid.UUI
 	if session.ClassID != classID {
 		return nil, 0, domain.ErrNotFound
 	}
-	if !caller.IsAdmin && !caller.HasPermission(domain.PermAttendanceViewAny) && caller.UserID != class.UserID {
-		enrolled, err := s.members.Exists(ctx, classID, caller.UserID)
-		if err != nil {
-			return nil, 0, err
-		}
-		if !enrolled {
-			return nil, 0, domain.ErrForbidden
-		}
+	scope, err := s.resolver.Scope(ctx, caller, class, domain.PermAttendanceViewAny)
+	if err != nil {
+		return nil, 0, err
+	}
+	switch scope {
+	case authz.ScopeNone:
+		return nil, 0, domain.ErrForbidden
+	case authz.ScopeOwn:
+		// Enrolled student sees only their own attendance.
 		userID := caller.UserID
 		q.UserID = &userID
 	}

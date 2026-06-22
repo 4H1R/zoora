@@ -1,8 +1,6 @@
 package factory
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 
 	"github.com/4H1R/zoora/internal/domain"
@@ -14,11 +12,11 @@ func NewPoll(userID uuid.UUID, modelType string, modelID uuid.UUID, opts ...func
 		UserID:              userID,
 		ModelType:           modelType,
 		ModelID:             modelID,
-		Name:                fmt.Sprintf("%s Poll %d", fake.Noun(), id),
+		Name:                fakePollName(id),
 		AllowedAnswersCount: 1,
 		Options: []domain.PollOption{
-			{Label: "Yes", Value: "yes"},
-			{Label: "No", Value: "no"},
+			{Label: T("Yes", "بله"), Value: "yes"},
+			{Label: T("No", "خیر"), Value: "no"},
 		},
 	}
 	for _, o := range opts {

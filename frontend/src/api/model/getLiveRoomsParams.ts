@@ -24,11 +24,11 @@ class_session_id?: string;
  */
 include_deleted?: boolean;
 /**
- * Substring match on livekit_room_name
+ * Substring match on name or livekit_room_name
  */
 search?: string;
 /**
- * One of: created_at, updated_at, status, actual_start_time, actual_end_time
+ * One of: created_at, updated_at, status, scheduled_start_time, actual_start_time, actual_end_time
  */
 order_by?: string;
 /**

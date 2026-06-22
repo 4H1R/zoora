@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/4H1R/zoora/internal/platform/authz"
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/gradebook"
 )
@@ -192,6 +193,16 @@ func (m *mPracticeSubRepo) ListByRoom(ctx context.Context, roomID uuid.UUID, p d
 	subs, _ := a.Get(0).([]domain.PracticeSubmission)
 	return subs, a.Get(1).(int64), a.Error(2)
 }
+func (m *mPracticeSubRepo) ListByRoomsAndUser(ctx context.Context, roomIDs []uuid.UUID, userID uuid.UUID) ([]domain.PracticeSubmission, error) {
+	a := m.Called(ctx, roomIDs, userID)
+	subs, _ := a.Get(0).([]domain.PracticeSubmission)
+	return subs, a.Error(1)
+}
+func (m *mPracticeSubRepo) CountsByRooms(ctx context.Context, roomIDs []uuid.UUID) (map[uuid.UUID]domain.PracticeRoomStats, error) {
+	a := m.Called(ctx, roomIDs)
+	rs, _ := a.Get(0).(map[uuid.UUID]domain.PracticeRoomStats)
+	return rs, a.Error(1)
+}
 
 type mQuizSubRepo struct{ mock.Mock }
 
@@ -262,6 +273,7 @@ func (d deps) service() domain.GradebookService {
 	return gradebook.NewService(
 		d.colRepo, d.cellRepo, d.classRepo, d.memberRepo,
 		d.attendanceRepo, d.practiceRepo, d.quizSubRepo,
+		authz.NewResolver(d.memberRepo),
 		slog.Default(),
 	)
 }
@@ -549,6 +561,42 @@ func TestGetMatrix_Student_Enrolled_Success(t *testing.T) {
 	matrix, err := svc.GetMatrix(ctx, classID)
 	assert.NoError(t, err)
 	assert.NotNil(t, matrix)
+}
+
+func TestGetMatrix_Student_Enrolled_OwnRowOnly(t *testing.T) {
+	studentID := uuid.New()
+	classmateID := uuid.New()
+	classID := uuid.New()
+	otherTeacher := uuid.New()
+	colManual := uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	d.classRepo.On("FindByID", ctx, classID).
+		Return(&domain.Class{ID: classID, UserID: otherTeacher}, nil)
+	d.memberRepo.On("Exists", ctx, classID, studentID).Return(true, nil)
+	d.colRepo.On("ListAllByClass", ctx, classID).
+		Return([]domain.GradebookColumn{
+			{ID: colManual, ClassID: classID, Title: "Grade", Type: domain.GradebookColumnManualGrade, OrderIndex: 0},
+		}, nil)
+	d.memberRepo.On("ListAllByClass", ctx, classID).
+		Return([]domain.ClassMember{
+			{UserID: studentID},
+			{UserID: classmateID},
+		}, nil)
+	d.cellRepo.On("ListByColumns", ctx, []uuid.UUID{colManual}).
+		Return([]domain.GradebookCell{
+			{ColumnID: colManual, StudentID: studentID, Value: "85"},
+			{ColumnID: colManual, StudentID: classmateID, Value: "92"},
+		}, nil)
+
+	svc := d.service()
+	matrix, err := svc.GetMatrix(ctx, classID)
+	assert.NoError(t, err)
+	// Enrolled student must see ONLY their own row, never classmates' grades.
+	assert.Len(t, matrix.Rows, 1)
+	assert.Equal(t, studentID, matrix.Rows[0].StudentID)
+	assert.Equal(t, "85", matrix.Rows[0].Cells[colManual.String()])
 }
 
 func TestGetMatrix_Student_NotEnrolled_Forbidden(t *testing.T) {

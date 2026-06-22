@@ -16,6 +16,18 @@ class_id?: string;
  */
 class_session_id?: string;
 /**
+ * Student status: upcoming, to_submit, submitted, graded, missed
+ */
+status?: string;
+/**
+ * Manager window state: upcoming, open, ended
+ */
+window?: string;
+/**
+ * Manager: only rooms with ungraded submissions
+ */
+needs_grading?: boolean;
+/**
  * Substring match on title/content
  */
 search?: string;

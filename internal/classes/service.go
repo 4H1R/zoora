@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/platform/authz"
 )
 
 // service implements domain.ClassService. RBAC hierarchy:
@@ -172,20 +173,10 @@ func (s *service) List(ctx context.Context, p domain.ListParams) ([]domain.Class
 }
 
 // resolveListScope maps a Caller into the role-resolved ClassListScope the
-// repository understands. The four modes from the domain doc correspond to
-// the four RBAC tiers exactly.
+// repository understands, via the shared authz.ListScope resolver (the four
+// RBAC tiers: admin / org-wide _any / teacher / enrolled member).
 func (s *service) resolveListScope(caller domain.Caller) domain.ClassListScope {
-	if caller.IsAdmin {
-		return domain.ClassListScope{All: true}
-	}
-	if caller.HasPermission(domain.PermClassesViewAny) || caller.HasPermission(domain.PermClassesUpdateAny) {
-		return domain.ClassListScope{All: true, OrganizationID: caller.OrgID}
-	}
-	userID := caller.UserID
-	return domain.ClassListScope{
-		TeacherID:    &userID,
-		MemberUserID: &userID,
-	}
+	return authz.ListScope(caller, domain.PermClassesViewAny, domain.PermClassesUpdateAny)
 }
 
 // --- sessions ---

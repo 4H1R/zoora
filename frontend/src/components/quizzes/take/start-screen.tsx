@@ -20,6 +20,7 @@ import { useTranslation } from "react-i18next"
 import { Eyebrow } from "@/components/eyebrow"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
+import { useFormatDate } from "@/lib/format-date"
 import { formatScore } from "@/lib/score"
 
 import { DecorativeBackground } from "./decorations"
@@ -36,8 +37,9 @@ interface StartScreenProps {
 
 export function StartScreen({ quiz, room, totalQuestions, backHref, starting, onBegin }: StartScreenProps) {
   const { t } = useTranslation()
+  const formatDate = useFormatDate()
   const shortId = (quiz.id ?? "").slice(0, 8).toUpperCase()
-  const closesAt = room.ended_at ? new Date(room.ended_at).toLocaleString() : "—"
+  const closesAt = formatDate(room.ended_at, "datetime")
 
   return (
     <div className="relative isolate flex flex-col gap-10 pb-24 pt-8">

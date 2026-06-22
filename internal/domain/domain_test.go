@@ -99,7 +99,7 @@ func TestAllPermissionsAreUniqueAndNonEmpty(t *testing.T) {
 		PermClassesJoin,
 		PermLiveSessionsManage,
 		PermMediaCreate,
-		PermAttendanceDeleteAny,
+		PermAttendanceDelete,
 	} {
 		if !seen[required] {
 			t.Fatalf("AllPermissions missing required permission %q", required)

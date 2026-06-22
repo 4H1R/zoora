@@ -1,7 +1,6 @@
 package factory
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,8 +13,8 @@ func NewClass(orgID, teacherID uuid.UUID, opts ...func(*domain.Class)) *domain.C
 	c := &domain.Class{
 		OrganizationID: orgID,
 		UserID:         teacherID,
-		Name:           fmt.Sprintf("%s %d", fake.School(), id),
-		Description:    fake.Sentence(8),
+		Name:           fakeClassName(id),
+		Description:    fakeSentence(8),
 	}
 	for _, o := range opts {
 		o(c)
@@ -27,8 +26,8 @@ func NewClassSession(classID uuid.UUID, opts ...func(*domain.ClassSession)) *dom
 	id := nextID()
 	s := &domain.ClassSession{
 		ClassID:     classID,
-		Name:        fmt.Sprintf("Session %d", id),
-		Description: fake.Sentence(6),
+		Name:        fakeSessionName(id),
+		Description: fakeSentence(6),
 		StartTime:   time.Now().Add(time.Duration(id) * 24 * time.Hour),
 	}
 	for _, o := range opts {

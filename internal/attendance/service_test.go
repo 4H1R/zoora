@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/4H1R/zoora/internal/attendance"
+	"github.com/4H1R/zoora/internal/platform/authz"
 	"github.com/4H1R/zoora/internal/domain"
 )
 
@@ -137,7 +138,7 @@ func (m *mSessRepo) AdminList(ctx context.Context, q domain.AdminListClassSessio
 // --- Helpers ---
 
 func newSvc(repo domain.AttendanceRepository, classes domain.ClassRepository, sessions domain.ClassSessionRepository) domain.AttendanceService {
-	return attendance.NewService(repo, classes, sessions, nil, nil, nil, nil, nil, slog.Default())
+	return attendance.NewService(repo, classes, sessions, nil, nil, nil, nil, nil, authz.NewResolver(nil), slog.Default())
 }
 
 func ownerCtx(userID uuid.UUID) context.Context {

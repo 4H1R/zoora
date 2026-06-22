@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { UserAvatar } from "@/components/user-avatar"
+import { useFormatDate } from "@/lib/format-date"
 import { cn } from "@/lib/utils"
 
 import type { SidePanelTab } from "./types"
@@ -119,6 +120,7 @@ function PeopleList() {
 
 function ChatPanel({ chat }: { chat: ReturnType<typeof useChat> }) {
   const { t } = useTranslation()
+  const formatDate = useFormatDate()
   const { chatMessages, send, isSending } = chat
   const [text, setText] = useState("")
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -147,7 +149,7 @@ function ChatPanel({ chat }: { chat: ReturnType<typeof useChat> }) {
           )}
           {chatMessages.map((msg, i) => {
             const sender = msg.from?.name || msg.from?.identity || "—"
-            const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+            const time = formatDate(msg.timestamp, "time")
             return (
               <div key={`${msg.timestamp}-${i}`} className="flex flex-col gap-0.5">
                 <div className="flex items-baseline gap-2">

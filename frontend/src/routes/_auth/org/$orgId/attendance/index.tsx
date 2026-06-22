@@ -41,7 +41,7 @@ function statusBadgeVariant(status: AttendanceStatus | undefined) {
 
 function RouteComponent() {
   const { t, i18n } = useTranslation()
-  const allowed = useOrgGuard(["attendance:view_own"])
+  const allowed = useOrgGuard(["attendance:view"])
 
   const attendanceQ = useGetAttendanceMe(undefined, { query: { enabled: allowed } })
   const attendance = (attendanceQ.data?.status === 200 && attendanceQ.data.data.data) || undefined

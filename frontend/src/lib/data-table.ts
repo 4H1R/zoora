@@ -3,7 +3,6 @@ import type { ColumnDef, OnChangeFn, SortingState, Table, VisibilityState } from
 import { useNavigate } from "@tanstack/react-router"
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table"
 import { useState } from "react"
-import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
 // ── types ────────────────────────────────────────────────────────────────────
@@ -35,17 +34,8 @@ export function getEntityColor(name?: string) {
 
 // ── date formatting ──────────────────────────────────────────────────────────
 
-export function useFormatDate() {
-  const { i18n } = useTranslation()
-  return (dateStr?: string) => {
-    if (!dateStr) return "—"
-    return new Intl.DateTimeFormat(i18n.language, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }).format(new Date(dateStr))
-  }
-}
+// Source of truth lives in ./format-date. Re-exported here for call-site convenience.
+export { useFormatDate } from "./format-date"
 
 // ── search schema ────────────────────────────────────────────────────────────
 

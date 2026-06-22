@@ -1,8 +1,6 @@
 package factory
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 
 	"github.com/4H1R/zoora/internal/domain"
@@ -12,8 +10,8 @@ func NewQuestionBank(orgID uuid.UUID, opts ...func(*domain.QuestionBank)) *domai
 	id := nextID()
 	qb := &domain.QuestionBank{
 		OrganizationID: orgID,
-		Name:           fmt.Sprintf("%s Question Bank %d", fake.Noun(), id),
-		Description:    fake.Sentence(8),
+		Name:           fakeQuestionBankName(id),
+		Description:    fakeSentence(8),
 	}
 	for _, o := range opts {
 		o(qb)
@@ -24,7 +22,7 @@ func NewQuestionBank(orgID uuid.UUID, opts ...func(*domain.QuestionBank)) *domai
 func NewQuestionOption() domain.QuestionOption {
 	return domain.QuestionOption{
 		ID:    uuid.New().String(),
-		Value: fake.Sentence(3),
+		Value: fakeSentence(3),
 		Score: float64(fake.IntRange(0, 5)),
 	}
 }
@@ -39,7 +37,7 @@ func NewQuestion(bankID, orgID uuid.UUID, opts ...func(*domain.Question)) *domai
 	q := &domain.Question{
 		BankID:         bankID,
 		OrganizationID: orgID,
-		Text:           fmt.Sprintf("%s? (%d)", fake.Question(), id),
+		Text:           fakeQuestionText(id),
 		Type:           questionTypes[id%3],
 		Metadata:       []domain.QuestionMetadata{},
 	}

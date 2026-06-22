@@ -19,28 +19,23 @@ var ManagerPermissions = []PermissionName{
 	PermClassesView, PermClassesViewAny, PermClassesCreate, PermClassesCreateAny,
 	PermClassesUpdate, PermClassesUpdateAny, PermClassesDelete, PermClassesDeleteAny, PermClassesJoin,
 	// Live Sessions
-	PermLiveSessionsView, PermLiveSessionsViewAny, PermLiveSessionsCreate, PermLiveSessionsCreateAny,
-	PermLiveSessionsUpdate, PermLiveSessionsUpdateAny, PermLiveSessionsDelete, PermLiveSessionsDeleteAny,
+	PermLiveSessionsView, PermLiveSessionsViewAny, PermLiveSessionsCreate,
+	PermLiveSessionsUpdate, PermLiveSessionsUpdateAny,
 	PermLiveSessionsJoin, PermLiveSessionsJoinAny, PermLiveSessionsManage, PermLiveSessionsManageAny,
-	// Recordings
-	PermRecordingsView, PermRecordingsViewAny, PermRecordingsCreate, PermRecordingsCreateAny,
-	PermRecordingsUpdate, PermRecordingsUpdateAny, PermRecordingsDelete, PermRecordingsDeleteAny, PermRecordingsDownload,
 	// Question Banks
 	PermQuestionBanksView, PermQuestionBanksViewAny, PermQuestionBanksCreate, PermQuestionBanksCreateAny,
 	PermQuestionBanksUpdate, PermQuestionBanksUpdateAny, PermQuestionBanksDelete, PermQuestionBanksDeleteAny,
 	// Quizzes
-	PermQuizzesView, PermQuizzesViewAny, PermQuizzesCreate, PermQuizzesCreateAny,
+	PermQuizzesView, PermQuizzesViewAny, PermQuizzesCreate,
 	PermQuizzesUpdate, PermQuizzesUpdateAny, PermQuizzesDelete, PermQuizzesDeleteAny,
 	// Polls
-	PermPollsView, PermPollsViewAny, PermPollsCreate, PermPollsCreateAny,
-	PermPollsUpdate, PermPollsUpdateAny, PermPollsDelete, PermPollsDeleteAny,
+	PermPollsView, PermPollsCreate,
+	PermPollsUpdate, PermPollsUpdateAny, PermPollsDelete,
 	// Chats
-	PermChatsView, PermChatsViewAny, PermChatsCreate, PermChatsCreateAny,
-	PermChatsUpdate, PermChatsUpdateAny, PermChatsDelete, PermChatsDeleteAny,
+	PermChatsView, PermChatsCreate, PermChatsUpdate, PermChatsDelete,
 	PermChatsWrite, PermChatsManage,
 	// Media
-	PermMediaView, PermMediaViewAny, PermMediaCreate, PermMediaCreateAny,
-	PermMediaDelete, PermMediaDeleteAny,
+	PermMediaView, PermMediaCreate, PermMediaDelete, PermMediaDeleteAny,
 	// Practices
 	PermPracticesView, PermPracticesViewAny, PermPracticesCreate, PermPracticesCreateAny,
 	PermPracticesUpdate, PermPracticesUpdateAny, PermPracticesDelete, PermPracticesDeleteAny,
@@ -50,15 +45,14 @@ var ManagerPermissions = []PermissionName{
 	PermOfflinesUpdate, PermOfflinesUpdateAny, PermOfflinesDelete, PermOfflinesDeleteAny,
 	// Attendance
 	PermAttendanceView, PermAttendanceViewAny, PermAttendanceCreate, PermAttendanceCreateAny,
-	PermAttendanceUpdate, PermAttendanceUpdateAny, PermAttendanceDelete, PermAttendanceDeleteAny,
+	PermAttendanceUpdate, PermAttendanceUpdateAny, PermAttendanceDelete,
 	// Gradebook
-	PermGradebookView, PermGradebookViewAny, PermGradebookCreate, PermGradebookCreateAny,
+	PermGradebookView, PermGradebookViewAny, PermGradebookCreate,
 	PermGradebookUpdate, PermGradebookUpdateAny, PermGradebookDelete, PermGradebookDeleteAny,
 }
 
 var TeacherPermissions = []PermissionName{
 	PermLiveSessionsCreate, PermLiveSessionsView, PermLiveSessionsManage, PermLiveSessionsJoin,
-	PermRecordingsView, PermRecordingsDownload,
 	PermClassesView, PermClassesCreate,
 	PermClassesUpdate, PermClassesDelete, PermClassesJoin,
 	PermUsersView, PermUsersViewAny,
@@ -66,19 +60,22 @@ var TeacherPermissions = []PermissionName{
 	PermQuestionBanksCreate, PermQuestionBanksUpdate, PermQuestionBanksView,
 	PermPollsCreate, PermPollsUpdate, PermPollsView,
 	PermOfflinesView, PermOfflinesCreate, PermOfflinesUpdate, PermOfflinesDelete,
+	PermPracticesView, PermPracticesCreate, PermPracticesUpdate, PermPracticesDelete, PermPracticesGrade,
 	PermAttendanceView, PermAttendanceCreate, PermAttendanceUpdate, PermAttendanceDelete,
+	PermGradebookView, PermGradebookCreate, PermGradebookUpdate, PermGradebookDelete,
 }
 
 // StudentPermissions is the default permission set for learners. It grants the
-// ability to view their own classes/recordings, join live sessions, and take
-// exams + see their own grades/attendance via the self-scoped endpoints.
+// ability to view their own classes, join live sessions, take exams, and see
+// their own grades/attendance — relation-scoped to "own" by the authz resolver.
 var StudentPermissions = []PermissionName{
 	PermClassesView, PermClassesJoin,
 	PermLiveSessionsView, PermLiveSessionsJoin,
-	PermRecordingsView, PermRecordingsDownload,
 	PermOfflinesView,
 	PermMediaView,
+	PermPollsView,
 	PermQuizzesView, PermQuizzesTake,
-	PermGradebookViewOwn,
-	PermAttendanceViewOwn,
+	PermPracticesView, PermPracticesSubmit,
+	PermGradebookView,
+	PermAttendanceView,
 }

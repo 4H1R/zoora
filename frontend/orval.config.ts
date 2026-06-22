@@ -1,21 +1,21 @@
-import { defineConfig } from "orval";
+import { defineConfig } from "orval"
 
 export default defineConfig({
-    petstore: {
-        output: {
-            mode: "tags-split",
-            target: "src/api/backend.ts",
-            schemas: "src/api/model",
-            client: "react-query",
-            override: {
-                mutator: {
-                    path: "./src/api/mutator/custom-instance.ts",
-                    name: "customInstance",
-                },
-            },
+  zoora: {
+    output: {
+      mode: "tags-split",
+      target: "src/api/backend.ts",
+      schemas: "src/api/model",
+      client: "react-query",
+      override: {
+        mutator: {
+          path: "./src/api/mutator/custom-instance.ts",
+          name: "customInstance",
         },
-        input: {
-            target: "../docs/swagger.json",
-        },
+      },
     },
-});
+    input: {
+      target: "../docs/swagger.json",
+    },
+  },
+})

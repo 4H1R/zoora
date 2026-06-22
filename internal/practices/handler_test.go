@@ -41,9 +41,9 @@ func (m *mockPracticeSvc) UpdateRoom(ctx context.Context, id uuid.UUID, dto doma
 func (m *mockPracticeSvc) DeleteRoom(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
-func (m *mockPracticeSvc) ListRooms(ctx context.Context, q domain.ListPracticeRoomsQuery) ([]domain.PracticeRoom, int64, error) {
+func (m *mockPracticeSvc) ListRooms(ctx context.Context, q domain.ListPracticeRoomsQuery) ([]domain.PracticeRoomView, int64, error) {
 	a := m.Called(ctx, q)
-	rs, _ := a.Get(0).([]domain.PracticeRoom)
+	rs, _ := a.Get(0).([]domain.PracticeRoomView)
 	return rs, a.Get(1).(int64), a.Error(2)
 }
 func (m *mockPracticeSvc) Submit(ctx context.Context, roomID uuid.UUID, dto domain.CreatePracticeSubmissionDTO) (*domain.PracticeSubmission, error) {
@@ -126,7 +126,7 @@ func do(t *testing.T, r http.Handler, method, path string, body any) *httptest.R
 func TestHandler_ListRooms_Success(t *testing.T) {
 	r, svc := newPracticeRouter(t)
 	svc.On("ListRooms", mock.Anything, mock.AnythingOfType("domain.ListPracticeRoomsQuery")).
-		Return([]domain.PracticeRoom{{ID: uuid.New(), Title: "HW1"}}, int64(1), nil)
+		Return([]domain.PracticeRoomView{{PracticeRoom: domain.PracticeRoom{ID: uuid.New(), Title: "HW1"}}}, int64(1), nil)
 
 	w := do(t, r, "GET", "/api/v1/practices?page=1", nil)
 	assert.Equal(t, http.StatusOK, w.Code)

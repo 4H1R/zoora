@@ -37,7 +37,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 
 	authed := rg.Group("", authMiddleware)
 	{
-		authed.GET("/attendance/me", perm(domain.PermAttendanceViewOwn), h.ListMine)
+		authed.GET("/attendance/me", perm(domain.PermAttendanceView), h.ListMine)
 		authed.GET("/classes/:id/sessions/:sessionId/attendance", perm(domain.PermAttendanceView), idParam, sessionIDParam, h.List)
 		authed.POST("/classes/:id/sessions/:sessionId/attendance", perm(domain.PermAttendanceCreate), idParam, sessionIDParam, h.Mark)
 		authed.POST("/classes/:id/sessions/:sessionId/attendance/bulk", perm(domain.PermAttendanceCreate), idParam, sessionIDParam, h.BulkMark)

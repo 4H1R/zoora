@@ -53,17 +53,20 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 
 // ListRooms returns practice rooms visible to the caller.
 // @Summary List practice rooms
-// @Description Returns practice rooms filtered by caller role. Filter by class_id or class_session_id. Search matches: title, content. Orderable: created_at, updated_at, start_time, end_time, title.
+// @Description Returns practices visible to the caller, enriched per-viewer (status, my_submission) and with manager stats when permitted. Filter by class_id, class_session_id, status (upcoming|to_submit|submitted|graded|missed), window (upcoming|open|ended), needs_grading. Search matches: title, content. Orderable: created_at, updated_at, start_time, end_time, title.
 // @Tags Practices
 // @Produce json
 // @Security BearerAuth
 // @Param class_id query string false "Filter by class UUID"
 // @Param class_session_id query string false "Filter by class session UUID"
+// @Param status query string false "Student status: upcoming, to_submit, submitted, graded, missed"
+// @Param window query string false "Manager window state: upcoming, open, ended"
+// @Param needs_grading query bool false "Manager: only rooms with ungraded submissions"
 // @Param search query string false "Substring match on title/content"
 // @Param order_by query string false "One of: created_at, updated_at, start_time, end_time, title"
 // @Param order_dir query string false "asc or desc"
 // @Param page query int false "1-based page number"
-// @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.PracticeRoom}}
+// @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.PracticeRoomView}}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 403 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 500 {object} domain.Response{error=domain.ErrorBody}
@@ -80,6 +83,16 @@ func (h *Handler) ListRooms(c *gin.Context) {
 	}); err != nil {
 		_ = c.Error(err)
 		return
+	}
+	if v := c.Query("status"); v != "" {
+		q.StudentStatus = &v
+	}
+	if v := c.Query("window"); v != "" {
+		q.WindowState = &v
+	}
+	if c.Query("needs_grading") == "true" {
+		needs := true
+		q.NeedsGrading = &needs
 	}
 	q.ListParams = listparams.Bind(c, roomsListConfig)
 	rooms, total, err := h.svc.ListRooms(c.Request.Context(), q)

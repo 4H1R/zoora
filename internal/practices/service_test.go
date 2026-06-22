@@ -54,6 +54,16 @@ func (m *mockRoomRepo) AdminList(ctx context.Context, q domain.AdminListPractice
 	rs, _ := a.Get(0).([]domain.PracticeRoom)
 	return rs, a.Get(1).(int64), a.Error(2)
 }
+func (m *mockRoomRepo) MemberCountsByClasses(ctx context.Context, classIDs []uuid.UUID) (map[uuid.UUID]int64, error) {
+	a := m.Called(ctx, classIDs)
+	rs, _ := a.Get(0).(map[uuid.UUID]int64)
+	return rs, a.Error(1)
+}
+func (m *mockRoomRepo) ViewerMemberClasses(ctx context.Context, userID uuid.UUID, classIDs []uuid.UUID) ([]uuid.UUID, error) {
+	a := m.Called(ctx, userID, classIDs)
+	rs, _ := a.Get(0).([]uuid.UUID)
+	return rs, a.Error(1)
+}
 
 type mockSubRepo struct{ mock.Mock }
 
@@ -79,6 +89,16 @@ func (m *mockSubRepo) FindByRoomAndUser(ctx context.Context, roomID, userID uuid
 		return nil, a.Error(1)
 	}
 	return a.Get(0).(*domain.PracticeSubmission), a.Error(1)
+}
+func (m *mockSubRepo) ListByRoomsAndUser(ctx context.Context, roomIDs []uuid.UUID, userID uuid.UUID) ([]domain.PracticeSubmission, error) {
+	a := m.Called(ctx, roomIDs, userID)
+	ss, _ := a.Get(0).([]domain.PracticeSubmission)
+	return ss, a.Error(1)
+}
+func (m *mockSubRepo) CountsByRooms(ctx context.Context, roomIDs []uuid.UUID) (map[uuid.UUID]domain.PracticeRoomStats, error) {
+	a := m.Called(ctx, roomIDs)
+	rs, _ := a.Get(0).(map[uuid.UUID]domain.PracticeRoomStats)
+	return rs, a.Error(1)
 }
 func (m *mockSubRepo) ListByRoom(ctx context.Context, roomID uuid.UUID, p domain.ListParams) ([]domain.PracticeSubmission, int64, error) {
 	a := m.Called(ctx, roomID, p)
@@ -210,6 +230,44 @@ func callerCtx(userID uuid.UUID, isAdmin bool, perms ...string) context.Context 
 		IsAdmin:     isAdmin,
 		Permissions: perms,
 	})
+}
+
+// --- ListRooms tests ---
+
+func TestListRooms_ManagerStatsAndStudentStatus(t *testing.T) {
+	svc, roomRepo, subRepo, _, _, _ := newTestService(t)
+	teacherID := uuid.New()
+	ctx := callerCtx(teacherID, false, "practices:grade", "practices:view_any")
+
+	roomID := uuid.New()
+	classID := uuid.New()
+	room := domain.PracticeRoom{
+		ID: roomID, ClassID: classID, UserID: teacherID,
+		StartTime: time.Now().Add(-time.Hour), EndTime: time.Now().Add(time.Hour),
+	}
+	roomRepo.On("List", mock.Anything, mock.Anything, mock.Anything).
+		Return([]domain.PracticeRoom{room}, int64(1), nil)
+	subRepo.On("ListByRoomsAndUser", mock.Anything, []uuid.UUID{roomID}, teacherID).
+		Return([]domain.PracticeSubmission{}, nil)
+	subRepo.On("CountsByRooms", mock.Anything, []uuid.UUID{roomID}).
+		Return(map[uuid.UUID]domain.PracticeRoomStats{roomID: {SubmittedCount: 3, GradedCount: 1}}, nil)
+	roomRepo.On("MemberCountsByClasses", mock.Anything, []uuid.UUID{classID}).
+		Return(map[uuid.UUID]int64{classID: 10}, nil)
+	roomRepo.On("ViewerMemberClasses", mock.Anything, teacherID, []uuid.UUID{classID}).
+		Return([]uuid.UUID{}, nil)
+
+	views, total, err := svc.ListRooms(ctx, domain.ListPracticeRoomsQuery{})
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), total)
+	assert.Len(t, views, 1)
+	assert.True(t, views[0].CanGrade)
+	if assert.NotNil(t, views[0].Stats) {
+		assert.Equal(t, int64(3), views[0].Stats.SubmittedCount)
+		assert.Equal(t, int64(1), views[0].Stats.GradedCount)
+		assert.Equal(t, int64(10), views[0].Stats.MemberCount)
+	}
+	assert.Equal(t, domain.PracticeStatusToSubmit, views[0].Status)
 }
 
 // --- CreateRoom tests ---

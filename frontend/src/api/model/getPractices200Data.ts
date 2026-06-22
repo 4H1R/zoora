@@ -6,8 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 import type { GithubCom4H1RZooraInternalDomainPaginatedData } from './githubCom4H1RZooraInternalDomainPaginatedData';
-import type { GithubCom4H1RZooraInternalDomainPracticeRoom } from './githubCom4H1RZooraInternalDomainPracticeRoom';
+import type { GithubCom4H1RZooraInternalDomainPracticeRoomView } from './githubCom4H1RZooraInternalDomainPracticeRoomView';
 
 export type GetPractices200Data = GithubCom4H1RZooraInternalDomainPaginatedData & {
-  items?: GithubCom4H1RZooraInternalDomainPracticeRoom[];
+  items?: GithubCom4H1RZooraInternalDomainPracticeRoomView[];
 };
