@@ -1506,7 +1506,14 @@
         "emptyTitle": "No students enrolled",
         "emptyHint": "Students who join this class will appear here.",
         "addMember": "Add member",
-        "removeAction": "Remove member"
+        "removeAction": "Remove member",
+        "open": "Open",
+        "backToClass": "Back to class",
+        "subtitle": "Manage the roster for this class — enroll members or remove them.",
+        "manageTitle": "Manage students",
+        "manageHint": "View the full roster, enroll new members, and remove students.",
+        "noAccessTitle": "No access to this roster",
+        "noAccessHint": "You do not have permission to view this class roster."
       },
       "enrollMember": {
         "title": "Enroll a member",

@@ -1,9 +1,5 @@
-import type {
-  GithubCom4H1RZooraInternalDomainClassMember as ClassMember,
-  GithubCom4H1RZooraInternalDomainClassSession as Session,
-} from "@/api/model"
+import type { GithubCom4H1RZooraInternalDomainClassSession as Session } from "@/api/model"
 
-import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import {
   ArrowLeftIcon,
@@ -11,24 +7,18 @@ import {
   PlusIcon,
   TrophyIcon,
   UserIcon,
-  UserMinusIcon,
   UsersIcon,
 } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useAccess } from "react-access-engine"
-import { toast } from "sonner"
 
 import {
-  getGetClassesIdMembersQueryKey,
-  useDeleteClassesIdMembersUserId,
   useGetClassesId,
   useGetClassesIdMembers,
   useGetClassesIdSessions,
 } from "@/api/classes/classes"
 import { SessionCreateModal } from "@/components/admin/sessions/SessionCreateModal"
-import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
-import { EnrollMemberModal } from "@/components/org/classes/EnrollMemberModal"
 import { useClassPermissions } from "@/components/org/classes/use-class-permissions"
 import { Eyebrow } from "@/components/eyebrow"
 import { SessionStatusPill } from "@/components/session/status-pill"
@@ -136,67 +126,6 @@ function DecorativeBackground() {
   )
 }
 
-function StudentCard({
-  member,
-  index,
-  onRemove,
-}: {
-  member: ClassMember
-  index: number
-  onRemove?: (member: ClassMember) => void
-}) {
-  const { t, i18n } = useTranslation()
-  const name = member.user?.name ?? t("org.class.students.unknownName")
-  const username = member.user?.username ?? ""
-  const tileNumber = String(index + 1).padStart(2, "0")
-  const joinedStr = member.created_at
-    ? formatSessionDate(member.created_at, i18n.language, "short")
-    : ""
-
-  return (
-    <div className="group/student bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex items-center gap-4 overflow-hidden rounded-2xl p-4 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-lg">
-      <UserAvatar name={name} size="lg" />
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="truncate text-sm font-semibold tracking-tight">{name}</span>
-        {username ? (
-          <span className="text-muted-foreground truncate font-mono text-xs">@{username}</span>
-        ) : null}
-        {joinedStr ? (
-          <span className="text-muted-foreground mt-1 inline-flex items-center gap-1.5 text-xs">
-            <CalendarClockIcon className="size-3" />
-            {t("org.class.students.joinedAt", { date: joinedStr })}
-          </span>
-        ) : null}
-      </div>
-      {onRemove ? (
-        <button
-          type="button"
-          onClick={() => onRemove(member)}
-          aria-label={t("org.class.students.removeAction")}
-          title={t("org.class.students.removeAction")}
-          className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:ring-ring inline-flex size-8 shrink-0 items-center justify-center rounded-full opacity-0 transition-all focus-visible:opacity-100 focus-visible:ring-2 focus-visible:outline-none group-hover/student:opacity-100"
-        >
-          <UserMinusIcon className="size-4" />
-        </button>
-      ) : (
-        <span className="text-muted-foreground font-mono text-xs tracking-[0.25em]">/{tileNumber}</span>
-      )}
-    </div>
-  )
-}
-
-function StudentCardSkeleton() {
-  return (
-    <div className="bg-card ring-foreground/10 flex items-center gap-4 rounded-2xl p-4 ring-1">
-      <Skeleton className="size-9 rounded-full" />
-      <div className="flex flex-1 flex-col gap-2">
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-3 w-20" />
-      </div>
-    </div>
-  )
-}
-
 function StatCell({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
   return (
     <div className="flex flex-col gap-2 px-5 py-5">
@@ -215,7 +144,6 @@ function StatCell({ label, value, accent }: { label: string; value: number; acce
 
 function RouteComponent() {
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
   const { orgId, classId } = Route.useParams()
   const { canView, canEdit: canCreateSession } = useClassPermissions()
   const allowed = useOrgGuard(["classes:view", "classes:view_any"])
@@ -223,31 +151,6 @@ function RouteComponent() {
   const { can, user: accessUser } = useAccess()
 
   const [formOpen, setFormOpen] = useState(false)
-  const [enrollOpen, setEnrollOpen] = useState(false)
-  const [removeTarget, setRemoveTarget] = useState<ClassMember | null>(null)
-
-  const removeMutation = useDeleteClassesIdMembersUserId({
-    mutation: {
-      onSuccess: () => {
-        toast.success(t("org.class.removeMember.success"))
-        queryClient.invalidateQueries({ queryKey: getGetClassesIdMembersQueryKey(classId) })
-        setRemoveTarget(null)
-      },
-      onError: (err) => {
-        const status = (err as { status?: number })?.status
-        if (status === 403) {
-          toast.error(t("org.class.removeMember.errorForbidden"))
-        } else {
-          toast.error(t("org.class.removeMember.errorGeneric"))
-        }
-      },
-    },
-  })
-
-  const handleConfirmRemove = () => {
-    if (!removeTarget?.user_id) return
-    removeMutation.mutate({ id: classId, userId: removeTarget.user_id })
-  }
 
   const { data: classData, isPending: classPending } = useGetClassesId(classId, {
     query: { enabled: canView },
@@ -269,14 +172,11 @@ function RouteComponent() {
     !!cls &&
     (can("classes:update_any") || (!!cls.user_id && cls.user_id === accessUser.id))
 
-  const { data: membersData, isPending: membersPending } = useGetClassesIdMembers(
-    classId,
-    undefined,
-    { query: { enabled: canView && canViewRoster } }
-  )
+  const { data: membersData } = useGetClassesIdMembers(classId, undefined, {
+    query: { enabled: canView && canViewRoster },
+  })
   const membersResult = (membersData?.status === 200 && membersData.data.data) || undefined
-  const members = membersResult?.items ?? []
-  const studentsTotal = membersResult?.total ?? members.length
+  const studentsTotal = membersResult?.total ?? membersResult?.items?.length ?? 0
 
   const liveCount = sessions.filter((s) => getSessionStatus(s.start_time, now) === "live").length
   const scheduledCount = sessions.filter((s) => getSessionStatus(s.start_time, now) === "scheduled").length
@@ -394,66 +294,39 @@ function RouteComponent() {
 
       {canViewRoster ? (
         <section className="flex flex-col gap-5">
-          <div className="flex items-end justify-between gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Eyebrow>{t("org.class.students.eyebrow")}</Eyebrow>
-              <h2 className="text-2xl font-semibold tracking-tight">
-                {t("org.class.students.title")}
-                <span className="text-muted-foreground ms-2 font-mono text-sm font-normal tabular-nums">
-                  {studentsTotal}
-                </span>
-              </h2>
-            </div>
-            <Button variant="outline" onClick={() => setEnrollOpen(true)}>
-              <PlusIcon className="size-4" />
-              {t("org.class.students.addMember")}
-            </Button>
+          <div className="flex flex-col gap-1.5">
+            <Eyebrow>{t("org.class.students.eyebrow")}</Eyebrow>
+            <h2 className="text-2xl font-semibold tracking-tight">{t("org.class.students.title")}</h2>
           </div>
 
-          {membersPending ? (
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              <StudentCardSkeleton />
-              <StudentCardSkeleton />
-              <StudentCardSkeleton />
+          <Link
+            to="/org/$orgId/classes/$classId/students"
+            params={{ orgId, classId }}
+            className="group/roster bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex items-center gap-4 overflow-hidden rounded-2xl p-5 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-lg"
+          >
+            <span className="bg-primary/10 text-primary inline-flex size-12 shrink-0 items-center justify-center rounded-full">
+              <UsersIcon className="size-5" />
+            </span>
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span className="text-sm font-semibold tracking-tight">
+                {t("org.class.students.manageTitle")}
+              </span>
+              <span className="text-muted-foreground text-xs">
+                {t("org.class.students.manageHint")}
+              </span>
             </div>
-          ) : members.length === 0 ? (
-            <EmptyState
-              icon={UsersIcon}
-              title={t("org.class.students.emptyTitle")}
-              description={t("org.class.students.emptyHint")}
-            >
-              <Button onClick={() => setEnrollOpen(true)}>
-                <PlusIcon className="size-4" />
-                {t("org.class.students.addMember")}
-              </Button>
-            </EmptyState>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {members.map((m, i) => (
-                <StudentCard key={m.id} member={m} index={i} onRemove={setRemoveTarget} />
-              ))}
-            </div>
-          )}
+            <span className="text-muted-foreground font-mono text-lg font-semibold tabular-nums">
+              {studentsTotal}
+            </span>
+            <span className="text-muted-foreground group-hover/roster:text-foreground text-xs font-medium underline-offset-4 transition-colors group-hover/roster:underline">
+              {t("org.class.students.open")} →
+            </span>
+          </Link>
         </section>
       ) : null}
 
       {canCreateSession ? (
         <SessionCreateModal open={formOpen} onOpenChange={setFormOpen} classId={classId} session={null} />
-      ) : null}
-
-      {canViewRoster ? (
-        <>
-          <EnrollMemberModal open={enrollOpen} onOpenChange={setEnrollOpen} classId={classId} />
-          <DeleteConfirmDialog
-            open={!!removeTarget}
-            onOpenChange={(open) => !open && setRemoveTarget(null)}
-            resourceName={
-              removeTarget?.user?.name ?? t("org.class.students.unknownName")
-            }
-            onConfirm={handleConfirmRemove}
-            isLoading={removeMutation.isPending}
-          />
-        </>
       ) : null}
     </div>
   )
