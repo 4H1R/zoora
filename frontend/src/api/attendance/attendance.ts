@@ -35,6 +35,11 @@ import type {
   GetAttendanceMe200,
   GetAttendanceMe401,
   GetAttendanceMeParams,
+  GetClassesIdAttendanceMatrix200,
+  GetClassesIdAttendanceMatrix401,
+  GetClassesIdAttendanceMatrix403,
+  GetClassesIdAttendanceMatrix404,
+  GetClassesIdAttendanceMatrixParams,
   GetClassesIdSessionsSessionIdAttendance200,
   GetClassesIdSessionsSessionIdAttendance401,
   GetClassesIdSessionsSessionIdAttendance403,
@@ -538,6 +543,151 @@ export function useGetAttendanceId<TData = Awaited<ReturnType<typeof getAttendan
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetAttendanceIdQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type getClassesIdAttendanceMatrixResponse200 = {
+  data: GetClassesIdAttendanceMatrix200
+  status: 200
+}
+
+export type getClassesIdAttendanceMatrixResponse401 = {
+  data: GetClassesIdAttendanceMatrix401
+  status: 401
+}
+
+export type getClassesIdAttendanceMatrixResponse403 = {
+  data: GetClassesIdAttendanceMatrix403
+  status: 403
+}
+
+export type getClassesIdAttendanceMatrixResponse404 = {
+  data: GetClassesIdAttendanceMatrix404
+  status: 404
+}
+
+export type getClassesIdAttendanceMatrixResponseSuccess = (getClassesIdAttendanceMatrixResponse200) & {
+  headers: Headers;
+};
+export type getClassesIdAttendanceMatrixResponseError = (getClassesIdAttendanceMatrixResponse401 | getClassesIdAttendanceMatrixResponse403 | getClassesIdAttendanceMatrixResponse404) & {
+  headers: Headers;
+};
+
+export type getClassesIdAttendanceMatrixResponse = (getClassesIdAttendanceMatrixResponseSuccess | getClassesIdAttendanceMatrixResponseError)
+
+export const getGetClassesIdAttendanceMatrixUrl = (id: string,
+    params?: GetClassesIdAttendanceMatrixParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/classes/${id}/attendance/matrix?${stringifiedParams}` : `/classes/${id}/attendance/matrix`
+}
+
+/**
+ * Rows = enrolled students (paged, searchable by name/username, orderable by created_at/name). Columns = all class sessions ordered by start_time asc. cells is keyed studentId→sessionId. Each student carries a P/A/L/E summary with a rate over started sessions only. Requires class management rights (admin, attendance:*_any, or class owner).
+ * @summary Attendance matrix for a class
+ */
+export const getClassesIdAttendanceMatrix = async (id: string,
+    params?: GetClassesIdAttendanceMatrixParams, options?: RequestInit): Promise<getClassesIdAttendanceMatrixResponse> => {
+
+  return customInstance<getClassesIdAttendanceMatrixResponse>(getGetClassesIdAttendanceMatrixUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetClassesIdAttendanceMatrixQueryKey = (id: string,
+    params?: GetClassesIdAttendanceMatrixParams,) => {
+    return [
+    `/classes/${id}/attendance/matrix`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetClassesIdAttendanceMatrixQueryOptions = <TData = Awaited<ReturnType<typeof getClassesIdAttendanceMatrix>>, TError = ErrorType<GetClassesIdAttendanceMatrix401 | GetClassesIdAttendanceMatrix403 | GetClassesIdAttendanceMatrix404>>(id: string,
+    params?: GetClassesIdAttendanceMatrixParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdAttendanceMatrix>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetClassesIdAttendanceMatrixQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClassesIdAttendanceMatrix>>> = ({ signal }) => getClassesIdAttendanceMatrix(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClassesIdAttendanceMatrix>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetClassesIdAttendanceMatrixQueryResult = NonNullable<Awaited<ReturnType<typeof getClassesIdAttendanceMatrix>>>
+export type GetClassesIdAttendanceMatrixQueryError = ErrorType<GetClassesIdAttendanceMatrix401 | GetClassesIdAttendanceMatrix403 | GetClassesIdAttendanceMatrix404>
+
+
+export function useGetClassesIdAttendanceMatrix<TData = Awaited<ReturnType<typeof getClassesIdAttendanceMatrix>>, TError = ErrorType<GetClassesIdAttendanceMatrix401 | GetClassesIdAttendanceMatrix403 | GetClassesIdAttendanceMatrix404>>(
+ id: string,
+    params: undefined |  GetClassesIdAttendanceMatrixParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdAttendanceMatrix>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getClassesIdAttendanceMatrix>>,
+          TError,
+          Awaited<ReturnType<typeof getClassesIdAttendanceMatrix>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClassesIdAttendanceMatrix<TData = Awaited<ReturnType<typeof getClassesIdAttendanceMatrix>>, TError = ErrorType<GetClassesIdAttendanceMatrix401 | GetClassesIdAttendanceMatrix403 | GetClassesIdAttendanceMatrix404>>(
+ id: string,
+    params?: GetClassesIdAttendanceMatrixParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdAttendanceMatrix>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getClassesIdAttendanceMatrix>>,
+          TError,
+          Awaited<ReturnType<typeof getClassesIdAttendanceMatrix>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClassesIdAttendanceMatrix<TData = Awaited<ReturnType<typeof getClassesIdAttendanceMatrix>>, TError = ErrorType<GetClassesIdAttendanceMatrix401 | GetClassesIdAttendanceMatrix403 | GetClassesIdAttendanceMatrix404>>(
+ id: string,
+    params?: GetClassesIdAttendanceMatrixParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdAttendanceMatrix>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Attendance matrix for a class
+ */
+
+export function useGetClassesIdAttendanceMatrix<TData = Awaited<ReturnType<typeof getClassesIdAttendanceMatrix>>, TError = ErrorType<GetClassesIdAttendanceMatrix401 | GetClassesIdAttendanceMatrix403 | GetClassesIdAttendanceMatrix404>>(
+ id: string,
+    params?: GetClassesIdAttendanceMatrixParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClassesIdAttendanceMatrix>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetClassesIdAttendanceMatrixQueryOptions(id,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

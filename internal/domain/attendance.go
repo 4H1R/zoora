@@ -81,6 +81,59 @@ type ListAttendanceQuery struct {
 	ListParams   ListParams        `form:"-"`
 }
 
+// ListAttendanceMatrixQuery pages/searches/orders the STUDENT (row) axis of
+// the attendance matrix. Sessions (columns) are always returned in full,
+// ordered by start_time asc.
+type ListAttendanceMatrixQuery struct {
+	ListParams ListParams `form:"-"`
+}
+
+// AttendanceMatrixSession is one column header in the matrix.
+type AttendanceMatrixSession struct {
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	StartTime time.Time `json:"start_time"`
+}
+
+// AttendanceMatrixCell is one student×session intersection. Absent from the
+// student's Cells map means "no record yet" (renders as a dash).
+type AttendanceMatrixCell struct {
+	ID           uuid.UUID        `json:"id"`
+	Status       AttendanceStatus `json:"status"`
+	IsAutoMarked bool             `json:"is_auto_marked"`
+}
+
+// AttendanceMatrixSummary is the trailing per-student summary column.
+// Rate = (present+late) / started_count; started_count counts only sessions
+// whose start_time <= now so future sessions don't drag the rate down.
+type AttendanceMatrixSummary struct {
+	Present      int     `json:"present"`
+	Absent       int     `json:"absent"`
+	Late         int     `json:"late"`
+	Excused      int     `json:"excused"`
+	StartedCount int     `json:"started_count"`
+	Rate         float64 `json:"rate"`
+}
+
+// AttendanceMatrixStudent is one row: the user, their cells keyed by session
+// id, and their summary.
+type AttendanceMatrixStudent struct {
+	UserID  uuid.UUID                          `json:"user_id"`
+	User    *User                              `json:"user,omitempty"`
+	Cells   map[uuid.UUID]AttendanceMatrixCell `json:"cells"`
+	Summary AttendanceMatrixSummary            `json:"summary"`
+}
+
+// AttendanceMatrixResult is the full matrix payload. Total/Page/PageSize page
+// the student axis only.
+type AttendanceMatrixResult struct {
+	Sessions []AttendanceMatrixSession `json:"sessions"`
+	Students []AttendanceMatrixStudent `json:"students"`
+	Total    int64                     `json:"total"`
+	Page     int                       `json:"page"`
+	PageSize int                       `json:"page_size"`
+}
+
 type AdminListAttendanceQuery struct {
 	Status         *AttendanceStatus `form:"status" binding:"omitempty,oneof=present absent late excused"`
 	IsAutoMarked   *bool             `form:"is_auto_marked"`
@@ -120,6 +173,10 @@ type AttendanceRepository interface {
 	// ListByUser returns all attendance records for a user across classes,
 	// with Class + ClassSession preloaded, newest first.
 	ListByUser(ctx context.Context, userID uuid.UUID, p ListParams) ([]Attendance, int64, error)
+	// ListByClassAndUsers returns every attendance row for the class that
+	// belongs to one of userIDs. No pagination — caller has already paged the
+	// user set. Returns an empty slice when userIDs is empty.
+	ListByClassAndUsers(ctx context.Context, classID uuid.UUID, userIDs []uuid.UUID) ([]Attendance, error)
 
 	// Admin-only.
 	AdminList(ctx context.Context, q AdminListAttendanceQuery) ([]Attendance, int64, error)
@@ -133,6 +190,7 @@ type AttendanceService interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (*Attendance, error)
 	ListBySession(ctx context.Context, classID, sessionID uuid.UUID, q ListAttendanceQuery) ([]Attendance, int64, error)
+	Matrix(ctx context.Context, classID uuid.UUID, q ListAttendanceMatrixQuery) (*AttendanceMatrixResult, error)
 	ListMine(ctx context.Context, p ListParams) (*MyAttendance, error)
 
 	// Admin surface. Require caller.IsAdmin.

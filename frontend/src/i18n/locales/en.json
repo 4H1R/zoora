@@ -91,6 +91,10 @@
       "description": "{{name}} won't be able to log in or use the platform. Their data is kept and you can re-enable them later.",
       "reasonLabel": "Reason (optional)",
       "reasonPlaceholder": "Why are you disabling this user?"
+    },
+    "pagination": {
+      "previous": "Previous page",
+      "next": "Next page"
     }
   },
   "nav": {
@@ -1568,6 +1572,41 @@
         "sort": "Sort",
         "columns": "Columns",
         "toggleColumns": "Toggle columns"
+      },
+      "tabs": {
+        "sessions": "Sessions",
+        "students": "Students",
+        "attendance": "Attendance"
+      },
+      "attendance": {
+        "eyebrow": "Attendance",
+        "title": "Attendance",
+        "tab": "Attendance",
+        "student": "Student",
+        "summary": "Summary",
+        "rate": "Rate",
+        "emptyTitle": "No sessions yet",
+        "emptyHint": "Attendance appears once this class has sessions and students.",
+        "searchPlaceholder": "Search students…",
+        "noRecord": "No record",
+        "future": "Not started yet",
+        "autoMarked": "Auto-marked",
+        "autoMark": "Auto-mark from activity",
+        "autoMarkSuccess": "Attendance auto-marked",
+        "updateSuccess": "Attendance updated",
+        "legend": {
+          "present": "Present",
+          "absent": "Absent",
+          "late": "Late",
+          "excused": "Excused",
+          "none": "No record"
+        },
+        "status": {
+          "present": "Present",
+          "absent": "Absent",
+          "late": "Late",
+          "excused": "Excused"
+        }
       }
     },
     "session": {

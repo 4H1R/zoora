@@ -160,6 +160,11 @@ func (m *mAttendanceRepo) AdminList(ctx context.Context, q domain.AdminListAtten
 	items, _ := a.Get(0).([]domain.Attendance)
 	return items, a.Get(1).(int64), a.Error(2)
 }
+func (m *mAttendanceRepo) ListByClassAndUsers(ctx context.Context, classID uuid.UUID, userIDs []uuid.UUID) ([]domain.Attendance, error) {
+	a := m.Called(ctx, classID, userIDs)
+	items, _ := a.Get(0).([]domain.Attendance)
+	return items, a.Error(1)
+}
 
 type mPracticeSubRepo struct{ mock.Mock }
 

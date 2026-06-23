@@ -147,3 +147,16 @@ func (r *repository) FindBySessionAndUser(ctx context.Context, sessionID, userID
 	}
 	return &a, nil
 }
+
+func (r *repository) ListByClassAndUsers(ctx context.Context, classID uuid.UUID, userIDs []uuid.UUID) ([]domain.Attendance, error) {
+	if len(userIDs) == 0 {
+		return []domain.Attendance{}, nil
+	}
+	var items []domain.Attendance
+	if err := r.baseQuery(ctx).
+		Where("class_id = ? AND user_id IN ?", classID, userIDs).
+		Find(&items).Error; err != nil {
+		return nil, fmt.Errorf("attendance.repository.ListByClassAndUsers: %w", err)
+	}
+	return items, nil
+}

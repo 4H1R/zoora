@@ -25,13 +25,16 @@ import { DataTablePagination } from "@/components/data-table/data-table-paginati
 import { TableFilter } from "@/components/data-table/table-filter"
 import { Eyebrow } from "@/components/eyebrow"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
+import { AttendanceMatrixView } from "@/components/org/classes/AttendanceMatrixView"
 import { EnrollMemberModal } from "@/components/org/classes/EnrollMemberModal"
 import { useClassPermissions } from "@/components/org/classes/use-class-permissions"
+import { useAttendancePermissions } from "@/components/org/livesessions/use-attendance-permissions"
 import { SessionStatusPill } from "@/components/session/status-pill"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UserAvatar } from "@/components/user-avatar"
 import { ViewModeToggle, useViewMode } from "@/components/view-mode-toggle"
 import { useOrgGuard } from "@/lib/access"
@@ -41,19 +44,20 @@ import { formatSessionDate, getSessionStatus, useNow } from "@/lib/session-statu
 
 import { useSessionColumns, useStudentColumns } from "./-detail-columns"
 
-// Two server-driven tables share this route, so their list params are
-// namespaced (sessions_* / students_*) to avoid colliding on the URL.
+// One tab is visible at a time, so the three views share a single set of
+// list params (bare search/order_by/order_dir/page/page_size). `tab` selects
+// the active view; switching tabs resets the shared params (see
+// handleTabChange) so a stale sort token never leaks across tabs.
+const CLASS_TABS = ["sessions", "students", "attendance"] as const
+type ClassTab = (typeof CLASS_TABS)[number]
+
 const classDetailSearchSchema = z.object({
-  sessions_search: z.string().optional(),
-  sessions_order_by: z.string().optional(),
-  sessions_order_dir: z.enum(["asc", "desc"]).optional(),
-  sessions_page: z.number().int().positive().optional().default(1),
-  sessions_page_size: z.number().int().positive().optional().default(8),
-  students_search: z.string().optional(),
-  students_order_by: z.string().optional(),
-  students_order_dir: z.enum(["asc", "desc"]).optional(),
-  students_page: z.number().int().positive().optional().default(1),
-  students_page_size: z.number().int().positive().optional().default(8),
+  tab: z.enum(CLASS_TABS).optional().default("sessions"),
+  search: z.string().optional(),
+  order_by: z.string().optional(),
+  order_dir: z.enum(["asc", "desc"]).optional(),
+  page: z.number().int().positive().optional().default(1),
+  page_size: z.number().int().positive().optional().default(8),
 })
 
 export const Route = createFileRoute("/_auth/org/$orgId/classes/$classId")({
@@ -235,6 +239,8 @@ function RouteComponent() {
   }
 
   const search = Route.useSearch()
+  const navigate = Route.useNavigate()
+  const { canEdit: canEditAttendance } = useAttendancePermissions()
 
   const {
     viewMode: sessionsView,
@@ -252,58 +258,48 @@ function RouteComponent() {
   const { data: classData, isPending: classPending } = useGetClassesId(classId, {
     query: { enabled: canView },
   })
-  const { data: sessionsData, isPending: sessionsPending } = useGetClassesIdSessions(
-    classId,
-    {
-      search: search.sessions_search || undefined,
-      order_by: search.sessions_order_by || undefined,
-      order_dir: search.sessions_order_dir || undefined,
-      page: search.sessions_page ?? 1,
-      page_size: search.sessions_page_size ?? 8,
-    },
-    { query: { enabled: canView } }
-  )
 
   const cls = (classData?.status === 200 && classData.data.data) || undefined
-  const sessionsResult = (sessionsData?.status === 200 && sessionsData.data.data) || undefined
-  const sessions = sessionsResult?.items ?? []
-  const total = sessionsResult?.total ?? sessions.length
 
   // Roster gating mirrors backend canManageClass:
   // admin OR classes:update_any OR caller is class owner.
   const canViewRoster = !!cls && (can("classes:update_any") || (!!cls.user_id && cls.user_id === accessUser.id))
 
-  const { data: membersData, isPending: membersPending } = useGetClassesIdMembers(
-    classId,
-    {
-      search: search.students_search || undefined,
-      order_by: search.students_order_by || undefined,
-      order_dir: search.students_order_dir || undefined,
-      page: search.students_page ?? 1,
-      page_size: search.students_page_size ?? 8,
-    },
-    { query: { enabled: canView && canViewRoster } }
-  )
+  // Deep-linking to a gated tab falls back to Sessions.
+  const activeTab = !canViewRoster && search.tab !== "sessions" ? "sessions" : search.tab
+
+  const listParams = {
+    search: search.search || undefined,
+    order_by: search.order_by || undefined,
+    order_dir: search.order_dir || undefined,
+    page: search.page ?? 1,
+    page_size: search.page_size ?? 8,
+  }
+
+  const { data: sessionsData, isPending: sessionsPending } = useGetClassesIdSessions(classId, listParams, {
+    query: { enabled: canView && activeTab === "sessions" },
+  })
+  const sessionsResult = (sessionsData?.status === 200 && sessionsData.data.data) || undefined
+  const sessions = sessionsResult?.items ?? []
+  const total = sessionsResult?.total ?? sessions.length
+
+  const { data: membersData, isPending: membersPending } = useGetClassesIdMembers(classId, listParams, {
+    query: { enabled: canView && canViewRoster && activeTab === "students" },
+  })
   const membersResult = (membersData?.status === 200 && membersData.data.data) || undefined
   const members = membersResult?.items ?? []
   const studentsTotal = membersResult?.total ?? members.length
 
   const liveCount = sessions.filter((s) => getSessionStatus(s.start_time, now) === "live").length
 
-  const sessionsSorting = search.sessions_order_by
-    ? [{ id: search.sessions_order_by, desc: search.sessions_order_dir === "desc" }]
-    : []
-  const studentsSorting = search.students_order_by
-    ? [{ id: search.students_order_by, desc: search.students_order_dir === "desc" }]
-    : []
+  const sorting = search.order_by ? [{ id: search.order_by, desc: search.order_dir === "desc" }] : []
 
   const sessionColumns = useSessionColumns(orgId, now)
   const sessionsTable = useAdminTable({
     data: sessions,
     columns: sessionColumns,
     rowCount: total,
-    sorting: sessionsSorting,
-    prefix: "sessions",
+    sorting,
   })
 
   const studentColumns = useStudentColumns(setRemoveTarget)
@@ -311,9 +307,20 @@ function RouteComponent() {
     data: members,
     columns: studentColumns,
     rowCount: studentsTotal,
-    sorting: studentsSorting,
-    prefix: "students",
+    sorting,
   })
+
+  // Sort/search/page tokens are tab-specific; reset them on switch so a stale
+  // order_by from one tab never leaks into another tab's query.
+  const handleTabChange = (tab: string) => {
+    navigate({
+      search: { tab: tab as ClassTab, page: 1, page_size: search.page_size },
+    })
+  }
+
+  const handleMatrixPageChange = (page: number) => {
+    navigate({ search: { ...search, page } })
+  }
 
   if (!allowed) return null
 
@@ -375,142 +382,166 @@ function RouteComponent() {
         </Button>
       </header>
 
-      <section className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-end justify-between gap-3 border-b border-dashed pb-3">
-          <div className="flex items-baseline gap-2.5">
-            <h2 className="text-lg font-semibold tracking-tight">{t("org.class.sessions.title")}</h2>
-            <span className="text-muted-foreground font-mono text-sm tabular-nums">{total}</span>
-          </div>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <TabsList variant="line">
+          <TabsTrigger value="sessions">{t("org.class.tabs.sessions")}</TabsTrigger>
+          {canViewRoster ? <TabsTrigger value="students">{t("org.class.tabs.students")}</TabsTrigger> : null}
+          {canViewRoster ? <TabsTrigger value="attendance">{t("org.class.tabs.attendance")}</TabsTrigger> : null}
+        </TabsList>
 
-          <div className="flex items-center gap-2">
-            <ViewModeToggle value={sessionsView} onChange={setSessionsView} />
-            {canCreateSession ? (
-              <Button size="sm" onClick={() => setFormOpen(true)}>
-                <PlusIcon className="size-4" />
-                {t("org.class.sessions.newSession")}
-              </Button>
-            ) : null}
-          </div>
-        </div>
-
-        <TableFilter
-          table={sessionsTable}
-          prefix="sessions"
-          searchPlaceholder={t("org.class.sessions.searchPlaceholder")}
-          sortLabel={t("org.class.toolbar.sort")}
-          columnsLabel={t("org.class.toolbar.columns")}
-          toggleColumnsLabel={t("org.class.toolbar.toggleColumns")}
-          showColumnsToggle={sessionsIsTable}
-        />
-
-        {sessionsPending && sessionsIsGrid ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-            <SessionCardSkeleton />
-            <SessionCardSkeleton />
-            <SessionCardSkeleton />
-            <SessionCardSkeleton />
-          </div>
-        ) : !sessionsPending && sessions.length === 0 ? (
-          <EmptyState
-            icon={CalendarClockIcon}
-            title={t("org.class.sessions.emptyTitle")}
-            description={t("org.class.sessions.emptyHint")}
-          >
-            {canCreateSession ? (
-              <Button onClick={() => setFormOpen(true)}>
-                <PlusIcon className="size-4" />
-                {t("org.class.sessions.newSession")}
-              </Button>
-            ) : null}
-          </EmptyState>
-        ) : sessionsIsTable ? (
-          <Card className="gap-0 overflow-hidden p-0">
-            <div className="overflow-x-auto">
-              <DataTable
-                table={sessionsTable}
-                isLoading={sessionsPending}
-                emptyIcon={<CalendarClockIcon className="size-5" />}
-                emptyTitle={t("org.class.sessions.emptyTitle")}
-                emptyHint={t("org.class.sessions.emptyHint")}
-              />
-            </div>
-            <DataTablePagination table={sessionsTable} prefix="sessions" />
-          </Card>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-            {sessions.map((s, i) => (
-              <SessionCard key={s.id} session={s} orgId={orgId} index={i} now={now} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {canViewRoster ? (
-        <section className="flex flex-col gap-4">
+        <TabsContent value="sessions" className="flex flex-col gap-4">
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-dashed pb-3">
             <div className="flex items-baseline gap-2.5">
-              <h2 className="text-lg font-semibold tracking-tight">{t("org.class.students.title")}</h2>
-              <span className="text-muted-foreground font-mono text-sm tabular-nums">{studentsTotal}</span>
+              <h2 className="text-lg font-semibold tracking-tight">{t("org.class.sessions.title")}</h2>
+              <span className="text-muted-foreground font-mono text-sm tabular-nums">{total}</span>
             </div>
+
             <div className="flex items-center gap-2">
-              <ViewModeToggle value={studentsView} onChange={setStudentsView} />
-              <Button variant="outline" size="sm" onClick={() => setEnrollOpen(true)}>
-                <PlusIcon className="size-4" />
-                {t("org.class.students.addMember")}
-              </Button>
+              <ViewModeToggle value={sessionsView} onChange={setSessionsView} />
+              {canCreateSession ? (
+                <Button size="sm" onClick={() => setFormOpen(true)}>
+                  <PlusIcon className="size-4" />
+                  {t("org.class.sessions.newSession")}
+                </Button>
+              ) : null}
             </div>
           </div>
 
           <TableFilter
-            table={studentsTable}
-            prefix="students"
-            searchPlaceholder={t("org.class.students.searchPlaceholder")}
+            table={sessionsTable}
+            searchPlaceholder={t("org.class.sessions.searchPlaceholder")}
             sortLabel={t("org.class.toolbar.sort")}
             columnsLabel={t("org.class.toolbar.columns")}
             toggleColumnsLabel={t("org.class.toolbar.toggleColumns")}
-            showColumnsToggle={studentsIsTable}
+            showColumnsToggle={sessionsIsTable}
           />
 
-          {membersPending && studentsIsGrid ? (
-            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-              <StudentCardSkeleton />
-              <StudentCardSkeleton />
-              <StudentCardSkeleton />
-              <StudentCardSkeleton />
+          {sessionsPending && sessionsIsGrid ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+              <SessionCardSkeleton />
+              <SessionCardSkeleton />
+              <SessionCardSkeleton />
+              <SessionCardSkeleton />
             </div>
-          ) : !membersPending && members.length === 0 ? (
+          ) : !sessionsPending && sessions.length === 0 ? (
             <EmptyState
-              icon={UsersIcon}
-              title={t("org.class.students.emptyTitle")}
-              description={t("org.class.students.emptyHint")}
+              icon={CalendarClockIcon}
+              title={t("org.class.sessions.emptyTitle")}
+              description={t("org.class.sessions.emptyHint")}
             >
-              <Button onClick={() => setEnrollOpen(true)}>
-                <PlusIcon className="size-4" />
-                {t("org.class.students.addMember")}
-              </Button>
+              {canCreateSession ? (
+                <Button onClick={() => setFormOpen(true)}>
+                  <PlusIcon className="size-4" />
+                  {t("org.class.sessions.newSession")}
+                </Button>
+              ) : null}
             </EmptyState>
-          ) : studentsIsTable ? (
+          ) : sessionsIsTable ? (
             <Card className="gap-0 overflow-hidden p-0">
               <div className="overflow-x-auto">
                 <DataTable
-                  table={studentsTable}
-                  isLoading={membersPending}
-                  emptyIcon={<UsersIcon className="size-5" />}
-                  emptyTitle={t("org.class.students.emptyTitle")}
-                  emptyHint={t("org.class.students.emptyHint")}
+                  table={sessionsTable}
+                  isLoading={sessionsPending}
+                  emptyIcon={<CalendarClockIcon className="size-5" />}
+                  emptyTitle={t("org.class.sessions.emptyTitle")}
+                  emptyHint={t("org.class.sessions.emptyHint")}
                 />
               </div>
-              <DataTablePagination table={studentsTable} prefix="students" />
+              <DataTablePagination table={sessionsTable} />
             </Card>
           ) : (
-            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-              {members.map((m, i) => (
-                <StudentCard key={m.id} member={m} index={i} onRemove={setRemoveTarget} />
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+              {sessions.map((s, i) => (
+                <SessionCard key={s.id} session={s} orgId={orgId} index={i} now={now} />
               ))}
             </div>
           )}
-        </section>
-      ) : null}
+        </TabsContent>
+
+        {canViewRoster ? (
+          <TabsContent value="students" className="flex flex-col gap-4">
+            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-dashed pb-3">
+              <div className="flex items-baseline gap-2.5">
+                <h2 className="text-lg font-semibold tracking-tight">{t("org.class.students.title")}</h2>
+                <span className="text-muted-foreground font-mono text-sm tabular-nums">{studentsTotal}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ViewModeToggle value={studentsView} onChange={setStudentsView} />
+                <Button variant="outline" size="sm" onClick={() => setEnrollOpen(true)}>
+                  <PlusIcon className="size-4" />
+                  {t("org.class.students.addMember")}
+                </Button>
+              </div>
+            </div>
+
+            <TableFilter
+              table={studentsTable}
+              searchPlaceholder={t("org.class.students.searchPlaceholder")}
+              sortLabel={t("org.class.toolbar.sort")}
+              columnsLabel={t("org.class.toolbar.columns")}
+              toggleColumnsLabel={t("org.class.toolbar.toggleColumns")}
+              showColumnsToggle={studentsIsTable}
+            />
+
+            {membersPending && studentsIsGrid ? (
+              <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+                <StudentCardSkeleton />
+                <StudentCardSkeleton />
+                <StudentCardSkeleton />
+                <StudentCardSkeleton />
+              </div>
+            ) : !membersPending && members.length === 0 ? (
+              <EmptyState
+                icon={UsersIcon}
+                title={t("org.class.students.emptyTitle")}
+                description={t("org.class.students.emptyHint")}
+              >
+                <Button onClick={() => setEnrollOpen(true)}>
+                  <PlusIcon className="size-4" />
+                  {t("org.class.students.addMember")}
+                </Button>
+              </EmptyState>
+            ) : studentsIsTable ? (
+              <Card className="gap-0 overflow-hidden p-0">
+                <div className="overflow-x-auto">
+                  <DataTable
+                    table={studentsTable}
+                    isLoading={membersPending}
+                    emptyIcon={<UsersIcon className="size-5" />}
+                    emptyTitle={t("org.class.students.emptyTitle")}
+                    emptyHint={t("org.class.students.emptyHint")}
+                  />
+                </div>
+                <DataTablePagination table={studentsTable} />
+              </Card>
+            ) : (
+              <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+                {members.map((m, i) => (
+                  <StudentCard key={m.id} member={m} index={i} onRemove={setRemoveTarget} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        ) : null}
+
+        {canViewRoster ? (
+          <TabsContent value="attendance" className="flex flex-col gap-4">
+            <div className="flex items-baseline gap-2.5 border-b border-dashed pb-3">
+              <h2 className="text-lg font-semibold tracking-tight">{t("org.class.attendance.title")}</h2>
+            </div>
+            <AttendanceMatrixView
+              classId={classId}
+              canEdit={canEditAttendance}
+              page={search.page ?? 1}
+              pageSize={search.page_size ?? 8}
+              search={search.search}
+              orderBy={search.order_by}
+              orderDir={search.order_dir}
+              onPageChange={handleMatrixPageChange}
+            />
+          </TabsContent>
+        ) : null}
+      </Tabs>
 
       {canCreateSession ? (
         <SessionCreateModal open={formOpen} onOpenChange={setFormOpen} classId={classId} session={null} />

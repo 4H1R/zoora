@@ -5,12 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/4H1R/zoora/internal/platform/authz"
 	"github.com/4H1R/zoora/internal/domain"
 )
+
+// attendanceMatrixMaxSessions caps the column axis. Classes never approach
+// this; it exists so the "all sessions" fetch stays a single bounded query.
+const attendanceMatrixMaxSessions = 1000
 
 type service struct {
 	repo         domain.AttendanceRepository
@@ -393,6 +398,112 @@ func (s *service) ListBySession(ctx context.Context, classID, sessionID uuid.UUI
 		q.UserID = &userID
 	}
 	return s.repo.ListBySession(ctx, sessionID, q)
+}
+
+func (s *service) Matrix(ctx context.Context, classID uuid.UUID, q domain.ListAttendanceMatrixQuery) (*domain.AttendanceMatrixResult, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	class, err := s.classes.FindByID(ctx, classID)
+	if err != nil {
+		return nil, err
+	}
+	if !canManageAttendance(caller, class) {
+		return nil, domain.ErrForbidden
+	}
+
+	// Columns: every session, oldest first.
+	sessions, _, err := s.sessions.ListByClass(ctx, classID, domain.ListClassSessionsQuery{
+		ListParams: domain.ListParams{
+			Page:     1,
+			PageSize: attendanceMatrixMaxSessions,
+			OrderBy:  "start_time",
+			OrderDir: "asc",
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Rows: paged students (User preloaded by the member repo).
+	members, total, err := s.members.ListByClass(ctx, classID, q.ListParams)
+	if err != nil {
+		return nil, err
+	}
+
+	userIDs := make([]uuid.UUID, 0, len(members))
+	for _, m := range members {
+		userIDs = append(userIDs, m.UserID)
+	}
+
+	records, err := s.repo.ListByClassAndUsers(ctx, classID, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	byUser := make(map[uuid.UUID]map[uuid.UUID]domain.Attendance, len(userIDs))
+	for _, rec := range records {
+		m, ok := byUser[rec.UserID]
+		if !ok {
+			m = make(map[uuid.UUID]domain.Attendance)
+			byUser[rec.UserID] = m
+		}
+		m[rec.ClassSessionID] = rec
+	}
+
+	now := time.Now()
+	startedCount := 0
+	resSessions := make([]domain.AttendanceMatrixSession, 0, len(sessions))
+	for _, sess := range sessions {
+		if !sess.StartTime.After(now) {
+			startedCount++
+		}
+		resSessions = append(resSessions, domain.AttendanceMatrixSession{
+			ID:        sess.ID,
+			Name:      sess.Name,
+			StartTime: sess.StartTime,
+		})
+	}
+
+	students := make([]domain.AttendanceMatrixStudent, 0, len(members))
+	for _, m := range members {
+		cells := make(map[uuid.UUID]domain.AttendanceMatrixCell)
+		summary := domain.AttendanceMatrixSummary{StartedCount: startedCount}
+		for sid, rec := range byUser[m.UserID] {
+			cells[sid] = domain.AttendanceMatrixCell{
+				ID:           rec.ID,
+				Status:       rec.Status,
+				IsAutoMarked: rec.IsAutoMarked,
+			}
+			switch rec.Status {
+			case domain.AttendanceStatusPresent:
+				summary.Present++
+			case domain.AttendanceStatusAbsent:
+				summary.Absent++
+			case domain.AttendanceStatusLate:
+				summary.Late++
+			case domain.AttendanceStatusExcused:
+				summary.Excused++
+			}
+		}
+		if startedCount > 0 {
+			summary.Rate = float64(summary.Present+summary.Late) / float64(startedCount)
+		}
+		students = append(students, domain.AttendanceMatrixStudent{
+			UserID:  m.UserID,
+			User:    m.User,
+			Cells:   cells,
+			Summary: summary,
+		})
+	}
+
+	return &domain.AttendanceMatrixResult{
+		Sessions: resSessions,
+		Students: students,
+		Total:    total,
+		Page:     q.ListParams.Page,
+		PageSize: q.ListParams.Limit(),
+	}, nil
 }
 
 // ListMine returns the caller's own attendance history + a status summary.
