@@ -23,7 +23,7 @@ const TILE_KEYS: OrgRouteKey[] = [
 ]
 
 // Returns permission-filtered launcher tiles; same grid for all roles.
-export function useDashboardTiles(orgId: string): DashboardTileSpec[] {
+export function useDashboardTiles(): DashboardTileSpec[] {
   const { can } = useAccess()
   const { t } = useTranslation()
 
@@ -33,7 +33,6 @@ export function useDashboardTiles(orgId: string): DashboardTileSpec[] {
       key,
       label: t(spec.i18nKey),
       icon: spec.icon,
-      to: `/org/$orgId/${spec.segment}`,
-      params: { orgId },
+      to: `/org/${spec.segment}`,
     }))
 }

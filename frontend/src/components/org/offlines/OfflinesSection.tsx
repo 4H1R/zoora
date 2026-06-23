@@ -28,12 +28,11 @@ import { useOfflinePermissions } from "./use-offline-permissions"
 interface OfflineCardProps {
   room: OfflineRoom
   index: number
-  orgId: string
   onEdit: (r: OfflineRoom) => void
   onDelete: (r: OfflineRoom) => void
 }
 
-function OfflineCard({ room, index, orgId, onEdit, onDelete }: OfflineCardProps) {
+function OfflineCard({ room, index, onEdit, onDelete }: OfflineCardProps) {
   const { t, i18n } = useTranslation()
   const canEdit = useCanSelfOr("offlines:update", "offlines:update_any", room.creator_id)
   const canDelete = useCanSelfOr("offlines:delete", "offlines:delete_any", room.creator_id)
@@ -109,7 +108,7 @@ function OfflineCard({ room, index, orgId, onEdit, onDelete }: OfflineCardProps)
           ) : null}
           <Button
             size="sm"
-            render={<Link to="/org/$orgId/offlines/$offlineId" params={{ orgId, offlineId: room.id ?? "" }} />}
+            render={<Link to="/org/offlines/$offlineId" params={{ offlineId: room.id ?? "" }} />}
           >
             {t("org.session.offlines.open")}
           </Button>
@@ -141,10 +140,9 @@ function OfflineCardSkeleton() {
 
 interface OfflinesSectionProps {
   classSessionId: string
-  orgId: string
 }
 
-export function OfflinesSection({ classSessionId, orgId }: OfflinesSectionProps) {
+export function OfflinesSection({ classSessionId }: OfflinesSectionProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { canView, canCreate } = useOfflinePermissions()
@@ -249,7 +247,6 @@ export function OfflinesSection({ classSessionId, orgId }: OfflinesSectionProps)
                 key={r.id}
                 room={r}
                 index={(list.page - 1) * pageSize + i}
-                orgId={orgId}
                 onEdit={(room) => {
                   setEditingRoom(room)
                   setFormOpen(true)

@@ -19,7 +19,7 @@ import { ViewModeToggle, useViewMode } from "@/components/view-mode-toggle"
 import { useAdminTable } from "@/lib/data-table"
 import { formatScore } from "@/lib/score"
 import { formatSessionDate } from "@/lib/session-status"
-import { Route } from "@/routes/_auth/org/$orgId/practices/index"
+import { Route } from "@/routes/_auth/org/practices/index"
 
 import { usePracticeStudentColumns } from "./practice-student-columns"
 import { PracticeStatusBadge } from "./practice-status-badge"

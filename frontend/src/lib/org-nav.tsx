@@ -15,7 +15,6 @@ type NavGroupSpec = {
 
 export function buildOrgNavGroups(
   t: TFunction,
-  orgId: string,
   has: (perm: AppPermission) => boolean
 ): NavGroup[] {
   const groups: NavGroupSpec[] = [
@@ -35,7 +34,7 @@ export function buildOrgNavGroups(
         .filter((spec) => !spec.perms || spec.perms.some(has))
         .map((spec) => ({
           title: t(spec.i18nKey),
-          url: `/org/${orgId}/${spec.segment}`,
+          url: `/org/${spec.segment}`,
           icon: spec.icon,
         })),
     }))

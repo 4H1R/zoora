@@ -28,12 +28,12 @@ export function examStateBadgeVariant(state: MyExamState | undefined) {
 }
 
 /** Trailing action for an exam row/card: start button, opens-at hint, or score. */
-export function ExamAction({ exam, orgId }: { exam: MyExam; orgId: string }) {
+export function ExamAction({ exam }: { exam: MyExam }) {
   const { t, i18n } = useTranslation()
   return (
     <div className="flex shrink-0 items-center gap-3">
       {exam.state === "open" ? (
-        <Link to="/org/$orgId/exams/$quizId/take" params={{ orgId, quizId: exam.quiz_id! }}>
+        <Link to="/org/exams/$quizId/take" params={{ quizId: exam.quiz_id! }}>
           <Button size="sm">{t("org.exams.start")}</Button>
         </Link>
       ) : null}
@@ -51,7 +51,7 @@ export function ExamAction({ exam, orgId }: { exam: MyExam; orgId: string }) {
   )
 }
 
-export function ExamCard({ exam, orgId }: { exam: MyExam; orgId: string }) {
+export function ExamCard({ exam }: { exam: MyExam }) {
   const { t } = useTranslation()
   return (
     <Card size="sm" className="flex-row items-center gap-3 p-4">
@@ -72,7 +72,7 @@ export function ExamCard({ exam, orgId }: { exam: MyExam; orgId: string }) {
         </p>
       </div>
 
-      <ExamAction exam={exam} orgId={orgId} />
+      <ExamAction exam={exam} />
     </Card>
   )
 }

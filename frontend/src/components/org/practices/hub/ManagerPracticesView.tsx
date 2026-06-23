@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useAdminTable } from "@/lib/data-table"
-import { Route } from "@/routes/_auth/org/$orgId/practices/index"
+import { Route } from "@/routes/_auth/org/practices/index"
 
 import { usePracticeHubColumns } from "./practice-hub-columns"
 import { ManagerSubmissionsDialog } from "./ManagerSubmissionsDialog"

@@ -132,7 +132,6 @@ export function eventDotColor(type: string | undefined): string {
 }
 
 export function eventLink(
-  orgId: string,
   e: CalendarEvent
 ): { to: string; params: Record<string, string> } {
   const entity = e.entity_id ?? ""
@@ -141,19 +140,19 @@ export function eventLink(
       return { to: "/live/$liveId", params: { liveId: entity } }
     case "quiz":
       return {
-        to: "/org/$orgId/exams/$quizId/take",
-        params: { orgId, quizId: entity },
+        to: "/org/exams/$quizId/take",
+        params: { quizId: entity },
       }
     case "offline":
       return {
-        to: "/org/$orgId/offlines/$offlineId",
-        params: { orgId, offlineId: entity },
+        to: "/org/offlines/$offlineId",
+        params: { offlineId: entity },
       }
     case "practice":
     default:
       return {
-        to: "/org/$orgId/classes/classsessions/$classSessionId",
-        params: { orgId, classSessionId: entity },
+        to: "/org/classes/classsessions/$classSessionId",
+        params: { classSessionId: entity },
       }
   }
 }

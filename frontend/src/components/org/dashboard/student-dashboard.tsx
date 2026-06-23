@@ -42,9 +42,9 @@ type LatestGrade = {
   value: string
 }
 
-export function StudentDashboard({ orgId }: { orgId: string }) {
+export function StudentDashboard() {
   const { t } = useTranslation()
-  const tiles = useDashboardTiles(orgId)
+  const tiles = useDashboardTiles()
 
   const { data: meData } = useGetUsersMe()
   const me = (meData?.status === 200 && meData.data.data) || undefined
@@ -95,8 +95,7 @@ export function StudentDashboard({ orgId }: { orgId: string }) {
           <div className="flex items-center justify-between border-b px-4 py-3">
             <Eyebrow>{t("org.portal.widgets.upcomingExams")}</Eyebrow>
             <Link
-              to="/org/$orgId/exams"
-              params={{ orgId }}
+              to="/org/exams"
               className="text-primary inline-flex items-center gap-1 text-xs font-medium transition-opacity hover:opacity-80"
             >
               {t("org.portal.widgets.viewAll")}
@@ -134,7 +133,7 @@ export function StudentDashboard({ orgId }: { orgId: string }) {
                     {t(`org.exams.state.${e.state}`)}
                   </Badge>
                   {e.state === "open" ? (
-                    <Link to="/org/$orgId/exams/$quizId/take" params={{ orgId, quizId: e.quiz_id! }}>
+                    <Link to="/org/exams/$quizId/take" params={{ quizId: e.quiz_id! }}>
                       <Button size="sm">{t("org.exams.start")}</Button>
                     </Link>
                   ) : null}
@@ -148,8 +147,7 @@ export function StudentDashboard({ orgId }: { orgId: string }) {
           <div className="flex items-center justify-between border-b px-4 py-3">
             <Eyebrow>{t("org.portal.widgets.latestGrades")}</Eyebrow>
             <Link
-              to="/org/$orgId/grades"
-              params={{ orgId }}
+              to="/org/grades"
               className="text-primary inline-flex items-center gap-1 text-xs font-medium transition-opacity hover:opacity-80"
             >
               {t("org.portal.widgets.viewAll")}

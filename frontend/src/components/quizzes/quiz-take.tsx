@@ -17,11 +17,9 @@ import { pickRoomForSession } from "@/components/quizzes/take/utils"
 // back link. Both the class-scoped take route and the standalone exam take
 // route render this component.
 export function QuizTake({
-  orgId,
   quizId,
   classSessionId,
 }: {
-  orgId: string
   quizId: string
   classSessionId?: string
 }) {
@@ -29,8 +27,8 @@ export function QuizTake({
   const { canView } = useQuizPermissions()
 
   const backHref = classSessionId
-    ? `/org/${orgId}/classes/classsessions/${classSessionId}`
-    : `/org/${orgId}/exams`
+    ? `/org/classes/classsessions/${classSessionId}`
+    : `/org/exams`
 
   const quizQ = useGetQuizzesId(quizId, { query: { enabled: canView } })
   const quiz = (quizQ.data?.status === 200 && quizQ.data.data.data) || undefined

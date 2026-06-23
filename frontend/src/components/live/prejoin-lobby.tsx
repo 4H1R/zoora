@@ -152,8 +152,7 @@ export function PreJoinLobby({ room, liveId, onJoined }: PreJoinLobbyProps) {
 
       <header className="relative z-10 flex items-center justify-between px-5 py-4 sm:px-8">
         <Link
-          to={orgId ? "/org/$orgId" : "/"}
-          params={orgId ? { orgId } : undefined}
+          to={orgId ? "/org" : "/"}
           className="inline-flex items-center gap-1.5 text-[13px] text-zinc-400 transition-colors hover:text-zinc-100"
         >
           <ChevronLeft className="size-3.5 rtl:rotate-180" />

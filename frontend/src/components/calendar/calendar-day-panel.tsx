@@ -31,7 +31,6 @@ const EVENT_ICON: Record<string, LucideIcon> = {
 type DayParts = { weekday: string; date: string }
 
 type CalendarDayPanelProps = {
-  orgId: string
   events: CalendarEvent[]
   parts: DayParts | null
   isToday: boolean
@@ -41,7 +40,6 @@ type CalendarDayPanelProps = {
 // the selected day + event count, then a vertical timeline of that day's events
 // (or an empty state). Selection state lives in the parent route.
 export function CalendarDayPanel({
-  orgId,
   events,
   parts,
   isToday,
@@ -57,7 +55,6 @@ export function CalendarDayPanel({
             <TimelineEvent
               key={e.id}
               event={e}
-              orgId={orgId}
               isFirst={i === 0}
               isLast={i === events.length - 1}
             />
@@ -129,18 +126,16 @@ function EmptyDay() {
 
 function TimelineEvent({
   event,
-  orgId,
   isFirst,
   isLast,
 }: {
   event: CalendarEvent
-  orgId: string
   isFirst: boolean
   isLast: boolean
 }) {
   const { i18n } = useTranslation()
   const lang = i18n.language
-  const link = eventLink(orgId, event)
+  const link = eventLink(event)
   const accent = eventAccent(event.type)
   const Icon = EVENT_ICON[event.type ?? ""] ?? CalendarDays
   const time = eventTime(event.start_time, lang)

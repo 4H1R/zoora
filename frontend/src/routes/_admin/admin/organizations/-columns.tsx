@@ -1,7 +1,6 @@
 import type { GithubCom4H1RZooraInternalDomainOrganization as Organization } from "@/api/model"
 import type { ColumnDef } from "@tanstack/react-table"
 
-import { useRouter } from "@tanstack/react-router"
 import { EllipsisVerticalIcon, ExternalLinkIcon, PencilIcon, Trash2Icon, UsersIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
@@ -44,10 +43,14 @@ interface OrgRowActionsProps {
 
 function OrgRowActions({ organization, onEdit, onDelete }: OrgRowActionsProps) {
   const { t } = useTranslation()
-  const router = useRouter()
 
+  // Org dashboards are host-scoped (one subdomain per tenant), so open the org's
+  // own subdomain rather than a path param. Preserves the current scheme/port.
   const handleGoToOrg = () => {
-    const href = router.buildLocation({ to: "/org/$orgId/dashboard", params: { orgId: String(organization.id) } }).href
+    const base = import.meta.env.VITE_BASE_DOMAIN ?? "localhost"
+    const { protocol, port } = window.location
+    const portSuffix = port ? `:${port}` : ""
+    const href = `${protocol}//${organization.slug}.${base}${portSuffix}/org/dashboard`
     window.open(href, "_blank", "noopener,noreferrer")
   }
 

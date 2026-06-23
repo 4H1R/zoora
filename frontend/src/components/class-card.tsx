@@ -30,10 +30,9 @@ export function getGradient(id: string) {
 
 interface ClassCardProps {
   cls: GithubCom4H1RZooraInternalDomainClass
-  orgId: string
 }
 
-export function ClassCard({ cls, orgId }: ClassCardProps) {
+export function ClassCard({ cls }: ClassCardProps) {
   const { t } = useTranslation()
 
   const gradient = getGradient(cls.id ?? "")
@@ -41,7 +40,7 @@ export function ClassCard({ cls, orgId }: ClassCardProps) {
 
   return (
     <div className="group/card ring-border bg-card flex flex-col overflow-hidden rounded-xl ring-1 transition-shadow hover:shadow-md">
-      <Link to="/org/$orgId/classes/$classId" params={{ orgId, classId: cls.id! }} className="block">
+      <Link to="/org/classes/$classId" params={{ classId: cls.id! }} className="block">
         <div className={cn("relative flex h-28 flex-col justify-end bg-gradient-to-br p-3.5", gradient)}>
           <p className="line-clamp-2 text-sm leading-snug font-semibold text-white drop-shadow-sm">{cls.name}</p>
         </div>
@@ -66,7 +65,7 @@ export function ClassCard({ cls, orgId }: ClassCardProps) {
             <Button
               variant="outline"
               size="xs"
-              render={<Link to="/org/$orgId/classes/$classId" params={{ orgId, classId: cls.id! }} />}
+              render={<Link to="/org/classes/$classId" params={{ classId: cls.id! }} />}
             >
               {t("common.continue")}
               <ChevronRight className="size-3.5 rtl:rotate-180" />

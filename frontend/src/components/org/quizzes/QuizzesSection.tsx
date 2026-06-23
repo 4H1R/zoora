@@ -2,7 +2,7 @@ import type { GithubCom4H1RZooraInternalDomainQuiz as Quiz } from "@/api/model"
 import type { SortOption } from "@/components/data-table/sort-picker"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { Link, useParams } from "@tanstack/react-router"
+import { Link } from "@tanstack/react-router"
 import {
   CalendarClockIcon,
   ClipboardListIcon,
@@ -46,14 +46,13 @@ import { useQuizPermissions } from "./use-quiz-permissions"
 interface QuizCardProps {
   quiz: Quiz
   index: number
-  orgId: string
   classSessionId: string
   onEdit: (q: Quiz) => void
   onManageQuestions: (q: Quiz) => void
   onDelete: (q: Quiz) => void
 }
 
-function QuizCard({ quiz, index, orgId, classSessionId, onEdit, onManageQuestions, onDelete }: QuizCardProps) {
+function QuizCard({ quiz, index, classSessionId, onEdit, onManageQuestions, onDelete }: QuizCardProps) {
   const { t, i18n } = useTranslation()
   const canEdit = useCanSelfOr("quizzes:update", "quizzes:update_any", quiz.user_id)
   const canDelete = useCanSelfOr("quizzes:delete", "quizzes:delete_any", quiz.user_id)
@@ -163,13 +162,13 @@ function QuizCard({ quiz, index, orgId, classSessionId, onEdit, onManageQuestion
               ) : null}
             </div>
           ) : null}
-          {quiz.id && orgId ? (
+          {quiz.id ? (
             <Button
               size="sm"
               render={
                 <Link
-                  to="/org/$orgId/classes/classsessions/$classSessionId/quizzes/$quizId/take"
-                  params={{ orgId, classSessionId, quizId: quiz.id }}
+                  to="/org/classes/classsessions/$classSessionId/quizzes/$quizId/take"
+                  params={{ classSessionId, quizId: quiz.id }}
                 />
               }
             >
@@ -212,7 +211,6 @@ export function QuizzesSection({ classId, classSessionId }: QuizzesSectionProps)
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { canView, canCreate } = useQuizPermissions()
-  const { orgId } = useParams({ strict: false }) as { orgId?: string }
 
   const list = useSectionList()
   const sortOptions: SortOption[] = [
@@ -311,7 +309,6 @@ export function QuizzesSection({ classId, classSessionId }: QuizzesSectionProps)
                 key={q.id}
                 quiz={q}
                 index={(list.page - 1) * pageSize + i}
-                orgId={orgId ?? ""}
                 classSessionId={classSessionId}
                 onEdit={(quiz) => {
                   setEditingQuiz(quiz)

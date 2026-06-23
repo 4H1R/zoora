@@ -1,4 +1,3 @@
-import { useParams } from "@tanstack/react-router"
 import { GraduationCapIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
@@ -11,8 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 
 export function AdminDashboard() {
   const { t } = useTranslation()
-  const { orgId } = useParams({ from: "/_auth/org/$orgId/dashboard" })
-  const tiles = useDashboardTiles(orgId)
+  const tiles = useDashboardTiles()
 
   const { data: meData } = useGetUsersMe()
   const me = (meData?.status === 200 && meData.data.data) || undefined
