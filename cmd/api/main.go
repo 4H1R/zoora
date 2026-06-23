@@ -131,6 +131,7 @@ func main() {
 	chatReactionRepo := chat.NewReactionRepository(db)
 
 	authMiddleware := auth.Middleware(jwtService, redisClient, roleRepo, userRepo)
+	tenantMiddleware := middleware.Tenant(redisClient, orgRepo, cfg.BaseDomain, cfg.AdminSubdomain)
 
 	authzResolver := authz.NewResolver(classMemberRepo)
 
@@ -196,7 +197,7 @@ func main() {
 	router.GET("/readyz", healthChecker.ReadinessHandler)
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	v1 := router.Group("/api/v1")
+	v1 := router.Group("/api/v1", tenantMiddleware)
 
 	authHandler := auth.NewHandler(authBusinessService)
 	authHandler.RegisterRoutes(v1, middleware.AuthRateLimit(redisClient))
