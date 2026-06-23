@@ -74,6 +74,29 @@ func Middleware(jwt *JWTService, rdb *redis.Client, roleRepo domain.RoleReposito
 			}
 		}
 
+		// Tenant-boundary enforcement: the resolved Host must agree with the
+		// caller's scope. Admin host => admin only; tenant host => org match.
+		if hc, ok := domain.HostContextFromCtx(c.Request.Context()); ok {
+			switch hc.Class {
+			case domain.HostClassAdmin:
+				if !caller.IsAdmin {
+					domain.ErrorResponse(c, domain.ErrForbidden)
+					c.Abort()
+					return
+				}
+			case domain.HostClassTenant:
+				if caller.IsAdmin || caller.OrgID == nil || hc.OrgID == nil || *caller.OrgID != *hc.OrgID {
+					domain.ErrorResponse(c, domain.ErrForbidden)
+					c.Abort()
+					return
+				}
+			default: // HostClassUnknown
+				domain.ErrorResponse(c, domain.ErrForbidden)
+				c.Abort()
+				return
+			}
+		}
+
 		c.Set(ContextKeyUserID, claims.UserID)
 		c.Set(ContextKeyIsAdmin, caller.IsAdmin)
 

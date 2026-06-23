@@ -10,4 +10,9 @@ export interface GithubCom4H1RZooraInternalDomainUpdateOrganizationDTO {
   description?: string;
   /** @minLength 2 */
   name?: string;
+  /**
+     * @minLength 2
+     * @maxLength 63
+     */
+  slug?: string;
 }

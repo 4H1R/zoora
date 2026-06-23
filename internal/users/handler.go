@@ -55,7 +55,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 	}
 }
 
-// CreateUser creates a new user.
 // @Summary Create user
 // @Tags Users
 // @Accept json
@@ -82,7 +81,6 @@ func (h *Handler) CreateUser(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusCreated, user)
 }
 
-// GetUserByID returns a user by ID.
 // @Summary Get user by ID
 // @Tags Users
 // @Produce json
@@ -103,7 +101,6 @@ func (h *Handler) GetUserByID(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, user)
 }
 
-// ListUsers returns a paginated list of users.
 // @Summary List users
 // @Description Returns users scoped by caller role. Search matches substrings of: username, name. Orderable fields: created_at, updated_at, username, name.
 // @Tags Users
@@ -150,7 +147,6 @@ func (h *Handler) ListUserStatusCounts(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, counts)
 }
 
-// UpdateUser updates a user by ID.
 // @Summary Update user
 // @Tags Users
 // @Accept json
@@ -228,7 +224,6 @@ func (h *Handler) DisableUser(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, user)
 }
 
-// EnableUser re-enables a previously disabled user.
 // @Summary Enable user
 // @Tags Users
 // @Produce json
@@ -249,7 +244,6 @@ func (h *Handler) EnableUser(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, user)
 }
 
-// GetProfile returns the authenticated user's profile.
 // @Summary Get my profile
 // @Tags Users
 // @Produce json
@@ -267,7 +261,6 @@ func (h *Handler) GetProfile(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, user)
 }
 
-// UpdateProfile updates the authenticated user's profile.
 // @Summary Update my profile
 // @Tags Users
 // @Accept json
@@ -293,7 +286,6 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, user)
 }
 
-// ChangePassword changes the authenticated user's password.
 // @Summary Change my password
 // @Tags Users
 // @Accept json
@@ -318,7 +310,6 @@ func (h *Handler) ChangePassword(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, nil)
 }
 
-// AssignRole assigns a role to a user.
 // @Summary Assign role to user
 // @Tags Users
 // @Accept json
@@ -347,7 +338,6 @@ func (h *Handler) AssignRole(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, user)
 }
 
-// RemoveRole removes the role from a user.
 // @Summary Remove role from user
 // @Tags Users
 // @Produce json

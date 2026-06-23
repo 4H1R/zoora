@@ -51,7 +51,6 @@ func (h *AdminHandler) RegisterAdminRoutes(group *gin.RouterGroup) {
 	group.DELETE("/classes/sessions/:sessionId", sessionIDParam, h.HardDeleteSession)
 }
 
-// Create creates a class in any organization.
 // @Summary [Admin] Create class
 // @Tags Admin/Classes
 // @Accept json
@@ -79,7 +78,6 @@ func (h *AdminHandler) Create(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusCreated, class)
 }
 
-// Update updates any class field.
 // @Summary [Admin] Update class
 // @Tags Admin/Classes
 // @Accept json
@@ -109,7 +107,6 @@ func (h *AdminHandler) Update(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, class)
 }
 
-// List returns classes across all organizations.
 // @Summary [Admin] List classes
 // @Description Cross-org list. Search matches substrings of: name, description. Orderable fields: created_at, updated_at, name. Filters: user_id (teacher), include_deleted.
 // @Tags Admin/Classes
@@ -165,7 +162,6 @@ func (h *AdminHandler) HardDelete(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, nil)
 }
 
-// ListSessions returns class sessions across all organizations.
 // @Summary [Admin] List class sessions
 // @Description Cross-org list. Search matches substrings of: name, description. Orderable fields: created_at, updated_at, name, start_time. Filters: class_id, include_deleted.
 // @Tags Admin/Classes

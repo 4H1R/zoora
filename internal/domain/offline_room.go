@@ -27,8 +27,6 @@ type OfflineRoom struct {
 	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
-// --- DTOs ---
-
 type CreateOfflineRoomDTO struct {
 	ClassSessionID uuid.UUID  `json:"class_session_id" binding:"required"`
 	Title          string     `json:"title" binding:"required,min=2"`
@@ -79,8 +77,6 @@ type OfflineRoomView struct {
 	ViewedAt       time.Time    `gorm:"not null;default:NOW()" json:"viewed_at"`
 	DurationSeconds int         `gorm:"not null;default:0" json:"duration_seconds"`
 }
-
-// --- Interfaces ---
 
 type OfflineRoomRepository interface {
 	Create(ctx context.Context, room *OfflineRoom) error

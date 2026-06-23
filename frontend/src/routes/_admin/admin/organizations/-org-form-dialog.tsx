@@ -23,6 +23,11 @@ import { Textarea } from "@/components/ui/textarea"
 
 const orgSchema = z.object({
   name: z.string().min(2),
+  slug: z
+    .string()
+    .min(2)
+    .max(63)
+    .regex(/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/),
   description: z.string().optional(),
   status: z.nativeEnum(OrgStatus).optional(),
 })
@@ -51,6 +56,7 @@ export function OrgFormDialog({ open, onOpenChange, organization }: OrgFormDialo
     resolver: zodResolver(orgSchema),
     defaultValues: {
       name: "",
+      slug: "",
       description: "",
       status: undefined,
     },
@@ -60,6 +66,7 @@ export function OrgFormDialog({ open, onOpenChange, organization }: OrgFormDialo
     if (open) {
       reset({
         name: organization?.name ?? "",
+        slug: organization?.slug ?? "",
         description: organization?.description ?? "",
         status: (organization?.status as OrgStatus) ?? undefined,
       })
@@ -124,6 +131,11 @@ export function OrgFormDialog({ open, onOpenChange, organization }: OrgFormDialo
           <FieldLabel>{t("admin.orgs.form.name")}</FieldLabel>
           <Input {...register("name")} placeholder={t("admin.orgs.form.namePlaceholder")} />
           <FieldError errors={[errors.name]} />
+        </Field>
+        <Field data-invalid={!!errors.slug || undefined}>
+          <FieldLabel>{t("admin.orgs.form.slug")}</FieldLabel>
+          <Input {...register("slug")} placeholder={t("admin.orgs.form.slugPlaceholder")} />
+          <FieldError errors={[errors.slug]} />
         </Field>
         <Field>
           <FieldLabel>{t("admin.orgs.form.description")}</FieldLabel>

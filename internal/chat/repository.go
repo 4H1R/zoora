@@ -13,8 +13,6 @@ import (
 	"github.com/4H1R/zoora/internal/platform/listparams"
 )
 
-// Chat repository
-
 type chatRepository struct {
 	db *gorm.DB
 }
@@ -95,8 +93,6 @@ func (r *chatRepository) FindByModel(ctx context.Context, modelType string, mode
 	return &chat, nil
 }
 
-// ChatMember repository
-
 type memberRepository struct {
 	db *gorm.DB
 }
@@ -151,8 +147,6 @@ func (r *memberRepository) ListByChat(ctx context.Context, chatID uuid.UUID) ([]
 	}
 	return members, nil
 }
-
-// Message repository
 
 type messageRepository struct {
 	db *gorm.DB
@@ -216,8 +210,6 @@ func (r *messageRepository) List(ctx context.Context, chatID uuid.UUID, q domain
 	}
 	return messages, total, nil
 }
-
-// MessageReaction repository
 
 type reactionRepository struct {
 	db *gorm.DB

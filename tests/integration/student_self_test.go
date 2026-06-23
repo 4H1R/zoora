@@ -22,8 +22,6 @@ import (
 	"github.com/4H1R/zoora/tests/testutil"
 )
 
-// --- Quiz repo: ListByMemberWithRooms only returns the member's classes ---
-
 func TestIntegration_QuizRepo_ListByMemberWithRooms(t *testing.T) {
 	r := setupQuizzesDB(t)
 	ctx := context.Background()
@@ -44,8 +42,6 @@ func TestIntegration_QuizRepo_ListByMemberWithRooms(t *testing.T) {
 	require.NotNil(t, got[0].Class)
 	assert.Equal(t, "Math", got[0].Class.Name)
 }
-
-// --- Quiz service: ListMine derives open / graded states against a real DB ---
 
 func TestIntegration_QuizService_ListMine_States(t *testing.T) {
 	r := setupQuizzesDB(t)
@@ -101,8 +97,6 @@ func TestIntegration_QuizService_ListMine_States(t *testing.T) {
 	assert.Equal(t, 18.0, *graded.Score)
 }
 
-// --- Gradebook service: GetMine returns only the caller's own cells ---
-
 func TestIntegration_GradebookService_GetMine(t *testing.T) {
 	db := testutil.SetupPostgres(t)
 	require.NoError(t, db.AutoMigrate(
@@ -157,8 +151,6 @@ func TestIntegration_GradebookService_GetMine(t *testing.T) {
 	// The other student's value must not leak in.
 	assert.NotContains(t, []string{rc.Classes[0].Cells[col.ID.String()]}, "11")
 }
-
-// --- Attendance: ListByUser repo + service ListMine summary ---
 
 func TestIntegration_Attendance_ListMine(t *testing.T) {
 	db := testutil.SetupPostgres(t)

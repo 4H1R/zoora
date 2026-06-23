@@ -1,0 +1,9 @@
+tls:
+  certificates:
+    - certFile: /certs/wildcard.zoora.ir.crt
+      keyFile: /certs/wildcard.zoora.ir.key
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /certs/wildcard.zoora.ir.crt
+        keyFile: /certs/wildcard.zoora.ir.key

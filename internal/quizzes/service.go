@@ -302,8 +302,6 @@ func canManageClass(caller domain.Caller, class *domain.Class) bool {
 	return caller.CanManage(class.UserID, domain.PermClassesUpdateAny)
 }
 
-// --- Rules ---
-
 func (s *service) CreateRule(ctx context.Context, quizID uuid.UUID, dto domain.CreateQuizRuleDTO) (*domain.QuizRule, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
@@ -496,8 +494,6 @@ func (s *service) ListRules(ctx context.Context, quizID uuid.UUID, q domain.List
 	}
 	return s.rules.ListByQuiz(ctx, quizID, q.ListParams)
 }
-
-// --- Rooms ---
 
 func (s *service) CreateRoom(ctx context.Context, quizID uuid.UUID, dto domain.CreateQuizRoomDTO) (*domain.QuizRoom, error) {
 	caller, ok := domain.CallerFromCtx(ctx)

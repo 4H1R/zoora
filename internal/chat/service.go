@@ -150,8 +150,6 @@ func (s *service) ListChats(ctx context.Context, q domain.ListChatsQuery) ([]dom
 	return s.chatRepo.List(ctx, q)
 }
 
-// Members
-
 func (s *service) AddMember(ctx context.Context, chatID uuid.UUID, dto domain.AddChatMemberDTO) (*domain.ChatMember, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
@@ -219,8 +217,6 @@ func (s *service) ListMembers(ctx context.Context, chatID uuid.UUID) ([]domain.C
 	}
 	return s.memberRepo.ListByChat(ctx, chatID)
 }
-
-// Messages
 
 func (s *service) SendMessage(ctx context.Context, chatID uuid.UUID, dto domain.SendMessageDTO) (*domain.Message, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
@@ -373,8 +369,6 @@ func (s *service) ListMessages(ctx context.Context, chatID uuid.UUID, q domain.L
 	return s.messageRepo.List(ctx, chatID, q)
 }
 
-// Reactions
-
 func (s *service) ToggleReaction(ctx context.Context, messageID uuid.UUID, dto domain.ToggleReactionDTO) (*domain.Message, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
@@ -437,8 +431,6 @@ func (s *service) ToggleReaction(ctx context.Context, messageID uuid.UUID, dto d
 	return msg, nil
 }
 
-// Cross-feature helpers
-
 func (s *service) FindChatByModel(ctx context.Context, modelType string, modelID uuid.UUID) (*domain.Chat, error) {
 	return s.chatRepo.FindByModel(ctx, modelType, modelID)
 }
@@ -454,8 +446,6 @@ func (s *service) ArchiveByModel(ctx context.Context, modelType string, modelID 
 	chat.Status = domain.ChatStatusArchived
 	return s.chatRepo.Update(ctx, chat)
 }
-
-// Access control helpers
 
 func (s *service) checkAccess(ctx context.Context, chat *domain.Chat, caller domain.Caller) error {
 	if caller.IsAdmin || caller.HasPermission(domain.PermChatsManage) {

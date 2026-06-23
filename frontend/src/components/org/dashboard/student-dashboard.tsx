@@ -21,8 +21,7 @@ import { TileGrid } from "./tile-grid"
 import { useDashboardTiles } from "./use-dashboard-tiles"
 import { useGreeting } from "./use-greeting"
 
-// examStateBadgeVariant maps a derived exam state to a shadcn Badge variant,
-// using theme tokens only: open = primary, graded = secondary, others = outline.
+// Maps exam state to Badge variant using theme tokens only.
 function examStateBadgeVariant(state: MyExamState | undefined) {
   switch (state) {
     case "open":
@@ -43,9 +42,9 @@ type LatestGrade = {
   value: string
 }
 
-export function StudentDashboard({ orgId }: { orgId: string }) {
+export function StudentDashboard() {
   const { t } = useTranslation()
-  const tiles = useDashboardTiles(orgId)
+  const tiles = useDashboardTiles()
 
   const { data: meData } = useGetUsersMe()
   const me = (meData?.status === 200 && meData.data.data) || undefined
@@ -86,21 +85,17 @@ export function StudentDashboard({ orgId }: { orgId: string }) {
         className="pointer-events-none absolute inset-x-0 -top-6 -z-10 h-48 bg-[radial-gradient(ellipse_at_top,var(--color-primary)/8%,transparent_60%)]"
       />
 
-      {/* Hero */}
       <div className="flex flex-col gap-1.5">
         <Eyebrow className="text-primary">{t("org.dashboard.overview")}</Eyebrow>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{greeting}</h1>
       </div>
 
-      {/* Widgets */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Upcoming exams */}
         <Card className="gap-0 overflow-hidden p-0">
           <div className="flex items-center justify-between border-b px-4 py-3">
             <Eyebrow>{t("org.portal.widgets.upcomingExams")}</Eyebrow>
             <Link
-              to="/org/$orgId/exams"
-              params={{ orgId }}
+              to="/org/exams"
               className="text-primary inline-flex items-center gap-1 text-xs font-medium transition-opacity hover:opacity-80"
             >
               {t("org.portal.widgets.viewAll")}
@@ -138,7 +133,7 @@ export function StudentDashboard({ orgId }: { orgId: string }) {
                     {t(`org.exams.state.${e.state}`)}
                   </Badge>
                   {e.state === "open" ? (
-                    <Link to="/org/$orgId/exams/$quizId/take" params={{ orgId, quizId: e.quiz_id! }}>
+                    <Link to="/org/exams/$quizId/take" params={{ quizId: e.quiz_id! }}>
                       <Button size="sm">{t("org.exams.start")}</Button>
                     </Link>
                   ) : null}
@@ -148,13 +143,11 @@ export function StudentDashboard({ orgId }: { orgId: string }) {
           )}
         </Card>
 
-        {/* Latest grades */}
         <Card className="gap-0 overflow-hidden p-0">
           <div className="flex items-center justify-between border-b px-4 py-3">
             <Eyebrow>{t("org.portal.widgets.latestGrades")}</Eyebrow>
             <Link
-              to="/org/$orgId/grades"
-              params={{ orgId }}
+              to="/org/grades"
               className="text-primary inline-flex items-center gap-1 text-xs font-medium transition-opacity hover:opacity-80"
             >
               {t("org.portal.widgets.viewAll")}
@@ -196,7 +189,6 @@ export function StudentDashboard({ orgId }: { orgId: string }) {
         </Card>
       </div>
 
-      {/* Launcher grid */}
       {tiles.length > 0 ? <TileGrid tiles={tiles} /> : null}
 
       {tiles.length === 0 && !examsLoading && !gradesLoading && upcomingExams.length === 0 && latestGrades.length === 0 ? (

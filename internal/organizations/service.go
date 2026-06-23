@@ -6,23 +6,45 @@ import (
 	"log/slog"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/platform/cache"
 )
 
 type service struct {
 	repo     domain.OrganizationRepository
 	userRepo domain.UserRepository
+	redis    *redis.Client
 	logger   *slog.Logger
 }
 
-func NewService(repo domain.OrganizationRepository, userRepo domain.UserRepository, logger *slog.Logger) domain.OrganizationService {
-	return &service{repo: repo, userRepo: userRepo, logger: logger}
+func NewService(repo domain.OrganizationRepository, userRepo domain.UserRepository, rdb *redis.Client, logger *slog.Logger) domain.OrganizationService {
+	return &service{repo: repo, userRepo: userRepo, redis: rdb, logger: logger}
+}
+
+// bustTenant removes cached slug->org entries after a slug or status change so
+// the tenant middleware re-resolves from the DB. No-op when redis is unset.
+func (s *service) bustTenant(ctx context.Context, slugs ...string) {
+	if s.redis == nil {
+		return
+	}
+	for _, slug := range slugs {
+		if slug == "" {
+			continue
+		}
+		if err := cache.BustTenant(ctx, s.redis, slug); err != nil {
+			s.logger.Warn("busting tenant cache", "slug", slug, "error", err)
+		}
+	}
 }
 
 func (s *service) Create(ctx context.Context, dto domain.CreateOrganizationDTO) (*domain.Organization, error) {
 	if _, ok := domain.CallerFromCtx(ctx); !ok {
 		return nil, domain.ErrForbidden
+	}
+	if err := domain.ValidateSlug(dto.Slug); err != nil {
+		return nil, err
 	}
 	status := domain.OrganizationStatusActive
 	if dto.Status != "" {
@@ -30,6 +52,7 @@ func (s *service) Create(ctx context.Context, dto domain.CreateOrganizationDTO) 
 	}
 	org := &domain.Organization{
 		Name:        dto.Name,
+		Slug:        dto.Slug,
 		Description: dto.Description,
 		Status:      status,
 	}
@@ -59,14 +82,24 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateOrg
 	if err != nil {
 		return nil, err
 	}
+	oldSlug := org.Slug
 	if dto.Name != nil {
 		org.Name = *dto.Name
+	}
+	if dto.Slug != nil {
+		if err := domain.ValidateSlug(*dto.Slug); err != nil {
+			return nil, err
+		}
+		org.Slug = *dto.Slug
 	}
 	if dto.Description != nil {
 		org.Description = *dto.Description
 	}
 	if err := s.repo.Update(ctx, org); err != nil {
 		return nil, err
+	}
+	if org.Slug != oldSlug {
+		s.bustTenant(ctx, oldSlug, org.Slug)
 	}
 	return org, nil
 }

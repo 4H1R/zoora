@@ -37,7 +37,6 @@ func (h *AdminHandler) RegisterAdminRoutes(group *gin.RouterGroup) {
 	group.DELETE("/roles/:id", idParam, h.Delete)
 }
 
-// List returns a filtered, paginated list of roles.
 // @Summary [Admin] List roles
 // @Tags Admin/Roles
 // @Produce json
@@ -69,7 +68,6 @@ func (h *AdminHandler) List(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(roleList, total, p))
 }
 
-// Stats returns aggregate stats for roles.
 // @Summary [Admin] Get role stats
 // @Tags Admin/Roles
 // @Produce json
@@ -95,7 +93,6 @@ func (h *AdminHandler) Stats(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, stats)
 }
 
-// Get returns a role by ID.
 // @Summary [Admin] Get role by ID
 // @Tags Admin/Roles
 // @Produce json
@@ -116,7 +113,6 @@ func (h *AdminHandler) Get(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, role)
 }
 
-// Create creates a new role.
 // @Summary [Admin] Create role
 // @Tags Admin/Roles
 // @Accept json
@@ -143,7 +139,6 @@ func (h *AdminHandler) Create(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusCreated, role)
 }
 
-// Update updates a role by ID.
 // @Summary [Admin] Update role
 // @Tags Admin/Roles
 // @Accept json
@@ -172,7 +167,6 @@ func (h *AdminHandler) Update(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, role)
 }
 
-// Delete soft-deletes a role by ID.
 // @Summary [Admin] Delete role
 // @Tags Admin/Roles
 // @Produce json

@@ -27,12 +27,10 @@ export function BackgroundFX({ tone = "brand" }: { tone?: Tone }) {
   const c = TONES[tone]
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-      {/* base wash */}
       <div
         className="absolute inset-0"
         style={{ background: `radial-gradient(120% 80% at 50% -10%, ${c.wash}, transparent 60%)` }}
       />
-      {/* aurora blobs */}
       <div
         className="animate-aurora absolute -top-40 start-[-10%] size-[40rem] rounded-full opacity-50 blur-3xl"
         style={{ background: `radial-gradient(circle, ${c.blobA}, transparent 65%)` }}
@@ -41,7 +39,6 @@ export function BackgroundFX({ tone = "brand" }: { tone?: Tone }) {
         className="animate-aurora-slow absolute -bottom-52 end-[-8%] size-[36rem] rounded-full opacity-40 blur-3xl"
         style={{ background: `radial-gradient(circle, ${c.blobB}, transparent 65%)` }}
       />
-      {/* grid */}
       <div
         className="absolute inset-0"
         style={{
@@ -52,12 +49,10 @@ export function BackgroundFX({ tone = "brand" }: { tone?: Tone }) {
           WebkitMaskImage: "radial-gradient(120% 90% at 50% 0%, black, transparent 75%)",
         }}
       />
-      {/* grain */}
       <div
         className="absolute inset-0 opacity-[0.04] mix-blend-overlay dark:opacity-[0.06]"
         style={{ backgroundImage: GRAIN }}
       />
-      {/* bottom fade */}
       <div
         className="absolute inset-x-0 bottom-0 h-40"
         style={{ background: "linear-gradient(to top, var(--background), transparent)" }}

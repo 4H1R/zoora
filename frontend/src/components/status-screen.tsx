@@ -90,14 +90,12 @@ export function StatusGlyph({ code, tone = "brand" }: { code: string; tone?: "br
       style={{ animationDelay: "180ms" }}
       aria-hidden
     >
-      {/* blurred echo */}
       <span
         className="absolute inset-0 bg-clip-text leading-none font-heading font-bold tracking-tight text-transparent opacity-40 blur-2xl"
         style={{ backgroundImage: gradient, fontSize: "clamp(7rem, 26vw, 16rem)" }}
       >
         {code}
       </span>
-      {/* foreground glyph */}
       <span
         className="relative block bg-clip-text leading-none font-heading font-bold tracking-tight text-transparent"
         style={{ backgroundImage: gradient, fontSize: "clamp(7rem, 26vw, 16rem)" }}

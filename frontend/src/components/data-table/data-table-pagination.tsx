@@ -14,8 +14,9 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { paramKeys } from "@/lib/data-table"
 
-const DEFAULT_PAGE_SIZE_OPTIONS = [8, 20, 50]
+const DEFAULT_PAGE_SIZE_OPTIONS = [8, 20, 50, 100, 200]
 
 function getPageWindow(current: number, total: number): (number | "…")[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
@@ -35,20 +36,24 @@ function getPageWindow(current: number, total: number): (number | "…")[] {
 export function DataTablePagination<TData>({
   table,
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
+  prefix,
 }: {
   table: Table<TData>
   pageSizeOptions?: number[]
+  /** Namespaces the URL params this pager reads/writes (page/page_size); pair
+   * with the same prefix on useAdminTable + TableFilter. */
+  prefix?: string
 }) {
   const { t } = useTranslation()
-  const { page: urlPage, page_size: urlPageSize } = useSearch({ strict: false }) as {
-    page?: number
-    page_size?: number
-  }
+  const k = paramKeys(prefix)
+  const sp = useSearch({ strict: false }) as Record<string, unknown>
+  const urlPage = sp[k.page] as number | undefined
+  const urlPageSize = sp[k.page_size] as number | undefined
   const navigate = useNavigate() as unknown as NavFn
 
   const total = table.getRowCount()
   const page = urlPage ?? 1
-  const pageSize = urlPageSize ?? 8
+  const pageSize = urlPageSize ?? 20
   const totalPages = Math.ceil(total / pageSize)
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1
   const to = Math.min(page * pageSize, total)
@@ -59,16 +64,15 @@ export function DataTablePagination<TData>({
 
   return (
     <div className="bg-muted/30 border-t px-4 py-3">
-      {/* Mobile */}
       <div className="flex items-center justify-between sm:hidden">
         <PaginationPrevious
           aria-disabled={page <= 1}
           className={page <= 1 ? "pointer-events-none opacity-50" : ""}
-          onClick={page > 1 ? () => navigate({ search: (prev) => ({ ...prev, page: page - 1 }) }) : undefined}
+          onClick={page > 1 ? () => navigate({ search: (prev) => ({ ...prev, [k.page]: page - 1 }) }) : undefined}
         />
         <Select
           value={String(pageSize)}
-          onValueChange={(v) => navigate({ search: (prev) => ({ ...prev, page_size: Number(v), page: 1 }) })}
+          onValueChange={(v) => navigate({ search: (prev) => ({ ...prev, [k.page_size]: Number(v), [k.page]: 1 }) })}
         >
           <SelectTrigger className="h-7 w-16 text-xs">
             <SelectValue />
@@ -84,11 +88,12 @@ export function DataTablePagination<TData>({
         <PaginationNext
           aria-disabled={page >= totalPages}
           className={page >= totalPages ? "pointer-events-none opacity-50" : ""}
-          onClick={page < totalPages ? () => navigate({ search: (prev) => ({ ...prev, page: page + 1 }) }) : undefined}
+          onClick={
+            page < totalPages ? () => navigate({ search: (prev) => ({ ...prev, [k.page]: page + 1 }) }) : undefined
+          }
         />
       </div>
 
-      {/* Desktop */}
       <div className="hidden items-center justify-between gap-4 sm:flex">
         <span className="text-muted-foreground text-xs tabular-nums">
           {t("admin.pagination.showing", { from, to, total })}
@@ -98,7 +103,9 @@ export function DataTablePagination<TData>({
             <span className="text-muted-foreground text-xs">{t("admin.pagination.rowsPerPage")}</span>
             <Select
               value={String(pageSize)}
-              onValueChange={(v) => navigate({ search: (prev) => ({ ...prev, page_size: Number(v), page: 1 }) })}
+              onValueChange={(v) =>
+                navigate({ search: (prev) => ({ ...prev, [k.page_size]: Number(v), [k.page]: 1 }) })
+              }
             >
               <SelectTrigger className="h-7 w-16 text-xs">
                 <SelectValue />
@@ -118,7 +125,9 @@ export function DataTablePagination<TData>({
                 <PaginationPrevious
                   aria-disabled={page <= 1}
                   className={page <= 1 ? "pointer-events-none opacity-50" : ""}
-                  onClick={page > 1 ? () => navigate({ search: (prev) => ({ ...prev, page: page - 1 }) }) : undefined}
+                  onClick={
+                    page > 1 ? () => navigate({ search: (prev) => ({ ...prev, [k.page]: page - 1 }) }) : undefined
+                  }
                 />
               </PaginationItem>
               {pages.map((p, i) =>
@@ -130,7 +139,7 @@ export function DataTablePagination<TData>({
                   <PaginationItem key={p}>
                     <PaginationLink
                       isActive={p === page}
-                      onClick={() => navigate({ search: (prev) => ({ ...prev, page: p }) })}
+                      onClick={() => navigate({ search: (prev) => ({ ...prev, [k.page]: p }) })}
                     >
                       {p}
                     </PaginationLink>
@@ -142,7 +151,9 @@ export function DataTablePagination<TData>({
                   aria-disabled={page >= totalPages}
                   className={page >= totalPages ? "pointer-events-none opacity-50" : ""}
                   onClick={
-                    page < totalPages ? () => navigate({ search: (prev) => ({ ...prev, page: page + 1 }) }) : undefined
+                    page < totalPages
+                      ? () => navigate({ search: (prev) => ({ ...prev, [k.page]: page + 1 }) })
+                      : undefined
                   }
                 />
               </PaginationItem>

@@ -64,8 +64,6 @@ func seedQuestion(t *testing.T, repo domain.QuestionRepository, bankID, orgID uu
 	return q
 }
 
-// --- QuestionBank Repository ---
-
 func TestIntegration_QuestionBankRepo_CRUD(t *testing.T) {
 	r := setupQuestionBanksDB(t)
 	ctx := context.Background()
@@ -142,8 +140,6 @@ func TestIntegration_QuestionBankRepo_AdminList_SearchAndFilter(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int64(3), total)
 }
-
-// --- Question Repository ---
 
 func TestIntegration_QuestionRepo_CRUD(t *testing.T) {
 	r := setupQuestionBanksDB(t)

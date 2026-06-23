@@ -26,7 +26,7 @@ function PermissionsPage() {
   const { search, order_by, order_dir, page, page_size } = Route.useSearch()
 
   const currentPage = page ?? 1
-  const pageSize = page_size ?? 8
+  const pageSize = page_size ?? 20
 
   const { data, isLoading } = useGetPermissions()
   const allPermissions: Permission[] = (data?.data as { data?: Permission[] } | undefined)?.data ?? []

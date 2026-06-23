@@ -1,4 +1,4 @@
-import type { Table } from "@tanstack/react-table"
+import type { Header, Table } from "@tanstack/react-table"
 
 import { flexRender } from "@tanstack/react-table"
 import { ArrowDownIcon, ArrowUpIcon } from "lucide-react"
@@ -32,6 +32,22 @@ export function DataTable<TData>({
 }: DataTableProps<TData>) {
   const colCount = table.getVisibleLeafColumns().length
 
+  const renderHeader = (header: Header<TData, unknown>) => {
+    if (header.isPlaceholder) return null
+    if (header.column.getCanSort())
+      return (
+        <button
+          type="button"
+          className="hover:text-foreground flex items-center gap-1 transition-colors"
+          onClick={header.column.getToggleSortingHandler()}
+        >
+          {flexRender(header.column.columnDef.header, header.getContext())}
+          <SortIcon direction={header.column.getIsSorted()} />
+        </button>
+      )
+    return flexRender(header.column.columnDef.header, header.getContext())
+  }
+
   return (
     <TableRoot>
       <TableHeader>
@@ -42,18 +58,7 @@ export function DataTable<TData>({
                 key={header.id}
                 className="text-muted-foreground text-[11px] font-medium tracking-wider uppercase"
               >
-                {header.isPlaceholder ? null : header.column.getCanSort() ? (
-                  <button
-                    type="button"
-                    className="hover:text-foreground flex items-center gap-1 transition-colors"
-                    onClick={header.column.getToggleSortingHandler()}
-                  >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                    <SortIcon direction={header.column.getIsSorted()} />
-                  </button>
-                ) : (
-                  flexRender(header.column.columnDef.header, header.getContext())
-                )}
+                {renderHeader(header)}
               </TableHead>
             ))}
           </TableRow>

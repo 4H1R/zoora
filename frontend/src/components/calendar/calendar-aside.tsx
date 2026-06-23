@@ -25,8 +25,6 @@ const LEARNING_KEYS: OrgRouteKey[] = [
   "attendance",
 ]
 
-// CalendarLegend maps each event-type color to its label and shows the total
-// event count for the visible period.
 export function CalendarLegend({ monthCount }: { monthCount: number }) {
   const { t } = useTranslation()
   return (
@@ -54,9 +52,7 @@ export function CalendarLegend({ monthCount }: { monthCount: number }) {
   )
 }
 
-// LearningLinks renders perm-gated quick links to the org's learning routes.
-// Hidden entirely when the user can access none of them.
-export function LearningLinks({ orgId }: { orgId: string }) {
+export function LearningLinks() {
   const { t, i18n } = useTranslation()
   const { can } = useAccess()
   const routes = LEARNING_KEYS.map((k) => ORG_ROUTES[k]).filter(
@@ -74,7 +70,7 @@ export function LearningLinks({ orgId }: { orgId: string }) {
         {routes.map((spec) => (
           <Link
             key={spec.segment}
-            to={`/org/${orgId}/${spec.segment}` as string}
+            to={`/org/${spec.segment}` as string}
             className="group hover:bg-accent flex items-center gap-2.5 rounded-lg px-2 py-2 text-sm font-medium transition-colors [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-muted-foreground group-hover:[&_svg]:text-primary"
           >
             {spec.icon}

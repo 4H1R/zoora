@@ -33,7 +33,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 	}
 }
 
-// CreateRole creates a new role in the caller's organization.
 // @Summary Create role
 // @Tags Roles
 // @Accept json
@@ -61,7 +60,6 @@ func (h *Handler) CreateRole(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusCreated, role)
 }
 
-// GetRoleByID returns a role by ID.
 // @Summary Get role by ID
 // @Tags Roles
 // @Produce json
@@ -82,7 +80,6 @@ func (h *Handler) GetRoleByID(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, role)
 }
 
-// UpdateRole updates a role by ID.
 // @Summary Update role
 // @Tags Roles
 // @Accept json
@@ -111,7 +108,6 @@ func (h *Handler) UpdateRole(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, role)
 }
 
-// DeleteRole soft-deletes a role by ID.
 // @Summary Delete role
 // @Tags Roles
 // @Produce json
@@ -131,7 +127,6 @@ func (h *Handler) DeleteRole(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, nil)
 }
 
-// ListRoles returns all roles for the caller's organization.
 // @Summary List roles
 // @Tags Roles
 // @Produce json
@@ -150,7 +145,6 @@ func (h *Handler) ListRoles(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, roleList)
 }
 
-// RoleStats returns aggregate stats for roles.
 // @Summary Get role stats
 // @Tags Roles
 // @Produce json
@@ -169,7 +163,6 @@ func (h *Handler) RoleStats(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, stats)
 }
 
-// ListPermissions returns all available permissions.
 // @Summary List permissions
 // @Tags Roles
 // @Produce json

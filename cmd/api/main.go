@@ -41,7 +41,6 @@ import (
 	"github.com/4H1R/zoora/internal/quizzes"
 	"github.com/4H1R/zoora/internal/roles"
 	"github.com/4H1R/zoora/internal/users"
-	// "github.com/4H1R/zoora/internal/websocket"
 )
 
 // @title Zoora API
@@ -132,11 +131,12 @@ func main() {
 	chatReactionRepo := chat.NewReactionRepository(db)
 
 	authMiddleware := auth.Middleware(jwtService, redisClient, roleRepo, userRepo)
+	tenantMiddleware := middleware.Tenant(redisClient, orgRepo, cfg.BaseDomain, cfg.AdminSubdomain)
 
 	authzResolver := authz.NewResolver(classMemberRepo)
 
 	userService := users.NewService(userRepo, roleRepo, log)
-	orgService := organizations.NewService(orgRepo, userRepo, log)
+	orgService := organizations.NewService(orgRepo, userRepo, redisClient, log)
 	classService := classes.NewService(classRepo, classSessionRepo, classMemberRepo, log)
 	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, log)
 	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, log)
@@ -172,9 +172,6 @@ func main() {
 		authzResolver, log,
 	)
 
-	// wsHub := websocket.NewHub(log)
-	// go wsHub.Run()
-
 	healthChecker := health.NewChecker(db, redisClient, storageClient)
 
 	router := gin.New()
@@ -200,7 +197,7 @@ func main() {
 	router.GET("/readyz", healthChecker.ReadinessHandler)
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	v1 := router.Group("/api/v1")
+	v1 := router.Group("/api/v1", tenantMiddleware)
 
 	authHandler := auth.NewHandler(authBusinessService)
 	authHandler.RegisterRoutes(v1, middleware.AuthRateLimit(redisClient))
@@ -262,7 +259,6 @@ func main() {
 	gradebookHandler := gradebook.NewHandler(gradebookService)
 	gradebookHandler.RegisterRoutes(v1, authMiddleware, perm)
 
-	// Admin route tree: /api/v1/admin/*
 	adminUserHandler := users.NewAdminHandler(userService, authBusinessService)
 	adminOrgHandler := organizations.NewAdminHandler(orgService)
 	adminClassHandler := classes.NewAdminHandler(classService)
@@ -278,8 +274,6 @@ func main() {
 
 	adminGroup := v1.Group("/admin", authMiddleware, auth.RequireAdmin())
 	admin.RegisterRoutes(adminGroup, adminUserHandler, adminOrgHandler, adminClassHandler, adminQuestionBankHandler, adminQuizHandler, adminLiveSessionHandler, adminOfflineHandler, adminPracticeHandler, adminPollHandler, adminRoleHandler, adminAttendanceHandler)
-
-	// router.GET("/ws/:room", websocket.HandleWebSocket(wsHub, jwtService, log))
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
@@ -309,7 +303,6 @@ func main() {
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Error("server shutdown error", "error", err)
 	}
-	// wsHub.Shutdown()
 	queueClient.Close()
 
 	sqlDB, _ := db.DB()

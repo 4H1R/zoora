@@ -6,16 +6,27 @@
  * OpenAPI spec version: 1.0
  */
 import {
-  useMutation
+  useMutation,
+  useQuery
 } from '@tanstack/react-query';
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
   QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
-  UseMutationResult
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
+  GetOrg200,
+  GetOrg404,
   GithubCom4H1RZooraInternalDomainLoginDTO,
   PostAuthLogin200,
   PostAuthLogin400,
@@ -30,6 +41,21 @@ import type { ErrorType } from '.././mutator/custom-instance';
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
+
+const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
+  const result = { queryKey } as T & { queryKey: K };
+  for (const key of Object.keys(query)) {
+    // The explicit queryKey always wins, matching the previous
+    // `{ ...query, queryKey }` spread where it was set last.
+    if (key === 'queryKey') continue;
+    Object.defineProperty(result, key, {
+      enumerable: true,
+      configurable: true,
+      get: () => (query as Record<string, unknown>)[key],
+    });
+  }
+  return result;
+};
 
 export type postAuthLoginResponse200 = {
   data: PostAuthLogin200
@@ -129,3 +155,122 @@ export const usePostAuthLogin = <TError = ErrorType<PostAuthLogin400 | PostAuthL
       > => {
       return useMutation(getPostAuthLoginMutationOptions(options), queryClient);
     }
+    export type getOrgResponse200 = {
+  data: GetOrg200
+  status: 200
+}
+
+export type getOrgResponse404 = {
+  data: GetOrg404
+  status: 404
+}
+
+export type getOrgResponseSuccess = (getOrgResponse200) & {
+  headers: Headers;
+};
+export type getOrgResponseError = (getOrgResponse404) & {
+  headers: Headers;
+};
+
+export type getOrgResponse = (getOrgResponseSuccess | getOrgResponseError)
+
+export const getGetOrgUrl = () => {
+
+
+
+
+  return `/org`
+}
+
+/**
+ * @summary Resolve current org by host
+ */
+export const getOrg = async ( options?: RequestInit): Promise<getOrgResponse> => {
+
+  return customInstance<getOrgResponse>(getGetOrgUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetOrgQueryKey = () => {
+    return [
+    `/org`
+    ] as const;
+    }
+
+
+export const getGetOrgQueryOptions = <TData = Awaited<ReturnType<typeof getOrg>>, TError = ErrorType<GetOrg404>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrg>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOrgQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOrg>>> = ({ signal }) => getOrg({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOrg>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetOrgQueryResult = NonNullable<Awaited<ReturnType<typeof getOrg>>>
+export type GetOrgQueryError = ErrorType<GetOrg404>
+
+
+export function useGetOrg<TData = Awaited<ReturnType<typeof getOrg>>, TError = ErrorType<GetOrg404>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrg>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOrg>>,
+          TError,
+          Awaited<ReturnType<typeof getOrg>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOrg<TData = Awaited<ReturnType<typeof getOrg>>, TError = ErrorType<GetOrg404>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrg>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOrg>>,
+          TError,
+          Awaited<ReturnType<typeof getOrg>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOrg<TData = Awaited<ReturnType<typeof getOrg>>, TError = ErrorType<GetOrg404>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrg>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Resolve current org by host
+ */
+
+export function useGetOrg<TData = Awaited<ReturnType<typeof getOrg>>, TError = ErrorType<GetOrg404>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrg>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetOrgQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+

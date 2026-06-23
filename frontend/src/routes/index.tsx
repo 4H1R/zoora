@@ -1,13 +1,22 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, redirect } from "@tanstack/react-router"
 import { GraduationCap, Languages, Moon, Radio, Sun, Video } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { BackgroundFX } from "@/components/background-fx"
 import { Logo } from "@/components/logo"
 import { languages } from "@/i18n"
+import { currentSlug } from "@/lib/tenant"
 import { useThemeStore } from "@/stores/theme"
 
 export const Route = createFileRoute("/")({
+  // The landing page only belongs on the apex host. On any tenant or admin
+  // subdomain, send `/` to `/login` — the `_guest` layout then bounces an
+  // already-authenticated user on to `/org/dashboard` or `/admin/dashboard`.
+  beforeLoad: () => {
+    if (currentSlug() !== "") {
+      throw redirect({ to: "/login" })
+    }
+  },
   component: RouteComponent,
 })
 
@@ -27,10 +36,8 @@ function RouteComponent() {
 
   return (
     <main className="relative flex min-h-svh flex-col overflow-hidden bg-background text-foreground">
-      {/* atmosphere */}
       <BackgroundFX />
 
-      {/* top bar */}
       <header
         className="animate-reveal relative z-10 flex items-center justify-between px-6 py-6 sm:px-10"
         style={{ animationDelay: "60ms" }}
@@ -57,7 +64,6 @@ function RouteComponent() {
         </div>
       </header>
 
-      {/* hero */}
       <section className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 py-10 text-center sm:px-10">
         <div className="flex w-full max-w-3xl flex-col items-center">
           <span
@@ -101,7 +107,6 @@ function RouteComponent() {
             {t("comingSoon.subtitle")}
           </p>
 
-          {/* features */}
           <ul
             className="animate-reveal mt-11 flex flex-wrap items-center justify-center gap-x-8 gap-y-3"
             style={{ animationDelay: "460ms" }}
@@ -116,7 +121,6 @@ function RouteComponent() {
         </div>
       </section>
 
-      {/* footer */}
       <footer
         className="animate-reveal relative z-10 flex items-center justify-center px-6 py-6 font-mono text-[0.7rem] tracking-caps text-muted-foreground/60 uppercase sm:justify-between sm:px-10"
         style={{ animationDelay: "700ms" }}

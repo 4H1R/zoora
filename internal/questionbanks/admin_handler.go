@@ -45,7 +45,6 @@ func (h *AdminHandler) RegisterAdminRoutes(group *gin.RouterGroup) {
 	group.DELETE("/question-banks/questions/:questionId", questionIDParam, h.HardDeleteQuestion)
 }
 
-// ListQuestions returns questions across all banks/orgs with optional filters.
 // @Summary [Admin] List questions
 // @Description Cross-bank list. Search matches: text. Orderable: created_at, updated_at, type. Filters: bank_id, organization_id, type, include_deleted.
 // @Tags Admin/QuestionBanks
@@ -86,7 +85,6 @@ func (h *AdminHandler) ListQuestions(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(questions, total, q.ListParams))
 }
 
-// Create creates a question bank in any organization.
 // @Summary [Admin] Create question bank
 // @Tags Admin/QuestionBanks
 // @Accept json
@@ -114,7 +112,6 @@ func (h *AdminHandler) Create(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusCreated, bank)
 }
 
-// Update updates any question bank field.
 // @Summary [Admin] Update question bank
 // @Tags Admin/QuestionBanks
 // @Accept json
@@ -144,7 +141,6 @@ func (h *AdminHandler) Update(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, bank)
 }
 
-// List returns question banks with optional filters.
 // @Summary [Admin] List question banks
 // @Tags Admin/QuestionBanks
 // @Produce json
@@ -180,7 +176,6 @@ func (h *AdminHandler) List(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(banks, total, q.ListParams))
 }
 
-// HardDelete permanently removes a question bank.
 // @Summary [Admin] Hard-delete question bank
 // @Tags Admin/QuestionBanks
 // @Produce json
@@ -200,7 +195,6 @@ func (h *AdminHandler) HardDelete(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, nil)
 }
 
-// HardDeleteQuestion permanently removes a question.
 // @Summary [Admin] Hard-delete question
 // @Tags Admin/QuestionBanks
 // @Produce json

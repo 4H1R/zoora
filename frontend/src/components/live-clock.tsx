@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next"
 import { formatDate, formatDateToParts } from "@/lib/format-date"
 import { cn } from "@/lib/utils"
 
-// useNow returns a Date that refreshes every second so dependent UI stays live.
 function useNow() {
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {
@@ -14,12 +13,9 @@ function useNow() {
   return now
 }
 
-// LiveClock renders a locale-aware time + date. Persian (fa) resolves to the
-// Jalali calendar with Persian digits automatically via Intl, matching the
-// rest of the app. The time is split into parts so the separator can blink
-// each second (a digital-clock tell) without breaking locale digits —
-// formatToParts keeps fa's Persian numerals intact. Date hides on narrow
-// screens to keep the navbar compact.
+// Persian (fa) gets Jalali calendar + Persian digits via Intl automatically.
+// Time is split into parts so the separator can blink without breaking locale
+// digits — formatToParts keeps fa's Persian numerals intact.
 export function LiveClock({ className }: { className?: string }) {
   const { i18n } = useTranslation()
   const now = useNow()
@@ -28,7 +24,6 @@ export function LiveClock({ className }: { className?: string }) {
   const timeParts = formatDateToParts(now, locale, "time")
   const date = formatDate(now, locale, "weekday-long")
 
-  // Toggle every second to blink the separator and pulse the heartbeat dot.
   const tick = now.getSeconds() % 2 === 0
 
   return (

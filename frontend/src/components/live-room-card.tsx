@@ -115,7 +115,6 @@ function LiveRoomCardCta({ mode, liveId }: { mode: CtaMode; liveId: string }) {
     )
   }
 
-  // ended
   return (
     <Button size="xs" variant="ghost" disabled>
       {t("onlineClassesPage.status.finished")}

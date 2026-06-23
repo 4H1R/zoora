@@ -250,7 +250,6 @@ export function LiveRoomsSection({ classSessionId }: { classSessionId: string })
     <section id="live-rooms" className="flex scroll-mt-20 flex-col gap-5">
       <div className="flex items-end justify-between gap-4">
         <div className="flex flex-col gap-1.5">
-          <Eyebrow>{t("org.session.liveRooms.eyebrow")}</Eyebrow>
           <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.liveRooms.title")}</h2>
         </div>
         {canCreate ? (

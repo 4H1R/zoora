@@ -25,8 +25,6 @@ func newTestRedis(t *testing.T) *redis.Client {
 	return redis.NewClient(&redis.Options{Addr: mr.Addr()})
 }
 
-// --- Mocks ---
-
 type mockUserRepo struct{ mock.Mock }
 
 func (m *mockUserRepo) Create(ctx context.Context, user *domain.User) error {
@@ -46,7 +44,14 @@ func (m *mockUserRepo) FindByIDWithPermissions(ctx context.Context, id uuid.UUID
 	}
 	return args.Get(0).(*domain.User), args.Error(1)
 }
-func (m *mockUserRepo) FindByUsername(ctx context.Context, username string) (*domain.User, error) {
+func (m *mockUserRepo) FindByUsernameAndOrg(ctx context.Context, username string, orgID uuid.UUID) (*domain.User, error) {
+	args := m.Called(ctx, username, orgID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.User), args.Error(1)
+}
+func (m *mockUserRepo) FindAdminByUsername(ctx context.Context, username string) (*domain.User, error) {
 	args := m.Called(ctx, username)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -86,8 +91,6 @@ func (m *mockUserRepo) CountAll(ctx context.Context) (int64, error) {
 	return args.Get(0).(int64), args.Error(1)
 }
 
-// --- Tests ---
-
 func TestLogin_ValidCredentials(t *testing.T) {
 	ctx := context.Background()
 	cfg := &config.Config{JWTSecret: "test-secret", JWTExpiry: time.Hour}
@@ -106,14 +109,14 @@ func TestLogin_ValidCredentials(t *testing.T) {
 		IsAdmin:        false,
 	}
 
-	userRepo.On("FindByUsername", ctx, "testuser").Return(user, nil)
+	userRepo.On("FindByUsernameAndOrg", ctx, "testuser", orgID).Return(user, nil)
 
 	svc := auth.NewAuthService(userRepo, jwtService, newTestRedis(t), logger)
 
 	resultUser, token, err := svc.Login(ctx, domain.LoginDTO{
 		Username: "testuser",
 		Password: "password123",
-	})
+	}, &orgID)
 
 	if err != nil {
 		assert.ErrorIs(t, err, domain.ErrUnauthorized)
@@ -123,6 +126,36 @@ func TestLogin_ValidCredentials(t *testing.T) {
 	}
 }
 
+func TestLogin_TenantUsesOrgScopedLookup(t *testing.T) {
+	ctx := context.Background()
+	cfg := &config.Config{JWTSecret: "test-secret", JWTExpiry: time.Hour}
+	jwtService := auth.NewJWTService(cfg)
+
+	orgID := uuid.New()
+	hashed, err := bcrypt.GenerateFromPassword([]byte("secret123"), bcrypt.DefaultCost)
+	assert.NoError(t, err)
+	user := &domain.User{
+		ID:             uuid.New(),
+		OrganizationID: &orgID,
+		Username:       "ali",
+		Password:       string(hashed),
+	}
+
+	userRepo := &mockUserRepo{}
+	userRepo.On("FindByUsernameAndOrg", ctx, "ali", orgID).Return(user, nil)
+
+	svc := auth.NewAuthService(userRepo, jwtService, newTestRedis(t), slog.Default())
+
+	resultUser, token, err := svc.Login(ctx, domain.LoginDTO{Username: "ali", Password: "secret123"}, &orgID)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, resultUser)
+	assert.NotEmpty(t, token)
+	// org-scoped lookup used, not the admin lookup.
+	userRepo.AssertExpectations(t)
+	userRepo.AssertNotCalled(t, "FindAdminByUsername")
+}
+
 func TestLogin_UserNotFound_ReturnsUnauthorized(t *testing.T) {
 	ctx := context.Background()
 	cfg := &config.Config{JWTSecret: "test-secret", JWTExpiry: time.Hour}
@@ -130,14 +163,14 @@ func TestLogin_UserNotFound_ReturnsUnauthorized(t *testing.T) {
 	logger := slog.Default()
 
 	userRepo := &mockUserRepo{}
-	userRepo.On("FindByUsername", ctx, "nonexistent").Return(nil, domain.ErrNotFound)
+	userRepo.On("FindAdminByUsername", ctx, "nonexistent").Return(nil, domain.ErrNotFound)
 
 	svc := auth.NewAuthService(userRepo, jwtService, newTestRedis(t), logger)
 
 	resultUser, token, err := svc.Login(ctx, domain.LoginDTO{
 		Username: "nonexistent",
 		Password: "password123",
-	})
+	}, nil)
 
 	assert.ErrorIs(t, err, domain.ErrUnauthorized)
 	assert.Nil(t, resultUser)
@@ -154,21 +187,23 @@ func TestLogin_DisabledUserRejected(t *testing.T) {
 	now := time.Now()
 	hashed, hashErr := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
 	assert.NoError(t, hashErr)
+	orgID := uuid.New()
 	user := &domain.User{
-		ID:         uuid.New(),
-		Username:   "disabled",
-		Name:       "Disabled User",
-		Password:   string(hashed),
-		DisabledAt: &now,
+		ID:             uuid.New(),
+		OrganizationID: &orgID,
+		Username:       "disabled",
+		Name:           "Disabled User",
+		Password:       string(hashed),
+		DisabledAt:     &now,
 	}
-	userRepo.On("FindByUsername", ctx, "disabled").Return(user, nil)
+	userRepo.On("FindByUsernameAndOrg", ctx, "disabled", orgID).Return(user, nil)
 
 	svc := auth.NewAuthService(userRepo, jwtService, newTestRedis(t), slog.Default())
 
 	resultUser, token, err := svc.Login(ctx, domain.LoginDTO{
 		Username: "disabled",
 		Password: "password123",
-	})
+	}, &orgID)
 
 	assert.ErrorIs(t, err, domain.ErrUserDisabled)
 	assert.Nil(t, resultUser)

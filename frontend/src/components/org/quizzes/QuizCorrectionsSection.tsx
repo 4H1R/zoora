@@ -5,26 +5,19 @@ import type {
 import type { SortOption } from "@/components/data-table/sort-picker"
 import type { SectionSort } from "@/lib/use-section-list"
 
-import {
-  CheckCheckIcon,
-  CheckSquareIcon,
-  ClipboardListIcon,
-  ClockIcon,
-  HourglassIcon,
-  PencilIcon,
-} from "lucide-react"
+import { CheckCheckIcon, CheckSquareIcon, ClipboardListIcon, ClockIcon, HourglassIcon, PencilIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { useGetQuizzes, useGetQuizzesIdSubmissions } from "@/api/quizzes/quizzes"
 import { GradeSubmissionDialog } from "@/components/admin/quizzes/corrections/GradeSubmissionDialog"
 import { SortPicker } from "@/components/data-table/sort-picker"
-import { SectionPagination } from "@/components/org/session/section-pagination"
 import { Eyebrow } from "@/components/eyebrow"
+import { SectionPagination } from "@/components/org/session/section-pagination"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getEntityColor, getInitials, useFormatDate } from "@/lib/data-table"
+import { getEntityColor, getInitials } from "@/lib/data-table"
 import { DEFAULT_PAGE_SIZE } from "@/lib/list"
 import { formatScore } from "@/lib/score"
 import { formatSessionDate } from "@/lib/session-status"
@@ -57,17 +50,12 @@ export function QuizCorrectionsSection({ classSessionId }: QuizCorrectionsSectio
     { id: "total_score", label: t("org.session.controls.sortFields.total_score") },
   ]
 
-  // Selecting another quiz, status, or sort returns to the first page.
   useEffect(() => {
     setPage(1)
   }, [quizId, status, sort?.id, sort?.desc])
 
-  const quizzesQ = useGetQuizzes(
-    { class_session_id: classSessionId },
-    { query: { enabled: canView } }
-  )
-  const quizzes: Quiz[] =
-    (quizzesQ.data?.status === 200 && quizzesQ.data.data.data?.items) || []
+  const quizzesQ = useGetQuizzes({ class_session_id: classSessionId }, { query: { enabled: canView } })
+  const quizzes: Quiz[] = (quizzesQ.data?.status === 200 && quizzesQ.data.data.data?.items) || []
 
   const effectiveQuizId = quizId ?? quizzes[0]?.id
   const selectedQuiz = quizzes.find((q) => q.id === effectiveQuizId)
@@ -98,10 +86,7 @@ export function QuizCorrectionsSection({ classSessionId }: QuizCorrectionsSectio
   const noQuizzes = !isLoadingQuizzes && quizzes.length === 0
 
   return (
-    <section
-      id="corrections"
-      className="relative isolate flex scroll-mt-20 flex-col gap-6 overflow-hidden rounded-3xl"
-    >
+    <section id="corrections" className="relative isolate flex scroll-mt-20 flex-col gap-6 overflow-hidden rounded-3xl">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_bottom_left,var(--color-primary)/8%,transparent_55%)]"
@@ -110,9 +95,7 @@ export function QuizCorrectionsSection({ classSessionId }: QuizCorrectionsSectio
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1.5">
           <Eyebrow>{t("org.session.corrections.eyebrow")}</Eyebrow>
-          <h2 className="text-2xl font-semibold tracking-tight">
-            {t("org.session.corrections.title")}
-          </h2>
+          <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.corrections.title")}</h2>
           <p className="text-muted-foreground max-w-xl text-sm leading-relaxed">
             {t("org.session.corrections.subtitle")}
           </p>
@@ -153,12 +136,7 @@ export function QuizCorrectionsSection({ classSessionId }: QuizCorrectionsSectio
                 counts={{ all: total, submitted: pendingCount, graded: gradedCount }}
               />
             </div>
-            <SortPicker
-              options={sortOptions}
-              value={sort}
-              onChange={setSort}
-              label={t("org.session.controls.sort")}
-            />
+            <SortPicker options={sortOptions} value={sort} onChange={setSort} label={t("org.session.controls.sort")} />
           </div>
 
           {isLoadingSubs ? (
@@ -244,10 +222,10 @@ function QuizSelector({
               type="button"
               onClick={() => onSelect(q.id)}
               className={cn(
-                "group/pill border-border inline-flex items-center gap-2.5 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/10",
+                "group/pill border-border dark:ring-foreground/10 inline-flex items-center gap-2.5 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all dark:border-0 dark:shadow-none dark:ring-1",
                 active
                   ? "bg-foreground text-background border-foreground dark:ring-foreground"
-                  : "bg-card text-foreground hover:-translate-y-0.5 hover:border-foreground/30 dark:hover:ring-foreground/30"
+                  : "bg-card text-foreground hover:border-foreground/30 dark:hover:ring-foreground/30 hover:-translate-y-0.5"
               )}
             >
               <span
@@ -284,7 +262,7 @@ function StatStrip({
   const completion = total > 0 ? Math.round((graded / total) * 100) : 0
 
   return (
-    <div className="bg-card border-border grid grid-cols-2 overflow-hidden rounded-2xl border shadow-sm dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/10 md:grid-cols-4">
+    <div className="bg-card border-border dark:ring-foreground/10 grid grid-cols-2 overflow-hidden rounded-2xl border shadow-sm md:grid-cols-4 dark:border-0 dark:shadow-none dark:ring-1">
       <StatCell
         icon={<ClipboardListIcon className="size-4" />}
         label={t("org.session.corrections.stats.total")}
@@ -303,9 +281,7 @@ function StatStrip({
         accent="success"
         suffix={
           !loading && total > 0 ? (
-            <span className="text-muted-foreground font-mono text-xs tabular-nums">
-              {completion}%
-            </span>
+            <span className="text-muted-foreground font-mono text-xs tabular-nums">{completion}%</span>
           ) : null
         }
       />
@@ -338,11 +314,11 @@ function StatCell({
     accent === "success"
       ? "text-emerald-600 dark:text-emerald-400"
       : accent === "warn"
-      ? "text-amber-600 dark:text-amber-400"
-      : "text-foreground"
+        ? "text-amber-600 dark:text-amber-400"
+        : "text-foreground"
 
   return (
-    <div className="border-border flex flex-col gap-2 border-b border-dashed p-5 md:border-b-0 md:border-s md:first:border-s-0">
+    <div className="border-border flex flex-col gap-2 border-b border-dashed p-5 md:border-s md:border-b-0 md:first:border-s-0">
       <div className="text-muted-foreground flex items-center gap-2">
         {icon}
         <Eyebrow className="text-[10px]">{label}</Eyebrow>
@@ -367,6 +343,13 @@ function StatCell({
   )
 }
 
+function getCount(s: StatusFilter, counts: { all: number; submitted: number; graded: number }): number | null {
+  if (s === "all") return counts.all
+  if (s === "submitted") return counts.submitted
+  if (s === "graded") return counts.graded
+  return null
+}
+
 function StatusFilterBar({
   value,
   onChange,
@@ -381,8 +364,7 @@ function StatusFilterBar({
     <div className="border-border flex flex-wrap items-center gap-1 border-b border-dashed pb-2">
       {STATUS_FILTERS.map((s) => {
         const active = value === s
-        const count =
-          s === "all" ? counts.all : s === "submitted" ? counts.submitted : s === "graded" ? counts.graded : null
+        const count = getCount(s, counts)
         return (
           <button
             key={s}
@@ -390,9 +372,7 @@ function StatusFilterBar({
             onClick={() => onChange(s)}
             className={cn(
               "relative inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-              active
-                ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground"
+              active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
             )}
           >
             <span>{t(`org.session.corrections.filter.${s}`)}</span>
@@ -406,12 +386,7 @@ function StatusFilterBar({
                 {count}
               </span>
             )}
-            {active && (
-              <span
-                aria-hidden
-                className="bg-foreground absolute inset-x-2 -bottom-2 h-px"
-              />
-            )}
+            {active && <span aria-hidden className="bg-foreground absolute inset-x-2 -bottom-2 h-px" />}
           </button>
         )
       })}
@@ -433,26 +408,23 @@ function SubmissionRow({
   onGrade: () => void
 }) {
   const { t } = useTranslation()
-  const formatDate = useFormatDate()
   const name = submission.user?.name ?? "—"
   const username = submission.user?.username
   const status = submission.status ?? "in_progress"
   const tile = String(index + 1).padStart(2, "0")
   const score = submission.total_score ?? 0
-  const submittedStr = submission.submitted_at
-    ? formatSessionDate(submission.submitted_at, lang, "short")
-    : null
+  const submittedStr = submission.submitted_at ? formatSessionDate(submission.submitted_at, lang, "short") : null
   const isInProgress = status === "in_progress"
 
   const statusTone =
     status === "graded"
       ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
       : status === "submitted"
-      ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
-      : "border-foreground/15 text-muted-foreground"
+        ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+        : "border-foreground/15 text-muted-foreground"
 
   return (
-    <li className="group/row bg-card text-card-foreground border-border relative isolate flex flex-col gap-4 overflow-hidden rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-foreground/25 dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/10 dark:hover:ring-foreground/30 sm:flex-row sm:items-center sm:gap-6 sm:p-5">
+    <li className="group/row bg-card text-card-foreground border-border hover:border-foreground/25 dark:ring-foreground/10 dark:hover:ring-foreground/30 relative isolate flex flex-col gap-4 overflow-hidden rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md sm:flex-row sm:items-center sm:gap-6 sm:p-5 dark:border-0 dark:shadow-none dark:ring-1">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,var(--color-primary)/6%,transparent_60%)] opacity-0 transition-opacity group-hover/row:opacity-100"
@@ -473,16 +445,14 @@ function SubmissionRow({
         </div>
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold tracking-tight">{name}</div>
-          {username && (
-            <div className="text-muted-foreground truncate font-mono text-xs">@{username}</div>
-          )}
+          {username && <div className="text-muted-foreground truncate font-mono text-xs">@{username}</div>}
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 sm:flex-nowrap">
         <span
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider",
+            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[10px] tracking-wider uppercase",
             statusTone
           )}
         >
@@ -511,9 +481,7 @@ function SubmissionRow({
                 {submittedStr}
               </>
             ) : (
-              <span className="text-muted-foreground italic">
-                {t("org.session.corrections.row.notSubmitted")}
-              </span>
+              <span className="text-muted-foreground italic">{t("org.session.corrections.row.notSubmitted")}</span>
             )}
           </span>
         </div>
@@ -525,15 +493,11 @@ function SubmissionRow({
         disabled={isInProgress}
         onClick={onGrade}
         title={
-          isInProgress
-            ? t("org.session.corrections.row.gradeDisabledHint")
-            : t("org.session.corrections.row.gradeHint")
+          isInProgress ? t("org.session.corrections.row.gradeDisabledHint") : t("org.session.corrections.row.gradeHint")
         }
       >
         <PencilIcon data-icon="inline-start" />
-        {status === "graded"
-          ? t("org.session.corrections.row.regrade")
-          : t("org.session.corrections.row.grade")}
+        {status === "graded" ? t("org.session.corrections.row.regrade") : t("org.session.corrections.row.grade")}
       </Button>
     </li>
   )
@@ -541,17 +505,13 @@ function SubmissionRow({
 
 function StatusDot({ status }: { status: string }) {
   const cls =
-    status === "graded"
-      ? "bg-emerald-500"
-      : status === "submitted"
-      ? "bg-amber-500"
-      : "bg-muted-foreground/50"
+    status === "graded" ? "bg-emerald-500" : status === "submitted" ? "bg-amber-500" : "bg-muted-foreground/50"
   return <span aria-hidden className={cn("size-1.5 rounded-full", cls)} />
 }
 
 function SubmissionRowSkeleton() {
   return (
-    <div className="bg-card border-border flex items-center gap-4 rounded-2xl border p-5 shadow-sm dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/10">
+    <div className="bg-card border-border dark:ring-foreground/10 flex items-center gap-4 rounded-2xl border p-5 shadow-sm dark:border-0 dark:shadow-none dark:ring-1">
       <Skeleton className="size-11 rounded-xl" />
       <div className="flex flex-1 flex-col gap-1.5">
         <Skeleton className="h-4 w-40" />

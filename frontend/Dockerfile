@@ -4,8 +4,8 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
-ARG VITE_API_URL
-ENV VITE_API_URL=$VITE_API_URL
+# Same-origin: the SPA calls /api/v1 on its own host; nginx proxies to the API.
+ENV VITE_API_URL=/api/v1
 RUN pnpm build
 
 FROM nginx:alpine

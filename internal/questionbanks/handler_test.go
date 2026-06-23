@@ -96,7 +96,6 @@ func (m *mockBankSvc) AdminListQuestions(ctx context.Context, q domain.AdminList
 	return qs, a.Get(1).(int64), a.Error(2)
 }
 
-
 func newBankHandlerRouter(t *testing.T) (*gin.Engine, *mockBankSvc) {
 	t.Helper()
 	gin.SetMode(gin.TestMode)
@@ -140,8 +139,6 @@ func doReq(t *testing.T, r http.Handler, method, path string, body any) *httptes
 	r.ServeHTTP(w, req)
 	return w
 }
-
-// --- Bank handler tests ---
 
 func TestBankHandler_List_Success(t *testing.T) {
 	r, svc := newBankHandlerRouter(t)
@@ -204,8 +201,6 @@ func TestBankHandler_Delete_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-// --- Question handler tests ---
-
 func TestBankHandler_CreateQuestion_Success(t *testing.T) {
 	r, svc := newBankHandlerRouter(t)
 	bankID := uuid.New()
@@ -248,8 +243,6 @@ func TestBankHandler_DeleteQuestion_Success(t *testing.T) {
 	w := doReq(t, r, "DELETE", "/api/v1/question-banks/questions/"+qID.String(), nil)
 	assert.Equal(t, http.StatusOK, w.Code)
 }
-
-// --- Admin handler tests ---
 
 func TestBankAdminHandler_List_Success(t *testing.T) {
 	r, svc := newBankAdminRouter(t)

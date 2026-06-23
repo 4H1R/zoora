@@ -28,6 +28,14 @@ func (m *orgRepoMock) FindByID(ctx context.Context, id uuid.UUID) (*domain.Organ
 	return args.Get(0).(*domain.Organization), args.Error(1)
 }
 
+func (m *orgRepoMock) FindBySlug(ctx context.Context, slug string) (*domain.Organization, error) {
+	args := m.Called(ctx, slug)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Organization), args.Error(1)
+}
+
 func (m *orgRepoMock) Update(ctx context.Context, org *domain.Organization) error {
 	return m.Called(ctx, org).Error(0)
 }
@@ -65,7 +73,7 @@ func (m *orgRepoMock) Restore(ctx context.Context, id uuid.UUID) error {
 }
 
 func newOrganizationService(repo *orgRepoMock) domain.OrganizationService {
-	return organizations.NewService(repo, nil, slog.Default())
+	return organizations.NewService(repo, nil, nil, slog.Default())
 }
 
 func orgCaller(userID uuid.UUID, orgID *uuid.UUID, isAdmin bool) context.Context {
@@ -86,15 +94,26 @@ func TestOrganizationCreateDefaultsStatusAndRequiresCaller(t *testing.T) {
 	ctx := orgCaller(uuid.New(), nil, false)
 	repo.On("Create", ctx, mock.MatchedBy(func(org *domain.Organization) bool {
 		return org.Name == "Zoora" &&
+			org.Slug == "zoora" &&
 			org.Description == "Learning" &&
 			org.Status == domain.OrganizationStatusActive
 	})).Return(nil)
 
-	org, err := svc.Create(ctx, domain.CreateOrganizationDTO{Name: "Zoora", Description: "Learning"})
+	org, err := svc.Create(ctx, domain.CreateOrganizationDTO{Name: "Zoora", Slug: "zoora", Description: "Learning"})
 
 	assert.NoError(t, err)
 	assert.Equal(t, domain.OrganizationStatusActive, org.Status)
 	repo.AssertExpectations(t)
+}
+
+func TestCreateRejectsReservedSlug(t *testing.T) {
+	repo := &orgRepoMock{}
+	svc := newOrganizationService(repo)
+	ctx := orgCaller(uuid.New(), nil, false)
+
+	_, err := svc.Create(ctx, domain.CreateOrganizationDTO{Name: "Acme", Slug: "api"})
+	assert.ErrorIs(t, err, domain.ErrInvalidSlug)
+	repo.AssertNotCalled(t, "Create")
 }
 
 func TestOrganizationGetByIDScopesNonAdminsToTheirOrganization(t *testing.T) {
@@ -193,9 +212,9 @@ func TestOrganizationAdminMethodsRequireAdminAndDefaultPagination(t *testing.T) 
 	assert.NoError(t, err)
 
 	repo.On("Create", ctx, mock.MatchedBy(func(org *domain.Organization) bool {
-		return org.Name == "Admin org" && org.Status == domain.OrganizationStatusActive
+		return org.Name == "Admin org" && org.Slug == "admin-org" && org.Status == domain.OrganizationStatusActive
 	})).Return(nil)
-	created, err := svc.AdminCreate(ctx, domain.AdminCreateOrganizationDTO{Name: "Admin org"})
+	created, err := svc.AdminCreate(ctx, domain.AdminCreateOrganizationDTO{Name: "Admin org", Slug: "admin-org"})
 	assert.NoError(t, err)
 	assert.Equal(t, domain.OrganizationStatusActive, created.Status)
 

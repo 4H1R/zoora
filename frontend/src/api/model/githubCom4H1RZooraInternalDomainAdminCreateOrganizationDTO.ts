@@ -11,5 +11,10 @@ export interface GithubCom4H1RZooraInternalDomainAdminCreateOrganizationDTO {
   description?: string;
   /** @minLength 2 */
   name: string;
+  /**
+     * @minLength 2
+     * @maxLength 63
+     */
+  slug: string;
   status?: GithubCom4H1RZooraInternalDomainAdminCreateOrganizationDTOStatus;
 }

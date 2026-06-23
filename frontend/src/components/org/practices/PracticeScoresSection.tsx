@@ -19,8 +19,8 @@ import { useTranslation } from "react-i18next"
 
 import { useGetPractices, useGetPracticesIdSubmissions } from "@/api/practices/practices"
 import { SortPicker } from "@/components/data-table/sort-picker"
-import { SectionPagination } from "@/components/org/session/section-pagination"
 import { Eyebrow } from "@/components/eyebrow"
+import { SectionPagination } from "@/components/org/session/section-pagination"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getEntityColor, getInitials } from "@/lib/data-table"
@@ -36,6 +36,12 @@ const STATUS_FILTERS = ["all", "pending", "graded"] as const
 type StatusFilter = (typeof STATUS_FILTERS)[number]
 
 const isGraded = (s: PracticeSubmission) => s.score != null
+
+function matchesSubmissionStatus(s: PracticeSubmission, status: StatusFilter): boolean {
+  if (status === "all") return true
+  if (status === "graded") return isGraded(s)
+  return !isGraded(s)
+}
 
 interface PracticeScoresSectionProps {
   classSessionId: string
@@ -58,17 +64,12 @@ export function PracticeScoresSection({ classSessionId }: PracticeScoresSectionP
     { id: "score", label: t("org.session.controls.sortFields.score") },
   ]
 
-  // Switching practice or sort returns to the first page.
   useEffect(() => {
     setPage(1)
   }, [practiceId, sort?.id, sort?.desc])
 
-  const practicesQ = useGetPractices(
-    { class_session_id: classSessionId },
-    { query: { enabled: canView } }
-  )
-  const practices: PracticeRoom[] =
-    (practicesQ.data?.status === 200 && practicesQ.data.data.data?.items) || []
+  const practicesQ = useGetPractices({ class_session_id: classSessionId }, { query: { enabled: canView } })
+  const practices: PracticeRoom[] = (practicesQ.data?.status === 200 && practicesQ.data.data.data?.items) || []
 
   const effectiveId = practiceId ?? practices[0]?.id
   const selected = practices.find((p) => p.id === effectiveId)
@@ -91,9 +92,7 @@ export function PracticeScoresSection({ classSessionId }: PracticeScoresSectionP
   const gradedCount = allSubmissions.filter(isGraded).length
   const pendingCount = allSubmissions.length - gradedCount
 
-  const submissions = allSubmissions.filter((s) =>
-    status === "all" ? true : status === "graded" ? isGraded(s) : !isGraded(s)
-  )
+  const submissions = allSubmissions.filter((s) => matchesSubmissionStatus(s, status))
 
   if (!canView || !canGrade) return null
 
@@ -114,9 +113,7 @@ export function PracticeScoresSection({ classSessionId }: PracticeScoresSectionP
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1.5">
           <Eyebrow>{t("org.session.practiceScores.eyebrow")}</Eyebrow>
-          <h2 className="text-2xl font-semibold tracking-tight">
-            {t("org.session.practiceScores.title")}
-          </h2>
+          <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.practiceScores.title")}</h2>
           <p className="text-muted-foreground max-w-xl text-sm leading-relaxed">
             {t("org.session.practiceScores.subtitle")}
           </p>
@@ -153,12 +150,7 @@ export function PracticeScoresSection({ classSessionId }: PracticeScoresSectionP
                 counts={{ all: allSubmissions.length, pending: pendingCount, graded: gradedCount }}
               />
             </div>
-            <SortPicker
-              options={sortOptions}
-              value={sort}
-              onChange={setSort}
-              label={t("org.session.controls.sort")}
-            />
+            <SortPicker options={sortOptions} value={sort} onChange={setSort} label={t("org.session.controls.sort")} />
           </div>
 
           {isLoadingSubs ? (
@@ -209,7 +201,7 @@ export function PracticeScoresSection({ classSessionId }: PracticeScoresSectionP
 function EmptyState() {
   const { t } = useTranslation()
   return (
-    <div className="bg-card border-border flex flex-col items-center gap-3 rounded-2xl border px-6 py-16 text-center shadow-sm dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/10">
+    <div className="bg-card border-border dark:ring-foreground/10 flex flex-col items-center gap-3 rounded-2xl border px-6 py-16 text-center shadow-sm dark:border-0 dark:shadow-none dark:ring-1">
       <DumbbellIcon className="text-muted-foreground size-8" />
       <h3 className="text-foreground text-lg font-semibold tracking-tight">
         {t("org.session.practiceScores.emptyTitle")}
@@ -224,7 +216,7 @@ function EmptyState() {
 function NoSubmissions() {
   const { t } = useTranslation()
   return (
-    <div className="bg-card border-border flex flex-col items-center gap-2 rounded-2xl border px-6 py-12 text-center shadow-sm dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/10">
+    <div className="bg-card border-border dark:ring-foreground/10 flex flex-col items-center gap-2 rounded-2xl border px-6 py-12 text-center shadow-sm dark:border-0 dark:shadow-none dark:ring-1">
       <CheckSquareIcon className="text-muted-foreground size-7 opacity-60" />
       <h3 className="text-foreground text-base font-semibold tracking-tight">
         {t("org.session.practiceScores.noResults")}
@@ -270,10 +262,10 @@ function PracticeSelector({
               type="button"
               onClick={() => onSelect(p.id)}
               className={cn(
-                "group/pill border-border inline-flex items-center gap-2.5 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/10",
+                "group/pill border-border dark:ring-foreground/10 inline-flex items-center gap-2.5 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all dark:border-0 dark:shadow-none dark:ring-1",
                 active
                   ? "bg-foreground text-background border-foreground dark:ring-foreground"
-                  : "bg-card text-foreground hover:-translate-y-0.5 hover:border-foreground/30 dark:hover:ring-foreground/30"
+                  : "bg-card text-foreground hover:border-foreground/30 dark:hover:ring-foreground/30 hover:-translate-y-0.5"
               )}
             >
               <span
@@ -310,7 +302,7 @@ function StatStrip({
   const completion = total > 0 ? Math.round((graded / total) * 100) : 0
 
   return (
-    <div className="bg-card border-border grid grid-cols-2 overflow-hidden rounded-2xl border shadow-sm dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/10 md:grid-cols-4">
+    <div className="bg-card border-border dark:ring-foreground/10 grid grid-cols-2 overflow-hidden rounded-2xl border shadow-sm md:grid-cols-4 dark:border-0 dark:shadow-none dark:ring-1">
       <StatCell
         icon={<ClipboardListIcon className="size-4" />}
         label={t("org.session.practiceScores.stats.total")}
@@ -362,11 +354,11 @@ function StatCell({
     accent === "success"
       ? "text-emerald-600 dark:text-emerald-400"
       : accent === "warn"
-      ? "text-amber-600 dark:text-amber-400"
-      : "text-foreground"
+        ? "text-amber-600 dark:text-amber-400"
+        : "text-foreground"
 
   return (
-    <div className="border-border flex flex-col gap-2 border-b border-dashed p-5 md:border-b-0 md:border-s md:first:border-s-0">
+    <div className="border-border flex flex-col gap-2 border-b border-dashed p-5 md:border-s md:border-b-0 md:first:border-s-0">
       <div className="text-muted-foreground flex items-center gap-2">
         {icon}
         <Eyebrow className="text-[10px]">{label}</Eyebrow>
@@ -391,6 +383,12 @@ function StatCell({
   )
 }
 
+function getCount(s: StatusFilter, counts: { all: number; pending: number; graded: number }): number {
+  if (s === "all") return counts.all
+  if (s === "pending") return counts.pending
+  return counts.graded
+}
+
 function StatusFilterBar({
   value,
   onChange,
@@ -405,7 +403,7 @@ function StatusFilterBar({
     <div className="border-border flex flex-wrap items-center gap-1 border-b border-dashed pb-2">
       {STATUS_FILTERS.map((s) => {
         const active = value === s
-        const count = s === "all" ? counts.all : s === "pending" ? counts.pending : counts.graded
+        const count = getCount(s, counts)
         return (
           <button
             key={s}
@@ -454,16 +452,14 @@ function SubmissionRow({
   const graded = isGraded(submission)
   const tile = String(index + 1).padStart(2, "0")
   const score = submission.score ?? 0
-  const submittedStr = submission.submitted_at
-    ? formatSessionDate(submission.submitted_at, lang, "short")
-    : null
+  const submittedStr = submission.submitted_at ? formatSessionDate(submission.submitted_at, lang, "short") : null
 
   const statusTone = graded
     ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
     : "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
 
   return (
-    <li className="group/row bg-card text-card-foreground border-border relative isolate flex flex-col gap-4 overflow-hidden rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-foreground/25 dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/10 dark:hover:ring-foreground/30 sm:flex-row sm:items-center sm:gap-6 sm:p-5">
+    <li className="group/row bg-card text-card-foreground border-border hover:border-foreground/25 dark:ring-foreground/10 dark:hover:ring-foreground/30 relative isolate flex flex-col gap-4 overflow-hidden rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md sm:flex-row sm:items-center sm:gap-6 sm:p-5 dark:border-0 dark:shadow-none dark:ring-1">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,var(--color-primary)/6%,transparent_60%)] opacity-0 transition-opacity group-hover/row:opacity-100"
@@ -484,23 +480,18 @@ function SubmissionRow({
         </div>
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold tracking-tight">{name}</div>
-          {username && (
-            <div className="text-muted-foreground truncate font-mono text-xs">@{username}</div>
-          )}
+          {username && <div className="text-muted-foreground truncate font-mono text-xs">@{username}</div>}
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 sm:flex-nowrap">
         <span
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider",
+            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[10px] tracking-wider uppercase",
             statusTone
           )}
         >
-          <span
-            aria-hidden
-            className={cn("size-1.5 rounded-full", graded ? "bg-emerald-500" : "bg-amber-500")}
-          />
+          <span aria-hidden className={cn("size-1.5 rounded-full", graded ? "bg-emerald-500" : "bg-amber-500")} />
           {t(`org.session.practiceScores.statuses.${graded ? "graded" : "pending"}`)}
         </span>
 
@@ -525,9 +516,7 @@ function SubmissionRow({
                 {submittedStr}
               </>
             ) : (
-              <span className="text-muted-foreground italic">
-                {t("org.session.practiceScores.row.notSubmitted")}
-              </span>
+              <span className="text-muted-foreground italic">{t("org.session.practiceScores.row.notSubmitted")}</span>
             )}
           </span>
         </div>
@@ -543,7 +532,7 @@ function SubmissionRow({
 
 function SubmissionRowSkeleton() {
   return (
-    <div className="bg-card border-border flex items-center gap-4 rounded-2xl border p-5 shadow-sm dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/10">
+    <div className="bg-card border-border dark:ring-foreground/10 flex items-center gap-4 rounded-2xl border p-5 shadow-sm dark:border-0 dark:shadow-none dark:ring-1">
       <Skeleton className="size-11 rounded-xl" />
       <div className="flex flex-1 flex-col gap-1.5">
         <Skeleton className="h-4 w-40" />

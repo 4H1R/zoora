@@ -15,8 +15,6 @@ import (
 	"github.com/4H1R/zoora/internal/domain"
 )
 
-// Mocks
-
 type mockChatRepo struct{ mock.Mock }
 
 func (m *mockChatRepo) Create(ctx context.Context, c *domain.Chat) error {
@@ -110,8 +108,6 @@ func (m *mockReactionRepo) CountByMessage(ctx context.Context, messageID uuid.UU
 	return args.Get(0).(map[string]int), args.Error(1)
 }
 
-// Helpers
-
 func adminCtx() context.Context {
 	return domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New(), IsAdmin: true})
 }
@@ -135,8 +131,6 @@ func newService(
 ) domain.ChatService {
 	return chat.NewService(chatRepo, memberRepo, msgRepo, reactionRepo, noopTx{}, slog.Default())
 }
-
-// Tests
 
 func TestCreateChat_AdminSuccess(t *testing.T) {
 	ctx := adminCtx()

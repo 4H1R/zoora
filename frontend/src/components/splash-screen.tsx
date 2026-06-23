@@ -17,7 +17,6 @@ export function SplashScreen() {
 
   return (
     <div data-splash={scope} className="splash-root relative flex h-screen w-full items-center justify-center overflow-hidden bg-background">
-      {/* atmosphere: layered brand glow + faint grid, drifting slowly */}
       <div aria-hidden className="splash-glow splash-glow-a" />
       <div aria-hidden className="splash-glow splash-glow-b" />
       <div aria-hidden className="splash-grid" />

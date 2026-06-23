@@ -19,9 +19,6 @@ var adminAttendanceListConfig = domain.ListConfig{
 	DefaultOrderDir:     "desc",
 }
 
-// AdminHandler registers under /api/v1/admin. The admin group is already
-// guarded by auth middleware + RequireAdmin, so this handler only binds
-// input, forwards to the service, and attaches errors.
 type AdminHandler struct {
 	svc domain.AttendanceService
 }
@@ -38,7 +35,6 @@ func (h *AdminHandler) RegisterAdminRoutes(group *gin.RouterGroup) {
 	group.DELETE("/attendance/:id", idParam, h.HardDelete)
 }
 
-// List returns attendance records across all organizations.
 // @Summary [Admin] List attendance
 // @Description Cross-org list. Search matches substrings of: remarks. Orderable fields: created_at, updated_at, status. Filters: status, is_auto_marked, user_id, class_id, class_session_id, organization_id.
 // @Tags Admin/Attendance
@@ -83,7 +79,6 @@ func (h *AdminHandler) List(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(items, total, q.ListParams))
 }
 
-// Update updates an attendance record's status or remarks.
 // @Summary [Admin] Update attendance
 // @Tags Admin/Attendance
 // @Accept json
@@ -112,7 +107,6 @@ func (h *AdminHandler) Update(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, a)
 }
 
-// HardDelete permanently deletes an attendance record.
 // @Summary [Admin] Delete attendance
 // @Tags Admin/Attendance
 // @Produce json

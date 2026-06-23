@@ -161,9 +161,12 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 	// 1. Organizations
 	demoOrg := factory.NewOrganization(func(o *domain.Organization) {
 		o.Name = factory.T("Zoora Demo", "زورا دمو")
+		o.Slug = "acme"
 		o.Description = factory.T("Demo organization for development", "سازمان نمونه برای توسعه")
 	})
-	randomOrg := factory.NewOrganization()
+	randomOrg := factory.NewOrganization(func(o *domain.Organization) {
+		o.Slug = "globex"
+	})
 	orgs := []*domain.Organization{demoOrg, randomOrg}
 	for _, org := range orgs {
 		if err := db.WithContext(ctx).Create(org).Error; err != nil {
@@ -203,7 +206,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 		return nil
 	}
 
-	// 3. Preset roles (Manager + Teacher) — global, no org
+	// 3. Preset roles — global, no org
 	presetDefs := []struct {
 		Name  string
 		Perms []domain.PermissionName
@@ -276,7 +279,6 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 			counts.Users++
 		}
 
-		// One extra teacher per org with Teacher preset role
 		teacher := factory.NewUser(org.ID, func(u *domain.User) {
 			u.OrganizationID = &org.ID
 			u.RoleID = &presetRoles[domain.PresetRoleTeacher].ID
@@ -287,7 +289,6 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 		ou.teachers = append(ou.teachers, teacher)
 		counts.Users++
 
-		// 4 students per org
 		studentRole := presetRoles[domain.PresetRoleStudent]
 		for s := 0; s < 4; s++ {
 			st := factory.NewUser(org.ID, func(u *domain.User) {
@@ -393,7 +394,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 			}
 			counts.Classes++
 
-			// 9. ClassMembers — enroll all students
+			// 9. ClassMembers
 			for _, student := range ou.students {
 				m := factory.NewClassMember(class.ID, student.ID)
 				if err := db.WithContext(ctx).Create(m).Error; err != nil {
@@ -402,7 +403,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 				counts.ClassMembers++
 			}
 
-			// 10. ClassSessions (3 per class)
+			// 10. ClassSessions
 			var sessions []*domain.ClassSession
 			for i := 0; i < 3; i++ {
 				s := factory.NewClassSession(class.ID, func(s *domain.ClassSession) {
@@ -526,7 +527,6 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 				return nil, fmt.Errorf("creating chat: %w", err)
 			}
 			counts.Chats++
-			// teacher as admin member
 			teacherMember := factory.NewChatMember(chat.ID, teacher.ID, domain.ChatMemberRoleAdmin)
 			if err := db.WithContext(ctx).Create(teacherMember).Error; err != nil {
 				return nil, fmt.Errorf("creating chat member: %w", err)
@@ -539,7 +539,6 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 				}
 				counts.ChatMembers++
 			}
-			// messages
 			tid := teacher.ID
 			welcome := factory.NewMessage(chat.ID, &tid, func(m *domain.Message) {
 				m.Content = factory.T("Welcome to the class!", "به کلاس خوش آمدید!")
@@ -556,7 +555,6 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 				}
 				counts.Messages++
 			}
-			// reactions on welcome message
 			for _, student := range ou.students {
 				r := factory.NewMessageReaction(welcome.ID, student.ID, "👍")
 				if err := db.WithContext(ctx).Create(r).Error; err != nil {
@@ -577,7 +575,6 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 				return nil, fmt.Errorf("creating live room: %w", err)
 			}
 			counts.LiveRooms++
-			// teacher + all students as participants
 			lpUsers := append([]*domain.User{teacher}, ou.students...)
 			for _, u := range lpUsers {
 				lp := factory.NewLiveParticipant(liveRoom.ID, u.ID)

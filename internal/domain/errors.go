@@ -57,6 +57,8 @@ func MapError(err error) (int, string) {
 		return http.StatusUnauthorized, "UNAUTHORIZED"
 	case errors.Is(err, ErrConflict):
 		return http.StatusConflict, "CONFLICT"
+	case errors.Is(err, ErrInvalidSlug):
+		return http.StatusUnprocessableEntity, "INVALID_SLUG"
 	case errors.Is(err, ErrValidation):
 		return http.StatusBadRequest, "VALIDATION_ERROR"
 	default:

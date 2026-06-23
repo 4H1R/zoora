@@ -27,12 +27,10 @@ func NewClient(cfg *config.Config, logger *slog.Logger) (*Client, error) {
 		UsePathStyle: true,
 	})
 
-	// Ensure bucket exists
 	_, err := s3Client.HeadBucket(context.Background(), &s3.HeadBucketInput{
 		Bucket: aws.String(cfg.S3Bucket),
 	})
 	if err != nil {
-		// Try to create the bucket in development
 		if cfg.IsDevelopment() {
 			_, createErr := s3Client.CreateBucket(context.Background(), &s3.CreateBucketInput{
 				Bucket: aws.String(cfg.S3Bucket),

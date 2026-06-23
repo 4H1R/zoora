@@ -204,8 +204,6 @@ func (s *service) List(ctx context.Context, p domain.ListParams) ([]domain.Quest
 	return s.repo.List(ctx, *caller.OrgID, p)
 }
 
-// --- Questions ---
-
 func (s *service) CreateQuestion(ctx context.Context, bankID uuid.UUID, dto domain.CreateQuestionDTO) (*domain.Question, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {

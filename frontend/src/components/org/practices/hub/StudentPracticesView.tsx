@@ -15,11 +15,11 @@ import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ViewModeToggle, type ViewMode } from "@/components/view-mode-toggle"
+import { ViewModeToggle, useViewMode } from "@/components/view-mode-toggle"
 import { useAdminTable } from "@/lib/data-table"
 import { formatScore } from "@/lib/score"
 import { formatSessionDate } from "@/lib/session-status"
-import { Route } from "@/routes/_auth/org/$orgId/practices/index"
+import { Route } from "@/routes/_auth/org/practices/index"
 
 import { usePracticeStudentColumns } from "./practice-student-columns"
 import { PracticeStatusBadge } from "./practice-status-badge"
@@ -36,7 +36,7 @@ export function StudentPracticesView() {
   const currentPage = page ?? 1
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
 
-  const [viewMode, setViewMode] = useState<ViewMode>("grid")
+  const { viewMode, setViewMode, isTable } = useViewMode()
   const [submitTarget, setSubmitTarget] = useState<PracticeRoomView | null>(null)
 
   const { data, isLoading } = useGetPractices({
@@ -58,7 +58,7 @@ export function StudentPracticesView() {
     navigate({ to: ".", search: (prev) => ({ ...prev, status: value === "all" ? undefined : value, page: 1 }) })
 
   const renderContent = () => {
-    if (viewMode === "table") {
+    if (isTable) {
       return (
         <Card className="gap-0 overflow-hidden p-0">
           <div className="overflow-x-auto">
@@ -160,6 +160,7 @@ export function StudentPracticesView() {
             sortLabel={t("org.practices.toolbar.sort")}
             columnsLabel={t("org.practices.toolbar.columns")}
             toggleColumnsLabel={t("org.practices.toolbar.toggleColumns")}
+            showColumnsToggle={isTable}
           >
             <div className="flex flex-wrap gap-1.5">
               {STATUS_FILTERS.map((value) => (

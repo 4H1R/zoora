@@ -13,8 +13,6 @@ import (
 	"github.com/4H1R/zoora/internal/offlines"
 )
 
-// --- Mock repositories ---
-
 type mockRoomRepo struct{ mock.Mock }
 
 func (m *mockRoomRepo) Create(ctx context.Context, room *domain.OfflineRoom) error {
@@ -178,8 +176,6 @@ func (m *mockViewRepo) ListDistinctUsersByRoom(ctx context.Context, roomID uuid.
 	return ids, a.Error(1)
 }
 
-// --- Helpers ---
-
 func newTestService(t *testing.T) (domain.OfflineService, *mockRoomRepo, *mockViewRepo, *mockSessionRepo, *mockClassRepo, *mockMemberRepo) {
 	t.Helper()
 	roomRepo := &mockRoomRepo{}
@@ -198,8 +194,6 @@ func callerCtx(userID uuid.UUID, isAdmin bool, perms ...string) context.Context 
 		Permissions: perms,
 	})
 }
-
-// --- CreateRoom tests ---
 
 func TestCreateRoom_Success(t *testing.T) {
 	svc, roomRepo, _, sessionRepo, classRepo, _ := newTestService(t)
@@ -318,8 +312,6 @@ func TestCreateRoom_SessionNotFound(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrNotFound)
 }
 
-// --- GetRoom tests ---
-
 func TestGetRoom_Creator_Success(t *testing.T) {
 	svc, roomRepo, viewRepo, _, _, _ := newTestService(t)
 
@@ -387,8 +379,6 @@ func TestGetRoom_NotFound(t *testing.T) {
 	_, err := svc.GetRoom(ctx, roomID)
 	assert.ErrorIs(t, err, domain.ErrNotFound)
 }
-
-// --- UpdateRoom tests ---
 
 func TestUpdateRoom_Creator_Success(t *testing.T) {
 	svc, roomRepo, _, _, _, _ := newTestService(t)
@@ -458,8 +448,6 @@ func TestUpdateRoom_Description(t *testing.T) {
 	assert.Equal(t, "new desc", updated.Description)
 }
 
-// --- DeleteRoom tests ---
-
 func TestDeleteRoom_Creator_Success(t *testing.T) {
 	svc, roomRepo, _, _, _, _ := newTestService(t)
 
@@ -496,8 +484,6 @@ func TestDeleteRoom_NoCaller_Forbidden(t *testing.T) {
 	err := svc.DeleteRoom(context.Background(), uuid.New())
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
-
-// --- ListRooms tests ---
 
 func TestListRooms_Admin_SeesAll(t *testing.T) {
 	svc, roomRepo, _, _, _, _ := newTestService(t)
@@ -547,8 +533,6 @@ func TestListRooms_NonAdmin_CannotIncludeDeleted(t *testing.T) {
 	_, _, err := svc.ListRooms(ctx, domain.ListOfflineRoomsQuery{IncludeDeleted: true})
 	assert.NoError(t, err)
 }
-
-// --- Admin tests ---
 
 func TestAdminList_Success(t *testing.T) {
 	svc, roomRepo, _, _, _, _ := newTestService(t)

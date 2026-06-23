@@ -84,7 +84,6 @@ func (h *Handler) List(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(polls, total, q.ListParams))
 }
 
-// Create creates a new poll.
 // @Summary Create poll
 // @Tags Polls
 // @Accept json
@@ -110,7 +109,6 @@ func (h *Handler) Create(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusCreated, poll)
 }
 
-// Get returns a poll by ID.
 // @Summary Get poll
 // @Tags Polls
 // @Produce json
@@ -130,7 +128,6 @@ func (h *Handler) Get(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, poll)
 }
 
-// Update updates a poll.
 // @Summary Update poll
 // @Tags Polls
 // @Accept json
@@ -205,7 +202,6 @@ func (h *Handler) Answer(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusCreated, answers)
 }
 
-// ListAnswers returns answers for a poll.
 // @Summary List poll answers
 // @Tags Polls
 // @Produce json

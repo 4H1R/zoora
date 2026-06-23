@@ -82,6 +82,31 @@ function ClassMembersPage() {
     }
   }
 
+  const renderMembers = () => {
+    if (isLoading)
+      return (
+        <Card className="text-muted-foreground flex items-center justify-center gap-2 p-10 text-sm">
+          <Spinner />
+          {t("common.loading")}
+        </Card>
+      )
+    if (members.length === 0)
+      return (
+        <EmptyState
+          icon={UsersIcon}
+          title={t("admin.classMembers.empty.title")}
+          description={t("admin.classMembers.empty.hint")}
+        />
+      )
+    return (
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {members.map((m) => (
+          <MemberCard key={m.id} member={m} joined={formatDate(m.created_at)} onRemove={() => setRemoveTarget(m)} />
+        ))}
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -140,29 +165,7 @@ function ClassMembersPage() {
         )}
       </div>
 
-      {isLoading ? (
-        <Card className="text-muted-foreground flex items-center justify-center gap-2 p-10 text-sm">
-          <Spinner />
-          {t("common.loading")}
-        </Card>
-      ) : members.length === 0 ? (
-        <EmptyState
-          icon={UsersIcon}
-          title={t("admin.classMembers.empty.title")}
-          description={t("admin.classMembers.empty.hint")}
-        />
-      ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {members.map((m) => (
-            <MemberCard
-              key={m.id}
-              member={m}
-              joined={formatDate(m.created_at)}
-              onRemove={() => setRemoveTarget(m)}
-            />
-          ))}
-        </div>
-      )}
+      {renderMembers()}
 
       <DeleteConfirmDialog
         open={!!removeTarget}

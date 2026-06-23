@@ -93,8 +93,6 @@ func (r *columnRepository) ListAllByClass(ctx context.Context, classID uuid.UUID
 	return cols, nil
 }
 
-// --- Cell Repository ---
-
 type cellRepository struct {
 	db *gorm.DB
 }

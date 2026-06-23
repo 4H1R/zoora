@@ -14,8 +14,6 @@ import (
 	"github.com/4H1R/zoora/internal/livesessions"
 )
 
-// --- Mocks ---
-
 type mockRoomRepo struct{ mock.Mock }
 
 func (m *mockRoomRepo) Create(ctx context.Context, room *domain.LiveRoom) error {
@@ -318,8 +316,6 @@ func (noopTx) RunInTx(ctx context.Context, fn func(context.Context) error) error
 	return fn(ctx)
 }
 
-// --- Test helpers ---
-
 func newTestService(t *testing.T) (
 	domain.LiveSessionService,
 	*mockRoomRepo, *mockParticipantRepo, *mockRecordingRepo,
@@ -393,8 +389,6 @@ func testRoom() *domain.LiveRoom {
 		Config:          domain.DefaultLiveRoomConfig(),
 	}
 }
-
-// --- Tests ---
 
 func TestCreateRoom_NoCaller_Forbidden(t *testing.T) {
 	svc, _, _, _, _, _, _, _ := newTestService(t)

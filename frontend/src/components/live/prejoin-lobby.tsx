@@ -152,8 +152,7 @@ export function PreJoinLobby({ room, liveId, onJoined }: PreJoinLobbyProps) {
 
       <header className="relative z-10 flex items-center justify-between px-5 py-4 sm:px-8">
         <Link
-          to={orgId ? "/org/$orgId" : "/"}
-          params={orgId ? { orgId } : undefined}
+          to={orgId ? "/org" : "/"}
           className="inline-flex items-center gap-1.5 text-[13px] text-zinc-400 transition-colors hover:text-zinc-100"
         >
           <ChevronLeft className="size-3.5 rtl:rotate-180" />
@@ -166,7 +165,6 @@ export function PreJoinLobby({ room, liveId, onJoined }: PreJoinLobbyProps) {
       </header>
 
       <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-6 px-5 pb-10 sm:px-8 lg:flex-row lg:items-stretch lg:gap-8">
-        {/* Preview */}
         <section className="flex w-full flex-col gap-4 lg:max-w-[58%]">
           <div className="group relative aspect-video w-full overflow-hidden rounded-3xl border border-white/10 bg-zinc-900 shadow-2xl shadow-black/50">
             {videoEnabled && videoTrack && !permError ? (
@@ -186,13 +184,11 @@ export function PreJoinLobby({ room, liveId, onJoined }: PreJoinLobbyProps) {
               </div>
             )}
 
-            {/* Name chip */}
             <div className="absolute bottom-3 start-3 inline-flex items-center gap-2 rounded-full bg-black/55 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md">
               <span className={cn("size-1.5 rounded-full", audioEnabled ? "bg-emerald-400" : "bg-zinc-500")} />
               {myName}
             </div>
 
-            {/* Floating device controls */}
             <div className="absolute inset-x-0 bottom-3 flex items-center justify-center gap-2.5">
               <DeviceToggle
                 on={audioEnabled}
@@ -222,7 +218,6 @@ export function PreJoinLobby({ room, liveId, onJoined }: PreJoinLobbyProps) {
           <p className="text-center text-[13px] text-zinc-500">{t("liveRoom.checkDevices")}</p>
         </section>
 
-        {/* Session card */}
         <section className="flex w-full flex-col lg:max-w-[42%]">
           <div className="flex flex-1 flex-col rounded-3xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl sm:p-7">
             <div className="flex items-center gap-2.5">

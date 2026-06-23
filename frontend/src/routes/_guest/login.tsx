@@ -1,11 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
+import { useTranslation } from "react-i18next"
 import i18n from "@/i18n"
 
+import { useGetOrg } from "@/api/auth/auth"
 import GridBackground from "@/components/auth/gradient-background"
 import { LoginForm } from "@/components/auth/login-form"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { Logo } from "@/components/logo"
+import { SplashScreen } from "@/components/splash-screen"
+import { StatusGlyph, StatusScreen } from "@/components/status-screen"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { isAdminHost } from "@/lib/tenant"
 
 export const Route = createFileRoute("/_guest/login")({
   head: () => {
@@ -15,7 +20,36 @@ export const Route = createFileRoute("/_guest/login")({
   component: LoginComponent,
 })
 
+// Tenant hosts only render the login form once their org resolves and is
+// active/trial. The admin host skips the lookup entirely.
+const LIVE_STATUSES = ["active", "trial"]
+
 function LoginComponent() {
+  const { t } = useTranslation()
+  const admin = isAdminHost()
+  const { data, isLoading } = useGetOrg({ query: { enabled: !admin } })
+
+  if (!admin) {
+    if (isLoading) return <SplashScreen />
+    const org = (data?.status === 200 && data.data.data) || undefined
+    if (!org || (org.status && !LIVE_STATUSES.includes(org.status))) {
+      return (
+        <StatusScreen tone="alert">
+          <StatusGlyph code="404" tone="alert" />
+          <h1
+            className="animate-reveal mt-6 font-heading font-semibold leading-[1.12] tracking-tight text-balance"
+            style={{ animationDelay: "340ms", fontSize: "clamp(1.75rem, 5vw, 2.75rem)" }}
+          >
+            {t("login.workspace.notFoundTitle")}
+          </h1>
+          <p className="mt-3 max-w-sm text-sm text-muted-foreground">
+            {t("login.workspace.notFoundDescription")}
+          </p>
+        </StatusScreen>
+      )
+    }
+  }
+
   return (
     <div className="bg-muted/50 relative min-h-svh">
       <GridBackground />

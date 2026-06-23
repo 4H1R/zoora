@@ -21,7 +21,6 @@ import (
 	"github.com/4H1R/zoora/internal/quizzes"
 )
 
-// mockQuizSvc implements domain.QuizService for handler tests.
 type mockQuizSvc struct{ mock.Mock }
 
 func (m *mockQuizSvc) Create(ctx context.Context, dto domain.CreateQuizDTO) (*domain.Quiz, error) {
@@ -184,8 +183,6 @@ func do(t *testing.T, r http.Handler, method, path string, body any) *httptest.R
 	return w
 }
 
-// --- Quiz handler tests ---
-
 func TestQuizHandler_List_Success(t *testing.T) {
 	r, svc := newQuizHandlerRouter(t)
 	svc.On("List", mock.Anything, mock.AnythingOfType("domain.ListQuizzesQuery")).
@@ -252,8 +249,6 @@ func TestQuizHandler_Delete_Success(t *testing.T) {
 	w := do(t, r, "DELETE", "/api/v1/quizzes/"+id.String(), nil)
 	assert.Equal(t, http.StatusOK, w.Code)
 }
-
-// --- Submission handler tests ---
 
 func TestQuizHandler_StartSubmission_Success(t *testing.T) {
 	r, svc := newQuizHandlerRouter(t)
@@ -327,8 +322,6 @@ func TestQuizHandler_GradeSubmission_Success(t *testing.T) {
 	w := do(t, r, "POST", "/api/v1/quizzes/submissions/"+subID.String()+"/grade", body)
 	assert.Equal(t, http.StatusOK, w.Code)
 }
-
-// --- Admin handler tests ---
 
 func TestQuizAdminHandler_List_Success(t *testing.T) {
 	r, svc := newQuizAdminRouter(t)

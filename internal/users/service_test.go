@@ -35,7 +35,14 @@ func (m *mockUserRepo) FindByIDWithPermissions(ctx context.Context, id uuid.UUID
 	}
 	return args.Get(0).(*domain.User), args.Error(1)
 }
-func (m *mockUserRepo) FindByUsername(ctx context.Context, username string) (*domain.User, error) {
+func (m *mockUserRepo) FindByUsernameAndOrg(ctx context.Context, username string, orgID uuid.UUID) (*domain.User, error) {
+	args := m.Called(ctx, username, orgID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.User), args.Error(1)
+}
+func (m *mockUserRepo) FindAdminByUsername(ctx context.Context, username string) (*domain.User, error) {
 	args := m.Called(ctx, username)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)

@@ -85,8 +85,6 @@ type Question struct {
 	IsMultiSelectFlag *bool `gorm:"-" json:"is_multi_select,omitempty"`
 }
 
-// --- DTOs ---
-
 type CreateQuestionBankDTO struct {
 	Name        string `json:"name" binding:"required,min=2"`
 	Description string `json:"description"`
@@ -238,20 +236,16 @@ type AdminListQuestionsQuery struct {
 	ListParams     ListParams    `form:"-"`
 }
 
-// AdminCreateQuestionBankDTO is the body for POST /admin/question-banks.
 type AdminCreateQuestionBankDTO struct {
 	OrganizationID uuid.UUID `json:"organization_id" binding:"required"`
 	Name           string    `json:"name" binding:"required,min=2"`
 	Description    string    `json:"description"`
 }
 
-// AdminUpdateQuestionBankDTO is the body for PUT /admin/question-banks/:id.
 type AdminUpdateQuestionBankDTO struct {
 	Name        *string `json:"name" binding:"omitempty,min=2"`
 	Description *string `json:"description"`
 }
-
-// --- Interfaces ---
 
 type QuestionBankRepository interface {
 	Create(ctx context.Context, bank *QuestionBank) error

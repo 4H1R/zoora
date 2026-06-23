@@ -116,8 +116,8 @@ func (m *mockUserSvc) Enable(ctx context.Context, id uuid.UUID) (*domain.User, e
 // mockAuthSvc satisfies domain.AuthService for the revoke-sessions handler.
 type mockAuthSvc struct{ mock.Mock }
 
-func (m *mockAuthSvc) Login(ctx context.Context, dto domain.LoginDTO) (*domain.User, string, error) {
-	a := m.Called(ctx, dto)
+func (m *mockAuthSvc) Login(ctx context.Context, dto domain.LoginDTO, orgID *uuid.UUID) (*domain.User, string, error) {
+	a := m.Called(ctx, dto, orgID)
 	u, _ := a.Get(0).(*domain.User)
 	return u, a.String(1), a.Error(2)
 }

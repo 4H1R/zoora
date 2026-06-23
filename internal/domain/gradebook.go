@@ -54,8 +54,6 @@ type GradebookCell struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// --- DTOs ---
-
 type CreateGradebookColumnDTO struct {
 	Title      string              `json:"title" binding:"required,min=1"`
 	Type       GradebookColumnType `json:"type" binding:"required,oneof=auto_attendance auto_practice auto_quiz manual_grade manual_attendance manual_text"`
@@ -80,7 +78,6 @@ type GradebookMatrixRow struct {
 	Cells     map[string]string `json:"cells"` // column_id -> value
 }
 
-// GradebookMatrix is the full gradebook response.
 type GradebookMatrix struct {
 	Columns []GradebookColumn    `json:"columns"`
 	Rows    []GradebookMatrixRow `json:"rows"`
@@ -91,8 +88,6 @@ type ListGradebookColumnsQuery struct {
 	Type       *GradebookColumnType `form:"type" binding:"omitempty,oneof=auto_attendance auto_practice auto_quiz manual_grade manual_attendance manual_text"`
 	ListParams ListParams           `form:"-"`
 }
-
-// --- Student self-scoped grades ("my grades") ---
 
 // MyGradebookClass is one class's report card for a single student.
 type MyGradebookClass struct {
@@ -107,8 +102,6 @@ type MyGradebookClass struct {
 type MyGradebook struct {
 	Classes []MyGradebookClass `json:"classes"`
 }
-
-// --- Interfaces ---
 
 type GradebookColumnRepository interface {
 	Create(ctx context.Context, col *GradebookColumn) error

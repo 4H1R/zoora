@@ -22,6 +22,15 @@ var attendanceListConfig = domain.ListConfig{
 	DefaultOrderDir:     "desc",
 }
 
+// attendanceMatrixListConfig drives the STUDENT (row) axis: search by user
+// name/username, order by name or join date. Mirrors the class roster config.
+var attendanceMatrixListConfig = domain.ListConfig{
+	AllowedSearchFields: []string{"name", "username"},
+	AllowedOrderFields:  []string{"created_at", "name"},
+	DefaultOrderBy:      "created_at",
+	DefaultOrderDir:     "desc",
+}
+
 type Handler struct {
 	svc domain.AttendanceService
 }
@@ -39,6 +48,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 	{
 		authed.GET("/attendance/me", perm(domain.PermAttendanceView), h.ListMine)
 		authed.GET("/classes/:id/sessions/:sessionId/attendance", perm(domain.PermAttendanceView), idParam, sessionIDParam, h.List)
+		authed.GET("/classes/:id/attendance/matrix", perm(domain.PermAttendanceView), idParam, h.Matrix)
 		authed.POST("/classes/:id/sessions/:sessionId/attendance", perm(domain.PermAttendanceCreate), idParam, sessionIDParam, h.Mark)
 		authed.POST("/classes/:id/sessions/:sessionId/attendance/bulk", perm(domain.PermAttendanceCreate), idParam, sessionIDParam, h.BulkMark)
 		authed.POST("/classes/:id/sessions/:sessionId/attendance/auto-mark", perm(domain.PermAttendanceCreate), idParam, sessionIDParam, h.AutoMark)
@@ -111,6 +121,33 @@ func (h *Handler) List(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(items, total, q.ListParams))
+}
+
+// Matrix returns the full student×session attendance grid for a class.
+// @Summary Attendance matrix for a class
+// @Description Rows = enrolled students (paged, searchable by name/username, orderable by created_at/name). Columns = all class sessions ordered by start_time asc. cells is keyed studentId→sessionId. Each student carries a P/A/L/E summary with a rate over started sessions only. Requires class management rights (admin, attendance:*_any, or class owner).
+// @Tags Attendance
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Class UUID"
+// @Param search query string false "Substring match on student name/username"
+// @Param order_by query string false "One of: created_at, name"
+// @Param order_dir query string false "asc or desc"
+// @Param page query int false "1-based page number"
+// @Param page_size query int false "Students per page"
+// @Success 200 {object} domain.Response{data=domain.AttendanceMatrixResult}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /classes/{id}/attendance/matrix [get]
+func (h *Handler) Matrix(c *gin.Context) {
+	q := domain.ListAttendanceMatrixQuery{ListParams: listparams.Bind(c, attendanceMatrixListConfig)}
+	result, err := h.svc.Matrix(c.Request.Context(), httpx.UUIDParam(c, "id"), q)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, result)
 }
 
 // Mark creates a single attendance record for a student in a session.

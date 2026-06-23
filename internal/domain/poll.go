@@ -37,8 +37,6 @@ type PollAnswer struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-// --- DTOs ---
-
 type CreatePollDTO struct {
 	ModelType           string       `json:"model_type" binding:"required,max=100"`
 	ModelID             uuid.UUID    `json:"model_id" binding:"required"`
@@ -77,8 +75,6 @@ type ListPollAnswersQuery struct {
 	ListParams ListParams `form:"-"`
 }
 
-// --- Scoping ---
-
 type PollListScope struct {
 	AllOrgs        bool
 	OwnerID        *uuid.UUID
@@ -86,8 +82,6 @@ type PollListScope struct {
 	ModelID        *uuid.UUID
 	IncludeDeleted bool
 }
-
-// --- Interfaces ---
 
 type PollRepository interface {
 	Create(ctx context.Context, poll *Poll) error

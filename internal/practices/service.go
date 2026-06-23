@@ -290,8 +290,6 @@ func canListDeleted(caller domain.Caller) bool {
 	return caller.HasAny(domain.PermPracticesUpdateAny)
 }
 
-// --- Submissions ---
-
 func (s *service) Submit(ctx context.Context, roomID uuid.UUID, dto domain.CreatePracticeSubmissionDTO) (*domain.PracticeSubmission, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {

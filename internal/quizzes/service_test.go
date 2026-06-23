@@ -14,8 +14,6 @@ import (
 	"github.com/4H1R/zoora/internal/quizzes"
 )
 
-// --- Mock implementations ---
-
 type mQuizRepo struct{ mock.Mock }
 
 func (m *mQuizRepo) Create(ctx context.Context, q *domain.Quiz) error {
@@ -265,8 +263,6 @@ func (m *mMemberRepo) ListAllByClass(ctx context.Context, classID uuid.UUID) ([]
 	return ms, a.Error(1)
 }
 
-// --- Helpers ---
-
 func teacherCtx(userID uuid.UUID) context.Context {
 	return domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      userID,
@@ -308,8 +304,6 @@ func (d testDeps) service() domain.QuizService {
 		d.questionRepo, d.classRepo, d.memberRepo, slog.Default(),
 	)
 }
-
-// --- Quiz CRUD tests ---
 
 func TestQuizService_Create_AsTeacher(t *testing.T) {
 	teacherID := uuid.New()
@@ -353,8 +347,6 @@ func TestQuizService_Create_NotClassOwner_Forbidden(t *testing.T) {
 	_, err := svc.Create(ctx, domain.CreateQuizDTO{ClassID: classID, Title: "X", DurationMinutes: 10})
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
-
-// --- Submission tests ---
 
 func TestQuizService_StartSubmission_Success(t *testing.T) {
 	studentID := uuid.New()
@@ -733,8 +725,6 @@ func TestQuizService_ListQuestionsForTaking_SanitizesAnswersAndDeduplicates(t *t
 	assert.Equal(t, []domain.QuestionOption{}, questions[1].Options)
 	assert.Equal(t, 0.0, questions[2].Options[0].Score)
 }
-
-// --- ListMine (my exams) tests ---
 
 func TestQuizService_ListMine_DerivesStates(t *testing.T) {
 	studentID := uuid.New()

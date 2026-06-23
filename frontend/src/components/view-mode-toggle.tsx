@@ -1,10 +1,19 @@
 import { LayoutGrid, List } from "lucide-react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { cn } from "@/lib/utils"
 
 export type ViewMode = "grid" | "table"
+
+// Co-locates grid/table state with its derived flags. Use `isTable` for both
+// content rendering and TableFilter's `showColumnsToggle` so the column toggle
+// never appears in card view (it has nothing to toggle there).
+export function useViewMode(initial: ViewMode = "grid") {
+  const [viewMode, setViewMode] = useState<ViewMode>(initial)
+  return { viewMode, setViewMode, isTable: viewMode === "table", isGrid: viewMode === "grid" }
+}
 
 interface ViewModeToggleProps {
   value: ViewMode

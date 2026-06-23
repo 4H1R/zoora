@@ -10,6 +10,7 @@ import { useDebounce } from "use-debounce"
 import { ColumnsToggle } from "@/components/data-table/columns-toggle"
 import { SortPicker } from "@/components/data-table/sort-picker"
 import { Input } from "@/components/ui/input"
+import { paramKeys } from "@/lib/data-table"
 
 interface TableFilterProps<TData> {
   searchPlaceholder?: string
@@ -18,6 +19,12 @@ interface TableFilterProps<TData> {
   table: Table<TData>
   columnsLabel?: string
   toggleColumnsLabel?: string
+  /** Show the column show/hide toggle. Only meaningful in table view — pages
+   * with a grid/table switcher should pass `useViewMode().isTable`. Default true. */
+  showColumnsToggle?: boolean
+  /** Namespaces the URL params this toolbar reads/writes; pair with the same
+   * prefix on useAdminTable + DataTablePagination. Omit for single-table pages. */
+  prefix?: string
   children?: React.ReactNode
 }
 
@@ -28,17 +35,15 @@ export function TableFilter<TData>({
   table,
   columnsLabel = "Columns",
   toggleColumnsLabel = "Toggle columns",
+  showColumnsToggle = true,
+  prefix,
   children,
 }: TableFilterProps<TData>) {
-  const {
-    search: urlSearch,
-    order_by,
-    order_dir,
-  } = useSearch({ strict: false }) as {
-    search?: string
-    order_by?: string
-    order_dir?: "asc" | "desc"
-  }
+  const k = paramKeys(prefix)
+  const sp = useSearch({ strict: false }) as Record<string, unknown>
+  const urlSearch = sp[k.search] as string | undefined
+  const order_by = sp[k.order_by] as string | undefined
+  const order_dir = sp[k.order_dir] as "asc" | "desc" | undefined
   const navigate = useNavigate() as unknown as NavFn
 
   const sortOptions: SortOption[] =
@@ -60,7 +65,7 @@ export function TableFilter<TData>({
       isFirstRender.current = false
       return
     }
-    navigate({ search: (prev) => ({ ...prev, search: debouncedSearch || undefined, page: 1 }) })
+    navigate({ search: (prev) => ({ ...prev, [k.search]: debouncedSearch || undefined, [k.page]: 1 }) })
   }, [debouncedSearch])
 
   const sortValue = order_by ? { id: order_by, desc: order_dir === "desc" } : undefined
@@ -86,14 +91,16 @@ export function TableFilter<TData>({
           navigate({
             search: (prev) => ({
               ...prev,
-              order_by: v?.id,
-              order_dir: v ? (v.desc ? "desc" : "asc") : undefined,
-              page: 1,
+              [k.order_by]: v?.id,
+              [k.order_dir]: v ? (v.desc ? "desc" : "asc") : undefined,
+              [k.page]: 1,
             }),
           })
         }
       />
-      <ColumnsToggle table={table} columnsLabel={columnsLabel} toggleColumnsLabel={toggleColumnsLabel} />
+      {showColumnsToggle && (
+        <ColumnsToggle table={table} columnsLabel={columnsLabel} toggleColumnsLabel={toggleColumnsLabel} />
+      )}
     </div>
   )
 }

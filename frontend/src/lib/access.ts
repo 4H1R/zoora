@@ -4,7 +4,7 @@ import type {
 } from "@/api/model"
 import type { UserContext } from "react-access-engine"
 
-import { useNavigate, useParams } from "@tanstack/react-router"
+import { useNavigate } from "@tanstack/react-router"
 import { useEffect } from "react"
 import { defineAccess, useAccess } from "react-access-engine"
 
@@ -65,14 +65,12 @@ export function useOrgGuard(perms: AppPermission | AppPermission[]): boolean {
   const list = Array.isArray(perms) ? perms : [perms]
   const allowed = useCanAny(list)
   const navigate = useNavigate()
-  const params = useParams({ strict: false }) as { orgId?: string }
-  const orgId = params.orgId
 
   useEffect(() => {
-    if (!allowed && orgId) {
-      navigate({ to: "/org/$orgId/dashboard", params: { orgId } })
+    if (!allowed) {
+      navigate({ to: "/org/dashboard" })
     }
-  }, [allowed, orgId, navigate])
+  }, [allowed, navigate])
 
   return allowed
 }

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/platform/httpx"
@@ -22,6 +23,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, mws ...gin.HandlerFunc) {
 	{
 		auth.POST("/login", h.Login)
 	}
+	rg.GET("/org", h.CurrentOrg)
 }
 
 // Login authenticates a user with username and password.
@@ -42,7 +44,19 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	user, token, err := h.svc.Login(c.Request.Context(), dto)
+	hc, _ := domain.HostContextFromCtx(c.Request.Context())
+	if hc.Class == domain.HostClassUnknown ||
+		(hc.Class == domain.HostClassTenant && hc.OrgStatus != domain.OrganizationStatusActive && hc.OrgStatus != domain.OrganizationStatusTrial) {
+		_ = c.Error(domain.ErrForbidden)
+		return
+	}
+
+	var orgID *uuid.UUID
+	if hc.Class == domain.HostClassTenant {
+		orgID = hc.OrgID
+	}
+
+	user, token, err := h.svc.Login(c.Request.Context(), dto, orgID)
 	if err != nil {
 		_ = c.Error(err)
 		return
@@ -51,5 +65,26 @@ func (h *Handler) Login(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, gin.H{
 		"user":  user,
 		"token": token,
+	})
+}
+
+// CurrentOrg returns the org resolved from the request Host (subdomain), or an
+// error for unknown/suspended hosts. Unauthenticated — drives the login page.
+// @Summary Resolve current org by host
+// @Tags Auth
+// @Produce json
+// @Success 200 {object} domain.Response{data=object{id=string,slug=string,status=string}}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /org [get]
+func (h *Handler) CurrentOrg(c *gin.Context) {
+	hc, ok := domain.HostContextFromCtx(c.Request.Context())
+	if !ok || hc.Class != domain.HostClassTenant || hc.OrgID == nil {
+		_ = c.Error(domain.ErrNotFound)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, gin.H{
+		"id":     hc.OrgID.String(),
+		"slug":   hc.Slug,
+		"status": hc.OrgStatus,
 	})
 }

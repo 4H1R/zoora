@@ -18,7 +18,7 @@ function RouteComponent() {
     if (user?.is_admin) {
       navigate({ to: "/admin/dashboard" })
     } else if (user?.organization_id) {
-      navigate({ to: "/org/$orgId/dashboard", params: { orgId: user.organization_id } })
+      navigate({ to: "/org/dashboard" })
     }
   }, [isError, navigate, isLoading, data])
 

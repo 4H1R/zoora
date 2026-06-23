@@ -48,6 +48,17 @@ func (r *repository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Organi
 	return &org, nil
 }
 
+func (r *repository) FindBySlug(ctx context.Context, slug string) (*domain.Organization, error) {
+	var org domain.Organization
+	if err := database.DB(ctx, r.db).First(&org, "slug = ?", slug).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("organizations.repository.FindBySlug: %w", err)
+	}
+	return &org, nil
+}
+
 // fillUserCounts populates the computed TotalUsers field (live count of
 // non-deleted users) for each org in a single grouped query.
 func (r *repository) fillUserCounts(ctx context.Context, orgs []domain.Organization) error {

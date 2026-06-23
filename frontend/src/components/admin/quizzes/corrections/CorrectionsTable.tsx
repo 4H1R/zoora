@@ -1,5 +1,6 @@
 import type { GithubCom4H1RZooraInternalDomainQuizSubmission as QuizSubmission } from "@/api/model"
 import type { ColumnDef, SortingState } from "@tanstack/react-table"
+import type { VariantProps } from "class-variance-authority"
 
 import { CheckSquareIcon, PencilIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -7,12 +8,18 @@ import { useTranslation } from "react-i18next"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { TableFilter } from "@/components/data-table/table-filter"
-import { Badge } from "@/components/ui/badge"
+import { Badge, badgeVariants } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { getEntityColor, getInitials, useAdminTable, useFormatDate } from "@/lib/data-table"
 import { formatScore } from "@/lib/score"
 import { cn } from "@/lib/utils"
+
+function getBadgeVariant(status: string): VariantProps<typeof badgeVariants>["variant"] {
+  if (status === "graded") return "default"
+  if (status === "submitted") return "secondary"
+  return "outline"
+}
 
 interface CorrectionsTableProps {
   submissions: QuizSubmission[]
@@ -53,9 +60,7 @@ export function CorrectionsTable({
             <div className="min-w-0">
               <div className="truncate text-start text-sm font-medium">{name}</div>
               {row.original.user?.username && (
-                <div className="text-muted-foreground truncate text-start text-xs">
-                  {row.original.user.username}
-                </div>
+                <div className="text-muted-foreground truncate text-start text-xs">{row.original.user.username}</div>
               )}
             </div>
           </div>
@@ -69,13 +74,8 @@ export function CorrectionsTable({
       header: t("admin.corrections.status"),
       cell: ({ row }) => {
         const status = row.original.status ?? "in_progress"
-        const variant =
-          status === "graded" ? "default" : status === "submitted" ? "secondary" : "outline"
-        return (
-          <Badge variant={variant}>
-            {t(`admin.corrections.statuses.${status}`)}
-          </Badge>
-        )
+        const variant = getBadgeVariant(status)
+        return <Badge variant={variant}>{t(`admin.corrections.statuses.${status}`)}</Badge>
       },
       enableSorting: false,
     },
@@ -97,21 +97,13 @@ export function CorrectionsTable({
     {
       accessorKey: "submitted_at",
       header: t("admin.corrections.submittedAt"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-xs">
-          {formatDate(row.original.submitted_at)}
-        </span>
-      ),
+      cell: ({ row }) => <span className="text-muted-foreground text-xs">{formatDate(row.original.submitted_at)}</span>,
       enableSorting: true,
     },
     {
       accessorKey: "started_at",
       header: t("admin.corrections.startedAt"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-xs">
-          {formatDate(row.original.started_at)}
-        </span>
-      ),
+      cell: ({ row }) => <span className="text-muted-foreground text-xs">{formatDate(row.original.started_at)}</span>,
       enableSorting: true,
       enableHiding: true,
     },
@@ -123,12 +115,7 @@ export function CorrectionsTable({
         const disabled = status === "in_progress"
         return (
           <div className="flex items-center justify-end">
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={disabled}
-              onClick={() => onGrade(row.original)}
-            >
+            <Button variant="ghost" size="sm" disabled={disabled} onClick={() => onGrade(row.original)}>
               <PencilIcon data-icon="inline-start" />
               {t("admin.corrections.actions.grade")}
             </Button>

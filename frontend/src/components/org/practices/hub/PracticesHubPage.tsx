@@ -10,8 +10,7 @@ export function PracticesHubPage() {
 
   if (!allowed) return null
 
-  // Managers (org-wide viewers or graders) get the oversight data-table; everyone
-  // else gets the personal "my homework" list.
+  // Managers (graders or org-wide viewers) see the oversight table; others see their own list.
   const isManager = canGrade || canViewAny
   return isManager ? <ManagerPracticesView /> : <StudentPracticesView />
 }

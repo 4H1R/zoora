@@ -1,4 +1,3 @@
-import { useParams } from "@tanstack/react-router"
 import { GraduationCapIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
@@ -11,8 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 
 export function AdminDashboard() {
   const { t } = useTranslation()
-  const { orgId } = useParams({ from: "/_auth/org/$orgId/dashboard" })
-  const tiles = useDashboardTiles(orgId)
+  const tiles = useDashboardTiles()
 
   const { data: meData } = useGetUsersMe()
   const me = (meData?.status === 200 && meData.data.data) || undefined
@@ -28,7 +26,6 @@ export function AdminDashboard() {
         className="pointer-events-none absolute inset-x-0 -top-6 -z-10 h-48 bg-[radial-gradient(ellipse_at_top,var(--color-primary)/8%,transparent_60%)]"
       />
 
-      {/* Hero */}
       <div className="flex items-center gap-3.5">
         {initial ? (
           <div
@@ -41,7 +38,6 @@ export function AdminDashboard() {
             <span className="text-primary absolute inset-0 grid place-items-center text-base font-semibold tracking-tight">
               {initial}
             </span>
-            {/* online status dot */}
             <span className="bg-success ring-background absolute -end-0.5 -bottom-0.5 size-3 rounded-full ring-2" />
           </div>
         ) : null}
@@ -53,7 +49,7 @@ export function AdminDashboard() {
         </div>
       </div>
 
-      {/* Launcher grid — same design for every role, tiles gated by permission */}
+      {/* Tiles gated by permission */}
       {tiles.length > 0 ? (
         <TileGrid tiles={tiles} />
       ) : (
