@@ -80,7 +80,6 @@ function DayHeader({
   const { t } = useTranslation()
   return (
     <div className="relative overflow-hidden border-b">
-      {/* atmospheric wash behind the header */}
       <div
         aria-hidden
         className="from-primary/8 pointer-events-none absolute inset-0 bg-gradient-to-bl to-transparent"
@@ -153,11 +152,9 @@ function TimelineEvent({
 
   return (
     <li className="grid grid-cols-[3.25rem_1.25rem_1fr] items-stretch gap-x-1">
-      {/* time rail */}
       <span className="text-muted-foreground pt-4 text-end text-xs font-medium tabular-nums">
         {time}
       </span>
-      {/* spine + node */}
       <span aria-hidden className="relative flex justify-center">
         <span
           className={cn(
@@ -184,7 +181,6 @@ function TimelineEvent({
           />
         )}
       </span>
-      {/* event card */}
       <Link
         to={link.to}
         params={link.params}

@@ -34,7 +34,6 @@ func NewAdminHandler(svc domain.UserService, authSvc domain.AuthService) *AdminH
 	return &AdminHandler{svc: svc, authSvc: authSvc}
 }
 
-// RegisterAdminRoutes attaches admin user routes to the group.
 func (h *AdminHandler) RegisterAdminRoutes(group *gin.RouterGroup) {
 	idParam := httpx.RequireUUIDParam("id")
 
@@ -170,7 +169,6 @@ func (h *AdminHandler) Update(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, user)
 }
 
-// HardDelete permanently removes the row.
 // @Summary [Admin] Hard-delete user
 // @Tags Admin/Users
 // @Produce json
@@ -218,7 +216,6 @@ func (h *AdminHandler) ForceResetPassword(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, nil)
 }
 
-// Disable disables any user across organizations.
 // @Summary [Admin] Disable user
 // @Tags Admin/Users
 // @Accept json
@@ -247,7 +244,6 @@ func (h *AdminHandler) Disable(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, user)
 }
 
-// Enable re-enables any user across organizations.
 // @Summary [Admin] Enable user
 // @Tags Admin/Users
 // @Produce json

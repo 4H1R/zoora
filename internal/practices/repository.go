@@ -233,8 +233,6 @@ func (r *roomRepository) AdminList(ctx context.Context, q domain.AdminListPracti
 	return rooms, total, nil
 }
 
-// --- Submission Repository ---
-
 type submissionRepository struct {
 	db *gorm.DB
 }

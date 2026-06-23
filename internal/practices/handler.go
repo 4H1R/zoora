@@ -51,7 +51,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 	}
 }
 
-// ListRooms returns practice rooms visible to the caller.
 // @Summary List practice rooms
 // @Description Returns practices visible to the caller, enriched per-viewer (status, my_submission) and with manager stats when permitted. Filter by class_id, class_session_id, status (upcoming|to_submit|submitted|graded|missed), window (upcoming|open|ended), needs_grading. Search matches: title, content. Orderable: created_at, updated_at, start_time, end_time, title.
 // @Tags Practices
@@ -103,7 +102,6 @@ func (h *Handler) ListRooms(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(rooms, total, q.ListParams))
 }
 
-// CreateRoom creates a practice room inside a class session.
 // @Summary Create practice room
 // @Tags Practices
 // @Accept json
@@ -130,7 +128,6 @@ func (h *Handler) CreateRoom(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusCreated, room)
 }
 
-// GetRoom returns a practice room by ID.
 // @Summary Get practice room
 // @Tags Practices
 // @Produce json
@@ -150,7 +147,6 @@ func (h *Handler) GetRoom(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, room)
 }
 
-// UpdateRoom updates a practice room.
 // @Summary Update practice room
 // @Tags Practices
 // @Accept json
@@ -178,7 +174,6 @@ func (h *Handler) UpdateRoom(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, room)
 }
 
-// DeleteRoom soft-deletes a practice room.
 // @Summary Delete practice room
 // @Tags Practices
 // @Produce json
@@ -197,7 +192,6 @@ func (h *Handler) DeleteRoom(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, nil)
 }
 
-// Submit creates a submission for a practice room.
 // @Summary Submit to practice room
 // @Description Students can only submit between start_time and end_time.
 // @Tags Practices
@@ -227,7 +221,6 @@ func (h *Handler) Submit(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusCreated, sub)
 }
 
-// ListSubmissions lists all submissions for a practice room (managers only).
 // @Summary List submissions for practice room
 // @Description Only room owner, staff, and admins can view all submissions. Orderable: submitted_at, created_at, score.
 // @Tags Practices
@@ -254,7 +247,6 @@ func (h *Handler) ListSubmissions(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(subs, total, q.ListParams))
 }
 
-// GetSubmission returns a single submission.
 // @Summary Get submission
 // @Tags Practices
 // @Produce json
@@ -274,7 +266,6 @@ func (h *Handler) GetSubmission(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, sub)
 }
 
-// Grade scores a submission.
 // @Summary Grade submission
 // @Tags Practices
 // @Accept json

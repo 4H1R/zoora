@@ -14,8 +14,6 @@ import (
 	"github.com/4H1R/zoora/internal/domain"
 )
 
-// --- Mocks ---
-
 type mAttRepo struct{ mock.Mock }
 
 func (m *mAttRepo) Create(ctx context.Context, a *domain.Attendance) error {
@@ -135,8 +133,6 @@ func (m *mSessRepo) AdminList(ctx context.Context, q domain.AdminListClassSessio
 	return res, a.Get(1).(int64), a.Error(2)
 }
 
-// --- Helpers ---
-
 func newSvc(repo domain.AttendanceRepository, classes domain.ClassRepository, sessions domain.ClassSessionRepository) domain.AttendanceService {
 	return attendance.NewService(repo, classes, sessions, nil, nil, nil, nil, nil, authz.NewResolver(nil), slog.Default())
 }
@@ -144,8 +140,6 @@ func newSvc(repo domain.AttendanceRepository, classes domain.ClassRepository, se
 func ownerCtx(userID uuid.UUID) context.Context {
 	return domain.WithCaller(context.Background(), domain.Caller{UserID: userID})
 }
-
-// --- Tests ---
 
 func TestBulkMark_UpdatesExistingNoCreate(t *testing.T) {
 	ownerID := uuid.New()

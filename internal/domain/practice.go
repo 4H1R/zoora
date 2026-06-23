@@ -78,8 +78,6 @@ type PracticeSubmission struct {
 	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
-// --- DTOs ---
-
 type CreatePracticeRoomDTO struct {
 	ClassSessionID uuid.UUID   `json:"class_session_id" binding:"required"`
 	Title          string      `json:"title" binding:"required,min=2"`
@@ -139,8 +137,6 @@ type AdminListPracticeRoomsQuery struct {
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }
-
-// --- Interfaces ---
 
 type PracticeRoomRepository interface {
 	Create(ctx context.Context, room *PracticeRoom) error

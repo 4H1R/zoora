@@ -2,7 +2,6 @@ import type { GithubCom4H1RZooraInternalDomainMyExam as MyExam } from "@/api/mod
 
 import { createFileRoute } from "@tanstack/react-router"
 import { ClipboardListIcon } from "lucide-react"
-import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { useGetQuizzesMe } from "@/api/quizzes/quizzes"
@@ -13,7 +12,7 @@ import { ExamCard, ExamCardSkeleton } from "@/components/exam-card"
 import { PageHeader } from "@/components/page-header"
 import { Card } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
-import { ViewModeToggle, type ViewMode } from "@/components/view-mode-toggle"
+import { ViewModeToggle, useViewMode } from "@/components/view-mode-toggle"
 import { useOrgGuard } from "@/lib/access"
 import { adminSearchSchema, useClientTable } from "@/lib/data-table"
 import { orgHead } from "@/lib/org-head"
@@ -36,7 +35,7 @@ function RouteComponent() {
   const exams: MyExam[] = (examsQ.data?.status === 200 && examsQ.data.data.data?.items) || []
   const loading = examsQ.isPending
 
-  const [viewMode, setViewMode] = useState<ViewMode>("grid")
+  const { viewMode, setViewMode, isTable } = useViewMode()
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
   const columns = useExamColumns(orgId)
 
@@ -52,7 +51,7 @@ function RouteComponent() {
   if (!allowed) return null
 
   const renderContent = () => {
-    if (viewMode === "table") {
+    if (isTable) {
       return (
         <Card className="gap-0 overflow-hidden p-0">
           <div className="overflow-x-auto">
@@ -104,6 +103,7 @@ function RouteComponent() {
             sortLabel={t("org.exams.toolbar.sort")}
             columnsLabel={t("org.exams.toolbar.columns")}
             toggleColumnsLabel={t("org.exams.toolbar.toggleColumns")}
+            showColumnsToggle={isTable}
           />
         </div>
         <ViewModeToggle value={viewMode} onChange={setViewMode} />

@@ -26,7 +26,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 	}
 }
 
-// Get returns an organization by ID.
 // @Summary Get organization by ID
 // @Tags Organizations
 // @Produce json
@@ -47,7 +46,6 @@ func (h *Handler) Get(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, org)
 }
 
-// Update updates an organization by ID.
 // @Summary Update organization
 // @Tags Organizations
 // @Accept json

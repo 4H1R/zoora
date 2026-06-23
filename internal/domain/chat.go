@@ -106,8 +106,6 @@ type MessageReaction struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-// DTOs
-
 type CreateChatDTO struct {
 	Name        string `json:"name" binding:"required,min=1,max=255"`
 	Description string `json:"description" binding:"max=1000"`
@@ -153,8 +151,6 @@ type ListChatsQuery struct {
 	ListParams ListParams  `form:"-"`
 }
 
-// Repositories
-
 type ChatRepository interface {
 	Create(ctx context.Context, chat *Chat) error
 	FindByID(ctx context.Context, id uuid.UUID) (*Chat, error)
@@ -185,8 +181,6 @@ type MessageReactionRepository interface {
 	FindByMessageAndUser(ctx context.Context, messageID, userID uuid.UUID, emoji string) (*MessageReaction, error)
 	CountByMessage(ctx context.Context, messageID uuid.UUID) (map[string]int, error)
 }
-
-// Services
 
 type ChatService interface {
 	CreateChat(ctx context.Context, dto CreateChatDTO) (*Chat, error)

@@ -81,7 +81,6 @@ export function PlayArea({ quiz, room, submission, questions, backHref }: PlayAr
 
   const submittedRef = useRef(false)
 
-  // persist whenever local state changes
   useEffect(() => {
     savePersistedState(submissionId, { answers, order: orderedQuestionIds, index })
   }, [answers, index, orderedQuestionIds, submissionId])
@@ -120,7 +119,6 @@ export function PlayArea({ quiz, room, submission, questions, backHref }: PlayAr
     if (reason === "auto") toast.message(t("org.session.quizzes.take.autoSubmitNote"))
   }
 
-  // auto-submit on expiry
   useEffect(() => {
     if (isExpired && submission.status === "in_progress" && !submittedRef.current) {
       finalize("auto")
@@ -128,7 +126,6 @@ export function PlayArea({ quiz, room, submission, questions, backHref }: PlayAr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isExpired, submission.status])
 
-  // unload guard while in progress
   useEffect(() => {
     if (submission.status !== "in_progress") return
     const handler = (e: BeforeUnloadEvent) => {

@@ -31,7 +31,6 @@ import { useGetAdminPolls } from "@/api/admin-polls/admin-polls"
 import { useGetAdminQuestionBanks } from "@/api/admin-questionbanks/admin-questionbanks"
 import { useGetAdminQuizzes } from "@/api/admin-quizzes/admin-quizzes"
 import { useGetAdminUsers } from "@/api/admin-users/admin-users"
-import { useGetUsersMe } from "@/api/users/users"
 import { StatCards } from "@/components/data-table/stat-cards"
 import { PageHeader } from "@/components/page-header"
 import { Badge } from "@/components/ui/badge"
@@ -50,6 +49,12 @@ function RecentUsersCard({ users, loading }: { users: User[]; loading: boolean }
   const { t } = useTranslation()
   const roleName = useRoleName()
   const formatDate = useFormatDate()
+
+  const getRoleLabel = (user: User) => {
+    if (user.is_admin) return t("admin.roleAdmin")
+    if (user.role?.name) return roleName(user.role.name)
+    return t("admin.roleMember")
+  }
 
   return (
     <Card className="gap-0 overflow-hidden p-0">
@@ -84,7 +89,7 @@ function RecentUsersCard({ users, loading }: { users: User[]; loading: boolean }
                 </div>
                 <div className="ms-3 flex shrink-0 flex-col items-end gap-1">
                   <Badge variant="outline" className="text-xs">
-                    {user.is_admin ? t("admin.roleAdmin") : (user.role?.name ? roleName(user.role.name) : t("admin.roleMember"))}
+                    {getRoleLabel(user)}
                   </Badge>
                   <span className="text-muted-foreground text-[11px]">{formatDate(user.created_at)}</span>
                 </div>
@@ -108,6 +113,40 @@ function RecentOrgsCard({ orgs, loading }: { orgs: Organization[]; loading: bool
     return "outline"
   }
 
+  const renderOrgs = () => {
+    if (loading)
+      return (
+        <div className="divide-y">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center justify-between px-4 py-3">
+              <Skeleton className="h-4 w-36" />
+              <div className="ms-3 flex shrink-0 flex-col items-end gap-1">
+                <Skeleton className="h-5 w-16" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+    if (orgs.length === 0)
+      return <p className="text-muted-foreground px-4 py-6 text-center text-sm">{t("admin.dashboard.recent.empty")}</p>
+    return (
+      <div className="divide-y">
+        {orgs.map((org) => (
+          <div key={org.id} className="flex items-center justify-between px-4 py-3">
+            <p className="min-w-0 truncate text-sm font-medium">{org.name || "—"}</p>
+            <div className="ms-3 flex shrink-0 flex-col items-end gap-1">
+              <Badge variant={statusVariant(org.status)} className="text-xs capitalize">
+                {org.status ? t(`admin.orgs.statusLabels.${org.status}`) : "—"}
+              </Badge>
+              <span className="text-muted-foreground text-[11px]">{formatDate(org.created_at)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   return (
     <Card className="gap-0 overflow-hidden p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b px-4 py-3">
@@ -119,37 +158,7 @@ function RecentOrgsCard({ orgs, loading }: { orgs: Organization[]; loading: bool
           {t("admin.dashboard.recent.viewAll")}
         </Link>
       </CardHeader>
-      <CardContent className="p-0">
-        {loading ? (
-          <div className="divide-y">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center justify-between px-4 py-3">
-                <Skeleton className="h-4 w-36" />
-                <div className="ms-3 flex shrink-0 flex-col items-end gap-1">
-                  <Skeleton className="h-5 w-16" />
-                  <Skeleton className="h-3 w-20" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : orgs.length === 0 ? (
-          <p className="text-muted-foreground px-4 py-6 text-center text-sm">{t("admin.dashboard.recent.empty")}</p>
-        ) : (
-          <div className="divide-y">
-            {orgs.map((org) => (
-              <div key={org.id} className="flex items-center justify-between px-4 py-3">
-                <p className="min-w-0 truncate text-sm font-medium">{org.name || "—"}</p>
-                <div className="ms-3 flex shrink-0 flex-col items-end gap-1">
-                  <Badge variant={statusVariant(org.status)} className="text-xs capitalize">
-                    {org.status ? t(`admin.orgs.statusLabels.${org.status}`) : "—"}
-                  </Badge>
-                  <span className="text-muted-foreground text-[11px]">{formatDate(org.created_at)}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
+      <CardContent className="p-0">{renderOrgs()}</CardContent>
     </Card>
   )
 }

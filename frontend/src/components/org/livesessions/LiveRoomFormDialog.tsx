@@ -78,8 +78,7 @@ export function LiveRoomFormDialog({ open, onOpenChange, classSessionId }: LiveR
   const pending = createMutation.isPending || startMutation.isPending
 
   const onSubmit = form.handleSubmit(async (values) => {
-    // Schedule mode must carry a real future timestamp — otherwise the room is
-    // "scheduled" in name only (the old behaviour) and students get no countdown.
+    // Must be a real future timestamp; without it students get no countdown.
     let scheduledISO: string | undefined
     if (values.mode === "schedule") {
       const ts = values.scheduled_start_time ? new Date(values.scheduled_start_time).getTime() : NaN

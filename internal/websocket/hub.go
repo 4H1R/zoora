@@ -74,7 +74,6 @@ func (h *Hub) addClient(client *Client) {
 		h.rooms[client.room] = make(map[*Client]bool)
 	}
 
-	// Check per-user connection limit
 	count := 0
 	for c := range h.rooms[client.room] {
 		if c.userID == client.userID {

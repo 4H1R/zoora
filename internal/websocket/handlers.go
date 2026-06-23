@@ -20,7 +20,6 @@ var upgrader = websocket.Upgrader{
 
 func HandleWebSocket(hub *Hub, jwt *auth.JWTService, logger *slog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Authenticate via query param token
 		token := c.Query("token")
 		if token == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "missing token"})

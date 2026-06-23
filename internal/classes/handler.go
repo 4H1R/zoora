@@ -28,11 +28,14 @@ var sessionsListConfig = domain.ListConfig{
 	DefaultOrderDir:     "asc",
 }
 
-// membersListConfig gates GET /classes/:id/members.
+// membersListConfig gates GET /classes/:id/members. Search/order target the
+// member's user (name/username); memberRepository.ListByClass resolves them
+// against the users table via a subquery, so tokens stay friendly here.
 var membersListConfig = domain.ListConfig{
-	AllowedOrderFields: []string{"created_at"},
-	DefaultOrderBy:     "created_at",
-	DefaultOrderDir:    "desc",
+	AllowedSearchFields: []string{"name", "username"},
+	AllowedOrderFields:  []string{"created_at", "name"},
+	DefaultOrderBy:      "created_at",
+	DefaultOrderDir:     "desc",
 }
 
 type Handler struct {
@@ -68,7 +71,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 	}
 }
 
-// List returns classes visible to the caller.
 // @Summary List classes (scoped by RBAC)
 // @Description Returns classes filtered by caller role: super-admins see all, org-admins see their organization, teachers see their own classes, students see classes they are enrolled in. Search matches substrings of: name, description. Orderable fields: created_at, updated_at, name.
 // @Tags Classes
@@ -119,7 +121,6 @@ func (h *Handler) Create(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusCreated, class)
 }
 
-// Get returns a class by ID.
 // @Summary Get class
 // @Tags Classes
 // @Produce json
@@ -139,7 +140,6 @@ func (h *Handler) Get(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, class)
 }
 
-// Update updates a class.
 // @Summary Update class
 // @Tags Classes
 // @Accept json
@@ -186,7 +186,6 @@ func (h *Handler) Delete(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, nil)
 }
 
-// ListSessions lists sessions for a class.
 // @Summary List class sessions
 // @Description Search matches substrings of: name, description. Orderable fields: created_at, updated_at, name, start_time.
 // @Tags Classes
@@ -197,6 +196,7 @@ func (h *Handler) Delete(c *gin.Context) {
 // @Param order_by query string false "One of: created_at, updated_at, name, start_time"
 // @Param order_dir query string false "asc or desc"
 // @Param page query int false "1-based page number"
+// @Param page_size query int false "Items per page"
 // @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.ClassSession}}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 403 {object} domain.Response{error=domain.ErrorBody}
@@ -217,7 +217,6 @@ func (h *Handler) ListSessions(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(sessions, total, q.ListParams))
 }
 
-// CreateSession creates a session inside a class.
 // @Summary Create class session
 // @Tags Classes
 // @Accept json
@@ -245,7 +244,6 @@ func (h *Handler) CreateSession(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusCreated, session)
 }
 
-// GetSession returns a single session by ID.
 // @Summary Get class session
 // @Tags Classes
 // @Produce json
@@ -265,7 +263,6 @@ func (h *Handler) GetSession(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, session)
 }
 
-// UpdateSession updates a session.
 // @Summary Update class session
 // @Tags Classes
 // @Accept json
@@ -314,13 +311,16 @@ func (h *Handler) DeleteSession(c *gin.Context) {
 
 // ListMembers lists the roster of a class (managers only).
 // @Summary List class members
-// @Description Orderable fields: created_at. Only class managers (teacher, org-admin, super-admin) may view the roster.
+// @Description Search matches substrings of the member's name/username. Orderable fields: created_at, name. Only class managers (teacher, org-admin, super-admin) may view the roster.
 // @Tags Classes
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Class UUID"
+// @Param search query string false "Substring match on member name/username"
+// @Param order_by query string false "One of: created_at, name"
 // @Param order_dir query string false "asc or desc"
 // @Param page query int false "1-based page number"
+// @Param page_size query int false "Items per page"
 // @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.ClassMember}}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 403 {object} domain.Response{error=domain.ErrorBody}

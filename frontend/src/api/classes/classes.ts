@@ -1056,7 +1056,7 @@ export const getGetClassesIdMembersUrl = (id: string,
 }
 
 /**
- * Orderable fields: created_at. Only class managers (teacher, org-admin, super-admin) may view the roster.
+ * Search matches substrings of the member's name/username. Orderable fields: created_at, name. Only class managers (teacher, org-admin, super-admin) may view the roster.
  * @summary List class members
  */
 export const getClassesIdMembers = async (id: string,

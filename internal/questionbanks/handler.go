@@ -52,7 +52,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 	}
 }
 
-// List returns question banks visible to the caller.
 // @Summary List question banks (scoped by org)
 // @Description Returns question banks filtered by caller's organization. Admins see all. Search matches substrings of: name, description. Orderable fields: created_at, updated_at, name.
 // @Tags QuestionBanks
@@ -77,7 +76,6 @@ func (h *Handler) List(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(banks, total, p))
 }
 
-// Create creates a question bank in the caller's organization.
 // @Summary Create question bank
 // @Tags QuestionBanks
 // @Accept json
@@ -103,7 +101,6 @@ func (h *Handler) Create(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusCreated, bank)
 }
 
-// Get returns a question bank by ID.
 // @Summary Get question bank
 // @Tags QuestionBanks
 // @Produce json
@@ -123,7 +120,6 @@ func (h *Handler) Get(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, bank)
 }
 
-// Update updates a question bank.
 // @Summary Update question bank
 // @Tags QuestionBanks
 // @Accept json
@@ -151,7 +147,6 @@ func (h *Handler) Update(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, bank)
 }
 
-// Delete soft-deletes a question bank.
 // @Summary Delete question bank
 // @Tags QuestionBanks
 // @Produce json
@@ -170,7 +165,6 @@ func (h *Handler) Delete(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, nil)
 }
 
-// ListQuestions returns questions belonging to a bank.
 // @Summary List questions in a bank
 // @Description Returns questions filtered by optional type. Search matches substrings of: text. Orderable fields: created_at, updated_at, type.
 // @Tags QuestionBanks
@@ -202,7 +196,6 @@ func (h *Handler) ListQuestions(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(questions, total, q.ListParams))
 }
 
-// CreateQuestion adds a question to a bank.
 // @Summary Create question in bank
 // @Tags QuestionBanks
 // @Accept json
@@ -230,7 +223,6 @@ func (h *Handler) CreateQuestion(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusCreated, question)
 }
 
-// GetQuestion returns a question by ID.
 // @Summary Get question
 // @Tags QuestionBanks
 // @Produce json
@@ -250,7 +242,6 @@ func (h *Handler) GetQuestion(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, question)
 }
 
-// UpdateQuestion updates a question.
 // @Summary Update question
 // @Tags QuestionBanks
 // @Accept json
@@ -278,7 +269,6 @@ func (h *Handler) UpdateQuestion(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, question)
 }
 
-// DeleteQuestion soft-deletes a question.
 // @Summary Delete question
 // @Tags QuestionBanks
 // @Produce json

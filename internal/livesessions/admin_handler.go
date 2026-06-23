@@ -35,7 +35,6 @@ func (h *AdminHandler) RegisterAdminRoutes(group *gin.RouterGroup) {
 	group.DELETE("/live-rooms/:id", idParam, h.HardDelete)
 }
 
-// List returns live rooms.
 // @Summary [Admin] List live rooms
 // @Description Cross-org list. Search matches substrings of: livekit_room_name. Orderable fields: created_at, updated_at, status, actual_start_time, actual_end_time. Filters: status, user_id (teacher), class_id, class_session_id, include_deleted.
 // @Tags Admin/LiveSessions

@@ -176,7 +176,6 @@ func (h *Handler) Create(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusCreated, quiz)
 }
 
-// Get returns a quiz by ID.
 // @Summary Get quiz
 // @Tags Quizzes
 // @Produce json
@@ -196,7 +195,6 @@ func (h *Handler) Get(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, quiz)
 }
 
-// Update updates a quiz.
 // @Summary Update quiz
 // @Tags Quizzes
 // @Accept json
@@ -243,9 +241,6 @@ func (h *Handler) Delete(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, nil)
 }
 
-// --- Rules ---
-
-// ListRules returns rules for a quiz.
 // @Summary List quiz rules
 // @Tags Quizzes
 // @Produce json
@@ -297,7 +292,6 @@ func (h *Handler) CreateRule(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusCreated, rule)
 }
 
-// GetRule returns a quiz rule by ID.
 // @Summary Get quiz rule
 // @Tags Quizzes
 // @Produce json
@@ -317,7 +311,6 @@ func (h *Handler) GetRule(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, rule)
 }
 
-// UpdateRule updates a quiz rule.
 // @Summary Update quiz rule
 // @Tags Quizzes
 // @Accept json
@@ -345,7 +338,6 @@ func (h *Handler) UpdateRule(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, rule)
 }
 
-// DeleteRule deletes a quiz rule.
 // @Summary Delete quiz rule
 // @Tags Quizzes
 // @Produce json
@@ -364,9 +356,6 @@ func (h *Handler) DeleteRule(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, nil)
 }
 
-// --- Rooms ---
-
-// ListRooms returns rooms for a quiz.
 // @Summary List quiz rooms
 // @Tags Quizzes
 // @Produce json
@@ -390,7 +379,6 @@ func (h *Handler) ListRooms(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(rooms, total, q.ListParams))
 }
 
-// CreateRoom creates a room for a quiz.
 // @Summary Create quiz room
 // @Tags Quizzes
 // @Accept json
@@ -418,7 +406,6 @@ func (h *Handler) CreateRoom(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusCreated, room)
 }
 
-// GetRoom returns a quiz room by ID.
 // @Summary Get quiz room
 // @Tags Quizzes
 // @Produce json
@@ -500,9 +487,6 @@ func (h *Handler) ListQuestionsForTaking(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(questions, int64(len(questions)), domain.ListParams{Page: 1, PageSize: len(questions)}))
 }
 
-// --- Submissions ---
-
-// StartSubmission begins a quiz attempt for the caller.
 // @Summary Start quiz submission
 // @Description Starts a submission for the authenticated student. Requires enrollment in the quiz's class and an open quiz room. Only one submission per user per quiz is allowed.
 // @Tags Quizzes
@@ -560,7 +544,6 @@ func (h *Handler) SubmitQuiz(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, sub)
 }
 
-// GetSubmission returns a submission by ID.
 // @Summary Get quiz submission
 // @Tags Quizzes
 // @Produce json
@@ -580,7 +563,6 @@ func (h *Handler) GetSubmission(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, sub)
 }
 
-// ListSubmissions returns submissions for a quiz.
 // @Summary List quiz submissions
 // @Description Teachers/managers see all submissions; students see only their own.
 // @Tags Quizzes

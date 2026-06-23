@@ -121,8 +121,6 @@ func do(t *testing.T, r http.Handler, method, path string, body any) *httptest.R
 	return w
 }
 
-// --- Room handler tests ---
-
 func TestHandler_ListRooms_Success(t *testing.T) {
 	r, svc := newPracticeRouter(t)
 	svc.On("ListRooms", mock.Anything, mock.AnythingOfType("domain.ListPracticeRoomsQuery")).
@@ -214,8 +212,6 @@ func TestHandler_DeleteRoom_Forbidden(t *testing.T) {
 	assert.Equal(t, http.StatusForbidden, w.Code)
 }
 
-// --- Submission handler tests ---
-
 func TestHandler_Submit_Success(t *testing.T) {
 	r, svc := newPracticeRouter(t)
 	roomID := uuid.New()
@@ -288,8 +284,6 @@ func TestHandler_Grade_Forbidden(t *testing.T) {
 	w := do(t, r, "PUT", "/api/v1/practices/submissions/"+subID.String()+"/grade", map[string]any{"score": 50})
 	assert.Equal(t, http.StatusForbidden, w.Code)
 }
-
-// --- Admin handler tests ---
 
 func TestAdminHandler_List_Success(t *testing.T) {
 	r, svc := newPracticeAdminRouter(t)

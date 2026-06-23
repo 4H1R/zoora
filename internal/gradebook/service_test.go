@@ -14,8 +14,6 @@ import (
 	"github.com/4H1R/zoora/internal/gradebook"
 )
 
-// --- Mocks ---
-
 type mColRepo struct{ mock.Mock }
 
 func (m *mColRepo) Create(ctx context.Context, col *domain.GradebookColumn) error {
@@ -232,8 +230,6 @@ func (m *mQuizSubRepo) ListByQuiz(ctx context.Context, quizID uuid.UUID, q domai
 	return subs, a.Get(1).(int64), a.Error(2)
 }
 
-// --- Helpers ---
-
 func teacherCtx(userID uuid.UUID) context.Context {
 	return domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      userID,
@@ -277,8 +273,6 @@ func (d deps) service() domain.GradebookService {
 		slog.Default(),
 	)
 }
-
-// --- CreateColumn tests ---
 
 func TestCreateColumn_Success(t *testing.T) {
 	teacherID := uuid.New()
@@ -365,8 +359,6 @@ func TestCreateColumn_NotOwner_Forbidden(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 
-// --- UpdateColumn tests ---
-
 func TestUpdateColumn_Success(t *testing.T) {
 	teacherID := uuid.New()
 	classID := uuid.New()
@@ -386,8 +378,6 @@ func TestUpdateColumn_Success(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "New Title", col.Title)
 }
-
-// --- DeleteColumn tests ---
 
 func TestDeleteColumn_Success(t *testing.T) {
 	teacherID := uuid.New()
@@ -424,8 +414,6 @@ func TestDeleteColumn_NotOwner_Forbidden(t *testing.T) {
 	err := svc.DeleteColumn(ctx, colID)
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
-
-// --- UpsertCell tests ---
 
 func TestUpsertCell_ManualColumn_Success(t *testing.T) {
 	teacherID := uuid.New()
@@ -487,8 +475,6 @@ func TestUpsertCell_WrongClass_NotFound(t *testing.T) {
 	})
 	assert.ErrorIs(t, err, domain.ErrNotFound)
 }
-
-// --- GetMatrix tests ---
 
 func TestGetMatrix_Teacher_Success(t *testing.T) {
 	teacherID := uuid.New()
@@ -621,8 +607,6 @@ func TestGetMatrix_NoCaller_Forbidden(t *testing.T) {
 	_, err := svc.GetMatrix(context.Background(), uuid.New())
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
-
-// --- Column type validation tests ---
 
 func TestGradebookColumnType_Valid(t *testing.T) {
 	assert.True(t, domain.GradebookColumnAutoAttendance.Valid())

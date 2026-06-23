@@ -27,10 +27,8 @@ function RouteComponent() {
 
   return (
     <main className="relative flex min-h-svh flex-col overflow-hidden bg-background text-foreground">
-      {/* atmosphere */}
       <BackgroundFX />
 
-      {/* top bar */}
       <header
         className="animate-reveal relative z-10 flex items-center justify-between px-6 py-6 sm:px-10"
         style={{ animationDelay: "60ms" }}
@@ -57,7 +55,6 @@ function RouteComponent() {
         </div>
       </header>
 
-      {/* hero */}
       <section className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 py-10 text-center sm:px-10">
         <div className="flex w-full max-w-3xl flex-col items-center">
           <span
@@ -101,7 +98,6 @@ function RouteComponent() {
             {t("comingSoon.subtitle")}
           </p>
 
-          {/* features */}
           <ul
             className="animate-reveal mt-11 flex flex-wrap items-center justify-center gap-x-8 gap-y-3"
             style={{ animationDelay: "460ms" }}
@@ -116,7 +112,6 @@ function RouteComponent() {
         </div>
       </section>
 
-      {/* footer */}
       <footer
         className="animate-reveal relative z-10 flex items-center justify-center px-6 py-6 font-mono text-[0.7rem] tracking-caps text-muted-foreground/60 uppercase sm:justify-between sm:px-10"
         style={{ animationDelay: "700ms" }}

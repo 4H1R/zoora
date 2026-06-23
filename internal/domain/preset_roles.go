@@ -7,46 +7,32 @@ const (
 )
 
 var ManagerPermissions = []PermissionName{
-	// Users
 	PermUsersView, PermUsersViewAny, PermUsersCreate,
 	PermUsersUpdate, PermUsersUpdateAny, PermUsersDelete, PermUsersDeleteAny,
 	PermUsersDisable, PermUsersDisableAny,
-	// Roles
 	PermRolesView, PermRolesCreate, PermRolesUpdate, PermRolesDelete,
-	// Organizations
 	PermOrganizationsUpdate,
-	// Classes
 	PermClassesView, PermClassesViewAny, PermClassesCreate, PermClassesCreateAny,
 	PermClassesUpdate, PermClassesUpdateAny, PermClassesDelete, PermClassesDeleteAny, PermClassesJoin,
-	// Live Sessions
 	PermLiveSessionsView, PermLiveSessionsViewAny, PermLiveSessionsCreate,
 	PermLiveSessionsUpdate, PermLiveSessionsUpdateAny,
 	PermLiveSessionsJoin, PermLiveSessionsJoinAny, PermLiveSessionsManage, PermLiveSessionsManageAny,
-	// Question Banks
 	PermQuestionBanksView, PermQuestionBanksViewAny, PermQuestionBanksCreate, PermQuestionBanksCreateAny,
 	PermQuestionBanksUpdate, PermQuestionBanksUpdateAny, PermQuestionBanksDelete, PermQuestionBanksDeleteAny,
-	// Quizzes
 	PermQuizzesView, PermQuizzesViewAny, PermQuizzesCreate,
 	PermQuizzesUpdate, PermQuizzesUpdateAny, PermQuizzesDelete, PermQuizzesDeleteAny,
-	// Polls
 	PermPollsView, PermPollsCreate,
 	PermPollsUpdate, PermPollsUpdateAny, PermPollsDelete,
-	// Chats
 	PermChatsView, PermChatsCreate, PermChatsUpdate, PermChatsDelete,
 	PermChatsWrite, PermChatsManage,
-	// Media
 	PermMediaView, PermMediaCreate, PermMediaDelete, PermMediaDeleteAny,
-	// Practices
 	PermPracticesView, PermPracticesViewAny, PermPracticesCreate, PermPracticesCreateAny,
 	PermPracticesUpdate, PermPracticesUpdateAny, PermPracticesDelete, PermPracticesDeleteAny,
 	PermPracticesSubmit, PermPracticesGrade,
-	// Offlines
 	PermOfflinesView, PermOfflinesViewAny, PermOfflinesCreate, PermOfflinesCreateAny,
 	PermOfflinesUpdate, PermOfflinesUpdateAny, PermOfflinesDelete, PermOfflinesDeleteAny,
-	// Attendance
 	PermAttendanceView, PermAttendanceViewAny, PermAttendanceCreate, PermAttendanceCreateAny,
 	PermAttendanceUpdate, PermAttendanceUpdateAny, PermAttendanceDelete,
-	// Gradebook
 	PermGradebookView, PermGradebookViewAny, PermGradebookCreate,
 	PermGradebookUpdate, PermGradebookUpdateAny, PermGradebookDelete, PermGradebookDeleteAny,
 }

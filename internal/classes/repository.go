@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -324,9 +325,33 @@ func (r *memberRepository) ListAllByClass(ctx context.Context, classID uuid.UUID
 func (r *memberRepository) ListByClass(ctx context.Context, classID uuid.UUID, p domain.ListParams) ([]domain.ClassMember, int64, error) {
 	base := database.DB(ctx, r.db).Model(&domain.ClassMember{}).
 		Preload("User").
-		Where("class_id = ?", classID)
+		Where("class_members.class_id = ?", classID)
+
+	// Search/order target the member's user. Resolve against users without a
+	// JOIN (which would make id/created_at ambiguous and break the shared
+	// Count) — a subquery for search, a correlated subquery for name ordering.
+	if p.Search != "" {
+		like := "%" + p.Search + "%"
+		sub := database.DB(ctx, r.db).Model(&domain.User{}).
+			Select("id").
+			Where("name ILIKE ? OR username ILIKE ?", like, like)
+		base = base.Where("class_members.user_id IN (?)", sub)
+	}
+
+	dir := "DESC"
+	if strings.EqualFold(p.OrderDir, "asc") {
+		dir = "ASC"
+	}
+	if p.OrderBy == "name" {
+		base = base.Order(fmt.Sprintf("(SELECT name FROM users WHERE users.id = class_members.user_id) %s", dir))
+	} else {
+		base = base.Order(fmt.Sprintf("class_members.created_at %s", dir))
+	}
+
+	// Search/order already applied above; pass only pagination to Paginate so
+	// its generic Apply (which assumes columns on the base table) is a no-op.
 	var members []domain.ClassMember
-	total, err := listparams.Paginate(base, p, &members)
+	total, err := listparams.Paginate(base, domain.ListParams{Page: p.Page, PageSize: p.PageSize}, &members)
 	if err != nil {
 		return nil, 0, fmt.Errorf("classes.memberRepository.ListByClass: %w", err)
 	}

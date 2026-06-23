@@ -14,8 +14,6 @@ import (
 	"github.com/4H1R/zoora/internal/platform/listparams"
 )
 
-// --- LiveRoom repository ---
-
 type roomRepository struct {
 	db *gorm.DB
 }
@@ -214,8 +212,6 @@ func (r *roomRepository) FindByIDIncludingDeleted(ctx context.Context, id uuid.U
 	return &room, nil
 }
 
-// --- LiveParticipant repository ---
-
 type participantRepository struct {
 	db *gorm.DB
 }
@@ -296,8 +292,6 @@ func (r *participantRepository) MarkAllLeft(ctx context.Context, roomID uuid.UUI
 	}
 	return nil
 }
-
-// --- LiveRecording repository ---
 
 type recordingRepository struct {
 	db *gorm.DB

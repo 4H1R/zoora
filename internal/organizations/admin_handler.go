@@ -56,7 +56,6 @@ func (h *AdminHandler) Stats(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, stats)
 }
 
-// List returns all organizations with search, ordering, and pagination.
 // @Summary [Admin] List organizations
 // @Description Cross-org list. Search matches substrings of: name, description. Orderable fields: created_at, updated_at, name. Filters: status, include_deleted.
 // @Tags Admin/Organizations
@@ -88,7 +87,6 @@ func (h *AdminHandler) List(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(orgs, total, q.ListParams))
 }
 
-// Create creates an organization.
 // @Summary [Admin] Create organization
 // @Tags Admin/Organizations
 // @Accept json
@@ -116,7 +114,6 @@ func (h *AdminHandler) Create(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusCreated, org)
 }
 
-// Get returns an organization by ID.
 // @Summary [Admin] Get organization
 // @Tags Admin/Organizations
 // @Produce json
@@ -137,7 +134,6 @@ func (h *AdminHandler) Get(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, org)
 }
 
-// Update updates an organization.
 // @Summary [Admin] Update organization
 // @Tags Admin/Organizations
 // @Accept json

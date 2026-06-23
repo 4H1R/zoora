@@ -74,9 +74,6 @@ type AutoMarkResult struct {
 	Skipped int `json:"skipped"`
 }
 
-// ListAttendanceQuery is the query for GET /classes/:id/sessions/:sessionId/attendance.
-// Typed filters sit alongside the embedded ListParams populated by the handler
-// after white-listing.
 type ListAttendanceQuery struct {
 	Status       *AttendanceStatus `form:"status" binding:"omitempty,oneof=present absent late excused"`
 	IsAutoMarked *bool             `form:"is_auto_marked"`
@@ -84,9 +81,6 @@ type ListAttendanceQuery struct {
 	ListParams   ListParams        `form:"-"`
 }
 
-// AdminListAttendanceQuery is the query for GET /admin/attendance. Typed
-// filters sit alongside the embedded ListParams populated by the handler
-// after white-listing.
 type AdminListAttendanceQuery struct {
 	Status         *AttendanceStatus `form:"status" binding:"omitempty,oneof=present absent late excused"`
 	IsAutoMarked   *bool             `form:"is_auto_marked"`
@@ -97,13 +91,10 @@ type AdminListAttendanceQuery struct {
 	ListParams     ListParams        `form:"-"`
 }
 
-// AdminUpdateAttendanceDTO is the body for PUT /admin/attendance/:id.
 type AdminUpdateAttendanceDTO struct {
 	Status  *AttendanceStatus `json:"status" binding:"omitempty,oneof=present absent late excused"`
 	Remarks *string           `json:"remarks"`
 }
-
-// --- Student self-scoped attendance ("my attendance") ---
 
 // MyAttendanceSummary counts the caller's records by status.
 type MyAttendanceSummary struct {

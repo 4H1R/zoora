@@ -106,8 +106,6 @@ func seedQuizFixture(t *testing.T, r quizRepos) quizFixture {
 	return quizFixture{org: org, teacher: teacher, student: student, class: cls, session: sess, bank: bank, quiz: quiz}
 }
 
-// --- Quiz Repository ---
-
 func TestIntegration_QuizRepo_CRUD(t *testing.T) {
 	r := setupQuizzesDB(t)
 	ctx := context.Background()
@@ -194,8 +192,6 @@ func TestIntegration_QuizRepo_AdminList_FilterByClass(t *testing.T) {
 	assert.Equal(t, f.quiz.ID, got[0].ID)
 }
 
-// --- Rule Repository ---
-
 func TestIntegration_QuizRuleRepo_CRUD(t *testing.T) {
 	r := setupQuizzesDB(t)
 	ctx := context.Background()
@@ -256,8 +252,6 @@ func TestIntegration_QuizRuleRepo_ManualWithQuestionIDs(t *testing.T) {
 	assert.Contains(t, got.QuestionIDs, q2.ID)
 }
 
-// --- Room Repository ---
-
 func TestIntegration_QuizRoomRepo_CRUD(t *testing.T) {
 	r := setupQuizzesDB(t)
 	ctx := context.Background()
@@ -299,8 +293,6 @@ func TestIntegration_QuizRoomRepo_CRUD(t *testing.T) {
 	_, err = r.rooms.FindByID(ctx, room.ID)
 	assert.ErrorIs(t, err, domain.ErrNotFound)
 }
-
-// --- Submission Repository ---
 
 func TestIntegration_SubmissionRepo_CRUD(t *testing.T) {
 	r := setupQuizzesDB(t)

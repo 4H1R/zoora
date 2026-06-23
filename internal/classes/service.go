@@ -179,8 +179,6 @@ func (s *service) resolveListScope(caller domain.Caller) domain.ClassListScope {
 	return authz.ListScope(caller, domain.PermClassesViewAny, domain.PermClassesUpdateAny)
 }
 
-// --- sessions ---
-
 func (s *service) CreateSession(ctx context.Context, classID uuid.UUID, dto domain.CreateClassSessionDTO) (*domain.ClassSession, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
@@ -300,8 +298,6 @@ func (s *service) ListSessions(ctx context.Context, classID uuid.UUID, q domain.
 	}
 	return s.sessions.ListByClass(ctx, classID, q)
 }
-
-// --- membership ---
 
 func (s *service) Enroll(ctx context.Context, classID uuid.UUID, dto domain.EnrollClassMemberDTO) (*domain.ClassMember, error) {
 	caller, ok := domain.CallerFromCtx(ctx)

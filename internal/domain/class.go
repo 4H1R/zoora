@@ -93,16 +93,12 @@ type ClassListScope struct {
 	IncludeDeleted bool
 }
 
-// AdminListClassesQuery is the query for GET /admin/classes. Typed filters
-// sit alongside the embedded ListParams populated by the handler after
-// white-listing.
 type AdminListClassesQuery struct {
 	UserID         *uuid.UUID `form:"-"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }
 
-// AdminCreateClassDTO is the body for POST /admin/classes.
 type AdminCreateClassDTO struct {
 	OrganizationID uuid.UUID `json:"organization_id" binding:"required"`
 	UserID         uuid.UUID `json:"user_id" binding:"required"`
@@ -111,27 +107,23 @@ type AdminCreateClassDTO struct {
 	TotalUsers     int       `json:"total_users" binding:"gte=0"`
 }
 
-// AdminUpdateClassDTO is the body for PUT /admin/classes/:id.
 type AdminUpdateClassDTO struct {
 	Name        *string `json:"name" binding:"omitempty,min=2"`
 	Description *string `json:"description"`
 	TotalUsers  *int    `json:"total_users" binding:"omitempty,gte=0"`
 }
 
-// ListClassSessionsQuery is the query for GET /classes/:id/sessions.
 type ListClassSessionsQuery struct {
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }
 
-// AdminListClassSessionsQuery is the query for GET /admin/sessions.
 type AdminListClassSessionsQuery struct {
 	ClassID        *uuid.UUID `form:"-"`
 	IncludeDeleted bool       `form:"include_deleted"`
 	ListParams     ListParams `form:"-"`
 }
 
-// ListClassMembersQuery is the query for GET /classes/:id/members.
 type ListClassMembersQuery struct {
 	ListParams ListParams `form:"-"`
 }

@@ -104,9 +104,7 @@ function countdownLabel(iso: string | undefined, now: number): string {
 }
 
 function itemsCount(payload: unknown): number {
-  const p = payload as
-    | { status?: number; data?: { data?: { total?: number; items?: unknown[] } } }
-    | undefined
+  const p = payload as { status?: number; data?: { data?: { total?: number; items?: unknown[] } } } | undefined
   if (!p || p.status !== 200) return 0
   return p.data?.data?.total ?? p.data?.data?.items?.length ?? 0
 }
@@ -152,7 +150,15 @@ function DecorativeBackground({ accent }: { accent: Accent }) {
   )
 }
 
-function Breadcrumb({ orgId, classId, classLabel }: { orgId: string; classId: string; classLabel: string | undefined }) {
+function Breadcrumb({
+  orgId,
+  classId,
+  classLabel,
+}: {
+  orgId: string
+  classId: string
+  classLabel: string | undefined
+}) {
   const { t } = useTranslation()
   return (
     <div className="animate-in fade-in-0 slide-in-from-top-2 fill-mode-both flex items-center gap-2 pt-6 font-mono text-xs tracking-[0.25em] uppercase duration-500">
@@ -244,7 +250,7 @@ function SessionHeader({
     <header
       className={cn(
         "animate-in fade-in-0 slide-in-from-bottom-3 fill-mode-both bg-card relative isolate overflow-hidden rounded-3xl border p-7 shadow-sm duration-500 md:p-9",
-        "dark:bg-card/50 dark:border-0 dark:shadow-none dark:ring-1 dark:ring-foreground/8 dark:backdrop-blur-sm",
+        "dark:bg-card/50 dark:ring-foreground/8 dark:border-0 dark:shadow-none dark:ring-1 dark:backdrop-blur-sm",
         accent.border
       )}
     >
@@ -328,7 +334,7 @@ function StatCell({
       ) : (
         <span
           className={cn(
-            "font-mono text-3xl leading-none font-semibold tracking-tight tabular-nums md:text-4xl text-foreground",
+            "text-foreground font-mono text-3xl leading-none font-semibold tracking-tight tabular-nums md:text-4xl",
             className
           )}
         >
@@ -363,8 +369,8 @@ function SummaryCard({
       }}
       className={cn(
         "group/card bg-card text-card-foreground border-border animate-in fade-in-0 slide-in-from-bottom-3 fill-mode-both relative isolate flex cursor-pointer flex-col gap-4 overflow-hidden rounded-2xl border p-5 shadow-sm transition-all duration-300",
-        "hover:-translate-y-0.5 hover:shadow-lg hover:border-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-        "dark:shadow-none dark:ring-1 dark:ring-foreground/8 dark:border-0 dark:hover:ring-foreground/30"
+        "hover:border-foreground/25 focus-visible:ring-primary/40 hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:outline-none",
+        "dark:ring-foreground/8 dark:hover:ring-foreground/30 dark:border-0 dark:shadow-none dark:ring-1"
       )}
       style={{ animationDelay: `${index * 70}ms`, animationDuration: "450ms" }}
     >
@@ -688,9 +694,7 @@ function RouteComponent() {
       canCreate: canCreatePractices,
       newLabel: t("org.session.practices.newPractice"),
       summaryLabel: t("org.session.overview.units.practices", { count }),
-      emptyHint: canCreatePractices
-        ? t("org.session.practices.emptyHint")
-        : t("org.session.practices.emptyHintMember"),
+      emptyHint: canCreatePractices ? t("org.session.practices.emptyHint") : t("org.session.practices.emptyHintMember"),
       subTabs,
     })
   }
@@ -709,9 +713,7 @@ function RouteComponent() {
       canCreate: canCreateOfflines,
       newLabel: t("org.session.offlines.newOffline"),
       summaryLabel: t("org.session.overview.units.recordings", { count }),
-      emptyHint: canCreateOfflines
-        ? t("org.session.offlines.emptyHint")
-        : t("org.session.offlines.emptyHintMember"),
+      emptyHint: canCreateOfflines ? t("org.session.offlines.emptyHint") : t("org.session.offlines.emptyHintMember"),
       subTabs: [
         {
           key: "offlines",
@@ -725,8 +727,12 @@ function RouteComponent() {
     })
   }
 
-  const countdownStatLabel =
-    status === "live" ? t("status.liveNow") : status === "ended" ? t("status.ended") : t("org.session.meta.countdown")
+  const getCountdownStatLabel = () => {
+    if (status === "live") return t("status.liveNow")
+    if (status === "ended") return t("status.ended")
+    return t("org.session.meta.countdown")
+  }
+  const countdownStatLabel = getCountdownStatLabel()
   const statCount = surfaces.length + 1
 
   return (
@@ -749,7 +755,7 @@ function RouteComponent() {
           <TabsList variant="line" className="h-auto w-full flex-wrap gap-1 bg-transparent p-0">
             <TabsTrigger
               value="overview"
-              className="gap-2 rounded-xl px-4 py-2.5 data-active:bg-foreground data-active:text-background data-active:shadow-sm"
+              className="data-active:bg-foreground data-active:text-background gap-2 rounded-xl px-4 py-2.5 data-active:shadow-sm"
             >
               <LayoutDashboardIcon className="size-4" />
               <span className="text-sm font-semibold tracking-tight">{t("org.session.nav.overview")}</span>
@@ -758,7 +764,7 @@ function RouteComponent() {
               <TabsTrigger
                 key={surface.key}
                 value={surface.key}
-                className="group/toptab gap-2 rounded-xl px-4 py-2.5 data-active:bg-foreground data-active:text-background data-active:shadow-sm"
+                className="group/toptab data-active:bg-foreground data-active:text-background gap-2 rounded-xl px-4 py-2.5 data-active:shadow-sm"
               >
                 <span className="text-sm font-semibold tracking-tight">{surface.navLabel}</span>
                 {surface.loading ? (
@@ -767,7 +773,7 @@ function RouteComponent() {
                   <span className="inline-flex items-center gap-1 font-mono text-xs tabular-nums">
                     <span
                       className={cn(
-                        "size-1.5 rounded-full group-data-[active]/toptab:bg-background",
+                        "group-data-[active]/toptab:bg-background size-1.5 rounded-full",
                         surface.count > 0 ? accent.dot : "bg-muted-foreground/40"
                       )}
                       aria-hidden

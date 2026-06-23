@@ -20,6 +20,11 @@ interface UseSectionListOptions {
   searchDelayMs?: number
 }
 
+function getOrderDir(sort: SectionSort | undefined): "asc" | "desc" | undefined {
+  if (!sort) return undefined
+  return sort.desc ? "desc" : "asc"
+}
+
 /**
  * Local list state for a card-grid section: debounced search, sort, an optional
  * status filter, and pagination. Each section owns its own instance, so the five
@@ -43,7 +48,7 @@ export function useSectionList(opts: UseSectionListOptions = {}) {
   const params: SectionListParams = {
     search: search || undefined,
     order_by: sort?.id,
-    order_dir: sort ? (sort.desc ? "desc" : "asc") : undefined,
+    order_dir: getOrderDir(sort),
     page,
   }
 

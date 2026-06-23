@@ -1568,7 +1568,14 @@
         "newSession": "جلسه جدید",
         "open": "باز کردن",
         "emptyTitle": "هنوز جلسه‌ای وجود ندارد",
-        "emptyHint": "اولین جلسه این کلاس را برنامه‌ریزی کنید."
+        "emptyHint": "اولین جلسه این کلاس را برنامه‌ریزی کنید.",
+        "searchPlaceholder": "جستجوی جلسات…",
+        "table": {
+          "status": "وضعیت",
+          "name": "جلسه",
+          "startTime": "شروع",
+          "createdAt": "ایجاد"
+        }
       },
       "students": {
         "eyebrow": "فهرست",
@@ -1578,7 +1585,12 @@
         "emptyTitle": "هیچ دانش‌آموزی ثبت‌نام نکرده است",
         "emptyHint": "دانش‌آموزانی که به این کلاس می‌پیوندند اینجا نمایش داده می‌شوند.",
         "addMember": "افزودن عضو",
-        "removeAction": "حذف عضو"
+        "removeAction": "حذف عضو",
+        "searchPlaceholder": "جستجوی دانش‌آموزان…",
+        "table": {
+          "name": "دانش‌آموز",
+          "joined": "تاریخ عضویت"
+        }
       },
       "enrollMember": {
         "title": "افزودن عضو",
@@ -1623,6 +1635,11 @@
           "manual_attendance": "دستی · حضور و غیاب",
           "manual_text": "دستی · متن"
         }
+      },
+      "toolbar": {
+        "sort": "مرتب‌سازی",
+        "columns": "ستون‌ها",
+        "toggleColumns": "نمایش ستون‌ها"
       }
     },
     "session": {

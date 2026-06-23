@@ -57,21 +57,18 @@ type OrganizationStats struct {
 	TotalUsers           int64 `json:"total_users"`
 }
 
-// AdminListOrganizationsQuery is the query for GET /admin/organizations.
 type AdminListOrganizationsQuery struct {
 	Status         *OrganizationStatus `form:"status" binding:"omitempty,oneof=active trial suspended archived"`
 	IncludeDeleted bool                `form:"include_deleted"`
 	ListParams     ListParams          `form:"-"`
 }
 
-// AdminCreateOrganizationDTO is the body for POST /admin/organizations.
 type AdminCreateOrganizationDTO struct {
 	Name        string             `json:"name" binding:"required,min=2"`
 	Description string             `json:"description"`
 	Status      OrganizationStatus `json:"status" binding:"omitempty,oneof=active trial suspended archived"`
 }
 
-// AdminUpdateOrganizationDTO is the body for PUT /admin/organizations/:id.
 type AdminUpdateOrganizationDTO struct {
 	Name        *string             `json:"name" binding:"omitempty,min=2"`
 	Description *string             `json:"description"`

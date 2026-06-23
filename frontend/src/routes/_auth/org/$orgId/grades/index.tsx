@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { GraduationCapIcon } from "lucide-react"
-import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { useGetGradebookMe } from "@/api/gradebook/gradebook"
@@ -11,7 +10,7 @@ import { PageHeader } from "@/components/page-header"
 import { Card } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ViewModeToggle, type ViewMode } from "@/components/view-mode-toggle"
+import { ViewModeToggle, useViewMode } from "@/components/view-mode-toggle"
 import { useOrgGuard } from "@/lib/access"
 import { adminSearchSchema, useClientTable } from "@/lib/data-table"
 import { orgHead } from "@/lib/org-head"
@@ -44,7 +43,7 @@ function RouteComponent() {
     }))
   )
 
-  const [viewMode, setViewMode] = useState<ViewMode>("grid")
+  const { viewMode, setViewMode, isTable } = useViewMode()
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
   const columns = useGradeColumns()
   const table = useClientTable({
@@ -59,7 +58,7 @@ function RouteComponent() {
   if (!allowed) return null
 
   const renderContent = () => {
-    if (viewMode === "table") {
+    if (isTable) {
       return (
         <Card className="gap-0 overflow-hidden p-0">
           <div className="overflow-x-auto">
@@ -151,6 +150,7 @@ function RouteComponent() {
             sortLabel={t("org.grades.toolbar.sort")}
             columnsLabel={t("org.grades.toolbar.columns")}
             toggleColumnsLabel={t("org.grades.toolbar.toggleColumns")}
+            showColumnsToggle={isTable}
           />
         </div>
         <ViewModeToggle value={viewMode} onChange={setViewMode} />

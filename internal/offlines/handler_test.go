@@ -101,8 +101,6 @@ func do(t *testing.T, r http.Handler, method, path string, body any) *httptest.R
 	return w
 }
 
-// --- Room handler tests ---
-
 func TestHandler_ListRooms_Success(t *testing.T) {
 	r, svc := newOfflineRouter(t)
 	svc.On("ListRooms", mock.Anything, mock.AnythingOfType("domain.ListOfflineRoomsQuery")).
@@ -260,8 +258,6 @@ func TestHandler_DeleteRoom_NotFound(t *testing.T) {
 	w := do(t, r, "DELETE", "/api/v1/offlines/"+id.String(), nil)
 	assert.Equal(t, http.StatusNotFound, w.Code)
 }
-
-// --- Admin handler tests ---
 
 func TestAdminHandler_List_Success(t *testing.T) {
 	r, svc := newOfflineAdminRouter(t)

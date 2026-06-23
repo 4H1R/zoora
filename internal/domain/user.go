@@ -95,9 +95,6 @@ type UserStatusCounts struct {
 	Disabled int64 `json:"disabled"`
 }
 
-// AdminListUsersQuery is the query for GET /admin/users. Typed filters
-// sit alongside the embedded ListParams populated by the handler after
-// white-listing.
 type AdminListUsersQuery struct {
 	OrganizationID *uuid.UUID `form:"-"`
 	RoleID         *uuid.UUID `form:"-"`

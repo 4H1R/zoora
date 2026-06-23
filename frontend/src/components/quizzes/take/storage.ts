@@ -28,6 +28,6 @@ export function clearPersistedState(submissionId: string) {
   try {
     localStorage.removeItem(key(submissionId))
   } catch {
-    // ignore
+    // storage unavailable — ignore
   }
 }

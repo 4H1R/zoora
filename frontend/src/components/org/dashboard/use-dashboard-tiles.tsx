@@ -7,10 +7,8 @@ import { ORG_ROUTES } from "@/lib/org-routes"
 
 import type { DashboardTileSpec } from "./tile-grid"
 
-// TILE_KEYS lists the launcher tiles in display order. Unlike the sidebar nav,
-// the dashboard excludes "dashboard" itself and includes "online-classes".
-// Per-route metadata (icon, label, perms, path) comes from ORG_ROUTES so the
-// tiles and the nav never drift.
+// Launcher tiles in display order. Excludes "dashboard", includes "online-classes".
+// Metadata comes from ORG_ROUTES so tiles and nav never drift.
 const TILE_KEYS: OrgRouteKey[] = [
   "calendar",
   "classes",
@@ -24,9 +22,7 @@ const TILE_KEYS: OrgRouteKey[] = [
   "settings",
 ]
 
-// useDashboardTiles returns the launcher tiles the current user is allowed to
-// open, gated by permission. Every role sees the same grid design; only the
-// tiles they can access are shown.
+// Returns permission-filtered launcher tiles; same grid for all roles.
 export function useDashboardTiles(orgId: string): DashboardTileSpec[] {
   const { can } = useAccess()
   const { t } = useTranslation()

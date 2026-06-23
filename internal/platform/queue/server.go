@@ -49,7 +49,6 @@ func (s *Server) Shutdown() {
 	s.inner.Shutdown()
 }
 
-// AsynqLogger adapts slog.Logger to asynq's Logger interface.
 type AsynqLogger struct {
 	logger *slog.Logger
 }

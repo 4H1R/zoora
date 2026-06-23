@@ -144,7 +144,6 @@ export function OrgSwitcher({
               />
             </div>
 
-            {/* Scope */}
             <DropdownMenuGroup>
               <DropdownMenuLabel>{t("admin.orgs.switcher.scope")}</DropdownMenuLabel>
               <DropdownMenuItem className="gap-2.5 rounded-md px-2.5 py-1.5" onClick={() => handleSelect(null)}>
@@ -164,7 +163,6 @@ export function OrgSwitcher({
               </DropdownMenuItem>
             </DropdownMenuGroup>
 
-            {/* Recent */}
             {recentOrgs.length > 0 && !search && (
               <>
                 <DropdownMenuSeparator />
@@ -175,7 +173,6 @@ export function OrgSwitcher({
               </>
             )}
 
-            {/* All organizations */}
             {!search && remainingOrgs.length > 0 && (
               <>
                 <DropdownMenuSeparator />
@@ -186,7 +183,6 @@ export function OrgSwitcher({
               </>
             )}
 
-            {/* When searching, show all results without recent split */}
             {search && organizations.length > 0 && (
               <>
                 <DropdownMenuSeparator />
@@ -197,7 +193,6 @@ export function OrgSwitcher({
               </>
             )}
 
-            {/* Create organization footer */}
             {onCreateOrg && (
               <>
                 <DropdownMenuSeparator />

@@ -59,7 +59,6 @@ function RouteComponent() {
 
   return (
     <div className="relative isolate flex min-h-[70vh] flex-col items-center justify-center overflow-hidden rounded-2xl border px-6 py-16 text-center sm:py-24">
-      {/* Atmosphere: primary glow + faint grid, fading toward the edges */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_70%_55%_at_50%_0%,var(--color-primary)/12%,transparent_70%)]"
@@ -74,7 +73,6 @@ function RouteComponent() {
         }}
       />
 
-      {/* Floating document deck */}
       <div aria-hidden className="relative mb-12 h-28 w-48">
         <div className="bg-primary/25 absolute inset-x-8 top-6 -z-10 h-20 rounded-full blur-2xl" />
         {DECK.map((card, i) => (
@@ -91,7 +89,6 @@ function RouteComponent() {
         ))}
       </div>
 
-      {/* Badge */}
       <span className="bg-primary/10 text-primary ring-primary/20 mb-5 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset">
         <SparklesIcon className="size-3.5 shrink-0" />
         {t("org.files.comingSoon.badge")}
@@ -104,7 +101,6 @@ function RouteComponent() {
         {t("org.files.comingSoon.description")}
       </p>
 
-      {/* Feature preview */}
       <div className="mt-10 grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
         {FEATURES.map(({ key, icon: Icon }) => (
           <div
@@ -122,7 +118,6 @@ function RouteComponent() {
         ))}
       </div>
 
-      {/* Status + back */}
       <div className="mt-10 flex flex-col items-center gap-4">
         <span className="text-muted-foreground inline-flex items-center gap-2 text-xs font-medium">
           <span className="relative flex size-2">

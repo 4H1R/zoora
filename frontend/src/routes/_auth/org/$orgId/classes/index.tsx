@@ -14,7 +14,7 @@ import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
-import { ViewModeToggle, type ViewMode } from "@/components/view-mode-toggle"
+import { ViewModeToggle, useViewMode } from "@/components/view-mode-toggle"
 import { useOrgGuard } from "@/lib/access"
 import { useAdminTable } from "@/lib/data-table"
 import { orgHead } from "@/lib/org-head"
@@ -60,14 +60,14 @@ function RouteComponent() {
   const total = classesData?.total ?? 0
 
   const [formOpen, setFormOpen] = useState(false)
-  const [viewMode, setViewMode] = useState<ViewMode>("grid")
+  const { viewMode, setViewMode, isTable } = useViewMode()
 
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
   const columns = useClassColumns(orgId)
   const table = useAdminTable({ data: classes, columns, rowCount: total, sorting })
 
   const renderContent = () => {
-    if (viewMode === "table") {
+    if (isTable) {
       return (
         <Card className="gap-0 overflow-hidden p-0">
           <div className="overflow-x-auto">
@@ -136,6 +136,7 @@ function RouteComponent() {
             sortLabel={t("classesPage.toolbar.sort")}
             columnsLabel={t("classesPage.toolbar.columns")}
             toggleColumnsLabel={t("classesPage.toolbar.toggleColumns")}
+            showColumnsToggle={isTable}
           />
         </div>
         <ViewModeToggle value={viewMode} onChange={setViewMode} />

@@ -1496,7 +1496,14 @@
         "newSession": "New session",
         "open": "Open",
         "emptyTitle": "No sessions yet",
-        "emptyHint": "Schedule the first session for this class to get started."
+        "emptyHint": "Schedule the first session for this class to get started.",
+        "searchPlaceholder": "Search sessions…",
+        "table": {
+          "status": "Status",
+          "name": "Session",
+          "startTime": "Starts",
+          "createdAt": "Created"
+        }
       },
       "students": {
         "eyebrow": "Roster",
@@ -1506,7 +1513,12 @@
         "emptyTitle": "No students enrolled",
         "emptyHint": "Students who join this class will appear here.",
         "addMember": "Add member",
-        "removeAction": "Remove member"
+        "removeAction": "Remove member",
+        "searchPlaceholder": "Search students…",
+        "table": {
+          "name": "Student",
+          "joined": "Joined"
+        }
       },
       "enrollMember": {
         "title": "Enroll a member",
@@ -1551,6 +1563,11 @@
           "manual_attendance": "Manual · Attendance",
           "manual_text": "Manual · Text"
         }
+      },
+      "toolbar": {
+        "sort": "Sort",
+        "columns": "Columns",
+        "toggleColumns": "Toggle columns"
       }
     },
     "session": {

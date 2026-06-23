@@ -33,7 +33,6 @@ func (h *AdminHandler) RegisterAdminRoutes(group *gin.RouterGroup) {
 	group.DELETE("/practices/:id", idParam, h.HardDelete)
 }
 
-// List returns practice rooms across all organizations.
 // @Summary [Admin] List practice rooms
 // @Description Cross-org list. Search matches: title, content. Orderable: created_at, updated_at, start_time, end_time, title. Filters: class_id, class_session_id, user_id, include_deleted.
 // @Tags Admin/Practices
@@ -75,7 +74,6 @@ func (h *AdminHandler) List(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(rooms, total, q.ListParams))
 }
 
-// HardDelete permanently deletes a practice room.
 // @Summary [Admin] Hard-delete practice room
 // @Tags Admin/Practices
 // @Produce json

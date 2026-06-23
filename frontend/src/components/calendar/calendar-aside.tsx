@@ -25,8 +25,6 @@ const LEARNING_KEYS: OrgRouteKey[] = [
   "attendance",
 ]
 
-// CalendarLegend maps each event-type color to its label and shows the total
-// event count for the visible period.
 export function CalendarLegend({ monthCount }: { monthCount: number }) {
   const { t } = useTranslation()
   return (
@@ -54,8 +52,6 @@ export function CalendarLegend({ monthCount }: { monthCount: number }) {
   )
 }
 
-// LearningLinks renders perm-gated quick links to the org's learning routes.
-// Hidden entirely when the user can access none of them.
 export function LearningLinks({ orgId }: { orgId: string }) {
   const { t, i18n } = useTranslation()
   const { can } = useAccess()

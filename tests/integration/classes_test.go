@@ -245,3 +245,40 @@ func TestIntegration_MemberRepo_UniqueAndCapacityCount(t *testing.T) {
 	err = r.members.Delete(ctx, c.ID, studentA.ID)
 	assert.ErrorIs(t, err, domain.ErrNotFound)
 }
+
+func TestIntegration_MemberRepo_ListByClass_SearchAndOrder(t *testing.T) {
+	r := setupClassesDB(t)
+	ctx := context.Background()
+	org := seedOrg(t, r.orgs, "Acme")
+	teacher := seedTeacher(t, r.users, org.ID, "t")
+	alice := seedTeacher(t, r.users, org.ID, "alice")
+	bob := seedTeacher(t, r.users, org.ID, "bob")
+	c := seedClass(t, r, org.ID, teacher.ID, "Roster", 0)
+
+	require.NoError(t, r.members.Create(ctx, &domain.ClassMember{ClassID: c.ID, UserID: alice.ID}))
+	require.NoError(t, r.members.Create(ctx, &domain.ClassMember{ClassID: c.ID, UserID: bob.ID}))
+
+	// Search joins users and matches the member's name/username substring.
+	found, total, err := r.members.ListByClass(ctx, c.ID, domain.ListParams{
+		Page: 1, PageSize: 10,
+		Search:       "ali",
+		SearchFields: []string{"name", "username"},
+		OrderBy:      "created_at", OrderDir: "desc",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), total)
+	require.Len(t, found, 1)
+	assert.Equal(t, alice.ID, found[0].UserID)
+	require.NotNil(t, found[0].User)
+	assert.Equal(t, "alice", found[0].User.Name)
+
+	// Order by the joined users.name ascending → alice before bob.
+	asc, _, err := r.members.ListByClass(ctx, c.ID, domain.ListParams{
+		Page: 1, PageSize: 10,
+		OrderBy: "name", OrderDir: "asc",
+	})
+	require.NoError(t, err)
+	require.Len(t, asc, 2)
+	assert.Equal(t, alice.ID, asc[0].UserID)
+	assert.Equal(t, bob.ID, asc[1].UserID)
+}

@@ -67,8 +67,6 @@ type QuizRoom struct {
 	UpdatedAt      time.Time     `json:"updated_at"`
 }
 
-// --- DTOs ---
-
 type CreateQuizDTO struct {
 	ClassID          uuid.UUID `json:"class_id" binding:"required"`
 	Title            string    `json:"title" binding:"required,min=2"`
@@ -141,8 +139,6 @@ type ListQuizRoomsQuery struct {
 	QuizID     *uuid.UUID `form:"-"`
 	ListParams ListParams `form:"-"`
 }
-
-// --- Submission ---
 
 type SubmissionStatus string
 
@@ -237,8 +233,6 @@ type ListSubmissionsQuery struct {
 // before a submission is rejected outright.
 const SubmissionGracePeriod = 30 // seconds
 
-// --- Scoping ---
-
 type QuizListScope struct {
 	All            bool
 	OrganizationID *uuid.UUID
@@ -248,8 +242,6 @@ type QuizListScope struct {
 	ClassSessionID *uuid.UUID
 	IncludeDeleted bool
 }
-
-// --- Student self-scoped exams ("my exams") ---
 
 // MyExamState is the derived status of an exam for a specific student.
 type MyExamState string
@@ -290,8 +282,6 @@ type MyExam struct {
 	// SubmittedAt is populated when the student has submitted.
 	SubmittedAt *time.Time `json:"submitted_at,omitempty"`
 }
-
-// --- Interfaces ---
 
 type QuizRepository interface {
 	Create(ctx context.Context, quiz *Quiz) error

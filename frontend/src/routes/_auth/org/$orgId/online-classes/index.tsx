@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { ChevronLeft, ChevronRight, VideoIcon } from "lucide-react"
-import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
@@ -13,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { ViewModeToggle, type ViewMode } from "@/components/view-mode-toggle"
+import { ViewModeToggle, useViewMode } from "@/components/view-mode-toggle"
 import { useOrgGuard } from "@/lib/access"
 import { useAdminTable } from "@/lib/data-table"
 import { orgHead } from "@/lib/org-head"
@@ -72,13 +71,13 @@ function RouteComponent() {
   const rooms = roomsData?.items ?? []
   const total = roomsData?.total ?? 0
 
-  const [viewMode, setViewMode] = useState<ViewMode>("grid")
+  const { viewMode, setViewMode, isTable } = useViewMode()
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
   const columns = useLiveRoomColumns()
   const table = useAdminTable({ data: rooms, columns, rowCount: total, sorting })
 
   const renderContent = () => {
-    if (viewMode === "table") {
+    if (isTable) {
       return (
         <Card className="gap-0 overflow-hidden p-0">
           <div className="overflow-x-auto">
@@ -152,7 +151,7 @@ function RouteComponent() {
         </ToggleGroup>
 
         <div className="flex items-center gap-2">
-          {viewMode === "table" && (
+          {isTable && (
             <ColumnsToggle
               table={table}
               columnsLabel={t("onlineClassesPage.toolbar.columns")}

@@ -21,8 +21,7 @@ import { TileGrid } from "./tile-grid"
 import { useDashboardTiles } from "./use-dashboard-tiles"
 import { useGreeting } from "./use-greeting"
 
-// examStateBadgeVariant maps a derived exam state to a shadcn Badge variant,
-// using theme tokens only: open = primary, graded = secondary, others = outline.
+// Maps exam state to Badge variant using theme tokens only.
 function examStateBadgeVariant(state: MyExamState | undefined) {
   switch (state) {
     case "open":
@@ -86,15 +85,12 @@ export function StudentDashboard({ orgId }: { orgId: string }) {
         className="pointer-events-none absolute inset-x-0 -top-6 -z-10 h-48 bg-[radial-gradient(ellipse_at_top,var(--color-primary)/8%,transparent_60%)]"
       />
 
-      {/* Hero */}
       <div className="flex flex-col gap-1.5">
         <Eyebrow className="text-primary">{t("org.dashboard.overview")}</Eyebrow>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{greeting}</h1>
       </div>
 
-      {/* Widgets */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Upcoming exams */}
         <Card className="gap-0 overflow-hidden p-0">
           <div className="flex items-center justify-between border-b px-4 py-3">
             <Eyebrow>{t("org.portal.widgets.upcomingExams")}</Eyebrow>
@@ -148,7 +144,6 @@ export function StudentDashboard({ orgId }: { orgId: string }) {
           )}
         </Card>
 
-        {/* Latest grades */}
         <Card className="gap-0 overflow-hidden p-0">
           <div className="flex items-center justify-between border-b px-4 py-3">
             <Eyebrow>{t("org.portal.widgets.latestGrades")}</Eyebrow>
@@ -196,7 +191,6 @@ export function StudentDashboard({ orgId }: { orgId: string }) {
         </Card>
       </div>
 
-      {/* Launcher grid */}
       {tiles.length > 0 ? <TileGrid tiles={tiles} /> : null}
 
       {tiles.length === 0 && !examsLoading && !gradesLoading && upcomingExams.length === 0 && latestGrades.length === 0 ? (

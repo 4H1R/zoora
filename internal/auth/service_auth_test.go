@@ -25,8 +25,6 @@ func newTestRedis(t *testing.T) *redis.Client {
 	return redis.NewClient(&redis.Options{Addr: mr.Addr()})
 }
 
-// --- Mocks ---
-
 type mockUserRepo struct{ mock.Mock }
 
 func (m *mockUserRepo) Create(ctx context.Context, user *domain.User) error {
@@ -85,8 +83,6 @@ func (m *mockUserRepo) CountAll(ctx context.Context) (int64, error) {
 	args := m.Called(ctx)
 	return args.Get(0).(int64), args.Error(1)
 }
-
-// --- Tests ---
 
 func TestLogin_ValidCredentials(t *testing.T) {
 	ctx := context.Background()

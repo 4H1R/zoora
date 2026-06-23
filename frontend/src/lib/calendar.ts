@@ -36,8 +36,7 @@ export function getMonthRange(
 }
 
 // formatDayParts splits a date into its weekday name and long date in the
-// active calendar system (Jalali for fa, Gregorian otherwise). Used by the
-// selected-day header so the user always sees which day they're looking at.
+// active calendar system (Jalali for fa, Gregorian otherwise).
 export function formatDayParts(
   d: Date,
   lang: string
@@ -70,8 +69,6 @@ export function isToday(d: Date): boolean {
   return isSameDay(d, new Date())
 }
 
-// EventAccent is the per-type color palette for the selected-day list: a solid
-// bar, a tinted icon chip, and a readable icon foreground (dark-mode aware).
 export type EventAccent = { bar: string; chipBg: string; chipText: string }
 
 export function eventAccent(type: string | undefined): EventAccent {
@@ -119,7 +116,6 @@ export function bucketByDay(
   return map
 }
 
-// eventDotColor maps a type to a Tailwind background class for day-cell dots.
 export function eventDotColor(type: string | undefined): string {
   switch (type) {
     case "live":
@@ -135,7 +131,6 @@ export function eventDotColor(type: string | undefined): string {
   }
 }
 
-// eventLink returns the TanStack Router target for an event's deep link.
 export function eventLink(
   orgId: string,
   e: CalendarEvent

@@ -39,10 +39,8 @@ export type OrgRouteKey =
 // Each consumer decides WHICH routes to show and in what order/grouping; this
 // table only owns the metadata that must stay in sync across both.
 export type OrgRouteSpec = {
-  // i18nKey is the translation key for the route label (e.g. "org.nav.exams").
   i18nKey: string
   icon: React.ReactNode
-  // segment is the path under /org/$orgId, e.g. "exams" -> "/org/$orgId/exams".
   segment: string
   // perms gate visibility; undefined means always visible to org members.
   perms?: AppPermission[]

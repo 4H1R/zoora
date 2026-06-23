@@ -33,7 +33,6 @@ export function badgeLabelKey(status: LiveRoomStatus | undefined): string {
   }
 }
 
-// ctaMode picks the CTA based on status and whether the caller can host (manage).
 export function ctaMode(status: LiveRoomStatus | undefined, canManage: boolean): CtaMode {
   if (status === "active") return "join"
   if (status === "finished") return "ended"

@@ -150,9 +150,7 @@ function RouteComponent() {
   return (
     <div className="mx-auto w-full max-w-4xl pb-24">
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
-        {/* ── Identity hero ── */}
         <section className="relative overflow-hidden rounded-2xl border">
-          {/* atmosphere */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 bg-gradient-to-br from-success/8 via-card to-card"
@@ -174,7 +172,6 @@ function RouteComponent() {
           />
 
           <div className="relative flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:gap-6 sm:p-8">
-            {/* monogram */}
             <div className="relative shrink-0">
               <div className="from-success to-green-700 text-success-foreground ring-foreground/10 grid size-18 place-items-center rounded-2xl bg-gradient-to-br font-heading text-2xl font-semibold tracking-tight shadow-lg ring-1 select-none">
                 {initials(liveName || org?.name)}
@@ -214,7 +211,6 @@ function RouteComponent() {
           </div>
         </section>
 
-        {/* ── General section ── */}
         <Section
           title={t("org.settings.general")}
           hint={t("org.settings.generalHint")}
@@ -248,7 +244,6 @@ function RouteComponent() {
           </Field>
         </Section>
 
-        {/* ── Details (read-only) ── */}
         <Section
           title={t("org.settings.details")}
           hint={t("org.settings.detailsHint")}
@@ -291,7 +286,6 @@ function RouteComponent() {
         </Section>
       </form>
 
-      {/* ── Floating save bar ── */}
       <FormSaveBar
         form={form}
         onSave={onSubmit}

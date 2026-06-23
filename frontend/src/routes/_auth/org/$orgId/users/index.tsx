@@ -7,7 +7,13 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { getGetUsersCountsQueryKey, getGetUsersQueryKey, useGetUsers, useGetUsersCounts, useDeleteUsersId } from "@/api/users/users"
+import {
+  getGetUsersCountsQueryKey,
+  getGetUsersQueryKey,
+  useDeleteUsersId,
+  useGetUsers,
+  useGetUsersCounts,
+} from "@/api/users/users"
 import { useDisableUser, useEnableUser } from "@/api/users/users-disable"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
@@ -34,6 +40,12 @@ export const Route = createFileRoute("/_auth/org/$orgId/users/")({
   component: UsersPage,
 })
 
+function getDisabledFilter(statusFilter: string): boolean | undefined {
+  if (statusFilter === "active") return false
+  if (statusFilter === "disabled") return true
+  return undefined
+}
+
 function UsersPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -43,7 +55,7 @@ function UsersPage() {
   const allowed = useOrgGuard(["users:view", "users:view_any"])
 
   const statusFilter = status ?? "all"
-  const disabled = statusFilter === "active" ? false : statusFilter === "disabled" ? true : undefined
+  const disabled = getDisabledFilter(statusFilter)
   const currentPage = page ?? 1
   const pageSize = page_size ?? 8
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []

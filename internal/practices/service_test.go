@@ -14,8 +14,6 @@ import (
 	"github.com/4H1R/zoora/internal/practices"
 )
 
-// --- Mock repositories ---
-
 type mockRoomRepo struct{ mock.Mock }
 
 func (m *mockRoomRepo) Create(ctx context.Context, room *domain.PracticeRoom) error {
@@ -211,8 +209,6 @@ func (m *mockMemberRepo) ListAllByClass(ctx context.Context, classID uuid.UUID) 
 	return ms, a.Error(1)
 }
 
-// --- Helpers ---
-
 func newTestService(t *testing.T) (domain.PracticeService, *mockRoomRepo, *mockSubRepo, *mockSessionRepo, *mockClassRepo, *mockMemberRepo) {
 	t.Helper()
 	roomRepo := &mockRoomRepo{}
@@ -231,8 +227,6 @@ func callerCtx(userID uuid.UUID, isAdmin bool, perms ...string) context.Context 
 		Permissions: perms,
 	})
 }
-
-// --- ListRooms tests ---
 
 func TestListRooms_ManagerStatsAndStudentStatus(t *testing.T) {
 	svc, roomRepo, subRepo, _, _, _ := newTestService(t)
@@ -269,8 +263,6 @@ func TestListRooms_ManagerStatsAndStudentStatus(t *testing.T) {
 	}
 	assert.Equal(t, domain.PracticeStatusToSubmit, views[0].Status)
 }
-
-// --- CreateRoom tests ---
 
 func TestCreateRoom_Success(t *testing.T) {
 	svc, roomRepo, _, sessionRepo, classRepo, _ := newTestService(t)
@@ -356,8 +348,6 @@ func TestCreateRoom_Admin_CanCreateForAnyClass(t *testing.T) {
 	assert.Equal(t, adminID, room.UserID)
 }
 
-// --- GetRoom tests ---
-
 func TestGetRoom_Owner_Success(t *testing.T) {
 	svc, roomRepo, _, _, _, _ := newTestService(t)
 
@@ -408,8 +398,6 @@ func TestGetRoom_NonMember_Forbidden(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 
-// --- UpdateRoom tests ---
-
 func TestUpdateRoom_Owner_Success(t *testing.T) {
 	svc, roomRepo, _, _, _, _ := newTestService(t)
 
@@ -443,8 +431,6 @@ func TestUpdateRoom_NotOwner_Forbidden(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 
-// --- DeleteRoom tests ---
-
 func TestDeleteRoom_Owner_Success(t *testing.T) {
 	svc, roomRepo, _, _, _, _ := newTestService(t)
 
@@ -459,8 +445,6 @@ func TestDeleteRoom_Owner_Success(t *testing.T) {
 	err := svc.DeleteRoom(ctx, roomID)
 	assert.NoError(t, err)
 }
-
-// --- Submit tests ---
 
 func TestSubmit_Member_InWindow_Success(t *testing.T) {
 	svc, roomRepo, subRepo, _, _, memberRepo := newTestService(t)
@@ -552,8 +536,6 @@ func TestSubmit_NonMember_Forbidden(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 
-// --- Grade tests ---
-
 func TestGrade_RoomOwner_Success(t *testing.T) {
 	svc, roomRepo, subRepo, _, _, _ := newTestService(t)
 
@@ -616,8 +598,6 @@ func TestGrade_NotOwner_Forbidden(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 
-// --- GetSubmission tests ---
-
 func TestGetSubmission_OwnSubmission_Success(t *testing.T) {
 	svc, _, subRepo, _, _, _ := newTestService(t)
 
@@ -671,8 +651,6 @@ func TestGetSubmission_OtherUser_NotOwner_Forbidden(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 
-// --- ListSubmissions tests ---
-
 func TestListSubmissions_RoomOwner_Success(t *testing.T) {
 	svc, roomRepo, subRepo, _, _, _ := newTestService(t)
 
@@ -705,8 +683,6 @@ func TestListSubmissions_NotOwner_Forbidden(t *testing.T) {
 	_, _, err := svc.ListSubmissions(ctx, roomID, domain.ListPracticeSubmissionsQuery{})
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
-
-// --- Admin tests ---
 
 func TestAdminList_Success(t *testing.T) {
 	svc, roomRepo, _, _, _, _ := newTestService(t)
