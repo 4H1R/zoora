@@ -161,9 +161,12 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 	// 1. Organizations
 	demoOrg := factory.NewOrganization(func(o *domain.Organization) {
 		o.Name = factory.T("Zoora Demo", "زورا دمو")
+		o.Slug = "acme"
 		o.Description = factory.T("Demo organization for development", "سازمان نمونه برای توسعه")
 	})
-	randomOrg := factory.NewOrganization()
+	randomOrg := factory.NewOrganization(func(o *domain.Organization) {
+		o.Slug = "globex"
+	})
 	orgs := []*domain.Organization{demoOrg, randomOrg}
 	for _, org := range orgs {
 		if err := db.WithContext(ctx).Create(org).Error; err != nil {
