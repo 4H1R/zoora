@@ -12,6 +12,7 @@ export interface GithubCom4H1RZooraInternalDomainOrganization {
   description?: string;
   id?: string;
   name?: string;
+  slug?: string;
   status?: GithubCom4H1RZooraInternalDomainOrganizationStatus;
   /** TotalUsers is computed (live COUNT of non-deleted users), not a stored column. */
   total_users?: number;
