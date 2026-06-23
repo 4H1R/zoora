@@ -1,13 +1,8 @@
 import { useRouterState } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
+import { useBreadcrumbTrail, type Crumb } from "@/components/layout/breadcrumb-context"
+import { BreadcrumbTrailView } from "@/components/layout/breadcrumb-trail"
 
 export function SidebarBreadcrumb({
   className,
@@ -24,22 +19,13 @@ export function SidebarBreadcrumb({
 }) {
   const { t } = useTranslation()
   const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const trail = useBreadcrumbTrail()
 
+  // Path-based fallback: a single crumb for the top-level section (Org / Classes).
   const segments = pathname.replace(pathPrefix, "").split("/").filter(Boolean)
   const currentSegment = segments[0] ?? defaultSegment
   const currentKey = segmentKeys[currentSegment] ?? currentSegment
+  const fallback: Crumb[] = [{ label: t(currentKey) }]
 
-  return (
-    <Breadcrumb className={className}>
-      <BreadcrumbList>
-        <BreadcrumbItem>
-          <span className="text-muted-foreground text-sm">{prefixLabel}</span>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbPage>{t(currentKey)}</BreadcrumbPage>
-        </BreadcrumbItem>
-      </BreadcrumbList>
-    </Breadcrumb>
-  )
+  return <BreadcrumbTrailView className={className} prefixLabel={prefixLabel} crumbs={trail ?? fallback} />
 }
