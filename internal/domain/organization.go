@@ -20,6 +20,7 @@ const (
 type Organization struct {
 	ID          uuid.UUID          `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
 	Name        string             `gorm:"not null" json:"name"`
+	Slug        string             `gorm:"not null;uniqueIndex" json:"slug"`
 	Description string             `json:"description"`
 	Status      OrganizationStatus `gorm:"not null;default:'active'" json:"status"`
 	// TotalUsers is computed (live COUNT of non-deleted users), not a stored column.
@@ -31,12 +32,14 @@ type Organization struct {
 
 type CreateOrganizationDTO struct {
 	Name        string             `json:"name" binding:"required,min=2"`
+	Slug        string             `json:"slug" binding:"required,min=2,max=63"`
 	Description string             `json:"description"`
 	Status      OrganizationStatus `json:"status" binding:"omitempty,oneof=active trial suspended archived"`
 }
 
 type UpdateOrganizationDTO struct {
 	Name        *string `json:"name" binding:"omitempty,min=2"`
+	Slug        *string `json:"slug" binding:"omitempty,min=2,max=63"`
 	Description *string `json:"description"`
 }
 
@@ -65,12 +68,14 @@ type AdminListOrganizationsQuery struct {
 
 type AdminCreateOrganizationDTO struct {
 	Name        string             `json:"name" binding:"required,min=2"`
+	Slug        string             `json:"slug" binding:"required,min=2,max=63"`
 	Description string             `json:"description"`
 	Status      OrganizationStatus `json:"status" binding:"omitempty,oneof=active trial suspended archived"`
 }
 
 type AdminUpdateOrganizationDTO struct {
 	Name        *string             `json:"name" binding:"omitempty,min=2"`
+	Slug        *string             `json:"slug" binding:"omitempty,min=2,max=63"`
 	Description *string             `json:"description"`
 	Status      *OrganizationStatus `json:"status" binding:"omitempty,oneof=active trial suspended archived"`
 }
@@ -78,6 +83,7 @@ type AdminUpdateOrganizationDTO struct {
 type OrganizationRepository interface {
 	Create(ctx context.Context, org *Organization) error
 	FindByID(ctx context.Context, id uuid.UUID) (*Organization, error)
+	FindBySlug(ctx context.Context, slug string) (*Organization, error)
 	Update(ctx context.Context, org *Organization) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, f OrganizationFilter) ([]Organization, int64, error)
