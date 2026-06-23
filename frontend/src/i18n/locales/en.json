@@ -1120,6 +1120,10 @@
     }
   },
   "login": {
+    "workspace": {
+      "notFoundTitle": "Workspace not found",
+      "notFoundDescription": "This address doesn't match an active workspace. Check the URL or contact your organization's administrator."
+    },
     "title": "Welcome back",
     "subtitle": "Sign in to continue to your classroom.",
     "subtitleStudent": "Sign in to see today's classes and resources.",
