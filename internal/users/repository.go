@@ -68,8 +68,12 @@ func (r *repository) FindByIDWithPermissions(ctx context.Context, id uuid.UUID) 
 	return &user, nil
 }
 
-func (r *repository) FindByUsername(ctx context.Context, username string) (*domain.User, error) {
-	return r.findOne(ctx, "username = ?", username)
+func (r *repository) FindByUsernameAndOrg(ctx context.Context, username string, orgID uuid.UUID) (*domain.User, error) {
+	return r.findOne(ctx, "username = ? AND organization_id = ?", username, orgID)
+}
+
+func (r *repository) FindAdminByUsername(ctx context.Context, username string) (*domain.User, error) {
+	return r.findOne(ctx, "username = ? AND organization_id IS NULL AND is_admin = true", username)
 }
 
 func (r *repository) Update(ctx context.Context, user *domain.User) error {

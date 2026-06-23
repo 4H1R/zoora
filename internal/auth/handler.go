@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/platform/httpx"
@@ -42,7 +43,19 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	user, token, err := h.svc.Login(c.Request.Context(), dto)
+	hc, _ := domain.HostContextFromCtx(c.Request.Context())
+	if hc.Class == domain.HostClassUnknown ||
+		(hc.Class == domain.HostClassTenant && hc.OrgStatus != domain.OrganizationStatusActive && hc.OrgStatus != domain.OrganizationStatusTrial) {
+		_ = c.Error(domain.ErrForbidden)
+		return
+	}
+
+	var orgID *uuid.UUID
+	if hc.Class == domain.HostClassTenant {
+		orgID = hc.OrgID
+	}
+
+	user, token, err := h.svc.Login(c.Request.Context(), dto, orgID)
 	if err != nil {
 		_ = c.Error(err)
 		return

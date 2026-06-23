@@ -116,7 +116,10 @@ type UserRepository interface {
 	Create(ctx context.Context, user *User) error
 	FindByID(ctx context.Context, id uuid.UUID) (*User, error)
 	FindByIDWithPermissions(ctx context.Context, id uuid.UUID) (*User, error)
-	FindByUsername(ctx context.Context, username string) (*User, error)
+	// FindByUsernameAndOrg looks up an active org member by (org, username).
+	FindByUsernameAndOrg(ctx context.Context, username string, orgID uuid.UUID) (*User, error)
+	// FindAdminByUsername looks up a platform admin (org_id IS NULL, is_admin).
+	FindAdminByUsername(ctx context.Context, username string) (*User, error)
 	Update(ctx context.Context, user *User) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, scope UserListScope, p ListParams) ([]User, int64, error)
@@ -154,6 +157,8 @@ type UserService interface {
 }
 
 type AuthService interface {
-	Login(ctx context.Context, dto LoginDTO) (*User, string, error)
+	// Login authenticates within a host scope. orgID nil = admin-host login
+	// (org_id IS NULL, is_admin); non-nil = tenant-host login scoped to that org.
+	Login(ctx context.Context, dto LoginDTO, orgID *uuid.UUID) (*User, string, error)
 	AdminRevokeSessions(ctx context.Context, userID uuid.UUID) error
 }

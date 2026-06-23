@@ -45,13 +45,23 @@ func NewAuthService(
 	}
 }
 
-func (s *service) Login(ctx context.Context, dto domain.LoginDTO) (*domain.User, string, error) {
-	lockKey := fmt.Sprintf("login:lock:%s", dto.Username)
+func (s *service) Login(ctx context.Context, dto domain.LoginDTO, orgID *uuid.UUID) (*domain.User, string, error) {
+	scope := "admin"
+	if orgID != nil {
+		scope = orgID.String()
+	}
+	lockKey := fmt.Sprintf("login:lock:%s:%s", scope, dto.Username)
 	if locked, _ := s.redis.Get(ctx, lockKey).Int(); locked >= loginMaxFails {
 		return nil, "", domain.ErrUnauthorized
 	}
 
-	user, err := s.userRepo.FindByUsername(ctx, dto.Username)
+	var user *domain.User
+	var err error
+	if orgID != nil {
+		user, err = s.userRepo.FindByUsernameAndOrg(ctx, dto.Username, *orgID)
+	} else {
+		user, err = s.userRepo.FindAdminByUsername(ctx, dto.Username)
+	}
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
 			return nil, "", domain.ErrUnauthorized
@@ -75,7 +85,7 @@ func (s *service) Login(ctx context.Context, dto domain.LoginDTO) (*domain.User,
 	}
 
 	s.redis.Del(ctx, lockKey)
-	s.logger.Info("user logged in", "user_id", user.ID.String())
+	s.logger.Info("user logged in", "user_id", user.ID.String(), "scope", scope)
 	return user, token, nil
 }
 
