@@ -24,6 +24,11 @@ type Config struct {
 	JWTExpiry          time.Duration `env:"JWT_EXPIRY"         envDefault:"24h"`
 	Environment        string        `env:"ENVIRONMENT"        envDefault:"development"`
 	CORSAllowedOrigins []string      `env:"CORS_ALLOWED_ORIGINS" envSeparator:"," envDefault:"*"`
+	// BaseDomain is the apex the app is served under. Host parsing strips this
+	// suffix to recover the tenant/admin subdomain label. Dev: "localhost".
+	BaseDomain string `env:"BASE_DOMAIN" envDefault:"localhost"`
+	// AdminSubdomain is the reserved label that routes to the platform-admin scope.
+	AdminSubdomain string `env:"ADMIN_SUBDOMAIN" envDefault:"admin"`
 }
 
 func Load() (*Config, error) {
