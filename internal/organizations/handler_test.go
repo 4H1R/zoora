@@ -223,11 +223,12 @@ func TestAdminHandlerCreateValidationDoesNotCallService(t *testing.T) {
 
 func TestAdminHandlerCreateConflictMaps409(t *testing.T) {
 	r, svc := newOrganizationAdminRouter(t)
-	dto := domain.AdminCreateOrganizationDTO{Name: "Zoora", Status: domain.OrganizationStatusActive}
+	dto := domain.AdminCreateOrganizationDTO{Name: "Zoora", Slug: "zoora", Status: domain.OrganizationStatusActive}
 	svc.On("AdminCreate", mock.Anything, dto).Return((*domain.Organization)(nil), domain.ErrConflict)
 
 	w := do(t, r, http.MethodPost, "/admin/organizations", map[string]any{
 		"name":   "Zoora",
+		"slug":   "zoora",
 		"status": "active",
 	})
 

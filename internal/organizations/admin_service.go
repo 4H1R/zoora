@@ -34,12 +34,16 @@ func (s *service) AdminCreate(ctx context.Context, dto domain.AdminCreateOrganiz
 	if err != nil {
 		return nil, err
 	}
+	if err := domain.ValidateSlug(dto.Slug); err != nil {
+		return nil, err
+	}
 	status := domain.OrganizationStatusActive
 	if dto.Status != "" {
 		status = dto.Status
 	}
 	org := &domain.Organization{
 		Name:        dto.Name,
+		Slug:        dto.Slug,
 		Description: dto.Description,
 		Status:      status,
 	}
@@ -63,6 +67,12 @@ func (s *service) AdminUpdate(ctx context.Context, id uuid.UUID, dto domain.Admi
 	}
 	if dto.Name != nil {
 		org.Name = *dto.Name
+	}
+	if dto.Slug != nil {
+		if err := domain.ValidateSlug(*dto.Slug); err != nil {
+			return nil, err
+		}
+		org.Slug = *dto.Slug
 	}
 	if dto.Description != nil {
 		org.Description = *dto.Description
