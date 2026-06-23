@@ -1044,6 +1044,8 @@
         "editDescription": "Update organization details.",
         "name": "Name",
         "namePlaceholder": "Organization name",
+        "slug": "Slug",
+        "slugPlaceholder": "subdomain label (e.g. acme)",
         "description": "Description",
         "descriptionPlaceholder": "Brief description (optional)",
         "status": "Status",

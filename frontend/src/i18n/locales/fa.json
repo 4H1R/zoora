@@ -1044,6 +1044,8 @@
         "editDescription": "جزئیات سازمان را بروزرسانی کنید.",
         "name": "نام",
         "namePlaceholder": "نام سازمان",
+        "slug": "اسلاگ",
+        "slugPlaceholder": "برچسب زیردامنه (مثلاً acme)",
         "description": "توضیحات",
         "descriptionPlaceholder": "توضیحات مختصر (اختیاری)",
         "status": "وضعیت",
