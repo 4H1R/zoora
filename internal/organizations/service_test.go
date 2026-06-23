@@ -73,7 +73,7 @@ func (m *orgRepoMock) Restore(ctx context.Context, id uuid.UUID) error {
 }
 
 func newOrganizationService(repo *orgRepoMock) domain.OrganizationService {
-	return organizations.NewService(repo, nil, slog.Default())
+	return organizations.NewService(repo, nil, nil, slog.Default())
 }
 
 func orgCaller(userID uuid.UUID, orgID *uuid.UUID, isAdmin bool) context.Context {

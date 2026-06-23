@@ -135,7 +135,7 @@ func main() {
 	authzResolver := authz.NewResolver(classMemberRepo)
 
 	userService := users.NewService(userRepo, roleRepo, log)
-	orgService := organizations.NewService(orgRepo, userRepo, log)
+	orgService := organizations.NewService(orgRepo, userRepo, redisClient, log)
 	classService := classes.NewService(classRepo, classSessionRepo, classMemberRepo, log)
 	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, log)
 	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, log)

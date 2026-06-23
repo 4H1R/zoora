@@ -65,6 +65,7 @@ func (s *service) AdminUpdate(ctx context.Context, id uuid.UUID, dto domain.Admi
 	if err != nil {
 		return nil, err
 	}
+	oldSlug, oldStatus := org.Slug, org.Status
 	if dto.Name != nil {
 		org.Name = *dto.Name
 	}
@@ -82,6 +83,9 @@ func (s *service) AdminUpdate(ctx context.Context, id uuid.UUID, dto domain.Admi
 	}
 	if err := s.repo.Update(ctx, org); err != nil {
 		return nil, err
+	}
+	if org.Slug != oldSlug || org.Status != oldStatus {
+		s.bustTenant(ctx, oldSlug, org.Slug)
 	}
 	return org, nil
 }
