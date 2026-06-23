@@ -4,9 +4,11 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import { ArrowLeftIcon, DownloadIcon, EyeIcon, FileIcon, Loader2Icon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { useGetClassesSessionsSessionId } from "@/api/classes/classes"
 import { useGetMedia, useGetMediaIdDownloadUrl } from "@/api/media/media"
 import { useGetOfflinesId } from "@/api/offlines/offlines"
 import { Eyebrow } from "@/components/eyebrow"
+import { useBreadcrumb } from "@/components/layout/breadcrumb-context"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useOrgGuard } from "@/lib/access"
@@ -67,6 +69,23 @@ function RouteComponent() {
   const { data, isPending, isError } = useGetOfflinesId(offlineId)
   const room = (data?.status === 200 && data.data.data) || undefined
 
+  const sessionId = room?.class_session_id
+  const { data: sessionData } = useGetClassesSessionsSessionId(sessionId ?? "", {
+    query: { enabled: !!sessionId },
+  })
+  const session = (sessionData?.status === 200 && sessionData.data.data) || undefined
+
+  useBreadcrumb([
+    { label: t("org.nav.classes"), to: "/org/classes" },
+    {
+      label: session?.name ?? null,
+      to: "/org/classes/class-sessions/$classSessionId",
+      params: { classSessionId: sessionId ?? "" },
+      loading: !session,
+    },
+    { label: room?.title ?? null, loading: !room },
+  ])
+
   const mediaQuery = useGetMedia(
     { model_type: OFFLINE_MODEL_TYPE, model_id: offlineId, collection: OFFLINE_ATTACHMENTS_COLLECTION },
     { query: { enabled: allowed } }
@@ -104,7 +123,7 @@ function RouteComponent() {
     <div className="flex flex-col gap-10 pb-16">
       <div className="pt-6">
         <Link
-          to="/org/classes/classsessions/$classSessionId"
+          to="/org/classes/class-sessions/$classSessionId"
           params={{ classSessionId: room.class_session_id ?? "" }}
           className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 font-mono text-xs tracking-[0.25em] uppercase transition-colors"
         >

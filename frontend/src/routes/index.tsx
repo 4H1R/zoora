@@ -1,13 +1,22 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, redirect } from "@tanstack/react-router"
 import { GraduationCap, Languages, Moon, Radio, Sun, Video } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { BackgroundFX } from "@/components/background-fx"
 import { Logo } from "@/components/logo"
 import { languages } from "@/i18n"
+import { currentSlug } from "@/lib/tenant"
 import { useThemeStore } from "@/stores/theme"
 
 export const Route = createFileRoute("/")({
+  // The landing page only belongs on the apex host. On any tenant or admin
+  // subdomain, send `/` to `/login` — the `_guest` layout then bounces an
+  // already-authenticated user on to `/org/dashboard` or `/admin/dashboard`.
+  beforeLoad: () => {
+    if (currentSlug() !== "") {
+      throw redirect({ to: "/login" })
+    }
+  },
   component: RouteComponent,
 })
 

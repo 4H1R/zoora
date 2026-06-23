@@ -33,6 +33,28 @@ export function formatSessionDate(
   return formatDate(iso, locale, variant === "long" ? "datetime-long" : "datetime")
 }
 
+// Locale-aware relative time ("in 2 days" / "۲ روز دیگر"). Intl picks the unit
+// granularity and handles fa/en wording + numerals. Empty string for no/bad date.
+export function formatRelativeTime(targetIso: string | undefined, now: number, locale: string): string {
+  if (!targetIso) return ""
+  const target = new Date(targetIso).getTime()
+  if (Number.isNaN(target)) return ""
+  const diff = target - now
+  const abs = Math.abs(diff)
+  const min = 60_000
+  const hr = 3_600_000
+  const day = 86_400_000
+  const week = day * 7
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" })
+  if (abs < min) return rtf.format(0, "second")
+  if (abs < hr) return rtf.format(Math.round(diff / min), "minute")
+  if (abs < day) return rtf.format(Math.round(diff / hr), "hour")
+  if (abs < week) return rtf.format(Math.round(diff / day), "day")
+  if (abs < day * 30) return rtf.format(Math.round(diff / week), "week")
+  if (abs < day * 365) return rtf.format(Math.round(diff / (day * 30)), "month")
+  return rtf.format(Math.round(diff / (day * 365)), "year")
+}
+
 export function formatCountdown(targetIso: string | undefined, now: number): string {
   if (!targetIso) return "—"
   const target = new Date(targetIso).getTime()

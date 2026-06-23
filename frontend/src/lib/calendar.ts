@@ -151,7 +151,7 @@ export function eventLink(
     case "practice":
     default:
       return {
-        to: "/org/classes/classsessions/$classSessionId",
+        to: "/org/classes/class-sessions/$classSessionId",
         params: { classSessionId: entity },
       }
   }

@@ -27,7 +27,7 @@ export function QuizTake({
   const { canView } = useQuizPermissions()
 
   const backHref = classSessionId
-    ? `/org/classes/classsessions/${classSessionId}`
+    ? `/org/classes/class-sessions/${classSessionId}`
     : `/org/exams`
 
   const quizQ = useGetQuizzesId(quizId, { query: { enabled: canView } })

@@ -4,7 +4,7 @@ import { QuizTake } from "@/components/quizzes/quiz-take"
 import { orgHead } from "@/lib/org-head"
 
 export const Route = createFileRoute(
-  "/_auth/org/classes/classsessions/$classSessionId_/quizzes/$quizId/take",
+  "/_auth/org/classes/class-sessions/$classSessionId_/quizzes/$quizId/take",
 )({
   head: () => orgHead("org.session.quizzes.take.headTitle"),
   component: RouteComponent,

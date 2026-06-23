@@ -30,6 +30,7 @@ func Bind(c *gin.Context, cfg domain.ListConfig) domain.ListParams {
 	if pageSize <= 0 {
 		pageSize = domain.DefaultPageSize
 	}
+	pageSize = min(pageSize, domain.MaxPageSize)
 
 	page := httpx.QueryInt(c, "page", 1)
 	if page < 1 {

@@ -68,7 +68,7 @@ export const adminSearchSchema = z.object({
   order_by: z.string().optional(),
   order_dir: z.enum(["asc", "desc"]).optional(),
   page: z.number().int().positive().optional().default(1),
-  page_size: z.number().int().positive().optional().default(8),
+  page_size: z.number().int().positive().optional().default(20),
 })
 
 function getOrderDir(first: SortingState[number] | undefined): "asc" | "desc" | undefined {
@@ -154,7 +154,7 @@ export function useClientTable<TData>({
   sorting,
   globalFilter,
   page,
-  pageSize = 8,
+  pageSize = 20,
 }: UseClientTableOptions<TData>): Table<TData> {
   const navigate = useNavigate() as unknown as NavFn
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})

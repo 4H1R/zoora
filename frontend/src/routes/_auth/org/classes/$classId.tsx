@@ -25,6 +25,7 @@ import { DataTablePagination } from "@/components/data-table/data-table-paginati
 import { TableFilter } from "@/components/data-table/table-filter"
 import { Eyebrow } from "@/components/eyebrow"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
+import { useBreadcrumb } from "@/components/layout/breadcrumb-context"
 import { AttendanceMatrixView } from "@/components/org/classes/AttendanceMatrixView"
 import { EnrollMemberModal } from "@/components/org/classes/EnrollMemberModal"
 import { useClassPermissions } from "@/components/org/classes/use-class-permissions"
@@ -40,7 +41,8 @@ import { ViewModeToggle, useViewMode } from "@/components/view-mode-toggle"
 import { useOrgGuard } from "@/lib/access"
 import { useAdminTable } from "@/lib/data-table"
 import { orgHead } from "@/lib/org-head"
-import { formatSessionDate, getSessionStatus, useNow } from "@/lib/session-status"
+import { formatRelativeTime, formatSessionDate, getSessionStatus, useNow } from "@/lib/session-status"
+import { cn } from "@/lib/utils"
 
 import { useSessionColumns, useStudentColumns } from "./-detail-columns"
 
@@ -57,7 +59,7 @@ const classDetailSearchSchema = z.object({
   order_by: z.string().optional(),
   order_dir: z.enum(["asc", "desc"]).optional(),
   page: z.number().int().positive().optional().default(1),
-  page_size: z.number().int().positive().optional().default(8),
+  page_size: z.number().int().positive().optional().default(20),
 })
 
 export const Route = createFileRoute("/_auth/org/classes/$classId")({
@@ -66,26 +68,79 @@ export const Route = createFileRoute("/_auth/org/classes/$classId")({
   component: RouteComponent,
 })
 
-function SessionCard({ session, index, now }: { session: Session; index: number; now: number }) {
+function SessionCard({
+  session,
+  index,
+  now,
+  isNext,
+}: {
+  session: Session
+  index: number
+  now: number
+  isNext: boolean
+}) {
   const { t, i18n } = useTranslation()
   const status = getSessionStatus(session.start_time, now)
   const tileNumber = String(index + 1).padStart(2, "0")
   const startStr = formatSessionDate(session.start_time, i18n.language, "short")
+  const relativeStr = formatRelativeTime(session.start_time, now, i18n.language)
+  const isEnded = status === "ended"
+
+  // Status drives a single accent so the eye lands on what's actionable:
+  // live = destructive, the upcoming "next" = primary, the rest stays neutral.
+  const accent = isEnded
+    ? "ring-foreground/10 hover:ring-foreground/25"
+    : status === "live"
+      ? "ring-destructive/40 hover:ring-destructive/60"
+      : isNext
+        ? "ring-primary/45 hover:ring-primary/65"
+        : "ring-foreground/10 hover:ring-foreground/30"
+  const rail =
+    status === "live" ? "bg-destructive" : isNext ? "bg-primary" : isEnded ? "bg-foreground/15" : "bg-foreground/20"
 
   return (
     <Link
-      to="/org/classes/classsessions/$classSessionId"
+      to="/org/classes/class-sessions/$classSessionId"
       params={{ classSessionId: session.id! }}
-      className="group/tile bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex flex-col gap-2.5 overflow-hidden rounded-xl p-3.5 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-md"
+      className={cn(
+        "group/tile bg-card text-card-foreground relative isolate flex flex-col gap-2.5 overflow-hidden rounded-xl p-3.5 ps-4 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-md",
+        accent,
+        isNext && !isEnded && "bg-primary/[0.04]",
+        isEnded && "opacity-75 hover:opacity-100"
+      )}
     >
+      {/* Status-keyed accent rail on the inline-start edge (RTL-safe). */}
+      <span aria-hidden className={cn("absolute inset-y-0 start-0 w-1", rail)} />
+
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,var(--color-primary)/8%,transparent_60%)] opacity-0 transition-opacity group-hover/tile:opacity-100"
       />
 
-      <div className="flex items-start justify-between gap-2">
-        <SessionStatusPill status={status} size="sm" />
-        <span className="text-muted-foreground font-mono text-[0.7rem] tracking-[0.2em]">/{tileNumber}</span>
+      {/* Oversized ordinal as a quiet design anchor — gives the grid a lesson-tile cadence. */}
+      <span
+        aria-hidden
+        className="text-foreground/[0.05] pointer-events-none absolute -top-3 end-2 font-mono text-6xl leading-none font-bold tabular-nums select-none"
+      >
+        {tileNumber}
+      </span>
+
+      <div className="flex min-h-6 items-center gap-2">
+        {status === "live" ? (
+          <SessionStatusPill status="live" size="sm" />
+        ) : isEnded ? (
+          <SessionStatusPill status="ended" size="sm" />
+        ) : isNext ? (
+          <span className="text-primary inline-flex items-center gap-1.5 font-mono text-[0.7rem] font-medium tracking-[0.2em] uppercase">
+            <span className="bg-primary size-1.5 rounded-full" />
+            {t("org.class.sessions.nextUp")}
+          </span>
+        ) : relativeStr ? (
+          <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[0.7rem] font-medium">
+            <CalendarClockIcon className="size-3" />
+            {relativeStr}
+          </span>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-1">
@@ -100,8 +155,9 @@ function SessionCard({ session, index, now }: { session: Session; index: number;
           <CalendarClockIcon className="size-3" />
           {startStr}
         </span>
-        <span className="text-muted-foreground group-hover/tile:text-foreground text-[0.7rem] font-medium underline-offset-4 transition-colors group-hover/tile:underline">
-          {t("org.class.sessions.open")} →
+        <span className="text-muted-foreground group-hover/tile:text-foreground inline-flex items-center gap-1 text-[0.7rem] font-medium underline-offset-4 transition-colors group-hover/tile:underline">
+          {t("org.class.sessions.open")}
+          <span className="transition-transform group-hover/tile:-translate-x-0.5 rtl:rotate-180">→</span>
         </span>
       </div>
     </Link>
@@ -261,6 +317,11 @@ function RouteComponent() {
 
   const cls = (classData?.status === 200 && classData.data.data) || undefined
 
+  useBreadcrumb([
+    { label: t("org.nav.classes"), to: "/org/classes" },
+    { label: cls?.name ?? null, loading: !cls },
+  ])
+
   // Roster gating mirrors backend canManageClass:
   // admin OR classes:update_any OR caller is class owner.
   const canViewRoster = !!cls && (can("classes:update_any") || (!!cls.user_id && cls.user_id === accessUser.id))
@@ -273,7 +334,7 @@ function RouteComponent() {
     order_by: search.order_by || undefined,
     order_dir: search.order_dir || undefined,
     page: search.page ?? 1,
-    page_size: search.page_size ?? 8,
+    page_size: search.page_size ?? 20,
   }
 
   const { data: sessionsData, isPending: sessionsPending } = useGetClassesIdSessions(classId, listParams, {
@@ -291,6 +352,12 @@ function RouteComponent() {
   const studentsTotal = membersResult?.total ?? members.length
 
   const liveCount = sessions.filter((s) => getSessionStatus(s.start_time, now) === "live").length
+
+  // The soonest upcoming session gets the "next up" highlight (Classroom/Canvas
+  // pattern) so the eye lands on what's actionable, not the whole scheduled list.
+  const nextSessionId = sessions
+    .filter((s) => getSessionStatus(s.start_time, now) === "scheduled" && s.start_time)
+    .sort((a, b) => new Date(a.start_time!).getTime() - new Date(b.start_time!).getTime())[0]?.id
 
   const sorting = search.order_by ? [{ id: search.order_by, desc: search.order_dir === "desc" }] : []
 
@@ -450,11 +517,14 @@ function RouteComponent() {
               <DataTablePagination table={sessionsTable} />
             </Card>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-              {sessions.map((s, i) => (
-                <SessionCard key={s.id} session={s} index={i} now={now} />
-              ))}
-            </div>
+            <>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+                {sessions.map((s, i) => (
+                  <SessionCard key={s.id} session={s} index={i} now={now} isNext={!!s.id && s.id === nextSessionId} />
+                ))}
+              </div>
+              <DataTablePagination table={sessionsTable} />
+            </>
           )}
         </TabsContent>
 
@@ -515,11 +585,14 @@ function RouteComponent() {
                 <DataTablePagination table={studentsTable} />
               </Card>
             ) : (
-              <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-                {members.map((m, i) => (
-                  <StudentCard key={m.id} member={m} index={i} onRemove={setRemoveTarget} />
-                ))}
-              </div>
+              <>
+                <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+                  {members.map((m, i) => (
+                    <StudentCard key={m.id} member={m} index={i} onRemove={setRemoveTarget} />
+                  ))}
+                </div>
+                <DataTablePagination table={studentsTable} />
+              </>
             )}
           </TabsContent>
         ) : null}
@@ -533,7 +606,7 @@ function RouteComponent() {
               classId={classId}
               canEdit={canEditAttendance}
               page={search.page ?? 1}
-              pageSize={search.page_size ?? 8}
+              pageSize={search.page_size ?? 20}
               search={search.search}
               orderBy={search.order_by}
               orderDir={search.order_dir}

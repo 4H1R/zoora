@@ -16,7 +16,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { paramKeys } from "@/lib/data-table"
 
-const DEFAULT_PAGE_SIZE_OPTIONS = [8, 20, 50]
+const DEFAULT_PAGE_SIZE_OPTIONS = [8, 20, 50, 100, 200]
 
 function getPageWindow(current: number, total: number): (number | "…")[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
@@ -53,7 +53,7 @@ export function DataTablePagination<TData>({
 
   const total = table.getRowCount()
   const page = urlPage ?? 1
-  const pageSize = urlPageSize ?? 8
+  const pageSize = urlPageSize ?? 20
   const totalPages = Math.ceil(total / pageSize)
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1
   const to = Math.min(page * pageSize, total)

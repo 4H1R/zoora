@@ -167,7 +167,7 @@ function QuizCard({ quiz, index, classSessionId, onEdit, onManageQuestions, onDe
               size="sm"
               render={
                 <Link
-                  to="/org/classes/classsessions/$classSessionId/quizzes/$quizId/take"
+                  to="/org/classes/class-sessions/$classSessionId/quizzes/$quizId/take"
                   params={{ classSessionId, quizId: quiz.id }}
                 />
               }

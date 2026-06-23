@@ -73,7 +73,7 @@ export function useSessionColumns(now: number): ColumnDef<Session>[] {
             size="sm"
             render={
               <Link
-                to="/org/classes/classsessions/$classSessionId"
+                to="/org/classes/class-sessions/$classSessionId"
                 params={{ classSessionId: row.original.id! }}
               />
             }

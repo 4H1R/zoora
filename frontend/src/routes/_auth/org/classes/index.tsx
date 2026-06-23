@@ -27,7 +27,7 @@ const classesSearchSchema = z.object({
   order_by: z.string().optional(),
   order_dir: z.enum(["asc", "desc"]).optional(),
   page: z.number().int().positive().optional().default(1),
-  page_size: z.number().int().positive().optional().default(8),
+  page_size: z.number().int().positive().optional().default(20),
 })
 
 export const Route = createFileRoute("/_auth/org/classes/")({

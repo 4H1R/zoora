@@ -5,6 +5,12 @@ package domain
 // expensive queries via arbitrarily large page sizes.
 const DefaultPageSize = 20
 
+// MaxPageSize is the upper bound enforced on client-supplied page_size. It
+// matches the largest option offered by the frontend pagination control.
+// Internal callers that construct ListParams directly (e.g. PageSize: 10000)
+// bypass this cap, which is applied only at the client HTTP boundary in Bind.
+const MaxPageSize = 200
+
 // ListParams carries pagination, search, and ordering for List APIs.
 // Values are populated by the handler after white-listing against ListConfig;
 // services and repositories treat ListParams as already-validated input.

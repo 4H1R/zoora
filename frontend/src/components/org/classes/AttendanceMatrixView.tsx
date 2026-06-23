@@ -121,7 +121,7 @@ export function AttendanceMatrixView({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="bg-card sticky start-0 z-10 min-w-56">
+                <TableHead className="bg-card z-10 min-w-44 md:sticky md:start-0 md:min-w-56">
                   {t("org.class.attendance.student")}
                 </TableHead>
                 {sessions.map((sess) => (
@@ -134,7 +134,7 @@ export function AttendanceMatrixView({
                     </span>
                   </TableHead>
                 ))}
-                <TableHead className="bg-card sticky end-0 z-10 min-w-36 text-center">
+                <TableHead className="bg-card z-10 min-w-36 text-center md:sticky md:end-0">
                   {t("org.class.attendance.summary")}
                 </TableHead>
               </TableRow>
@@ -142,7 +142,7 @@ export function AttendanceMatrixView({
             <TableBody>
               {students.map((stu) => (
                 <TableRow key={stu.user_id}>
-                  <TableCell className="bg-card sticky start-0 z-10">
+                  <TableCell className="bg-card z-10 md:sticky md:start-0">
                     <div className="flex items-center gap-2">
                       <UserAvatar name={stu.user?.name ?? "?"} size="sm" />
                       <span className="truncate">{stu.user?.name ?? stu.user_id}</span>
@@ -189,7 +189,7 @@ export function AttendanceMatrixView({
                       </TableCell>
                     )
                   })}
-                  <TableCell className="bg-card sticky end-0 z-10 text-center text-sm">
+                  <TableCell className="bg-card z-10 text-center text-sm md:sticky md:end-0">
                     <span className="font-medium">{Math.round((stu.summary?.rate ?? 0) * 100)}%</span>
                     <span className="text-muted-foreground ms-2">
                       {stu.summary?.present ?? 0}/{stu.summary?.absent ?? 0}/{stu.summary?.late ?? 0}/

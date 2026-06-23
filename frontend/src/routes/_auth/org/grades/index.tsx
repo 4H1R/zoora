@@ -52,7 +52,7 @@ function RouteComponent() {
     sorting,
     globalFilter: search,
     page,
-    pageSize: page_size ?? 8,
+    pageSize: page_size ?? 20,
   })
 
   if (!allowed) return null

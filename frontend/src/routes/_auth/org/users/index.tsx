@@ -59,7 +59,7 @@ function UsersPage() {
   const statusFilter = status ?? "all"
   const disabled = getDisabledFilter(statusFilter)
   const currentPage = page ?? 1
-  const pageSize = page_size ?? 8
+  const pageSize = page_size ?? 20
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
 
   const [formOpen, setFormOpen] = useState(false)
