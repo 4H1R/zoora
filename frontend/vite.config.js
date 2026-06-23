@@ -20,4 +20,14 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    host: true,
+    port: 3000,
+    allowedHosts: ['.localhost'],
+    proxy: {
+      // changeOrigin: false preserves Host: <slug>.localhost so the Go tenant
+      // middleware resolves the right org from the subdomain.
+      '/api': { target: 'http://localhost:8080', changeOrigin: false },
+    },
+  },
 })
