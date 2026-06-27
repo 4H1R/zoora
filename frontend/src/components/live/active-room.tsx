@@ -2,7 +2,6 @@ import {
   LayoutContextProvider,
   LiveKitRoom,
   RoomAudioRenderer,
-  useChat,
   useCreateLayoutContext,
   useLocalParticipant,
 } from "@livekit/components-react"
@@ -26,6 +25,7 @@ import { RoomPanel } from "./room-panel"
 import { RoomRoleContext, type RoomRole, useRoomRole } from "./room-role"
 import { Stage } from "./stage"
 import type { PreJoinChoices, RoomTab } from "./types"
+import { useRoomChat } from "./use-room-chat"
 import { useRoomRoles } from "./use-room-roles"
 import { WebcamRail } from "./webcam-rail"
 
@@ -36,6 +36,7 @@ interface ActiveRoomProps {
   sessionName: string
   className?: string
   liveId: string
+  chatId?: string
   role: RoomRole
   onDisconnect: () => void
 }
@@ -46,6 +47,7 @@ export function ActiveRoom({
   sessionName,
   className,
   liveId,
+  chatId,
   role,
   onDisconnect,
 }: ActiveRoomProps) {
@@ -73,6 +75,7 @@ export function ActiveRoom({
           onLeave={handleLeave}
           leavePending={leaveMutation.isPending}
           liveId={liveId}
+          chatId={chatId}
         />
         <RoomAudioRenderer />
       </LiveKitRoom>
@@ -86,16 +89,18 @@ function RoomShell({
   onLeave,
   leavePending,
   liveId,
+  chatId,
 }: {
   sessionName: string
   className?: string
   onLeave: () => void
   leavePending: boolean
   liveId: string
+  chatId?: string
 }) {
   const { t } = useTranslation()
   const layoutContext = useCreateLayoutContext()
-  const chat = useChat()
+  const chat = useRoomChat(chatId)
   const [tab, setTab] = useState<RoomTab | null>(null)
   const [readCount, setReadCount] = useState(0)
   const [railOpen, setRailOpen] = useState(false) // hidden by default (mobile-first)
@@ -117,10 +122,10 @@ function RoomShell({
     muteMutation.mutate({ id: liveId, identity, data: { track_sid: trackSid, muted: true } })
 
   useEffect(() => {
-    if (tab === "chat") setReadCount(chat.chatMessages.length)
-  }, [tab, chat.chatMessages.length])
+    if (tab === "chat") setReadCount(chat.count)
+  }, [tab, chat.count])
 
-  const unread = Math.max(0, chat.chatMessages.length - readCount)
+  const unread = Math.max(0, chat.count - readCount)
 
   return (
     <LayoutContextProvider value={layoutContext}>

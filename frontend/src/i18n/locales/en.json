@@ -2435,7 +2435,8 @@
     },
     "chat": {
       "empty": "No messages yet",
-      "placeholder": "Type a message…"
+      "placeholder": "Type a message…",
+      "delete": "Delete message"
     },
     "stage": {
       "empty": "Waiting for the presenter to share something"

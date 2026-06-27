@@ -1,4 +1,3 @@
-import type { useChat } from "@livekit/components-react"
 import { BarChart3, MessageSquare, Users, X } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
@@ -11,13 +10,14 @@ import { PeoplePanel } from "./panels/people-panel"
 import { PollsPanel } from "./panels/polls-panel"
 import type { RoomRole } from "./room-role"
 import type { RoomTab } from "./types"
+import type { useRoomChat } from "./use-room-chat"
 
 interface RoomPanelProps {
   tab: RoomTab
   setTab: (tab: RoomTab) => void
   open: boolean
   onClose: () => void
-  chat: ReturnType<typeof useChat>
+  chat: ReturnType<typeof useRoomChat>
   unread: number
   states: Record<string, { role: RoomRole; handRaised: boolean }>
   isHost: boolean
@@ -64,7 +64,7 @@ function TabsInner({
         </TabsTrigger>
       </TabsList>
       <TabsContent value="chat" className="flex min-h-0 flex-1 flex-col">
-        <ChatPanel chat={chat} />
+        <ChatPanel chat={chat} canModerate={isHost} />
       </TabsContent>
       <TabsContent value="people" className="flex min-h-0 flex-1 flex-col">
         <PeoplePanel

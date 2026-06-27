@@ -1,5 +1,4 @@
-import type { useChat } from "@livekit/components-react"
-import { MessageSquare, SendHorizonal } from "lucide-react"
+import { MessageSquare, SendHorizonal, Trash2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 
@@ -8,22 +7,29 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useFormatDate } from "@/lib/format-date"
 
-export function ChatPanel({ chat }: { chat: ReturnType<typeof useChat> }) {
+import type { useRoomChat } from "../use-room-chat"
+
+interface ChatPanelProps {
+  chat: ReturnType<typeof useRoomChat>
+  canModerate: boolean
+}
+
+export function ChatPanel({ chat, canModerate }: ChatPanelProps) {
   const { t } = useTranslation()
   const formatDate = useFormatDate()
-  const { chatMessages, send, isSending } = chat
+  const { messages, send, isSending, deleteMessage } = chat
   const [text, setText] = useState("")
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [chatMessages.length])
+  }, [messages.length])
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault()
     const value = text.trim()
     if (!value) return
-    void send(value)
+    send(value)
     setText("")
   }
 
@@ -31,24 +37,33 @@ export function ChatPanel({ chat }: { chat: ReturnType<typeof useChat> }) {
     <div className="flex min-h-0 flex-1 flex-col">
       <ScrollArea className="flex-1">
         <div className="flex flex-col gap-3 p-3">
-          {chatMessages.length === 0 && (
+          {messages.length === 0 && (
             <div className="flex flex-col items-center gap-2 py-12 text-center text-zinc-500">
               <MessageSquare className="size-7 opacity-40" />
               <p className="text-sm">{t("liveRoom.chat.empty")}</p>
             </div>
           )}
-          {chatMessages.map((msg, i) => {
-            const sender = msg.from?.name || msg.from?.identity || "—"
-            const time = formatDate(msg.timestamp, "time")
+          {messages.map((msg) => {
+            const time = formatDate(msg.createdAt || undefined, "time")
             return (
-              <div key={`${msg.timestamp}-${i}`} className="flex flex-col gap-0.5">
+              <div key={msg.id} className="group flex flex-col gap-0.5">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-xs font-medium text-primary">{sender}</span>
+                  <span className="text-xs font-medium text-primary">{msg.senderName}</span>
                   <span className="font-mono text-[10px] text-zinc-600" dir="ltr">
                     {time}
                   </span>
+                  {canModerate && (
+                    <button
+                      type="button"
+                      onClick={() => deleteMessage(msg.id)}
+                      aria-label={t("liveRoom.chat.delete")}
+                      className="ms-auto hidden size-5 items-center justify-center rounded text-zinc-500 hover:text-red-400 group-hover:flex"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  )}
                 </div>
-                <p className="text-sm break-words text-zinc-200">{msg.message}</p>
+                <p className="break-words text-sm text-zinc-200">{msg.content}</p>
               </div>
             )
           })}

@@ -60,6 +60,7 @@ function RouteComponent() {
         sessionName={room?.class_session?.name ?? t("liveRoom.session")}
         className={room?.class_session?.class?.name}
         liveId={liveId}
+        chatId={connection.data.chat_id}
         role={role}
         onDisconnect={() => setConnection(null)}
       />
