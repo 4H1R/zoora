@@ -2,16 +2,19 @@ package livesessions
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 	lkproto "github.com/livekit/protocol/livekit"
 
 	"github.com/4H1R/zoora/internal/domain"
 	lk "github.com/4H1R/zoora/internal/platform/livekit"
+	"github.com/4H1R/zoora/internal/platform/queue"
 )
 
 type service struct {
@@ -24,6 +27,7 @@ type service struct {
 	chatSvc      domain.ChatService
 	tx           domain.Transactor
 	livekit      *lk.Client
+	queue        *queue.Client
 	logger       *slog.Logger
 }
 
@@ -37,6 +41,7 @@ func NewService(
 	chatSvc domain.ChatService,
 	tx domain.Transactor,
 	livekit *lk.Client,
+	queueClient *queue.Client,
 	logger *slog.Logger,
 ) domain.LiveSessionService {
 	return &service{
@@ -49,6 +54,7 @@ func NewService(
 		chatSvc:      chatSvc,
 		tx:           tx,
 		livekit:      livekit,
+		queue:        queueClient,
 		logger:       logger,
 	}
 }
@@ -126,6 +132,11 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreateLiveRoomDTO) 
 		return nil, domain.ErrForbidden
 	}
 
+	name := strings.TrimSpace(dto.Name)
+	if name == "" {
+		return nil, domain.NewValidationError(map[string]string{"name": "required"})
+	}
+
 	cfg := dto.Config
 	if cfg.MaxParticipants <= 0 {
 		// Backfill only the participant cap; preserve caller-supplied flags.
@@ -136,7 +147,7 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreateLiveRoomDTO) 
 	room := &domain.LiveRoom{
 		ID:                 roomID,
 		ClassSessionID:     dto.ClassSessionID,
-		Name:               strings.TrimSpace(dto.Name),
+		Name:               name,
 		LiveKitRoomName:    fmt.Sprintf("session-%s-%s", dto.ClassSessionID.String(), roomID.String()),
 		Status:             domain.LiveRoomStatusCreated,
 		ScheduledStartTime: dto.ScheduledStartTime,
@@ -237,7 +248,7 @@ func (s *service) JoinRoom(ctx context.Context, roomID uuid.UUID) (*domain.JoinL
 		return nil, fmt.Errorf("livesessions.service.JoinRoom livekit: %w", err)
 	}
 
-	sources := publishSources(isModerator, room.Config)
+	sources := publishSources(isModerator)
 	roomAdmin := isModerator
 
 	identity := caller.UserID.String()
@@ -341,30 +352,13 @@ func (s *service) startRoomInternal(ctx context.Context, room *domain.LiveRoom) 
 		return nil, err
 	}
 
-	if room.Config.AutoRecord {
-		s3Path := fmt.Sprintf("recordings/%s/%s.mp4", room.ID.String(), uuid.New().String())
-		egressID, err := s.livekit.StartRecording(ctx, room.LiveKitRoomName, s3Path)
-		if err != nil {
-			s.logger.Error("auto-record failed", "room_id", room.ID.String(), "error", err)
-		} else {
-			rec := &domain.LiveRecording{
-				LiveRoomID: room.ID,
-				EgressID:   egressID,
-				Status:     domain.LiveRecordingStatusStarted,
-				StartedAt:  now,
-			}
-			if err := s.recordings.Create(ctx, rec); err != nil {
-				s.logger.Error("saving auto-record", "room_id", room.ID.String(), "error", err)
-			}
-		}
-	}
 	return room, nil
 }
 
-// publishSources maps a caller's role + the room config into the LiveKit track
-// sources they may publish. Moderators get everything; others get only what the
-// room config allows. An empty result yields a subscribe-only (view) token.
-func publishSources(isModerator bool, cfg domain.LiveRoomConfig) []lkproto.TrackSource {
+// publishSources maps a caller's role into the LiveKit track sources they may
+// publish. Moderators get everything; everyone else is subscribe-only (view).
+// The room is a conference room: students don't publish until granted access.
+func publishSources(isModerator bool) []lkproto.TrackSource {
 	if isModerator {
 		return []lkproto.TrackSource{
 			lkproto.TrackSource_CAMERA,
@@ -373,17 +367,7 @@ func publishSources(isModerator bool, cfg domain.LiveRoomConfig) []lkproto.Track
 			lkproto.TrackSource_SCREEN_SHARE_AUDIO,
 		}
 	}
-	var sources []lkproto.TrackSource
-	if cfg.AllowCameraDefault {
-		sources = append(sources, lkproto.TrackSource_CAMERA)
-	}
-	if cfg.AllowMicDefault {
-		sources = append(sources, lkproto.TrackSource_MICROPHONE)
-	}
-	if cfg.AllowScreenShareDefault {
-		sources = append(sources, lkproto.TrackSource_SCREEN_SHARE, lkproto.TrackSource_SCREEN_SHARE_AUDIO)
-	}
-	return sources
+	return nil
 }
 
 func (s *service) endRoomInternal(ctx context.Context, room *domain.LiveRoom) (*domain.LiveRoom, error) {
@@ -413,7 +397,33 @@ func (s *service) endRoomInternal(ctx context.Context, room *domain.LiveRoom) (*
 		s.logger.Error("failed to archive chat for room", "room_id", room.ID.String(), "error", err)
 	}
 
+	s.enqueueAutoMark(ctx, room)
+
 	return room, nil
+}
+
+// enqueueAutoMark schedules a session-scoped attendance auto-mark for the room's
+// session. Best-effort: failures are logged and never block room teardown.
+func (s *service) enqueueAutoMark(ctx context.Context, room *domain.LiveRoom) {
+	if s.queue == nil {
+		return
+	}
+	session, err := s.sessions.FindByID(ctx, room.ClassSessionID)
+	if err != nil {
+		s.logger.Error("auto-mark enqueue: load session", "room_id", room.ID.String(), "error", err)
+		return
+	}
+	payload, err := json.Marshal(domain.AttendanceAutoMarkPayload{
+		ClassID:   session.ClassID,
+		SessionID: session.ID,
+	})
+	if err != nil {
+		s.logger.Error("auto-mark enqueue: marshal payload", "room_id", room.ID.String(), "error", err)
+		return
+	}
+	if _, err := s.queue.Enqueue(asynq.NewTask(domain.TypeAttendanceAutoMark, payload)); err != nil {
+		s.logger.Error("auto-mark enqueue", "room_id", room.ID.String(), "error", err)
+	}
 }
 
 func (s *service) EndRoom(ctx context.Context, roomID uuid.UUID) (*domain.LiveRoom, error) {

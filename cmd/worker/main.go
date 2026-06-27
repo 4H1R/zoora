@@ -5,11 +5,15 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/4H1R/zoora/internal/attendance"
 	"github.com/4H1R/zoora/internal/chat"
 	"github.com/4H1R/zoora/internal/classes"
 	"github.com/4H1R/zoora/internal/config"
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/livesessions"
+	"github.com/4H1R/zoora/internal/offlines"
+	"github.com/4H1R/zoora/internal/orgsettings"
+	"github.com/4H1R/zoora/internal/platform/authz"
 	"github.com/4H1R/zoora/internal/platform/database"
 	lk "github.com/4H1R/zoora/internal/platform/livekit"
 	"github.com/4H1R/zoora/internal/platform/logger"
@@ -41,6 +45,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	queueClient, err := queue.NewClient(cfg.RedisURL, log)
+	if err != nil {
+		log.Error("failed to initialize queue client", "error", err)
+		os.Exit(1)
+	}
+
 	transactor := database.NewTransactor(db)
 	chatRepo := chat.NewChatRepository(db)
 	chatMemberRepo := chat.NewMemberRepository(db)
@@ -59,9 +69,22 @@ func main() {
 		liveRoomRepo, liveParticipantRepo, liveRecordingRepo,
 		classSessionRepo, classRepo, classMemberRepo,
 		chatSvc, transactor,
-		livekitClient, log,
+		livekitClient, queueClient, log,
 	)
 	queueServer.HandleFunc(domain.TypeLiveSessionAutoClose, livesessions.NewAutoCloseHandler(liveSessionService))
+
+	attendanceRepo := attendance.NewRepository(db)
+	offlineRoomRepo := offlines.NewRoomRepository(db)
+	offlineViewRepo := offlines.NewViewRepository(db)
+	orgSettingsRepo := orgsettings.NewRepository(db)
+	orgSettingsService := orgsettings.NewService(orgSettingsRepo, log)
+	authzResolver := authz.NewResolver(classMemberRepo)
+	attendanceService := attendance.NewService(
+		attendanceRepo, classRepo, classSessionRepo, classMemberRepo,
+		liveRoomRepo, liveParticipantRepo, offlineViewRepo, offlineRoomRepo,
+		orgSettingsService, authzResolver, log,
+	)
+	queueServer.HandleFunc(domain.TypeAttendanceAutoMark, attendance.NewAutoMarkHandler(attendanceService))
 
 	go func() {
 		log.Info("starting worker server")

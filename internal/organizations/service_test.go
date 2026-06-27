@@ -72,8 +72,18 @@ func (m *orgRepoMock) Restore(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
 
+// noopSettingsRepo satisfies domain.OrganizationSettingsRepository; org-create
+// inserts a default settings row, which these tests don't assert on.
+type noopSettingsRepo struct{}
+
+func (noopSettingsRepo) Create(ctx context.Context, s *domain.OrganizationSettings) error { return nil }
+func (noopSettingsRepo) FindByOrgID(ctx context.Context, orgID uuid.UUID) (*domain.OrganizationSettings, error) {
+	return domain.NewDefaultOrganizationSettings(orgID), nil
+}
+func (noopSettingsRepo) Update(ctx context.Context, s *domain.OrganizationSettings) error { return nil }
+
 func newOrganizationService(repo *orgRepoMock) domain.OrganizationService {
-	return organizations.NewService(repo, nil, nil, slog.Default())
+	return organizations.NewService(repo, nil, noopSettingsRepo{}, nil, slog.Default())
 }
 
 func orgCaller(userID uuid.UUID, orgID *uuid.UUID, isAdmin bool) context.Context {

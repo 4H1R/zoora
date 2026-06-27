@@ -179,7 +179,7 @@ function TimelineEvent({
       <Link
         to={link.to}
         params={link.params}
-        className="group hover:border-border my-1.5 flex items-stretch gap-3 rounded-xl border border-transparent p-2.5 transition-all hover:-translate-y-0.5 hover:bg-card hover:shadow-sm"
+        className="group hover:border-border my-1.5 flex items-stretch gap-3 rounded-xl border border-transparent p-2.5 transition-all hover:bg-card"
       >
         <span
           className={cn(

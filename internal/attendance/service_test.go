@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/4H1R/zoora/internal/attendance"
-	"github.com/4H1R/zoora/internal/platform/authz"
 	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/platform/authz"
 )
 
 type mAttRepo struct{ mock.Mock }
@@ -168,11 +168,11 @@ func (m *mMemberRepo) ListAllByClass(ctx context.Context, classID uuid.UUID) ([]
 }
 
 func newSvc(repo domain.AttendanceRepository, classes domain.ClassRepository, sessions domain.ClassSessionRepository) domain.AttendanceService {
-	return attendance.NewService(repo, classes, sessions, nil, nil, nil, nil, nil, authz.NewResolver(nil), slog.Default())
+	return attendance.NewService(repo, classes, sessions, nil, nil, nil, nil, nil, nil, authz.NewResolver(nil), slog.Default())
 }
 
 func newSvcWithMembers(repo domain.AttendanceRepository, classes domain.ClassRepository, sessions domain.ClassSessionRepository, members domain.ClassMemberRepository) domain.AttendanceService {
-	return attendance.NewService(repo, classes, sessions, members, nil, nil, nil, nil, authz.NewResolver(nil), slog.Default())
+	return attendance.NewService(repo, classes, sessions, members, nil, nil, nil, nil, nil, authz.NewResolver(nil), slog.Default())
 }
 
 func ownerCtx(userID uuid.UUID) context.Context {

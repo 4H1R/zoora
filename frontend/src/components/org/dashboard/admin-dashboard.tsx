@@ -27,7 +27,7 @@ export function AdminDashboard() {
       />
 
       <div className="flex items-center gap-3.5">
-        {initial ? (
+        {initial && (
           <div
             aria-hidden
             className="ring-primary/15 relative size-11 shrink-0 rounded-xl shadow-sm ring-1 ring-inset"
@@ -40,7 +40,7 @@ export function AdminDashboard() {
             </span>
             <span className="bg-success ring-background absolute -end-0.5 -bottom-0.5 size-3 rounded-full ring-2" />
           </div>
-        ) : null}
+        )}
         <div className="flex min-w-0 flex-col gap-0.5">
           <Eyebrow className="text-primary">{t("org.dashboard.overview")}</Eyebrow>
           <h1 className="truncate text-xl font-bold tracking-tight text-balance sm:text-2xl">

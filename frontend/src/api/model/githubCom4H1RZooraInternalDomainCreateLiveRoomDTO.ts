@@ -11,6 +11,6 @@ export interface GithubCom4H1RZooraInternalDomainCreateLiveRoomDTO {
   class_session_id: string;
   config?: GithubCom4H1RZooraInternalDomainLiveRoomConfig;
   /** @maxLength 255 */
-  name?: string;
+  name: string;
   scheduled_start_time?: string;
 }

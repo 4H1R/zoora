@@ -26,6 +26,11 @@ func (m *mockRoomRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Live
 	}
 	return a.Get(0).(*domain.LiveRoom), a.Error(1)
 }
+func (m *mockRoomRepo) ListByClassSession(ctx context.Context, sessionID uuid.UUID) ([]domain.LiveRoom, error) {
+	a := m.Called(ctx, sessionID)
+	rooms, _ := a.Get(0).([]domain.LiveRoom)
+	return rooms, a.Error(1)
+}
 func (m *mockRoomRepo) Update(ctx context.Context, room *domain.LiveRoom) error {
 	return m.Called(ctx, room).Error(0)
 }
@@ -336,6 +341,7 @@ func newTestService(t *testing.T) (
 		sessRepo, classRepo, memberRepo,
 		chatSvc, noopTx{},
 		nil, // livekit client
+		nil, // queue client
 		slog.Default(),
 	)
 	return svc, roomRepo, partRepo, recRepo, sessRepo, classRepo, memberRepo, chatSvc
@@ -415,6 +421,7 @@ func TestCreateRoom_Teacher_Success(t *testing.T) {
 
 	room, err := svc.CreateRoom(teacherCtx(), domain.CreateLiveRoomDTO{
 		ClassSessionID: testSessionID,
+		Name:           "Morning session",
 		Config:         domain.DefaultLiveRoomConfig(),
 	})
 	assert.NoError(t, err)
@@ -544,6 +551,7 @@ func TestCreateRoom_CreatesChat(t *testing.T) {
 
 	room, err := svc.CreateRoom(teacherCtx(), domain.CreateLiveRoomDTO{
 		ClassSessionID: testSessionID,
+		Name:           "Morning session",
 		Config:         domain.DefaultLiveRoomConfig(),
 	})
 	assert.NoError(t, err)
@@ -561,9 +569,23 @@ func TestCreateRoom_ChatFailure_RollsBack(t *testing.T) {
 
 	_, err := svc.CreateRoom(teacherCtx(), domain.CreateLiveRoomDTO{
 		ClassSessionID: testSessionID,
+		Name:           "Morning session",
 		Config:         domain.DefaultLiveRoomConfig(),
 	})
 	assert.Error(t, err)
+}
+
+func TestCreateRoom_BlankName_Validation(t *testing.T) {
+	svc, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
+	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
+
+	_, err := svc.CreateRoom(teacherCtx(), domain.CreateLiveRoomDTO{
+		ClassSessionID: testSessionID,
+		Name:           "   ",
+		Config:         domain.DefaultLiveRoomConfig(),
+	})
+	assert.ErrorIs(t, err, domain.ErrValidation)
 }
 
 func TestEndRoom_ArchivesChat(t *testing.T) {
@@ -608,7 +630,6 @@ func manageAnyCtx() context.Context {
 		Permissions: []string{"live_sessions:manage_any", "live_sessions:view_any", "live_sessions:update_any"},
 	})
 }
-
 
 func TestManageAny_NonOwner_CanManageRoom(t *testing.T) {
 	svc, roomRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)

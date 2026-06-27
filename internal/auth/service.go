@@ -52,7 +52,7 @@ func (s *service) Login(ctx context.Context, dto domain.LoginDTO, orgID *uuid.UU
 	}
 	lockKey := fmt.Sprintf("login:lock:%s:%s", scope, dto.Username)
 	if locked, _ := s.redis.Get(ctx, lockKey).Int(); locked >= loginMaxFails {
-		return nil, "", domain.ErrUnauthorized
+		return nil, "", domain.ErrAccountLocked
 	}
 
 	var user *domain.User
@@ -70,7 +70,9 @@ func (s *service) Login(ctx context.Context, dto domain.LoginDTO, orgID *uuid.UU
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(dto.Password)); err != nil {
-		s.bumpLoginFail(ctx, lockKey)
+		if s.bumpLoginFail(ctx, lockKey) {
+			return nil, "", domain.ErrAccountLocked
+		}
 		return nil, "", domain.ErrUnauthorized
 	}
 
@@ -89,17 +91,21 @@ func (s *service) Login(ctx context.Context, dto domain.LoginDTO, orgID *uuid.UU
 	return user, token, nil
 }
 
-func (s *service) bumpLoginFail(ctx context.Context, key string) {
+// bumpLoginFail increments the failure counter and reports whether the account
+// is now locked (this attempt reached the threshold).
+func (s *service) bumpLoginFail(ctx context.Context, key string) bool {
 	pipe := s.redis.TxPipeline()
 	incr := pipe.Incr(ctx, key)
 	pipe.Expire(ctx, key, loginLockTTL)
 	if _, err := pipe.Exec(ctx); err != nil {
 		s.logger.Warn("login fail counter", "error", err)
-		return
+		return false
 	}
 	if incr.Val() >= loginMaxFails {
 		s.logger.Warn("login lockout triggered", "key", key)
+		return true
 	}
+	return false
 }
 
 func (s *service) AdminRevokeSessions(ctx context.Context, userID uuid.UUID) error {

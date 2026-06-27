@@ -43,6 +43,7 @@
   },
   "common": {
     "brandName": "Zoora",
+    "autoSessionTitle": "Class {{date}} at {{time}}",
     "dateTimePicker": {
       "placeholder": "Pick a date",
       "hour": "Hour",
@@ -438,12 +439,8 @@
         "session": "Session",
         "sessionPlaceholder": "Select session…",
         "sessionSelectClassFirst": "Select a class first",
-        "maxParticipants": "Max participants",
-        "maxParticipantsPlaceholder": "100",
-        "allowMicDefault": "Allow mic by default",
-        "allowCameraDefault": "Allow camera by default",
-        "allowScreenShareDefault": "Allow screen share by default",
-        "autoRecord": "Auto record when room starts",
+        "name": "Room name",
+        "namePlaceholder": "Session title",
         "createSuccess": "Live room created"
       },
       "toolbar": {
@@ -1124,7 +1121,7 @@
       "notFoundTitle": "Workspace not found",
       "notFoundDescription": "This address doesn't match an active workspace. Check the URL or contact your organization's administrator."
     },
-    "title": "Welcome back",
+    "title": "Login",
     "subtitle": "Sign in to continue to your classroom.",
     "subtitleStudent": "Sign in to see today's classes and resources.",
     "subtitleOrg": "Sign in to manage your organization's learning.",
@@ -1147,6 +1144,7 @@
     "submitting": "Signing in…",
     "success": "Welcome back! Redirecting…",
     "error": "Invalid username or password",
+    "locked": "Too many failed attempts. Your account is locked for 15 minutes — try again later.",
     "separator": "or continue with",
     "googleLogin": "Google",
     "appleLogin": "Apple",
@@ -1476,6 +1474,14 @@
       "generalHint": "Your organization's public name and description.",
       "details": "Details",
       "detailsHint": "Read-only metadata about your organization.",
+      "attendance": {
+        "title": "Attendance",
+        "hint": "How attendance is auto-marked when a live class ends.",
+        "thresholdLabel": "Minimum attendance %",
+        "thresholdHint": "Students present for at least this percentage of the session are marked present automatically.",
+        "save": "Save",
+        "updateSuccess": "Attendance settings updated"
+      },
       "members": "Members",
       "member": "member",
       "members_plural": "members",
@@ -1660,7 +1666,7 @@
         "live": "Live Rooms",
         "quizzes": "Quizzes",
         "practices": "Practices",
-        "recordings": "Recordings"
+        "recordings": "Offline Rooms"
       },
       "overview": {
         "stats": {
@@ -2096,14 +2102,9 @@
         "form": {
           "createTitle": "New live room",
           "createDescription": "Create a live room for this session.",
-          "maxParticipants": "Max participants",
-          "allowMic": "Allow mic by default",
-          "allowCamera": "Allow camera by default",
-          "allowScreen": "Allow screen share by default",
-          "autoRecord": "Auto-record",
           "createSuccess": "Live room created",
           "name": "Room name",
-          "namePlaceholder": "Optional name",
+          "namePlaceholder": "Session title",
           "mode": "When",
           "scheduleLater": "Schedule for later",
           "startNow": "Start now",
@@ -2169,6 +2170,8 @@
           "markAllPresent": "All present",
           "markAllAbsent": "All absent",
           "unmarked": "Unmarked",
+          "member": "Student",
+          "status": "Status",
           "unsaved": "{{count}} unsaved",
           "saveSuccess": "Attendance saved",
           "saveError": "Could not save attendance. Try again.",
@@ -2356,10 +2359,6 @@
     "classStarted": "Class has started",
     "instructor": "Instructor",
     "startTime": "Start time",
-    "participants": "Participants",
-    "capacity": "capacity",
-    "recordingEnabled": "Enabled",
-    "recordingNotice": "This session is being recorded. By joining, you agree to the recording and privacy terms.",
     "back": "Back",
     "secureEntry": "Secure entry",
     "avSettingsNote": "Adjust mic and camera before joining",

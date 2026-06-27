@@ -77,7 +77,7 @@ function RouteComponent() {
                 <ThemeToggle />
               </div>
             </header>
-            <MobileBreadcrumb className="border-b px-4 py-2 md:hidden" />
+            <MobileBreadcrumb className="px-4 pb-2 pt-4 md:hidden" />
             <div className="container flex flex-1 flex-col gap-4 py-4">
               <Outlet />
             </div>

@@ -144,12 +144,12 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
           <Eyebrow>{t("org.class.gradebook.eyebrow")}</Eyebrow>
           <h2 className="text-2xl font-semibold tracking-tight">{t("org.class.gradebook.title")}</h2>
         </div>
-        {canManage ? (
+        {canManage && (
           <Button onClick={openCreate}>
             <PlusIcon className="size-4" />
             {t("org.class.gradebook.newColumn")}
           </Button>
-        ) : null}
+        )}
       </div>
 
       <section className="bg-card ring-foreground/10 grid grid-cols-2 divide-x divide-dashed overflow-hidden rounded-2xl ring-1 rtl:divide-x-reverse">
@@ -193,7 +193,7 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
                             {t(`org.class.gradebook.types.${col.type}`)}
                           </Badge>
                         </div>
-                        {canManage || canDelete ? (
+                        {(canManage || canDelete) && (
                           <DropdownMenu>
                             <DropdownMenuTrigger
                               render={
@@ -203,7 +203,7 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
                               }
                             />
                             <DropdownMenuContent align="end" className="min-w-40">
-                              {canManage ? (
+                              {canManage && (
                                 <DropdownMenuGroup>
                                   <DropdownMenuItem
                                     onClick={() => {
@@ -215,10 +215,10 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
                                     {t("common.edit")}
                                   </DropdownMenuItem>
                                 </DropdownMenuGroup>
-                              ) : null}
-                              {canDelete ? (
+                              )}
+                              {canDelete && (
                                 <>
-                                  {canManage ? <DropdownMenuSeparator /> : null}
+                                  {canManage && <DropdownMenuSeparator />}
                                   <DropdownMenuGroup>
                                     <DropdownMenuItem
                                       variant="destructive"
@@ -229,10 +229,10 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
                                     </DropdownMenuItem>
                                   </DropdownMenuGroup>
                                 </>
-                              ) : null}
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
-                        ) : null}
+                        )}
                       </div>
                     </TableHead>
                   ))}
@@ -296,7 +296,7 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
         </div>
       </div>
 
-      {canManage || canDelete ? (
+      {(canManage || canDelete) && (
         <>
           <GradebookColumnDialog
             open={columnDialogOpen}
@@ -328,7 +328,7 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
             isLoading={deleteMutation.isPending}
           />
         </>
-      ) : null}
+      )}
     </section>
   )
 }

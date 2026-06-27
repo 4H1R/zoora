@@ -46,8 +46,8 @@ export function LiveRoomCard({ room }: LiveRoomCardProps) {
   return (
     <div
       className={cn(
-        "group/card bg-card flex flex-col overflow-hidden rounded-xl ring-1 transition-shadow hover:shadow-md",
-        isLive ? "ring-2 ring-[#dc2626]/60" : "ring-border"
+        "group/card bg-card flex flex-col overflow-hidden rounded-xl ring-1 transition-all",
+        isLive ? "ring-2 ring-[#dc2626]/60" : "ring-foreground/10 hover:ring-foreground/30"
       )}
     >
       <div className={cn("relative flex h-28 flex-col justify-end gap-2 bg-gradient-to-br p-3.5", gradient)}>

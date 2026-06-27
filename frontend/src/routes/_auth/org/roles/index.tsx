@@ -127,12 +127,12 @@ function RolesPage() {
       <PageHeader
         title={t("org.roles.title")}
         actions={
-          canCreate ? (
+          canCreate && (
             <Button size="sm" onClick={handleCreate}>
               <PlusIcon data-icon="inline-start" />
               {t("org.roles.newRole")}
             </Button>
-          ) : null
+          )
         }
       />
       <StatCards stats={statCards} />

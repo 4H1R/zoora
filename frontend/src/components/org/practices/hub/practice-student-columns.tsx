@@ -77,13 +77,13 @@ export function usePracticeStudentColumns({ canSubmit, onSubmit }: Options): Col
       enableSorting: false,
       enableHiding: false,
       cell: ({ row }) =>
-        canSubmit && row.original.can_submit ? (
+        canSubmit && row.original.can_submit && (
           <div className="flex justify-end">
             <Button size="xs" onClick={() => onSubmit(row.original)}>
               {t("org.practices.actions.submit")}
             </Button>
           </div>
-        ) : null,
+        ),
     },
   ]
 }

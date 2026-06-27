@@ -261,6 +261,7 @@ export function QuestionCreateModal({
       onSubmit={onSubmit}
       isLoading={isLoading}
       submitLabel={isEdit ? t("common.save") : t("common.create")}
+      contentClassName="sm:max-w-2xl"
     >
       <FieldGroup>
         {!isEdit && (
@@ -289,7 +290,9 @@ export function QuestionCreateModal({
           <FieldLabel>{t("admin.questions.form.type")}</FieldLabel>
           <Select value={type} onValueChange={(v) => handleTypeChange(v as QType)}>
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue>
+                {(value: QType) => t(`admin.questions.types.${value}`)}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {TYPE_VALUES.map((v) => (

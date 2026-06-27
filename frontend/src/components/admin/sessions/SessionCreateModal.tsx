@@ -2,7 +2,7 @@ import type { GithubCom4H1RZooraInternalDomainClassSession as Session } from "@/
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -19,6 +19,7 @@ import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { useSessionTitle } from "@/lib/session-title"
 
 const schema = z.object({
   name: z.string().min(2),
@@ -39,6 +40,7 @@ export function SessionCreateModal({ open, onOpenChange, classId, session }: Ses
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const isEdit = !!session
+  const genTitle = useSessionTitle()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -49,8 +51,13 @@ export function SessionCreateModal({ open, onOpenChange, classId, session }: Ses
     },
   })
 
+  // Tracks the last auto-filled title so we only overwrite the name field
+  // while the user hasn't typed their own.
+  const autoNameRef = useRef("")
+
   useEffect(() => {
     if (!open) return
+    autoNameRef.current = ""
     if (isEdit && session) {
       form.reset({
         name: session.name ?? "",
@@ -61,6 +68,21 @@ export function SessionCreateModal({ open, onOpenChange, classId, session }: Ses
       form.reset({ name: "", description: "", start_time: "" })
     }
   }, [open, session, isEdit])
+
+  const startTime = form.watch("start_time")
+
+  // On create, default the name to a readable label derived from the start
+  // time ("کلاس دوشنبه ۲۰ تیر ساعت ۱۱:۳۰"), unless the user typed their own.
+  useEffect(() => {
+    if (!open || isEdit || !startTime) return
+    const base = new Date(startTime)
+    if (Number.isNaN(base.getTime())) return
+    const current = form.getValues("name") ?? ""
+    if (current !== "" && current !== autoNameRef.current) return
+    const next = genTitle(base)
+    autoNameRef.current = next
+    form.setValue("name", next, { shouldValidate: true })
+  }, [open, isEdit, startTime])
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getGetClassesIdSessionsQueryKey(classId) })

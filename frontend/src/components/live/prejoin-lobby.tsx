@@ -4,7 +4,6 @@ import { LocalVideoTrack } from "livekit-client"
 import {
   CalendarDays,
   ChevronLeft,
-  Circle,
   Hourglass,
   Info,
   Lock,
@@ -120,8 +119,6 @@ export function PreJoinLobby({ room, liveId, onJoined }: PreJoinLobbyProps) {
   const className = session?.class?.name
   const teacherName = session?.class?.user?.name
   const sessionName = session?.name
-  const maxParticipants = room?.config?.max_participants
-  const autoRecord = room?.config?.auto_record
 
   // The room's own scheduled time wins; fall back to the session start time.
   const scheduledIso = room?.scheduled_start_time ?? session?.start_time
@@ -257,24 +254,7 @@ export function PreJoinLobby({ room, liveId, onJoined }: PreJoinLobbyProps) {
                   </span>
                 </MetaRow>
               )}
-              {maxParticipants != null && maxParticipants > 0 && (
-                <MetaRow icon={<Users className="size-4" />} label={t("liveRoom.participants")}>
-                  <span className="text-sm text-zinc-200">
-                    <span className="font-mono" dir="ltr">
-                      {maxParticipants}
-                    </span>
-                    <span className="ms-1.5 text-zinc-500">{t("liveRoom.capacity")}</span>
-                  </span>
-                </MetaRow>
-              )}
             </div>
-
-            {autoRecord && (
-              <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-red-500/20 bg-red-500/5 p-3">
-                <Circle className="mt-0.5 size-2.5 shrink-0 animate-pulse fill-red-500 text-red-500" />
-                <p className="text-[13px] leading-relaxed text-zinc-400">{t("liveRoom.recordingNotice")}</p>
-              </div>
-            )}
 
             {joinMutation.isError && !isWaiting && (
               <p className="mt-4 text-center text-sm text-red-400">{t("liveRoom.joinError")}</p>

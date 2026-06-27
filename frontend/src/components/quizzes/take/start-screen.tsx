@@ -61,11 +61,11 @@ export function StartScreen({ quiz, room, totalQuestions, backHref, starting, on
         <h1 className="max-w-4xl text-4xl leading-tight font-semibold tracking-tight text-balance md:text-5xl lg:text-6xl">
           {quiz.title}
         </h1>
-        {quiz.description ? (
+        {Boolean(quiz.description) && (
           <p className="text-muted-foreground max-w-2xl text-base leading-relaxed md:text-lg">
             {quiz.description}
           </p>
-        ) : null}
+        )}
       </header>
 
       <section className="bg-card ring-foreground/10 grid grid-cols-2 gap-0 overflow-hidden rounded-2xl px-4 py-6 ring-1 md:grid-cols-4 md:px-6">
@@ -111,12 +111,12 @@ export function StartScreen({ quiz, room, totalQuestions, backHref, starting, on
               ? t("org.session.quizzes.take.rules.noBack")
               : t("org.session.quizzes.take.rules.backAllowed")}
           </li>
-          {quiz.shuffle_questions ? (
+          {quiz.shuffle_questions && (
             <li className="flex items-start gap-2">
               <ShuffleIcon className="text-muted-foreground mt-0.5 size-4" />
               {t("org.session.quizzes.take.rules.shuffle")}
             </li>
-          ) : null}
+          )}
           <li className="flex items-start gap-2">
             <AlertTriangleIcon className="text-muted-foreground mt-0.5 size-4" />
             {t("org.session.quizzes.take.rules.autoSubmit")}

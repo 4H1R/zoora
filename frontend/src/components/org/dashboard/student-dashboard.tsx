@@ -132,11 +132,11 @@ export function StudentDashboard() {
                   <Badge variant={examStateBadgeVariant(e.state)}>
                     {t(`org.exams.state.${e.state}`)}
                   </Badge>
-                  {e.state === "open" ? (
+                  {e.state === "open" && (
                     <Link to="/org/exams/$quizId/take" params={{ quizId: e.quiz_id! }}>
                       <Button size="sm">{t("org.exams.start")}</Button>
                     </Link>
-                  ) : null}
+                  )}
                 </div>
               ))}
             </div>
@@ -189,15 +189,15 @@ export function StudentDashboard() {
         </Card>
       </div>
 
-      {tiles.length > 0 ? <TileGrid tiles={tiles} /> : null}
+      {tiles.length > 0 && <TileGrid tiles={tiles} />}
 
-      {tiles.length === 0 && !examsLoading && !gradesLoading && upcomingExams.length === 0 && latestGrades.length === 0 ? (
+      {tiles.length === 0 && !examsLoading && !gradesLoading && upcomingExams.length === 0 && latestGrades.length === 0 && (
         <EmptyState
           icon={GraduationCapIcon}
           title={t("org.dashboard.memberEmpty.title")}
           description={t("org.dashboard.memberEmpty.hint")}
         />
-      ) : null}
+      )}
     </div>
   )
 }

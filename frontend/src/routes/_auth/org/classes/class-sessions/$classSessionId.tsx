@@ -1,9 +1,7 @@
-import type { GithubCom4H1RZooraInternalDomainClassSession as Session } from "@/api/model"
-import type { ErrorType } from "@/api/mutator/custom-instance"
 import type { SessionStatus } from "@/lib/session-status"
 import type { ReactNode } from "react"
 
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, Link } from "@tanstack/react-router"
 import {
   ArrowLeftIcon,
   CalendarClockIcon,
@@ -17,12 +15,12 @@ import {
   UserCheckIcon,
   VideoIcon,
 } from "lucide-react"
-import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { z } from "zod"
 
 import { useGetClassesIdSessionsSessionIdAttendance } from "@/api/attendance/attendance"
 import { useGetClassesId, useGetClassesSessionsSessionId } from "@/api/classes/classes"
-import { getLiveRooms, useGetLiveRooms, usePostLiveRooms } from "@/api/live-sessions/live-sessions"
+import { useGetLiveRooms } from "@/api/live-sessions/live-sessions"
 import { useGetOfflines } from "@/api/offlines/offlines"
 import { useGetPractices } from "@/api/practices/practices"
 import { useGetQuestionBanks } from "@/api/question-banks/question-banks"
@@ -46,14 +44,24 @@ import { useQuizPermissions } from "@/components/org/quizzes/use-quiz-permission
 import { SessionStatusPill } from "@/components/session/status-pill"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useOrgGuard } from "@/lib/access"
 import { orgHead } from "@/lib/org-head"
 import { formatRelativeTime, formatSessionDate, getSessionStatus, useNow } from "@/lib/session-status"
 import { cn } from "@/lib/utils"
 
+// Surface and leaf selection live in the URL (mirrors the class detail page's
+// ?tab= idiom) so a session view is shareable and survives reload. Keys are
+// permission-gated and computed at render, so both params stay loose strings;
+// invalid/stale keys fall back to the first available surface/leaf.
+const sessionDetailSearchSchema = z.object({
+  tab: z.string().optional(),
+  subtab: z.string().optional(),
+})
+
 export const Route = createFileRoute("/_auth/org/classes/class-sessions/$classSessionId")({
   head: () => orgHead("org.session.title"),
+  validateSearch: sessionDetailSearchSchema,
   component: RouteComponent,
 })
 
@@ -114,72 +122,36 @@ function DecorativeBackground() {
   )
 }
 
-function JoinAction({ session }: { session: Session }) {
-  const { t } = useTranslation()
-  const navigate = useNavigate()
-  const { canCreate: canStart, canJoin } = useLivesessionPermissions()
-
-  const join = usePostLiveRooms({
-    mutation: {
-      onSuccess: (result) => {
-        const room = (result.status === 201 && result.data.data) || undefined
-        if (room?.id) navigate({ to: "/live/$liveId", params: { liveId: room.id } })
-      },
-      onError: async (err, variables) => {
-        if ((err as ErrorType<unknown>).response?.status !== 409) return
-        try {
-          const rooms = await getLiveRooms()
-          const roomsData = (rooms.status === 200 && rooms.data.data) || undefined
-          const room = (roomsData?.items ?? []).find((r) => r.class_session_id === variables.data.class_session_id)
-          if (room?.id) navigate({ to: "/live/$liveId", params: { liveId: room.id } })
-        } catch {
-          // ignore
-        }
-      },
-    },
-  })
-
-  if (!canStart && !canJoin) {
-    return (
-      <Button variant="outline" size="sm" disabled>
-        {t("org.session.actions.notPermitted")}
-      </Button>
-    )
-  }
-
+// Light line sub-tabs, rendered as the second tier of the unified nav group.
+// Presentational only — selection state is lifted to the route so both tiers
+// share one bordered surface instead of floating as two detached bars.
+function SubTabsBar({
+  tabs,
+  value,
+  onValueChange,
+  status,
+}: {
+  tabs: SubTab[]
+  value: string
+  onValueChange: (key: string) => void
+  status: SessionStatus
+}) {
   return (
-    <Button
-      size="sm"
-      disabled={join.isPending || !session.id}
-      onClick={() => session.id && join.mutate({ data: { class_session_id: session.id } })}
-    >
-      <RadioIcon className="size-4" />
-      {canStart ? t("org.session.actions.start") : t("org.session.actions.join")}
-    </Button>
-  )
-}
-
-// Light line sub-tabs, consistent with the class detail page's TabsList.
-function SubTabs({ tabs, status }: { tabs: SubTab[]; status: SessionStatus }) {
-  if (tabs.length === 0) return null
-  if (tabs.length === 1) return <div className="flex flex-col gap-6">{tabs[0]!.content}</div>
-
-  return (
-    <Tabs defaultValue={tabs[0]?.key} className="gap-6">
-      <TabsList variant="line">
-        {tabs.map((tab) => (
-          <TabsTrigger key={tab.key} value={tab.key} className="gap-2">
-            {tab.icon}
-            <span>{tab.label}</span>
-            <CountBadge count={tab.count} loading={tab.loading} status={status} />
-          </TabsTrigger>
-        ))}
-      </TabsList>
-      {tabs.map((tab) => (
-        <TabsContent key={tab.key} value={tab.key} className="flex flex-col gap-6">
-          {tab.content}
-        </TabsContent>
-      ))}
+    <Tabs value={value} onValueChange={onValueChange}>
+      {/* Scrolls horizontally on narrow viewports rather than wrapping into a
+          jumbled stack. The -mb/pb pair reserves room for the active underline
+          (bottom-[-5px]) so the overflow clip doesn't shave it off. */}
+      <div className="-mb-1.5 max-w-full overflow-x-auto pb-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <TabsList variant="line">
+          {tabs.map((tab) => (
+            <TabsTrigger key={tab.key} value={tab.key} className="shrink-0 gap-2">
+              {tab.icon}
+              <span>{tab.label}</span>
+              <CountBadge count={tab.count} loading={tab.loading} status={status} />
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </div>
     </Tabs>
   )
 }
@@ -197,7 +169,8 @@ function RouteComponent() {
   const canViewLiveAny = canViewLive || canJoinLive
   const now = useNow(1000)
 
-  const [tab, setTab] = useState<string | null>(null)
+  const search = Route.useSearch()
+  const navigate = Route.useNavigate()
 
   const {
     data: sessionData,
@@ -385,7 +358,7 @@ function RouteComponent() {
 
   if (canViewOfflines) {
     surfaces.push({
-      key: "recordings",
+      key: "offlines",
       navLabel: t("org.session.nav.recordings"),
       icon: <FilmIcon className="size-4" />,
       count: itemsCount(offlineQ.data),
@@ -403,14 +376,26 @@ function RouteComponent() {
     })
   }
 
-  const activeTab = tab ?? surfaces[0]?.key
+  const activeSurface = surfaces.find((s) => s.key === search.tab) ?? surfaces[0]
+  // A stored sub-tab only applies while its parent surface is active; switching
+  // surfaces falls back to the new surface's first leaf so a stale key never
+  // renders a blank panel.
+  const activeSub = activeSurface?.subTabs.find((s) => s.key === search.subtab) ?? activeSurface?.subTabs[0]
+
+  const handleSurfaceChange = (key: string) => {
+    navigate({ search: { tab: key } })
+  }
+
+  const handleSubChange = (key: string) => {
+    navigate({ search: { ...search, subtab: key } })
+  }
 
   return (
     <div className="relative isolate flex flex-col gap-6 pb-10">
       <DecorativeBackground />
 
 
-      <header className="border-foreground/10 bg-card/50 relative flex flex-col gap-5 overflow-hidden rounded-2xl border p-4 backdrop-blur-sm md:flex-row md:items-start md:justify-between md:gap-8 md:p-5">
+      <header className="border-foreground/10 bg-card/50 relative mt-5 flex flex-col gap-5 overflow-hidden rounded-2xl border p-4 backdrop-blur-sm md:p-5">
         <div className="flex min-w-0 flex-col gap-2.5">
           <div className="flex flex-wrap items-center gap-2.5">
             <Eyebrow>{t("org.session.eyebrow")}</Eyebrow>
@@ -421,26 +406,28 @@ function RouteComponent() {
             {session.name}
           </h1>
 
-          {session.description ? (
+          {session.description && (
             <p className="text-muted-foreground line-clamp-2 max-w-xl text-sm leading-relaxed">
               {session.description}
             </p>
-          ) : null}
+          )}
 
-          <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm">
+          <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-sm">
             <span className="inline-flex items-center gap-1.5">
-              <CalendarClockIcon className="size-3.5" />
+              <CalendarClockIcon className="size-3.5 opacity-70" />
               {startStr}
             </span>
-            {status !== "ended" && relativeStr ? (
+            {status !== "ended" && relativeStr && (
               <>
                 <span className="text-muted-foreground/40">·</span>
-                <span className={cn("font-medium", status === "live" ? "text-destructive" : "text-foreground")}>
+                <span
+                  className={cn("font-medium", status === "live" ? "text-destructive" : "text-primary")}
+                >
                   {relativeStr}
                 </span>
               </>
-            ) : null}
-            {cls?.name ? (
+            )}
+            {cls?.name && (
               <>
                 <span className="text-muted-foreground/40">·</span>
                 <Link
@@ -448,41 +435,54 @@ function RouteComponent() {
                   params={{ classId: classId ?? "" }}
                   className="hover:text-foreground inline-flex max-w-[22ch] items-center gap-1.5 truncate transition-colors"
                 >
-                  <SparklesIcon className="size-3.5" />
+                  <SparklesIcon className="size-3.5 opacity-70" />
                   {cls.name}
                 </Link>
               </>
-            ) : null}
+            )}
           </div>
-        </div>
-
-        <div className="flex shrink-0 items-center gap-2 max-md:self-start">
-          <JoinAction session={session} />
         </div>
       </header>
 
-      {surfaces.length > 0 && activeTab ? (
-        <Tabs value={activeTab} onValueChange={setTab}>
-          {/* Primary nav: a filled segmented control with icons. The distinct
-              filled treatment (vs. the line sub-tabs below) makes the two-tier
-              hierarchy legible at a glance. */}
-          <TabsList variant="default" className="h-auto flex-wrap p-1">
-            {surfaces.map((surface) => (
-              <TabsTrigger key={surface.key} value={surface.key} className="gap-2 px-3 py-1.5">
-                {surface.icon}
-                <span>{surface.navLabel}</span>
-                <CountBadge count={surface.count} loading={surface.loading} status={status} />
-              </TabsTrigger>
-            ))}
-          </TabsList>
+      {surfaces.length > 0 && activeSurface && activeSub && (
+        <div className="flex flex-col gap-6">
+          {/* Both tab tiers share one bordered surface so they read as a single
+              nav group rather than two detached, right-ragged bars. The dashed
+              underline echoes the section dividers used across the app. */}
+          <nav className="border-foreground/10 flex flex-col gap-3 border-b border-dashed pb-4">
+            {/* Tier 1 — primary surfaces as a filled segmented control. The
+                filled treatment sets it apart from the line sub-tabs below. */}
+            <Tabs value={activeSurface.key} onValueChange={handleSurfaceChange}>
+              <TabsList
+                variant="default"
+                className="h-auto max-w-full justify-start overflow-x-auto p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
+                {surfaces.map((surface) => (
+                  <TabsTrigger key={surface.key} value={surface.key} className="shrink-0 gap-2 px-3 py-1.5">
+                    {surface.icon}
+                    <span>{surface.navLabel}</span>
+                    <CountBadge count={surface.count} loading={surface.loading} status={status} />
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
 
-          {surfaces.map((surface) => (
-            <TabsContent key={surface.key} value={surface.key} className="flex flex-col gap-6">
-              <SubTabs tabs={surface.subTabs} status={status} />
-            </TabsContent>
-          ))}
-        </Tabs>
-      ) : null}
+            {/* Tier 2 — leaf sections of the active surface. Hidden when the
+                surface has a single leaf, so a lone underlined tab never sits
+                orphaned beneath the primary control. */}
+            {activeSurface.subTabs.length > 1 && (
+              <SubTabsBar
+                tabs={activeSurface.subTabs}
+                value={activeSub.key}
+                onValueChange={handleSubChange}
+                status={status}
+              />
+            )}
+          </nav>
+
+          <div className="flex flex-col gap-6">{activeSub.content}</div>
+        </div>
+      )}
     </div>
   )
 }

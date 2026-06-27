@@ -30,13 +30,23 @@ import type {
   GetOrganizationsId403,
   GetOrganizationsId404,
   GetOrganizationsId500,
+  GetOrganizationsIdSettings200,
+  GetOrganizationsIdSettings401,
+  GetOrganizationsIdSettings403,
+  GetOrganizationsIdSettings500,
   GithubCom4H1RZooraInternalDomainUpdateOrganizationDTO,
+  GithubCom4H1RZooraInternalDomainUpdateOrganizationSettingsDTO,
   PutOrganizationsId200,
   PutOrganizationsId400,
   PutOrganizationsId401,
   PutOrganizationsId403,
   PutOrganizationsId404,
-  PutOrganizationsId500
+  PutOrganizationsId500,
+  PutOrganizationsIdSettings200,
+  PutOrganizationsIdSettings400,
+  PutOrganizationsIdSettings401,
+  PutOrganizationsIdSettings403,
+  PutOrganizationsIdSettings500
 } from '../model';
 
 import { customInstance } from '.././mutator/custom-instance';
@@ -304,4 +314,237 @@ export const usePutOrganizationsId = <TError = ErrorType<PutOrganizationsId400 |
         TContext
       > => {
       return useMutation(getPutOrganizationsIdMutationOptions(options), queryClient);
+    }
+    export type getOrganizationsIdSettingsResponse200 = {
+  data: GetOrganizationsIdSettings200
+  status: 200
+}
+
+export type getOrganizationsIdSettingsResponse401 = {
+  data: GetOrganizationsIdSettings401
+  status: 401
+}
+
+export type getOrganizationsIdSettingsResponse403 = {
+  data: GetOrganizationsIdSettings403
+  status: 403
+}
+
+export type getOrganizationsIdSettingsResponse500 = {
+  data: GetOrganizationsIdSettings500
+  status: 500
+}
+
+export type getOrganizationsIdSettingsResponseSuccess = (getOrganizationsIdSettingsResponse200) & {
+  headers: Headers;
+};
+export type getOrganizationsIdSettingsResponseError = (getOrganizationsIdSettingsResponse401 | getOrganizationsIdSettingsResponse403 | getOrganizationsIdSettingsResponse500) & {
+  headers: Headers;
+};
+
+export type getOrganizationsIdSettingsResponse = (getOrganizationsIdSettingsResponseSuccess | getOrganizationsIdSettingsResponseError)
+
+export const getGetOrganizationsIdSettingsUrl = (id: string,) => {
+
+
+
+
+  return `/organizations/${id}/settings`
+}
+
+/**
+ * @summary Get organization settings
+ */
+export const getOrganizationsIdSettings = async (id: string, options?: RequestInit): Promise<getOrganizationsIdSettingsResponse> => {
+
+  return customInstance<getOrganizationsIdSettingsResponse>(getGetOrganizationsIdSettingsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetOrganizationsIdSettingsQueryKey = (id: string,) => {
+    return [
+    `/organizations/${id}/settings`
+    ] as const;
+    }
+
+
+export const getGetOrganizationsIdSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getOrganizationsIdSettings>>, TError = ErrorType<GetOrganizationsIdSettings401 | GetOrganizationsIdSettings403 | GetOrganizationsIdSettings500>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationsIdSettings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOrganizationsIdSettingsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOrganizationsIdSettings>>> = ({ signal }) => getOrganizationsIdSettings(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOrganizationsIdSettings>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetOrganizationsIdSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getOrganizationsIdSettings>>>
+export type GetOrganizationsIdSettingsQueryError = ErrorType<GetOrganizationsIdSettings401 | GetOrganizationsIdSettings403 | GetOrganizationsIdSettings500>
+
+
+export function useGetOrganizationsIdSettings<TData = Awaited<ReturnType<typeof getOrganizationsIdSettings>>, TError = ErrorType<GetOrganizationsIdSettings401 | GetOrganizationsIdSettings403 | GetOrganizationsIdSettings500>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationsIdSettings>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOrganizationsIdSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getOrganizationsIdSettings>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOrganizationsIdSettings<TData = Awaited<ReturnType<typeof getOrganizationsIdSettings>>, TError = ErrorType<GetOrganizationsIdSettings401 | GetOrganizationsIdSettings403 | GetOrganizationsIdSettings500>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationsIdSettings>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOrganizationsIdSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getOrganizationsIdSettings>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOrganizationsIdSettings<TData = Awaited<ReturnType<typeof getOrganizationsIdSettings>>, TError = ErrorType<GetOrganizationsIdSettings401 | GetOrganizationsIdSettings403 | GetOrganizationsIdSettings500>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationsIdSettings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get organization settings
+ */
+
+export function useGetOrganizationsIdSettings<TData = Awaited<ReturnType<typeof getOrganizationsIdSettings>>, TError = ErrorType<GetOrganizationsIdSettings401 | GetOrganizationsIdSettings403 | GetOrganizationsIdSettings500>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationsIdSettings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetOrganizationsIdSettingsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type putOrganizationsIdSettingsResponse200 = {
+  data: PutOrganizationsIdSettings200
+  status: 200
+}
+
+export type putOrganizationsIdSettingsResponse400 = {
+  data: PutOrganizationsIdSettings400
+  status: 400
+}
+
+export type putOrganizationsIdSettingsResponse401 = {
+  data: PutOrganizationsIdSettings401
+  status: 401
+}
+
+export type putOrganizationsIdSettingsResponse403 = {
+  data: PutOrganizationsIdSettings403
+  status: 403
+}
+
+export type putOrganizationsIdSettingsResponse500 = {
+  data: PutOrganizationsIdSettings500
+  status: 500
+}
+
+export type putOrganizationsIdSettingsResponseSuccess = (putOrganizationsIdSettingsResponse200) & {
+  headers: Headers;
+};
+export type putOrganizationsIdSettingsResponseError = (putOrganizationsIdSettingsResponse400 | putOrganizationsIdSettingsResponse401 | putOrganizationsIdSettingsResponse403 | putOrganizationsIdSettingsResponse500) & {
+  headers: Headers;
+};
+
+export type putOrganizationsIdSettingsResponse = (putOrganizationsIdSettingsResponseSuccess | putOrganizationsIdSettingsResponseError)
+
+export const getPutOrganizationsIdSettingsUrl = (id: string,) => {
+
+
+
+
+  return `/organizations/${id}/settings`
+}
+
+/**
+ * @summary Update organization settings
+ */
+export const putOrganizationsIdSettings = async (id: string,
+    githubCom4H1RZooraInternalDomainUpdateOrganizationSettingsDTO: GithubCom4H1RZooraInternalDomainUpdateOrganizationSettingsDTO, options?: RequestInit): Promise<putOrganizationsIdSettingsResponse> => {
+
+  return customInstance<putOrganizationsIdSettingsResponse>(getPutOrganizationsIdSettingsUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(githubCom4H1RZooraInternalDomainUpdateOrganizationSettingsDTO)
+  }
+);}
+
+
+
+
+export const getPutOrganizationsIdSettingsMutationOptions = <TError = ErrorType<PutOrganizationsIdSettings400 | PutOrganizationsIdSettings401 | PutOrganizationsIdSettings403 | PutOrganizationsIdSettings500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putOrganizationsIdSettings>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateOrganizationSettingsDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putOrganizationsIdSettings>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateOrganizationSettingsDTO}, TContext> => {
+
+const mutationKey = ['putOrganizationsIdSettings'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putOrganizationsIdSettings>>, {id: string;data: GithubCom4H1RZooraInternalDomainUpdateOrganizationSettingsDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  putOrganizationsIdSettings(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutOrganizationsIdSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof putOrganizationsIdSettings>>>
+    export type PutOrganizationsIdSettingsMutationBody = GithubCom4H1RZooraInternalDomainUpdateOrganizationSettingsDTO
+    export type PutOrganizationsIdSettingsMutationError = ErrorType<PutOrganizationsIdSettings400 | PutOrganizationsIdSettings401 | PutOrganizationsIdSettings403 | PutOrganizationsIdSettings500>
+
+    /**
+ * @summary Update organization settings
+ */
+export const usePutOrganizationsIdSettings = <TError = ErrorType<PutOrganizationsIdSettings400 | PutOrganizationsIdSettings401 | PutOrganizationsIdSettings403 | PutOrganizationsIdSettings500>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putOrganizationsIdSettings>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainUpdateOrganizationSettingsDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putOrganizationsIdSettings>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainUpdateOrganizationSettingsDTO},
+        TContext
+      > => {
+      return useMutation(getPutOrganizationsIdSettingsMutationOptions(options), queryClient);
     }

@@ -32,21 +32,21 @@ export function ExamAction({ exam }: { exam: MyExam }) {
   const { t, i18n } = useTranslation()
   return (
     <div className="flex shrink-0 items-center gap-3">
-      {exam.state === "open" ? (
+      {exam.state === "open" && (
         <Link to="/org/exams/$quizId/take" params={{ quizId: exam.quiz_id! }}>
           <Button size="sm">{t("org.exams.start")}</Button>
         </Link>
-      ) : null}
-      {exam.state === "upcoming" && exam.room?.started_at ? (
+      )}
+      {exam.state === "upcoming" && exam.room?.started_at && (
         <span className="text-muted-foreground text-xs">
           {t("org.exams.opensAt", { date: formatSessionDate(exam.room.started_at, i18n.language, "short") })}
         </span>
-      ) : null}
-      {exam.state === "graded" ? (
+      )}
+      {exam.state === "graded" && (
         <Eyebrow className="normal-case tracking-normal">
           {t("org.exams.score", { score: exam.score ?? 0, total: exam.total_score ?? 0 })}
         </Eyebrow>
-      ) : null}
+      )}
     </div>
   )
 }

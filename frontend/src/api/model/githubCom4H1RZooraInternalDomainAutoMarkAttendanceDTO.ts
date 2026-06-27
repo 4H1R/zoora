@@ -8,8 +8,10 @@
 import type { GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTOSource } from './githubCom4H1RZooraInternalDomainAutoMarkAttendanceDTOSource';
 
 export interface GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO {
-  /** @minimum 0 */
-  min_duration_seconds?: number;
-  room_id: string;
+  /**
+     * RoomID is required only for the offline source; live auto-mark is
+     * session-scoped and ignores it.
+     */
+  room_id?: string;
   source: GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTOSource;
 }

@@ -320,9 +320,9 @@ function StatStrip({
         value={loading ? null : graded}
         accent="success"
         suffix={
-          !loading && total > 0 ? (
+          !loading && total > 0 && (
             <span className="text-muted-foreground font-mono text-xs tabular-nums">{completion}%</span>
-          ) : null
+          )
         }
       />
       <StatCell
@@ -459,7 +459,7 @@ function SubmissionRow({
     : "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
 
   return (
-    <li className="group/row bg-card text-card-foreground border-border hover:border-foreground/25 dark:ring-foreground/10 dark:hover:ring-foreground/30 relative isolate flex flex-col gap-4 overflow-hidden rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md sm:flex-row sm:items-center sm:gap-6 sm:p-5 dark:border-0 dark:shadow-none dark:ring-1">
+    <li className="group/row bg-card text-card-foreground border-border hover:border-foreground/25 dark:ring-foreground/10 dark:hover:ring-foreground/30 relative isolate flex flex-col gap-4 overflow-hidden rounded-2xl border p-4 transition-all sm:flex-row sm:items-center sm:gap-6 sm:p-5 dark:border-0 dark:ring-1">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,var(--color-primary)/6%,transparent_60%)] opacity-0 transition-opacity group-hover/row:opacity-100"

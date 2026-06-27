@@ -35,6 +35,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, mws ...gin.HandlerFunc) {
 // @Success 200 {object} domain.Response{data=object{user=domain.User,token=string}}
 // @Failure 400 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 429 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 500 {object} domain.Response{error=domain.ErrorBody}
 // @Router /auth/login [post]
 func (h *Handler) Login(c *gin.Context) {

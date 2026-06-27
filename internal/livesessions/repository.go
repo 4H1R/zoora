@@ -47,6 +47,14 @@ func (r *roomRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Li
 	return &room, nil
 }
 
+func (r *roomRepository) ListByClassSession(ctx context.Context, sessionID uuid.UUID) ([]domain.LiveRoom, error) {
+	var rooms []domain.LiveRoom
+	if err := r.baseQuery(ctx).Where("class_session_id = ?", sessionID).Find(&rooms).Error; err != nil {
+		return nil, fmt.Errorf("livesessions.roomRepository.ListByClassSession: %w", err)
+	}
+	return rooms, nil
+}
+
 func (r *roomRepository) Update(ctx context.Context, room *domain.LiveRoom) error {
 	result := database.DB(ctx, r.db).Save(room)
 	if result.Error != nil {

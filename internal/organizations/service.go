@@ -13,14 +13,15 @@ import (
 )
 
 type service struct {
-	repo     domain.OrganizationRepository
-	userRepo domain.UserRepository
-	redis    *redis.Client
-	logger   *slog.Logger
+	repo         domain.OrganizationRepository
+	userRepo     domain.UserRepository
+	settingsRepo domain.OrganizationSettingsRepository
+	redis        *redis.Client
+	logger       *slog.Logger
 }
 
-func NewService(repo domain.OrganizationRepository, userRepo domain.UserRepository, rdb *redis.Client, logger *slog.Logger) domain.OrganizationService {
-	return &service{repo: repo, userRepo: userRepo, redis: rdb, logger: logger}
+func NewService(repo domain.OrganizationRepository, userRepo domain.UserRepository, settingsRepo domain.OrganizationSettingsRepository, rdb *redis.Client, logger *slog.Logger) domain.OrganizationService {
+	return &service{repo: repo, userRepo: userRepo, settingsRepo: settingsRepo, redis: rdb, logger: logger}
 }
 
 // bustTenant removes cached slug->org entries after a slug or status change so
@@ -58,6 +59,9 @@ func (s *service) Create(ctx context.Context, dto domain.CreateOrganizationDTO) 
 	}
 	if err := s.repo.Create(ctx, org); err != nil {
 		return nil, err
+	}
+	if err := s.settingsRepo.Create(ctx, domain.NewDefaultOrganizationSettings(org.ID)); err != nil {
+		return nil, fmt.Errorf("creating organization settings: %w", err)
 	}
 	s.logger.Info("organization created", "org_id", org.ID.String())
 	return org, nil

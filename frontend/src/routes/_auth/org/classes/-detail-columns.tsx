@@ -36,9 +36,9 @@ export function useSessionColumns(now: number): ColumnDef<Session>[] {
       cell: ({ row }) => (
         <div className="flex min-w-0 flex-col">
           <span className="truncate font-medium">{row.original.name}</span>
-          {row.original.description ? (
+          {row.original.description && (
             <span className="text-muted-foreground truncate text-xs">{row.original.description}</span>
-          ) : null}
+          )}
         </div>
       ),
     },
@@ -102,7 +102,7 @@ export function useStudentColumns(onRemove?: (member: ClassMember) => void): Col
             <UserAvatar name={name} size="sm" />
             <div className="flex min-w-0 flex-col">
               <span className="truncate font-medium">{name}</span>
-              {username ? <span className="text-muted-foreground truncate font-mono text-xs">@{username}</span> : null}
+              {username && <span className="text-muted-foreground truncate font-mono text-xs">@{username}</span>}
             </div>
           </div>
         )
@@ -124,7 +124,7 @@ export function useStudentColumns(onRemove?: (member: ClassMember) => void): Col
       enableSorting: false,
       enableHiding: false,
       cell: ({ row }) =>
-        onRemove ? (
+        onRemove && (
           <div className="flex justify-end">
             <button
               type="button"
@@ -136,7 +136,7 @@ export function useStudentColumns(onRemove?: (member: ClassMember) => void): Col
               <UserMinusIcon className="size-3.5" />
             </button>
           </div>
-        ) : null,
+        ),
     },
   ]
 }

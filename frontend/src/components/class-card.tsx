@@ -39,7 +39,7 @@ export function ClassCard({ cls }: ClassCardProps) {
   const teacherName = cls.user?.name ?? ""
 
   return (
-    <div className="group/card ring-border bg-card flex flex-col overflow-hidden rounded-xl ring-1 transition-shadow hover:shadow-md">
+    <div className="group/card ring-foreground/10 hover:ring-foreground/30 bg-card flex flex-col overflow-hidden rounded-xl ring-1 transition-all">
       <Link to="/org/classes/$classId" params={{ classId: cls.id! }} className="block">
         <div className={cn("relative flex h-28 flex-col justify-end bg-gradient-to-br p-3.5", gradient)}>
           <p className="line-clamp-2 text-sm leading-snug font-semibold text-white drop-shadow-sm">{cls.name}</p>

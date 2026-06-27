@@ -63,7 +63,13 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
             queryClient.invalidateQueries({ queryKey: getGetUsersMeQueryKey() })
           }
         },
-        onError: () => {
+        onError: (error) => {
+          const code = error.response?.data?.error?.code
+          if (code === "ACCOUNT_LOCKED") {
+            toast.error(t("login.locked"))
+            setError("username", { message: t("login.locked") })
+            return
+          }
           setError("username", { message: t("login.error") })
         },
       }

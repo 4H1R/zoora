@@ -16,8 +16,11 @@ import { z } from "zod"
 
 import {
   getGetOrganizationsIdQueryKey,
+  getGetOrganizationsIdSettingsQueryKey,
   useGetOrganizationsId,
+  useGetOrganizationsIdSettings,
   usePutOrganizationsId,
+  usePutOrganizationsIdSettings,
 } from "@/api/organizations/organizations"
 import { useGetUsersMe } from "@/api/users/users"
 import type { GithubCom4H1RZooraInternalDomainOrganizationStatus as OrgStatus } from "@/api/model/githubCom4H1RZooraInternalDomainOrganizationStatus"
@@ -43,6 +46,28 @@ const settingsSchema = z.object({
 })
 
 type SettingsFormValues = z.infer<typeof settingsSchema>
+
+const attendanceSchema = z.object({
+  attendance_present_threshold_percent: z.number().int().min(1).max(100),
+})
+
+type AttendanceFormValues = z.infer<typeof attendanceSchema>
+
+function orgFormDefaults(org?: {
+  name?: string | null
+  description?: string | null
+}): SettingsFormValues {
+  return { name: org?.name ?? "", description: org?.description ?? "" }
+}
+
+function attendanceFormDefaults(settings?: {
+  attendance_present_threshold_percent?: number | null
+}): AttendanceFormValues {
+  return {
+    attendance_present_threshold_percent:
+      settings?.attendance_present_threshold_percent ?? 75,
+  }
+}
 
 const STATUS_STYLES: Record<OrgStatus, { dot: string; chip: string; key: string }> = {
   active: {
@@ -84,14 +109,30 @@ function RouteComponent() {
   const allowed = useOrgGuard("organizations:update")
   const [copied, setCopied] = useState(false)
 
+  // Two independent settings resources, each its own query/mutation/form,
+  // but unified under a single save bar at the bottom of the page.
   const { data: orgResponse, isLoading } = useGetOrganizationsId(orgId)
   const org = orgResponse?.status === 200 ? orgResponse.data.data : undefined
+
+  const { data: settingsResponse } = useGetOrganizationsIdSettings(orgId)
+  const settings = settingsResponse?.status === 200 ? settingsResponse.data.data : undefined
 
   const updateMutation = usePutOrganizationsId({
     mutation: {
       onSuccess: () => {
         toast.success(t("org.settings.updateSuccess"))
         queryClient.invalidateQueries({ queryKey: getGetOrganizationsIdQueryKey(orgId) })
+      },
+    },
+  })
+
+  const attendanceMutation = usePutOrganizationsIdSettings({
+    mutation: {
+      onSuccess: () => {
+        toast.success(t("org.settings.attendance.updateSuccess"))
+        queryClient.invalidateQueries({
+          queryKey: getGetOrganizationsIdSettingsQueryKey(orgId),
+        })
       },
     },
   })
@@ -108,18 +149,40 @@ function RouteComponent() {
     formState: { errors },
   } = form
 
+  const attendanceForm = useForm<AttendanceFormValues>({
+    resolver: zodResolver(attendanceSchema),
+    defaultValues: { attendance_present_threshold_percent: 75 },
+  })
+
+  // Sync forms with server data once it loads.
   useEffect(() => {
-    if (org) {
-      reset({ name: org.name ?? "", description: org.description ?? "" })
-    }
+    if (org) reset(orgFormDefaults(org))
   }, [org, reset])
+
+  useEffect(() => {
+    if (settings) attendanceForm.reset(attendanceFormDefaults(settings))
+  }, [settings, attendanceForm])
 
   const onSubmit = handleSubmit((values) => {
     updateMutation.mutate({ id: orgId, data: values })
   })
 
+  const onAttendanceSubmit = attendanceForm.handleSubmit((values) => {
+    attendanceMutation.mutate({ id: orgId, data: values })
+  })
+
+  const dirty = form.formState.isDirty || attendanceForm.formState.isDirty
+  const anyPending = updateMutation.isPending || attendanceMutation.isPending
+
+  // Save bar drives both forms — submit only what changed, reset reverts both.
+  const handleSaveAll = () => {
+    if (form.formState.isDirty) onSubmit()
+    if (attendanceForm.formState.isDirty) onAttendanceSubmit()
+  }
+
   const handleReset = () => {
-    if (org) reset({ name: org.name ?? "", description: org.description ?? "" })
+    if (org) reset(orgFormDefaults(org))
+    if (settings) attendanceForm.reset(attendanceFormDefaults(settings))
   }
 
   const copyId = async () => {
@@ -133,7 +196,6 @@ function RouteComponent() {
     }
   }
 
-  const isPending = updateMutation.isPending
   const liveName = watch("name")
   const status = (org?.status ?? "active") as OrgStatus
   const statusStyle = STATUS_STYLES[status] ?? STATUS_STYLES.active
@@ -288,11 +350,51 @@ function RouteComponent() {
         </Section>
       </form>
 
+      <form onSubmit={onAttendanceSubmit} noValidate className="mt-6">
+        <Section
+          title={t("org.settings.attendance.title")}
+          hint={t("org.settings.attendance.hint")}
+        >
+          <Field
+            data-invalid={
+              !!attendanceForm.formState.errors.attendance_present_threshold_percent ||
+              undefined
+            }
+          >
+            <FieldLabel htmlFor="attendance-threshold" className="text-xs">
+              {t("org.settings.attendance.thresholdLabel")}
+            </FieldLabel>
+            <Input
+              id="attendance-threshold"
+              type="number"
+              min={1}
+              max={100}
+              className="h-10 w-full"
+              aria-invalid={
+                !!attendanceForm.formState.errors.attendance_present_threshold_percent
+              }
+              {...attendanceForm.register("attendance_present_threshold_percent", {
+                valueAsNumber: true,
+              })}
+            />
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              {t("org.settings.attendance.thresholdHint")}
+            </p>
+            {attendanceForm.formState.errors.attendance_present_threshold_percent && (
+              <FieldError>
+                {attendanceForm.formState.errors.attendance_present_threshold_percent.message}
+              </FieldError>
+            )}
+          </Field>
+        </Section>
+      </form>
+
       <FormSaveBar
         form={form}
-        onSave={onSubmit}
+        onSave={handleSaveAll}
         onReset={handleReset}
-        isPending={isPending}
+        visible={dirty}
+        isPending={anyPending}
       />
     </div>
   )

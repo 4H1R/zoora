@@ -8,13 +8,14 @@ import (
 )
 
 var (
-	ErrNotFound     = errors.New("resource not found")
-	ErrForbidden    = errors.New("forbidden")
-	ErrUnauthorized = errors.New("unauthorized")
-	ErrConflict     = errors.New("resource already exists")
-	ErrValidation   = errors.New("validation failed")
-	ErrInternal     = errors.New("internal server error")
-	ErrUserDisabled = errors.New("account is disabled")
+	ErrNotFound      = errors.New("resource not found")
+	ErrForbidden     = errors.New("forbidden")
+	ErrUnauthorized  = errors.New("unauthorized")
+	ErrConflict      = errors.New("resource already exists")
+	ErrValidation    = errors.New("validation failed")
+	ErrInternal      = errors.New("internal server error")
+	ErrUserDisabled  = errors.New("account is disabled")
+	ErrAccountLocked = errors.New("account is locked")
 )
 
 // ValidationError carries per-field validation failures.
@@ -51,6 +52,8 @@ func MapError(err error) (int, string) {
 		return http.StatusNotFound, "NOT_FOUND"
 	case errors.Is(err, ErrUserDisabled):
 		return http.StatusForbidden, "USER_DISABLED"
+	case errors.Is(err, ErrAccountLocked):
+		return http.StatusTooManyRequests, "ACCOUNT_LOCKED"
 	case errors.Is(err, ErrForbidden):
 		return http.StatusForbidden, "FORBIDDEN"
 	case errors.Is(err, ErrUnauthorized):

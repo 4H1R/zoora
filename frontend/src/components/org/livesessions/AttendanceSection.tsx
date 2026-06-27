@@ -25,7 +25,6 @@ import {
   usePostClassesIdSessionsSessionIdAttendanceAutoMark,
 } from "@/api/attendance/attendance"
 import { useGetClassesId, useGetClassesIdMembers } from "@/api/classes/classes"
-import { useGetLiveRooms } from "@/api/live-sessions/live-sessions"
 import { SectionNoResults } from "@/components/org/session/section-no-results"
 import { SectionPagination } from "@/components/org/session/section-pagination"
 import { SectionToolbar } from "@/components/org/session/section-toolbar"
@@ -34,7 +33,6 @@ import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
-import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getEntityColor, getInitials } from "@/lib/data-table"
@@ -61,11 +59,6 @@ interface AutoMarkControlProps {
 function AutoMarkControl({ classId, classSessionId }: AutoMarkControlProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const [roomId, setRoomId] = useState("")
-  const [minutes, setMinutes] = useState(5)
-
-  const roomsQuery = useGetLiveRooms({ class_session_id: classSessionId })
-  const rooms = (roomsQuery.data?.status === 200 && roomsQuery.data.data.data?.items) || []
 
   const autoMark = usePostClassesIdSessionsSessionIdAttendanceAutoMark({
     mutation: {
@@ -85,11 +78,10 @@ function AutoMarkControl({ classId, classSessionId }: AutoMarkControlProps) {
   })
 
   const run = () => {
-    if (!roomId) return
     autoMark.mutate({
       id: classId,
       sessionId: classSessionId,
-      data: { source: "live_room", room_id: roomId, min_duration_seconds: Math.max(0, minutes) * 60 },
+      data: { source: "live_room" },
     })
   }
 
@@ -107,37 +99,14 @@ function AutoMarkControl({ classId, classSessionId }: AutoMarkControlProps) {
         <p className="text-muted-foreground text-sm leading-relaxed">{t("org.session.attendance.autoMark.hint")}</p>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="flex flex-1 flex-col gap-1.5">
-          <FieldLabelText>{t("org.session.attendance.autoMark.room")}</FieldLabelText>
-          <Select value={roomId} onValueChange={(v) => setRoomId(v ?? "")}>
-            <SelectTrigger>
-              <SelectValue placeholder={t("org.session.attendance.autoMark.roomPlaceholder")} />
-            </SelectTrigger>
-            <SelectContent>
-              {rooms.map((r) => (
-                <SelectItem key={r.id} value={r.id ?? ""}>
-                  {r.livekit_room_name ?? r.id?.slice(0, 8).toUpperCase() ?? "—"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex flex-col gap-1.5 sm:w-40">
-          <FieldLabelText>{t("org.session.attendance.autoMark.minMinutes")}</FieldLabelText>
-          <Input type="number" min={0} value={minutes} onChange={(e) => setMinutes(Number(e.target.value))} />
-        </div>
-        <Button disabled={!roomId || autoMark.isPending} onClick={run}>
+      <div>
+        <Button disabled={autoMark.isPending} onClick={run}>
           <UserCheckIcon className="size-4" />
           {t("org.session.attendance.autoMark.run")}
         </Button>
       </div>
     </div>
   )
-}
-
-function FieldLabelText({ children }: { children: React.ReactNode }) {
-  return <span className="text-muted-foreground font-mono text-[10px] tracking-[0.25em] uppercase">{children}</span>
 }
 
 interface AttendanceRowProps {
@@ -165,9 +134,9 @@ function AttendanceRow({ attendance, canEdit, canDelete, onEdit, onDelete }: Att
 
       <div className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-sm font-medium">{name}</span>
-        {attendance.remarks ? (
+        {Boolean(attendance.remarks) && (
           <span className="text-muted-foreground truncate text-xs">{attendance.remarks}</span>
-        ) : null}
+        )}
       </div>
 
       {attendance.is_auto_marked ? (
@@ -192,12 +161,12 @@ function AttendanceRow({ attendance, canEdit, canDelete, onEdit, onDelete }: Att
       </span>
 
       <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover/row:opacity-100">
-        {canEdit ? (
+        {canEdit && (
           <Button variant="ghost" size="icon-xs" onClick={() => onEdit(attendance)}>
             <PencilIcon />
           </Button>
-        ) : null}
-        {canDelete ? (
+        )}
+        {canDelete && (
           <Button
             variant="ghost"
             size="icon-xs"
@@ -206,7 +175,7 @@ function AttendanceRow({ attendance, canEdit, canDelete, onEdit, onDelete }: Att
           >
             <Trash2Icon />
           </Button>
-        ) : null}
+        )}
       </div>
     </div>
   )
@@ -283,6 +252,14 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
 
   const loading = query.isPending || classPending || (canViewRoster && membersQuery.isPending)
 
+  const statusItems = [
+    { value: "all", label: t("org.session.controls.status.all") },
+    { value: "present", label: t("org.session.attendance.status.present") },
+    { value: "absent", label: t("org.session.attendance.status.absent") },
+    { value: "late", label: t("org.session.attendance.status.late") },
+    { value: "excused", label: t("org.session.attendance.status.excused") },
+  ]
+
   return (
     <section id="attendance" className="flex scroll-mt-20 flex-col gap-5">
       <div className="flex flex-col gap-1.5">
@@ -290,9 +267,9 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
         <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.attendance.title")}</h2>
       </div>
 
-      {canCreate ? <AutoMarkControl classId={classId} classSessionId={classSessionId} /> : null}
+      {canCreate && <AutoMarkControl classId={classId} classSessionId={classSessionId} />}
 
-      {!canViewRoster && !loading && (records.length > 0 || list.isFiltered) ? (
+      {!canViewRoster && !loading && (records.length > 0 || list.isFiltered) && (
         <SectionToolbar
           searchValue={list.searchInput}
           onSearchChange={list.setSearchInput}
@@ -301,6 +278,7 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
           onSortChange={list.setSort}
         >
           <Select
+            items={statusItems}
             value={list.status ?? "all"}
             onValueChange={(v) => list.setStatus(v && v !== "all" ? v : undefined)}
           >
@@ -308,25 +286,15 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all" className="text-xs">
-                {t("org.session.controls.status.all")}
-              </SelectItem>
-              <SelectItem value="present" className="text-xs">
-                {t("org.session.attendance.status.present")}
-              </SelectItem>
-              <SelectItem value="absent" className="text-xs">
-                {t("org.session.attendance.status.absent")}
-              </SelectItem>
-              <SelectItem value="late" className="text-xs">
-                {t("org.session.attendance.status.late")}
-              </SelectItem>
-              <SelectItem value="excused" className="text-xs">
-                {t("org.session.attendance.status.excused")}
-              </SelectItem>
+              {statusItems.map((item) => (
+                <SelectItem key={item.value} value={item.value} className="text-xs">
+                  {item.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </SectionToolbar>
-      ) : null}
+      )}
 
       {loading ? (
         <div className="flex flex-col gap-2">

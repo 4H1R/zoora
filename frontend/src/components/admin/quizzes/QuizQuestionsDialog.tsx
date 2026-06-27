@@ -134,7 +134,7 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>
             {t("admin.quizzes.questions.title")}

@@ -128,7 +128,7 @@ export function DateTimePicker({
               disabled={dayDisabled}
               autoFocus
             />
-            {showTime ? (
+            {showTime && (
               <div
                 dir="ltr"
                 className="flex w-full flex-col border-t sm:w-auto sm:border-s sm:border-t-0"
@@ -172,11 +172,11 @@ export function DateTimePicker({
                   />
                 </div>
               </div>
-            ) : null}
+            )}
           </div>
         </PopoverContent>
       </Popover>
-      {clearable && value && !disabled ? (
+      {clearable && value && !disabled && (
         <button
           type="button"
           aria-label={t("common.dateTimePicker.clear")}
@@ -185,7 +185,7 @@ export function DateTimePicker({
         >
           <XIcon className="size-4" />
         </button>
-      ) : null}
+      )}
     </div>
   )
 }

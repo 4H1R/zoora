@@ -140,11 +140,11 @@ function OrgUserPicker({ value, onChange }: OrgUserPickerProps) {
             <UserAvatar name={selected.name ?? ""} size="sm" />
             <span className="flex min-w-0 flex-col items-start">
               <span className="truncate text-sm font-medium">{selected.name}</span>
-              {selected.username ? (
+              {selected.username && (
                 <span className="text-muted-foreground truncate font-mono text-xs">
                   @{selected.username}
                 </span>
-              ) : null}
+              )}
             </span>
           </span>
         ) : (
@@ -185,11 +185,11 @@ function OrgUserPicker({ value, onChange }: OrgUserPickerProps) {
                   <UserAvatar name={user.name ?? ""} size="sm" />
                   <div className="ms-2 flex min-w-0 flex-col">
                     <span className="truncate text-sm">{user.name}</span>
-                    {user.username ? (
+                    {user.username && (
                       <span className="text-muted-foreground truncate font-mono text-xs">
                         @{user.username}
                       </span>
-                    ) : null}
+                    )}
                   </div>
                 </CommandItem>
               ))}

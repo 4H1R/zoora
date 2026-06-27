@@ -13,9 +13,10 @@ import (
 
 // liveRoomsListConfig is the handler-owned white-list for GET /live-rooms.
 var liveRoomsListConfig = domain.ListConfig{
-	AllowedOrderFields: []string{"created_at", "updated_at", "status", "scheduled_start_time", "actual_start_time", "actual_end_time"},
-	DefaultOrderBy:     "created_at",
-	DefaultOrderDir:    "desc",
+	AllowedOrderFields:  []string{"created_at", "updated_at", "status", "scheduled_start_time", "actual_start_time", "actual_end_time"},
+	AllowedSearchFields: []string{"name"},
+	DefaultOrderBy:      "created_at",
+	DefaultOrderDir:     "desc",
 }
 
 // participantsListConfig gates GET /live-rooms/:id/participants.

@@ -9,8 +9,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/4H1R/zoora/internal/platform/authz"
 	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/platform/authz"
 )
 
 // attendanceMatrixMaxSessions caps the column axis. Classes never approach
@@ -26,6 +26,7 @@ type service struct {
 	participants domain.LiveParticipantRepository
 	offlineViews domain.OfflineRoomViewRepository
 	offlineRooms domain.OfflineRoomRepository
+	orgSettings  domain.OrganizationSettingsProvider
 	resolver     *authz.Resolver
 	logger       *slog.Logger
 }
@@ -39,6 +40,7 @@ func NewService(
 	participants domain.LiveParticipantRepository,
 	offlineViews domain.OfflineRoomViewRepository,
 	offlineRooms domain.OfflineRoomRepository,
+	orgSettings domain.OrganizationSettingsProvider,
 	resolver *authz.Resolver,
 	logger *slog.Logger,
 ) domain.AttendanceService {
@@ -51,6 +53,7 @@ func NewService(
 		participants: participants,
 		offlineViews: offlineViews,
 		offlineRooms: offlineRooms,
+		orgSettings:  orgSettings,
 		resolver:     resolver,
 		logger:       logger,
 	}
@@ -187,103 +190,162 @@ func (s *service) AutoMark(ctx context.Context, classID, sessionID uuid.UUID, dt
 		return nil, domain.ErrNotFound
 	}
 
-	allMembers, err := s.members.ListAllByClass(ctx, classID)
-	if err != nil {
-		return nil, err
-	}
-
-	presentUserIDs, err := s.resolvePresent(ctx, classID, dto)
-	if err != nil {
-		return nil, err
-	}
-	presentSet := make(map[uuid.UUID]bool, len(presentUserIDs))
-	for _, uid := range presentUserIDs {
-		presentSet[uid] = true
-	}
-
-	result := &domain.AutoMarkResult{}
-	for _, member := range allMembers {
-		_, err := s.repo.FindBySessionAndUser(ctx, sessionID, member.UserID)
-		if err == nil {
-			result.Skipped++
-			continue
-		}
-		if !errors.Is(err, domain.ErrNotFound) {
-			return nil, err
-		}
-
-		status := domain.AttendanceStatusAbsent
-		if presentSet[member.UserID] {
-			status = domain.AttendanceStatusPresent
-		}
-
-		a := &domain.Attendance{
-			OrganizationID: class.OrganizationID,
-			ClassID:        classID,
-			ClassSessionID: sessionID,
-			UserID:         member.UserID,
-			Status:         status,
-			IsAutoMarked:   true,
-			Remarks:        "auto-marked from " + string(dto.Source),
-		}
-		if err := s.repo.Create(ctx, a); err != nil {
-			return nil, err
-		}
-		result.Marked++
-	}
-
-	s.logger.Info("auto-mark attendance completed",
-		"session_id", sessionID.String(),
-		"source", string(dto.Source),
-		"room_id", dto.RoomID.String(),
-		"marked", result.Marked,
-		"skipped", result.Skipped,
-		"triggered_by", caller.UserID.String(),
-	)
-	return result, nil
-}
-
-func (s *service) resolvePresent(ctx context.Context, classID uuid.UUID, dto domain.AutoMarkAttendanceDTO) ([]uuid.UUID, error) {
 	switch dto.Source {
 	case domain.AutoMarkSourceLive:
-		return s.resolvePresentFromLive(ctx, classID, dto.RoomID, dto.MinDurationSeconds)
+		return s.autoMarkLiveSession(ctx, class, sessionID)
 	case domain.AutoMarkSourceOffline:
-		return s.resolvePresentFromOffline(ctx, classID, dto.RoomID)
+		if dto.RoomID == uuid.Nil {
+			return nil, domain.NewValidationError(map[string]string{"room_id": "required for offline source"})
+		}
+		present, err := s.resolvePresentFromOffline(ctx, classID, dto.RoomID)
+		if err != nil {
+			return nil, err
+		}
+		result, err := s.writeAutoMark(ctx, class, sessionID, present, "offline_room")
+		if err != nil {
+			return nil, err
+		}
+		s.logger.Info("auto-mark attendance completed",
+			"session_id", sessionID.String(),
+			"source", string(dto.Source),
+			"marked", result.Marked,
+			"skipped", result.Skipped,
+			"triggered_by", caller.UserID.String(),
+		)
+		return result, nil
 	default:
 		return nil, domain.ErrValidation
 	}
 }
 
-func (s *service) resolvePresentFromLive(ctx context.Context, classID uuid.UUID, roomID uuid.UUID, minDuration int) ([]uuid.UUID, error) {
-	room, err := s.liveRooms.FindByID(ctx, roomID)
+// AutoMarkSessionLive runs live auto-mark for a whole session using the org's
+// configured threshold. No caller authz — used by the worker / system path.
+func (s *service) AutoMarkSessionLive(ctx context.Context, classID, sessionID uuid.UUID) (*domain.AutoMarkResult, error) {
+	class, err := s.classes.FindByID(ctx, classID)
 	if err != nil {
 		return nil, err
 	}
-	session, err := s.sessions.FindByID(ctx, room.ClassSessionID)
+	session, err := s.sessions.FindByID(ctx, sessionID)
 	if err != nil {
 		return nil, err
 	}
 	if session.ClassID != classID {
 		return nil, domain.ErrNotFound
 	}
+	return s.autoMarkLiveSession(ctx, class, sessionID)
+}
 
-	participants, err := s.participants.ListAllByRoom(ctx, roomID)
+// autoMarkLiveSession aggregates participation across the session's live rooms,
+// resolves present users against the org threshold, and writes attendance.
+func (s *service) autoMarkLiveSession(ctx context.Context, class *domain.Class, sessionID uuid.UUID) (*domain.AutoMarkResult, error) {
+	settings, err := s.orgSettings.GetByOrgID(ctx, class.OrganizationID)
 	if err != nil {
 		return nil, err
 	}
-
-	seen := make(map[uuid.UUID]int)
-	for _, p := range participants {
-		seen[p.UserID] += p.TotalDurationSeconds
+	present, ok, err := s.resolvePresentLiveSession(ctx, sessionID, settings.AttendancePresentThresholdPercent)
+	if err != nil {
+		return nil, err
 	}
+	if !ok {
+		s.logger.Warn("auto-mark skipped: no valid room duration",
+			"class_id", class.ID.String(), "session_id", sessionID.String())
+		return &domain.AutoMarkResult{Marked: 0, Skipped: 0}, nil
+	}
+	result, err := s.writeAutoMark(ctx, class, sessionID, present, "live_room")
+	if err != nil {
+		return nil, err
+	}
+	s.logger.Info("auto-mark attendance completed",
+		"session_id", sessionID.String(),
+		"source", "live_room",
+		"percent", settings.AttendancePresentThresholdPercent,
+		"marked", result.Marked,
+		"skipped", result.Skipped,
+	)
+	return result, nil
+}
 
-	var present []uuid.UUID
-	for userID, dur := range seen {
-		if dur >= minDuration {
-			present = append(present, userID)
+// resolvePresentLiveSession aggregates participant durations across all of the
+// session's live rooms that have valid actual start/end times. Returns ok=false
+// when no room contributes a positive duration (caller should skip).
+func (s *service) resolvePresentLiveSession(ctx context.Context, sessionID uuid.UUID, percent int) ([]uuid.UUID, bool, error) {
+	rooms, err := s.liveRooms.ListByClassSession(ctx, sessionID)
+	if err != nil {
+		return nil, false, err
+	}
+	totalRoomSeconds := 0
+	userSeconds := make(map[uuid.UUID]int)
+	for _, room := range rooms {
+		if room.ActualStartTime == nil || room.ActualEndTime == nil {
+			continue
+		}
+		dur := int(room.ActualEndTime.Sub(*room.ActualStartTime).Seconds())
+		if dur <= 0 {
+			continue
+		}
+		totalRoomSeconds += dur
+		participants, err := s.participants.ListAllByRoom(ctx, room.ID)
+		if err != nil {
+			return nil, false, err
+		}
+		for _, p := range participants {
+			userSeconds[p.UserID] += p.TotalDurationSeconds
 		}
 	}
-	return present, nil
+	present, ok := computePresentByPercent(totalRoomSeconds, userSeconds, percent)
+	return present, ok, nil
+}
+
+// writeAutoMark sets present for the given users and absent for all other class
+// members. Existing auto-marked rows are overwritten; manual rows are preserved.
+func (s *service) writeAutoMark(ctx context.Context, class *domain.Class, sessionID uuid.UUID, presentUserIDs []uuid.UUID, source string) (*domain.AutoMarkResult, error) {
+	members, err := s.members.ListAllByClass(ctx, class.ID)
+	if err != nil {
+		return nil, err
+	}
+	presentSet := make(map[uuid.UUID]bool, len(presentUserIDs))
+	for _, id := range presentUserIDs {
+		presentSet[id] = true
+	}
+
+	result := &domain.AutoMarkResult{}
+	for _, member := range members {
+		status := domain.AttendanceStatusAbsent
+		if presentSet[member.UserID] {
+			status = domain.AttendanceStatusPresent
+		}
+
+		existing, err := s.repo.FindBySessionAndUser(ctx, sessionID, member.UserID)
+		switch {
+		case err == nil && !existing.IsAutoMarked:
+			// Manual override — never touch.
+			result.Skipped++
+		case err == nil && existing.IsAutoMarked:
+			existing.Status = status
+			existing.Remarks = "auto-marked from " + source
+			if err := s.repo.Update(ctx, existing); err != nil {
+				return nil, err
+			}
+			result.Marked++
+		case errors.Is(err, domain.ErrNotFound):
+			a := &domain.Attendance{
+				OrganizationID: class.OrganizationID,
+				ClassID:        class.ID,
+				ClassSessionID: sessionID,
+				UserID:         member.UserID,
+				Status:         status,
+				IsAutoMarked:   true,
+				Remarks:        "auto-marked from " + source,
+			}
+			if err := s.repo.Create(ctx, a); err != nil {
+				return nil, err
+			}
+			result.Marked++
+		default:
+			return nil, err
+		}
+	}
+	return result, nil
 }
 
 func (s *service) resolvePresentFromOffline(ctx context.Context, classID uuid.UUID, roomID uuid.UUID) ([]uuid.UUID, error) {

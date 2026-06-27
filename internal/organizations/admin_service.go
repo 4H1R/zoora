@@ -2,6 +2,7 @@ package organizations
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 
@@ -49,6 +50,9 @@ func (s *service) AdminCreate(ctx context.Context, dto domain.AdminCreateOrganiz
 	}
 	if err := s.repo.Create(ctx, org); err != nil {
 		return nil, err
+	}
+	if err := s.settingsRepo.Create(ctx, domain.NewDefaultOrganizationSettings(org.ID)); err != nil {
+		return nil, fmt.Errorf("creating organization settings: %w", err)
 	}
 	s.logger.Info("admin created organization",
 		"org_id", org.ID.String(),

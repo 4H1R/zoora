@@ -43,7 +43,7 @@ export function ErrorScreen({ error, reset }: ErrorComponentProps) {
         {t("errorPages.serverError.description")}
       </p>
 
-      {import.meta.env.DEV && error?.message ? (
+      {import.meta.env.DEV && error?.message && (
         <details
           className="animate-reveal mt-7 w-full max-w-lg text-start"
           style={{ animationDelay: "440ms" }}
@@ -55,7 +55,7 @@ export function ErrorScreen({ error, reset }: ErrorComponentProps) {
             {error.message}
           </pre>
         </details>
-      ) : null}
+      )}
 
       <div
         className="animate-reveal mt-9 flex flex-col items-center gap-3 sm:flex-row"

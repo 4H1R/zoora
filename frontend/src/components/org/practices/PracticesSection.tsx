@@ -59,7 +59,7 @@ function PracticeCard({ practice, index, canSubmit, onEdit, onDelete, onSubmit }
   const endStr = formatSessionDate(practice.end_time, i18n.language, "short")
 
   return (
-    <div className="group/practice bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex flex-col gap-5 overflow-hidden rounded-2xl p-5 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-lg">
+    <div className="group/practice bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex flex-col gap-5 overflow-hidden rounded-2xl p-5 ring-1 transition-all">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,var(--color-primary)/8%,transparent_60%)] opacity-0 transition-opacity group-hover/practice:opacity-100"
@@ -76,12 +76,12 @@ function PracticeCard({ practice, index, canSubmit, onEdit, onDelete, onSubmit }
         <h3 className="line-clamp-2 text-xl leading-snug font-semibold tracking-tight text-balance">
           {practice.title ?? "—"}
         </h3>
-        {practice.content ? (
+        {practice.content && (
           <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">{practice.content}</p>
-        ) : null}
-        {practice.attachments && practice.attachments.length > 0 ? (
+        )}
+        {practice.attachments && practice.attachments.length > 0 && (
           <MediaAttachmentList mediaIds={practice.attachments} className="pt-1" />
-        ) : null}
+        )}
       </div>
 
       <div className="border-foreground/10 grid grid-cols-2 gap-3 border-t border-dashed pt-3">
@@ -107,9 +107,9 @@ function PracticeCard({ practice, index, canSubmit, onEdit, onDelete, onSubmit }
           {createdStr}
         </span>
         <div className="flex items-center gap-1.5">
-          {(canEdit || canDelete) ? (
+          {(canEdit || canDelete) && (
             <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover/practice:opacity-100">
-              {canEdit ? (
+              {canEdit && (
                 <Button
                   variant="ghost"
                   size="icon-xs"
@@ -118,8 +118,8 @@ function PracticeCard({ practice, index, canSubmit, onEdit, onDelete, onSubmit }
                 >
                   <PencilIcon />
                 </Button>
-              ) : null}
-              {canDelete ? (
+              )}
+              {canDelete && (
                 <Button
                   variant="ghost"
                   size="icon-xs"
@@ -129,15 +129,15 @@ function PracticeCard({ practice, index, canSubmit, onEdit, onDelete, onSubmit }
                 >
                   <Trash2Icon />
                 </Button>
-              ) : null}
+              )}
             </div>
-          ) : null}
-          {canSubmit ? (
+          )}
+          {canSubmit && (
             <Button size="sm" onClick={() => onSubmit(practice)}>
               <SendIcon className="size-3.5" />
               {t("org.session.practices.actions.submit")}
             </Button>
-          ) : null}
+          )}
         </div>
       </div>
     </div>
@@ -222,15 +222,15 @@ export function PracticesSection({ classSessionId }: PracticesSectionProps) {
           <Eyebrow>{t("org.session.practices.eyebrow")}</Eyebrow>
           <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.practices.title")}</h2>
         </div>
-        {canCreate ? (
+        {canCreate && (
           <Button onClick={openCreate}>
             <PlusIcon className="size-4" />
             {t("org.session.practices.newPractice")}
           </Button>
-        ) : null}
+        )}
       </div>
 
-      {practices.length > 0 || list.isFiltered ? (
+      {(practices.length > 0 || list.isFiltered) && (
         <SectionToolbar
           searchValue={list.searchInput}
           onSearchChange={list.setSearchInput}
@@ -238,7 +238,7 @@ export function PracticesSection({ classSessionId }: PracticesSectionProps) {
           sort={list.sort}
           onSortChange={list.setSort}
         />
-      ) : null}
+      )}
 
       {practicesQuery.isPending ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -259,12 +259,12 @@ export function PracticesSection({ classSessionId }: PracticesSectionProps) {
                 : t("org.session.practices.emptyHintMember")
             }
           >
-            {canCreate ? (
+            {canCreate && (
               <Button onClick={openCreate}>
                 <PlusIcon className="size-4" />
                 {t("org.session.practices.newPractice")}
               </Button>
-            ) : null}
+            )}
           </EmptyState>
         )
       ) : (

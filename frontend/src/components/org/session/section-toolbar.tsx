@@ -33,7 +33,7 @@ export function SectionToolbar({
   const { t } = useTranslation()
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      {onSearchChange ? (
+      {onSearchChange && (
         <div className="relative w-full sm:max-w-xs">
           <SearchIcon className="text-muted-foreground pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2" />
           <Input
@@ -43,7 +43,7 @@ export function SectionToolbar({
             className="ps-9"
           />
         </div>
-      ) : null}
+      )}
       <div className="flex items-center gap-2">
         {children}
         <SortPicker

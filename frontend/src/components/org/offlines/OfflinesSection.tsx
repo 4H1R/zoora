@@ -41,7 +41,7 @@ function OfflineCard({ room, index, onEdit, onDelete }: OfflineCardProps) {
   const publishedStr = room.published_at ? formatSessionDate(room.published_at, i18n.language, "short") : null
 
   return (
-    <div className="group/offline bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex flex-col gap-5 overflow-hidden rounded-2xl p-5 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-lg">
+    <div className="group/offline bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex flex-col gap-5 overflow-hidden rounded-2xl p-5 ring-1 transition-all">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,var(--color-primary)/8%,transparent_60%)] opacity-0 transition-opacity group-hover/offline:opacity-100"
@@ -58,9 +58,9 @@ function OfflineCard({ room, index, onEdit, onDelete }: OfflineCardProps) {
         <h3 className="line-clamp-2 text-xl leading-snug font-semibold tracking-tight text-balance">
           {room.title ?? "—"}
         </h3>
-        {room.description ? (
+        {room.description && (
           <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">{room.description}</p>
-        ) : null}
+        )}
       </div>
 
       <div className="border-foreground/10 grid grid-cols-2 gap-3 border-t border-dashed pt-3">
@@ -86,14 +86,14 @@ function OfflineCard({ room, index, onEdit, onDelete }: OfflineCardProps) {
           {createdStr}
         </span>
         <div className="flex items-center gap-1.5">
-          {canEdit || canDelete ? (
+          {(canEdit || canDelete) && (
             <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover/offline:opacity-100">
-              {canEdit ? (
+              {canEdit && (
                 <Button variant="ghost" size="icon-xs" title={t("org.session.offlines.actions.edit")} onClick={() => onEdit(room)}>
                   <PencilIcon />
                 </Button>
-              ) : null}
-              {canDelete ? (
+              )}
+              {canDelete && (
                 <Button
                   variant="ghost"
                   size="icon-xs"
@@ -103,9 +103,9 @@ function OfflineCard({ room, index, onEdit, onDelete }: OfflineCardProps) {
                 >
                   <Trash2Icon />
                 </Button>
-              ) : null}
+              )}
             </div>
-          ) : null}
+          )}
           <Button
             size="sm"
             render={<Link to="/org/offlines/$offlineId" params={{ offlineId: room.id ?? "" }} />}
@@ -194,15 +194,15 @@ export function OfflinesSection({ classSessionId }: OfflinesSectionProps) {
           <Eyebrow>{t("org.session.offlines.eyebrow")}</Eyebrow>
           <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.offlines.title")}</h2>
         </div>
-        {canCreate ? (
+        {canCreate && (
           <Button onClick={openCreate}>
             <PlusIcon className="size-4" />
             {t("org.session.offlines.newOffline")}
           </Button>
-        ) : null}
+        )}
       </div>
 
-      {rooms.length > 0 || list.isFiltered ? (
+      {(rooms.length > 0 || list.isFiltered) && (
         <SectionToolbar
           searchValue={list.searchInput}
           onSearchChange={list.setSearchInput}
@@ -210,7 +210,7 @@ export function OfflinesSection({ classSessionId }: OfflinesSectionProps) {
           sort={list.sort}
           onSortChange={list.setSort}
         />
-      ) : null}
+      )}
 
       {offlinesQuery.isPending ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -231,12 +231,12 @@ export function OfflinesSection({ classSessionId }: OfflinesSectionProps) {
                 : t("org.session.offlines.emptyHintMember")
             }
           >
-            {canCreate ? (
+            {canCreate && (
               <Button onClick={openCreate}>
                 <PlusIcon className="size-4" />
                 {t("org.session.offlines.newOffline")}
               </Button>
-            ) : null}
+            )}
           </EmptyState>
         )
       ) : (

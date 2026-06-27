@@ -122,30 +122,32 @@ function LiveRoomCard({ room, index, canJoin, canManage }: LiveRoomCardProps) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight">
+          {room.name?.trim() || room.id?.slice(0, 8).toUpperCase() || "—"}
+        </h3>
         <span
           className={cn(
-            "inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[10px] tracking-[0.25em] uppercase",
+            "inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[10px] tracking-[0.25em] uppercase",
             STATUS_STYLES[status] ?? "bg-muted text-muted-foreground"
           )}
         >
-          {isActive ? (
+          {isActive && (
             <span className="relative flex size-1.5">
               <span className="bg-destructive absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" />
               <span className="bg-destructive relative inline-flex size-1.5 rounded-full" />
             </span>
-          ) : null}
+          )}
           {t(`org.session.liveRooms.status.${status}`)}
         </span>
-        <h3 className="line-clamp-1 text-sm font-medium tracking-tight">
-          {room.name?.trim() || room.livekit_room_name || room.id?.slice(0, 8).toUpperCase() || "—"}
-        </h3>
       </div>
 
       <div className="border-foreground/10 grid grid-cols-2 gap-3 border-t border-dashed pt-3">
         <div className="flex flex-col gap-1">
           <Eyebrow className="text-[10px]">{t("org.session.liveRooms.startedAt")}</Eyebrow>
-          <span className="font-mono text-xs tabular-nums">{formatDate(room.actual_start_time)}</span>
+          <span className="font-mono text-xs tabular-nums">
+            {formatDate(room.actual_start_time ?? room.scheduled_start_time)}
+          </span>
         </div>
         <div className="flex flex-col gap-1">
           <Eyebrow className="text-[10px]">{t("org.session.liveRooms.endedAt")}</Eyebrow>
@@ -154,13 +156,13 @@ function LiveRoomCard({ room, index, canJoin, canManage }: LiveRoomCardProps) {
       </div>
 
       <div className="mt-auto flex items-center gap-2">
-        {isActive && canJoin ? (
+        {isActive && canJoin && (
           <Button size="sm" className="flex-1" onClick={enter}>
             <RadioIcon className="size-3.5" />
             {t("org.session.liveRooms.actions.join")}
           </Button>
-        ) : null}
-        {!isActive && !isFinished && canManage ? (
+        )}
+        {!isActive && !isFinished && canManage && (
           <Button
             size="sm"
             className="flex-1"
@@ -170,8 +172,8 @@ function LiveRoomCard({ room, index, canJoin, canManage }: LiveRoomCardProps) {
             <RadioIcon className="size-3.5" />
             {t("org.session.liveRooms.actions.start")}
           </Button>
-        ) : null}
-        {isActive && canManage ? (
+        )}
+        {isActive && canManage && (
           <Button
             size="sm"
             variant="outline"
@@ -181,7 +183,7 @@ function LiveRoomCard({ room, index, canJoin, canManage }: LiveRoomCardProps) {
             <SquareIcon className="size-3.5" />
             {t("org.session.liveRooms.actions.end")}
           </Button>
-        ) : null}
+        )}
       </div>
 
       <Collapsible open={open} onOpenChange={setOpen}>
@@ -197,7 +199,7 @@ function LiveRoomCard({ room, index, canJoin, canManage }: LiveRoomCardProps) {
           }
         />
         <CollapsibleContent className="flex flex-col gap-4 pt-3">
-          {open ? <LiveRoomRecordings roomId={room.id ?? ""} isActive={isActive} canManage={canManage} /> : null}
+          {open && <LiveRoomRecordings roomId={room.id ?? ""} isActive={isActive} canManage={canManage} />}
         </CollapsibleContent>
       </Collapsible>
     </div>
@@ -234,6 +236,12 @@ export function LiveRoomsSection({ classSessionId }: { classSessionId: string })
     { id: "actual_start_time", label: t("org.session.controls.sortFields.actual_start_time") },
     { id: "actual_end_time", label: t("org.session.controls.sortFields.actual_end_time") },
   ]
+  const statusItems = [
+    { value: "all", label: t("org.session.controls.status.all") },
+    { value: "created", label: t("org.session.controls.status.created") },
+    { value: "active", label: t("org.session.controls.status.active") },
+    { value: "finished", label: t("org.session.controls.status.finished") },
+  ]
 
   const query = useGetLiveRooms(
     { class_session_id: classSessionId, status: list.status, ...list.params },
@@ -252,21 +260,22 @@ export function LiveRoomsSection({ classSessionId }: { classSessionId: string })
         <div className="flex flex-col gap-1.5">
           <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.liveRooms.title")}</h2>
         </div>
-        {canCreate ? (
+        {canCreate && (
           <Button onClick={() => setFormOpen(true)}>
             <PlusIcon className="size-4" />
             {t("org.session.liveRooms.newRoom")}
           </Button>
-        ) : null}
+        )}
       </div>
 
-      {rooms.length > 0 || list.isFiltered ? (
+      {(rooms.length > 0 || list.isFiltered) && (
         <SectionToolbar
           sortOptions={sortOptions}
           sort={list.sort}
           onSortChange={list.setSort}
         >
           <Select
+            items={statusItems}
             value={list.status ?? "all"}
             onValueChange={(v) => list.setStatus(v && v !== "all" ? v : undefined)}
           >
@@ -274,22 +283,15 @@ export function LiveRoomsSection({ classSessionId }: { classSessionId: string })
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all" className="text-xs">
-                {t("org.session.controls.status.all")}
-              </SelectItem>
-              <SelectItem value="created" className="text-xs">
-                {t("org.session.controls.status.created")}
-              </SelectItem>
-              <SelectItem value="active" className="text-xs">
-                {t("org.session.controls.status.active")}
-              </SelectItem>
-              <SelectItem value="finished" className="text-xs">
-                {t("org.session.controls.status.finished")}
-              </SelectItem>
+              {statusItems.map((item) => (
+                <SelectItem key={item.value} value={item.value} className="text-xs">
+                  {item.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </SectionToolbar>
-      ) : null}
+      )}
 
       {query.isPending ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -306,12 +308,12 @@ export function LiveRoomsSection({ classSessionId }: { classSessionId: string })
             title={t("org.session.liveRooms.emptyTitle")}
             description={canCreate ? t("org.session.liveRooms.emptyHint") : t("org.session.liveRooms.emptyHintMember")}
           >
-            {canCreate ? (
+            {canCreate && (
               <Button onClick={() => setFormOpen(true)}>
                 <PlusIcon className="size-4" />
                 {t("org.session.liveRooms.newRoom")}
               </Button>
-            ) : null}
+            )}
           </EmptyState>
         )
       ) : (

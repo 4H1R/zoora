@@ -5,7 +5,7 @@ CREATE TABLE live_rooms (
     livekit_room_name VARCHAR(255) NOT NULL,
     scheduled_start_time TIMESTAMPTZ,
     status            VARCHAR(20) NOT NULL DEFAULT 'created',
-    config            JSONB NOT NULL DEFAULT '{"allow_mic_default":true,"allow_camera_default":true,"allow_screen_share_default":false,"auto_record":false,"max_participants":100}',
+    config            JSONB NOT NULL DEFAULT '{"max_participants":100}',
     actual_start_time TIMESTAMPTZ,
     actual_end_time   TIMESTAMPTZ,
     host_last_seen_at TIMESTAMPTZ,

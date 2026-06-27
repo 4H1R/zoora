@@ -14,7 +14,6 @@ import {
 } from "@/api/live-sessions/live-sessions"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
-import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatSessionDate } from "@/lib/session-status"
 import { cn } from "@/lib/utils"
@@ -78,12 +77,8 @@ export function LiveRoomRecordings({ roomId, isActive, canManage }: LiveRoomReco
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <span className="text-muted-foreground inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.25em] uppercase">
-          <FilmIcon className="size-3.5" />
-          {t("org.session.liveRooms.recordings.title")}
-        </span>
-        {canManage && isActive ? (
+      {canManage && isActive && (
+        <div className="flex justify-end">
           <Button
             size="sm"
             variant="outline"
@@ -93,13 +88,18 @@ export function LiveRoomRecordings({ roomId, isActive, canManage }: LiveRoomReco
             <VideoIcon className="size-3.5" />
             {recording ? t("org.session.liveRooms.recordings.recording") : t("org.session.liveRooms.recordings.start")}
           </Button>
-        ) : null}
-      </div>
+        </div>
+      )}
 
       {query.isPending ? (
         <Skeleton className="h-12 w-full rounded-xl" />
       ) : recordings.length === 0 ? (
-        <EmptyState icon={FilmIcon} title={t("org.session.liveRooms.recordings.empty")} />
+        <div className="text-muted-foreground border-foreground/10 flex flex-col items-center gap-2 rounded-xl border border-dashed px-4 py-8 text-center">
+          <FilmIcon className="size-5 opacity-60" />
+          <span className="font-mono text-[10px] tracking-[0.2em] uppercase">
+            {t("org.session.liveRooms.recordings.empty")}
+          </span>
+        </div>
       ) : (
         <ul className="flex flex-col gap-1.5">
           {recordings.map((r) => {
@@ -112,14 +112,14 @@ export function LiveRoomRecordings({ roomId, isActive, canManage }: LiveRoomReco
                     STATUS_STYLES[status] ?? "bg-muted text-muted-foreground"
                   )}
                 >
-                  {status === "started" ? <CircleIcon className="size-2 animate-pulse fill-current" /> : null}
+                  {status === "started" && <CircleIcon className="size-2 animate-pulse fill-current" />}
                   {t(`org.session.liveRooms.recordings.status.${status}`)}
                 </span>
                 <div className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate font-mono text-xs tabular-nums">{formatDate(r.started_at)}</span>
                   <span className="text-muted-foreground font-mono text-[10px]">{formatSize(r.size)}</span>
                 </div>
-                {r.file_url ? (
+                {Boolean(r.file_url) && (
                   <Button
                     variant="ghost"
                     size="icon-xs"
@@ -127,8 +127,8 @@ export function LiveRoomRecordings({ roomId, isActive, canManage }: LiveRoomReco
                   >
                     <DownloadIcon />
                   </Button>
-                ) : null}
-                {canManage ? (
+                )}
+                {canManage && (
                   <Button
                     variant="ghost"
                     size="icon-xs"
@@ -137,7 +137,7 @@ export function LiveRoomRecordings({ roomId, isActive, canManage }: LiveRoomReco
                   >
                     <Trash2Icon />
                   </Button>
-                ) : null}
+                )}
               </li>
             )
           })}

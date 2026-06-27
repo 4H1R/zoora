@@ -53,7 +53,7 @@ function BankCard({ bank, index, canEdit, canDelete, onEdit, onManage, onDelete 
     : "—"
 
   return (
-    <div className="group/bank bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex flex-col gap-5 overflow-hidden rounded-2xl p-5 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-lg">
+    <div className="group/bank bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex flex-col gap-5 overflow-hidden rounded-2xl p-5 ring-1 transition-all">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,var(--color-primary)/8%,transparent_60%)] opacity-0 transition-opacity group-hover/bank:opacity-100"
@@ -70,11 +70,11 @@ function BankCard({ bank, index, canEdit, canDelete, onEdit, onManage, onDelete 
         <h3 className="line-clamp-2 text-xl leading-snug font-semibold tracking-tight text-balance">
           {bank.name ?? "—"}
         </h3>
-        {bank.description ? (
+        {bank.description && (
           <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">
             {bank.description}
           </p>
-        ) : null}
+        )}
       </div>
 
       <div className="border-foreground/10 mt-auto flex items-center justify-between gap-2 border-t border-dashed pt-3">
@@ -91,7 +91,7 @@ function BankCard({ bank, index, canEdit, canDelete, onEdit, onManage, onDelete 
           >
             <ListChecksIcon />
           </Button>
-          {canEdit ? (
+          {canEdit && (
             <Button
               variant="ghost"
               size="icon-xs"
@@ -100,8 +100,8 @@ function BankCard({ bank, index, canEdit, canDelete, onEdit, onManage, onDelete 
             >
               <PencilIcon />
             </Button>
-          ) : null}
-          {canDelete ? (
+          )}
+          {canDelete && (
             <Button
               variant="ghost"
               size="icon-xs"
@@ -111,7 +111,7 @@ function BankCard({ bank, index, canEdit, canDelete, onEdit, onManage, onDelete 
             >
               <Trash2Icon />
             </Button>
-          ) : null}
+          )}
         </div>
       </div>
     </div>
@@ -186,15 +186,15 @@ export function QuestionBanksSection() {
             {t("org.session.questionBanks.title")}
           </h2>
         </div>
-        {canCreate ? (
+        {canCreate && (
           <Button onClick={openCreate}>
             <PlusIcon className="size-4" />
             {t("org.session.questionBanks.newBank")}
           </Button>
-        ) : null}
+        )}
       </div>
 
-      {banks.length > 0 || list.isFiltered ? (
+      {(banks.length > 0 || list.isFiltered) && (
         <SectionToolbar
           searchValue={list.searchInput}
           onSearchChange={list.setSearchInput}
@@ -202,7 +202,7 @@ export function QuestionBanksSection() {
           sort={list.sort}
           onSortChange={list.setSort}
         />
-      ) : null}
+      )}
 
       {banksQuery.isPending ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -219,12 +219,12 @@ export function QuestionBanksSection() {
             title={t("org.session.questionBanks.emptyTitle")}
             description={t("org.session.questionBanks.emptyHint")}
           >
-            {canCreate ? (
+            {canCreate && (
               <Button onClick={openCreate}>
                 <PlusIcon className="size-4" />
                 {t("org.session.questionBanks.newBank")}
               </Button>
-            ) : null}
+            )}
           </EmptyState>
         )
       ) : (

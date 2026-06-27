@@ -43,6 +43,7 @@
   },
   "common": {
     "brandName": "زورا",
+    "autoSessionTitle": "کلاس {{date}} ساعت {{time}}",
     "dateTimePicker": {
       "placeholder": "انتخاب تاریخ",
       "hour": "ساعت",
@@ -438,12 +439,8 @@
         "session": "جلسه",
         "sessionPlaceholder": "انتخاب جلسه…",
         "sessionSelectClassFirst": "ابتدا یک کلاس انتخاب کنید",
-        "maxParticipants": "حداکثر شرکت‌کنندگان",
-        "maxParticipantsPlaceholder": "۱۰۰",
-        "allowMicDefault": "میکروفن به‌صورت پیش‌فرض فعال",
-        "allowCameraDefault": "دوربین به‌صورت پیش‌فرض فعال",
-        "allowScreenShareDefault": "اشتراک‌گذاری صفحه به‌صورت پیش‌فرض فعال",
-        "autoRecord": "ضبط خودکار با شروع اتاق",
+        "name": "نام اتاق",
+        "namePlaceholder": "عنوان جلسه",
         "createSuccess": "اتاق زنده ایجاد شد"
       },
       "toolbar": {
@@ -1196,7 +1193,7 @@
       "notFoundTitle": "فضای کاری یافت نشد",
       "notFoundDescription": "این نشانی با هیچ فضای کاری فعالی مطابقت ندارد. نشانی را بررسی کنید یا با مدیر سازمان خود تماس بگیرید."
     },
-    "title": "خوش برگشتید",
+    "title": "ورود",
     "subtitle": "برای ادامه وارد کلاس خود شوید.",
     "subtitleStudent": "برای مشاهده کلاس‌ها و منابع امروز وارد شوید.",
     "subtitleOrg": "برای مدیریت یادگیری سازمان خود وارد شوید.",
@@ -1219,6 +1216,7 @@
     "submitting": "در حال ورود…",
     "success": "خوش آمدید! در حال انتقال…",
     "error": "نام کاربری یا رمز عبور نامعتبر است",
+    "locked": "تلاش‌های ناموفق بیش از حد. حساب شما به مدت ۱۵ دقیقه قفل شد — بعداً دوباره تلاش کنید.",
     "separator": "یا ادامه با",
     "googleLogin": "گوگل",
     "appleLogin": "اپل",
@@ -1548,6 +1546,14 @@
       "generalHint": "نام و توضیحات عمومی سازمان شما.",
       "details": "جزئیات",
       "detailsHint": "اطلاعات فقط‌خواندنی درباره سازمان شما.",
+      "attendance": {
+        "title": "حضور و غیاب",
+        "hint": "نحوه ثبت خودکار حضور و غیاب هنگام پایان کلاس زنده.",
+        "thresholdLabel": "حداقل درصد حضور",
+        "thresholdHint": "دانش‌آموزانی که حداقل این درصد از جلسه را حاضر بوده‌اند، به‌صورت خودکار حاضر ثبت می‌شوند.",
+        "save": "ذخیره",
+        "updateSuccess": "تنظیمات حضور و غیاب به‌روزرسانی شد"
+      },
       "members": "اعضا",
       "member": "عضو",
       "members_plural": "عضو",
@@ -1732,7 +1738,7 @@
         "live": "اتاق‌های زنده",
         "quizzes": "آزمون‌ها",
         "practices": "تمرین‌ها",
-        "recordings": "ضبط‌ها"
+        "recordings": "اتاق‌های آفلاین"
       },
       "overview": {
         "stats": {
@@ -2168,14 +2174,9 @@
         "form": {
           "createTitle": "اتاق زنده جدید",
           "createDescription": "یک اتاق زنده برای این جلسه بسازید.",
-          "maxParticipants": "حداکثر شرکت‌کننده",
-          "allowMic": "اجازه میکروفون به‌صورت پیش‌فرض",
-          "allowCamera": "اجازه دوربین به‌صورت پیش‌فرض",
-          "allowScreen": "اجازه اشتراک صفحه به‌صورت پیش‌فرض",
-          "autoRecord": "ضبط خودکار",
           "createSuccess": "اتاق زنده ساخته شد",
           "name": "نام اتاق",
-          "namePlaceholder": "نام اختیاری",
+          "namePlaceholder": "عنوان جلسه",
           "mode": "زمان",
           "scheduleLater": "زمان‌بندی برای بعد",
           "startNow": "شروع فوری",
@@ -2241,6 +2242,8 @@
           "markAllPresent": "همه حاضر",
           "markAllAbsent": "همه غایب",
           "unmarked": "ثبت‌نشده",
+          "member": "دانش‌آموز",
+          "status": "وضعیت",
           "unsaved": "{{count}} تغییر ذخیره‌نشده",
           "saveSuccess": "حضور و غیاب ذخیره شد",
           "saveError": "ذخیره حضور و غیاب ناموفق بود. دوباره تلاش کنید.",
@@ -2356,10 +2359,6 @@
     "classStarted": "کلاس شروع شده است",
     "instructor": "مدرس",
     "startTime": "زمان شروع",
-    "participants": "حاضران",
-    "capacity": "ظرفیت",
-    "recordingEnabled": "فعال",
-    "recordingNotice": "این جلسه ضبط می‌شود. با ورود، با شرایط ضبط و حفظ حریم خصوصی موافقت می‌کنید.",
     "back": "بازگشت",
     "secureEntry": "ورود امن",
     "avSettingsNote": "میکروفن و دوربین را پیش از ورود تنظیم کنید",

@@ -39,12 +39,12 @@ function AttachmentViewer({ media }: { media: Media }) {
       <div className="flex items-center gap-2">
         <FileIcon className="text-muted-foreground size-4 shrink-0" />
         <span className="min-w-0 flex-1 truncate text-sm font-medium">{label}</span>
-        {url ? (
+        {url && (
           <Button variant="outline" size="sm" render={<a href={url} download={label} />}>
             <DownloadIcon className="size-4" />
             {t("org.offline.download")}
           </Button>
-        ) : null}
+        )}
       </div>
       {!url ? (
         <div className="bg-muted flex h-40 items-center justify-center rounded-xl">
@@ -135,19 +135,19 @@ function RouteComponent() {
       <header className="flex flex-col gap-4">
         <Eyebrow>{t("org.offline.title")}</Eyebrow>
         <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">{room.title}</h1>
-        {room.description ? (
+        {room.description && (
           <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">{room.description}</p>
-        ) : null}
+        )}
         <div className="text-muted-foreground flex flex-wrap items-center gap-4 text-sm">
           <span className="inline-flex items-center gap-1.5 tabular-nums">
             <EyeIcon className="size-4" />
             {room.view_count ?? 0} {t("org.offline.views")}
           </span>
-          {publishedStr ? (
+          {publishedStr && (
             <span>
               {t("org.offline.published")}: {publishedStr}
             </span>
-          ) : null}
+          )}
           <span>
             {t("org.offline.created")}: {createdStr}
           </span>

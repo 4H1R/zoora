@@ -5,7 +5,7 @@ import type {
 
 import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { CalendarClockIcon, PlusIcon, TrophyIcon, UserIcon, UserMinusIcon, UsersIcon } from "lucide-react"
+import { CalendarClockIcon, PlusIcon, TrophyIcon, UserIcon, UsersIcon } from "lucide-react"
 import { useState } from "react"
 import { useAccess } from "react-access-engine"
 import { useTranslation } from "react-i18next"
@@ -103,7 +103,7 @@ function SessionCard({
       to="/org/classes/class-sessions/$classSessionId"
       params={{ classSessionId: session.id! }}
       className={cn(
-        "group/tile bg-card text-card-foreground relative isolate flex flex-col gap-2.5 overflow-hidden rounded-xl p-3.5 ps-4 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-md",
+        "group/tile bg-card text-card-foreground relative isolate flex flex-col gap-2.5 overflow-hidden rounded-xl p-3.5 ps-4 ring-1 transition-all",
         accent,
         isNext && !isEnded && "bg-primary/[0.04]",
         isEnded && "opacity-75 hover:opacity-100"
@@ -145,9 +145,9 @@ function SessionCard({
 
       <div className="flex flex-col gap-1">
         <h3 className="line-clamp-2 text-sm leading-snug font-semibold tracking-tight text-balance">{session.name}</h3>
-        {session.description ? (
+        {session.description && (
           <p className="text-muted-foreground line-clamp-1 text-xs leading-relaxed">{session.description}</p>
-        ) : null}
+        )}
       </div>
 
       <div className="mt-auto flex items-center justify-between gap-3 border-t border-dashed pt-2.5">
@@ -198,66 +198,6 @@ function DecorativeBackground() {
   )
 }
 
-function StudentCard({
-  member,
-  index,
-  onRemove,
-}: {
-  member: ClassMember
-  index: number
-  onRemove?: (member: ClassMember) => void
-}) {
-  const { t, i18n } = useTranslation()
-  const name = member.user?.name ?? t("org.class.students.unknownName")
-  const username = member.user?.username ?? ""
-  const tileNumber = String(index + 1).padStart(2, "0")
-  const joinedStr = member.created_at ? formatSessionDate(member.created_at, i18n.language, "short") : ""
-
-  return (
-    <div className="group/student bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex items-center gap-3 overflow-hidden rounded-xl p-2.5 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-md">
-      <UserAvatar name={name} size="md" />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate text-sm font-semibold tracking-tight">{name}</span>
-        <span className="text-muted-foreground inline-flex items-center gap-1.5 truncate text-xs">
-          {username ? <span className="font-mono">@{username}</span> : null}
-          {username && joinedStr ? <span className="text-muted-foreground/40">·</span> : null}
-          {joinedStr ? (
-            <span className="inline-flex items-center gap-1">
-              <CalendarClockIcon className="size-2.5" />
-              {joinedStr}
-            </span>
-          ) : null}
-        </span>
-      </div>
-      {onRemove ? (
-        <button
-          type="button"
-          onClick={() => onRemove(member)}
-          aria-label={t("org.class.students.removeAction")}
-          title={t("org.class.students.removeAction")}
-          className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:ring-ring inline-flex size-7 shrink-0 items-center justify-center rounded-full opacity-0 transition-all group-hover/student:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:outline-none"
-        >
-          <UserMinusIcon className="size-3.5" />
-        </button>
-      ) : (
-        <span className="text-muted-foreground font-mono text-[0.7rem] tracking-[0.2em]">/{tileNumber}</span>
-      )}
-    </div>
-  )
-}
-
-function StudentCardSkeleton() {
-  return (
-    <div className="bg-card ring-foreground/10 flex items-center gap-3 rounded-xl p-2.5 ring-1">
-      <Skeleton className="size-7 rounded-full" />
-      <div className="flex flex-1 flex-col gap-1.5">
-        <Skeleton className="h-3.5 w-32" />
-        <Skeleton className="h-3 w-20" />
-      </div>
-    </div>
-  )
-}
-
 function RouteComponent() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -304,13 +244,6 @@ function RouteComponent() {
     isTable: sessionsIsTable,
     isGrid: sessionsIsGrid,
   } = useViewMode()
-  const {
-    viewMode: studentsView,
-    setViewMode: setStudentsView,
-    isTable: studentsIsTable,
-    isGrid: studentsIsGrid,
-  } = useViewMode()
-
   const { data: classData, isPending: classPending } = useGetClassesId(classId, {
     query: { enabled: canView },
   })
@@ -415,18 +348,18 @@ function RouteComponent() {
         <div className="flex min-w-0 flex-col gap-2.5">
           <div className="flex flex-wrap items-center gap-2.5">
             <Eyebrow>{t("org.class.eyebrow")}</Eyebrow>
-            {liveCount > 0 ? <SessionStatusPill status="live" size="sm" /> : null}
+            {liveCount > 0 && <SessionStatusPill status="live" size="sm" />}
           </div>
 
           <h1 className="max-w-2xl text-2xl leading-tight font-semibold tracking-tight text-balance md:text-3xl">
             {cls?.name ?? "—"}
           </h1>
 
-          {cls?.description ? (
+          {cls?.description && (
             <p className="text-muted-foreground line-clamp-2 max-w-xl text-sm leading-relaxed">{cls.description}</p>
-          ) : null}
+          )}
 
-          {cls?.user_id ? (
+          {Boolean(cls?.user_id) && (
             <div className="text-muted-foreground mt-0.5 inline-flex items-center gap-2 text-sm">
               {teacherName ? <UserAvatar name={teacherName} size="sm" /> : <UserIcon className="size-4" />}
               <span className="text-foreground font-medium">{teacherName || t("org.class.unknownTeacher")}</span>
@@ -435,7 +368,7 @@ function RouteComponent() {
                 {t("org.class.instructor")}
               </Eyebrow>
             </div>
-          ) : null}
+          )}
         </div>
 
         <Button
@@ -452,8 +385,8 @@ function RouteComponent() {
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList variant="line">
           <TabsTrigger value="sessions">{t("org.class.tabs.sessions")}</TabsTrigger>
-          {canViewRoster ? <TabsTrigger value="students">{t("org.class.tabs.students")}</TabsTrigger> : null}
-          {canViewRoster ? <TabsTrigger value="attendance">{t("org.class.tabs.attendance")}</TabsTrigger> : null}
+          {canViewRoster && <TabsTrigger value="students">{t("org.class.tabs.students")}</TabsTrigger>}
+          {canViewRoster && <TabsTrigger value="attendance">{t("org.class.tabs.attendance")}</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="sessions" className="flex flex-col gap-4">
@@ -465,12 +398,12 @@ function RouteComponent() {
 
             <div className="flex items-center gap-2">
               <ViewModeToggle value={sessionsView} onChange={setSessionsView} />
-              {canCreateSession ? (
+              {canCreateSession && (
                 <Button size="sm" onClick={() => setFormOpen(true)}>
                   <PlusIcon className="size-4" />
                   {t("org.class.sessions.newSession")}
                 </Button>
-              ) : null}
+              )}
             </div>
           </div>
 
@@ -496,12 +429,12 @@ function RouteComponent() {
               title={t("org.class.sessions.emptyTitle")}
               description={t("org.class.sessions.emptyHint")}
             >
-              {canCreateSession ? (
+              {canCreateSession && (
                 <Button onClick={() => setFormOpen(true)}>
                   <PlusIcon className="size-4" />
                   {t("org.class.sessions.newSession")}
                 </Button>
-              ) : null}
+              )}
             </EmptyState>
           ) : sessionsIsTable ? (
             <Card className="gap-0 overflow-hidden p-0">
@@ -528,7 +461,7 @@ function RouteComponent() {
           )}
         </TabsContent>
 
-        {canViewRoster ? (
+        {canViewRoster && (
           <TabsContent value="students" className="flex flex-col gap-4">
             <div className="flex flex-wrap items-end justify-between gap-3 border-b border-dashed pb-3">
               <div className="flex items-baseline gap-2.5">
@@ -536,7 +469,6 @@ function RouteComponent() {
                 <span className="text-muted-foreground font-mono text-sm tabular-nums">{studentsTotal}</span>
               </div>
               <div className="flex items-center gap-2">
-                <ViewModeToggle value={studentsView} onChange={setStudentsView} />
                 <Button variant="outline" size="sm" onClick={() => setEnrollOpen(true)}>
                   <PlusIcon className="size-4" />
                   {t("org.class.students.addMember")}
@@ -550,17 +482,10 @@ function RouteComponent() {
               sortLabel={t("org.class.toolbar.sort")}
               columnsLabel={t("org.class.toolbar.columns")}
               toggleColumnsLabel={t("org.class.toolbar.toggleColumns")}
-              showColumnsToggle={studentsIsTable}
+              showColumnsToggle
             />
 
-            {membersPending && studentsIsGrid ? (
-              <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-                <StudentCardSkeleton />
-                <StudentCardSkeleton />
-                <StudentCardSkeleton />
-                <StudentCardSkeleton />
-              </div>
-            ) : !membersPending && members.length === 0 ? (
+            {!membersPending && members.length === 0 ? (
               <EmptyState
                 icon={UsersIcon}
                 title={t("org.class.students.emptyTitle")}
@@ -571,7 +496,7 @@ function RouteComponent() {
                   {t("org.class.students.addMember")}
                 </Button>
               </EmptyState>
-            ) : studentsIsTable ? (
+            ) : (
               <Card className="gap-0 overflow-hidden p-0">
                 <div className="overflow-x-auto">
                   <DataTable
@@ -584,20 +509,11 @@ function RouteComponent() {
                 </div>
                 <DataTablePagination table={studentsTable} />
               </Card>
-            ) : (
-              <>
-                <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-                  {members.map((m, i) => (
-                    <StudentCard key={m.id} member={m} index={i} onRemove={setRemoveTarget} />
-                  ))}
-                </div>
-                <DataTablePagination table={studentsTable} />
-              </>
             )}
           </TabsContent>
-        ) : null}
+        )}
 
-        {canViewRoster ? (
+        {canViewRoster && (
           <TabsContent value="attendance" className="flex flex-col gap-4">
             <div className="flex items-baseline gap-2.5 border-b border-dashed pb-3">
               <h2 className="text-lg font-semibold tracking-tight">{t("org.class.attendance.title")}</h2>
@@ -613,14 +529,14 @@ function RouteComponent() {
               onPageChange={handleMatrixPageChange}
             />
           </TabsContent>
-        ) : null}
+        )}
       </Tabs>
 
-      {canCreateSession ? (
+      {canCreateSession && (
         <SessionCreateModal open={formOpen} onOpenChange={setFormOpen} classId={classId} session={null} />
-      ) : null}
+      )}
 
-      {canViewRoster ? (
+      {canViewRoster && (
         <>
           <EnrollMemberModal open={enrollOpen} onOpenChange={setEnrollOpen} classId={classId} />
           <DeleteConfirmDialog
@@ -631,7 +547,7 @@ function RouteComponent() {
             isLoading={removeMutation.isPending}
           />
         </>
-      ) : null}
+      )}
     </div>
   )
 }

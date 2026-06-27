@@ -35,11 +35,11 @@ export function QuestionInput({ question, answer, onChange }: QuestionInputProps
             />
           )
         })}
-        {isMulti ? (
+        {isMulti && (
           <span className="text-muted-foreground mt-1 font-mono text-[10px] tracking-[0.25em] uppercase">
             {t("org.session.quizzes.take.multiSelectHint")}
           </span>
-        ) : null}
+        )}
       </div>
     )
   }

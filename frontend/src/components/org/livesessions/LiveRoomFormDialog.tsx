@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { CalendarClockIcon, RadioIcon } from "lucide-react"
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -14,21 +14,16 @@ import {
   usePostLiveRoomsIdStart,
 } from "@/api/live-sessions/live-sessions"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
-import { Checkbox } from "@/components/ui/checkbox"
 import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { useSessionTitle } from "@/lib/session-title"
 import { cn } from "@/lib/utils"
 
 const schema = z.object({
-  name: z.string().max(255).optional(),
+  name: z.string().min(1).max(255),
   mode: z.enum(["schedule", "now"]),
   scheduled_start_time: z.string().optional(),
-  max_participants: z.coerce.number().int().min(1).max(1000).optional(),
-  auto_record: z.boolean().optional(),
-  allow_mic_default: z.boolean().optional(),
-  allow_camera_default: z.boolean().optional(),
-  allow_screen_share_default: z.boolean().optional(),
 })
 
 type FormInput = z.input<typeof schema>
@@ -38,11 +33,6 @@ const DEFAULTS: FormValues = {
   name: "",
   mode: "schedule",
   scheduled_start_time: "",
-  max_participants: 100,
-  auto_record: false,
-  allow_mic_default: true,
-  allow_camera_default: true,
-  allow_screen_share_default: false,
 }
 
 interface LiveRoomFormDialogProps {
@@ -55,14 +45,22 @@ export function LiveRoomFormDialog({ open, onOpenChange, classSessionId }: LiveR
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const genTitle = useSessionTitle()
 
   const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
     defaultValues: DEFAULTS,
   })
 
+  // Tracks the last value we auto-filled so we only overwrite the name field
+  // while the user hasn't typed their own title.
+  const autoNameRef = useRef("")
+
   useEffect(() => {
-    if (open) form.reset(DEFAULTS)
+    if (open) {
+      form.reset(DEFAULTS)
+      autoNameRef.current = ""
+    }
   }, [open])
 
   const createMutation = usePostLiveRooms()
@@ -70,10 +68,20 @@ export function LiveRoomFormDialog({ open, onOpenChange, classSessionId }: LiveR
 
   const errors = form.formState.errors
   const mode = form.watch("mode")
-  const autoRecord = form.watch("auto_record")
-  const allowMic = form.watch("allow_mic_default")
-  const allowCamera = form.watch("allow_camera_default")
-  const allowScreen = form.watch("allow_screen_share_default")
+  const scheduledTime = form.watch("scheduled_start_time")
+
+  // Default the title to a readable label derived from the start time
+  // ("کلاس دوشنبه ۲۰ تیر ساعت ۱۱:۳۰"), but never clobber a title the user typed.
+  useEffect(() => {
+    if (!open) return
+    const base = mode === "now" ? new Date() : scheduledTime ? new Date(scheduledTime) : null
+    if (!base || Number.isNaN(base.getTime())) return
+    const current = form.getValues("name") ?? ""
+    if (current !== "" && current !== autoNameRef.current) return
+    const next = genTitle(base)
+    autoNameRef.current = next
+    form.setValue("name", next, { shouldValidate: true })
+  }, [open, mode, scheduledTime])
 
   const pending = createMutation.isPending || startMutation.isPending
 
@@ -93,15 +101,8 @@ export function LiveRoomFormDialog({ open, onOpenChange, classSessionId }: LiveR
       const result = await createMutation.mutateAsync({
         data: {
           class_session_id: classSessionId,
-          name: values.name?.trim() || undefined,
+          name: values.name.trim(),
           scheduled_start_time: scheduledISO,
-          config: {
-            max_participants: values.max_participants ?? 100,
-            auto_record: !!values.auto_record,
-            allow_mic_default: !!values.allow_mic_default,
-            allow_camera_default: !!values.allow_camera_default,
-            allow_screen_share_default: !!values.allow_screen_share_default,
-          },
         },
       })
       queryClient.invalidateQueries({ queryKey: getGetLiveRoomsQueryKey() })
@@ -158,7 +159,7 @@ export function LiveRoomFormDialog({ open, onOpenChange, classSessionId }: LiveR
           </div>
         </Field>
 
-        {mode === "schedule" ? (
+        {mode === "schedule" && (
           <Field data-invalid={!!errors.scheduled_start_time || undefined}>
             <FieldLabel>{t("org.session.liveRooms.form.scheduledTime")}</FieldLabel>
             <Controller
@@ -176,33 +177,7 @@ export function LiveRoomFormDialog({ open, onOpenChange, classSessionId }: LiveR
             <FieldError errors={[errors.scheduled_start_time]} />
             <p className="text-muted-foreground text-xs">{t("org.session.liveRooms.form.scheduledTimeHint")}</p>
           </Field>
-        ) : null}
-
-        <Field data-invalid={!!errors.max_participants || undefined}>
-          <FieldLabel>{t("org.session.liveRooms.form.maxParticipants")}</FieldLabel>
-          <Input type="number" min={1} max={1000} {...form.register("max_participants")} placeholder="100" />
-          <FieldError errors={[errors.max_participants]} />
-        </Field>
-
-        <Field orientation="horizontal">
-          <Checkbox checked={!!allowMic} onCheckedChange={(c) => form.setValue("allow_mic_default", !!c)} />
-          <FieldLabel className="cursor-pointer text-start">{t("org.session.liveRooms.form.allowMic")}</FieldLabel>
-        </Field>
-
-        <Field orientation="horizontal">
-          <Checkbox checked={!!allowCamera} onCheckedChange={(c) => form.setValue("allow_camera_default", !!c)} />
-          <FieldLabel className="cursor-pointer text-start">{t("org.session.liveRooms.form.allowCamera")}</FieldLabel>
-        </Field>
-
-        <Field orientation="horizontal">
-          <Checkbox checked={!!allowScreen} onCheckedChange={(c) => form.setValue("allow_screen_share_default", !!c)} />
-          <FieldLabel className="cursor-pointer text-start">{t("org.session.liveRooms.form.allowScreen")}</FieldLabel>
-        </Field>
-
-        <Field orientation="horizontal">
-          <Checkbox checked={!!autoRecord} onCheckedChange={(c) => form.setValue("auto_record", !!c)} />
-          <FieldLabel className="cursor-pointer text-start">{t("org.session.liveRooms.form.autoRecord")}</FieldLabel>
-        </Field>
+        )}
       </FieldGroup>
     </ResourceFormDialog>
   )

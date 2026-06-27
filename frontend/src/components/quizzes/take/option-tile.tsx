@@ -30,7 +30,7 @@ export function OptionTile({ index, label, checked, onClick }: OptionTileProps) 
         {letter}
       </span>
       <span className="text-foreground text-base leading-snug">{label}</span>
-      {checked ? <CheckCircle2Icon className="text-foreground ms-auto size-5" /> : null}
+      {checked && <CheckCircle2Icon className="text-foreground ms-auto size-5" />}
     </button>
   )
 }

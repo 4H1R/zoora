@@ -16,17 +16,18 @@ import (
 	"github.com/4H1R/zoora/internal/admin"
 	"github.com/4H1R/zoora/internal/attendance"
 	"github.com/4H1R/zoora/internal/auth"
-	"github.com/4H1R/zoora/internal/platform/authz"
 	"github.com/4H1R/zoora/internal/calendar"
 	"github.com/4H1R/zoora/internal/chat"
 	"github.com/4H1R/zoora/internal/classes"
-	"github.com/4H1R/zoora/internal/gradebook"
 	"github.com/4H1R/zoora/internal/config"
+	"github.com/4H1R/zoora/internal/gradebook"
 	"github.com/4H1R/zoora/internal/livesessions"
 	"github.com/4H1R/zoora/internal/media"
 	"github.com/4H1R/zoora/internal/middleware"
 	"github.com/4H1R/zoora/internal/offlines"
 	"github.com/4H1R/zoora/internal/organizations"
+	"github.com/4H1R/zoora/internal/orgsettings"
+	"github.com/4H1R/zoora/internal/platform/authz"
 	"github.com/4H1R/zoora/internal/platform/cache"
 	"github.com/4H1R/zoora/internal/platform/database"
 	"github.com/4H1R/zoora/internal/platform/health"
@@ -135,8 +136,11 @@ func main() {
 
 	authzResolver := authz.NewResolver(classMemberRepo)
 
+	orgSettingsRepo := orgsettings.NewRepository(db)
+	orgSettingsService := orgsettings.NewService(orgSettingsRepo, log)
+
 	userService := users.NewService(userRepo, roleRepo, log)
-	orgService := organizations.NewService(orgRepo, userRepo, redisClient, log)
+	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, log)
 	classService := classes.NewService(classRepo, classSessionRepo, classMemberRepo, log)
 	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, log)
 	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, log)
@@ -159,7 +163,7 @@ func main() {
 		liveRoomRepo, liveParticipantRepo, liveRecordingRepo,
 		classSessionRepo, classRepo, classMemberRepo,
 		chatService, transactor,
-		livekitClient, log,
+		livekitClient, queueClient, log,
 	)
 	offlineService := offlines.NewService(offlineRoomRepo, offlineViewRepo, classSessionRepo, classRepo, classMemberRepo, log)
 	practiceService := practices.NewService(practiceRoomRepo, practiceSubRepo, classSessionRepo, classRepo, classMemberRepo, log)
@@ -169,7 +173,7 @@ func main() {
 	attendanceService := attendance.NewService(
 		attendanceRepo, classRepo, classSessionRepo, classMemberRepo,
 		liveRoomRepo, liveParticipantRepo, offlineViewRepo, offlineRoomRepo,
-		authzResolver, log,
+		orgSettingsService, authzResolver, log,
 	)
 
 	healthChecker := health.NewChecker(db, redisClient, storageClient)
@@ -207,6 +211,9 @@ func main() {
 
 	orgHandler := organizations.NewHandler(orgService)
 	orgHandler.RegisterRoutes(v1, authMiddleware, perm)
+
+	orgSettingsHandler := orgsettings.NewHandler(orgSettingsService)
+	orgSettingsHandler.RegisterRoutes(v1, authMiddleware, perm)
 
 	userHandler := users.NewHandler(userService)
 	userHandler.RegisterRoutes(v1, authMiddleware, perm)

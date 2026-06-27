@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 
 import { useTranslation } from "react-i18next"
 
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -23,6 +24,7 @@ interface ResourceFormDialogProps {
   onSubmit: React.ComponentProps<"form">["onSubmit"]
   isLoading?: boolean
   submitLabel?: string
+  contentClassName?: string
 }
 
 export function ResourceFormDialog({
@@ -34,12 +36,13 @@ export function ResourceFormDialog({
   onSubmit,
   isLoading,
   submitLabel,
+  contentClassName,
 }: ResourceFormDialogProps) {
   const { t } = useTranslation()
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90dvh] flex-col sm:max-w-lg">
+      <DialogContent className={cn("flex max-h-[90dvh] flex-col sm:max-w-lg", contentClassName)}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}

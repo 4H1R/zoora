@@ -60,7 +60,7 @@ function QuizCard({ quiz, index, classSessionId, onEdit, onManageQuestions, onDe
   const createdStr = formatSessionDate(quiz.created_at, i18n.language, "short")
 
   return (
-    <div className="group/quiz bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex flex-col gap-5 overflow-hidden rounded-2xl p-5 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-lg">
+    <div className="group/quiz bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex flex-col gap-5 overflow-hidden rounded-2xl p-5 ring-1 transition-all">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,var(--color-primary)/8%,transparent_60%)] opacity-0 transition-opacity group-hover/quiz:opacity-100"
@@ -77,12 +77,12 @@ function QuizCard({ quiz, index, classSessionId, onEdit, onManageQuestions, onDe
         <h3 className="line-clamp-2 text-xl leading-snug font-semibold tracking-tight text-balance">
           {quiz.title ?? "—"}
         </h3>
-        {quiz.description ? (
+        {Boolean(quiz.description) && (
           <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">{quiz.description}</p>
-        ) : null}
-        {(quiz.no_back_navigation || quiz.shuffle_questions) ? (
+        )}
+        {(quiz.no_back_navigation || quiz.shuffle_questions) && (
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            {quiz.no_back_navigation ? (
+            {quiz.no_back_navigation && (
               <span
                 className="border-foreground/15 text-muted-foreground inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider"
                 title={t("org.session.quizzes.flags.noBackNavigation")}
@@ -90,8 +90,8 @@ function QuizCard({ quiz, index, classSessionId, onEdit, onManageQuestions, onDe
                 <LockKeyholeIcon className="size-3" />
                 {t("org.session.quizzes.flags.noBackShort")}
               </span>
-            ) : null}
-            {quiz.shuffle_questions ? (
+            )}
+            {quiz.shuffle_questions && (
               <span
                 className="border-foreground/15 text-muted-foreground inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider"
                 title={t("org.session.quizzes.flags.shuffleQuestions")}
@@ -99,9 +99,9 @@ function QuizCard({ quiz, index, classSessionId, onEdit, onManageQuestions, onDe
                 <ShuffleIcon className="size-3" />
                 {t("org.session.quizzes.flags.shuffleShort")}
               </span>
-            ) : null}
+            )}
           </div>
-        ) : null}
+        )}
       </div>
 
       <div className="border-foreground/10 grid grid-cols-2 gap-3 border-t border-dashed pt-3">
@@ -127,9 +127,9 @@ function QuizCard({ quiz, index, classSessionId, onEdit, onManageQuestions, onDe
           {createdStr}
         </span>
         <div className="flex items-center gap-1.5">
-          {(canEdit || canDelete) ? (
+          {(canEdit || canDelete) && (
             <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover/quiz:opacity-100">
-              {canEdit ? (
+              {canEdit && (
                 <Button
                   variant="ghost"
                   size="icon-xs"
@@ -138,8 +138,8 @@ function QuizCard({ quiz, index, classSessionId, onEdit, onManageQuestions, onDe
                 >
                   <ListChecksIcon />
                 </Button>
-              ) : null}
-              {canEdit ? (
+              )}
+              {canEdit && (
                 <Button
                   variant="ghost"
                   size="icon-xs"
@@ -148,8 +148,8 @@ function QuizCard({ quiz, index, classSessionId, onEdit, onManageQuestions, onDe
                 >
                   <PencilIcon />
                 </Button>
-              ) : null}
-              {canDelete ? (
+              )}
+              {canDelete && (
                 <Button
                   variant="ghost"
                   size="icon-xs"
@@ -159,10 +159,10 @@ function QuizCard({ quiz, index, classSessionId, onEdit, onManageQuestions, onDe
                 >
                   <Trash2Icon />
                 </Button>
-              ) : null}
+              )}
             </div>
-          ) : null}
-          {quiz.id ? (
+          )}
+          {quiz.id && (
             <Button
               size="sm"
               render={
@@ -175,7 +175,7 @@ function QuizCard({ quiz, index, classSessionId, onEdit, onManageQuestions, onDe
               <PlayIcon className="size-3.5" />
               {t("org.session.quizzes.actions.take")}
             </Button>
-          ) : null}
+          )}
         </div>
       </div>
     </div>
@@ -260,15 +260,15 @@ export function QuizzesSection({ classId, classSessionId }: QuizzesSectionProps)
           <Eyebrow>{t("org.session.quizzes.eyebrow")}</Eyebrow>
           <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.quizzes.title")}</h2>
         </div>
-        {canCreate ? (
+        {canCreate && (
           <Button onClick={openCreate}>
             <PlusIcon className="size-4" />
             {t("org.session.quizzes.newQuiz")}
           </Button>
-        ) : null}
+        )}
       </div>
 
-      {quizzes.length > 0 || list.isFiltered ? (
+      {(quizzes.length > 0 || list.isFiltered) && (
         <SectionToolbar
           searchValue={list.searchInput}
           onSearchChange={list.setSearchInput}
@@ -276,7 +276,7 @@ export function QuizzesSection({ classId, classSessionId }: QuizzesSectionProps)
           sort={list.sort}
           onSortChange={list.setSort}
         />
-      ) : null}
+      )}
 
       {quizzesQuery.isPending ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -293,12 +293,12 @@ export function QuizzesSection({ classId, classSessionId }: QuizzesSectionProps)
             title={t("org.session.quizzes.emptyTitle")}
             description={t("org.session.quizzes.emptyHint")}
           >
-            {canCreate ? (
+            {canCreate && (
               <Button onClick={openCreate}>
                 <PlusIcon className="size-4" />
                 {t("org.session.quizzes.newQuiz")}
               </Button>
-            ) : null}
+            )}
           </EmptyState>
         )
       ) : (

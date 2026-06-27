@@ -64,9 +64,10 @@ const (
 )
 
 type AutoMarkAttendanceDTO struct {
-	Source            AutoMarkSource `json:"source" binding:"required,oneof=live_room offline_room"`
-	RoomID            uuid.UUID      `json:"room_id" binding:"required"`
-	MinDurationSeconds int           `json:"min_duration_seconds" binding:"gte=0"`
+	Source AutoMarkSource `json:"source" binding:"required,oneof=live_room offline_room"`
+	// RoomID is required only for the offline source; live auto-mark is
+	// session-scoped and ignores it.
+	RoomID uuid.UUID `json:"room_id" binding:"omitempty"`
 }
 
 type AutoMarkResult struct {
@@ -186,6 +187,9 @@ type AttendanceService interface {
 	Mark(ctx context.Context, classID, sessionID uuid.UUID, dto CreateAttendanceDTO) (*Attendance, error)
 	BulkMark(ctx context.Context, classID, sessionID uuid.UUID, dto BulkCreateAttendanceDTO) ([]Attendance, error)
 	AutoMark(ctx context.Context, classID, sessionID uuid.UUID, dto AutoMarkAttendanceDTO) (*AutoMarkResult, error)
+	// AutoMarkSessionLive runs live auto-mark for a whole session using the org's
+	// configured threshold. No caller authz (used by the worker / system).
+	AutoMarkSessionLive(ctx context.Context, classID, sessionID uuid.UUID) (*AutoMarkResult, error)
 	Update(ctx context.Context, id uuid.UUID, dto UpdateAttendanceDTO) (*Attendance, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (*Attendance, error)

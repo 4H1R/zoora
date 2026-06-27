@@ -156,6 +156,37 @@ func TestLogin_TenantUsesOrgScopedLookup(t *testing.T) {
 	userRepo.AssertNotCalled(t, "FindAdminByUsername")
 }
 
+func TestLogin_LocksAfterMaxFailedAttempts(t *testing.T) {
+	ctx := context.Background()
+	cfg := &config.Config{JWTSecret: "test-secret", JWTExpiry: time.Hour}
+	jwtService := auth.NewJWTService(cfg)
+
+	orgID := uuid.New()
+	hashed, err := bcrypt.GenerateFromPassword([]byte("secret123"), bcrypt.DefaultCost)
+	assert.NoError(t, err)
+	user := &domain.User{ID: uuid.New(), OrganizationID: &orgID, Username: "ali", Password: string(hashed)}
+
+	userRepo := &mockUserRepo{}
+	userRepo.On("FindByUsernameAndOrg", ctx, "ali", orgID).Return(user, nil)
+	svc := auth.NewAuthService(userRepo, jwtService, newTestRedis(t), slog.Default())
+
+	bad := domain.LoginDTO{Username: "ali", Password: "wrong"}
+
+	// First 4 wrong attempts: plain unauthorized.
+	for range 4 {
+		_, _, err := svc.Login(ctx, bad, &orgID)
+		assert.ErrorIs(t, err, domain.ErrUnauthorized)
+	}
+
+	// 5th wrong attempt trips the threshold -> locked.
+	_, _, err = svc.Login(ctx, bad, &orgID)
+	assert.ErrorIs(t, err, domain.ErrAccountLocked)
+
+	// Subsequent attempts stay locked, even with the correct password.
+	_, _, err = svc.Login(ctx, domain.LoginDTO{Username: "ali", Password: "secret123"}, &orgID)
+	assert.ErrorIs(t, err, domain.ErrAccountLocked)
+}
+
 func TestLogin_UserNotFound_ReturnsUnauthorized(t *testing.T) {
 	ctx := context.Background()
 	cfg := &config.Config{JWTSecret: "test-secret", JWTExpiry: time.Hour}

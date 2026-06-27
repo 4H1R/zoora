@@ -172,6 +172,9 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 		if err := db.WithContext(ctx).Create(org).Error; err != nil {
 			return nil, fmt.Errorf("creating organization %s: %w", org.Name, err)
 		}
+		if err := db.WithContext(ctx).Create(factory.NewOrganizationSettings(org.ID)).Error; err != nil {
+			return nil, fmt.Errorf("creating org settings for %s: %w", org.Name, err)
+		}
 	}
 	counts.Organizations = len(orgs)
 
@@ -565,6 +568,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 
 			// 17. LiveRoom on liveSession + participants + recording
 			liveRoom := factory.NewLiveRoom(liveSession.ID, func(lr *domain.LiveRoom) {
+				lr.Name = factory.T("Past session", "جلسه گذشته")
 				lr.Status = domain.LiveRoomStatusFinished
 				start := time.Now().Add(-2 * time.Hour)
 				end := time.Now().Add(-1 * time.Hour)

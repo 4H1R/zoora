@@ -150,7 +150,7 @@ func TestHandler_CreateRoom_Success(t *testing.T) {
 	svc.On("CreateRoom", mock.Anything, mock.AnythingOfType("domain.CreateLiveRoomDTO")).
 		Return(&domain.LiveRoom{ID: uuid.New(), Status: domain.LiveRoomStatusCreated}, nil)
 
-	body := map[string]any{"class_session_id": uuid.New().String()}
+	body := map[string]any{"class_session_id": uuid.New().String(), "name": "Morning session"}
 	w := doReq(t, r, "POST", "/api/v1/live-rooms", body)
 	assert.Equal(t, http.StatusCreated, w.Code)
 }

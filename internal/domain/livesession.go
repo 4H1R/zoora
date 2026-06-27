@@ -33,20 +33,12 @@ const (
 )
 
 type LiveRoomConfig struct {
-	AllowMicDefault         bool `json:"allow_mic_default"`
-	AllowCameraDefault      bool `json:"allow_camera_default"`
-	AllowScreenShareDefault bool `json:"allow_screen_share_default"`
-	AutoRecord              bool `json:"auto_record"`
-	MaxParticipants         int  `json:"max_participants"`
+	MaxParticipants int `json:"max_participants"`
 }
 
 func DefaultLiveRoomConfig() LiveRoomConfig {
 	return LiveRoomConfig{
-		AllowMicDefault:         true,
-		AllowCameraDefault:      true,
-		AllowScreenShareDefault: false,
-		AutoRecord:              false,
-		MaxParticipants:         100,
+		MaxParticipants: 100,
 	}
 }
 
@@ -97,7 +89,7 @@ type LiveRecording struct {
 
 type CreateLiveRoomDTO struct {
 	ClassSessionID     uuid.UUID      `json:"class_session_id" binding:"required"`
-	Name               string         `json:"name" binding:"omitempty,max=255"`
+	Name               string         `json:"name" binding:"required,max=255"`
 	ScheduledStartTime *time.Time     `json:"scheduled_start_time"`
 	Config             LiveRoomConfig `json:"config"`
 }
@@ -166,6 +158,7 @@ type LiveRoomRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, scope LiveRoomListScope, p ListParams) ([]LiveRoom, int64, error)
 	FindActiveRoomsWithStaleHost(ctx context.Context, staleDuration time.Duration) ([]LiveRoom, error)
+	ListByClassSession(ctx context.Context, sessionID uuid.UUID) ([]LiveRoom, error)
 	AdminList(ctx context.Context, q AdminListLiveRoomsQuery) ([]LiveRoom, int64, error)
 	HardDelete(ctx context.Context, id uuid.UUID) error
 	FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*LiveRoom, error)

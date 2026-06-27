@@ -175,12 +175,12 @@ function UsersPage() {
       <PageHeader
         title={t("org.users.title")}
         actions={
-          canCreate ? (
+          canCreate && (
             <Button size="sm" onClick={handleCreate}>
               <PlusIcon data-icon="inline-start" />
               {t("org.users.newUser")}
             </Button>
-          ) : null
+          )
         }
       />
       <StatCards stats={statCards} />

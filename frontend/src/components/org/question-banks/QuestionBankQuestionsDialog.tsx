@@ -99,35 +99,33 @@ export function QuestionBankQuestionsDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>
-              {t("org.session.questionBanks.questions.title")}
-              {bank?.name && (
-                <span className="text-muted-foreground ms-2 text-sm font-normal">
-                  · {bank.name}
-                </span>
-              )}
+              {bank?.name ?? t("org.session.questionBanks.questions.title")}
+              <span className="text-muted-foreground ms-2 text-sm font-normal">
+                · {t("org.session.questionBanks.questions.title")}
+              </span>
             </DialogTitle>
             <DialogDescription>
-              {t("org.session.questionBanks.questions.description")}
+              {bank?.description || t("org.session.questionBanks.questions.description")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
-              <span className="text-muted-foreground">
-                {t("org.session.questionBanks.questions.count")}
-              </span>
               <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">
+                  {t("org.session.questionBanks.questions.count")}
+                </span>
                 <Badge variant="secondary">{questions.length}</Badge>
-                {canEdit ? (
-                  <Button size="sm" onClick={openCreate}>
-                    <PlusIcon className="size-4" />
-                    {t("org.session.questionBanks.questions.add")}
-                  </Button>
-                ) : null}
               </div>
+              {canEdit && (
+                <Button size="sm" onClick={openCreate}>
+                  <PlusIcon className="size-4" />
+                  {t("org.session.questionBanks.questions.add")}
+                </Button>
+              )}
             </div>
 
             {!isLoading && questions.length === 0 ? (
@@ -159,7 +157,7 @@ export function QuestionBankQuestionsDialog({
                       </div>
                     </div>
                     <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover/qrow:opacity-100">
-                      {canEdit ? (
+                      {canEdit && (
                         <Button
                           variant="ghost"
                           size="icon-xs"
@@ -168,8 +166,8 @@ export function QuestionBankQuestionsDialog({
                         >
                           <PencilIcon />
                         </Button>
-                      ) : null}
-                      {canDelete ? (
+                      )}
+                      {canDelete && (
                         <Button
                           variant="ghost"
                           size="icon-xs"
@@ -182,7 +180,7 @@ export function QuestionBankQuestionsDialog({
                         >
                           <Trash2Icon />
                         </Button>
-                      ) : null}
+                      )}
                     </div>
                   </li>
                 ))

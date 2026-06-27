@@ -68,7 +68,7 @@ export function SessionRoomsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden">
+      <DialogContent className="flex max-h-[85vh] w-full flex-col overflow-hidden sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {t("admin.sessions.manageRooms.title")}
