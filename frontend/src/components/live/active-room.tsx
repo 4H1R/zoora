@@ -242,6 +242,7 @@ function RoomShell({
           unread={unread}
           states={states}
           isHost={role === "host"}
+          liveId={liveId}
           onSetRole={onSetRole}
           onMute={onMute}
         />

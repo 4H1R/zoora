@@ -2450,7 +2450,23 @@
       "nextPage": "Next page"
     },
     "polls": {
-      "comingSoon": "Polls are coming soon"
+      "comingSoon": "Polls are coming soon",
+      "create": "Create poll",
+      "question": "Question",
+      "singleChoice": "Single choice",
+      "yesNo": "Yes / No",
+      "addOption": "Add option",
+      "option": "Option",
+      "launch": "Launch poll",
+      "reveal": "Reveal to students",
+      "close": "Close poll",
+      "vote": "Vote",
+      "submitted": "Answer submitted — waiting for results",
+      "noActive": "No active poll",
+      "votes": "{{count}} votes",
+      "yes": "Yes",
+      "no": "No",
+      "results": "Results"
     },
     "panel": {
       "title": "Room"

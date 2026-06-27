@@ -21,11 +21,12 @@ interface RoomPanelProps {
   unread: number
   states: Record<string, { role: RoomRole; handRaised: boolean }>
   isHost: boolean
+  liveId: string
   onSetRole: (identity: string, role: "presenter" | "viewer") => void
   onMute: (identity: string, trackSid: string) => void
 }
 
-type TabsInnerProps = Pick<RoomPanelProps, "tab" | "setTab" | "chat" | "unread" | "states" | "isHost" | "onSetRole" | "onMute">
+type TabsInnerProps = Pick<RoomPanelProps, "tab" | "setTab" | "chat" | "unread" | "states" | "isHost" | "liveId" | "onSetRole" | "onMute">
 
 function TabsInner({
   tab,
@@ -34,6 +35,7 @@ function TabsInner({
   unread,
   states,
   isHost,
+  liveId,
   onSetRole,
   onMute,
 }: TabsInnerProps) {
@@ -75,13 +77,13 @@ function TabsInner({
         />
       </TabsContent>
       <TabsContent value="polls" className="flex min-h-0 flex-1 flex-col">
-        <PollsPanel />
+        <PollsPanel liveId={liveId} isHost={isHost} />
       </TabsContent>
     </Tabs>
   )
 }
 
-export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, isHost, onSetRole, onMute }: RoomPanelProps) {
+export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, isHost, liveId, onSetRole, onMute }: RoomPanelProps) {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
   if (!open) return null
@@ -101,6 +103,7 @@ export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, is
             unread={unread}
             states={states}
             isHost={isHost}
+            liveId={liveId}
             onSetRole={onSetRole}
             onMute={onMute}
           />
@@ -129,6 +132,7 @@ export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, is
         unread={unread}
         states={states}
         isHost={isHost}
+        liveId={liveId}
         onSetRole={onSetRole}
         onMute={onMute}
       />
