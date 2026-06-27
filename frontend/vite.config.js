@@ -6,6 +6,11 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  optimizeDeps: {
+    // pdfjs-dist ships ESM workers; tell Vite not to bundle them so the
+    // new URL(..., import.meta.url) worker pattern resolves at runtime.
+    exclude: ['pdfjs-dist'],
+  },
   plugins: [
     tailwindcss(),
     tanstackRouter({ target: 'react', autoCodeSplitting: true }),

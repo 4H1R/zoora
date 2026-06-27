@@ -8,6 +8,7 @@ import {
 import { Users } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 
 import "@livekit/components-styles"
 import "./livekit-overrides.css"
@@ -18,15 +19,18 @@ import {
   usePostLiveRoomsIdParticipantsIdentityMute,
   usePutLiveRoomsIdParticipantsIdentityRole,
 } from "@/api/live-sessions/live-sessions"
+import { postMediaPresign, getMediaIdDownloadUrl } from "@/api/media/media"
 
 import { ControlBar } from "./control-bar"
 import { RoomHeader } from "./room-header"
 import { RoomPanel } from "./room-panel"
 import { RoomRoleContext, type RoomRole, useRoomRole } from "./room-role"
+import { canPublish } from "./room-role"
 import { Stage } from "./stage"
 import type { PreJoinChoices, RoomTab } from "./types"
 import { useRoomChat } from "./use-room-chat"
 import { useRoomRoles } from "./use-room-roles"
+import { useStage } from "./use-stage"
 import { WebcamRail } from "./webcam-rail"
 
 interface ActiveRoomProps {
@@ -108,8 +112,58 @@ function RoomShell({
   const { localParticipant } = useLocalParticipant()
   const states = useRoomRoles({})
   const role = useRoomRole()
+  const isHost = role === "host"
   const myIdentity = localParticipant.identity
   const handRaised = states[myIdentity]?.handRaised ?? false
+
+  const { stage, setStage } = useStage(isHost)
+
+  const onShareSlides = async (file: File) => {
+    try {
+      const mime = file.type || "application/pdf"
+      const presignRes = await postMediaPresign({
+        model_type: "live_room",
+        model_id: liveId,
+        collection_name: "slides",
+        file_name: file.name,
+        mime_type: mime,
+        size: file.size,
+      })
+      const uploadUrl = presignRes.status === 201 ? presignRes.data.data?.upload_url : undefined
+      const mediaId = presignRes.status === 201 ? presignRes.data.data?.media?.id : undefined
+      if (!uploadUrl || !mediaId) throw new Error("presign failed")
+
+      const put = await fetch(uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": mime },
+      })
+      if (!put.ok) throw new Error(`upload failed: ${put.status}`)
+
+      // Get a presigned download URL so all clients can fetch the PDF
+      const dlRes = await getMediaIdDownloadUrl(mediaId)
+      const dlUrl = dlRes.status === 200 ? dlRes.data.data?.url : undefined
+      if (!dlUrl) throw new Error("download url failed")
+
+      setStage({ kind: "slides", url: dlUrl, page: 1, numPages: 0 })
+    } catch {
+      toast.error(t("liveRoom.errors.upload"))
+    }
+  }
+
+  const onStopStage = () => setStage({ kind: "none" })
+
+  const onPageChange = (page: number) => {
+    if (stage.kind === "slides") {
+      setStage({ ...stage, page })
+    }
+  }
+
+  const onLoadNumPages = (numPages: number) => {
+    if (stage.kind === "slides") {
+      setStage({ ...stage, numPages })
+    }
+  }
 
   const roleMutation = usePutLiveRoomsIdParticipantsIdentityRole()
   const muteMutation = usePostLiveRoomsIdParticipantsIdentityMute()
@@ -140,7 +194,12 @@ function RoomShell({
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <Stage />
+              <Stage
+                stage={stage}
+                isHost={isHost}
+                onPageChange={onPageChange}
+                onLoadNumPages={onLoadNumPages}
+              />
             </div>
           </div>
 
@@ -159,6 +218,10 @@ function RoomShell({
             unread={unread}
             handRaised={handRaised}
             onToggleHand={onToggleHand}
+            canShareStage={canPublish(role)}
+            stageKind={stage.kind}
+            onShareSlides={onShareSlides}
+            onStopStage={onStopStage}
           />
 
           <button

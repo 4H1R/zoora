@@ -3,6 +3,8 @@
 export type RoomEvent =
   | { type: "role_changed"; data: { identity: string; role: "host" | "presenter" | "viewer" } }
   | { type: "hand"; data: { identity: string; raised: boolean } }
+  | { type: "stage"; data: { kind: "none" | "slides"; url?: string; page?: number; numPages?: number } }
+  | { type: "request_stage"; data: Record<string, never> }
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()

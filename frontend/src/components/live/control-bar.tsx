@@ -1,4 +1,5 @@
 import { useLocalParticipant } from "@livekit/components-react"
+import { useRef } from "react"
 import {
   BarChart3,
   Hand,
@@ -9,6 +10,7 @@ import {
   MicOff,
   MonitorUp,
   MoreHorizontal,
+  Presentation,
   Users,
   Video,
   VideoOff,
@@ -32,13 +34,33 @@ interface ControlBarProps {
   unread: number
   handRaised: boolean
   onToggleHand: () => void
+  canShareStage: boolean
+  stageKind: "none" | "slides"
+  onShareSlides: (file: File) => void
+  onStopStage: () => void
 }
 
-export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, unread, handRaised, onToggleHand }: ControlBarProps) {
+export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, unread, handRaised, onToggleHand, canShareStage, stageKind, onShareSlides, onStopStage }: ControlBarProps) {
   const { t } = useTranslation()
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled, isScreenShareEnabled } = useLocalParticipant()
   const role = useRoomRole()
   const publisher = localParticipant.permissions?.canPublish ?? canPublish(role)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleSlidesClick = () => {
+    if (stageKind === "slides") {
+      onStopStage()
+    } else {
+      fileInputRef.current?.click()
+    }
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) onShareSlides(file)
+    // Reset so the same file can be re-selected later
+    e.target.value = ""
+  }
 
   // Swallow OS-permission dismissals; surface real errors via toast
   const toggle = async (fn: () => Promise<unknown>, errorKey: string) => {
@@ -110,6 +132,27 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, un
               )
             }
           />
+        )}
+
+        {/* Slides — publishers (hosts) only, desktop only */}
+        {canShareStage && (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <CtrlButton
+              icon={Presentation}
+              on
+              active={stageKind === "slides"}
+              label={stageKind === "slides" ? t("liveRoom.controls.stopSlides") : t("liveRoom.controls.shareSlides")}
+              className="hidden sm:flex"
+              onClick={handleSlidesClick}
+            />
+          </>
         )}
 
         <span className="mx-0.5 h-7 w-px bg-white/10" />
@@ -185,6 +228,16 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, un
                 >
                   <MonitorUp className="size-5 shrink-0" />
                   <span>{isScreenShareEnabled ? t("liveRoom.controls.stopShare") : t("liveRoom.controls.shareScreen")}</span>
+                </button>
+              )}
+              {canShareStage && (
+                <button
+                  type="button"
+                  onClick={handleSlidesClick}
+                  className="flex items-center gap-3 px-5 py-3.5 text-sm text-zinc-200 hover:bg-white/5"
+                >
+                  <Presentation className="size-5 shrink-0" />
+                  <span>{stageKind === "slides" ? t("liveRoom.controls.stopSlides") : t("liveRoom.controls.shareSlides")}</span>
                 </button>
               )}
               <button

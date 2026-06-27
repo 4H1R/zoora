@@ -4,8 +4,19 @@ import { Track } from "livekit-client"
 import { MonitorPlay } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-// The single content surface. Priority: screenshare > presenter camera > empty.
-export function Stage() {
+import type { StageContent } from "./use-stage"
+import { SlidesStage } from "./slides-stage"
+
+interface StageProps {
+  stage: StageContent
+  isHost: boolean
+  onPageChange: (page: number) => void
+  onLoadNumPages: (n: number) => void
+}
+
+// The single content surface.
+// Priority: slides (host-shared PDF) > screenshare > presenter camera > empty.
+export function Stage({ stage, isHost, onPageChange, onLoadNumPages }: StageProps) {
   const { t } = useTranslation()
   const tracks = useTracks(
     [
@@ -14,6 +25,20 @@ export function Stage() {
     ],
     { onlySubscribed: false }
   )
+
+  // Slides take priority over everything else
+  if (stage.kind === "slides" && stage.url) {
+    return (
+      <SlidesStage
+        url={stage.url}
+        page={stage.page ?? 1}
+        numPages={stage.numPages ?? 0}
+        isHost={isHost}
+        onPageChange={onPageChange}
+        onLoadNumPages={onLoadNumPages}
+      />
+    )
+  }
 
   const screenShare = tracks.find(
     (tr) => isTrackReference(tr) && tr.publication.source === Track.Source.ScreenShare

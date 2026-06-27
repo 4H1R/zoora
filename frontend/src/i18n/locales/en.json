@@ -2410,7 +2410,8 @@
     "errors": {
       "screenShare": "Couldn't start screen sharing. Check your browser permissions and try again.",
       "camera": "Couldn't toggle your camera.",
-      "microphone": "Couldn't toggle your microphone."
+      "microphone": "Couldn't toggle your microphone.",
+      "upload": "Upload failed"
     },
     "controls": {
       "micOn": "Turn on microphone",
@@ -2424,7 +2425,9 @@
       "polls": "Polls",
       "more": "More",
       "raiseHand": "Raise hand",
-      "lowerHand": "Lower hand"
+      "lowerHand": "Lower hand",
+      "shareSlides": "Share slides",
+      "stopSlides": "Stop slides"
     },
     "people": {
       "makePresenter": "Make presenter",
@@ -2439,7 +2442,10 @@
       "delete": "Delete message"
     },
     "stage": {
-      "empty": "Waiting for the presenter to share something"
+      "empty": "Waiting for the presenter to share something",
+      "slidesLoading": "Loading slides…",
+      "slidesError": "Couldn't load slides",
+      "pageOf": "{{page}} / {{total}}"
     },
     "polls": {
       "comingSoon": "Polls are coming soon"
