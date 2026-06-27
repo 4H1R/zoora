@@ -145,6 +145,50 @@ func (c *Client) ListParticipants(ctx context.Context, roomName string) ([]*live
 	return resp.Participants, nil
 }
 
+func (c *Client) UpdateParticipant(ctx context.Context, roomName, identity string, sources []livekit.TrackSource) error {
+	canPublish := len(sources) > 0
+	_, err := c.roomClient.UpdateParticipant(ctx, &livekit.UpdateParticipantRequest{
+		Room:     roomName,
+		Identity: identity,
+		Permission: &livekit.ParticipantPermission{
+			CanSubscribe:      true,
+			CanPublish:        canPublish,
+			CanPublishData:    true,
+			CanPublishSources: sources,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("updating participant %s in %s: %w", identity, roomName, err)
+	}
+	return nil
+}
+
+func (c *Client) MutePublishedTrack(ctx context.Context, roomName, identity, trackSID string, muted bool) error {
+	_, err := c.roomClient.MutePublishedTrack(ctx, &livekit.MuteRoomTrackRequest{
+		Room:     roomName,
+		Identity: identity,
+		TrackSid: trackSID,
+		Muted:    muted,
+	})
+	if err != nil {
+		return fmt.Errorf("muting track %s of %s: %w", trackSID, identity, err)
+	}
+	return nil
+}
+
+func (c *Client) SendData(ctx context.Context, roomName string, payload []byte, destinationIdentities []string) error {
+	_, err := c.roomClient.SendData(ctx, &livekit.SendDataRequest{
+		Room:                  roomName,
+		Data:                  payload,
+		Kind:                  livekit.DataPacket_RELIABLE,
+		DestinationIdentities: destinationIdentities,
+	})
+	if err != nil {
+		return fmt.Errorf("sending data to %s: %w", roomName, err)
+	}
+	return nil
+}
+
 func (c *Client) Host() string {
 	return c.host
 }
