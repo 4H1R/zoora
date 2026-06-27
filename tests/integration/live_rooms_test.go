@@ -21,11 +21,12 @@ import (
 )
 
 type liveRoomRepos struct {
-	rooms    domain.LiveRoomRepository
-	sessions domain.ClassSessionRepository
-	classes  domain.ClassRepository
-	users    domain.UserRepository
-	orgs     domain.OrganizationRepository
+	rooms        domain.LiveRoomRepository
+	participants domain.LiveParticipantRepository
+	sessions     domain.ClassSessionRepository
+	classes      domain.ClassRepository
+	users        domain.UserRepository
+	orgs         domain.OrganizationRepository
 }
 
 func setupLiveRoomsDB(t *testing.T) liveRoomRepos {
@@ -38,13 +39,15 @@ func setupLiveRoomsDB(t *testing.T) liveRoomRepos {
 		&domain.ClassSession{},
 		&domain.ClassMember{},
 		&domain.LiveRoom{},
+		&domain.LiveParticipant{},
 	))
 	return liveRoomRepos{
-		rooms:    livesessions.NewRoomRepository(db),
-		sessions: classes.NewSessionRepository(db),
-		classes:  classes.NewRepository(db),
-		users:    users.NewRepository(db),
-		orgs:     organizations.NewRepository(db),
+		rooms:        livesessions.NewRoomRepository(db),
+		participants: livesessions.NewParticipantRepository(db),
+		sessions:     classes.NewSessionRepository(db),
+		classes:      classes.NewRepository(db),
+		users:        users.NewRepository(db),
+		orgs:         organizations.NewRepository(db),
 	}
 }
 
@@ -121,4 +124,54 @@ func TestIntegration_LiveRoomRepo_List_OrderAndSearch(t *testing.T) {
 	assert.Equal(t, int64(1), total)
 	require.Len(t, found, 1)
 	assert.True(t, strings.Contains(strings.ToLower(found[0].Name), "algebra"))
+}
+
+// TestIntegration_LiveParticipantRole_Persistence verifies that
+// UpdateParticipantRole, SetHandRaised, and GetActiveParticipant work
+// correctly against a real Postgres database.
+func TestIntegration_LiveParticipantRole_Persistence(t *testing.T) {
+	r := setupLiveRoomsDB(t)
+	ctx := context.Background()
+
+	// Seed prerequisite entities.
+	org := seedOrg(t, r.orgs, "Acme")
+	teacher := seedTeacher(t, r.users, org.ID, "teacher-role-test")
+	c := &domain.Class{OrganizationID: org.ID, UserID: teacher.ID, Name: "Role Test Class"}
+	require.NoError(t, r.classes.Create(ctx, c))
+	sess := &domain.ClassSession{ClassID: c.ID, Name: "Role Test Session", StartTime: time.Now()}
+	require.NoError(t, r.sessions.Create(ctx, sess))
+	room := seedLiveRoom(t, r, sess.ID, "Role Test Room", time.Now().Add(time.Hour))
+
+	// Insert a participant directly via the participant repository.
+	identity := teacher.ID.String()
+	p := &domain.LiveParticipant{
+		LiveRoomID: room.ID,
+		UserID:     teacher.ID,
+		Identity:   identity,
+		JoinedAt:   time.Now(),
+		Role:       domain.ParticipantRoleViewer,
+	}
+	require.NoError(t, r.participants.Create(ctx, p))
+
+	// 1. UpdateParticipantRole: viewer -> presenter.
+	require.NoError(t, r.participants.UpdateParticipantRole(ctx, room.ID, identity, domain.ParticipantRolePresenter))
+	got, err := r.participants.GetActiveParticipant(ctx, room.ID, identity)
+	require.NoError(t, err)
+	assert.Equal(t, domain.ParticipantRolePresenter, got.Role)
+
+	// 2. SetHandRaised true: HandRaisedAt must be populated.
+	require.NoError(t, r.participants.SetHandRaised(ctx, room.ID, identity, true))
+	got, err = r.participants.GetActiveParticipant(ctx, room.ID, identity)
+	require.NoError(t, err)
+	assert.NotNil(t, got.HandRaisedAt, "HandRaisedAt must be set after raising hand")
+
+	// 3. SetHandRaised false: HandRaisedAt must be cleared.
+	require.NoError(t, r.participants.SetHandRaised(ctx, room.ID, identity, false))
+	got, err = r.participants.GetActiveParticipant(ctx, room.ID, identity)
+	require.NoError(t, err)
+	assert.Nil(t, got.HandRaisedAt, "HandRaisedAt must be nil after lowering hand")
+
+	// 4. GetActiveParticipant for unknown identity returns ErrParticipantNotFound.
+	_, err = r.participants.GetActiveParticipant(ctx, room.ID, "no-such-identity")
+	assert.ErrorIs(t, err, domain.ErrParticipantNotFound)
 }
