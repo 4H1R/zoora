@@ -2,6 +2,7 @@ package livesessions_test
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"testing"
 	"time"
@@ -131,6 +132,23 @@ func (m *mockRecordingRepo) ListByRoom(ctx context.Context, roomID uuid.UUID, q 
 	a := m.Called(ctx, roomID, q)
 	recs, _ := a.Get(0).([]domain.LiveRecording)
 	return recs, a.Get(1).(int64), a.Error(2)
+}
+
+type mockWhiteboardRepo struct{ mock.Mock }
+
+func (m *mockWhiteboardRepo) Get(ctx context.Context, roomID uuid.UUID) (*domain.LiveWhiteboard, error) {
+	a := m.Called(ctx, roomID)
+	if a.Get(0) == nil {
+		return nil, a.Error(1)
+	}
+	return a.Get(0).(*domain.LiveWhiteboard), a.Error(1)
+}
+func (m *mockWhiteboardRepo) Upsert(ctx context.Context, roomID uuid.UUID, snapshot json.RawMessage) (*domain.LiveWhiteboard, error) {
+	a := m.Called(ctx, roomID, snapshot)
+	if a.Get(0) == nil {
+		return nil, a.Error(1)
+	}
+	return a.Get(0).(*domain.LiveWhiteboard), a.Error(1)
 }
 
 type mockClassSessionRepo struct{ mock.Mock }
@@ -336,7 +354,7 @@ func (noopTx) RunInTx(ctx context.Context, fn func(context.Context) error) error
 
 func newTestService(t *testing.T) (
 	domain.LiveSessionService,
-	*mockRoomRepo, *mockParticipantRepo, *mockRecordingRepo,
+	*mockRoomRepo, *mockParticipantRepo, *mockRecordingRepo, *mockWhiteboardRepo,
 	*mockClassSessionRepo, *mockClassRepo, *mockMemberRepo,
 	*mockChatService,
 ) {
@@ -344,20 +362,21 @@ func newTestService(t *testing.T) (
 	roomRepo := &mockRoomRepo{}
 	partRepo := &mockParticipantRepo{}
 	recRepo := &mockRecordingRepo{}
+	wbRepo := &mockWhiteboardRepo{}
 	sessRepo := &mockClassSessionRepo{}
 	classRepo := &mockClassRepo{}
 	memberRepo := &mockMemberRepo{}
 	chatSvc := &mockChatService{}
 
 	svc := livesessions.NewService(
-		roomRepo, partRepo, recRepo,
+		roomRepo, partRepo, recRepo, wbRepo,
 		sessRepo, classRepo, memberRepo,
 		chatSvc, noopTx{},
 		nil, // livekit client
 		nil, // queue client
 		slog.Default(),
 	)
-	return svc, roomRepo, partRepo, recRepo, sessRepo, classRepo, memberRepo, chatSvc
+	return svc, roomRepo, partRepo, recRepo, wbRepo, sessRepo, classRepo, memberRepo, chatSvc
 }
 
 var (
@@ -410,13 +429,13 @@ func testRoom() *domain.LiveRoom {
 }
 
 func TestCreateRoom_NoCaller_Forbidden(t *testing.T) {
-	svc, _, _, _, _, _, _, _ := newTestService(t)
+	svc, _, _, _, _, _, _, _, _ := newTestService(t)
 	_, err := svc.CreateRoom(context.Background(), domain.CreateLiveRoomDTO{ClassSessionID: testSessionID})
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 
 func TestCreateRoom_Student_Forbidden(t *testing.T) {
-	svc, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	svc, _, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
 
@@ -425,7 +444,7 @@ func TestCreateRoom_Student_Forbidden(t *testing.T) {
 }
 
 func TestCreateRoom_Teacher_Success(t *testing.T) {
-	svc, roomRepo, _, _, sessRepo, classRepo, _, chatSvc := newTestService(t)
+	svc, roomRepo, _, _, _, sessRepo, classRepo, _, chatSvc := newTestService(t)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
 	roomRepo.On("Create", mock.Anything, mock.AnythingOfType("*domain.LiveRoom")).Return(nil)
@@ -444,13 +463,13 @@ func TestCreateRoom_Teacher_Success(t *testing.T) {
 }
 
 func TestGetRoom_NoCaller_Forbidden(t *testing.T) {
-	svc, _, _, _, _, _, _, _ := newTestService(t)
+	svc, _, _, _, _, _, _, _, _ := newTestService(t)
 	_, err := svc.GetRoom(context.Background(), testRoomID)
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 
 func TestGetRoom_Student_NotMember_Forbidden(t *testing.T) {
-	svc, roomRepo, _, _, sessRepo, classRepo, memberRepo, _ := newTestService(t)
+	svc, roomRepo, _, _, _, sessRepo, classRepo, memberRepo, _ := newTestService(t)
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
@@ -461,7 +480,7 @@ func TestGetRoom_Student_NotMember_Forbidden(t *testing.T) {
 }
 
 func TestGetRoom_Student_Member_Success(t *testing.T) {
-	svc, roomRepo, _, _, sessRepo, classRepo, memberRepo, _ := newTestService(t)
+	svc, roomRepo, _, _, _, sessRepo, classRepo, memberRepo, _ := newTestService(t)
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
@@ -473,7 +492,7 @@ func TestGetRoom_Student_Member_Success(t *testing.T) {
 }
 
 func TestGetRoom_Admin_Success(t *testing.T) {
-	svc, roomRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	svc, roomRepo, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
@@ -484,7 +503,7 @@ func TestGetRoom_Admin_Success(t *testing.T) {
 }
 
 func TestEndRoom_NotActive_ValidationError(t *testing.T) {
-	svc, roomRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	svc, roomRepo, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	room := testRoom()
 	room.Status = domain.LiveRoomStatusCreated
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(room, nil)
@@ -496,7 +515,7 @@ func TestEndRoom_NotActive_ValidationError(t *testing.T) {
 }
 
 func TestHeartbeat_Student_Forbidden(t *testing.T) {
-	svc, roomRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	svc, roomRepo, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
@@ -506,7 +525,7 @@ func TestHeartbeat_Student_Forbidden(t *testing.T) {
 }
 
 func TestHeartbeat_Teacher_Success(t *testing.T) {
-	svc, roomRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	svc, roomRepo, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	room := testRoom()
 	room.Status = domain.LiveRoomStatusActive
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(room, nil)
@@ -520,13 +539,13 @@ func TestHeartbeat_Teacher_Success(t *testing.T) {
 }
 
 func TestList_NoCaller_Forbidden(t *testing.T) {
-	svc, _, _, _, _, _, _, _ := newTestService(t)
+	svc, _, _, _, _, _, _, _, _ := newTestService(t)
 	_, _, err := svc.List(context.Background(), domain.ListLiveRoomsQuery{})
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 
 func TestList_Admin_All(t *testing.T) {
-	svc, roomRepo, _, _, _, _, _, _ := newTestService(t)
+	svc, roomRepo, _, _, _, _, _, _, _ := newTestService(t)
 	roomRepo.On("List", mock.Anything, domain.LiveRoomListScope{All: true}, mock.Anything).
 		Return([]domain.LiveRoom{{ID: testRoomID}}, int64(1), nil)
 
@@ -537,13 +556,13 @@ func TestList_Admin_All(t *testing.T) {
 }
 
 func TestAdminEndRoom_NotAdmin_Forbidden(t *testing.T) {
-	svc, _, _, _, _, _, _, _ := newTestService(t)
+	svc, _, _, _, _, _, _, _, _ := newTestService(t)
 	_, err := svc.AdminEndRoom(studentCtx(), testRoomID)
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 
 func TestAdminHardDelete_Success(t *testing.T) {
-	svc, roomRepo, _, _, _, _, _, _ := newTestService(t)
+	svc, roomRepo, _, _, _, _, _, _, _ := newTestService(t)
 	roomRepo.On("HardDelete", mock.Anything, testRoomID).Return(nil)
 
 	err := svc.AdminHardDelete(adminCtx(), testRoomID)
@@ -552,7 +571,7 @@ func TestAdminHardDelete_Success(t *testing.T) {
 }
 
 func TestCreateRoom_CreatesChat(t *testing.T) {
-	svc, roomRepo, _, _, sessRepo, classRepo, _, chatSvc := newTestService(t)
+	svc, roomRepo, _, _, _, sessRepo, classRepo, _, chatSvc := newTestService(t)
 	session := testSession()
 	session.Name = "Algebra 101"
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(session, nil)
@@ -573,7 +592,7 @@ func TestCreateRoom_CreatesChat(t *testing.T) {
 }
 
 func TestCreateRoom_ChatFailure_RollsBack(t *testing.T) {
-	svc, roomRepo, _, _, sessRepo, classRepo, _, chatSvc := newTestService(t)
+	svc, roomRepo, _, _, _, sessRepo, classRepo, _, chatSvc := newTestService(t)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
 	roomRepo.On("Create", mock.Anything, mock.AnythingOfType("*domain.LiveRoom")).Return(nil)
@@ -589,7 +608,7 @@ func TestCreateRoom_ChatFailure_RollsBack(t *testing.T) {
 }
 
 func TestCreateRoom_BlankName_Validation(t *testing.T) {
-	svc, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	svc, _, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
 
@@ -602,7 +621,7 @@ func TestCreateRoom_BlankName_Validation(t *testing.T) {
 }
 
 func TestEndRoom_ArchivesChat(t *testing.T) {
-	svc, roomRepo, partRepo, recRepo, sessRepo, classRepo, _, chatSvc := newTestService(t)
+	svc, roomRepo, partRepo, recRepo, _, sessRepo, classRepo, _, chatSvc := newTestService(t)
 	room := testRoom()
 	room.Status = domain.LiveRoomStatusActive
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(room, nil)
@@ -621,7 +640,7 @@ func TestEndRoom_ArchivesChat(t *testing.T) {
 }
 
 func TestLeaveRoom_Success(t *testing.T) {
-	svc, _, partRepo, _, _, _, _, _ := newTestService(t)
+	svc, _, partRepo, _, _, _, _, _, _ := newTestService(t)
 	joined := time.Now().Add(-30 * time.Minute)
 	p := &domain.LiveParticipant{
 		ID:         uuid.New(),
@@ -645,7 +664,7 @@ func manageAnyCtx() context.Context {
 }
 
 func TestManageAny_NonOwner_CanManageRoom(t *testing.T) {
-	svc, roomRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	svc, roomRepo, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	room := testRoom()
 	room.Status = domain.LiveRoomStatusActive
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(room, nil)
@@ -662,7 +681,7 @@ func TestManage_NonOwner_Forbidden(t *testing.T) {
 		UserID:      uuid.New(),
 		Permissions: []string{"live_sessions:manage"},
 	})
-	svc, roomRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	svc, roomRepo, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
@@ -672,7 +691,7 @@ func TestManage_NonOwner_Forbidden(t *testing.T) {
 }
 
 func TestViewAny_ListReturnsAll_ScopedToOrg(t *testing.T) {
-	svc, roomRepo, _, _, _, _, _, _ := newTestService(t)
+	svc, roomRepo, _, _, _, _, _, _, _ := newTestService(t)
 	orgID := uuid.New()
 	ctx := domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      uuid.New(),
@@ -692,7 +711,7 @@ func TestViewAny_ListReturnsAll_ScopedToOrg(t *testing.T) {
 }
 
 func TestAdmin_ListReturnsAll_NoOrgFilter(t *testing.T) {
-	svc, roomRepo, _, _, _, _, _, _ := newTestService(t)
+	svc, roomRepo, _, _, _, _, _, _, _ := newTestService(t)
 	// Admins are cross-tenant by design: no OrganizationID on the scope.
 	roomRepo.On("List", mock.Anything, domain.LiveRoomListScope{All: true}, mock.Anything).
 		Return([]domain.LiveRoom{{ID: testRoomID}}, int64(1), nil)
@@ -708,7 +727,7 @@ func TestViewAny_GetRoom_NonMember_Success(t *testing.T) {
 		UserID:      uuid.New(),
 		Permissions: []string{"live_sessions:view_any"},
 	})
-	svc, roomRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	svc, roomRepo, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
@@ -719,7 +738,7 @@ func TestViewAny_GetRoom_NonMember_Success(t *testing.T) {
 }
 
 func TestUpdateAny_NonOwner_CanUpdateConfig(t *testing.T) {
-	svc, roomRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	svc, roomRepo, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	room := testRoom()
 	room.Status = domain.LiveRoomStatusActive
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(room, nil)
@@ -738,7 +757,7 @@ func TestUpdateAny_NonOwner_CanUpdateConfig(t *testing.T) {
 }
 
 func TestUpdate_NonOwner_Forbidden(t *testing.T) {
-	svc, roomRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	svc, roomRepo, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
@@ -757,19 +776,19 @@ func TestUpdate_NonOwner_Forbidden(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestSetParticipantRole_InvalidRole_Error(t *testing.T) {
-	svc, _, _, _, _, _, _, _ := newTestService(t)
+	svc, _, _, _, _, _, _, _, _ := newTestService(t)
 	_, err := svc.SetParticipantRole(teacherCtx(), testRoomID, "some-identity", domain.SetParticipantRoleDTO{Role: "invalid"})
 	assert.ErrorIs(t, err, domain.ErrInvalidParticipantRole)
 }
 
 func TestSetParticipantRole_RoleHost_Error(t *testing.T) {
-	svc, _, _, _, _, _, _, _ := newTestService(t)
+	svc, _, _, _, _, _, _, _, _ := newTestService(t)
 	_, err := svc.SetParticipantRole(teacherCtx(), testRoomID, "some-identity", domain.SetParticipantRoleDTO{Role: domain.ParticipantRoleHost})
 	assert.ErrorIs(t, err, domain.ErrCannotChangeHostRole)
 }
 
 func TestSetParticipantRole_Student_Forbidden(t *testing.T) {
-	svc, roomRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	svc, roomRepo, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
@@ -779,7 +798,7 @@ func TestSetParticipantRole_Student_Forbidden(t *testing.T) {
 }
 
 func TestSetParticipantRole_TargetIsHost_Error(t *testing.T) {
-	svc, roomRepo, partRepo, _, sessRepo, classRepo, _, _ := newTestService(t)
+	svc, roomRepo, partRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
@@ -798,7 +817,7 @@ func TestSetParticipantRole_TargetIsHost_Error(t *testing.T) {
 }
 
 func TestSetParticipantRole_PromoteToPresenter_Success(t *testing.T) {
-	svc, roomRepo, partRepo, _, sessRepo, classRepo, _, _ := newTestService(t)
+	svc, roomRepo, partRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
@@ -820,7 +839,7 @@ func TestSetParticipantRole_PromoteToPresenter_Success(t *testing.T) {
 }
 
 func TestSetParticipantRole_DemoteToViewer_Success(t *testing.T) {
-	svc, roomRepo, partRepo, _, sessRepo, classRepo, _, _ := newTestService(t)
+	svc, roomRepo, partRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
@@ -846,7 +865,7 @@ func TestSetParticipantRole_DemoteToViewer_Success(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestMuteParticipant_Student_Forbidden(t *testing.T) {
-	svc, roomRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	svc, roomRepo, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
@@ -857,7 +876,7 @@ func TestMuteParticipant_Student_Forbidden(t *testing.T) {
 
 func TestMuteParticipant_Teacher_NilLivekit_NoError(t *testing.T) {
 	// livekit is nil in test service — MuteParticipant should succeed (no-op) when livekit is nil
-	svc, roomRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	svc, roomRepo, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
@@ -871,13 +890,13 @@ func TestMuteParticipant_Teacher_NilLivekit_NoError(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestSetHand_NoCaller_Forbidden(t *testing.T) {
-	svc, _, _, _, _, _, _, _ := newTestService(t)
+	svc, _, _, _, _, _, _, _, _ := newTestService(t)
 	_, err := svc.SetHand(context.Background(), testRoomID, domain.SetHandDTO{Raised: true})
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 
 func TestSetHand_Student_SetsHandAndReturnsParticipant(t *testing.T) {
-	svc, roomRepo, partRepo, _, sessRepo, classRepo, _, _ := newTestService(t)
+	svc, roomRepo, partRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
@@ -901,4 +920,76 @@ func TestSetHand_Student_SetsHandAndReturnsParticipant(t *testing.T) {
 	assert.Equal(t, expected.ID, result.ID)
 	assert.NotNil(t, result.HandRaisedAt)
 	partRepo.AssertExpectations(t)
+}
+
+// ---------------------------------------------------------------------------
+// SaveWhiteboard / GetWhiteboard tests
+// ---------------------------------------------------------------------------
+
+func TestSaveWhiteboard_NoCaller_Forbidden(t *testing.T) {
+	svc, _, _, _, _, _, _, _, _ := newTestService(t)
+	_, err := svc.SaveWhiteboard(context.Background(), testRoomID, domain.SaveWhiteboardDTO{
+		Snapshot: json.RawMessage(`{"shapes":[]}`),
+	})
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+func TestSaveWhiteboard_Viewer_Forbidden(t *testing.T) {
+	svc, roomRepo, partRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
+	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
+	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
+	partRepo.On("GetActiveParticipant", mock.Anything, testRoomID, testStudentID.String()).
+		Return(&domain.LiveParticipant{Role: domain.ParticipantRoleViewer}, nil)
+
+	_, err := svc.SaveWhiteboard(studentCtx(), testRoomID, domain.SaveWhiteboardDTO{
+		Snapshot: json.RawMessage(`{"shapes":[]}`),
+	})
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+func TestSaveWhiteboard_Host_Success(t *testing.T) {
+	svc, roomRepo, _, _, wbRepo, sessRepo, classRepo, _, _ := newTestService(t)
+	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
+	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
+	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
+	snapshot := json.RawMessage(`{"shapes":[{"id":"s1"}]}`)
+	wbRepo.On("Upsert", mock.Anything, testRoomID, snapshot).
+		Return(&domain.LiveWhiteboard{LiveRoomID: testRoomID, Snapshot: snapshot}, nil)
+
+	wb, err := svc.SaveWhiteboard(teacherCtx(), testRoomID, domain.SaveWhiteboardDTO{Snapshot: snapshot})
+	assert.NoError(t, err)
+	assert.Equal(t, testRoomID, wb.LiveRoomID)
+	wbRepo.AssertExpectations(t)
+}
+
+func TestSaveWhiteboard_Presenter_Success(t *testing.T) {
+	svc, roomRepo, partRepo, _, wbRepo, sessRepo, classRepo, _, _ := newTestService(t)
+	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
+	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
+	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
+	partRepo.On("GetActiveParticipant", mock.Anything, testRoomID, testStudentID.String()).
+		Return(&domain.LiveParticipant{Role: domain.ParticipantRolePresenter}, nil)
+	snapshot := json.RawMessage(`{"shapes":[{"id":"s2"}]}`)
+	wbRepo.On("Upsert", mock.Anything, testRoomID, snapshot).
+		Return(&domain.LiveWhiteboard{LiveRoomID: testRoomID, Snapshot: snapshot}, nil)
+
+	wb, err := svc.SaveWhiteboard(studentCtx(), testRoomID, domain.SaveWhiteboardDTO{Snapshot: snapshot})
+	assert.NoError(t, err)
+	assert.Equal(t, testRoomID, wb.LiveRoomID)
+	wbRepo.AssertExpectations(t)
+}
+
+func TestGetWhiteboard_NoRecord_ReturnsEmpty(t *testing.T) {
+	svc, roomRepo, _, _, wbRepo, sessRepo, classRepo, memberRepo, _ := newTestService(t)
+	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
+	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
+	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
+	memberRepo.On("Exists", mock.Anything, testClassID, testStudentID).Return(true, nil)
+	wbRepo.On("Get", mock.Anything, testRoomID).Return(nil, domain.ErrWhiteboardNotFound)
+
+	wb, err := svc.GetWhiteboard(studentCtx(), testRoomID)
+	assert.NoError(t, err)
+	assert.Equal(t, testRoomID, wb.LiveRoomID)
+	assert.Equal(t, json.RawMessage("{}"), wb.Snapshot)
 }

@@ -20,6 +20,7 @@ var (
 	ErrInvalidParticipantRole = errors.New("invalid participant role")
 	ErrParticipantNotFound    = errors.New("participant not found")
 	ErrCannotChangeHostRole   = errors.New("cannot change the host role")
+	ErrWhiteboardNotFound     = errors.New("whiteboard not found")
 )
 
 // ValidationError carries per-field validation failures.
@@ -72,6 +73,8 @@ func MapError(err error) (int, string) {
 		return http.StatusUnprocessableEntity, "INVALID_PARTICIPANT_ROLE"
 	case errors.Is(err, ErrCannotChangeHostRole):
 		return http.StatusConflict, "CANNOT_CHANGE_HOST_ROLE"
+	case errors.Is(err, ErrWhiteboardNotFound):
+		return http.StatusNotFound, "WHITEBOARD_NOT_FOUND"
 	case errors.Is(err, ErrValidation):
 		return http.StatusBadRequest, "VALIDATION_ERROR"
 	default:

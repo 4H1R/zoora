@@ -3,6 +3,7 @@ package livesessions
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -36,6 +37,7 @@ type service struct {
 	rooms        domain.LiveRoomRepository
 	participants domain.LiveParticipantRepository
 	recordings   domain.LiveRecordingRepository
+	whiteboards  domain.LiveWhiteboardRepository
 	sessions     domain.ClassSessionRepository
 	classes      domain.ClassRepository
 	members      domain.ClassMemberRepository
@@ -50,6 +52,7 @@ func NewService(
 	rooms domain.LiveRoomRepository,
 	participants domain.LiveParticipantRepository,
 	recordings domain.LiveRecordingRepository,
+	whiteboards domain.LiveWhiteboardRepository,
 	sessions domain.ClassSessionRepository,
 	classes domain.ClassRepository,
 	members domain.ClassMemberRepository,
@@ -70,6 +73,7 @@ func NewService(
 		rooms:        rooms,
 		participants: participants,
 		recordings:   recordings,
+		whiteboards:  whiteboards,
 		sessions:     sessions,
 		classes:      classes,
 		members:      members,
@@ -777,4 +781,67 @@ func (s *service) SetHand(ctx context.Context, roomID uuid.UUID, dto domain.SetH
 	})
 
 	return participant, nil
+}
+
+// GetWhiteboard returns the current tldraw snapshot for the room.
+// Any participant (viewer or above) may read it; returns an empty board if none has been saved yet.
+func (s *service) GetWhiteboard(ctx context.Context, roomID uuid.UUID) (*domain.LiveWhiteboard, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	_, _, class, err := s.loadRoomWithClass(ctx, roomID)
+	if err != nil {
+		return nil, err
+	}
+	canView, err := s.canViewRoom(ctx, caller, class)
+	if err != nil {
+		return nil, err
+	}
+	if !canView {
+		return nil, domain.ErrForbidden
+	}
+
+	wb, err := s.whiteboards.Get(ctx, roomID)
+	if err != nil {
+		if errors.Is(err, domain.ErrWhiteboardNotFound) {
+			return &domain.LiveWhiteboard{
+				LiveRoomID: roomID,
+				Snapshot:   json.RawMessage("{}"),
+			}, nil
+		}
+		return nil, fmt.Errorf("livesessions.service.GetWhiteboard: %w", err)
+	}
+	return wb, nil
+}
+
+// SaveWhiteboard persists a tldraw snapshot. Only hosts and presenters may write.
+func (s *service) SaveWhiteboard(ctx context.Context, roomID uuid.UUID, dto domain.SaveWhiteboardDTO) (*domain.LiveWhiteboard, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	_, _, class, err := s.loadRoomWithClass(ctx, roomID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Hosts (canManageRoom) may always draw. Presenters may also draw.
+	// Pure viewers are forbidden.
+	if !s.canManageRoom(caller, class) {
+		participant, err := s.participants.GetActiveParticipant(ctx, roomID, caller.UserID.String())
+		if err != nil {
+			// Not an active participant → forbidden.
+			return nil, domain.ErrForbidden
+		}
+		if participant.Role != domain.ParticipantRolePresenter {
+			return nil, domain.ErrForbidden
+		}
+	}
+
+	wb, err := s.whiteboards.Upsert(ctx, roomID, dto.Snapshot)
+	if err != nil {
+		return nil, fmt.Errorf("livesessions.service.SaveWhiteboard: %w", err)
+	}
+	return wb, nil
 }

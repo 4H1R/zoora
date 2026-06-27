@@ -2,12 +2,14 @@ package livesessions
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/platform/database"
@@ -406,4 +408,49 @@ func (r *recordingRepository) ListByRoom(ctx context.Context, roomID uuid.UUID, 
 		return nil, 0, fmt.Errorf("livesessions.recordingRepository.ListByRoom: %w", err)
 	}
 	return recs, total, nil
+}
+
+// whiteboardRepository implements domain.LiveWhiteboardRepository.
+type whiteboardRepository struct {
+	db *gorm.DB
+}
+
+func NewWhiteboardRepository(db *gorm.DB) domain.LiveWhiteboardRepository {
+	return &whiteboardRepository{db: db}
+}
+
+// Get returns the whiteboard for the given room. Returns domain.ErrWhiteboardNotFound
+// when no row exists yet (the caller may decide to return an empty board instead).
+func (r *whiteboardRepository) Get(ctx context.Context, roomID uuid.UUID) (*domain.LiveWhiteboard, error) {
+	var wb domain.LiveWhiteboard
+	err := database.DB(ctx, r.db).Model(&domain.LiveWhiteboard{}).
+		Where("live_room_id = ?", roomID).
+		First(&wb).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrWhiteboardNotFound
+		}
+		return nil, fmt.Errorf("livesessions.whiteboardRepository.Get: %w", err)
+	}
+	return &wb, nil
+}
+
+// Upsert inserts or updates the whiteboard snapshot for the given room.
+func (r *whiteboardRepository) Upsert(ctx context.Context, roomID uuid.UUID, snapshot json.RawMessage) (*domain.LiveWhiteboard, error) {
+	wb := domain.LiveWhiteboard{
+		LiveRoomID: roomID,
+		Snapshot:   snapshot,
+	}
+	result := database.DB(ctx, r.db).
+		Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "live_room_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"snapshot", "updated_at"}),
+		}).
+		Create(&wb)
+	if result.Error != nil {
+		return nil, fmt.Errorf("livesessions.whiteboardRepository.Upsert: %w", result.Error)
+	}
+
+	// Re-fetch to get the persisted row (created_at / updated_at from DB).
+	return r.Get(ctx, roomID)
 }

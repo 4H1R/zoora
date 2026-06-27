@@ -120,6 +120,7 @@ func main() {
 	liveRoomRepo := livesessions.NewRoomRepository(db)
 	liveParticipantRepo := livesessions.NewParticipantRepository(db)
 	liveRecordingRepo := livesessions.NewRecordingRepository(db)
+	liveWhiteboardRepo := livesessions.NewWhiteboardRepository(db)
 	offlineRoomRepo := offlines.NewRoomRepository(db)
 	offlineViewRepo := offlines.NewViewRepository(db)
 	practiceRoomRepo := practices.NewRoomRepository(db)
@@ -160,7 +161,7 @@ func main() {
 	livekitClient := lk.NewClient(cfg, log)
 	chatService := chat.NewService(chatRepo, chatMemberRepo, chatMessageRepo, chatReactionRepo, transactor, log)
 	liveSessionService := livesessions.NewService(
-		liveRoomRepo, liveParticipantRepo, liveRecordingRepo,
+		liveRoomRepo, liveParticipantRepo, liveRecordingRepo, liveWhiteboardRepo,
 		classSessionRepo, classRepo, classMemberRepo,
 		chatService, transactor,
 		livekitClient, queueClient, log,

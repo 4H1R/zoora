@@ -64,6 +64,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		authed.POST("/live-rooms/:id/recordings", perm(domain.PermLiveSessionsManage), idParam, h.StartRecording)
 		authed.DELETE("/live-rooms/:id/recordings/:recordingId", perm(domain.PermLiveSessionsManage), idParam, recordingIDParam, h.StopRecording)
 		authed.GET("/live-rooms/:id/recordings", perm(domain.PermLiveSessionsView), idParam, h.ListRecordings)
+		authed.GET("/live-rooms/:id/whiteboard", perm(domain.PermLiveSessionsJoin), idParam, h.GetWhiteboard)
+		authed.PUT("/live-rooms/:id/whiteboard", perm(domain.PermLiveSessionsJoin), idParam, h.SaveWhiteboard)
 	}
 }
 
@@ -474,4 +476,54 @@ func (h *Handler) ListRecordings(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(recs, total, q.ListParams))
+}
+
+// GetWhiteboard returns the current tldraw snapshot for a live room.
+// @Summary Get whiteboard snapshot
+// @Description Returns the persisted tldraw snapshot. Any room participant (viewer or above) may read it. Returns an empty board ({}) if no snapshot has been saved yet.
+// @Tags LiveSessions
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "LiveRoom UUID"
+// @Success 200 {object} domain.Response{data=domain.LiveWhiteboard}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /live-rooms/{id}/whiteboard [get]
+func (h *Handler) GetWhiteboard(c *gin.Context) {
+	wb, err := h.svc.GetWhiteboard(c.Request.Context(), httpx.UUIDParam(c, "id"))
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, wb)
+}
+
+// SaveWhiteboard persists a tldraw snapshot for a live room.
+// @Summary Save whiteboard snapshot
+// @Description Upserts the tldraw snapshot. Only hosts and presenters may write.
+// @Tags LiveSessions
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "LiveRoom UUID"
+// @Param body body domain.SaveWhiteboardDTO true "Snapshot data"
+// @Success 200 {object} domain.Response{data=domain.LiveWhiteboard}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /live-rooms/{id}/whiteboard [put]
+func (h *Handler) SaveWhiteboard(c *gin.Context) {
+	var dto domain.SaveWhiteboardDTO
+	if err := httpx.Bind(c, &dto); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	wb, err := h.svc.SaveWhiteboard(c.Request.Context(), httpx.UUIDParam(c, "id"), dto)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, wb)
 }

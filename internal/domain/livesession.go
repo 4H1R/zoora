@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -215,6 +216,27 @@ type LiveRecordingRepository interface {
 	ListByRoom(ctx context.Context, roomID uuid.UUID, q ListLiveRecordingsQuery) ([]LiveRecording, int64, error)
 }
 
+// LiveWhiteboard persists the tldraw snapshot for a live room so that
+// late-joiners and refreshers can load the current board state.
+type LiveWhiteboard struct {
+	ID         uuid.UUID       `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	LiveRoomID uuid.UUID       `gorm:"type:uuid;not null;uniqueIndex" json:"live_room_id"`
+	Snapshot   json.RawMessage `gorm:"type:jsonb;not null;default:'{}'" json:"snapshot"`
+	UpdatedAt  time.Time       `json:"updated_at"`
+	CreatedAt  time.Time       `json:"created_at"`
+}
+
+// SaveWhiteboardDTO is the request body for PUT /live-rooms/:id/whiteboard.
+type SaveWhiteboardDTO struct {
+	Snapshot json.RawMessage `json:"snapshot" binding:"required"`
+}
+
+// LiveWhiteboardRepository persists whiteboard snapshots keyed by live_room_id.
+type LiveWhiteboardRepository interface {
+	Get(ctx context.Context, roomID uuid.UUID) (*LiveWhiteboard, error)
+	Upsert(ctx context.Context, roomID uuid.UUID, snapshot json.RawMessage) (*LiveWhiteboard, error)
+}
+
 type LiveSessionService interface {
 	CreateRoom(ctx context.Context, dto CreateLiveRoomDTO) (*LiveRoom, error)
 	GetRoom(ctx context.Context, id uuid.UUID) (*LiveRoom, error)
@@ -238,6 +260,12 @@ type LiveSessionService interface {
 	SetParticipantRole(ctx context.Context, roomID uuid.UUID, identity string, dto SetParticipantRoleDTO) (*LiveParticipant, error)
 	MuteParticipant(ctx context.Context, roomID uuid.UUID, identity string, dto MuteParticipantDTO) error
 	SetHand(ctx context.Context, roomID uuid.UUID, dto SetHandDTO) (*LiveParticipant, error)
+
+	// GetWhiteboard returns the current snapshot for the room. Any participant
+	// (viewer or above) may read it. Returns an empty board if none saved yet.
+	GetWhiteboard(ctx context.Context, roomID uuid.UUID) (*LiveWhiteboard, error)
+	// SaveWhiteboard persists a snapshot. Only hosts and presenters may write.
+	SaveWhiteboard(ctx context.Context, roomID uuid.UUID, dto SaveWhiteboardDTO) (*LiveWhiteboard, error)
 
 	AdminList(ctx context.Context, q AdminListLiveRoomsQuery) ([]LiveRoom, int64, error)
 	AdminEndRoom(ctx context.Context, roomID uuid.UUID) (*LiveRoom, error)

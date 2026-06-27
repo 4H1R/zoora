@@ -113,6 +113,16 @@ func (m *mockLiveSessionSvc) SetHand(ctx context.Context, roomID uuid.UUID, dto 
 	p, _ := a.Get(0).(*domain.LiveParticipant)
 	return p, a.Error(1)
 }
+func (m *mockLiveSessionSvc) GetWhiteboard(ctx context.Context, roomID uuid.UUID) (*domain.LiveWhiteboard, error) {
+	a := m.Called(ctx, roomID)
+	wb, _ := a.Get(0).(*domain.LiveWhiteboard)
+	return wb, a.Error(1)
+}
+func (m *mockLiveSessionSvc) SaveWhiteboard(ctx context.Context, roomID uuid.UUID, dto domain.SaveWhiteboardDTO) (*domain.LiveWhiteboard, error) {
+	a := m.Called(ctx, roomID, dto)
+	wb, _ := a.Get(0).(*domain.LiveWhiteboard)
+	return wb, a.Error(1)
+}
 
 func newLiveRouter(t *testing.T) (*gin.Engine, *mockLiveSessionSvc) {
 	t.Helper()
