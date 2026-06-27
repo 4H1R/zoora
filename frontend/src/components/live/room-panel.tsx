@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { cn } from "@/lib/utils"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 import { ChatPanel } from "./panels/chat-panel"
 import { PeoplePanel } from "./panels/people-panel"
@@ -67,39 +67,37 @@ function TabsInner({
 
 export function RoomPanel({ tab, setTab, open, onClose, chat, unread }: RoomPanelProps) {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   if (!open) return null
 
-  return (
-    <>
-      {/* Desktop: side dock — hidden on mobile */}
-      <aside className="hidden h-full w-80 shrink-0 flex-col border-s border-white/10 bg-zinc-900/70 backdrop-blur-xl md:flex">
-        <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
-          <span className="text-sm font-medium text-zinc-200">{t("liveRoom.panel.title")}</span>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t("common.close")}
-            className="flex size-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-white/5 hover:text-zinc-100"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-        <TabsInner tab={tab} setTab={setTab} chat={chat} unread={unread} />
-      </aside>
-
-      {/* Mobile: bottom Sheet — hidden on desktop */}
+  if (isMobile) {
+    return (
       <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
         <SheetContent
           side="bottom"
-          className={cn(
-            "flex h-[70dvh] flex-col gap-0 bg-zinc-900 p-0 text-zinc-100 md:hidden",
-          )}
-          showCloseButton={false}
+          className="flex h-[70dvh] flex-col gap-0 bg-zinc-900 p-0 text-zinc-100"
         >
           <SheetTitle className="sr-only">{t("liveRoom.panel.title")}</SheetTitle>
           <TabsInner tab={tab} setTab={setTab} chat={chat} unread={unread} />
         </SheetContent>
       </Sheet>
-    </>
+    )
+  }
+
+  return (
+    <aside className="flex h-full w-80 shrink-0 flex-col border-s border-white/10 bg-zinc-900/70 backdrop-blur-xl">
+      <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
+        <span className="text-sm font-medium text-zinc-200">{t("liveRoom.panel.title")}</span>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={t("common.close")}
+          className="flex size-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-white/5 hover:text-zinc-100"
+        >
+          <X className="size-4" />
+        </button>
+      </div>
+      <TabsInner tab={tab} setTab={setTab} chat={chat} unread={unread} />
+    </aside>
   )
 }

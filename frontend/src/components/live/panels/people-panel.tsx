@@ -27,7 +27,7 @@ export function PeoplePanel() {
             const name = p.name || p.identity
             return (
               <li key={p.sid} className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-white/5">
-                <UserAvatar name={name} size="sm" online={p.isMicrophoneEnabled} />
+                <UserAvatar name={name} size="sm" online={true} />
                 <span className="min-w-0 flex-1 truncate text-sm text-zinc-100">
                   {name}
                   {p.isLocal && <span className="ms-1.5 text-xs text-zinc-500">({t("liveRoom.you")})</span>}

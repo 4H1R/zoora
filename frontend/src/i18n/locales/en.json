@@ -2437,6 +2437,7 @@
     "panel": {
       "title": "Room"
     },
+    "toggleRail": "Toggle camera rail",
     "device": {
       "camera": "Camera",
       "microphone": "Microphone",

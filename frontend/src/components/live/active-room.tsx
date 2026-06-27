@@ -7,6 +7,7 @@ import {
 } from "@livekit/components-react"
 import { Users } from "lucide-react"
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 
 import "@livekit/components-styles"
 import "./livekit-overrides.css"
@@ -82,6 +83,7 @@ function RoomShell({
   onLeave: () => void
   leavePending: boolean
 }) {
+  const { t } = useTranslation()
   const layoutContext = useCreateLayoutContext()
   const chat = useChat()
   const [tab, setTab] = useState<RoomTab | null>(null)
@@ -129,7 +131,7 @@ function RoomShell({
           <button
             type="button"
             onClick={() => setRailOpen((v) => !v)}
-            aria-label="Toggle camera rail"
+            aria-label={t("liveRoom.toggleRail")}
             className="absolute end-4 top-4 z-20 flex size-9 items-center justify-center rounded-lg bg-black/50 text-zinc-200 backdrop-blur-md transition-colors hover:bg-black/70"
           >
             <Users className="size-4" />

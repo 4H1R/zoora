@@ -2437,6 +2437,7 @@
     "panel": {
       "title": "اتاق"
     },
+    "toggleRail": "نمایش/پنهان دوربین‌ها",
     "device": {
       "camera": "دوربین",
       "microphone": "میکروفن",
