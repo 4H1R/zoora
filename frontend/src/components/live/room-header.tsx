@@ -32,7 +32,7 @@ export function RoomHeader({ sessionName, className }: { sessionName: string; cl
   return (
     <header className="flex shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-zinc-950/80 px-4 py-2.5 backdrop-blur-md sm:px-5">
       <div className="flex min-w-0 items-center gap-3">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-300">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
           <MonitorPlay className="size-5" />
         </div>
         <div className="min-w-0">
