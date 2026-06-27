@@ -49,7 +49,10 @@ import type {
   GetLiveRoomsIdRecordingsParams,
   GetLiveRoomsParams,
   GithubCom4H1RZooraInternalDomainCreateLiveRoomDTO,
+  GithubCom4H1RZooraInternalDomainMuteParticipantDTO,
   GithubCom4H1RZooraInternalDomainResponse,
+  GithubCom4H1RZooraInternalDomainSetHandDTO,
+  GithubCom4H1RZooraInternalDomainSetParticipantRoleDTO,
   GithubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO,
   PostLiveRooms201,
   PostLiveRooms400,
@@ -61,6 +64,11 @@ import type {
   PostLiveRoomsIdEnd401,
   PostLiveRoomsIdEnd403,
   PostLiveRoomsIdEnd404,
+  PostLiveRoomsIdHand200,
+  PostLiveRoomsIdHand400,
+  PostLiveRoomsIdHand401,
+  PostLiveRoomsIdHand403,
+  PostLiveRoomsIdHand404,
   PostLiveRoomsIdHeartbeat401,
   PostLiveRoomsIdHeartbeat403,
   PostLiveRoomsIdHeartbeat404,
@@ -70,6 +78,10 @@ import type {
   PostLiveRoomsIdJoin404,
   PostLiveRoomsIdLeave401,
   PostLiveRoomsIdLeave404,
+  PostLiveRoomsIdParticipantsIdentityMute400,
+  PostLiveRoomsIdParticipantsIdentityMute401,
+  PostLiveRoomsIdParticipantsIdentityMute403,
+  PostLiveRoomsIdParticipantsIdentityMute404,
   PostLiveRoomsIdRecordings201,
   PostLiveRoomsIdRecordings400,
   PostLiveRoomsIdRecordings401,
@@ -84,7 +96,12 @@ import type {
   PutLiveRoomsIdConfig400,
   PutLiveRoomsIdConfig401,
   PutLiveRoomsIdConfig403,
-  PutLiveRoomsIdConfig404
+  PutLiveRoomsIdConfig404,
+  PutLiveRoomsIdParticipantsIdentityRole200,
+  PutLiveRoomsIdParticipantsIdentityRole400,
+  PutLiveRoomsIdParticipantsIdentityRole401,
+  PutLiveRoomsIdParticipantsIdentityRole403,
+  PutLiveRoomsIdParticipantsIdentityRole404
 } from '../model';
 
 import { customInstance } from '.././mutator/custom-instance';
@@ -681,6 +698,110 @@ export const usePostLiveRoomsIdEnd = <TError = ErrorType<PostLiveRoomsIdEnd400 |
       > => {
       return useMutation(getPostLiveRoomsIdEndMutationOptions(options), queryClient);
     }
+    export type postLiveRoomsIdHandResponse200 = {
+  data: PostLiveRoomsIdHand200
+  status: 200
+}
+
+export type postLiveRoomsIdHandResponse400 = {
+  data: PostLiveRoomsIdHand400
+  status: 400
+}
+
+export type postLiveRoomsIdHandResponse401 = {
+  data: PostLiveRoomsIdHand401
+  status: 401
+}
+
+export type postLiveRoomsIdHandResponse403 = {
+  data: PostLiveRoomsIdHand403
+  status: 403
+}
+
+export type postLiveRoomsIdHandResponse404 = {
+  data: PostLiveRoomsIdHand404
+  status: 404
+}
+
+export type postLiveRoomsIdHandResponseSuccess = (postLiveRoomsIdHandResponse200) & {
+  headers: Headers;
+};
+export type postLiveRoomsIdHandResponseError = (postLiveRoomsIdHandResponse400 | postLiveRoomsIdHandResponse401 | postLiveRoomsIdHandResponse403 | postLiveRoomsIdHandResponse404) & {
+  headers: Headers;
+};
+
+export type postLiveRoomsIdHandResponse = (postLiveRoomsIdHandResponseSuccess | postLiveRoomsIdHandResponseError)
+
+export const getPostLiveRoomsIdHandUrl = (id: string,) => {
+
+
+
+
+  return `/live-rooms/${id}/hand`
+}
+
+/**
+ * @summary Set hand raised
+ */
+export const postLiveRoomsIdHand = async (id: string,
+    githubCom4H1RZooraInternalDomainSetHandDTO: GithubCom4H1RZooraInternalDomainSetHandDTO, options?: RequestInit): Promise<postLiveRoomsIdHandResponse> => {
+
+  return customInstance<postLiveRoomsIdHandResponse>(getPostLiveRoomsIdHandUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(githubCom4H1RZooraInternalDomainSetHandDTO)
+  }
+);}
+
+
+
+
+export const getPostLiveRoomsIdHandMutationOptions = <TError = ErrorType<PostLiveRoomsIdHand400 | PostLiveRoomsIdHand401 | PostLiveRoomsIdHand403 | PostLiveRoomsIdHand404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdHand>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainSetHandDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdHand>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainSetHandDTO}, TContext> => {
+
+const mutationKey = ['postLiveRoomsIdHand'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postLiveRoomsIdHand>>, {id: string;data: GithubCom4H1RZooraInternalDomainSetHandDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postLiveRoomsIdHand(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostLiveRoomsIdHandMutationResult = NonNullable<Awaited<ReturnType<typeof postLiveRoomsIdHand>>>
+    export type PostLiveRoomsIdHandMutationBody = GithubCom4H1RZooraInternalDomainSetHandDTO
+    export type PostLiveRoomsIdHandMutationError = ErrorType<PostLiveRoomsIdHand400 | PostLiveRoomsIdHand401 | PostLiveRoomsIdHand403 | PostLiveRoomsIdHand404>
+
+    /**
+ * @summary Set hand raised
+ */
+export const usePostLiveRoomsIdHand = <TError = ErrorType<PostLiveRoomsIdHand400 | PostLiveRoomsIdHand401 | PostLiveRoomsIdHand403 | PostLiveRoomsIdHand404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdHand>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainSetHandDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postLiveRoomsIdHand>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainSetHandDTO},
+        TContext
+      > => {
+      return useMutation(getPostLiveRoomsIdHandMutationOptions(options), queryClient);
+    }
     export type postLiveRoomsIdHeartbeatResponse200 = {
   data: GithubCom4H1RZooraInternalDomainResponse
   status: 200
@@ -1115,7 +1236,219 @@ export function useGetLiveRoomsIdParticipants<TData = Awaited<ReturnType<typeof 
 
 
 
-export type getLiveRoomsIdRecordingsResponse200 = {
+export type postLiveRoomsIdParticipantsIdentityMuteResponse200 = {
+  data: GithubCom4H1RZooraInternalDomainResponse
+  status: 200
+}
+
+export type postLiveRoomsIdParticipantsIdentityMuteResponse400 = {
+  data: PostLiveRoomsIdParticipantsIdentityMute400
+  status: 400
+}
+
+export type postLiveRoomsIdParticipantsIdentityMuteResponse401 = {
+  data: PostLiveRoomsIdParticipantsIdentityMute401
+  status: 401
+}
+
+export type postLiveRoomsIdParticipantsIdentityMuteResponse403 = {
+  data: PostLiveRoomsIdParticipantsIdentityMute403
+  status: 403
+}
+
+export type postLiveRoomsIdParticipantsIdentityMuteResponse404 = {
+  data: PostLiveRoomsIdParticipantsIdentityMute404
+  status: 404
+}
+
+export type postLiveRoomsIdParticipantsIdentityMuteResponseSuccess = (postLiveRoomsIdParticipantsIdentityMuteResponse200) & {
+  headers: Headers;
+};
+export type postLiveRoomsIdParticipantsIdentityMuteResponseError = (postLiveRoomsIdParticipantsIdentityMuteResponse400 | postLiveRoomsIdParticipantsIdentityMuteResponse401 | postLiveRoomsIdParticipantsIdentityMuteResponse403 | postLiveRoomsIdParticipantsIdentityMuteResponse404) & {
+  headers: Headers;
+};
+
+export type postLiveRoomsIdParticipantsIdentityMuteResponse = (postLiveRoomsIdParticipantsIdentityMuteResponseSuccess | postLiveRoomsIdParticipantsIdentityMuteResponseError)
+
+export const getPostLiveRoomsIdParticipantsIdentityMuteUrl = (id: string,
+    identity: string,) => {
+
+
+
+
+  return `/live-rooms/${id}/participants/${identity}/mute`
+}
+
+/**
+ * @summary Mute participant
+ */
+export const postLiveRoomsIdParticipantsIdentityMute = async (id: string,
+    identity: string,
+    githubCom4H1RZooraInternalDomainMuteParticipantDTO: GithubCom4H1RZooraInternalDomainMuteParticipantDTO, options?: RequestInit): Promise<postLiveRoomsIdParticipantsIdentityMuteResponse> => {
+
+  return customInstance<postLiveRoomsIdParticipantsIdentityMuteResponse>(getPostLiveRoomsIdParticipantsIdentityMuteUrl(id,identity),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(githubCom4H1RZooraInternalDomainMuteParticipantDTO)
+  }
+);}
+
+
+
+
+export const getPostLiveRoomsIdParticipantsIdentityMuteMutationOptions = <TError = ErrorType<PostLiveRoomsIdParticipantsIdentityMute400 | PostLiveRoomsIdParticipantsIdentityMute401 | PostLiveRoomsIdParticipantsIdentityMute403 | PostLiveRoomsIdParticipantsIdentityMute404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdParticipantsIdentityMute>>, TError,{id: string;identity: string;data: GithubCom4H1RZooraInternalDomainMuteParticipantDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdParticipantsIdentityMute>>, TError,{id: string;identity: string;data: GithubCom4H1RZooraInternalDomainMuteParticipantDTO}, TContext> => {
+
+const mutationKey = ['postLiveRoomsIdParticipantsIdentityMute'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postLiveRoomsIdParticipantsIdentityMute>>, {id: string;identity: string;data: GithubCom4H1RZooraInternalDomainMuteParticipantDTO}> = (props) => {
+          const {id,identity,data} = props ?? {};
+
+          return  postLiveRoomsIdParticipantsIdentityMute(id,identity,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostLiveRoomsIdParticipantsIdentityMuteMutationResult = NonNullable<Awaited<ReturnType<typeof postLiveRoomsIdParticipantsIdentityMute>>>
+    export type PostLiveRoomsIdParticipantsIdentityMuteMutationBody = GithubCom4H1RZooraInternalDomainMuteParticipantDTO
+    export type PostLiveRoomsIdParticipantsIdentityMuteMutationError = ErrorType<PostLiveRoomsIdParticipantsIdentityMute400 | PostLiveRoomsIdParticipantsIdentityMute401 | PostLiveRoomsIdParticipantsIdentityMute403 | PostLiveRoomsIdParticipantsIdentityMute404>
+
+    /**
+ * @summary Mute participant
+ */
+export const usePostLiveRoomsIdParticipantsIdentityMute = <TError = ErrorType<PostLiveRoomsIdParticipantsIdentityMute400 | PostLiveRoomsIdParticipantsIdentityMute401 | PostLiveRoomsIdParticipantsIdentityMute403 | PostLiveRoomsIdParticipantsIdentityMute404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdParticipantsIdentityMute>>, TError,{id: string;identity: string;data: GithubCom4H1RZooraInternalDomainMuteParticipantDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postLiveRoomsIdParticipantsIdentityMute>>,
+        TError,
+        {id: string;identity: string;data: GithubCom4H1RZooraInternalDomainMuteParticipantDTO},
+        TContext
+      > => {
+      return useMutation(getPostLiveRoomsIdParticipantsIdentityMuteMutationOptions(options), queryClient);
+    }
+    export type putLiveRoomsIdParticipantsIdentityRoleResponse200 = {
+  data: PutLiveRoomsIdParticipantsIdentityRole200
+  status: 200
+}
+
+export type putLiveRoomsIdParticipantsIdentityRoleResponse400 = {
+  data: PutLiveRoomsIdParticipantsIdentityRole400
+  status: 400
+}
+
+export type putLiveRoomsIdParticipantsIdentityRoleResponse401 = {
+  data: PutLiveRoomsIdParticipantsIdentityRole401
+  status: 401
+}
+
+export type putLiveRoomsIdParticipantsIdentityRoleResponse403 = {
+  data: PutLiveRoomsIdParticipantsIdentityRole403
+  status: 403
+}
+
+export type putLiveRoomsIdParticipantsIdentityRoleResponse404 = {
+  data: PutLiveRoomsIdParticipantsIdentityRole404
+  status: 404
+}
+
+export type putLiveRoomsIdParticipantsIdentityRoleResponseSuccess = (putLiveRoomsIdParticipantsIdentityRoleResponse200) & {
+  headers: Headers;
+};
+export type putLiveRoomsIdParticipantsIdentityRoleResponseError = (putLiveRoomsIdParticipantsIdentityRoleResponse400 | putLiveRoomsIdParticipantsIdentityRoleResponse401 | putLiveRoomsIdParticipantsIdentityRoleResponse403 | putLiveRoomsIdParticipantsIdentityRoleResponse404) & {
+  headers: Headers;
+};
+
+export type putLiveRoomsIdParticipantsIdentityRoleResponse = (putLiveRoomsIdParticipantsIdentityRoleResponseSuccess | putLiveRoomsIdParticipantsIdentityRoleResponseError)
+
+export const getPutLiveRoomsIdParticipantsIdentityRoleUrl = (id: string,
+    identity: string,) => {
+
+
+
+
+  return `/live-rooms/${id}/participants/${identity}/role`
+}
+
+/**
+ * @summary Set participant role
+ */
+export const putLiveRoomsIdParticipantsIdentityRole = async (id: string,
+    identity: string,
+    githubCom4H1RZooraInternalDomainSetParticipantRoleDTO: GithubCom4H1RZooraInternalDomainSetParticipantRoleDTO, options?: RequestInit): Promise<putLiveRoomsIdParticipantsIdentityRoleResponse> => {
+
+  return customInstance<putLiveRoomsIdParticipantsIdentityRoleResponse>(getPutLiveRoomsIdParticipantsIdentityRoleUrl(id,identity),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(githubCom4H1RZooraInternalDomainSetParticipantRoleDTO)
+  }
+);}
+
+
+
+
+export const getPutLiveRoomsIdParticipantsIdentityRoleMutationOptions = <TError = ErrorType<PutLiveRoomsIdParticipantsIdentityRole400 | PutLiveRoomsIdParticipantsIdentityRole401 | PutLiveRoomsIdParticipantsIdentityRole403 | PutLiveRoomsIdParticipantsIdentityRole404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putLiveRoomsIdParticipantsIdentityRole>>, TError,{id: string;identity: string;data: GithubCom4H1RZooraInternalDomainSetParticipantRoleDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putLiveRoomsIdParticipantsIdentityRole>>, TError,{id: string;identity: string;data: GithubCom4H1RZooraInternalDomainSetParticipantRoleDTO}, TContext> => {
+
+const mutationKey = ['putLiveRoomsIdParticipantsIdentityRole'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putLiveRoomsIdParticipantsIdentityRole>>, {id: string;identity: string;data: GithubCom4H1RZooraInternalDomainSetParticipantRoleDTO}> = (props) => {
+          const {id,identity,data} = props ?? {};
+
+          return  putLiveRoomsIdParticipantsIdentityRole(id,identity,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutLiveRoomsIdParticipantsIdentityRoleMutationResult = NonNullable<Awaited<ReturnType<typeof putLiveRoomsIdParticipantsIdentityRole>>>
+    export type PutLiveRoomsIdParticipantsIdentityRoleMutationBody = GithubCom4H1RZooraInternalDomainSetParticipantRoleDTO
+    export type PutLiveRoomsIdParticipantsIdentityRoleMutationError = ErrorType<PutLiveRoomsIdParticipantsIdentityRole400 | PutLiveRoomsIdParticipantsIdentityRole401 | PutLiveRoomsIdParticipantsIdentityRole403 | PutLiveRoomsIdParticipantsIdentityRole404>
+
+    /**
+ * @summary Set participant role
+ */
+export const usePutLiveRoomsIdParticipantsIdentityRole = <TError = ErrorType<PutLiveRoomsIdParticipantsIdentityRole400 | PutLiveRoomsIdParticipantsIdentityRole401 | PutLiveRoomsIdParticipantsIdentityRole403 | PutLiveRoomsIdParticipantsIdentityRole404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putLiveRoomsIdParticipantsIdentityRole>>, TError,{id: string;identity: string;data: GithubCom4H1RZooraInternalDomainSetParticipantRoleDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putLiveRoomsIdParticipantsIdentityRole>>,
+        TError,
+        {id: string;identity: string;data: GithubCom4H1RZooraInternalDomainSetParticipantRoleDTO},
+        TContext
+      > => {
+      return useMutation(getPutLiveRoomsIdParticipantsIdentityRoleMutationOptions(options), queryClient);
+    }
+    export type getLiveRoomsIdRecordingsResponse200 = {
   data: GetLiveRoomsIdRecordings200
   status: 200
 }
