@@ -2420,11 +2420,22 @@
       "shareScreen": "Share screen",
       "stopShare": "Stop sharing",
       "chat": "Chat",
-      "people": "People"
+      "people": "People",
+      "polls": "Polls",
+      "more": "More"
     },
     "chat": {
       "empty": "No messages yet",
       "placeholder": "Type a message…"
+    },
+    "stage": {
+      "empty": "Waiting for the presenter to share something"
+    },
+    "polls": {
+      "comingSoon": "Polls are coming soon"
+    },
+    "panel": {
+      "title": "Room"
     },
     "device": {
       "camera": "Camera",
