@@ -2466,7 +2466,8 @@
       "votes": "{{count}} votes",
       "yes": "Yes",
       "no": "No",
-      "results": "Results"
+      "results": "Results",
+      "removeOption": "Remove option"
     },
     "panel": {
       "title": "Room"

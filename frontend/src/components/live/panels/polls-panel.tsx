@@ -2,7 +2,7 @@ import { BarChart3, Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
-import { useGetPollsIdAnswers, usePostPolls, usePostPollsIdAnswer } from "@/api/polls/polls"
+import { useGetPollsIdResults, usePostPolls, usePostPollsIdAnswer } from "@/api/polls/polls"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
@@ -98,7 +98,7 @@ function CreatePollForm({ liveId, onLaunch }: CreatePollFormProps) {
   function handleLaunch() {
     const name = question.trim()
     if (!name) return
-    const resolvedOptions = mode === "yesno" ? yesNoOptions : options.map((o, i) => ({ label: o.trim() || `${t("liveRoom.polls.option")} ${i + 1}`, value: o.trim().toLowerCase().replace(/\s+/g, "_") || `option_${i + 1}` }))
+    const resolvedOptions = mode === "yesno" ? yesNoOptions : options.map((o, i) => ({ label: o.trim() || `${t("liveRoom.polls.option")} ${i + 1}`, value: String(i) }))
 
     createPoll.mutate(
       {
@@ -187,7 +187,7 @@ function CreatePollForm({ liveId, onLaunch }: CreatePollFormProps) {
                 <button
                   type="button"
                   onClick={() => removeOption(i)}
-                  aria-label="Remove option"
+                  aria-label={t("liveRoom.polls.removeOption")}
                   className="flex size-8 shrink-0 items-center justify-center rounded text-zinc-500 hover:text-red-400"
                 >
                   <Trash2 className="size-3.5" />
@@ -232,22 +232,16 @@ interface HostActivePollProps {
 function HostActivePoll({ activePoll, onReveal, onClose }: HostActivePollProps) {
   const { t } = useTranslation()
 
-  const answersQuery = useGetPollsIdAnswers(activePoll.pollId, undefined, {
+  const resultsQuery = useGetPollsIdResults(activePoll.pollId, {
     query: { refetchInterval: 3000 },
   })
 
-  const answers = answersQuery.data?.status === 200 ? (answersQuery.data.data.data?.items ?? []) : []
-
-  // Aggregate counts per option value
+  const resultsData = resultsQuery.data?.status === 200 ? resultsQuery.data.data.data : null
   const counts: Record<string, number> = {}
   for (const opt of activePoll.options) {
-    counts[opt.value] = 0
+    counts[opt.value] = resultsData?.counts?.[opt.value] ?? 0
   }
-  for (const answer of answers) {
-    const v = answer.option ?? ""
-    if (v in counts) counts[v] = (counts[v] ?? 0) + 1
-  }
-  const total = answers.length
+  const total = resultsData?.total ?? 0
 
   function handleReveal() {
     onReveal({ counts, total })

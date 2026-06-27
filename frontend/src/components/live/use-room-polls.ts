@@ -61,18 +61,20 @@ export function useRoomPolls() {
   }
 
   function revealResults(r: PollResults) {
+    if (!activePoll) return
     setResults(r)
     send(
       encodeRoomEvent({
         type: "poll_results",
-        data: { pollId: activePoll?.pollId ?? "", counts: r.counts, total: r.total },
+        data: { pollId: activePoll.pollId, counts: r.counts, total: r.total },
       }),
       { reliable: true },
     )
   }
 
   function closePoll() {
-    const id = activePoll?.pollId ?? ""
+    if (!activePoll) return
+    const id = activePoll.pollId
     setActivePoll(null)
     setResults(null)
     setHasAnswered(false)
