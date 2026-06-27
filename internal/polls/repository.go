@@ -190,3 +190,28 @@ func (r *answerRepository) DeleteByPollAndUser(ctx context.Context, pollID, user
 	}
 	return nil
 }
+
+type optionCount struct {
+	Option string
+	Count  int
+}
+
+func (r *answerRepository) CountByOption(ctx context.Context, pollID uuid.UUID) (map[string]int, int, error) {
+	var rows []optionCount
+	err := database.DB(ctx, r.db).
+		Model(&domain.PollAnswer{}).
+		Select("option, COUNT(*) AS count").
+		Where("poll_id = ?", pollID).
+		Group("option").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, 0, fmt.Errorf("polls.answerRepository.CountByOption: %w", err)
+	}
+	counts := make(map[string]int, len(rows))
+	total := 0
+	for _, row := range rows {
+		counts[row.Option] = row.Count
+		total += row.Count
+	}
+	return counts, total, nil
+}

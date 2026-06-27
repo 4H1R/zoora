@@ -81,6 +81,12 @@ func (m *pollAnswerRepoMock) DeleteByPollAndUser(ctx context.Context, pollID, us
 	return m.Called(ctx, pollID, userID).Error(0)
 }
 
+func (m *pollAnswerRepoMock) CountByOption(ctx context.Context, pollID uuid.UUID) (map[string]int, int, error) {
+	args := m.Called(ctx, pollID)
+	counts, _ := args.Get(0).(map[string]int)
+	return counts, args.Int(1), args.Error(2)
+}
+
 func newPollService(repo *pollRepoMock, answers *pollAnswerRepoMock) domain.PollService {
 	return polls.NewService(repo, answers, slog.Default())
 }

@@ -75,6 +75,12 @@ type ListPollAnswersQuery struct {
 	ListParams ListParams `form:"-"`
 }
 
+type PollResults struct {
+	PollID uuid.UUID      `json:"poll_id"`
+	Counts map[string]int `json:"counts"`
+	Total  int            `json:"total"`
+}
+
 type PollListScope struct {
 	AllOrgs        bool
 	OwnerID        *uuid.UUID
@@ -100,6 +106,7 @@ type PollAnswerRepository interface {
 	FindByPollAndUser(ctx context.Context, pollID, userID uuid.UUID) ([]PollAnswer, error)
 	ListByPoll(ctx context.Context, pollID uuid.UUID, q ListPollAnswersQuery) ([]PollAnswer, int64, error)
 	DeleteByPollAndUser(ctx context.Context, pollID, userID uuid.UUID) error
+	CountByOption(ctx context.Context, pollID uuid.UUID) (map[string]int, int, error)
 }
 
 type PollService interface {
@@ -111,6 +118,7 @@ type PollService interface {
 
 	Answer(ctx context.Context, pollID uuid.UUID, dto AnswerPollDTO) ([]PollAnswer, error)
 	ListAnswers(ctx context.Context, pollID uuid.UUID, q ListPollAnswersQuery) ([]PollAnswer, int64, error)
+	Results(ctx context.Context, pollID uuid.UUID) (*PollResults, error)
 
 	AdminList(ctx context.Context, q AdminListPollsQuery) ([]Poll, int64, error)
 	AdminHardDelete(ctx context.Context, id uuid.UUID) error

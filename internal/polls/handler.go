@@ -45,6 +45,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 
 		authed.POST("/polls/:id/answer", perm(domain.PermPollsView), idParam, h.Answer)
 		authed.GET("/polls/:id/answers", perm(domain.PermPollsView), idParam, h.ListAnswers)
+		authed.GET("/polls/:id/results", perm(domain.PermPollsView), idParam, h.Results)
 	}
 }
 
@@ -232,4 +233,25 @@ func (h *Handler) ListAnswers(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(answers, total, q.ListParams))
+}
+
+// Results returns aggregate vote counts for a poll.
+// @Summary Get poll results
+// @Description Returns vote counts grouped by option and the total vote count for a poll.
+// @Tags Polls
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Poll UUID"
+// @Success 200 {object} domain.Response{data=domain.PollResults}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /polls/{id}/results [get]
+func (h *Handler) Results(c *gin.Context) {
+	results, err := h.svc.Results(c.Request.Context(), httpx.UUIDParam(c, "id"))
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, results)
 }
