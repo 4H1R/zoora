@@ -196,7 +196,7 @@ func (r *messageRepository) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 func (r *messageRepository) List(ctx context.Context, chatID uuid.UUID, q domain.ListMessagesQuery) ([]domain.Message, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.Message{}).Where("chat_id = ?", chatID)
+	base := database.DB(ctx, r.db).Model(&domain.Message{}).Preload("Sender").Where("chat_id = ?", chatID)
 	if q.ParentMessageID != nil {
 		base = base.Where("parent_message_id = ?", *q.ParentMessageID)
 	} else {
