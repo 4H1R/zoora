@@ -15,6 +15,35 @@ export function useNow(intervalMs = 1000) {
   return now
 }
 
+// setTimeout caps at a signed 32-bit ms (~24.8 days); a larger delay overflows
+// to fire immediately, so we clamp and let the hook re-evaluate at that ceiling.
+const MAX_TIMEOUT_MS = 2_147_483_647
+
+// Live status only flips at two instants: start (scheduled→live) and
+// start+window (live→ended). Polling every second to detect those is wasteful —
+// instead schedule a single timeout to the exact next boundary, so consumers
+// re-render ~twice per session rather than 60×/min.
+export function useSessionStatus(startIso: string | undefined): SessionStatus {
+  const [status, setStatus] = useState<SessionStatus>(() => getSessionStatus(startIso, Date.now()))
+  useEffect(() => {
+    let id: ReturnType<typeof setTimeout>
+    const schedule = () => {
+      const now = Date.now()
+      const next = getSessionStatus(startIso, now)
+      setStatus(next)
+      if (next === "ended" || !startIso) return // terminal — no further transitions
+      const start = new Date(startIso).getTime()
+      if (Number.isNaN(start)) return
+      const boundary = next === "scheduled" ? start : start + LIVE_WINDOW_MS
+      const delay = Math.min(Math.max(0, boundary - now) + 50, MAX_TIMEOUT_MS)
+      id = setTimeout(schedule, delay)
+    }
+    schedule()
+    return () => clearTimeout(id)
+  }, [startIso])
+  return status
+}
+
 export function getSessionStatus(startIso: string | undefined, now: number): SessionStatus {
   if (!startIso) return "scheduled"
   const start = new Date(startIso).getTime()

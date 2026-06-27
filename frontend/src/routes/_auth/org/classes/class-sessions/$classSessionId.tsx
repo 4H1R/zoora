@@ -47,7 +47,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useOrgGuard } from "@/lib/access"
 import { orgHead } from "@/lib/org-head"
-import { formatRelativeTime, formatSessionDate, getSessionStatus, useNow } from "@/lib/session-status"
+import { formatRelativeTime, formatSessionDate, useNow, useSessionStatus } from "@/lib/session-status"
 import { cn } from "@/lib/utils"
 
 // Surface and leaf selection live in the URL (mirrors the class detail page's
@@ -156,6 +156,26 @@ function SubTabsBar({
   )
 }
 
+// Relative time ("in 2 minutes") is the only header bit that ticks. Isolating
+// it here — with its own minute-granularity clock — keeps the second/minute
+// churn off the whole route tree; the string never changes faster than a minute
+// anyway (formatRelativeTime rounds, sub-minute collapses to a constant).
+function SessionRelativeTime({ startIso, status }: { startIso: string | undefined; status: SessionStatus }) {
+  const { i18n } = useTranslation()
+  const now = useNow(60_000)
+  if (status === "ended") return null
+  const relativeStr = formatRelativeTime(startIso, now, i18n.language)
+  if (!relativeStr) return null
+  return (
+    <>
+      <span className="text-muted-foreground/40">·</span>
+      <span className={cn("font-medium", status === "live" ? "text-destructive" : "text-primary")}>
+        {relativeStr}
+      </span>
+    </>
+  )
+}
+
 function RouteComponent() {
   const { t, i18n } = useTranslation()
   const { classSessionId } = Route.useParams()
@@ -167,7 +187,6 @@ function RouteComponent() {
   const { canView: canViewOfflines } = useOfflinePermissions()
   const { canView: canViewAttendance } = useAttendancePermissions()
   const canViewLiveAny = canViewLive || canJoinLive
-  const now = useNow(1000)
 
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
@@ -179,6 +198,9 @@ function RouteComponent() {
   } = useGetClassesSessionsSessionId(classSessionId)
   const session = (sessionData?.status === 200 && sessionData.data.data) || undefined
   const classId = session?.class_id
+  // Boundary-scheduled — re-renders only when the session actually flips
+  // scheduled→live→ended, not on a wall-clock tick.
+  const status = useSessionStatus(session?.start_time)
 
   const { data: classData } = useGetClassesId(classId ?? "", { query: { enabled: !!classId } })
   const cls = (classData?.status === 200 && classData.data.data) || undefined
@@ -245,9 +267,7 @@ function RouteComponent() {
     )
   }
 
-  const status = getSessionStatus(session.start_time, now)
   const startStr = formatSessionDate(session.start_time, i18n.language, "long")
-  const relativeStr = formatRelativeTime(session.start_time, now, i18n.language)
 
   // Build each surface once; the top tabs and their content both derive from it.
   const surfaces: Surface[] = []
@@ -417,16 +437,7 @@ function RouteComponent() {
               <CalendarClockIcon className="size-3.5 opacity-70" />
               {startStr}
             </span>
-            {status !== "ended" && relativeStr && (
-              <>
-                <span className="text-muted-foreground/40">·</span>
-                <span
-                  className={cn("font-medium", status === "live" ? "text-destructive" : "text-primary")}
-                >
-                  {relativeStr}
-                </span>
-              </>
-            )}
+            <SessionRelativeTime startIso={session.start_time} status={status} />
             {cls?.name && (
               <>
                 <span className="text-muted-foreground/40">·</span>

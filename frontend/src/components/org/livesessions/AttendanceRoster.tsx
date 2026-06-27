@@ -45,6 +45,27 @@ interface AttendanceRosterProps {
   canMark: boolean
 }
 
+// React Compiler flags useReactTable as an "incompatible library" and silently
+// skips memoizing any component that calls it. TanStack Table compares `data` and
+// `columns` by reference, so an unmemoized parent rebuilds them every render and
+// the table re-renders in an infinite loop (the tab freezes). Isolating the table
+// in this leaf keeps the data/columns construction in the compiler-memoized parent,
+// so this child receives stable references and the loop never starts.
+function RosterTable({ data, columns }: { data: RosterRow[]; columns: ColumnDef<RosterRow>[] }) {
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  })
+
+  return (
+    <div className="ring-foreground/10 overflow-hidden rounded-2xl ring-1">
+      <DataTable table={table} />
+    </div>
+  )
+}
+
 export function AttendanceRoster({ classId, classSessionId, members, records, canMark }: AttendanceRosterProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -172,13 +193,6 @@ export function AttendanceRoster({ classId, classSessionId, members, records, ca
     },
   ]
 
-  const table = useReactTable({
-    data: rows,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-  })
-
   if (members.length === 0) {
     return (
       <div className="text-muted-foreground rounded-2xl border border-dashed px-6 py-12 text-center text-sm">
@@ -213,9 +227,7 @@ export function AttendanceRoster({ classId, classSessionId, members, records, ca
         </div>
       )}
 
-      <div className="ring-foreground/10 overflow-hidden rounded-2xl ring-1">
-        <DataTable table={table} />
-      </div>
+      <RosterTable data={rows} columns={columns} />
     </div>
   )
 }

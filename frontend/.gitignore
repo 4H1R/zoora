@@ -9,3 +9,6 @@ dist-ssr
 /blob-report/
 /playwright/.cache/
 .vite/
+
+# TypeScript incremental build info
+*.tsbuildinfo

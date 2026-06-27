@@ -167,6 +167,13 @@ export function useClientTable<TData>({
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     globalFilterFn: "includesString",
+    // Pagination is fully URL-driven (DataTablePagination navigates on page change).
+    // The controlled `pagination` state MUST be paired with onPaginationChange and
+    // autoReset disabled — otherwise react-table's autoReset fires its internal state
+    // setter whenever the pagination row model is read (e.g. getRowCount() in
+    // DataTablePagination), with no handler to absorb it, looping renders forever.
+    autoResetPageIndex: false,
+    onPaginationChange: () => {},
     onSortingChange: createSortingHandler(navigate, sorting),
     onColumnVisibilityChange: (updater) => {
       setColumnVisibility((prev) => (typeof updater === "function" ? updater(prev) : updater))
