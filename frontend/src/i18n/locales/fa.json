@@ -2422,7 +2422,16 @@
       "chat": "گفتگو",
       "people": "افراد",
       "polls": "نظرسنجی",
-      "more": "بیشتر"
+      "more": "بیشتر",
+      "raiseHand": "بالا بردن دست",
+      "lowerHand": "پایین آوردن دست"
+    },
+    "people": {
+      "makePresenter": "ارائه‌دهنده کن",
+      "makeViewer": "بیننده کن",
+      "mute": "بی‌صدا",
+      "actions": "عملیات",
+      "handRaised": "دست بالا"
     },
     "chat": {
       "empty": "هنوز پیامی نیست",

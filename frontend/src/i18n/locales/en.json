@@ -2422,7 +2422,16 @@
       "chat": "Chat",
       "people": "People",
       "polls": "Polls",
-      "more": "More"
+      "more": "More",
+      "raiseHand": "Raise hand",
+      "lowerHand": "Lower hand"
+    },
+    "people": {
+      "makePresenter": "Make presenter",
+      "makeViewer": "Make viewer",
+      "mute": "Mute",
+      "actions": "Actions",
+      "handRaised": "Hand raised"
     },
     "chat": {
       "empty": "No messages yet",

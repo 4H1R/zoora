@@ -1,6 +1,7 @@
 import { useLocalParticipant } from "@livekit/components-react"
 import {
   BarChart3,
+  Hand,
   LogOut,
   type LucideIcon,
   MessageSquare,
@@ -29,13 +30,15 @@ interface ControlBarProps {
   onLeave: () => void
   leavePending: boolean
   unread: number
+  handRaised: boolean
+  onToggleHand: () => void
 }
 
-export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, unread }: ControlBarProps) {
+export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, unread, handRaised, onToggleHand }: ControlBarProps) {
   const { t } = useTranslation()
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled, isScreenShareEnabled } = useLocalParticipant()
   const role = useRoomRole()
-  const publisher = canPublish(role)
+  const publisher = localParticipant.permissions?.canPublish ?? canPublish(role)
 
   // Swallow OS-permission dismissals; surface real errors via toast
   const toggle = async (fn: () => Promise<unknown>, errorKey: string) => {
@@ -110,6 +113,17 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, un
         )}
 
         <span className="mx-0.5 h-7 w-px bg-white/10" />
+
+        {/* Raise hand — viewers only */}
+        {!publisher && (
+          <CtrlButton
+            icon={Hand}
+            on
+            active={handRaised}
+            label={t(handRaised ? "liveRoom.controls.lowerHand" : "liveRoom.controls.raiseHand")}
+            onClick={onToggleHand}
+          />
+        )}
 
         {/* Chat — always visible */}
         <CtrlButton

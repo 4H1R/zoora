@@ -9,6 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { ChatPanel } from "./panels/chat-panel"
 import { PeoplePanel } from "./panels/people-panel"
 import { PollsPanel } from "./panels/polls-panel"
+import type { RoomRole } from "./room-role"
 import type { RoomTab } from "./types"
 
 interface RoomPanelProps {
@@ -18,14 +19,24 @@ interface RoomPanelProps {
   onClose: () => void
   chat: ReturnType<typeof useChat>
   unread: number
+  states: Record<string, { role: RoomRole; handRaised: boolean }>
+  isHost: boolean
+  onSetRole: (identity: string, role: "presenter" | "viewer") => void
+  onMute: (identity: string, trackSid: string) => void
 }
+
+type TabsInnerProps = Pick<RoomPanelProps, "tab" | "setTab" | "chat" | "unread" | "states" | "isHost" | "onSetRole" | "onMute">
 
 function TabsInner({
   tab,
   setTab,
   chat,
   unread,
-}: Pick<RoomPanelProps, "tab" | "setTab" | "chat" | "unread">) {
+  states,
+  isHost,
+  onSetRole,
+  onMute,
+}: TabsInnerProps) {
   const { t } = useTranslation()
   return (
     <Tabs
@@ -56,7 +67,12 @@ function TabsInner({
         <ChatPanel chat={chat} />
       </TabsContent>
       <TabsContent value="people" className="flex min-h-0 flex-1 flex-col">
-        <PeoplePanel />
+        <PeoplePanel
+          states={states}
+          isHost={isHost}
+          onSetRole={onSetRole}
+          onMute={onMute}
+        />
       </TabsContent>
       <TabsContent value="polls" className="flex min-h-0 flex-1 flex-col">
         <PollsPanel />
@@ -65,7 +81,7 @@ function TabsInner({
   )
 }
 
-export function RoomPanel({ tab, setTab, open, onClose, chat, unread }: RoomPanelProps) {
+export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, isHost, onSetRole, onMute }: RoomPanelProps) {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
   if (!open) return null
@@ -78,7 +94,16 @@ export function RoomPanel({ tab, setTab, open, onClose, chat, unread }: RoomPane
           className="flex h-[70dvh] flex-col gap-0 bg-zinc-900 p-0 text-zinc-100"
         >
           <SheetTitle className="sr-only">{t("liveRoom.panel.title")}</SheetTitle>
-          <TabsInner tab={tab} setTab={setTab} chat={chat} unread={unread} />
+          <TabsInner
+            tab={tab}
+            setTab={setTab}
+            chat={chat}
+            unread={unread}
+            states={states}
+            isHost={isHost}
+            onSetRole={onSetRole}
+            onMute={onMute}
+          />
         </SheetContent>
       </Sheet>
     )
@@ -97,7 +122,16 @@ export function RoomPanel({ tab, setTab, open, onClose, chat, unread }: RoomPane
           <X className="size-4" />
         </button>
       </div>
-      <TabsInner tab={tab} setTab={setTab} chat={chat} unread={unread} />
+      <TabsInner
+        tab={tab}
+        setTab={setTab}
+        chat={chat}
+        unread={unread}
+        states={states}
+        isHost={isHost}
+        onSetRole={onSetRole}
+        onMute={onMute}
+      />
     </aside>
   )
 }

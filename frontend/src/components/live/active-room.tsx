@@ -4,6 +4,7 @@ import {
   RoomAudioRenderer,
   useChat,
   useCreateLayoutContext,
+  useLocalParticipant,
 } from "@livekit/components-react"
 import { Users } from "lucide-react"
 import { useEffect, useState } from "react"
@@ -12,14 +13,20 @@ import { useTranslation } from "react-i18next"
 import "@livekit/components-styles"
 import "./livekit-overrides.css"
 
-import { usePostLiveRoomsIdLeave } from "@/api/live-sessions/live-sessions"
+import {
+  usePostLiveRoomsIdHand,
+  usePostLiveRoomsIdLeave,
+  usePostLiveRoomsIdParticipantsIdentityMute,
+  usePutLiveRoomsIdParticipantsIdentityRole,
+} from "@/api/live-sessions/live-sessions"
 
 import { ControlBar } from "./control-bar"
 import { RoomHeader } from "./room-header"
 import { RoomPanel } from "./room-panel"
-import { RoomRoleContext, type RoomRole } from "./room-role"
+import { RoomRoleContext, type RoomRole, useRoomRole } from "./room-role"
 import { Stage } from "./stage"
 import type { PreJoinChoices, RoomTab } from "./types"
+import { useRoomRoles } from "./use-room-roles"
 import { WebcamRail } from "./webcam-rail"
 
 interface ActiveRoomProps {
@@ -65,6 +72,7 @@ export function ActiveRoom({
           className={className}
           onLeave={handleLeave}
           leavePending={leaveMutation.isPending}
+          liveId={liveId}
         />
         <RoomAudioRenderer />
       </LiveKitRoom>
@@ -77,11 +85,13 @@ function RoomShell({
   className,
   onLeave,
   leavePending,
+  liveId,
 }: {
   sessionName: string
   className?: string
   onLeave: () => void
   leavePending: boolean
+  liveId: string
 }) {
   const { t } = useTranslation()
   const layoutContext = useCreateLayoutContext()
@@ -89,6 +99,22 @@ function RoomShell({
   const [tab, setTab] = useState<RoomTab | null>(null)
   const [readCount, setReadCount] = useState(0)
   const [railOpen, setRailOpen] = useState(false) // hidden by default (mobile-first)
+
+  const { localParticipant } = useLocalParticipant()
+  const states = useRoomRoles({})
+  const role = useRoomRole()
+  const myIdentity = localParticipant.identity
+  const handRaised = states[myIdentity]?.handRaised ?? false
+
+  const roleMutation = usePutLiveRoomsIdParticipantsIdentityRole()
+  const muteMutation = usePostLiveRoomsIdParticipantsIdentityMute()
+  const handMutation = usePostLiveRoomsIdHand()
+
+  const onToggleHand = () => handMutation.mutate({ id: liveId, data: { raised: !handRaised } })
+  const onSetRole = (identity: string, r: "presenter" | "viewer") =>
+    roleMutation.mutate({ id: liveId, identity, data: { role: r } })
+  const onMute = (identity: string, trackSid: string) =>
+    muteMutation.mutate({ id: liveId, identity, data: { track_sid: trackSid, muted: true } })
 
   useEffect(() => {
     if (tab === "chat") setReadCount(chat.chatMessages.length)
@@ -126,6 +152,8 @@ function RoomShell({
             onLeave={onLeave}
             leavePending={leavePending}
             unread={unread}
+            handRaised={handRaised}
+            onToggleHand={onToggleHand}
           />
 
           <button
@@ -145,6 +173,10 @@ function RoomShell({
           onClose={() => setTab(null)}
           chat={chat}
           unread={unread}
+          states={states}
+          isHost={role === "host"}
+          onSetRole={onSetRole}
+          onMute={onMute}
         />
       </div>
     </LayoutContextProvider>
