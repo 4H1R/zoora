@@ -66,6 +66,12 @@ func MapError(err error) (int, string) {
 		return http.StatusConflict, "CONFLICT"
 	case errors.Is(err, ErrInvalidSlug):
 		return http.StatusUnprocessableEntity, "INVALID_SLUG"
+	case errors.Is(err, ErrParticipantNotFound):
+		return http.StatusNotFound, "PARTICIPANT_NOT_FOUND"
+	case errors.Is(err, ErrInvalidParticipantRole):
+		return http.StatusUnprocessableEntity, "INVALID_PARTICIPANT_ROLE"
+	case errors.Is(err, ErrCannotChangeHostRole):
+		return http.StatusConflict, "CANNOT_CHANGE_HOST_ROLE"
 	case errors.Is(err, ErrValidation):
 		return http.StatusBadRequest, "VALIDATION_ERROR"
 	default:
