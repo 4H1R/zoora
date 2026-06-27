@@ -2445,7 +2445,9 @@
       "empty": "Waiting for the presenter to share something",
       "slidesLoading": "Loading slides…",
       "slidesError": "Couldn't load slides",
-      "pageOf": "{{page}} / {{total}}"
+      "pageOf": "{{page}} / {{total}}",
+      "prevPage": "Previous page",
+      "nextPage": "Next page"
     },
     "polls": {
       "comingSoon": "Polls are coming soon"

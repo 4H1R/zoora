@@ -2445,7 +2445,9 @@
       "empty": "در انتظار اشتراک‌گذاری توسط ارائه‌دهنده",
       "slidesLoading": "در حال بارگذاری اسلاید…",
       "slidesError": "بارگذاری اسلاید ناموفق بود",
-      "pageOf": "{{page}} / {{total}}"
+      "pageOf": "{{page}} / {{total}}",
+      "prevPage": "صفحه قبل",
+      "nextPage": "صفحه بعد"
     },
     "polls": {
       "comingSoon": "نظرسنجی‌ها به‌زودی"

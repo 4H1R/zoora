@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
-import { useRef, useState } from "react"
+import { useState } from "react"
 import { Document, Page, pdfjs } from "react-pdf"
 import { useTranslation } from "react-i18next"
 
@@ -24,7 +24,6 @@ interface SlidesStageProps {
 
 export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPageChange }: SlidesStageProps) {
   const { t } = useTranslation()
-  const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState<number | undefined>(undefined)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -32,7 +31,6 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
   // Measure container width when the div mounts so the PDF page fills it.
   const measureRef = (el: HTMLDivElement | null) => {
     if (!el) return
-    ;(containerRef as React.MutableRefObject<HTMLDivElement | null>).current = el
     const observer = new ResizeObserver(([entry]) => {
       setContainerWidth(entry.contentRect.width)
     })
@@ -94,7 +92,7 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
               "flex size-9 items-center justify-center rounded-xl bg-black/60 text-zinc-100 backdrop-blur-md transition-colors hover:bg-primary/80 disabled:opacity-40",
               "rtl:rotate-180"
             )}
-            aria-label="Previous page"
+            aria-label={t("liveRoom.stage.prevPage")}
           >
             <ChevronLeft className="size-5" />
           </button>
@@ -115,7 +113,7 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
               "flex size-9 items-center justify-center rounded-xl bg-black/60 text-zinc-100 backdrop-blur-md transition-colors hover:bg-primary/80 disabled:opacity-40",
               "rtl:rotate-180"
             )}
-            aria-label="Next page"
+            aria-label={t("liveRoom.stage.nextPage")}
           >
             <ChevronRight className="size-5" />
           </button>

@@ -42,7 +42,7 @@ export function useRoomChat(chatId: string | undefined) {
     .map((msg) => ({
       id: msg.id ?? "",
       content: msg.content ?? "",
-      senderName: msg.sender?.name ?? msg.sender_id ?? "—",
+      senderName: msg.sender?.name ?? "—",
       senderId: msg.sender_id,
       createdAt: msg.created_at ?? "",
       isDeleted: false,
