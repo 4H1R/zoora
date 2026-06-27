@@ -83,6 +83,7 @@ export function QuizRunner({
       <StartScreen
         quiz={quiz}
         room={room}
+        questions={questions}
         totalQuestions={questions.length}
         backHref={backHref}
         starting={startMutation.isPending}

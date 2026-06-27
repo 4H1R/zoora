@@ -216,10 +216,18 @@ func (s *service) CreateQuestion(ctx context.Context, bankID uuid.UUID, dto doma
 	if !canManageBank(caller, bank) {
 		return nil, domain.ErrForbidden
 	}
-	if err := domain.ValidateQuestionOptions(dto.Type, dto.Options); err != nil {
+	options := clearOptionImagesForNonChoice(dto.Type, dto.Options)
+	if err := domain.ValidateQuestionOptions(dto.Type, options); err != nil {
 		return nil, err
 	}
 	if err := s.validateMetadataMedia(ctx, dto.Metadata); err != nil {
+		return nil, err
+	}
+	mode, val, wpp := domain.NormalizeNegativeMark(dto.NegativeMarkMode, dto.NegativeValue, dto.WrongsPerPoint)
+	if dto.Type != domain.QuestionTypeChoice {
+		mode, val, wpp = domain.NegativeMarkNone, 0, 0
+	}
+	if err := domain.ValidateNegativeMark(mode, val, wpp); err != nil {
 		return nil, err
 	}
 	metadata := dto.Metadata
@@ -227,12 +235,15 @@ func (s *service) CreateQuestion(ctx context.Context, bankID uuid.UUID, dto doma
 		metadata = []domain.QuestionMetadata{}
 	}
 	question := &domain.Question{
-		BankID:         bankID,
-		OrganizationID: bank.OrganizationID,
-		Text:           dto.Text,
-		Type:           dto.Type,
-		Options:        dto.Options,
-		Metadata:       metadata,
+		BankID:           bankID,
+		OrganizationID:   bank.OrganizationID,
+		Text:             dto.Text,
+		Type:             dto.Type,
+		Options:          options,
+		Metadata:         metadata,
+		NegativeMarkMode: mode,
+		NegativeValue:    val,
+		WrongsPerPoint:   wpp,
 	}
 	if err := s.questions.Create(ctx, question); err != nil {
 		return nil, err
@@ -284,11 +295,29 @@ func (s *service) UpdateQuestion(ctx context.Context, id uuid.UUID, dto domain.U
 	if dto.Options != nil {
 		question.Options = dto.Options
 	}
+	question.Options = clearOptionImagesForNonChoice(question.Type, question.Options)
 	if dto.Options != nil || dto.Type != nil {
 		if err := domain.ValidateQuestionOptions(question.Type, question.Options); err != nil {
 			return nil, err
 		}
 	}
+	if dto.NegativeMarkMode != nil {
+		question.NegativeMarkMode = *dto.NegativeMarkMode
+	}
+	if dto.NegativeValue != nil {
+		question.NegativeValue = *dto.NegativeValue
+	}
+	if dto.WrongsPerPoint != nil {
+		question.WrongsPerPoint = *dto.WrongsPerPoint
+	}
+	mode, val, wpp := domain.NormalizeNegativeMark(question.NegativeMarkMode, question.NegativeValue, question.WrongsPerPoint)
+	if question.Type != domain.QuestionTypeChoice {
+		mode, val, wpp = domain.NegativeMarkNone, 0, 0
+	}
+	if err := domain.ValidateNegativeMark(mode, val, wpp); err != nil {
+		return nil, err
+	}
+	question.NegativeMarkMode, question.NegativeValue, question.WrongsPerPoint = mode, val, wpp
 	if dto.Metadata != nil {
 		if err := s.validateMetadataMedia(ctx, dto.Metadata); err != nil {
 			return nil, err
@@ -299,6 +328,20 @@ func (s *service) UpdateQuestion(ctx context.Context, id uuid.UUID, dto domain.U
 		return nil, err
 	}
 	return question, nil
+}
+
+// clearOptionImagesForNonChoice strips ImageMediaID from options when the
+// question type is not choice (images are choice-only).
+func clearOptionImagesForNonChoice(t domain.QuestionType, in []domain.QuestionOption) []domain.QuestionOption {
+	if t == domain.QuestionTypeChoice || in == nil {
+		return in
+	}
+	out := make([]domain.QuestionOption, len(in))
+	for i, o := range in {
+		o.ImageMediaID = nil
+		out[i] = o
+	}
+	return out
 }
 
 func (s *service) DeleteQuestion(ctx context.Context, id uuid.UUID) error {

@@ -8,6 +8,7 @@
 
 export interface GithubCom4H1RZooraInternalDomainQuestionOption {
   id?: string;
+  image_media_id?: string;
   score?: number;
   value?: string;
 }

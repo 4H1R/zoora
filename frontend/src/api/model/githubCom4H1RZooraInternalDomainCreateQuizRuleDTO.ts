@@ -6,12 +6,14 @@
  * OpenAPI spec version: 1.0
  */
 import type { GithubCom4H1RZooraInternalDomainCreateQuizRuleDTOType } from './githubCom4H1RZooraInternalDomainCreateQuizRuleDTOType';
+import type { GithubCom4H1RZooraInternalDomainQuizQuestionNegativeOverride } from './githubCom4H1RZooraInternalDomainQuizQuestionNegativeOverride';
 
 export interface GithubCom4H1RZooraInternalDomainCreateQuizRuleDTO {
   bank_id?: string;
   /** @minimum 0 */
   count?: number;
   is_dynamic?: boolean;
+  negative_overrides?: GithubCom4H1RZooraInternalDomainQuizQuestionNegativeOverride[];
   question_ids?: string[];
   type: GithubCom4H1RZooraInternalDomainCreateQuizRuleDTOType;
 }

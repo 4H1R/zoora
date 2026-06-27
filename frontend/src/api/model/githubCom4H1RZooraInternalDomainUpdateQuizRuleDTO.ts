@@ -5,6 +5,7 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
+import type { GithubCom4H1RZooraInternalDomainQuizQuestionNegativeOverride } from './githubCom4H1RZooraInternalDomainQuizQuestionNegativeOverride';
 import type { GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTOType } from './githubCom4H1RZooraInternalDomainUpdateQuizRuleDTOType';
 
 export interface GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTO {
@@ -12,6 +13,7 @@ export interface GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTO {
   /** @minimum 0 */
   count?: number;
   is_dynamic?: boolean;
+  negative_overrides?: GithubCom4H1RZooraInternalDomainQuizQuestionNegativeOverride[];
   question_ids?: string[];
   type?: GithubCom4H1RZooraInternalDomainUpdateQuizRuleDTOType;
 }

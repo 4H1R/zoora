@@ -7,6 +7,7 @@
  */
 import type { GithubCom4H1RZooraInternalDomainQuestionBank } from './githubCom4H1RZooraInternalDomainQuestionBank';
 import type { GithubCom4H1RZooraInternalDomainQuiz } from './githubCom4H1RZooraInternalDomainQuiz';
+import type { GithubCom4H1RZooraInternalDomainQuizQuestionNegativeOverride } from './githubCom4H1RZooraInternalDomainQuizQuestionNegativeOverride';
 import type { GithubCom4H1RZooraInternalDomainQuizRuleType } from './githubCom4H1RZooraInternalDomainQuizRuleType';
 
 export interface GithubCom4H1RZooraInternalDomainQuizRule {
@@ -16,6 +17,8 @@ export interface GithubCom4H1RZooraInternalDomainQuizRule {
   created_at?: string;
   id?: string;
   is_dynamic?: boolean;
+  /** NegativeOverrides holds per-question negative-marking overrides (Layer 2a). */
+  negative_overrides?: GithubCom4H1RZooraInternalDomainQuizQuestionNegativeOverride[];
   question_ids?: string[];
   quiz?: GithubCom4H1RZooraInternalDomainQuiz;
   quiz_id?: string;

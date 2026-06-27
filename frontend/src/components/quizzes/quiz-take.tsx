@@ -95,7 +95,14 @@ export function QuizTake({
   }
 
   if (finalSubmission) {
-    return <ResultScreen quiz={quiz} submission={finalSubmission} backHref={backHref} />
+    return (
+      <ResultScreen
+        quiz={quiz}
+        submission={finalSubmission}
+        questions={questions}
+        backHref={backHref}
+      />
+    )
   }
 
   return (

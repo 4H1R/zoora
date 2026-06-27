@@ -80,6 +80,10 @@ func (s *service) Create(ctx context.Context, dto domain.CreateQuizDTO) (*domain
 	if !canManageClass(caller, class) {
 		return nil, domain.ErrForbidden
 	}
+	mode, val, wpp := domain.NormalizeNegativeMark(dto.NegativeMarkMode, dto.NegativeValue, dto.WrongsPerPoint)
+	if err := domain.ValidateNegativeMark(mode, val, wpp); err != nil {
+		return nil, err
+	}
 	quiz := &domain.Quiz{
 		OrganizationID:   class.OrganizationID,
 		UserID:           caller.UserID,
@@ -89,6 +93,9 @@ func (s *service) Create(ctx context.Context, dto domain.CreateQuizDTO) (*domain
 		DurationMinutes:  dto.DurationMinutes,
 		NoBackNavigation: dto.NoBackNavigation,
 		ShuffleQuestions: dto.ShuffleQuestions,
+		NegativeMarkMode: mode,
+		NegativeValue:    val,
+		WrongsPerPoint:   wpp,
 	}
 	if err := s.repo.Create(ctx, quiz); err != nil {
 		return nil, err
@@ -147,6 +154,20 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateQui
 	if dto.ShuffleQuestions != nil {
 		quiz.ShuffleQuestions = *dto.ShuffleQuestions
 	}
+	if dto.NegativeMarkMode != nil {
+		quiz.NegativeMarkMode = *dto.NegativeMarkMode
+	}
+	if dto.NegativeValue != nil {
+		quiz.NegativeValue = *dto.NegativeValue
+	}
+	if dto.WrongsPerPoint != nil {
+		quiz.WrongsPerPoint = *dto.WrongsPerPoint
+	}
+	mode, val, wpp := domain.NormalizeNegativeMark(quiz.NegativeMarkMode, quiz.NegativeValue, quiz.WrongsPerPoint)
+	if err := domain.ValidateNegativeMark(mode, val, wpp); err != nil {
+		return nil, err
+	}
+	quiz.NegativeMarkMode, quiz.NegativeValue, quiz.WrongsPerPoint = mode, val, wpp
 	if err := s.repo.Update(ctx, quiz); err != nil {
 		return nil, err
 	}
@@ -318,13 +339,18 @@ func (s *service) CreateRule(ctx context.Context, quizID uuid.UUID, dto domain.C
 	if questionIDs == nil {
 		questionIDs = []uuid.UUID{}
 	}
+	overrides, err := normalizeNegativeOverrides(dto.NegativeOverrides)
+	if err != nil {
+		return nil, err
+	}
 	rule := &domain.QuizRule{
-		QuizID:      quizID,
-		Type:        dto.Type,
-		BankID:      dto.BankID,
-		QuestionIDs: questionIDs,
-		Count:       dto.Count,
-		IsDynamic:   dto.IsDynamic,
+		QuizID:            quizID,
+		Type:              dto.Type,
+		BankID:            dto.BankID,
+		QuestionIDs:       questionIDs,
+		Count:             dto.Count,
+		IsDynamic:         dto.IsDynamic,
+		NegativeOverrides: overrides,
 	}
 	if err := s.rules.Create(ctx, rule); err != nil {
 		return nil, err
@@ -389,6 +415,13 @@ func (s *service) UpdateRule(ctx context.Context, id uuid.UUID, dto domain.Updat
 	if dto.IsDynamic != nil {
 		rule.IsDynamic = *dto.IsDynamic
 	}
+	if dto.NegativeOverrides != nil {
+		overrides, err := normalizeNegativeOverrides(dto.NegativeOverrides)
+		if err != nil {
+			return nil, err
+		}
+		rule.NegativeOverrides = overrides
+	}
 	if err := s.rules.Update(ctx, rule); err != nil {
 		return nil, err
 	}
@@ -396,6 +429,25 @@ func (s *service) UpdateRule(ctx context.Context, id uuid.UUID, dto domain.Updat
 		s.logger.Warn("failed to recompute quiz total", "quiz_id", rule.QuizID.String(), "err", err)
 	}
 	return rule, nil
+}
+
+// normalizeNegativeOverrides normalizes and validates each per-question
+// negative-marking override on a quiz rule.
+func normalizeNegativeOverrides(in []domain.QuizQuestionNegativeOverride) ([]domain.QuizQuestionNegativeOverride, error) {
+	out := make([]domain.QuizQuestionNegativeOverride, 0, len(in))
+	for _, o := range in {
+		m, v, w := domain.NormalizeNegativeMark(o.Mode, o.NegativeValue, o.WrongsPerPoint)
+		if err := domain.ValidateNegativeMark(m, v, w); err != nil {
+			return nil, err
+		}
+		out = append(out, domain.QuizQuestionNegativeOverride{
+			QuestionID:     o.QuestionID,
+			Mode:           m,
+			NegativeValue:  v,
+			WrongsPerPoint: w,
+		})
+	}
+	return out, nil
 }
 
 func (s *service) DeleteRule(ctx context.Context, id uuid.UUID) error {

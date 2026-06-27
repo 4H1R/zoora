@@ -255,6 +255,76 @@ func TestBankService_CreateQuestion_Success(t *testing.T) {
 	assert.Equal(t, orgID, q.OrganizationID)
 }
 
+func TestBankService_CreateQuestion_NegativeMarkValidated(t *testing.T) {
+	orgID := uuid.New()
+	ctx := staffCtx(orgID)
+	bankRepo := &mockBankRepo{}
+	qRepo := &mockQuestionRepo{}
+	bankID := uuid.New()
+	bankRepo.On("FindByID", ctx, bankID).
+		Return(&domain.QuestionBank{ID: bankID, OrganizationID: orgID}, nil)
+
+	svc := newTestBankService(bankRepo, qRepo)
+	_, err := svc.CreateQuestion(ctx, bankID, domain.CreateQuestionDTO{
+		Text: "Q", Type: domain.QuestionTypeChoice,
+		Options: []domain.QuestionOption{
+			{ID: "a", Value: "x", Score: 1},
+			{ID: "b", Value: "y", Score: 0},
+		},
+		NegativeMarkMode: domain.NegativeMarkPerWrong,
+		NegativeValue:    0,
+	})
+	assert.ErrorIs(t, err, domain.ErrValidation)
+}
+
+func TestBankService_CreateQuestion_NegativeMarkPersisted(t *testing.T) {
+	orgID := uuid.New()
+	ctx := staffCtx(orgID)
+	bankRepo := &mockBankRepo{}
+	qRepo := &mockQuestionRepo{}
+	bankID := uuid.New()
+	bankRepo.On("FindByID", ctx, bankID).
+		Return(&domain.QuestionBank{ID: bankID, OrganizationID: orgID}, nil)
+	qRepo.On("Create", ctx, mock.AnythingOfType("*domain.Question")).Return(nil)
+
+	svc := newTestBankService(bankRepo, qRepo)
+	q, err := svc.CreateQuestion(ctx, bankID, domain.CreateQuestionDTO{
+		Text: "Q", Type: domain.QuestionTypeChoice,
+		Options: []domain.QuestionOption{
+			{ID: "a", Value: "x", Score: 1},
+			{ID: "b", Value: "y", Score: 0},
+		},
+		NegativeMarkMode: domain.NegativeMarkAccumulative,
+		WrongsPerPoint:   3,
+		NegativeValue:    9, // should be zeroed by normalize
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, domain.NegativeMarkAccumulative, q.NegativeMarkMode)
+	assert.Equal(t, 3, q.WrongsPerPoint)
+	assert.Equal(t, float64(0), q.NegativeValue)
+}
+
+func TestBankService_CreateQuestion_OptionImageClearedForNonChoice(t *testing.T) {
+	orgID := uuid.New()
+	ctx := staffCtx(orgID)
+	bankRepo := &mockBankRepo{}
+	qRepo := &mockQuestionRepo{}
+	bankID := uuid.New()
+	bankRepo.On("FindByID", ctx, bankID).
+		Return(&domain.QuestionBank{ID: bankID, OrganizationID: orgID}, nil)
+	qRepo.On("Create", ctx, mock.AnythingOfType("*domain.Question")).Return(nil)
+
+	imgID := uuid.New()
+	svc := newTestBankService(bankRepo, qRepo)
+	q, err := svc.CreateQuestion(ctx, bankID, domain.CreateQuestionDTO{
+		Text: "Q", Type: domain.QuestionTypeShortAnswer,
+		Options: []domain.QuestionOption{{ID: "a", Value: "ans", Score: 1, ImageMediaID: &imgID}},
+	})
+	assert.NoError(t, err)
+	assert.Nil(t, q.Options[0].ImageMediaID)
+	assert.Equal(t, domain.NegativeMarkNone, q.NegativeMarkMode)
+}
+
 func TestBankService_AdminHardDelete_NonAdmin_Forbidden(t *testing.T) {
 	orgID := uuid.New()
 	ctx := staffCtx(orgID)

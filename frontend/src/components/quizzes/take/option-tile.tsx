@@ -1,5 +1,6 @@
 import { CheckCircle2Icon } from "lucide-react"
 
+import { OptionImageThumb } from "@/components/admin/questions/OptionImage"
 import { cn } from "@/lib/utils"
 
 interface OptionTileProps {
@@ -7,9 +8,10 @@ interface OptionTileProps {
   label: string
   checked: boolean
   onClick: () => void
+  imageMediaID?: string
 }
 
-export function OptionTile({ index, label, checked, onClick }: OptionTileProps) {
+export function OptionTile({ index, label, checked, onClick, imageMediaID }: OptionTileProps) {
   const letter = String.fromCharCode(65 + index)
   return (
     <button
@@ -29,6 +31,11 @@ export function OptionTile({ index, label, checked, onClick }: OptionTileProps) 
       >
         {letter}
       </span>
+      {imageMediaID && (
+        <span className="shrink-0">
+          <OptionImageThumb mediaID={imageMediaID} />
+        </span>
+      )}
       <span className="text-foreground text-base leading-snug">{label}</span>
       {checked && <CheckCircle2Icon className="text-foreground ms-auto size-5" />}
     </button>

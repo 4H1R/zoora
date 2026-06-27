@@ -1,4 +1,5 @@
 import type {
+  GithubCom4H1RZooraInternalDomainQuestion as Question,
   GithubCom4H1RZooraInternalDomainQuiz as Quiz,
   GithubCom4H1RZooraInternalDomainQuizSubmission as QuizSubmission,
 } from "@/api/model"
@@ -7,6 +8,7 @@ import { Link } from "@tanstack/react-router"
 import { ArrowLeftIcon, CheckCircle2Icon, ClockIcon, FlagIcon, TrophyIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { OptionImageThumb } from "@/components/admin/questions/OptionImage"
 import { Eyebrow } from "@/components/eyebrow"
 import { Button } from "@/components/ui/button"
 import { formatScore } from "@/lib/score"
@@ -18,16 +20,18 @@ import { formatClock } from "./utils"
 interface ResultScreenProps {
   quiz: Quiz
   submission: QuizSubmission
+  questions?: Question[]
   backHref: string
 }
 
-export function ResultScreen({ quiz, submission, backHref }: ResultScreenProps) {
+export function ResultScreen({ quiz, submission, questions = [], backHref }: ResultScreenProps) {
   const { t } = useTranslation()
   const total = quiz.total_score ?? 0
   const earned = submission.total_score ?? 0
   const pct = total > 0 ? Math.round((earned / total) * 100) : 0
   const answers = submission.answers ?? []
   const totalSpent = answers.reduce((acc, a) => acc + (a.spent_seconds ?? 0), 0)
+  const questionById = new Map(questions.map((q) => [q.id, q]))
 
   return (
     <div className="relative isolate flex flex-col gap-10 pb-24 pt-8">
@@ -83,22 +87,49 @@ export function ResultScreen({ quiz, submission, backHref }: ResultScreenProps) 
       <section className="flex flex-col gap-3">
         <Eyebrow>{t("org.session.quizzes.take.result.perQuestionEyebrow")}</Eyebrow>
         <div className="flex flex-col divide-y divide-dashed">
-          {answers.map((a, i) => (
-            <div key={a.question_id} className="flex items-center justify-between gap-4 py-3">
-              <span className="text-muted-foreground font-mono text-xs tracking-[0.2em]">
-                Q{String(i + 1).padStart(2, "0")}
-              </span>
-              <span className="text-foreground/80 ms-2 grow truncate font-mono text-xs">
-                {a.question_id?.slice(0, 8)}
-              </span>
-              <span className="text-muted-foreground font-mono text-xs tabular-nums">
-                {formatClock(a.spent_seconds ?? 0)}
-              </span>
-              <span className="text-foreground font-mono text-sm font-semibold tabular-nums">
-                {formatScore(a.earned_score ?? 0)}
-              </span>
-            </div>
-          ))}
+          {answers.map((a, i) => {
+            const q = questionById.get(a.question_id)
+            const selectedIds = a.selected_option_ids ?? []
+            const selectedOptions = (q?.options ?? []).filter((o) =>
+              selectedIds.includes(o.id ?? ""),
+            )
+            const imageOptions = selectedOptions.filter((o) => o.image_media_id)
+            const earnedScore = a.earned_score ?? 0
+            // We can only confirm a penalty was applied when the earned score is
+            // negative (scores are stripped on the take endpoint). Degrade to the
+            // earned score otherwise.
+            const penalized = earnedScore < 0
+            return (
+              <div key={a.question_id} className="flex flex-col gap-2 py-3">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted-foreground font-mono text-xs tracking-[0.2em]">
+                    Q{String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="text-foreground/80 ms-2 grow truncate font-mono text-xs">
+                    {q?.text ?? a.question_id?.slice(0, 8)}
+                  </span>
+                  <span className="text-muted-foreground font-mono text-xs tabular-nums">
+                    {formatClock(a.spent_seconds ?? 0)}
+                  </span>
+                  <span className="text-foreground font-mono text-sm font-semibold tabular-nums">
+                    {formatScore(earnedScore)}
+                  </span>
+                </div>
+                {imageOptions.length > 0 && (
+                  <div className="ms-8 flex flex-wrap gap-2">
+                    {imageOptions.map((o) => (
+                      <OptionImageThumb key={o.id} mediaID={o.image_media_id!} />
+                    ))}
+                  </div>
+                )}
+                {penalized && (
+                  <span className="text-destructive ms-8 text-xs">
+                    {t("org.session.quizzes.take.penalty.breakdown")}
+                  </span>
+                )}
+              </div>
+            )
+          })}
         </div>
       </section>
 

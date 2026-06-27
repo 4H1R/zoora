@@ -693,7 +693,11 @@
         "createSuccess": "Quiz created",
         "updateSuccess": "Quiz updated",
         "deleteSuccess": "Quiz deleted",
-        "linkRoomFailed": "Quiz created but session room linking failed"
+        "linkRoomFailed": "Quiz created but session room linking failed",
+        "negativeMark": {
+          "label": "Quiz-wide negative marking",
+          "hint": "Applied to questions that have no negative marking of their own."
+        }
       },
       "questions": {
         "title": "Manage questions",
@@ -717,6 +721,10 @@
         "ruleType": {
           "manual": "Manual",
           "random": "Random"
+        },
+        "override": {
+          "label": "Negative marking for this question",
+          "keepDefault": "Keep question default"
         }
       },
       "toolbar": {
@@ -910,7 +918,24 @@
         },
         "createSuccess": "Question created",
         "updateSuccess": "Question updated",
-        "deleteSuccess": "Question deleted"
+        "deleteSuccess": "Question deleted",
+        "optionImage": {
+          "add": "Add image",
+          "replace": "Replace image",
+          "remove": "Remove"
+        },
+        "negativeMark": {
+          "label": "Negative marking",
+          "modes": {
+            "none": "No penalty",
+            "per_wrong": "Per wrong answer",
+            "accumulative": "Accumulative"
+          },
+          "negativeValue": "Points deducted per wrong",
+          "wrongsPerPoint": "Wrong answers per 1 point lost",
+          "perWrongHint": "Each selected wrong option deducts this many points.",
+          "accumulativeHint": "Every this-many wrong selections deducts 1 point (between 2 and 5)."
+        }
       },
       "toolbar": {
         "sort": "Sort",
@@ -1848,6 +1873,12 @@
             "percent": "Percent",
             "totalTime": "Total time",
             "perQuestionEyebrow": "Per-question time & score"
+          },
+          "penalty": {
+            "explainer": "This quiz uses negative marking — wrong selections deduct points.",
+            "perWrong": "−{{fraction}} per wrong",
+            "accumulative": "−1 per {{count}} wrong",
+            "breakdown": "A penalty was applied for wrong selections."
           }
         }
       },

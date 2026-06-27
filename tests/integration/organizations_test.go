@@ -19,13 +19,14 @@ import (
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/middleware"
 	"github.com/4H1R/zoora/internal/organizations"
+	"github.com/4H1R/zoora/internal/orgsettings"
 	"github.com/4H1R/zoora/internal/users"
 	"github.com/4H1R/zoora/tests/testutil"
 )
 
 func TestOrganizationCRUD(t *testing.T) {
 	db := testutil.SetupPostgres(t)
-	require.NoError(t, db.AutoMigrate(&domain.Organization{}, &domain.User{}))
+	require.NoError(t, db.AutoMigrate(&domain.Organization{}, &domain.User{}, &domain.OrganizationSettings{}))
 
 	logger := slog.Default()
 	cfg := &config.Config{JWTSecret: "test-secret", JWTExpiry: 3600_000_000_000}
@@ -33,7 +34,7 @@ func TestOrganizationCRUD(t *testing.T) {
 	jwtService := auth.NewJWTService(cfg)
 	orgRepo := organizations.NewRepository(db)
 	userRepo := users.NewRepository(db)
-	orgSvc := organizations.NewService(orgRepo, userRepo, logger)
+	orgSvc := organizations.NewService(orgRepo, userRepo, orgsettings.NewRepository(db), nil, logger)
 	handler := organizations.NewHandler(orgSvc)
 
 	org := &domain.Organization{Name: "Test University", Description: "A test organization"}

@@ -7,7 +7,13 @@ import type {
 } from "@/api/model"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { ArrowLeftIcon, ArrowRightIcon, FlagIcon, LockKeyholeIcon } from "lucide-react"
+import {
+  AlertTriangleIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  FlagIcon,
+  LockKeyholeIcon,
+} from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -40,6 +46,7 @@ import { emptyAnswer } from "./types"
 import {
   computeDeadline,
   countAnswered,
+  penaltyText,
   questionTypeKey,
   shuffleSeeded,
 } from "./utils"
@@ -202,6 +209,8 @@ export function PlayArea({ quiz, room, submission, questions, backHref }: PlayAr
           {currentQuestion.text}
         </h2>
 
+        <PenaltyBadge question={currentQuestion} />
+
         <QuestionInput question={currentQuestion} answer={currentAnswer} onChange={setAnswer} />
       </article>
 
@@ -266,6 +275,19 @@ export function PlayArea({ quiz, room, submission, questions, backHref }: PlayAr
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+// PenaltyBadge surfaces the per-question negative-marking penalty (display-only).
+function PenaltyBadge({ question }: { question: Question }) {
+  const { t } = useTranslation()
+  const text = penaltyText(question.negative_config, t)
+  if (!text) return null
+  return (
+    <span className="border-destructive/30 text-destructive bg-destructive/5 inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium">
+      <AlertTriangleIcon className="size-3.5" />
+      {text}
+    </span>
   )
 }
 

@@ -5,6 +5,8 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
+import type { GithubCom4H1RZooraInternalDomainNegativeMarkConfig } from './githubCom4H1RZooraInternalDomainNegativeMarkConfig';
+import type { GithubCom4H1RZooraInternalDomainNegativeMarkMode } from './githubCom4H1RZooraInternalDomainNegativeMarkMode';
 import type { GithubCom4H1RZooraInternalDomainQuestionBank } from './githubCom4H1RZooraInternalDomainQuestionBank';
 import type { GithubCom4H1RZooraInternalDomainQuestionMetadata } from './githubCom4H1RZooraInternalDomainQuestionMetadata';
 import type { GithubCom4H1RZooraInternalDomainQuestionOption } from './githubCom4H1RZooraInternalDomainQuestionOption';
@@ -22,9 +24,19 @@ export interface GithubCom4H1RZooraInternalDomainQuestion {
      */
   is_multi_select?: boolean;
   metadata?: GithubCom4H1RZooraInternalDomainQuestionMetadata[];
+  /**
+     * NegativeConfig is the transient, score-free effective negative-marking
+     * config attached by the "take" endpoint so the client can show penalties
+     * without leaking the answer key. Never persisted.
+     */
+  negative_config?: GithubCom4H1RZooraInternalDomainNegativeMarkConfig;
+  /** Negative-marking default for this question (Layer 1). choice-only. */
+  negative_mark_mode?: GithubCom4H1RZooraInternalDomainNegativeMarkMode;
+  negative_value?: number;
   options?: GithubCom4H1RZooraInternalDomainQuestionOption[];
   organization_id?: string;
   text?: string;
   type?: GithubCom4H1RZooraInternalDomainQuestionType;
   updated_at?: string;
+  wrongs_per_point?: number;
 }

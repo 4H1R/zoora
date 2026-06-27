@@ -370,6 +370,28 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 					}
 					counts.Media++
 					q.Metadata = []domain.QuestionMetadata{{Type: domain.QuestionMetadataPhoto, MediaID: photo.ID}}
+
+					// Demo per-option image on the first choice option, backed by a
+					// real option-photos media row.
+					if q.Type == domain.QuestionTypeChoice && len(q.Options) > 0 {
+						optPhoto := factory.NewMedia(func(m *domain.Media) {
+							m.ModelType = domain.QuestionMediaModelType
+							m.ModelID = q.ID
+							m.CollectionName = domain.QuestionOptionPhotosCollection
+							m.MimeType = "image/png"
+							m.FileName = "option.png"
+						})
+						if err := db.WithContext(ctx).Create(optPhoto).Error; err != nil {
+							return nil, fmt.Errorf("creating option photo: %w", err)
+						}
+						counts.Media++
+						q.Options[0].ImageMediaID = &optPhoto.ID
+						// Demo negative marking for this choice question.
+						q.NegativeMarkMode = domain.NegativeMarkPerWrong
+						q.NegativeValue = domain.FractionFor(len(q.Options))
+						q.WrongsPerPoint = 0
+					}
+
 					if err := db.WithContext(ctx).Save(q).Error; err != nil {
 						return nil, fmt.Errorf("updating question metadata: %w", err)
 					}
@@ -422,8 +444,13 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 			liveSession := sessions[0]
 			practiceSession := sessions[2]
 
-			// 11. Quiz
+			// 11. Quiz — first quiz per org demos quiz-wide negative marking.
 			quiz := factory.NewQuiz(org.ID, teacher.ID, class.ID)
+			if c == 0 {
+				quiz.NegativeMarkMode = domain.NegativeMarkAccumulative
+				quiz.NegativeValue = 0
+				quiz.WrongsPerPoint = 3
+			}
 			if err := db.WithContext(ctx).Create(quiz).Error; err != nil {
 				return nil, fmt.Errorf("creating quiz: %w", err)
 			}
@@ -441,6 +468,12 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 				r.BankID = &bank.ID
 				r.QuestionIDs = questionIDs
 				r.Count = len(questionIDs)
+				// Demo per-question override (Layer 2a) on the first question.
+				if len(questionIDs) > 0 {
+					r.NegativeOverrides = []domain.QuizQuestionNegativeOverride{
+						{QuestionID: questionIDs[0], Mode: domain.NegativeMarkPerWrong, NegativeValue: 0.5},
+					}
+				}
 			})
 			if err := db.WithContext(ctx).Create(rule).Error; err != nil {
 				return nil, fmt.Errorf("creating quiz rule: %w", err)

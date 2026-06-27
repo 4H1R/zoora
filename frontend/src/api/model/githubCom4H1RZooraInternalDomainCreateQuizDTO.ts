@@ -5,13 +5,17 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
+import type { GithubCom4H1RZooraInternalDomainNegativeMarkMode } from './githubCom4H1RZooraInternalDomainNegativeMarkMode';
 
 export interface GithubCom4H1RZooraInternalDomainCreateQuizDTO {
   class_id: string;
   description?: string;
   duration_minutes: number;
+  negative_mark_mode?: GithubCom4H1RZooraInternalDomainNegativeMarkMode;
+  negative_value?: number;
   no_back_navigation?: boolean;
   shuffle_questions?: boolean;
   /** @minLength 2 */
   title: string;
+  wrongs_per_point?: number;
 }

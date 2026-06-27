@@ -23,8 +23,87 @@ import {
   QuizScheduleFields,
 } from "@/components/quizzes/quiz-form-fields"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const TRANSLATION_PREFIX = "admin.quizzes.form"
+
+const NEGATIVE_MODES = ["none", "per_wrong", "accumulative"] as const
+type NegativeMode = (typeof NEGATIVE_MODES)[number]
+
+interface QuizNegativeFieldsProps {
+  mode: NegativeMode
+  negativeValue: number
+  wrongsPerPoint: number
+  onModeChange: (mode: NegativeMode) => void
+  onNegativeValueChange: (value: number) => void
+  onWrongsPerPointChange: (value: number) => void
+  t: (key: string) => string
+}
+
+function QuizNegativeFields({
+  mode,
+  negativeValue,
+  wrongsPerPoint,
+  onModeChange,
+  onNegativeValueChange,
+  onWrongsPerPointChange,
+  t,
+}: QuizNegativeFieldsProps) {
+  return (
+    <Field>
+      <FieldLabel>{t("admin.quizzes.form.negativeMark.label")}</FieldLabel>
+      <Select value={mode} onValueChange={(v) => onModeChange(v as NegativeMode)}>
+        <SelectTrigger>
+          <SelectValue>
+            {(value: NegativeMode) => t(`admin.questions.form.negativeMark.modes.${value}`)}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {NEGATIVE_MODES.map((m) => (
+            <SelectItem key={m} value={m}>
+              {t(`admin.questions.form.negativeMark.modes.${m}`)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {mode === "per_wrong" && (
+        <div className="mt-2 flex flex-col gap-1">
+          <FieldLabel>{t("admin.questions.form.negativeMark.negativeValue")}</FieldLabel>
+          <Input
+            type="number"
+            step="any"
+            min={0}
+            value={negativeValue}
+            onChange={(e) => onNegativeValueChange(Number(e.target.value))}
+          />
+        </div>
+      )}
+      {mode === "accumulative" && (
+        <div className="mt-2 flex flex-col gap-1">
+          <FieldLabel>{t("admin.questions.form.negativeMark.wrongsPerPoint")}</FieldLabel>
+          <Input
+            type="number"
+            min={2}
+            max={5}
+            step={1}
+            value={wrongsPerPoint}
+            onChange={(e) => onWrongsPerPointChange(Number(e.target.value))}
+          />
+        </div>
+      )}
+      <p className="text-muted-foreground text-xs">
+        {t("admin.quizzes.form.negativeMark.hint")}
+      </p>
+    </Field>
+  )
+}
 
 const createSchema = z
   .object({
@@ -37,6 +116,9 @@ const createSchema = z
     shuffle_questions: z.boolean(),
     started_at: z.string().min(1),
     ended_at: z.string().min(1),
+    negative_mark_mode: z.enum(NEGATIVE_MODES),
+    negative_value: z.coerce.number(),
+    wrongs_per_point: z.coerce.number().int(),
   })
   .refine((v) => new Date(v.ended_at).getTime() > new Date(v.started_at).getTime(), {
     path: ["ended_at"],
@@ -49,6 +131,9 @@ const editSchema = z.object({
   duration_minutes: z.coerce.number().int().gt(0),
   no_back_navigation: z.boolean(),
   shuffle_questions: z.boolean(),
+  negative_mark_mode: z.enum(NEGATIVE_MODES),
+  negative_value: z.coerce.number(),
+  wrongs_per_point: z.coerce.number().int(),
 })
 
 type CreateInput = z.input<typeof createSchema>
@@ -66,6 +151,9 @@ const buildCreateDefaults = (classId?: string): CreateValues => ({
   shuffle_questions: false,
   started_at: "",
   ended_at: "",
+  negative_mark_mode: "none",
+  negative_value: 0,
+  wrongs_per_point: 0,
 })
 
 const quizToEditValues = (quiz: Quiz): EditValues => ({
@@ -74,6 +162,9 @@ const quizToEditValues = (quiz: Quiz): EditValues => ({
   duration_minutes: quiz.duration_minutes ?? 30,
   no_back_navigation: quiz.no_back_navigation ?? false,
   shuffle_questions: quiz.shuffle_questions ?? false,
+  negative_mark_mode: (quiz.negative_mark_mode as NegativeMode) ?? "none",
+  negative_value: quiz.negative_value ?? 0,
+  wrongs_per_point: quiz.wrongs_per_point ?? 0,
 })
 
 interface QuizCreateModalProps {
@@ -111,6 +202,21 @@ export function QuizCreateModal({
       t={t}
     />
   )
+}
+
+// negativePayload normalizes the quiz-wide negative fields so only the fields
+// relevant to the selected mode are non-zero (mirrors backend normalization).
+function negativePayload(values: {
+  negative_mark_mode: NegativeMode
+  negative_value: number
+  wrongs_per_point: number
+}) {
+  const mode = values.negative_mark_mode
+  return {
+    negative_mark_mode: mode,
+    negative_value: mode === "per_wrong" ? values.negative_value : 0,
+    wrongs_per_point: mode === "accumulative" ? values.wrongs_per_point : 0,
+  }
 }
 
 function invalidateQuizCaches(queryClient: ReturnType<typeof useQueryClient>) {
@@ -174,6 +280,7 @@ function CreateDialog({
         duration_minutes: values.duration_minutes,
         no_back_navigation: values.no_back_navigation,
         shuffle_questions: values.shuffle_questions,
+        ...negativePayload(values),
       },
     })
   })
@@ -183,6 +290,9 @@ function CreateDialog({
   const sessionId = form.watch("class_session_id")
   const noBack = form.watch("no_back_navigation")
   const shuffle = form.watch("shuffle_questions")
+  const negMode = form.watch("negative_mark_mode") as NegativeMode
+  const negValue = form.watch("negative_value") as number
+  const negWpp = form.watch("wrongs_per_point") as number
 
   return (
     <ResourceFormDialog
@@ -229,6 +339,15 @@ function CreateDialog({
           onNoBackNavigationChange={(v) => form.setValue("no_back_navigation", v)}
           onShuffleQuestionsChange={(v) => form.setValue("shuffle_questions", v)}
         />
+        <QuizNegativeFields
+          mode={negMode}
+          negativeValue={negValue}
+          wrongsPerPoint={negWpp}
+          onModeChange={(v) => form.setValue("negative_mark_mode", v)}
+          onNegativeValueChange={(v) => form.setValue("negative_value", v)}
+          onWrongsPerPointChange={(v) => form.setValue("wrongs_per_point", v)}
+          t={t}
+        />
       </FieldGroup>
     </ResourceFormDialog>
   )
@@ -264,12 +383,25 @@ function EditDialog({ open, onOpenChange, quiz, onInvalidate, t }: EditDialogPro
 
   const onSubmit = form.handleSubmit((values) => {
     if (!quiz.id) return
-    mutation.mutate({ id: quiz.id, data: values })
+    mutation.mutate({
+      id: quiz.id,
+      data: {
+        title: values.title,
+        description: values.description,
+        duration_minutes: values.duration_minutes,
+        no_back_navigation: values.no_back_navigation,
+        shuffle_questions: values.shuffle_questions,
+        ...negativePayload(values),
+      },
+    })
   })
 
   const errors = form.formState.errors
   const noBack = form.watch("no_back_navigation")
   const shuffle = form.watch("shuffle_questions")
+  const negMode = form.watch("negative_mark_mode") as NegativeMode
+  const negValue = form.watch("negative_value") as number
+  const negWpp = form.watch("wrongs_per_point") as number
 
   return (
     <ResourceFormDialog
@@ -289,6 +421,15 @@ function EditDialog({ open, onOpenChange, quiz, onInvalidate, t }: EditDialogPro
           shuffleQuestions={shuffle}
           onNoBackNavigationChange={(v) => form.setValue("no_back_navigation", v)}
           onShuffleQuestionsChange={(v) => form.setValue("shuffle_questions", v)}
+        />
+        <QuizNegativeFields
+          mode={negMode}
+          negativeValue={negValue}
+          wrongsPerPoint={negWpp}
+          onModeChange={(v) => form.setValue("negative_mark_mode", v)}
+          onNegativeValueChange={(v) => form.setValue("negative_value", v)}
+          onWrongsPerPointChange={(v) => form.setValue("wrongs_per_point", v)}
+          t={t}
         />
       </FieldGroup>
     </ResourceFormDialog>

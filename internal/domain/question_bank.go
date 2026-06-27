@@ -27,9 +27,10 @@ func (t QuestionType) Valid() bool {
 }
 
 type QuestionOption struct {
-	ID    string  `json:"id"`
-	Value string  `json:"value"`
-	Score float64 `json:"score"`
+	ID           string     `json:"id"`
+	Value        string     `json:"value"`
+	Score        float64    `json:"score"`
+	ImageMediaID *uuid.UUID `json:"image_media_id,omitempty"`
 }
 
 type QuestionMetadataType string
@@ -56,6 +57,10 @@ const QuestionMediaModelType = "question"
 // QuestionPhotosCollection is the media collection name for question photos.
 const QuestionPhotosCollection = "photos"
 
+// QuestionOptionPhotosCollection is the media collection name for per-option
+// images on choice questions.
+const QuestionOptionPhotosCollection = "option-photos"
+
 type QuestionBank struct {
 	ID             uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
 	OrganizationID uuid.UUID      `gorm:"type:uuid;not null;index" json:"organization_id"`
@@ -75,14 +80,25 @@ type Question struct {
 	Type      QuestionType       `gorm:"type:varchar(20);not null" json:"type"`
 	Options   []QuestionOption   `gorm:"type:jsonb;serializer:json" json:"options"`
 	Metadata  []QuestionMetadata `gorm:"type:jsonb;serializer:json" json:"metadata"`
-	CreatedAt time.Time          `json:"created_at"`
-	UpdatedAt time.Time        `json:"updated_at"`
-	DeletedAt gorm.DeletedAt   `gorm:"index" json:"-"`
+
+	// Negative-marking default for this question (Layer 1). choice-only.
+	NegativeMarkMode NegativeMarkMode `gorm:"type:varchar(20);not null;default:'none'" json:"negative_mark_mode"`
+	NegativeValue    float64          `gorm:"not null;default:0" json:"negative_value"`
+	WrongsPerPoint   int              `gorm:"not null;default:0" json:"wrongs_per_point"`
+
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
 	// IsMultiSelectFlag is populated only by the "take" endpoint after answer
 	// keys are stripped, so the client can still render multi-select choice
 	// questions without seeing per-option scores.
 	IsMultiSelectFlag *bool `gorm:"-" json:"is_multi_select,omitempty"`
+
+	// NegativeConfig is the transient, score-free effective negative-marking
+	// config attached by the "take" endpoint so the client can show penalties
+	// without leaking the answer key. Never persisted.
+	NegativeConfig *NegativeMarkConfig `gorm:"-" json:"negative_config,omitempty"`
 }
 
 type CreateQuestionBankDTO struct {
@@ -96,17 +112,23 @@ type UpdateQuestionBankDTO struct {
 }
 
 type CreateQuestionDTO struct {
-	Text     string             `json:"text" binding:"required,min=1"`
-	Type     QuestionType       `json:"type" binding:"required,oneof=descriptive short_answer choice"`
-	Options  []QuestionOption   `json:"options"`
-	Metadata []QuestionMetadata `json:"metadata"`
+	Text             string             `json:"text" binding:"required,min=1"`
+	Type             QuestionType       `json:"type" binding:"required,oneof=descriptive short_answer choice"`
+	Options          []QuestionOption   `json:"options"`
+	Metadata         []QuestionMetadata `json:"metadata"`
+	NegativeMarkMode NegativeMarkMode   `json:"negative_mark_mode"`
+	NegativeValue    float64            `json:"negative_value"`
+	WrongsPerPoint   int                `json:"wrongs_per_point"`
 }
 
 type UpdateQuestionDTO struct {
-	Text     *string            `json:"text" binding:"omitempty,min=1"`
-	Type     *QuestionType      `json:"type" binding:"omitempty,oneof=descriptive short_answer choice"`
-	Options  []QuestionOption   `json:"options"`
-	Metadata []QuestionMetadata `json:"metadata"`
+	Text             *string            `json:"text" binding:"omitempty,min=1"`
+	Type             *QuestionType      `json:"type" binding:"omitempty,oneof=descriptive short_answer choice"`
+	Options          []QuestionOption   `json:"options"`
+	Metadata         []QuestionMetadata `json:"metadata"`
+	NegativeMarkMode *NegativeMarkMode  `json:"negative_mark_mode"`
+	NegativeValue    *float64           `json:"negative_value"`
+	WrongsPerPoint   *int               `json:"wrongs_per_point"`
 }
 
 // IsMultiSelect reports whether a choice question has more than one
@@ -187,6 +209,11 @@ func ValidateQuestionOptions(qType QuestionType, options []QuestionOption) error
 		if qType == QuestionTypeShortAnswer && strings.TrimSpace(o.Value) == "" {
 			return NewValidationError(map[string]string{
 				fmt.Sprintf("options[%d].value", i): "value is required for short_answer options",
+			})
+		}
+		if qType != QuestionTypeChoice && o.ImageMediaID != nil {
+			return NewValidationError(map[string]string{
+				fmt.Sprintf("options[%d].image_media_id", i): "option images are allowed only for choice questions",
 			})
 		}
 	}

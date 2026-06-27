@@ -1,4 +1,5 @@
 import type {
+  GithubCom4H1RZooraInternalDomainNegativeMarkConfig as NegativeMarkConfig,
   GithubCom4H1RZooraInternalDomainQuestion as Question,
   GithubCom4H1RZooraInternalDomainQuizRoom as QuizRoom,
 } from "@/api/model"
@@ -72,4 +73,37 @@ export function questionTypeKey(type: Question["type"]): "choice" | "short" | "d
   if (type === "choice") return "choice"
   if (type === "short_answer") return "short"
   return "descriptive"
+}
+
+// formatFraction renders a per-wrong fraction for display; rounds to 2 decimals
+// and trims trailing zeros (e.g. 0.5 -> "0.5", 0.33 -> "0.33", 0.2 -> "0.2").
+export function formatFraction(value: number): string {
+  return value.toFixed(2).replace(/\.?0+$/, "")
+}
+
+// penaltyText returns a human-readable per-question penalty string, or null
+// when the config has no negative marking.
+export function penaltyText(
+  cfg: NegativeMarkConfig | undefined,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+): string | null {
+  if (!cfg || !cfg.mode || cfg.mode === "none") return null
+  if (cfg.mode === "per_wrong") {
+    return t("org.session.quizzes.take.penalty.perWrong", {
+      fraction: formatFraction(cfg.fraction ?? cfg.negative_value ?? 0),
+    })
+  }
+  if (cfg.mode === "accumulative") {
+    return t("org.session.quizzes.take.penalty.accumulative", {
+      count: cfg.wrongs_per_point ?? 0,
+    })
+  }
+  return null
+}
+
+// anyNegativeMarking reports whether any question carries active negative marking.
+export function anyNegativeMarking(questions: Question[]): boolean {
+  return questions.some(
+    (q) => q.negative_config?.mode && q.negative_config.mode !== "none",
+  )
 }

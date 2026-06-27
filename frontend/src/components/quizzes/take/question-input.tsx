@@ -31,6 +31,7 @@ export function QuestionInput({ question, answer, onChange }: QuestionInputProps
               index={i}
               label={opt.value ?? ""}
               checked={checked}
+              imageMediaID={opt.image_media_id}
               onClick={() => onChange((prev) => toggleSelection(prev, id, isMulti))}
             />
           )

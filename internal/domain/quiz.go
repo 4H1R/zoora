@@ -36,9 +36,25 @@ type Quiz struct {
 	TotalScore       float64        `gorm:"not null;default:0" json:"total_score"`
 	NoBackNavigation bool           `gorm:"not null;default:false" json:"no_back_navigation"`
 	ShuffleQuestions bool           `gorm:"not null;default:false" json:"shuffle_questions"`
-	CreatedAt        time.Time      `json:"created_at"`
-	UpdatedAt        time.Time      `json:"updated_at"`
-	DeletedAt        gorm.DeletedAt `gorm:"index" json:"-"`
+
+	// Quiz-wide negative-marking override (Layer 2b). Fills gaps for questions
+	// (manual and random) lacking their own setting.
+	NegativeMarkMode NegativeMarkMode `gorm:"type:varchar(20);not null;default:'none'" json:"negative_mark_mode"`
+	NegativeValue    float64          `gorm:"not null;default:0" json:"negative_value"`
+	WrongsPerPoint   int              `gorm:"not null;default:0" json:"wrongs_per_point"`
+
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+// QuizQuestionNegativeOverride is a per-question negative-marking override
+// (Layer 2a) stored on a QuizRule.
+type QuizQuestionNegativeOverride struct {
+	QuestionID     uuid.UUID        `json:"question_id"`
+	Mode           NegativeMarkMode `json:"mode"`
+	NegativeValue  float64          `json:"negative_value"`
+	WrongsPerPoint int              `json:"wrongs_per_point"`
 }
 
 type QuizRule struct {
@@ -51,8 +67,12 @@ type QuizRule struct {
 	QuestionIDs []uuid.UUID   `gorm:"type:jsonb;serializer:json" json:"question_ids,omitempty"`
 	Count       int           `gorm:"not null;default:0" json:"count"`
 	IsDynamic   bool          `gorm:"not null;default:false" json:"is_dynamic"`
-	CreatedAt   time.Time     `json:"created_at"`
-	UpdatedAt   time.Time     `json:"updated_at"`
+
+	// NegativeOverrides holds per-question negative-marking overrides (Layer 2a).
+	NegativeOverrides []QuizQuestionNegativeOverride `gorm:"type:jsonb;serializer:json" json:"negative_overrides"`
+
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type QuizRoom struct {
@@ -68,36 +88,44 @@ type QuizRoom struct {
 }
 
 type CreateQuizDTO struct {
-	ClassID          uuid.UUID `json:"class_id" binding:"required"`
-	Title            string    `json:"title" binding:"required,min=2"`
-	Description      string    `json:"description"`
-	DurationMinutes  int       `json:"duration_minutes" binding:"required,gt=0"`
-	NoBackNavigation bool      `json:"no_back_navigation"`
-	ShuffleQuestions bool      `json:"shuffle_questions"`
+	ClassID          uuid.UUID        `json:"class_id" binding:"required"`
+	Title            string           `json:"title" binding:"required,min=2"`
+	Description      string           `json:"description"`
+	DurationMinutes  int              `json:"duration_minutes" binding:"required,gt=0"`
+	NoBackNavigation bool             `json:"no_back_navigation"`
+	ShuffleQuestions bool             `json:"shuffle_questions"`
+	NegativeMarkMode NegativeMarkMode `json:"negative_mark_mode"`
+	NegativeValue    float64          `json:"negative_value"`
+	WrongsPerPoint   int              `json:"wrongs_per_point"`
 }
 
 type UpdateQuizDTO struct {
-	Title            *string `json:"title" binding:"omitempty,min=2"`
-	Description      *string `json:"description"`
-	DurationMinutes  *int    `json:"duration_minutes" binding:"omitempty,gt=0"`
-	NoBackNavigation *bool   `json:"no_back_navigation"`
-	ShuffleQuestions *bool   `json:"shuffle_questions"`
+	Title            *string           `json:"title" binding:"omitempty,min=2"`
+	Description      *string           `json:"description"`
+	DurationMinutes  *int              `json:"duration_minutes" binding:"omitempty,gt=0"`
+	NoBackNavigation *bool             `json:"no_back_navigation"`
+	ShuffleQuestions *bool             `json:"shuffle_questions"`
+	NegativeMarkMode *NegativeMarkMode `json:"negative_mark_mode"`
+	NegativeValue    *float64          `json:"negative_value"`
+	WrongsPerPoint   *int              `json:"wrongs_per_point"`
 }
 
 type CreateQuizRuleDTO struct {
-	Type        QuizRuleType `json:"type" binding:"required,oneof=manual random"`
-	BankID      *uuid.UUID   `json:"bank_id"`
-	QuestionIDs []uuid.UUID  `json:"question_ids"`
-	Count       int          `json:"count" binding:"gte=0"`
-	IsDynamic   bool         `json:"is_dynamic"`
+	Type              QuizRuleType                   `json:"type" binding:"required,oneof=manual random"`
+	BankID            *uuid.UUID                     `json:"bank_id"`
+	QuestionIDs       []uuid.UUID                    `json:"question_ids"`
+	Count             int                            `json:"count" binding:"gte=0"`
+	IsDynamic         bool                           `json:"is_dynamic"`
+	NegativeOverrides []QuizQuestionNegativeOverride `json:"negative_overrides"`
 }
 
 type UpdateQuizRuleDTO struct {
-	Type        *QuizRuleType `json:"type" binding:"omitempty,oneof=manual random"`
-	BankID      *uuid.UUID    `json:"bank_id"`
-	QuestionIDs []uuid.UUID   `json:"question_ids"`
-	Count       *int          `json:"count" binding:"omitempty,gte=0"`
-	IsDynamic   *bool         `json:"is_dynamic"`
+	Type              *QuizRuleType                  `json:"type" binding:"omitempty,oneof=manual random"`
+	BankID            *uuid.UUID                     `json:"bank_id"`
+	QuestionIDs       []uuid.UUID                    `json:"question_ids"`
+	Count             *int                           `json:"count" binding:"omitempty,gte=0"`
+	IsDynamic         *bool                          `json:"is_dynamic"`
+	NegativeOverrides []QuizQuestionNegativeOverride `json:"negative_overrides"`
 }
 
 type CreateQuizRoomDTO struct {

@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { GithubCom4H1RZooraInternalDomainClass } from './githubCom4H1RZooraInternalDomainClass';
+import type { GithubCom4H1RZooraInternalDomainNegativeMarkMode } from './githubCom4H1RZooraInternalDomainNegativeMarkMode';
 import type { GithubCom4H1RZooraInternalDomainUser } from './githubCom4H1RZooraInternalDomainUser';
 
 export interface GithubCom4H1RZooraInternalDomainQuiz {
@@ -15,6 +16,12 @@ export interface GithubCom4H1RZooraInternalDomainQuiz {
   description?: string;
   duration_minutes?: number;
   id?: string;
+  /**
+     * Quiz-wide negative-marking override (Layer 2b). Fills gaps for questions
+     * (manual and random) lacking their own setting.
+     */
+  negative_mark_mode?: GithubCom4H1RZooraInternalDomainNegativeMarkMode;
+  negative_value?: number;
   no_back_navigation?: boolean;
   organization_id?: string;
   shuffle_questions?: boolean;
@@ -23,4 +30,5 @@ export interface GithubCom4H1RZooraInternalDomainQuiz {
   updated_at?: string;
   user?: GithubCom4H1RZooraInternalDomainUser;
   user_id?: string;
+  wrongs_per_point?: number;
 }

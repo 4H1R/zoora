@@ -7,14 +7,9 @@
  */
 import type { GithubCom4H1RZooraInternalDomainNegativeMarkMode } from './githubCom4H1RZooraInternalDomainNegativeMarkMode';
 
-export interface GithubCom4H1RZooraInternalDomainUpdateQuizDTO {
-  description?: string;
-  duration_minutes?: number;
-  negative_mark_mode?: GithubCom4H1RZooraInternalDomainNegativeMarkMode;
+export interface GithubCom4H1RZooraInternalDomainQuizQuestionNegativeOverride {
+  mode?: GithubCom4H1RZooraInternalDomainNegativeMarkMode;
   negative_value?: number;
-  no_back_navigation?: boolean;
-  shuffle_questions?: boolean;
-  /** @minLength 2 */
-  title?: string;
+  question_id?: string;
   wrongs_per_point?: number;
 }

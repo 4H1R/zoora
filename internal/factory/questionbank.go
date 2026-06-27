@@ -66,6 +66,20 @@ func NewQuestion(bankID, orgID uuid.UUID, opts ...func(*domain.Question)) *domai
 			}}
 		}
 	}
+	// Negative marking only applies to choice questions; occasionally set a mode.
+	if q.Type == domain.QuestionTypeChoice && q.NegativeMarkMode == "" && fake.Bool() {
+		if fake.Bool() {
+			q.NegativeMarkMode = domain.NegativeMarkPerWrong
+			q.NegativeValue = domain.FractionFor(len(q.Options))
+		} else {
+			n := min(max(len(q.Options), 2), 5)
+			q.NegativeMarkMode = domain.NegativeMarkAccumulative
+			q.WrongsPerPoint = n
+		}
+	}
+	if q.NegativeMarkMode == "" {
+		q.NegativeMarkMode = domain.NegativeMarkNone
+	}
 	if q.Metadata == nil {
 		q.Metadata = []domain.QuestionMetadata{}
 	}

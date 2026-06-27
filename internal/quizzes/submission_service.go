@@ -37,9 +37,15 @@ func (s *service) ListQuestionsForTaking(ctx context.Context, quizID uuid.UUID) 
 		return nil, err
 	}
 
+	quizWide := domain.NegativeMarkConfig{Mode: quiz.NegativeMarkMode, NegativeValue: quiz.NegativeValue, WrongsPerPoint: quiz.WrongsPerPoint}
+
 	seen := make(map[uuid.UUID]struct{})
 	out := make([]domain.Question, 0)
 	for _, r := range rules {
+		ovByQ := make(map[uuid.UUID]domain.QuizQuestionNegativeOverride, len(r.NegativeOverrides))
+		for _, ov := range r.NegativeOverrides {
+			ovByQ[ov.QuestionID] = ov
+		}
 		picked, err := s.pickQuestionsForRule(ctx, r)
 		if err != nil {
 			return nil, err
@@ -49,7 +55,18 @@ func (s *service) ListQuestionsForTaking(ctx context.Context, quizID uuid.UUID) 
 				continue
 			}
 			seen[picked[i].ID] = struct{}{}
-			out = append(out, sanitizeQuestionForTaking(picked[i]))
+			sanitized := sanitizeQuestionForTaking(picked[i])
+			if sanitized.Type == domain.QuestionTypeChoice {
+				var ovPtr *domain.QuizQuestionNegativeOverride
+				if ov, ok := ovByQ[picked[i].ID]; ok {
+					ovPtr = &ov
+				}
+				cfg := domain.ResolveNegativeMark(picked[i], ovPtr, quizWide)
+				if cfg.Mode != domain.NegativeMarkNone {
+					sanitized.NegativeConfig = &cfg
+				}
+			}
+			out = append(out, sanitized)
 		}
 	}
 	return out, nil
@@ -94,7 +111,7 @@ func sanitizeQuestionForTaking(q domain.Question) domain.Question {
 		multi := q.IsMultiSelect()
 		opts := make([]domain.QuestionOption, len(q.Options))
 		for i, o := range q.Options {
-			opts[i] = domain.QuestionOption{ID: o.ID, Value: o.Value}
+			opts[i] = domain.QuestionOption{ID: o.ID, Value: o.Value, ImageMediaID: o.ImageMediaID}
 		}
 		q.Options = opts
 		q.IsMultiSelectFlag = &multi
@@ -213,6 +230,27 @@ func (s *service) SubmitQuiz(ctx context.Context, submissionID uuid.UUID, dto do
 		qMap[questions[i].ID] = &questions[i]
 	}
 
+	// Build per-question effective negative-marking config from the quiz rules
+	// (per-question override) + quiz-wide default.
+	rules, _, err := s.rules.ListByQuiz(ctx, sub.QuizID, domain.ListParams{Page: 1, PageSize: 10000})
+	if err != nil {
+		return nil, err
+	}
+	quizWide := domain.NegativeMarkConfig{Mode: quiz.NegativeMarkMode, NegativeValue: quiz.NegativeValue, WrongsPerPoint: quiz.WrongsPerPoint}
+	overrideByQ := make(map[uuid.UUID]domain.QuizQuestionNegativeOverride)
+	for _, r := range rules {
+		for _, ov := range r.NegativeOverrides {
+			overrideByQ[ov.QuestionID] = ov
+		}
+	}
+	cfgFor := func(q *domain.Question) domain.NegativeMarkConfig {
+		var ovPtr *domain.QuizQuestionNegativeOverride
+		if ov, ok := overrideByQ[q.ID]; ok {
+			ovPtr = &ov
+		}
+		return domain.ResolveNegativeMark(*q, ovPtr, quizWide)
+	}
+
 	answers := make([]domain.SubmissionAnswer, 0, len(dto.Answers))
 	var totalScore float64
 
@@ -226,7 +264,7 @@ func (s *service) SubmitQuiz(ctx context.Context, submissionID uuid.UUID, dto do
 
 		q, exists := qMap[a.QuestionID]
 		if exists {
-			sa.EarnedScore = gradeAnswer(q, a)
+			sa.EarnedScore = gradeAnswer(q, a, cfgFor(q))
 		}
 		totalScore += sa.EarnedScore
 		answers = append(answers, sa)
@@ -345,10 +383,10 @@ func (s *service) GradeSubmission(ctx context.Context, id uuid.UUID, dto domain.
 	return sub, nil
 }
 
-func gradeAnswer(q *domain.Question, a domain.SubmitAnswerDTO) float64 {
+func gradeAnswer(q *domain.Question, a domain.SubmitAnswerDTO, cfg domain.NegativeMarkConfig) float64 {
 	switch q.Type {
 	case domain.QuestionTypeChoice:
-		return gradeChoice(q.Options, a.SelectedOptionIDs)
+		return gradeChoice(q.Options, a.SelectedOptionIDs, cfg)
 	case domain.QuestionTypeShortAnswer:
 		return gradeShortAnswer(q.Options, a.Value)
 	case domain.QuestionTypeDescriptive:
@@ -357,18 +395,28 @@ func gradeAnswer(q *domain.Question, a domain.SubmitAnswerDTO) float64 {
 	return 0
 }
 
-func gradeChoice(options []domain.QuestionOption, selectedIDs []string) float64 {
+// gradeChoice computes earned = positive - penalty. Only the SIGN of an
+// option's score matters: Score>0 is correct, Score<=0 is a distractor.
+// Penalty is driven by the resolved negative-mark config. Result may be negative.
+func gradeChoice(options []domain.QuestionOption, selectedIDs []string, cfg domain.NegativeMarkConfig) float64 {
 	optMap := make(map[string]float64, len(options))
 	for _, o := range options {
 		optMap[o.ID] = o.Score
 	}
-	var total float64
+	var positive float64
+	wrongCount := 0
 	for _, id := range selectedIDs {
-		if score, ok := optMap[id]; ok {
-			total += score
+		score, ok := optMap[id]
+		if !ok {
+			continue
+		}
+		if score > 0 {
+			positive += score
+		} else {
+			wrongCount++
 		}
 	}
-	return total
+	return positive - cfg.Penalty(wrongCount)
 }
 
 func gradeShortAnswer(options []domain.QuestionOption, value string) float64 {

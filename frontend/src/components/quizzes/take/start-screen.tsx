@@ -1,4 +1,5 @@
 import type {
+  GithubCom4H1RZooraInternalDomainQuestion as Question,
   GithubCom4H1RZooraInternalDomainQuiz as Quiz,
   GithubCom4H1RZooraInternalDomainQuizRoom as QuizRoom,
 } from "@/api/model"
@@ -25,21 +26,32 @@ import { formatScore } from "@/lib/score"
 
 import { DecorativeBackground } from "./decorations"
 import { MetaCell } from "./meta-cell"
+import { anyNegativeMarking } from "./utils"
 
 interface StartScreenProps {
   quiz: Quiz
   room: QuizRoom
+  questions: Question[]
   totalQuestions: number
   backHref: string
   starting: boolean
   onBegin: () => void
 }
 
-export function StartScreen({ quiz, room, totalQuestions, backHref, starting, onBegin }: StartScreenProps) {
+export function StartScreen({
+  quiz,
+  room,
+  questions,
+  totalQuestions,
+  backHref,
+  starting,
+  onBegin,
+}: StartScreenProps) {
   const { t } = useTranslation()
   const formatDate = useFormatDate()
   const shortId = (quiz.id ?? "").slice(0, 8).toUpperCase()
   const closesAt = formatDate(room.ended_at, "datetime")
+  const hasNegativeMarking = anyNegativeMarking(questions)
 
   return (
     <div className="relative isolate flex flex-col gap-10 pb-24 pt-8">
@@ -121,6 +133,12 @@ export function StartScreen({ quiz, room, totalQuestions, backHref, starting, on
             <AlertTriangleIcon className="text-muted-foreground mt-0.5 size-4" />
             {t("org.session.quizzes.take.rules.autoSubmit")}
           </li>
+          {hasNegativeMarking && (
+            <li className="text-destructive flex items-start gap-2">
+              <AlertTriangleIcon className="mt-0.5 size-4" />
+              {t("org.session.quizzes.take.penalty.explainer")}
+            </li>
+          )}
         </ul>
       </section>
 

@@ -477,6 +477,8 @@ func TestQuizService_SubmitQuiz_AutoGrading(t *testing.T) {
 		Return(&domain.Quiz{ID: quizID, DurationMinutes: 60}, nil)
 	d.roomRepo.On("FindOpenByQuizID", ctx, quizID).
 		Return(&domain.QuizRoom{ID: uuid.New(), QuizID: quizID}, nil)
+	d.ruleRepo.On("ListByQuiz", ctx, quizID, domain.ListParams{Page: 1, PageSize: 10000}).
+		Return([]domain.QuizRule{}, int64(0), nil)
 
 	questions := []domain.Question{
 		{
@@ -642,6 +644,8 @@ func TestQuizService_SubmitQuiz_MultipleChoiceScoring(t *testing.T) {
 		Return(&domain.Quiz{ID: quizID, DurationMinutes: 60}, nil)
 	d.roomRepo.On("FindOpenByQuizID", ctx, quizID).
 		Return(&domain.QuizRoom{ID: uuid.New(), QuizID: quizID}, nil)
+	d.ruleRepo.On("ListByQuiz", ctx, quizID, domain.ListParams{Page: 1, PageSize: 10000}).
+		Return([]domain.QuizRule{}, int64(0), nil)
 
 	questions := []domain.Question{
 		{
@@ -665,9 +669,102 @@ func TestQuizService_SubmitQuiz_MultipleChoiceScoring(t *testing.T) {
 	})
 
 	assert.NoError(t, err)
-	// 1 + 1.5 + (-0.5) = 2.0
-	assert.Equal(t, 2.0, result.Answers[0].EarnedScore)
-	assert.Equal(t, 2.0, result.TotalScore)
+	// Sign-only correctness with mode=none: positives 1 + 1.5, the -0.5 option
+	// is a distractor contributing 0 (no penalty). 1 + 1.5 + 0 = 2.5
+	assert.Equal(t, 2.5, result.Answers[0].EarnedScore)
+	assert.Equal(t, 2.5, result.TotalScore)
+}
+
+func TestQuizService_SubmitQuiz_AppliesResolvedNegativeMarking(t *testing.T) {
+	studentID := uuid.New()
+	quizID := uuid.New()
+	subID := uuid.New()
+	qID := uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	startedAt := time.Now().Add(-5 * time.Minute)
+	d.subRepo.On("FindByID", ctx, subID).
+		Return(&domain.QuizSubmission{ID: subID, QuizID: quizID, UserID: studentID, Status: domain.SubmissionStatusInProgress, StartedAt: startedAt}, nil)
+	d.quizRepo.On("FindByID", ctx, quizID).
+		Return(&domain.Quiz{ID: quizID, DurationMinutes: 60}, nil)
+	d.roomRepo.On("FindOpenByQuizID", ctx, quizID).
+		Return(&domain.QuizRoom{ID: uuid.New(), QuizID: quizID}, nil)
+	d.ruleRepo.On("ListByQuiz", ctx, quizID, domain.ListParams{Page: 1, PageSize: 10000}).
+		Return([]domain.QuizRule{
+			{
+				ID: uuid.New(), QuizID: quizID, Type: domain.QuizRuleTypeManual, QuestionIDs: []uuid.UUID{qID},
+				NegativeOverrides: []domain.QuizQuestionNegativeOverride{
+					{QuestionID: qID, Mode: domain.NegativeMarkPerWrong, NegativeValue: 0.5},
+				},
+			},
+		}, int64(1), nil)
+
+	questions := []domain.Question{
+		{
+			ID: qID, Type: domain.QuestionTypeChoice,
+			Options: []domain.QuestionOption{
+				{ID: "a", Value: "correct", Score: 1},
+				{ID: "b", Value: "wrong", Score: 0},
+			},
+		},
+	}
+	d.questionRepo.On("FindByIDs", ctx, mock.Anything).Return(questions, nil)
+	d.subRepo.On("Update", ctx, mock.AnythingOfType("*domain.QuizSubmission")).Return(nil)
+
+	svc := d.service()
+	result, err := svc.SubmitQuiz(ctx, subID, domain.SubmitQuizDTO{
+		Answers: []domain.SubmitAnswerDTO{
+			{QuestionID: qID, SelectedOptionIDs: []string{"a", "b"}, SpentSeconds: 30},
+		},
+	})
+	assert.NoError(t, err)
+	// positive 1 - per_wrong penalty 0.5*1 = 0.5
+	assert.Equal(t, 0.5, result.Answers[0].EarnedScore)
+	assert.Equal(t, 0.5, result.TotalScore)
+}
+
+func TestQuizService_ListQuestionsForTaking_AttachesNegativeConfig(t *testing.T) {
+	studentID := uuid.New()
+	quizID := uuid.New()
+	classID := uuid.New()
+	qID := uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	d.quizRepo.On("FindByID", ctx, quizID).
+		Return(&domain.Quiz{ID: quizID, ClassID: classID, UserID: uuid.New()}, nil)
+	d.memberRepo.On("Exists", ctx, classID, studentID).Return(true, nil)
+	d.ruleRepo.On("ListByQuiz", ctx, quizID, domain.ListParams{Page: 1, PageSize: 10000}).
+		Return([]domain.QuizRule{
+			{
+				ID: uuid.New(), QuizID: quizID, Type: domain.QuizRuleTypeManual, QuestionIDs: []uuid.UUID{qID},
+				NegativeOverrides: []domain.QuizQuestionNegativeOverride{
+					{QuestionID: qID, Mode: domain.NegativeMarkPerWrong, NegativeValue: 0.5},
+				},
+			},
+		}, int64(1), nil)
+	d.questionRepo.On("FindByIDs", ctx, []uuid.UUID{qID}).
+		Return([]domain.Question{
+			{
+				ID: qID, Type: domain.QuestionTypeChoice,
+				Options: []domain.QuestionOption{
+					{ID: "a", Value: "A", Score: 1},
+					{ID: "b", Value: "B", Score: 0},
+				},
+			},
+		}, nil)
+
+	svc := d.service()
+	questions, err := svc.ListQuestionsForTaking(ctx, quizID)
+	assert.NoError(t, err)
+	assert.Len(t, questions, 1)
+	if assert.NotNil(t, questions[0].NegativeConfig) {
+		assert.Equal(t, domain.NegativeMarkPerWrong, questions[0].NegativeConfig.Mode)
+		assert.Equal(t, 0.5, questions[0].NegativeConfig.Fraction)
+	}
+	// answer key still stripped
+	assert.Equal(t, 0.0, questions[0].Options[0].Score)
 }
 
 func TestQuizService_ListQuestionsForTaking_SanitizesAnswersAndDeduplicates(t *testing.T) {
