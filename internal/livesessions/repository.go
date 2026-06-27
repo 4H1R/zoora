@@ -277,7 +277,7 @@ func (r *participantRepository) UpdateParticipantRole(ctx context.Context, roomI
 }
 
 func (r *participantRepository) SetHandRaised(ctx context.Context, roomID uuid.UUID, identity string, raised bool) error {
-	var handRaisedAt interface{}
+	var handRaisedAt any
 	if raised {
 		handRaisedAt = gorm.Expr("NOW()")
 	}
@@ -335,7 +335,7 @@ func (r *participantRepository) ListAllByRoom(ctx context.Context, roomID uuid.U
 func (r *participantRepository) MarkAllLeft(ctx context.Context, roomID uuid.UUID, leftAt time.Time) error {
 	result := database.DB(ctx, r.db).Model(&domain.LiveParticipant{}).
 		Where("live_room_id = ? AND left_at IS NULL", roomID).
-		Updates(map[string]interface{}{
+		Updates(map[string]any{
 			"left_at":                leftAt,
 			"total_duration_seconds": gorm.Expr("EXTRACT(EPOCH FROM ? - joined_at)::int", leftAt),
 		})
