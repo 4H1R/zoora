@@ -87,6 +87,7 @@ func (c *Client) GenerateToken(roomName, identity, name string, sources []liveki
 		grant.SetCanPublish(false)
 	}
 	grant.SetCanSubscribe(true)
+	grant.SetCanPublishData(true)
 	if roomAdmin {
 		grant.RoomAdmin = true
 	}
