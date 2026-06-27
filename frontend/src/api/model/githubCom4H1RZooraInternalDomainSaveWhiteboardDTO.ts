@@ -5,7 +5,8 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
+import type { GithubCom4H1RZooraInternalDomainSaveWhiteboardDTOSnapshot } from './githubCom4H1RZooraInternalDomainSaveWhiteboardDTOSnapshot';
 
 export interface GithubCom4H1RZooraInternalDomainSaveWhiteboardDTO {
-  snapshot: number[];
+  snapshot: GithubCom4H1RZooraInternalDomainSaveWhiteboardDTOSnapshot;
 }

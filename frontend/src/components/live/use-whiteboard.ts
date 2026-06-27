@@ -1,36 +1,13 @@
 import { useDataChannel } from "@livekit/components-react"
 import { useEffect, useRef, useState } from "react"
 import { createTLStore, getSnapshot, loadSnapshot } from "tldraw"
-import type { TLEditorSnapshot, TLRecord, TLStore } from "tldraw"
+import type { TLRecord, TLStore, TLStoreSnapshot } from "tldraw"
 
 import {
   useGetLiveRoomsIdWhiteboard,
   usePutLiveRoomsIdWhiteboard,
 } from "@/api/live-sessions/live-sessions"
-
-// ---- encoding helpers -------------------------------------------------------
-
-const textEncoder = new TextEncoder()
-const textDecoder = new TextDecoder()
-
-function bytesToSnapshot(bytes: number[]): TLEditorSnapshot | null {
-  if (!bytes || bytes.length === 0) return null
-  try {
-    const json = textDecoder.decode(new Uint8Array(bytes))
-    const parsed = JSON.parse(json)
-    // Guard: a valid tldraw snapshot has a document field
-    if (parsed && typeof parsed === "object" && "document" in parsed) {
-      return parsed as TLEditorSnapshot
-    }
-  } catch {
-    // corrupt snapshot — treat as empty
-  }
-  return null
-}
-
-function snapshotToBytes(snap: TLEditorSnapshot): number[] {
-  return Array.from(textEncoder.encode(JSON.stringify(snap)))
-}
+import type { GithubCom4H1RZooraInternalDomainSaveWhiteboardDTOSnapshot } from "@/api/model"
 
 // ---- diff wire format -------------------------------------------------------
 
@@ -40,6 +17,9 @@ interface TldrawDiff {
   updated: TLRecord[]
   removed: string[]
 }
+
+const textEncoder = new TextEncoder()
+const textDecoder = new TextDecoder()
 
 // entry.changes shape: { added: Record<id, R>, updated: Record<id, [from, to]>, removed: Record<id, R> }
 // We avoid importing RecordsDiff from @tldraw/store directly; use unknown + cast.
@@ -101,13 +81,12 @@ export function useWhiteboard(liveId: string, canDraw: boolean): UseWhiteboardRe
 
   useEffect(() => {
     if (snapshotLoadedRef.current) return
-    const bytes = whiteboardRes?.status === 200 ? whiteboardRes.data.data?.snapshot : undefined
-    if (!bytes || bytes.length === 0) return
-    const snap = bytesToSnapshot(bytes)
-    if (!snap) return
+    const document = whiteboardRes?.status === 200 ? whiteboardRes.data.data?.snapshot : undefined
+    // Guard: skip if the snapshot is empty or has no keys (empty board)
+    if (!document || Object.keys(document).length === 0) return
     snapshotLoadedRef.current = true
     store.mergeRemoteChanges(() => {
-      loadSnapshot(store, snap)
+      loadSnapshot(store, { document: document as unknown as TLStoreSnapshot })
     })
   }, [whiteboardRes, store])
 
@@ -135,19 +114,22 @@ export function useWhiteboard(liveId: string, canDraw: boolean): UseWhiteboardRe
         )
       : undefined
 
-    // Debounced persistence: trigger on ALL changes when canDraw
+    // Debounced persistence: trigger only on own edits (FIX M2: source "user" not "all")
     const unsubscribePersist = canDraw
       ? store.listen(
           () => {
             if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
             saveTimerRef.current = setTimeout(() => {
               saveTimerRef.current = null
-              const snap = getSnapshot(store)
-              const bytes = snapshotToBytes(snap)
-              saveMutationRef.current.mutate({ id: liveId, data: { snapshot: bytes } })
+              // FIX M3: persist only document state (not camera/selection)
+              const { document } = getSnapshot(store)
+              saveMutationRef.current.mutate({
+                id: liveId,
+                data: { snapshot: document as unknown as GithubCom4H1RZooraInternalDomainSaveWhiteboardDTOSnapshot },
+              })
             }, 1500)
           },
-          { source: "all", scope: "document" },
+          { source: "user", scope: "document" },
         )
       : undefined
 

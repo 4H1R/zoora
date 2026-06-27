@@ -221,14 +221,14 @@ type LiveRecordingRepository interface {
 type LiveWhiteboard struct {
 	ID         uuid.UUID       `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
 	LiveRoomID uuid.UUID       `gorm:"type:uuid;not null;uniqueIndex" json:"live_room_id"`
-	Snapshot   json.RawMessage `gorm:"type:jsonb;not null;default:'{}'" json:"snapshot"`
+	Snapshot   json.RawMessage `gorm:"type:jsonb;not null;default:'{}'" json:"snapshot" swaggertype:"object"`
 	UpdatedAt  time.Time       `json:"updated_at"`
 	CreatedAt  time.Time       `json:"created_at"`
 }
 
 // SaveWhiteboardDTO is the request body for PUT /live-rooms/:id/whiteboard.
 type SaveWhiteboardDTO struct {
-	Snapshot json.RawMessage `json:"snapshot" binding:"required"`
+	Snapshot json.RawMessage `json:"snapshot" binding:"required" swaggertype:"object"`
 }
 
 // LiveWhiteboardRepository persists whiteboard snapshots keyed by live_room_id.

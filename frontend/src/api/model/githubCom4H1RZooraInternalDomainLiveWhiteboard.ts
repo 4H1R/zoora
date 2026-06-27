@@ -5,11 +5,12 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
+import type { GithubCom4H1RZooraInternalDomainLiveWhiteboardSnapshot } from './githubCom4H1RZooraInternalDomainLiveWhiteboardSnapshot';
 
 export interface GithubCom4H1RZooraInternalDomainLiveWhiteboard {
   created_at?: string;
   id?: string;
   live_room_id?: string;
-  snapshot?: number[];
+  snapshot?: GithubCom4H1RZooraInternalDomainLiveWhiteboardSnapshot;
   updated_at?: string;
 }
