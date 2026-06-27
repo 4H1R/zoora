@@ -16,6 +16,10 @@ var (
 	ErrInternal      = errors.New("internal server error")
 	ErrUserDisabled  = errors.New("account is disabled")
 	ErrAccountLocked = errors.New("account is locked")
+
+	ErrInvalidParticipantRole = errors.New("invalid participant role")
+	ErrParticipantNotFound    = errors.New("participant not found")
+	ErrCannotChangeHostRole   = errors.New("cannot change the host role")
 )
 
 // ValidationError carries per-field validation failures.

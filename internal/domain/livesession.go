@@ -24,6 +24,22 @@ func (s LiveRoomStatus) Valid() bool {
 	return false
 }
 
+type ParticipantRole string
+
+const (
+	ParticipantRoleHost      ParticipantRole = "host"
+	ParticipantRolePresenter ParticipantRole = "presenter"
+	ParticipantRoleViewer    ParticipantRole = "viewer"
+)
+
+func (r ParticipantRole) Valid() bool {
+	switch r {
+	case ParticipantRoleHost, ParticipantRolePresenter, ParticipantRoleViewer:
+		return true
+	}
+	return false
+}
+
 type LiveRecordingStatus string
 
 const (
@@ -65,8 +81,10 @@ type LiveParticipant struct {
 	LiveRoom             *LiveRoom  `gorm:"foreignKey:LiveRoomID" json:"live_room,omitempty"`
 	UserID               uuid.UUID  `gorm:"type:uuid;not null;index" json:"user_id"`
 	User                 *User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	Identity             string     `gorm:"type:varchar(255);not null" json:"identity"`
-	JoinedAt             time.Time  `gorm:"not null" json:"joined_at"`
+	Identity             string          `gorm:"type:varchar(255);not null" json:"identity"`
+	Role                 ParticipantRole `gorm:"type:varchar(20);not null;default:'viewer'" json:"role"`
+	HandRaisedAt         *time.Time      `json:"hand_raised_at"`
+	JoinedAt             time.Time       `gorm:"not null" json:"joined_at"`
 	LeftAt               *time.Time `json:"left_at"`
 	TotalDurationSeconds int        `gorm:"not null;default:0" json:"total_duration_seconds"`
 	CreatedAt            time.Time  `json:"created_at"`
@@ -151,6 +169,19 @@ type ListLiveRecordingsQuery struct {
 	ListParams ListParams           `form:"-"`
 }
 
+type SetParticipantRoleDTO struct {
+	Role ParticipantRole `json:"role" binding:"required"`
+}
+
+type MuteParticipantDTO struct {
+	TrackSID string `json:"track_sid" binding:"required"`
+	Muted    bool   `json:"muted"`
+}
+
+type SetHandDTO struct {
+	Raised bool `json:"raised"`
+}
+
 type LiveRoomRepository interface {
 	Create(ctx context.Context, room *LiveRoom) error
 	FindByID(ctx context.Context, id uuid.UUID) (*LiveRoom, error)
@@ -200,6 +231,10 @@ type LiveSessionService interface {
 	ListRecordings(ctx context.Context, roomID uuid.UUID, q ListLiveRecordingsQuery) ([]LiveRecording, int64, error)
 
 	ListParticipants(ctx context.Context, roomID uuid.UUID, q ListLiveParticipantsQuery) ([]LiveParticipant, int64, error)
+
+	SetParticipantRole(ctx context.Context, roomID uuid.UUID, identity string, dto SetParticipantRoleDTO) (*LiveParticipant, error)
+	MuteParticipant(ctx context.Context, roomID uuid.UUID, identity string, dto MuteParticipantDTO) error
+	SetHand(ctx context.Context, roomID uuid.UUID, dto SetHandDTO) (*LiveParticipant, error)
 
 	AdminList(ctx context.Context, q AdminListLiveRoomsQuery) ([]LiveRoom, int64, error)
 	AdminEndRoom(ctx context.Context, roomID uuid.UUID) (*LiveRoom, error)
