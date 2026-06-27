@@ -116,6 +116,9 @@ function RoomShell({
   const handRaised = states[myIdentity]?.handRaised ?? false
 
   const { stage, setStage } = useStage(isHost)
+  const canDraw = localParticipant.permissions?.canPublish ?? false
+
+  const onStartWhiteboard = () => setStage({ kind: "whiteboard" })
 
   const onShareSlides = async (file: File) => {
     try {
@@ -196,6 +199,8 @@ function RoomShell({
               <Stage
                 stage={stage}
                 isHost={isHost}
+                liveId={liveId}
+                canDraw={canDraw}
                 onPageChange={onPageChange}
                 onLoadNumPages={onLoadNumPages}
               />
@@ -221,6 +226,7 @@ function RoomShell({
             stageKind={stage.kind}
             onShareSlides={onShareSlides}
             onStopStage={onStopStage}
+            onStartWhiteboard={onStartWhiteboard}
           />
 
           <button

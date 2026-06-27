@@ -10,6 +10,7 @@ import {
   MicOff,
   MonitorUp,
   MoreHorizontal,
+  PenLine,
   Presentation,
   Users,
   Video,
@@ -35,12 +36,13 @@ interface ControlBarProps {
   handRaised: boolean
   onToggleHand: () => void
   canShareStage: boolean
-  stageKind: "none" | "slides"
+  stageKind: "none" | "slides" | "whiteboard"
   onShareSlides: (file: File) => void
   onStopStage: () => void
+  onStartWhiteboard: () => void
 }
 
-export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, unread, handRaised, onToggleHand, canShareStage, stageKind, onShareSlides, onStopStage }: ControlBarProps) {
+export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, unread, handRaised, onToggleHand, canShareStage, stageKind, onShareSlides, onStopStage, onStartWhiteboard }: ControlBarProps) {
   const { t } = useTranslation()
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled, isScreenShareEnabled } = useLocalParticipant()
   const role = useRoomRole()
@@ -52,6 +54,14 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, un
       onStopStage()
     } else {
       fileInputRef.current?.click()
+    }
+  }
+
+  const handleWhiteboardClick = () => {
+    if (stageKind === "whiteboard") {
+      onStopStage()
+    } else {
+      onStartWhiteboard()
     }
   }
 
@@ -155,6 +165,18 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, un
           </>
         )}
 
+        {/* Whiteboard — publishers (hosts) only, desktop only */}
+        {canShareStage && (
+          <CtrlButton
+            icon={PenLine}
+            on
+            active={stageKind === "whiteboard"}
+            label={stageKind === "whiteboard" ? t("liveRoom.controls.stopWhiteboard") : t("liveRoom.controls.whiteboard")}
+            className="hidden sm:flex"
+            onClick={handleWhiteboardClick}
+          />
+        )}
+
         <span className="mx-0.5 h-7 w-px bg-white/10" />
 
         {/* Raise hand — viewers only */}
@@ -238,6 +260,16 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, un
                 >
                   <Presentation className="size-5 shrink-0" />
                   <span>{stageKind === "slides" ? t("liveRoom.controls.stopSlides") : t("liveRoom.controls.shareSlides")}</span>
+                </button>
+              )}
+              {canShareStage && (
+                <button
+                  type="button"
+                  onClick={handleWhiteboardClick}
+                  className="flex items-center gap-3 px-5 py-3.5 text-sm text-zinc-200 hover:bg-white/5"
+                >
+                  <PenLine className="size-5 shrink-0" />
+                  <span>{stageKind === "whiteboard" ? t("liveRoom.controls.stopWhiteboard") : t("liveRoom.controls.whiteboard")}</span>
                 </button>
               )}
               <button

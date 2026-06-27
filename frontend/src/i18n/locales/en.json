@@ -2427,7 +2427,9 @@
       "raiseHand": "Raise hand",
       "lowerHand": "Lower hand",
       "shareSlides": "Share slides",
-      "stopSlides": "Stop slides"
+      "stopSlides": "Stop slides",
+      "whiteboard": "Whiteboard",
+      "stopWhiteboard": "Stop whiteboard"
     },
     "people": {
       "makePresenter": "Make presenter",

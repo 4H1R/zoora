@@ -6,17 +6,20 @@ import { useTranslation } from "react-i18next"
 
 import type { StageContent } from "./use-stage"
 import { SlidesStage } from "./slides-stage"
+import { WhiteboardStage } from "./whiteboard-stage"
 
 interface StageProps {
   stage: StageContent
   isHost: boolean
+  liveId: string
+  canDraw: boolean
   onPageChange: (page: number) => void
   onLoadNumPages: (n: number) => void
 }
 
 // The single content surface.
-// Priority: slides (host-shared PDF) > screenshare > presenter camera > empty.
-export function Stage({ stage, isHost, onPageChange, onLoadNumPages }: StageProps) {
+// Priority: whiteboard > slides (host-shared PDF) > screenshare > presenter camera > empty.
+export function Stage({ stage, isHost, liveId, canDraw, onPageChange, onLoadNumPages }: StageProps) {
   const { t } = useTranslation()
   const tracks = useTracks(
     [
@@ -26,7 +29,12 @@ export function Stage({ stage, isHost, onPageChange, onLoadNumPages }: StageProp
     { onlySubscribed: false }
   )
 
-  // Slides take priority over everything else
+  // Whiteboard takes top priority
+  if (stage.kind === "whiteboard") {
+    return <WhiteboardStage liveId={liveId} canDraw={canDraw} />
+  }
+
+  // Slides take priority over screenshare/camera
   if (stage.kind === "slides" && stage.url) {
     return (
       <SlidesStage

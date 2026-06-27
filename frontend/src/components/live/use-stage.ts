@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { decodeRoomEvent, encodeRoomEvent } from "./room-events"
 
 export interface StageContent {
-  kind: "none" | "slides"
+  kind: "none" | "slides" | "whiteboard"
   url?: string
   page?: number
   numPages?: number
