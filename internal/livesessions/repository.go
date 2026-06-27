@@ -249,6 +249,50 @@ func (r *participantRepository) FindActiveByRoomAndUser(ctx context.Context, roo
 	return &p, nil
 }
 
+func (r *participantRepository) GetActiveParticipant(ctx context.Context, roomID uuid.UUID, identity string) (*domain.LiveParticipant, error) {
+	var p domain.LiveParticipant
+	err := database.DB(ctx, r.db).Model(&domain.LiveParticipant{}).
+		Where("live_room_id = ? AND identity = ? AND left_at IS NULL", roomID, identity).
+		First(&p).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrParticipantNotFound
+		}
+		return nil, fmt.Errorf("livesessions.participantRepository.GetActiveParticipant: %w", err)
+	}
+	return &p, nil
+}
+
+func (r *participantRepository) UpdateParticipantRole(ctx context.Context, roomID uuid.UUID, identity string, role domain.ParticipantRole) error {
+	result := database.DB(ctx, r.db).Model(&domain.LiveParticipant{}).
+		Where("live_room_id = ? AND identity = ? AND left_at IS NULL", roomID, identity).
+		Update("role", role)
+	if result.Error != nil {
+		return fmt.Errorf("livesessions.participantRepository.UpdateParticipantRole: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return domain.ErrParticipantNotFound
+	}
+	return nil
+}
+
+func (r *participantRepository) SetHandRaised(ctx context.Context, roomID uuid.UUID, identity string, raised bool) error {
+	var handRaisedAt interface{}
+	if raised {
+		handRaisedAt = gorm.Expr("NOW()")
+	}
+	result := database.DB(ctx, r.db).Model(&domain.LiveParticipant{}).
+		Where("live_room_id = ? AND identity = ? AND left_at IS NULL", roomID, identity).
+		Update("hand_raised_at", handRaisedAt)
+	if result.Error != nil {
+		return fmt.Errorf("livesessions.participantRepository.SetHandRaised: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return domain.ErrParticipantNotFound
+	}
+	return nil
+}
+
 func (r *participantRepository) Update(ctx context.Context, p *domain.LiveParticipant) error {
 	result := database.DB(ctx, r.db).Save(p)
 	if result.Error != nil {

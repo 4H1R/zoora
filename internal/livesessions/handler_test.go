@@ -100,6 +100,19 @@ func (m *mockLiveSessionSvc) AdminHardDelete(ctx context.Context, id uuid.UUID) 
 func (m *mockLiveSessionSvc) AutoCloseStaleRooms(ctx context.Context) error {
 	return m.Called(ctx).Error(0)
 }
+func (m *mockLiveSessionSvc) SetParticipantRole(ctx context.Context, roomID uuid.UUID, identity string, dto domain.SetParticipantRoleDTO) (*domain.LiveParticipant, error) {
+	a := m.Called(ctx, roomID, identity, dto)
+	p, _ := a.Get(0).(*domain.LiveParticipant)
+	return p, a.Error(1)
+}
+func (m *mockLiveSessionSvc) MuteParticipant(ctx context.Context, roomID uuid.UUID, identity string, dto domain.MuteParticipantDTO) error {
+	return m.Called(ctx, roomID, identity, dto).Error(0)
+}
+func (m *mockLiveSessionSvc) SetHand(ctx context.Context, roomID uuid.UUID, dto domain.SetHandDTO) (*domain.LiveParticipant, error) {
+	a := m.Called(ctx, roomID, dto)
+	p, _ := a.Get(0).(*domain.LiveParticipant)
+	return p, a.Error(1)
+}
 
 func newLiveRouter(t *testing.T) (*gin.Engine, *mockLiveSessionSvc) {
 	t.Helper()

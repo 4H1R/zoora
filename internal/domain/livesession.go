@@ -198,7 +198,10 @@ type LiveRoomRepository interface {
 type LiveParticipantRepository interface {
 	Create(ctx context.Context, p *LiveParticipant) error
 	FindActiveByRoomAndUser(ctx context.Context, roomID, userID uuid.UUID) (*LiveParticipant, error)
+	GetActiveParticipant(ctx context.Context, roomID uuid.UUID, identity string) (*LiveParticipant, error)
 	Update(ctx context.Context, p *LiveParticipant) error
+	UpdateParticipantRole(ctx context.Context, roomID uuid.UUID, identity string, role ParticipantRole) error
+	SetHandRaised(ctx context.Context, roomID uuid.UUID, identity string, raised bool) error
 	ListByRoom(ctx context.Context, roomID uuid.UUID, q ListLiveParticipantsQuery) ([]LiveParticipant, int64, error)
 	ListAllByRoom(ctx context.Context, roomID uuid.UUID) ([]LiveParticipant, error)
 	MarkAllLeft(ctx context.Context, roomID uuid.UUID, leftAt time.Time) error

@@ -602,6 +602,7 @@ export * from './githubCom4H1RZooraInternalDomainOrganizationSettings';
 export * from './githubCom4H1RZooraInternalDomainOrganizationStats';
 export * from './githubCom4H1RZooraInternalDomainOrganizationStatus';
 export * from './githubCom4H1RZooraInternalDomainPaginatedData';
+export * from './githubCom4H1RZooraInternalDomainParticipantRole';
 export * from './githubCom4H1RZooraInternalDomainPermission';
 export * from './githubCom4H1RZooraInternalDomainPermissionName';
 export * from './githubCom4H1RZooraInternalDomainPoll';

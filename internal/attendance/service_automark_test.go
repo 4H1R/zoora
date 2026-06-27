@@ -91,6 +91,19 @@ func (m *mParticipantRepo) ListAllByRoom(ctx context.Context, roomID uuid.UUID) 
 	res, _ := a.Get(0).([]domain.LiveParticipant)
 	return res, a.Error(1)
 }
+func (m *mParticipantRepo) GetActiveParticipant(ctx context.Context, roomID uuid.UUID, identity string) (*domain.LiveParticipant, error) {
+	a := m.Called(ctx, roomID, identity)
+	if a.Get(0) == nil {
+		return nil, a.Error(1)
+	}
+	return a.Get(0).(*domain.LiveParticipant), a.Error(1)
+}
+func (m *mParticipantRepo) UpdateParticipantRole(ctx context.Context, roomID uuid.UUID, identity string, role domain.ParticipantRole) error {
+	return m.Called(ctx, roomID, identity, role).Error(0)
+}
+func (m *mParticipantRepo) SetHandRaised(ctx context.Context, roomID uuid.UUID, identity string, raised bool) error {
+	return m.Called(ctx, roomID, identity, raised).Error(0)
+}
 func (m *mParticipantRepo) MarkAllLeft(ctx context.Context, roomID uuid.UUID, leftAt time.Time) error {
 	return m.Called(ctx, roomID, leftAt).Error(0)
 }

@@ -88,6 +88,19 @@ func (m *mockParticipantRepo) ListAllByRoom(ctx context.Context, roomID uuid.UUI
 	ps, _ := a.Get(0).([]domain.LiveParticipant)
 	return ps, a.Error(1)
 }
+func (m *mockParticipantRepo) GetActiveParticipant(ctx context.Context, roomID uuid.UUID, identity string) (*domain.LiveParticipant, error) {
+	a := m.Called(ctx, roomID, identity)
+	if a.Get(0) == nil {
+		return nil, a.Error(1)
+	}
+	return a.Get(0).(*domain.LiveParticipant), a.Error(1)
+}
+func (m *mockParticipantRepo) UpdateParticipantRole(ctx context.Context, roomID uuid.UUID, identity string, role domain.ParticipantRole) error {
+	return m.Called(ctx, roomID, identity, role).Error(0)
+}
+func (m *mockParticipantRepo) SetHandRaised(ctx context.Context, roomID uuid.UUID, identity string, raised bool) error {
+	return m.Called(ctx, roomID, identity, raised).Error(0)
+}
 func (m *mockParticipantRepo) MarkAllLeft(ctx context.Context, roomID uuid.UUID, leftAt time.Time) error {
 	return m.Called(ctx, roomID, leftAt).Error(0)
 }
@@ -737,4 +750,155 @@ func TestUpdate_NonOwner_Forbidden(t *testing.T) {
 	cfg := domain.DefaultLiveRoomConfig()
 	_, err := svc.UpdateRoomConfig(ctx, testRoomID, domain.UpdateLiveRoomConfigDTO{Config: &cfg})
 	assert.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+// ---------------------------------------------------------------------------
+// SetParticipantRole tests
+// ---------------------------------------------------------------------------
+
+func TestSetParticipantRole_InvalidRole_Error(t *testing.T) {
+	svc, _, _, _, _, _, _, _ := newTestService(t)
+	_, err := svc.SetParticipantRole(teacherCtx(), testRoomID, "some-identity", domain.SetParticipantRoleDTO{Role: "invalid"})
+	assert.ErrorIs(t, err, domain.ErrInvalidParticipantRole)
+}
+
+func TestSetParticipantRole_RoleHost_Error(t *testing.T) {
+	svc, _, _, _, _, _, _, _ := newTestService(t)
+	_, err := svc.SetParticipantRole(teacherCtx(), testRoomID, "some-identity", domain.SetParticipantRoleDTO{Role: domain.ParticipantRoleHost})
+	assert.ErrorIs(t, err, domain.ErrCannotChangeHostRole)
+}
+
+func TestSetParticipantRole_Student_Forbidden(t *testing.T) {
+	svc, roomRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
+	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
+	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
+
+	_, err := svc.SetParticipantRole(studentCtx(), testRoomID, "some-identity", domain.SetParticipantRoleDTO{Role: domain.ParticipantRolePresenter})
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+func TestSetParticipantRole_TargetIsHost_Error(t *testing.T) {
+	svc, roomRepo, partRepo, _, sessRepo, classRepo, _, _ := newTestService(t)
+	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
+	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
+	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
+
+	hostParticipant := &domain.LiveParticipant{
+		ID:         uuid.New(),
+		LiveRoomID: testRoomID,
+		UserID:     testTeacherID,
+		Identity:   testTeacherID.String(),
+		Role:       domain.ParticipantRoleHost,
+	}
+	partRepo.On("GetActiveParticipant", mock.Anything, testRoomID, testTeacherID.String()).Return(hostParticipant, nil)
+
+	_, err := svc.SetParticipantRole(teacherCtx(), testRoomID, testTeacherID.String(), domain.SetParticipantRoleDTO{Role: domain.ParticipantRoleViewer})
+	assert.ErrorIs(t, err, domain.ErrCannotChangeHostRole)
+}
+
+func TestSetParticipantRole_PromoteToPresenter_Success(t *testing.T) {
+	svc, roomRepo, partRepo, _, sessRepo, classRepo, _, _ := newTestService(t)
+	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
+	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
+	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
+
+	viewerParticipant := &domain.LiveParticipant{
+		ID:         uuid.New(),
+		LiveRoomID: testRoomID,
+		UserID:     testStudentID,
+		Identity:   testStudentID.String(),
+		Role:       domain.ParticipantRoleViewer,
+	}
+	partRepo.On("GetActiveParticipant", mock.Anything, testRoomID, testStudentID.String()).Return(viewerParticipant, nil)
+	partRepo.On("UpdateParticipantRole", mock.Anything, testRoomID, testStudentID.String(), domain.ParticipantRolePresenter).Return(nil)
+
+	result, err := svc.SetParticipantRole(teacherCtx(), testRoomID, testStudentID.String(), domain.SetParticipantRoleDTO{Role: domain.ParticipantRolePresenter})
+	assert.NoError(t, err)
+	assert.Equal(t, domain.ParticipantRolePresenter, result.Role)
+	partRepo.AssertExpectations(t)
+}
+
+func TestSetParticipantRole_DemoteToViewer_Success(t *testing.T) {
+	svc, roomRepo, partRepo, _, sessRepo, classRepo, _, _ := newTestService(t)
+	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
+	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
+	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
+
+	presenterParticipant := &domain.LiveParticipant{
+		ID:         uuid.New(),
+		LiveRoomID: testRoomID,
+		UserID:     testStudentID,
+		Identity:   testStudentID.String(),
+		Role:       domain.ParticipantRolePresenter,
+	}
+	partRepo.On("GetActiveParticipant", mock.Anything, testRoomID, testStudentID.String()).Return(presenterParticipant, nil)
+	partRepo.On("UpdateParticipantRole", mock.Anything, testRoomID, testStudentID.String(), domain.ParticipantRoleViewer).Return(nil)
+
+	result, err := svc.SetParticipantRole(teacherCtx(), testRoomID, testStudentID.String(), domain.SetParticipantRoleDTO{Role: domain.ParticipantRoleViewer})
+	assert.NoError(t, err)
+	assert.Equal(t, domain.ParticipantRoleViewer, result.Role)
+	partRepo.AssertExpectations(t)
+}
+
+// ---------------------------------------------------------------------------
+// MuteParticipant tests
+// ---------------------------------------------------------------------------
+
+func TestMuteParticipant_Student_Forbidden(t *testing.T) {
+	svc, roomRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
+	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
+	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
+
+	err := svc.MuteParticipant(studentCtx(), testRoomID, "some-identity", domain.MuteParticipantDTO{TrackSID: "TR_abc", Muted: true})
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+func TestMuteParticipant_Teacher_NilLivekit_NoError(t *testing.T) {
+	// livekit is nil in test service — MuteParticipant should succeed (no-op) when livekit is nil
+	svc, roomRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
+	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
+	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
+
+	err := svc.MuteParticipant(teacherCtx(), testRoomID, testStudentID.String(), domain.MuteParticipantDTO{TrackSID: "TR_abc", Muted: true})
+	assert.NoError(t, err)
+}
+
+// ---------------------------------------------------------------------------
+// SetHand tests
+// ---------------------------------------------------------------------------
+
+func TestSetHand_NoCaller_Forbidden(t *testing.T) {
+	svc, _, _, _, _, _, _, _ := newTestService(t)
+	_, err := svc.SetHand(context.Background(), testRoomID, domain.SetHandDTO{Raised: true})
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+func TestSetHand_Student_SetsHandAndReturnsParticipant(t *testing.T) {
+	svc, roomRepo, partRepo, _, sessRepo, classRepo, _, _ := newTestService(t)
+	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
+	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
+	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
+
+	identity := testStudentID.String()
+	partRepo.On("SetHandRaised", mock.Anything, testRoomID, identity, true).Return(nil)
+
+	now := time.Now()
+	expected := &domain.LiveParticipant{
+		ID:           uuid.New(),
+		LiveRoomID:   testRoomID,
+		UserID:       testStudentID,
+		Identity:     identity,
+		Role:         domain.ParticipantRoleViewer,
+		HandRaisedAt: &now,
+	}
+	partRepo.On("GetActiveParticipant", mock.Anything, testRoomID, identity).Return(expected, nil)
+
+	result, err := svc.SetHand(studentCtx(), testRoomID, domain.SetHandDTO{Raised: true})
+	assert.NoError(t, err)
+	assert.Equal(t, expected.ID, result.ID)
+	assert.NotNil(t, result.HandRaisedAt)
+	partRepo.AssertExpectations(t)
 }

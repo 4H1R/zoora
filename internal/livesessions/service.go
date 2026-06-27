@@ -17,6 +17,21 @@ import (
 	"github.com/4H1R/zoora/internal/platform/queue"
 )
 
+// liveKitClient is a local interface so the service can be tested with a nil or
+// mock client. *lk.Client satisfies it automatically.
+type liveKitClient interface {
+	CreateRoom(ctx context.Context, roomName string, maxParticipants uint32) (*lkproto.Room, error)
+	DeleteRoom(ctx context.Context, roomName string) error
+	GenerateToken(roomName, identity, name string, sources []lkproto.TrackSource, roomAdmin bool) (string, error)
+	StartRecording(ctx context.Context, roomName, s3Path string) (string, error)
+	StopRecording(ctx context.Context, egressID string) error
+	ListParticipants(ctx context.Context, roomName string) ([]*lkproto.ParticipantInfo, error)
+	UpdateParticipant(ctx context.Context, roomName, identity string, sources []lkproto.TrackSource) error
+	MutePublishedTrack(ctx context.Context, roomName, identity, trackSID string, muted bool) error
+	SendData(ctx context.Context, roomName string, payload []byte, destinationIdentities []string) error
+	PublicURL() string
+}
+
 type service struct {
 	rooms        domain.LiveRoomRepository
 	participants domain.LiveParticipantRepository
@@ -26,7 +41,7 @@ type service struct {
 	members      domain.ClassMemberRepository
 	chatSvc      domain.ChatService
 	tx           domain.Transactor
-	livekit      *lk.Client
+	livekit      liveKitClient
 	queue        *queue.Client
 	logger       *slog.Logger
 }
@@ -44,6 +59,13 @@ func NewService(
 	queueClient *queue.Client,
 	logger *slog.Logger,
 ) domain.LiveSessionService {
+	// Avoid storing a typed nil in the liveKitClient interface — a typed nil
+	// satisfies the interface (non-nil interface) and bypasses the s.livekit != nil
+	// guards used throughout the service.
+	var lkClient liveKitClient
+	if livekit != nil {
+		lkClient = livekit
+	}
 	return &service{
 		rooms:        rooms,
 		participants: participants,
@@ -53,7 +75,7 @@ func NewService(
 		members:      members,
 		chatSvc:      chatSvc,
 		tx:           tx,
-		livekit:      livekit,
+		livekit:      lkClient,
 		queue:        queueClient,
 		logger:       logger,
 	}
@@ -257,10 +279,15 @@ func (s *service) JoinRoom(ctx context.Context, roomID uuid.UUID) (*domain.JoinL
 		return nil, fmt.Errorf("livesessions.service.JoinRoom token: %w", err)
 	}
 
+	role := domain.ParticipantRoleViewer
+	if isModerator {
+		role = domain.ParticipantRoleHost
+	}
 	participant := &domain.LiveParticipant{
 		LiveRoomID: roomID,
 		UserID:     caller.UserID,
 		Identity:   identity,
+		Role:       role,
 		JoinedAt:   time.Now(),
 	}
 	if err := s.participants.Create(ctx, participant); err != nil {
@@ -636,4 +663,118 @@ func (s *service) AutoCloseStaleRooms(ctx context.Context) error {
 		s.logger.Info("auto-closed stale room", "room_id", r.ID.String())
 	}
 	return nil
+}
+
+const (
+	roomEventRoleChanged = "role_changed"
+	roomEventHand        = "hand"
+)
+
+func (s *service) broadcastRoomEvent(ctx context.Context, roomName, eventType string, data map[string]any) {
+	if s.livekit == nil {
+		return
+	}
+	payload, err := json.Marshal(map[string]any{"type": eventType, "data": data})
+	if err != nil {
+		s.logger.Error("broadcastRoomEvent: marshal", "event", eventType, "error", err)
+		return
+	}
+	if err := s.livekit.SendData(ctx, roomName, payload, nil); err != nil {
+		s.logger.Error("broadcastRoomEvent: send", "event", eventType, "error", err)
+	}
+}
+
+func (s *service) SetParticipantRole(ctx context.Context, roomID uuid.UUID, identity string, dto domain.SetParticipantRoleDTO) (*domain.LiveParticipant, error) {
+	if !dto.Role.Valid() {
+		return nil, domain.ErrInvalidParticipantRole
+	}
+	if dto.Role == domain.ParticipantRoleHost {
+		return nil, domain.ErrCannotChangeHostRole
+	}
+
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	room, _, class, err := s.loadRoomWithClass(ctx, roomID)
+	if err != nil {
+		return nil, err
+	}
+	if !s.canManageRoom(caller, class) {
+		return nil, domain.ErrForbidden
+	}
+
+	target, err := s.participants.GetActiveParticipant(ctx, roomID, identity)
+	if err != nil {
+		return nil, err
+	}
+	if target.Role == domain.ParticipantRoleHost {
+		return nil, domain.ErrCannotChangeHostRole
+	}
+
+	isPresenter := dto.Role == domain.ParticipantRolePresenter
+	sources := publishSources(isPresenter)
+	if s.livekit != nil {
+		if err := s.livekit.UpdateParticipant(ctx, room.LiveKitRoomName, identity, sources); err != nil {
+			return nil, fmt.Errorf("livesessions.service.SetParticipantRole livekit: %w", err)
+		}
+	}
+
+	if err := s.participants.UpdateParticipantRole(ctx, roomID, identity, dto.Role); err != nil {
+		return nil, fmt.Errorf("livesessions.service.SetParticipantRole persist: %w", err)
+	}
+	target.Role = dto.Role
+
+	s.broadcastRoomEvent(ctx, room.LiveKitRoomName, roomEventRoleChanged, map[string]any{
+		"identity": identity,
+		"role":     string(dto.Role),
+	})
+
+	return target, nil
+}
+
+func (s *service) MuteParticipant(ctx context.Context, roomID uuid.UUID, identity string, dto domain.MuteParticipantDTO) error {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return domain.ErrForbidden
+	}
+	room, _, class, err := s.loadRoomWithClass(ctx, roomID)
+	if err != nil {
+		return err
+	}
+	if !s.canManageRoom(caller, class) {
+		return domain.ErrForbidden
+	}
+	if s.livekit == nil {
+		return nil
+	}
+	return s.livekit.MutePublishedTrack(ctx, room.LiveKitRoomName, identity, dto.TrackSID, dto.Muted)
+}
+
+func (s *service) SetHand(ctx context.Context, roomID uuid.UUID, dto domain.SetHandDTO) (*domain.LiveParticipant, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	room, _, _, err := s.loadRoomWithClass(ctx, roomID)
+	if err != nil {
+		return nil, err
+	}
+
+	identity := caller.UserID.String()
+	if err := s.participants.SetHandRaised(ctx, roomID, identity, dto.Raised); err != nil {
+		return nil, fmt.Errorf("livesessions.service.SetHand: %w", err)
+	}
+
+	participant, err := s.participants.GetActiveParticipant(ctx, roomID, identity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.broadcastRoomEvent(ctx, room.LiveKitRoomName, roomEventHand, map[string]any{
+		"identity": identity,
+		"raised":   dto.Raised,
+	})
+
+	return participant, nil
 }
