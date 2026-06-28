@@ -34,51 +34,12 @@ import { QuestionPhotoUploader } from "./QuestionPhotoUploader"
 const TYPE_VALUES = ["descriptive", "short_answer", "choice"] as const
 type QType = (typeof TYPE_VALUES)[number]
 
-const NEGATIVE_MODES = ["none", "per_wrong", "accumulative"] as const
-type NegativeMode = (typeof NEGATIVE_MODES)[number]
-
 const optionSchema = z.object({
   id: z.string().min(1),
   value: z.string(),
   score: z.coerce.number(),
   image_media_id: z.string().nullable().optional(),
 })
-
-// fractionFor mirrors the backend domain.FractionFor: suggested per-wrong
-// fraction for an option count {2:0.5,3:0.33,4:0.25,5:0.2} else 1/n.
-function fractionFor(optionCount: number): number {
-  switch (optionCount) {
-    case 2:
-      return 0.5
-    case 3:
-      return 0.33
-    case 4:
-      return 0.25
-    case 5:
-      return 0.2
-  }
-  if (optionCount <= 0) return 0
-  return 1 / optionCount
-}
-
-function clamp(n: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, n))
-}
-
-// suggestNegative mirrors the backend auto-prefill: per_wrong uses fractionFor,
-// accumulative uses clamp(optionCount, 2, 5).
-function suggestNegative(mode: NegativeMode, optionCount: number): {
-  negative_value: number
-  wrongs_per_point: number
-} {
-  if (mode === "per_wrong") {
-    return { negative_value: fractionFor(optionCount), wrongs_per_point: 0 }
-  }
-  if (mode === "accumulative") {
-    return { negative_value: 0, wrongs_per_point: clamp(optionCount, 2, 5) }
-  }
-  return { negative_value: 0, wrongs_per_point: 0 }
-}
 
 const metadataSchema = z.object({
   type: z.literal("photo"),
@@ -91,9 +52,6 @@ const baseSchema = z.object({
   type: z.enum(TYPE_VALUES),
   options: z.array(optionSchema),
   metadata: z.array(metadataSchema),
-  negative_mark_mode: z.enum(NEGATIVE_MODES),
-  negative_value: z.coerce.number(),
-  wrongs_per_point: z.coerce.number().int(),
 })
 
 type FormInput = z.input<typeof baseSchema>
@@ -161,9 +119,6 @@ export function QuestionCreateModal({
       type: "descriptive",
       options: defaultOptionsFor("descriptive"),
       metadata: [],
-      negative_mark_mode: "none",
-      negative_value: 0,
-      wrongs_per_point: 0,
     },
   })
 
@@ -190,9 +145,6 @@ export function QuestionCreateModal({
           type: "photo" as const,
           media_id: m.media_id ?? "",
         })),
-        negative_mark_mode: (question.negative_mark_mode as NegativeMode) ?? "none",
-        negative_value: question.negative_value ?? 0,
-        wrongs_per_point: question.wrongs_per_point ?? 0,
       })
     } else {
       form.reset({
@@ -201,9 +153,6 @@ export function QuestionCreateModal({
         type: "descriptive",
         options: defaultOptionsFor("descriptive"),
         metadata: [],
-        negative_mark_mode: "none",
-        negative_value: 0,
-        wrongs_per_point: 0,
       })
     }
   }, [open, question, isEdit, defaultBankId])
@@ -243,15 +192,6 @@ export function QuestionCreateModal({
   const type = form.watch("type") as QType
   const bankId = form.watch("bank_id")
   const metadata = form.watch("metadata") as FormMetadata[]
-  const negativeMode = form.watch("negative_mark_mode") as NegativeMode
-
-  const handleNegativeModeChange = (next: NegativeMode) => {
-    form.setValue("negative_mark_mode", next, { shouldDirty: true })
-    const optionCount = (form.getValues("options") as FormOption[]).length
-    const suggested = suggestNegative(next, optionCount)
-    form.setValue("negative_value", suggested.negative_value, { shouldDirty: true })
-    form.setValue("wrongs_per_point", suggested.wrongs_per_point, { shouldDirty: true })
-  }
 
   const handleTypeChange = (next: QType) => {
     form.setValue("type", next, { shouldValidate: true })
@@ -276,9 +216,6 @@ export function QuestionCreateModal({
     }
 
     const isChoice = values.type === "choice"
-    const negativeMode: NegativeMode = isChoice ? values.negative_mark_mode : "none"
-    const negativeValue = isChoice && negativeMode === "per_wrong" ? values.negative_value : 0
-    const wrongsPerPoint = isChoice && negativeMode === "accumulative" ? values.wrongs_per_point : 0
     const options = values.options.map((o) => ({
       ...o,
       image_media_id: isChoice ? (o.image_media_id ?? undefined) : undefined,
@@ -293,9 +230,9 @@ export function QuestionCreateModal({
           type: values.type,
           options,
           metadata: values.metadata,
-          negative_mark_mode: negativeMode,
-          negative_value: negativeValue,
-          wrongs_per_point: wrongsPerPoint,
+          negative_mark_mode: "none",
+          negative_value: 0,
+          wrongs_per_point: 0,
         },
       })
     } else {
@@ -312,9 +249,9 @@ export function QuestionCreateModal({
           type: values.type,
           options,
           metadata: values.metadata,
-          negative_mark_mode: negativeMode,
-          negative_value: negativeValue,
-          wrongs_per_point: wrongsPerPoint,
+          negative_mark_mode: "none",
+          negative_value: 0,
+          wrongs_per_point: 0,
         },
       })
     }
@@ -454,60 +391,6 @@ export function QuestionCreateModal({
             </p>
           </div>
         </Field>
-
-        {type === "choice" && (
-          <Field>
-            <FieldLabel>{t("admin.questions.form.negativeMark.label")}</FieldLabel>
-            <Select
-              value={negativeMode}
-              onValueChange={(v) => handleNegativeModeChange(v as NegativeMode)}
-            >
-              <SelectTrigger>
-                <SelectValue>
-                  {(value: NegativeMode) =>
-                    t(`admin.questions.form.negativeMark.modes.${value}`)
-                  }
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {NEGATIVE_MODES.map((m) => (
-                  <SelectItem key={m} value={m}>
-                    {t(`admin.questions.form.negativeMark.modes.${m}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {negativeMode === "per_wrong" && (
-              <div className="mt-2 flex flex-col gap-1">
-                <FieldLabel>{t("admin.questions.form.negativeMark.negativeValue")}</FieldLabel>
-                <Input
-                  type="number"
-                  step="any"
-                  min={0}
-                  {...form.register("negative_value", { valueAsNumber: true })}
-                />
-                <p className="text-muted-foreground text-xs">
-                  {t("admin.questions.form.negativeMark.perWrongHint")}
-                </p>
-              </div>
-            )}
-            {negativeMode === "accumulative" && (
-              <div className="mt-2 flex flex-col gap-1">
-                <FieldLabel>{t("admin.questions.form.negativeMark.wrongsPerPoint")}</FieldLabel>
-                <Input
-                  type="number"
-                  min={2}
-                  max={5}
-                  step={1}
-                  {...form.register("wrongs_per_point", { valueAsNumber: true })}
-                />
-                <p className="text-muted-foreground text-xs">
-                  {t("admin.questions.form.negativeMark.accumulativeHint")}
-                </p>
-              </div>
-            )}
-          </Field>
-        )}
 
         <Field>
           <FieldLabel>{t("admin.questions.form.photos.label")}</FieldLabel>

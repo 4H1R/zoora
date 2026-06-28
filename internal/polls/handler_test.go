@@ -63,6 +63,12 @@ func (m *mockPollSvc) ListAnswers(ctx context.Context, pollID uuid.UUID, q domai
 	return items, a.Get(1).(int64), a.Error(2)
 }
 
+func (m *mockPollSvc) Results(ctx context.Context, pollID uuid.UUID) (*domain.PollResults, error) {
+	a := m.Called(ctx, pollID)
+	r, _ := a.Get(0).(*domain.PollResults)
+	return r, a.Error(1)
+}
+
 func (m *mockPollSvc) AdminList(ctx context.Context, q domain.AdminListPollsQuery) ([]domain.Poll, int64, error) {
 	a := m.Called(ctx, q)
 	items, _ := a.Get(0).([]domain.Poll)

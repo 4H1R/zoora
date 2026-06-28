@@ -2400,6 +2400,7 @@
     "checkDevices": "Check your camera and microphone before joining",
     "connecting": "Connecting",
     "reconnecting": "Reconnecting",
+    "reconnectHint": "Connection lost. Trying to reconnect…",
     "peopleCount": "{{count}} people",
     "waitingForHost": "Waiting for the host to start",
     "waitingHint": "You'll be able to join as soon as your teacher starts the class. This page updates automatically.",
@@ -2410,7 +2411,8 @@
     "errors": {
       "screenShare": "Couldn't start screen sharing. Check your browser permissions and try again.",
       "camera": "Couldn't toggle your camera.",
-      "microphone": "Couldn't toggle your microphone."
+      "microphone": "Couldn't toggle your microphone.",
+      "upload": "Upload failed"
     },
     "controls": {
       "micOn": "Turn on microphone",
@@ -2420,12 +2422,65 @@
       "shareScreen": "Share screen",
       "stopShare": "Stop sharing",
       "chat": "Chat",
-      "people": "People"
+      "people": "People",
+      "polls": "Polls",
+      "more": "More",
+      "raiseHand": "Raise hand",
+      "lowerHand": "Lower hand",
+      "shareSlides": "Share slides",
+      "stopSlides": "Stop slides",
+      "whiteboard": "Whiteboard",
+      "stopWhiteboard": "Stop whiteboard"
+    },
+    "people": {
+      "makePresenter": "Make presenter",
+      "makeViewer": "Make viewer",
+      "mute": "Mute",
+      "actions": "Actions",
+      "handRaised": "Hand raised",
+      "roles": {
+        "host": "Host",
+        "presenter": "Presenter",
+        "viewer": "Viewer"
+      }
     },
     "chat": {
       "empty": "No messages yet",
-      "placeholder": "Type a message…"
+      "placeholder": "Type a message…",
+      "delete": "Delete message"
     },
+    "stage": {
+      "empty": "Waiting for the presenter to share something",
+      "slidesLoading": "Loading slides…",
+      "slidesError": "Couldn't load slides",
+      "pageOf": "{{page}} / {{total}}",
+      "prevPage": "Previous page",
+      "nextPage": "Next page"
+    },
+    "polls": {
+      "comingSoon": "Polls are coming soon",
+      "create": "Create poll",
+      "question": "Question",
+      "singleChoice": "Single choice",
+      "yesNo": "Yes / No",
+      "addOption": "Add option",
+      "option": "Option",
+      "launch": "Launch poll",
+      "reveal": "Reveal to students",
+      "close": "Close poll",
+      "vote": "Vote",
+      "submitted": "Answer submitted — waiting for results",
+      "noActive": "No active poll",
+      "votes": "{{count}} votes",
+      "yes": "Yes",
+      "no": "No",
+      "results": "Results",
+      "removeOption": "Remove option"
+    },
+    "panel": {
+      "title": "Room"
+    },
+    "toggleRail": "Toggle camera rail",
     "device": {
       "camera": "Camera",
       "microphone": "Microphone",

@@ -74,7 +74,7 @@ func (c *Client) DeleteRoom(ctx context.Context, roomName string) error {
 // via CanPublishSources so room config (mic/camera/screen) is actually enforced
 // — an empty slice means subscribe-only. Passing sources also guarantees screen
 // share is authorized for moderators (previously CanPublish-only left it implicit).
-func (c *Client) GenerateToken(roomName, identity, name string, sources []livekit.TrackSource, roomAdmin bool) (string, error) {
+func (c *Client) GenerateToken(roomName, identity, name, metadata string, sources []livekit.TrackSource, roomAdmin bool) (string, error) {
 	at := auth.NewAccessToken(c.apiKey, c.apiSecret)
 	grant := &auth.VideoGrant{
 		RoomJoin: true,
@@ -87,6 +87,7 @@ func (c *Client) GenerateToken(roomName, identity, name string, sources []liveki
 		grant.SetCanPublish(false)
 	}
 	grant.SetCanSubscribe(true)
+	grant.SetCanPublishData(true)
 	if roomAdmin {
 		grant.RoomAdmin = true
 	}
@@ -95,6 +96,9 @@ func (c *Client) GenerateToken(roomName, identity, name string, sources []liveki
 		SetIdentity(identity).
 		SetName(name).
 		SetValidFor(24 * time.Hour)
+	if metadata != "" {
+		at.SetMetadata(metadata)
+	}
 
 	token, err := at.ToJWT()
 	if err != nil {
@@ -143,6 +147,54 @@ func (c *Client) ListParticipants(ctx context.Context, roomName string) ([]*live
 		return nil, fmt.Errorf("listing participants: %w", err)
 	}
 	return resp.Participants, nil
+}
+
+func (c *Client) UpdateParticipant(ctx context.Context, roomName, identity, metadata string, sources []livekit.TrackSource) error {
+	canPublish := len(sources) > 0
+	req := &livekit.UpdateParticipantRequest{
+		Room:     roomName,
+		Identity: identity,
+		Permission: &livekit.ParticipantPermission{
+			CanSubscribe:      true,
+			CanPublish:        canPublish,
+			CanPublishData:    true,
+			CanPublishSources: sources,
+		},
+	}
+	if metadata != "" {
+		req.Metadata = metadata
+	}
+	_, err := c.roomClient.UpdateParticipant(ctx, req)
+	if err != nil {
+		return fmt.Errorf("updating participant %s in %s: %w", identity, roomName, err)
+	}
+	return nil
+}
+
+func (c *Client) MutePublishedTrack(ctx context.Context, roomName, identity, trackSID string, muted bool) error {
+	_, err := c.roomClient.MutePublishedTrack(ctx, &livekit.MuteRoomTrackRequest{
+		Room:     roomName,
+		Identity: identity,
+		TrackSid: trackSID,
+		Muted:    muted,
+	})
+	if err != nil {
+		return fmt.Errorf("muting track %s of %s: %w", trackSID, identity, err)
+	}
+	return nil
+}
+
+func (c *Client) SendData(ctx context.Context, roomName string, payload []byte, destinationIdentities []string) error {
+	_, err := c.roomClient.SendData(ctx, &livekit.SendDataRequest{
+		Room:                  roomName,
+		Data:                  payload,
+		Kind:                  livekit.DataPacket_RELIABLE,
+		DestinationIdentities: destinationIdentities,
+	})
+	if err != nil {
+		return fmt.Errorf("sending data to %s: %w", roomName, err)
+	}
+	return nil
 }
 
 func (c *Client) Host() string {

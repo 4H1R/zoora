@@ -190,3 +190,22 @@ func (s *service) ListAnswers(ctx context.Context, pollID uuid.UUID, q domain.Li
 	}
 	return s.answers.ListByPoll(ctx, pollID, q)
 }
+
+func (s *service) Results(ctx context.Context, pollID uuid.UUID) (*domain.PollResults, error) {
+	_, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	if _, err := s.repo.FindByID(ctx, pollID); err != nil {
+		return nil, err
+	}
+	counts, total, err := s.answers.CountByOption(ctx, pollID)
+	if err != nil {
+		return nil, err
+	}
+	return &domain.PollResults{
+		PollID: pollID,
+		Counts: counts,
+		Total:  total,
+	}, nil
+}

@@ -6,6 +6,11 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  optimizeDeps: {
+    // pdfjs-dist ships ESM workers; tell Vite not to bundle them so the
+    // new URL(..., import.meta.url) worker pattern resolves at runtime.
+    exclude: ['pdfjs-dist'],
+  },
   plugins: [
     tailwindcss(),
     tanstackRouter({ target: 'react', autoCodeSplitting: true }),
@@ -28,6 +33,10 @@ export default defineConfig({
       // changeOrigin: false preserves Host: <slug>.localhost so the Go tenant
       // middleware resolves the right org from the subdomain.
       '/api': { target: 'http://localhost:8080', changeOrigin: false },
+      // LiveKit signal WS. Browser->Docker-Desktop port 7880 forwards plain HTTP
+      // but drops the WebSocket upgrade; route it through Vite (proven WS path)
+      // so the upgrade actually reaches the container. ws:true enables upgrade.
+      '/rtc': { target: 'http://localhost:7880', changeOrigin: true, ws: true },
     },
   },
 })

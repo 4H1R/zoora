@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,6 +20,22 @@ const (
 func (s LiveRoomStatus) Valid() bool {
 	switch s {
 	case LiveRoomStatusCreated, LiveRoomStatusActive, LiveRoomStatusFinished:
+		return true
+	}
+	return false
+}
+
+type ParticipantRole string
+
+const (
+	ParticipantRoleHost      ParticipantRole = "host"
+	ParticipantRolePresenter ParticipantRole = "presenter"
+	ParticipantRoleViewer    ParticipantRole = "viewer"
+)
+
+func (r ParticipantRole) Valid() bool {
+	switch r {
+	case ParticipantRoleHost, ParticipantRolePresenter, ParticipantRoleViewer:
 		return true
 	}
 	return false
@@ -65,8 +82,10 @@ type LiveParticipant struct {
 	LiveRoom             *LiveRoom  `gorm:"foreignKey:LiveRoomID" json:"live_room,omitempty"`
 	UserID               uuid.UUID  `gorm:"type:uuid;not null;index" json:"user_id"`
 	User                 *User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	Identity             string     `gorm:"type:varchar(255);not null" json:"identity"`
-	JoinedAt             time.Time  `gorm:"not null" json:"joined_at"`
+	Identity             string          `gorm:"type:varchar(255);not null" json:"identity"`
+	Role                 ParticipantRole `gorm:"type:varchar(20);not null;default:'viewer'" json:"role"`
+	HandRaisedAt         *time.Time      `json:"hand_raised_at"`
+	JoinedAt             time.Time       `gorm:"not null" json:"joined_at"`
 	LeftAt               *time.Time `json:"left_at"`
 	TotalDurationSeconds int        `gorm:"not null;default:0" json:"total_duration_seconds"`
 	CreatedAt            time.Time  `json:"created_at"`
@@ -151,6 +170,19 @@ type ListLiveRecordingsQuery struct {
 	ListParams ListParams           `form:"-"`
 }
 
+type SetParticipantRoleDTO struct {
+	Role ParticipantRole `json:"role" binding:"required"`
+}
+
+type MuteParticipantDTO struct {
+	TrackSID string `json:"track_sid" binding:"required"`
+	Muted    bool   `json:"muted"`
+}
+
+type SetHandDTO struct {
+	Raised bool `json:"raised"`
+}
+
 type LiveRoomRepository interface {
 	Create(ctx context.Context, room *LiveRoom) error
 	FindByID(ctx context.Context, id uuid.UUID) (*LiveRoom, error)
@@ -167,7 +199,10 @@ type LiveRoomRepository interface {
 type LiveParticipantRepository interface {
 	Create(ctx context.Context, p *LiveParticipant) error
 	FindActiveByRoomAndUser(ctx context.Context, roomID, userID uuid.UUID) (*LiveParticipant, error)
+	GetActiveParticipant(ctx context.Context, roomID uuid.UUID, identity string) (*LiveParticipant, error)
 	Update(ctx context.Context, p *LiveParticipant) error
+	UpdateParticipantRole(ctx context.Context, roomID uuid.UUID, identity string, role ParticipantRole) error
+	SetHandRaised(ctx context.Context, roomID uuid.UUID, identity string, raised bool) error
 	ListByRoom(ctx context.Context, roomID uuid.UUID, q ListLiveParticipantsQuery) ([]LiveParticipant, int64, error)
 	ListAllByRoom(ctx context.Context, roomID uuid.UUID) ([]LiveParticipant, error)
 	MarkAllLeft(ctx context.Context, roomID uuid.UUID, leftAt time.Time) error
@@ -179,6 +214,27 @@ type LiveRecordingRepository interface {
 	FindActiveByRoom(ctx context.Context, roomID uuid.UUID) (*LiveRecording, error)
 	Update(ctx context.Context, r *LiveRecording) error
 	ListByRoom(ctx context.Context, roomID uuid.UUID, q ListLiveRecordingsQuery) ([]LiveRecording, int64, error)
+}
+
+// LiveWhiteboard persists the tldraw snapshot for a live room so that
+// late-joiners and refreshers can load the current board state.
+type LiveWhiteboard struct {
+	ID         uuid.UUID       `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	LiveRoomID uuid.UUID       `gorm:"type:uuid;not null;uniqueIndex" json:"live_room_id"`
+	Snapshot   json.RawMessage `gorm:"type:jsonb;not null;default:'{}'" json:"snapshot" swaggertype:"object"`
+	UpdatedAt  time.Time       `json:"updated_at"`
+	CreatedAt  time.Time       `json:"created_at"`
+}
+
+// SaveWhiteboardDTO is the request body for PUT /live-rooms/:id/whiteboard.
+type SaveWhiteboardDTO struct {
+	Snapshot json.RawMessage `json:"snapshot" binding:"required" swaggertype:"object"`
+}
+
+// LiveWhiteboardRepository persists whiteboard snapshots keyed by live_room_id.
+type LiveWhiteboardRepository interface {
+	Get(ctx context.Context, roomID uuid.UUID) (*LiveWhiteboard, error)
+	Upsert(ctx context.Context, roomID uuid.UUID, snapshot json.RawMessage) (*LiveWhiteboard, error)
 }
 
 type LiveSessionService interface {
@@ -200,6 +256,16 @@ type LiveSessionService interface {
 	ListRecordings(ctx context.Context, roomID uuid.UUID, q ListLiveRecordingsQuery) ([]LiveRecording, int64, error)
 
 	ListParticipants(ctx context.Context, roomID uuid.UUID, q ListLiveParticipantsQuery) ([]LiveParticipant, int64, error)
+
+	SetParticipantRole(ctx context.Context, roomID uuid.UUID, identity string, dto SetParticipantRoleDTO) (*LiveParticipant, error)
+	MuteParticipant(ctx context.Context, roomID uuid.UUID, identity string, dto MuteParticipantDTO) error
+	SetHand(ctx context.Context, roomID uuid.UUID, dto SetHandDTO) (*LiveParticipant, error)
+
+	// GetWhiteboard returns the current snapshot for the room. Any participant
+	// (viewer or above) may read it. Returns an empty board if none saved yet.
+	GetWhiteboard(ctx context.Context, roomID uuid.UUID) (*LiveWhiteboard, error)
+	// SaveWhiteboard persists a snapshot. Only hosts and presenters may write.
+	SaveWhiteboard(ctx context.Context, roomID uuid.UUID, dto SaveWhiteboardDTO) (*LiveWhiteboard, error)
 
 	AdminList(ctx context.Context, q AdminListLiveRoomsQuery) ([]LiveRoom, int64, error)
 	AdminEndRoom(ctx context.Context, roomID uuid.UUID) (*LiveRoom, error)

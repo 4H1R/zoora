@@ -6,16 +6,19 @@
  * OpenAPI spec version: 1.0
  */
 import type { GithubCom4H1RZooraInternalDomainLiveRoom } from './githubCom4H1RZooraInternalDomainLiveRoom';
+import type { GithubCom4H1RZooraInternalDomainParticipantRole } from './githubCom4H1RZooraInternalDomainParticipantRole';
 import type { GithubCom4H1RZooraInternalDomainUser } from './githubCom4H1RZooraInternalDomainUser';
 
 export interface GithubCom4H1RZooraInternalDomainLiveParticipant {
   created_at?: string;
+  hand_raised_at?: string;
   id?: string;
   identity?: string;
   joined_at?: string;
   left_at?: string;
   live_room?: GithubCom4H1RZooraInternalDomainLiveRoom;
   live_room_id?: string;
+  role?: GithubCom4H1RZooraInternalDomainParticipantRole;
   total_duration_seconds?: number;
   user?: GithubCom4H1RZooraInternalDomainUser;
   user_id?: string;

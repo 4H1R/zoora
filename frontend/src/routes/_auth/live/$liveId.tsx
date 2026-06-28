@@ -6,11 +6,13 @@ import type { GithubCom4H1RZooraInternalDomainJoinLiveRoomResponse } from "@/api
 import type { PreJoinChoices } from "@/components/live/types"
 
 import { useGetLiveRoomsId } from "@/api/live-sessions/live-sessions"
+import { useGetUsersMe } from "@/api/users/users"
 import { ActiveRoom } from "@/components/live/active-room"
+import { deriveRoomRole } from "@/components/live/room-role"
 import { PreJoinLobby } from "@/components/live/prejoin-lobby"
 import { Spinner } from "@/components/ui/spinner"
 
-export const Route = createFileRoute("/live/$liveId")({
+export const Route = createFileRoute("/_auth/live/$liveId")({
   component: RouteComponent,
 })
 
@@ -23,6 +25,9 @@ function RouteComponent() {
   const { liveId } = Route.useParams()
   const { t } = useTranslation()
   const [connection, setConnection] = useState<Connection | null>(null)
+  const { data: meData } = useGetUsersMe()
+  const me = meData?.status === 200 ? meData.data.data : undefined
+  const role = deriveRoomRole(me)
   const { data, isPending } = useGetLiveRoomsId(liveId, {
     query: {
       // While a student waits in the lobby for a scheduled room, poll so the
@@ -40,8 +45,8 @@ function RouteComponent() {
 
   if (isPending) {
     return (
-      <div className="flex h-screen items-center justify-center bg-zinc-950">
-        <Spinner className="size-8 text-indigo-400" />
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Spinner className="size-8 text-primary" />
       </div>
     )
   }
@@ -55,6 +60,8 @@ function RouteComponent() {
         sessionName={room?.class_session?.name ?? t("liveRoom.session")}
         className={room?.class_session?.class?.name}
         liveId={liveId}
+        chatId={connection.data.chat_id}
+        role={role}
         onDisconnect={() => setConnection(null)}
       />
     )

@@ -2,12 +2,14 @@ package livesessions
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/platform/database"
@@ -249,6 +251,50 @@ func (r *participantRepository) FindActiveByRoomAndUser(ctx context.Context, roo
 	return &p, nil
 }
 
+func (r *participantRepository) GetActiveParticipant(ctx context.Context, roomID uuid.UUID, identity string) (*domain.LiveParticipant, error) {
+	var p domain.LiveParticipant
+	err := database.DB(ctx, r.db).Model(&domain.LiveParticipant{}).
+		Where("live_room_id = ? AND identity = ? AND left_at IS NULL", roomID, identity).
+		First(&p).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrParticipantNotFound
+		}
+		return nil, fmt.Errorf("livesessions.participantRepository.GetActiveParticipant: %w", err)
+	}
+	return &p, nil
+}
+
+func (r *participantRepository) UpdateParticipantRole(ctx context.Context, roomID uuid.UUID, identity string, role domain.ParticipantRole) error {
+	result := database.DB(ctx, r.db).Model(&domain.LiveParticipant{}).
+		Where("live_room_id = ? AND identity = ? AND left_at IS NULL", roomID, identity).
+		Update("role", role)
+	if result.Error != nil {
+		return fmt.Errorf("livesessions.participantRepository.UpdateParticipantRole: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return domain.ErrParticipantNotFound
+	}
+	return nil
+}
+
+func (r *participantRepository) SetHandRaised(ctx context.Context, roomID uuid.UUID, identity string, raised bool) error {
+	var handRaisedAt any
+	if raised {
+		handRaisedAt = gorm.Expr("NOW()")
+	}
+	result := database.DB(ctx, r.db).Model(&domain.LiveParticipant{}).
+		Where("live_room_id = ? AND identity = ? AND left_at IS NULL", roomID, identity).
+		Update("hand_raised_at", handRaisedAt)
+	if result.Error != nil {
+		return fmt.Errorf("livesessions.participantRepository.SetHandRaised: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return domain.ErrParticipantNotFound
+	}
+	return nil
+}
+
 func (r *participantRepository) Update(ctx context.Context, p *domain.LiveParticipant) error {
 	result := database.DB(ctx, r.db).Save(p)
 	if result.Error != nil {
@@ -291,7 +337,7 @@ func (r *participantRepository) ListAllByRoom(ctx context.Context, roomID uuid.U
 func (r *participantRepository) MarkAllLeft(ctx context.Context, roomID uuid.UUID, leftAt time.Time) error {
 	result := database.DB(ctx, r.db).Model(&domain.LiveParticipant{}).
 		Where("live_room_id = ? AND left_at IS NULL", roomID).
-		Updates(map[string]interface{}{
+		Updates(map[string]any{
 			"left_at":                leftAt,
 			"total_duration_seconds": gorm.Expr("EXTRACT(EPOCH FROM ? - joined_at)::int", leftAt),
 		})
@@ -362,4 +408,49 @@ func (r *recordingRepository) ListByRoom(ctx context.Context, roomID uuid.UUID, 
 		return nil, 0, fmt.Errorf("livesessions.recordingRepository.ListByRoom: %w", err)
 	}
 	return recs, total, nil
+}
+
+// whiteboardRepository implements domain.LiveWhiteboardRepository.
+type whiteboardRepository struct {
+	db *gorm.DB
+}
+
+func NewWhiteboardRepository(db *gorm.DB) domain.LiveWhiteboardRepository {
+	return &whiteboardRepository{db: db}
+}
+
+// Get returns the whiteboard for the given room. Returns domain.ErrWhiteboardNotFound
+// when no row exists yet (the caller may decide to return an empty board instead).
+func (r *whiteboardRepository) Get(ctx context.Context, roomID uuid.UUID) (*domain.LiveWhiteboard, error) {
+	var wb domain.LiveWhiteboard
+	err := database.DB(ctx, r.db).Model(&domain.LiveWhiteboard{}).
+		Where("live_room_id = ?", roomID).
+		First(&wb).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrWhiteboardNotFound
+		}
+		return nil, fmt.Errorf("livesessions.whiteboardRepository.Get: %w", err)
+	}
+	return &wb, nil
+}
+
+// Upsert inserts or updates the whiteboard snapshot for the given room.
+func (r *whiteboardRepository) Upsert(ctx context.Context, roomID uuid.UUID, snapshot json.RawMessage) (*domain.LiveWhiteboard, error) {
+	wb := domain.LiveWhiteboard{
+		LiveRoomID: roomID,
+		Snapshot:   snapshot,
+	}
+	result := database.DB(ctx, r.db).
+		Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "live_room_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"snapshot", "updated_at"}),
+		}).
+		Create(&wb)
+	if result.Error != nil {
+		return nil, fmt.Errorf("livesessions.whiteboardRepository.Upsert: %w", result.Error)
+	}
+
+	// Re-fetch to get the persisted row (created_at / updated_at from DB).
+	return r.Get(ctx, roomID)
 }

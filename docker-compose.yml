@@ -11,7 +11,7 @@ services:
             DATABASE_URL: "postgres://${DB_USERNAME:-dev}:${DB_PASSWORD:-dev}@pgsql:5432/${DB_DATABASE:-zoora}?sslmode=disable"
             REDIS_URL: "redis://redis:6379"
             LIVEKIT_HOST: "http://livekit:7880"
-            LIVEKIT_PUBLIC_URL: "ws://localhost:7880"
+            # LIVEKIT_PUBLIC_URL inherited from .env (browser-facing, same on host & container)
             S3_ENDPOINT: "http://rustfs:9000"
         volumes:
             - ".:/app"

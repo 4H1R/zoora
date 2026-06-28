@@ -40,6 +40,10 @@ import type {
   GetPollsIdAnswers401,
   GetPollsIdAnswers403,
   GetPollsIdAnswersParams,
+  GetPollsIdResults200,
+  GetPollsIdResults401,
+  GetPollsIdResults403,
+  GetPollsIdResults404,
   GetPollsParams,
   GithubCom4H1RZooraInternalDomainAnswerPollDTO,
   GithubCom4H1RZooraInternalDomainCreatePollDTO,
@@ -877,6 +881,136 @@ export function useGetPollsIdAnswers<TData = Awaited<ReturnType<typeof getPollsI
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetPollsIdAnswersQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type getPollsIdResultsResponse200 = {
+  data: GetPollsIdResults200
+  status: 200
+}
+
+export type getPollsIdResultsResponse401 = {
+  data: GetPollsIdResults401
+  status: 401
+}
+
+export type getPollsIdResultsResponse403 = {
+  data: GetPollsIdResults403
+  status: 403
+}
+
+export type getPollsIdResultsResponse404 = {
+  data: GetPollsIdResults404
+  status: 404
+}
+
+export type getPollsIdResultsResponseSuccess = (getPollsIdResultsResponse200) & {
+  headers: Headers;
+};
+export type getPollsIdResultsResponseError = (getPollsIdResultsResponse401 | getPollsIdResultsResponse403 | getPollsIdResultsResponse404) & {
+  headers: Headers;
+};
+
+export type getPollsIdResultsResponse = (getPollsIdResultsResponseSuccess | getPollsIdResultsResponseError)
+
+export const getGetPollsIdResultsUrl = (id: string,) => {
+
+
+
+
+  return `/polls/${id}/results`
+}
+
+/**
+ * Returns vote counts grouped by option and the total vote count for a poll.
+ * @summary Get poll results
+ */
+export const getPollsIdResults = async (id: string, options?: RequestInit): Promise<getPollsIdResultsResponse> => {
+
+  return customInstance<getPollsIdResultsResponse>(getGetPollsIdResultsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPollsIdResultsQueryKey = (id: string,) => {
+    return [
+    `/polls/${id}/results`
+    ] as const;
+    }
+
+
+export const getGetPollsIdResultsQueryOptions = <TData = Awaited<ReturnType<typeof getPollsIdResults>>, TError = ErrorType<GetPollsIdResults401 | GetPollsIdResults403 | GetPollsIdResults404>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsIdResults>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPollsIdResultsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPollsIdResults>>> = ({ signal }) => getPollsIdResults(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPollsIdResults>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPollsIdResultsQueryResult = NonNullable<Awaited<ReturnType<typeof getPollsIdResults>>>
+export type GetPollsIdResultsQueryError = ErrorType<GetPollsIdResults401 | GetPollsIdResults403 | GetPollsIdResults404>
+
+
+export function useGetPollsIdResults<TData = Awaited<ReturnType<typeof getPollsIdResults>>, TError = ErrorType<GetPollsIdResults401 | GetPollsIdResults403 | GetPollsIdResults404>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsIdResults>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPollsIdResults>>,
+          TError,
+          Awaited<ReturnType<typeof getPollsIdResults>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPollsIdResults<TData = Awaited<ReturnType<typeof getPollsIdResults>>, TError = ErrorType<GetPollsIdResults401 | GetPollsIdResults403 | GetPollsIdResults404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsIdResults>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPollsIdResults>>,
+          TError,
+          Awaited<ReturnType<typeof getPollsIdResults>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPollsIdResults<TData = Awaited<ReturnType<typeof getPollsIdResults>>, TError = ErrorType<GetPollsIdResults401 | GetPollsIdResults403 | GetPollsIdResults404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsIdResults>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get poll results
+ */
+
+export function useGetPollsIdResults<TData = Awaited<ReturnType<typeof getPollsIdResults>>, TError = ErrorType<GetPollsIdResults401 | GetPollsIdResults403 | GetPollsIdResults404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPollsIdResults>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPollsIdResultsQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
