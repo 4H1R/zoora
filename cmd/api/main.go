@@ -200,6 +200,8 @@ func main() {
 
 	router.GET("/healthz", healthChecker.LivenessHandler)
 	router.GET("/readyz", healthChecker.ReadinessHandler)
+	// Caddy on-demand TLS gate: only mint certs for real tenant subdomains.
+	router.GET("/internal/tls-check", middleware.OnDemandTLSCheck(redisClient, orgRepo, cfg.BaseDomain, cfg.AdminSubdomain))
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	v1 := router.Group("/api/v1", tenantMiddleware)

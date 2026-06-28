@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -58,6 +59,34 @@ func Tenant(rdb *redis.Client, orgRepo domain.OrganizationRepository, baseDomain
 
 		c.Request = c.Request.WithContext(domain.WithHostContext(c.Request.Context(), hc))
 		c.Next()
+	}
+}
+
+// OnDemandTLSCheck gates Caddy's on-demand TLS issuance. Caddy calls it with
+// ?domain=<sni> before obtaining a cert; a 200 authorizes, anything else
+// refuses. Only the admin label, the canonical www host, and labels backed by a
+// real organization are allowed — otherwise any *.<base> hostname could exhaust
+// the Let's Encrypt rate limit.
+func OnDemandTLSCheck(rdb *redis.Client, orgRepo domain.OrganizationRepository, baseDomain, adminSub string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		host := c.Query("domain")
+		if host == "" {
+			c.Status(http.StatusBadRequest)
+			return
+		}
+		switch label := parseHostLabel(host, baseDomain); label {
+		case adminSub, "www":
+			c.Status(http.StatusOK)
+		case "":
+			// Apex is an explicit Caddy site (managed cert), not on-demand; deny.
+			c.Status(http.StatusForbidden)
+		default:
+			if _, _, ok := resolveOrg(c, rdb, orgRepo, label); ok {
+				c.Status(http.StatusOK)
+			} else {
+				c.Status(http.StatusForbidden)
+			}
+		}
 	}
 }
 
