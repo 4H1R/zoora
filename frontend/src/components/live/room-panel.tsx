@@ -93,7 +93,7 @@ export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, is
       <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
         <SheetContent
           side="bottom"
-          className="flex h-[70dvh] flex-col gap-0 bg-zinc-900 p-0 text-zinc-100"
+          className="flex h-[70dvh] flex-col gap-0 bg-card p-0 text-foreground"
         >
           <SheetTitle className="sr-only">{t("liveRoom.panel.title")}</SheetTitle>
           <TabsInner
@@ -113,14 +113,14 @@ export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, is
   }
 
   return (
-    <aside className="flex h-full w-80 shrink-0 flex-col border-s border-white/10 bg-zinc-900/70 backdrop-blur-xl">
-      <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
-        <span className="text-sm font-medium text-zinc-200">{t("liveRoom.panel.title")}</span>
+    <aside className="flex h-full w-80 shrink-0 flex-col border-s border-border bg-card/70 backdrop-blur-xl">
+      <div className="flex items-center justify-between border-b border-border px-3 py-2">
+        <span className="text-sm font-medium text-foreground">{t("liveRoom.panel.title")}</span>
         <button
           type="button"
           onClick={onClose}
           aria-label={t("common.close")}
-          className="flex size-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-white/5 hover:text-zinc-100"
+          className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           <X className="size-4" />
         </button>

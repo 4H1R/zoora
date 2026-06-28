@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import { cn } from "@/lib/utils"
 
 type Status = "live" | "scheduled" | "ended" | "processing" | "failed" | "draft"
@@ -17,16 +19,8 @@ const statusConfig: Record<Status, { bg: string; text: string; dot: string; puls
   draft: { bg: "bg-[#eff6ff]", text: "text-[#1e40af]", dot: "bg-[#2563eb]" },
 }
 
-const statusLabels: Record<Status, string> = {
-  live: "LIVE",
-  scheduled: "Scheduled",
-  ended: "Ended",
-  processing: "Processing",
-  failed: "Failed",
-  draft: "Draft",
-}
-
 export function StatusBadge({ status, className, children }: StatusBadgeProps) {
+  const { t } = useTranslation()
   const config = statusConfig[status]
 
   return (
@@ -40,7 +34,7 @@ export function StatusBadge({ status, className, children }: StatusBadgeProps) {
       )}
     >
       <span className={cn("size-1.5 rounded-full", config.dot, config.pulse && "animate-pulse-dot")} />
-      {children ?? statusLabels[status]}
+      {children ?? t(`status.${status}`)}
     </span>
   )
 }

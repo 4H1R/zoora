@@ -2400,6 +2400,7 @@
     "checkDevices": "Check your camera and microphone before joining",
     "connecting": "Connecting",
     "reconnecting": "Reconnecting",
+    "reconnectHint": "Connection lost. Trying to reconnect…",
     "peopleCount": "{{count}} people",
     "waitingForHost": "Waiting for the host to start",
     "waitingHint": "You'll be able to join as soon as your teacher starts the class. This page updates automatically.",
@@ -2436,7 +2437,12 @@
       "makeViewer": "Make viewer",
       "mute": "Mute",
       "actions": "Actions",
-      "handRaised": "Hand raised"
+      "handRaised": "Hand raised",
+      "roles": {
+        "host": "Host",
+        "presenter": "Presenter",
+        "viewer": "Viewer"
+      }
     },
     "chat": {
       "empty": "No messages yet",

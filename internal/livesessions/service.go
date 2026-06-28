@@ -23,11 +23,11 @@ import (
 type liveKitClient interface {
 	CreateRoom(ctx context.Context, roomName string, maxParticipants uint32) (*lkproto.Room, error)
 	DeleteRoom(ctx context.Context, roomName string) error
-	GenerateToken(roomName, identity, name string, sources []lkproto.TrackSource, roomAdmin bool) (string, error)
+	GenerateToken(roomName, identity, name, metadata string, sources []lkproto.TrackSource, roomAdmin bool) (string, error)
 	StartRecording(ctx context.Context, roomName, s3Path string) (string, error)
 	StopRecording(ctx context.Context, egressID string) error
 	ListParticipants(ctx context.Context, roomName string) ([]*lkproto.ParticipantInfo, error)
-	UpdateParticipant(ctx context.Context, roomName, identity string, sources []lkproto.TrackSource) error
+	UpdateParticipant(ctx context.Context, roomName, identity, metadata string, sources []lkproto.TrackSource) error
 	MutePublishedTrack(ctx context.Context, roomName, identity, trackSID string, muted bool) error
 	SendData(ctx context.Context, roomName string, payload []byte, destinationIdentities []string) error
 	PublicURL() string
@@ -278,14 +278,19 @@ func (s *service) JoinRoom(ctx context.Context, roomID uuid.UUID) (*domain.JoinL
 	roomAdmin := isModerator
 
 	identity := caller.UserID.String()
-	token, err := s.livekit.GenerateToken(room.LiveKitRoomName, identity, identity, sources, roomAdmin)
-	if err != nil {
-		return nil, fmt.Errorf("livesessions.service.JoinRoom token: %w", err)
+	displayName := caller.Name
+	if displayName == "" {
+		displayName = identity
 	}
 
 	role := domain.ParticipantRoleViewer
 	if isModerator {
 		role = domain.ParticipantRoleHost
+	}
+
+	token, err := s.livekit.GenerateToken(room.LiveKitRoomName, identity, displayName, participantMetadata(role), sources, roomAdmin)
+	if err != nil {
+		return nil, fmt.Errorf("livesessions.service.JoinRoom token: %w", err)
 	}
 	participant := &domain.LiveParticipant{
 		LiveRoomID: roomID,
@@ -674,6 +679,17 @@ const (
 	roomEventHand        = "hand"
 )
 
+// participantMetadata encodes a participant's room role into the LiveKit
+// participant metadata so every connected client can read it off the
+// participant object — no separate snapshot fetch or seeding required.
+func participantMetadata(role domain.ParticipantRole) string {
+	b, err := json.Marshal(map[string]string{"role": string(role)})
+	if err != nil {
+		return ""
+	}
+	return string(b)
+}
+
 func (s *service) broadcastRoomEvent(ctx context.Context, roomName, eventType string, data map[string]any) {
 	if s.livekit == nil {
 		return
@@ -719,7 +735,7 @@ func (s *service) SetParticipantRole(ctx context.Context, roomID uuid.UUID, iden
 	isPresenter := dto.Role == domain.ParticipantRolePresenter
 	sources := publishSources(isPresenter)
 	if s.livekit != nil {
-		if err := s.livekit.UpdateParticipant(ctx, room.LiveKitRoomName, identity, sources); err != nil {
+		if err := s.livekit.UpdateParticipant(ctx, room.LiveKitRoomName, identity, participantMetadata(dto.Role), sources); err != nil {
 			return nil, fmt.Errorf("livesessions.service.SetParticipantRole livekit: %w", err)
 		}
 	}

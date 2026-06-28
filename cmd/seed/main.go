@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -43,12 +44,36 @@ func main() {
 		log.Fatalf("truncating tables: %v", err)
 	}
 
+	if err := flushRedis(ctx); err != nil {
+		log.Fatalf("flushing redis: %v", err)
+	}
+
 	counts, err := seedAll(db, ctx)
 	if err != nil {
 		log.Fatalf("seeding: %v", err)
 	}
 
 	printSummary(counts)
+}
+
+// flushRedis clears all cached state (permissions, tenant, sessions, queue) so a
+// fresh seed isn't shadowed by stale cache from a previous dataset.
+func flushRedis(ctx context.Context) error {
+	redisURL := os.Getenv("REDIS_URL")
+	if redisURL == "" {
+		log.Fatal("REDIS_URL is required")
+	}
+	opts, err := redis.ParseURL(redisURL)
+	if err != nil {
+		return fmt.Errorf("parsing redis URL: %w", err)
+	}
+	client := redis.NewClient(opts)
+	defer client.Close()
+	if err := client.FlushAll(ctx).Err(); err != nil {
+		return fmt.Errorf("flushall: %w", err)
+	}
+	fmt.Println("Redis flushed.")
+	return nil
 }
 
 // chooseLocale resolves the seed language. SEED_LANG (en/fa) takes priority for
@@ -265,6 +290,19 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 				return nil, fmt.Errorf("creating manager1: %w", err)
 			}
 			ou.teachers = append(ou.teachers, staff)
+			counts.Users++
+
+			// Second manager — manager2 (Manager preset) in acme org.
+			staff2 := factory.NewUser(org.ID, func(u *domain.User) {
+				u.OrganizationID = &org.ID
+				u.Username = "manager2"
+				u.Name = factory.T("Manager Two", "کاربر مدیر دو")
+				u.RoleID = &presetRoles[domain.PresetRoleManager].ID
+			})
+			if err := db.WithContext(ctx).Create(staff2).Error; err != nil {
+				return nil, fmt.Errorf("creating manager2: %w", err)
+			}
+			ou.teachers = append(ou.teachers, staff2)
 			counts.Users++
 
 			// Fixed user1 — debug student in Zoora Demo org
@@ -612,6 +650,15 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 				return nil, fmt.Errorf("creating live room: %w", err)
 			}
 			counts.LiveRooms++
+			// Mirror CreateRoom: every live room owns a live_session chat so the
+			// in-room chat panel has a backing chat to post to.
+			liveRoomChat := factory.NewChat("live_session", liveRoom.ID, func(c *domain.Chat) {
+				c.Name = factory.T("Chat – Past session", "گفتگو – جلسه گذشته")
+			})
+			if err := db.WithContext(ctx).Create(liveRoomChat).Error; err != nil {
+				return nil, fmt.Errorf("creating live room chat: %w", err)
+			}
+			counts.Chats++
 			lpUsers := append([]*domain.User{teacher}, ou.students...)
 			for _, u := range lpUsers {
 				lp := factory.NewLiveParticipant(liveRoom.ID, u.ID)
@@ -638,6 +685,13 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 				return nil, fmt.Errorf("creating scheduled live room: %w", err)
 			}
 			counts.LiveRooms++
+			scheduledRoomChat := factory.NewChat("live_session", scheduledRoom.ID, func(c *domain.Chat) {
+				c.Name = factory.T("Chat – Scheduled session", "گفتگو – جلسه زمان‌بندی‌شده")
+			})
+			if err := db.WithContext(ctx).Create(scheduledRoomChat).Error; err != nil {
+				return nil, fmt.Errorf("creating scheduled live room chat: %w", err)
+			}
+			counts.Chats++
 
 			// 18. PracticeRoom + submissions
 			pr := factory.NewPracticeRoom(org.ID, class.ID, practiceSession.ID, teacher.ID)
@@ -762,5 +816,6 @@ func printSummary(c *seedCounts) {
 	fmt.Println("\nLogins:")
 	fmt.Println("  admin1 / password   (super admin)")
 	fmt.Println("  manager1 / password (Manager preset in Zoora Demo org)")
+	fmt.Println("  manager2 / password (Manager preset in Zoora Demo org)")
 	fmt.Println("  user1 / password    (Student in Zoora Demo org)")
 }

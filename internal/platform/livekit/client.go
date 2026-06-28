@@ -74,7 +74,7 @@ func (c *Client) DeleteRoom(ctx context.Context, roomName string) error {
 // via CanPublishSources so room config (mic/camera/screen) is actually enforced
 // — an empty slice means subscribe-only. Passing sources also guarantees screen
 // share is authorized for moderators (previously CanPublish-only left it implicit).
-func (c *Client) GenerateToken(roomName, identity, name string, sources []livekit.TrackSource, roomAdmin bool) (string, error) {
+func (c *Client) GenerateToken(roomName, identity, name, metadata string, sources []livekit.TrackSource, roomAdmin bool) (string, error) {
 	at := auth.NewAccessToken(c.apiKey, c.apiSecret)
 	grant := &auth.VideoGrant{
 		RoomJoin: true,
@@ -96,6 +96,9 @@ func (c *Client) GenerateToken(roomName, identity, name string, sources []liveki
 		SetIdentity(identity).
 		SetName(name).
 		SetValidFor(24 * time.Hour)
+	if metadata != "" {
+		at.SetMetadata(metadata)
+	}
 
 	token, err := at.ToJWT()
 	if err != nil {
@@ -146,9 +149,9 @@ func (c *Client) ListParticipants(ctx context.Context, roomName string) ([]*live
 	return resp.Participants, nil
 }
 
-func (c *Client) UpdateParticipant(ctx context.Context, roomName, identity string, sources []livekit.TrackSource) error {
+func (c *Client) UpdateParticipant(ctx context.Context, roomName, identity, metadata string, sources []livekit.TrackSource) error {
 	canPublish := len(sources) > 0
-	_, err := c.roomClient.UpdateParticipant(ctx, &livekit.UpdateParticipantRequest{
+	req := &livekit.UpdateParticipantRequest{
 		Room:     roomName,
 		Identity: identity,
 		Permission: &livekit.ParticipantPermission{
@@ -157,7 +160,11 @@ func (c *Client) UpdateParticipant(ctx context.Context, roomName, identity strin
 			CanPublishData:    true,
 			CanPublishSources: sources,
 		},
-	})
+	}
+	if metadata != "" {
+		req.Metadata = metadata
+	}
+	_, err := c.roomClient.UpdateParticipant(ctx, req)
 	if err != nil {
 		return fmt.Errorf("updating participant %s in %s: %w", identity, roomName, err)
 	}

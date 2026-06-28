@@ -38,7 +38,7 @@ export function ChatPanel({ chat, canModerate }: ChatPanelProps) {
       <ScrollArea className="flex-1">
         <div className="flex flex-col gap-3 p-3">
           {messages.length === 0 && (
-            <div className="flex flex-col items-center gap-2 py-12 text-center text-zinc-500">
+            <div className="flex flex-col items-center gap-2 py-12 text-center text-muted-foreground">
               <MessageSquare className="size-7 opacity-40" />
               <p className="text-sm">{t("liveRoom.chat.empty")}</p>
             </div>
@@ -49,7 +49,7 @@ export function ChatPanel({ chat, canModerate }: ChatPanelProps) {
               <div key={msg.id} className="group flex flex-col gap-0.5">
                 <div className="flex items-baseline gap-2">
                   <span className="text-xs font-medium text-primary">{msg.senderName}</span>
-                  <span className="font-mono text-[10px] text-zinc-600" dir="ltr">
+                  <span className="font-mono text-[10px] text-muted-foreground" dir="ltr">
                     {time}
                   </span>
                   {canModerate && (
@@ -57,13 +57,13 @@ export function ChatPanel({ chat, canModerate }: ChatPanelProps) {
                       type="button"
                       onClick={() => deleteMessage(msg.id)}
                       aria-label={t("liveRoom.chat.delete")}
-                      className="ms-auto hidden size-5 items-center justify-center rounded text-zinc-500 hover:text-red-400 group-hover:flex"
+                      className="ms-auto hidden size-5 items-center justify-center rounded text-muted-foreground hover:text-red-400 group-hover:flex"
                     >
                       <Trash2 className="size-3.5" />
                     </button>
                   )}
                 </div>
-                <p className="break-words text-sm text-zinc-200">{msg.content}</p>
+                <p className="break-words text-sm text-foreground">{msg.content}</p>
               </div>
             )
           })}
@@ -71,12 +71,12 @@ export function ChatPanel({ chat, canModerate }: ChatPanelProps) {
         </div>
       </ScrollArea>
 
-      <form onSubmit={handleSend} className="flex items-center gap-2 border-t border-white/10 p-2.5">
+      <form onSubmit={handleSend} className="flex items-center gap-2 border-t border-border p-2.5">
         <Input
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={t("liveRoom.chat.placeholder")}
-          className="h-10 border-white/10 bg-white/5 text-zinc-100 placeholder:text-zinc-500 focus-visible:ring-ring/40"
+          className="h-10 border-border bg-input text-foreground placeholder:text-muted-foreground focus-visible:ring-ring/40"
         />
         <Button type="submit" size="icon" disabled={isSending || !text.trim()} className="size-10 shrink-0">
           <SendHorizonal className="size-4 rtl:rotate-180" />

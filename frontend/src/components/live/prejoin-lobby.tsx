@@ -10,7 +10,7 @@ import type { PreJoinChoices } from "./types"
 
 import { usePostLiveRoomsIdJoin } from "@/api/live-sessions/live-sessions"
 import { useGetUsersMe } from "@/api/users/users"
-import { StatusBadge } from "@/components/status-badge"
+import { SessionStatusPill } from "@/components/session/status-pill"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { UserAvatar } from "@/components/user-avatar"
@@ -61,11 +61,17 @@ export function PreJoinLobby({ room, liveId, onJoined }: PreJoinLobbyProps) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-950 text-zinc-100">
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-background text-foreground">
+      {/* atmosphere: a single, faint brand halo — adds depth without clutter */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[55vh] bg-[radial-gradient(55%_60%_at_50%_0%,color-mix(in_oklab,var(--primary)_9%,transparent),transparent_72%)]"
+      />
+
       <header className="flex items-center px-5 py-4 sm:px-8">
         <Link
           to={orgId ? "/org" : "/"}
-          className="inline-flex items-center gap-1.5 text-sm text-zinc-400 transition-colors hover:text-zinc-100"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ChevronLeft className="size-3.5 rtl:rotate-180" />
           <span>{t("liveRoom.backToDashboard")}</span>
@@ -73,38 +79,36 @@ export function PreJoinLobby({ room, liveId, onJoined }: PreJoinLobbyProps) {
       </header>
 
       <main className="flex flex-1 items-center justify-center px-5 pb-16">
-        <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/[0.03] p-7 text-center backdrop-blur-xl">
-          <div className="flex justify-center">
-            <StatusBadge status={room?.status === "active" ? "live" : isFinished ? "ended" : "scheduled"} />
-          </div>
+        <div className="flex w-full max-w-sm flex-col items-center rounded-3xl border border-border bg-card px-8 py-10 text-center">
+          <SessionStatusPill status={room?.status === "active" ? "live" : isFinished ? "ended" : "scheduled"} />
 
           {className && (
-            <div className="mt-5 text-xs font-medium tracking-wide text-primary uppercase">{className}</div>
+            <div className="mt-6 text-[0.7rem] font-semibold tracking-caps text-primary uppercase">{className}</div>
           )}
-          <h1 className="mt-1.5 text-2xl leading-tight font-semibold tracking-tight text-white">
+          <h1 className="mt-2 text-2xl leading-tight font-semibold tracking-tight text-balance text-foreground">
             {sessionName ?? t("liveRoom.session")}
           </h1>
 
           {teacherName && (
-            <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5">
+            <div className="mt-5 inline-flex items-center gap-2 text-sm text-muted-foreground">
               <UserAvatar name={teacherName} size="sm" />
-              <span className="text-sm text-zinc-200">{teacherName}</span>
+              <span>{teacherName}</span>
             </div>
           )}
 
-          <div className="mt-7">
+          <div className="mt-8 w-full">
             {isWaiting ? (
               <div className="flex flex-col items-center gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/5 px-5 py-6">
-                <span className="flex size-11 items-center justify-center rounded-full bg-amber-400/15 text-amber-300">
-                  <Hourglass className="size-5 animate-pulse" />
+                <span className="flex size-11 items-center justify-center rounded-full bg-amber-400/15 text-amber-500 dark:text-amber-300">
+                  <Hourglass className="size-5" />
                 </span>
-                <p className="text-sm font-medium text-zinc-100">{t("liveRoom.waitingForHost")}</p>
+                <p className="text-sm font-medium text-foreground">{t("liveRoom.waitingForHost")}</p>
                 {scheduledIso && now < new Date(scheduledIso).getTime() && (
-                  <p className="font-mono text-2xl font-semibold tracking-tight text-amber-200 tabular-nums" dir="ltr">
+                  <p className="font-mono text-2xl font-semibold tracking-tight text-amber-600 tabular-nums dark:text-amber-200" dir="ltr">
                     {formatCountdown(scheduledIso, now)}
                   </p>
                 )}
-                <p className="text-xs leading-relaxed text-zinc-400">{t("liveRoom.waitingHint")}</p>
+                <p className="text-xs leading-relaxed text-muted-foreground">{t("liveRoom.waitingHint")}</p>
               </div>
             ) : (
               <Button
@@ -127,19 +131,19 @@ export function PreJoinLobby({ room, liveId, onJoined }: PreJoinLobbyProps) {
                 )}
               </Button>
             )}
+
+            {joinMutation.isError && !isWaiting && (
+              <p className="mt-4 text-sm text-destructive">{t("liveRoom.joinError")}</p>
+            )}
+
+            <Button
+              variant="ghost"
+              onClick={() => router.history.back()}
+              className="mt-2 w-full text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              {t("liveRoom.back")}
+            </Button>
           </div>
-
-          {joinMutation.isError && !isWaiting && (
-            <p className="mt-4 text-sm text-red-400">{t("liveRoom.joinError")}</p>
-          )}
-
-          <Button
-            variant="ghost"
-            onClick={() => router.history.back()}
-            className="mt-2 w-full text-zinc-400 hover:bg-white/5 hover:text-zinc-100"
-          >
-            {t("liveRoom.back")}
-          </Button>
         </div>
       </main>
     </div>

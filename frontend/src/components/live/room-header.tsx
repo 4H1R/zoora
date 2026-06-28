@@ -30,14 +30,14 @@ export function RoomHeader({ sessionName, className }: { sessionName: string; cl
   const reconnecting = state === ConnectionState.Reconnecting || state === ConnectionState.SignalReconnecting
 
   return (
-    <header className="flex shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-zinc-950/80 px-4 py-2.5 backdrop-blur-md sm:px-5">
+    <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-background/80 px-4 py-2.5 backdrop-blur-md sm:px-5">
       <div className="flex min-w-0 items-center gap-3">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
           <MonitorPlay className="size-5" />
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-white">{sessionName}</p>
-          {className && <p className="truncate text-xs text-zinc-400">{className}</p>}
+          <p className="truncate text-sm font-semibold text-foreground">{sessionName}</p>
+          {className && <p className="truncate text-xs text-muted-foreground">{className}</p>}
         </div>
       </div>
 
@@ -51,7 +51,7 @@ export function RoomHeader({ sessionName, className }: { sessionName: string; cl
           <span
             className={cn(
               "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-wide",
-              connected ? "bg-red-500 text-white" : "bg-zinc-700 text-zinc-300"
+              connected ? "bg-red-500 text-white" : "bg-muted text-muted-foreground"
             )}
           >
             <span className={cn("size-1.5 rounded-full bg-white", connected && "animate-pulse")} />
@@ -59,14 +59,14 @@ export function RoomHeader({ sessionName, className }: { sessionName: string; cl
           </span>
         )}
 
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1 text-xs font-medium text-zinc-200">
-          <Users className="size-3.5 text-zinc-400" />
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground">
+          <Users className="size-3.5 text-muted-foreground" />
           <span className="font-mono" dir="ltr">
             {participants.length}
           </span>
         </span>
 
-        <span className="hidden rounded-full bg-white/5 px-2.5 py-1 font-mono text-xs text-zinc-300 sm:inline-block" dir="ltr">
+        <span className="hidden rounded-full bg-muted px-2.5 py-1 font-mono text-xs text-muted-foreground sm:inline-block" dir="ltr">
           {formatElapsed(elapsed)}
         </span>
       </div>

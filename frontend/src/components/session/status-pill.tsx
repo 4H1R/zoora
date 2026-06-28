@@ -28,7 +28,7 @@ export function SessionStatusPill({ status, size = "md", className }: SessionSta
           <span className="bg-destructive absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" />
           <span className={cn("bg-destructive relative inline-flex rounded-full", dotSize)} />
         </span>
-        {t("status.liveNow")}
+        {t("status.live")}
       </span>
     )
   }

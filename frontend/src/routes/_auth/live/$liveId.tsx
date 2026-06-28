@@ -12,7 +12,7 @@ import { deriveRoomRole } from "@/components/live/room-role"
 import { PreJoinLobby } from "@/components/live/prejoin-lobby"
 import { Spinner } from "@/components/ui/spinner"
 
-export const Route = createFileRoute("/live/$liveId")({
+export const Route = createFileRoute("/_auth/live/$liveId")({
   component: RouteComponent,
 })
 
@@ -45,7 +45,7 @@ function RouteComponent() {
 
   if (isPending) {
     return (
-      <div className="flex h-screen items-center justify-center bg-zinc-950">
+      <div className="flex h-screen items-center justify-center bg-background">
         <Spinner className="size-8 text-primary" />
       </div>
     )

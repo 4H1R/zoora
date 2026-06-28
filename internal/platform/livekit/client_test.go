@@ -41,6 +41,7 @@ func TestGenerateTokenCreatesJoinTokenAndRejectsInvalidSecrets(t *testing.T) {
 		"room-1",
 		"user-1",
 		"Alice",
+		`{"role":"host"}`,
 		[]livekitproto.TrackSource{livekitproto.TrackSource_MICROPHONE, livekitproto.TrackSource_CAMERA},
 		true,
 	)
@@ -52,7 +53,7 @@ func TestGenerateTokenCreatesJoinTokenAndRejectsInvalidSecrets(t *testing.T) {
 	}
 
 	client.apiSecret = ""
-	if _, err := client.GenerateToken("room-1", "user-1", "Alice", nil, false); err == nil {
+	if _, err := client.GenerateToken("room-1", "user-1", "Alice", "", nil, false); err == nil {
 		t.Fatal("GenerateToken() error = nil for empty secret")
 	}
 }

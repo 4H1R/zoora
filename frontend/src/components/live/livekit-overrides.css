@@ -11,13 +11,25 @@
 }
 
 .zoora-live {
-  --lk-bg: transparent;
-  --lk-fg: #fafafa;
-  --lk-fg-secondary: rgba(250, 250, 250, 0.7);
+  /* Map LiveKit's design tokens onto our app theme so the room follows
+     light/dark and uses our primary font (LiveKit defaults to a system-ui
+     stack + a hardcoded dark palette via [data-lk-theme=default]). */
+  --lk-font-family: var(--font-sans);
+  --lk-bg: var(--background);
+  --lk-fg: var(--foreground);
+  --lk-fg-secondary: var(--muted-foreground);
   --lk-accent-bg: var(--brand);
   --lk-accent-fg: var(--brand-fg);
-  --lk-border-color: rgba(255, 255, 255, 0.07);
+  --lk-border-color: var(--border);
   --lk-grid-gap: 0.75rem;
+}
+
+/* [data-lk-theme=default] hardcodes color-scheme:dark — follow our theme. */
+.zoora-live[data-lk-theme] {
+  color-scheme: light;
+}
+.dark .zoora-live[data-lk-theme] {
+  color-scheme: dark;
 }
 
 /* --- Layout containers fill their parent --- */
@@ -52,8 +64,8 @@
   position: relative;
   border-radius: 0.9rem;
   overflow: hidden;
-  background: #18191d;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--card);
+  border: 1px solid var(--border);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
   transition: box-shadow 150ms ease, border-color 150ms ease;
 }
@@ -66,8 +78,8 @@
 
 /* --- Camera-off placeholder: Discord-style avatar void --- */
 .zoora-live .lk-participant-placeholder {
-  background: radial-gradient(120% 120% at 50% 35%, #26272e 0%, #16171b 100%);
-  color: rgba(255, 255, 255, 0.22);
+  background: radial-gradient(120% 120% at 50% 35%, var(--muted) 0%, var(--card) 100%);
+  color: color-mix(in oklab, var(--muted-foreground) 55%, transparent);
   opacity: 1;
 }
 .zoora-live .lk-participant-placeholder svg {

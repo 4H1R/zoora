@@ -25,14 +25,14 @@ function PollsBar({ options, counts, total }: PollsBarProps) {
         const pct = total > 0 ? Math.round((count / total) * 100) : 0
         return (
           <div key={opt.value} className="flex flex-col gap-1">
-            <div className="flex items-center justify-between text-xs text-zinc-300">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{opt.label}</span>
-              <span className="font-mono text-zinc-400">
+              <span className="font-mono text-muted-foreground">
                 {t("liveRoom.polls.votes", { count })}
               </span>
             </div>
             <div
-              className="relative h-5 overflow-hidden rounded-sm bg-white/10"
+              className="relative h-5 overflow-hidden rounded-sm bg-muted"
               role="meter"
               aria-valuenow={pct}
               aria-valuemin={0}
@@ -50,7 +50,7 @@ function PollsBar({ options, counts, total }: PollsBarProps) {
           </div>
         )
       })}
-      <p className="mt-1 text-right text-[10px] text-zinc-500">
+      <p className="mt-1 text-right text-[10px] text-muted-foreground">
         {t("liveRoom.polls.votes", { count: total })}
       </p>
     </div>
@@ -135,12 +135,12 @@ function CreatePollForm({ liveId, onLaunch }: CreatePollFormProps) {
     <div className="flex flex-col gap-3 p-3">
       {/* Question */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium text-zinc-400">{t("liveRoom.polls.question")}</label>
+        <label className="text-xs font-medium text-muted-foreground">{t("liveRoom.polls.question")}</label>
         <Input
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder={t("liveRoom.polls.question")}
-          className="border-white/10 bg-white/5 text-zinc-100 placeholder:text-zinc-500 focus-visible:ring-ring/40"
+          className="border-border bg-transparent text-foreground placeholder:text-muted-foreground focus-visible:ring-ring/40"
         />
       </div>
 
@@ -153,7 +153,7 @@ function CreatePollForm({ liveId, onLaunch }: CreatePollFormProps) {
             "flex-1 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors",
             mode === "single"
               ? "border-primary bg-primary text-primary-foreground"
-              : "border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10",
+              : "border-border bg-muted text-muted-foreground hover:bg-accent",
           )}
         >
           {t("liveRoom.polls.singleChoice")}
@@ -165,7 +165,7 @@ function CreatePollForm({ liveId, onLaunch }: CreatePollFormProps) {
             "flex-1 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors",
             mode === "yesno"
               ? "border-primary bg-primary text-primary-foreground"
-              : "border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10",
+              : "border-border bg-muted text-muted-foreground hover:bg-accent",
           )}
         >
           {t("liveRoom.polls.yesNo")}
@@ -181,14 +181,14 @@ function CreatePollForm({ liveId, onLaunch }: CreatePollFormProps) {
                 value={opt}
                 onChange={(e) => setOption(i, e.target.value)}
                 placeholder={`${t("liveRoom.polls.option")} ${i + 1}`}
-                className="border-white/10 bg-white/5 text-zinc-100 placeholder:text-zinc-500 focus-visible:ring-ring/40"
+                className="border-border bg-transparent text-foreground placeholder:text-muted-foreground focus-visible:ring-ring/40"
               />
               {options.length > 2 && (
                 <button
                   type="button"
                   onClick={() => removeOption(i)}
                   aria-label={t("liveRoom.polls.removeOption")}
-                  className="flex size-8 shrink-0 items-center justify-center rounded text-zinc-500 hover:text-red-400"
+                  className="flex size-8 shrink-0 items-center justify-center rounded text-muted-foreground hover:text-red-400"
                 >
                   <Trash2 className="size-3.5" />
                 </button>
@@ -199,7 +199,7 @@ function CreatePollForm({ liveId, onLaunch }: CreatePollFormProps) {
             <button
               type="button"
               onClick={addOption}
-              className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200"
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
             >
               <Plus className="size-3.5" />
               {t("liveRoom.polls.addOption")}
@@ -249,13 +249,13 @@ function HostActivePoll({ activePoll, onReveal, onClose }: HostActivePollProps) 
 
   return (
     <div className="flex flex-col gap-4 p-3">
-      <p className="text-sm font-semibold text-zinc-100">{activePoll.name}</p>
+      <p className="text-sm font-semibold text-foreground">{activePoll.name}</p>
       <PollsBar options={activePoll.options} counts={counts} total={total} />
       <div className="flex gap-2">
         <Button size="sm" className="flex-1" onClick={handleReveal}>
           {t("liveRoom.polls.reveal")}
         </Button>
-        <Button size="sm" variant="outline" className="flex-1 border-white/10 text-zinc-300 hover:bg-white/10" onClick={onClose}>
+        <Button size="sm" variant="outline" className="flex-1 border-border text-muted-foreground hover:bg-accent" onClick={onClose}>
           {t("liveRoom.polls.close")}
         </Button>
       </div>
@@ -291,7 +291,7 @@ export function PollsPanel({ liveId, isHost }: PollsPanelProps) {
     if (!activePoll) {
       return (
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-          <p className="px-3 pt-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+          <p className="px-3 pt-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             {t("liveRoom.polls.create")}
           </p>
           <CreatePollForm liveId={liveId} onLaunch={launchPoll} />
@@ -315,7 +315,7 @@ export function PollsPanel({ liveId, isHost }: PollsPanelProps) {
   // No active poll
   if (!activePoll) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 p-6 text-center text-zinc-500">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 p-6 text-center text-muted-foreground">
         <BarChart3 className="size-7 opacity-40" />
         <p className="text-sm">{t("liveRoom.polls.noActive")}</p>
       </div>
@@ -326,8 +326,8 @@ export function PollsPanel({ liveId, isHost }: PollsPanelProps) {
   if (results) {
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-3">
-        <p className="text-sm font-semibold text-zinc-100">{activePoll.name}</p>
-        <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+        <p className="text-sm font-semibold text-foreground">{activePoll.name}</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {t("liveRoom.polls.results")}
         </p>
         <PollsBar options={activePoll.options} counts={results.counts} total={results.total} />
@@ -338,7 +338,7 @@ export function PollsPanel({ liveId, isHost }: PollsPanelProps) {
   // Waiting for results after answering
   if (hasAnswered) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 p-6 text-center text-zinc-400">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 p-6 text-center text-muted-foreground">
         <BarChart3 className="size-7 opacity-40" />
         <p className="text-sm">{t("liveRoom.polls.submitted")}</p>
       </div>
@@ -348,7 +348,7 @@ export function PollsPanel({ liveId, isHost }: PollsPanelProps) {
   // Show voting options
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
-      <p className="text-sm font-semibold text-zinc-100">{activePoll.name}</p>
+      <p className="text-sm font-semibold text-foreground">{activePoll.name}</p>
       <div className="flex flex-col gap-2">
         {activePoll.options.map((opt) => (
           <button
@@ -356,7 +356,7 @@ export function PollsPanel({ liveId, isHost }: PollsPanelProps) {
             type="button"
             disabled={answerMutation.isPending}
             onClick={() => handleVote(opt.value)}
-            className="w-full rounded-md border border-white/10 bg-white/5 px-4 py-2.5 text-start text-sm text-zinc-100 transition-colors hover:border-primary hover:bg-primary/10 disabled:opacity-50"
+            className="w-full rounded-md border border-border bg-muted px-4 py-2.5 text-start text-sm text-foreground transition-colors hover:border-primary hover:bg-primary/10 disabled:opacity-50"
           >
             {opt.label}
           </button>

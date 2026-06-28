@@ -1,10 +1,13 @@
 import {
+  isTrackReference,
   LayoutContextProvider,
   LiveKitRoom,
   RoomAudioRenderer,
   useCreateLayoutContext,
   useLocalParticipant,
+  useTracks,
 } from "@livekit/components-react"
+import { Track } from "livekit-client"
 import { Users } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -20,8 +23,10 @@ import {
   usePutLiveRoomsIdParticipantsIdentityRole,
 } from "@/api/live-sessions/live-sessions"
 import { postMediaPresign, getMediaIdDownloadUrl } from "@/api/media/media"
+import { cn } from "@/lib/utils"
 
 import { ControlBar } from "./control-bar"
+import { ReconnectOverlay } from "./reconnect-overlay"
 import { RoomHeader } from "./room-header"
 import { RoomPanel } from "./room-panel"
 import { canPublish, RoomRoleContext, type RoomRole, useRoomRole } from "./room-role"
@@ -70,7 +75,7 @@ export function ActiveRoom({
         video={false}
         onDisconnected={onDisconnect}
         data-lk-theme="default"
-        className="zoora-live relative flex flex-col overflow-hidden bg-zinc-950 text-zinc-100"
+        className="zoora-live relative flex flex-col overflow-hidden bg-background text-foreground"
       >
         <RoomShell
           sessionName={sessionName}
@@ -80,6 +85,7 @@ export function ActiveRoom({
           liveId={liveId}
           chatId={chatId}
         />
+        <ReconnectOverlay />
         <RoomAudioRenderer />
       </LiveKitRoom>
     </RoomRoleContext.Provider>
@@ -117,6 +123,12 @@ function RoomShell({
 
   const { stage, setStage } = useStage(isHost)
   const canDraw = localParticipant.permissions?.canPublish ?? false
+
+  // Camera publishers drive the webcam rail; with none, the rail (and its toggle) has nothing to show.
+  const hasCameras =
+    useTracks([{ source: Track.Source.Camera, withPlaceholder: false }], {
+      onlySubscribed: false,
+    }).filter(isTrackReference).length > 0
 
   const onStartWhiteboard = () => setStage({ kind: "whiteboard" })
 
@@ -229,14 +241,22 @@ function RoomShell({
             onStartWhiteboard={onStartWhiteboard}
           />
 
-          <button
-            type="button"
-            onClick={() => setRailOpen((v) => !v)}
-            aria-label={t("liveRoom.toggleRail")}
-            className="absolute end-4 top-4 z-20 flex size-9 items-center justify-center rounded-lg bg-black/50 text-zinc-200 backdrop-blur-md transition-colors hover:bg-black/70"
-          >
-            <Users className="size-4" />
-          </button>
+          {hasCameras && (
+            <button
+              type="button"
+              onClick={() => setRailOpen((v) => !v)}
+              aria-label={t("liveRoom.toggleRail")}
+              aria-pressed={railOpen}
+              className={cn(
+                "absolute end-4 top-4 z-20 flex size-9 items-center justify-center rounded-lg backdrop-blur-md transition-colors",
+                railOpen
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                  : "bg-black/50 text-zinc-200 hover:bg-black/70"
+              )}
+            >
+              <Users className="size-4" />
+            </button>
+          )}
         </div>
 
         <RoomPanel

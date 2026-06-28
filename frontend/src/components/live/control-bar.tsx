@@ -234,9 +234,9 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, un
           >
             <MoreHorizontal className="size-5" />
           </SheetTrigger>
-          <SheetContent side="bottom" className="bg-zinc-900 p-0 text-zinc-100" showCloseButton={false}>
+          <SheetContent side="bottom" className="bg-popover p-0 text-foreground" showCloseButton={false}>
             <SheetTitle className="sr-only">{t("liveRoom.controls.more")}</SheetTitle>
-            <div className="flex flex-col divide-y divide-white/10 py-2">
+            <div className="flex flex-col divide-y divide-border py-2">
               {publisher && (
                 <button
                   type="button"
@@ -246,7 +246,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, un
                       "liveRoom.errors.screenShare",
                     )
                   }
-                  className="flex items-center gap-3 px-5 py-3.5 text-sm text-zinc-200 hover:bg-white/5"
+                  className="flex items-center gap-3 px-5 py-3.5 text-sm text-foreground hover:bg-accent"
                 >
                   <MonitorUp className="size-5 shrink-0" />
                   <span>{isScreenShareEnabled ? t("liveRoom.controls.stopShare") : t("liveRoom.controls.shareScreen")}</span>
@@ -256,7 +256,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, un
                 <button
                   type="button"
                   onClick={handleSlidesClick}
-                  className="flex items-center gap-3 px-5 py-3.5 text-sm text-zinc-200 hover:bg-white/5"
+                  className="flex items-center gap-3 px-5 py-3.5 text-sm text-foreground hover:bg-accent"
                 >
                   <Presentation className="size-5 shrink-0" />
                   <span>{stageKind === "slides" ? t("liveRoom.controls.stopSlides") : t("liveRoom.controls.shareSlides")}</span>
@@ -266,7 +266,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, un
                 <button
                   type="button"
                   onClick={handleWhiteboardClick}
-                  className="flex items-center gap-3 px-5 py-3.5 text-sm text-zinc-200 hover:bg-white/5"
+                  className="flex items-center gap-3 px-5 py-3.5 text-sm text-foreground hover:bg-accent"
                 >
                   <PenLine className="size-5 shrink-0" />
                   <span>{stageKind === "whiteboard" ? t("liveRoom.controls.stopWhiteboard") : t("liveRoom.controls.whiteboard")}</span>
@@ -275,7 +275,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, un
               <button
                 type="button"
                 onClick={() => togglePanel("people")}
-                className="flex items-center gap-3 px-5 py-3.5 text-sm text-zinc-200 hover:bg-white/5"
+                className="flex items-center gap-3 px-5 py-3.5 text-sm text-foreground hover:bg-accent"
               >
                 <Users className="size-5 shrink-0" />
                 <span>{t("liveRoom.controls.people")}</span>
@@ -283,7 +283,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, un
               <button
                 type="button"
                 onClick={() => togglePanel("polls")}
-                className="flex items-center gap-3 px-5 py-3.5 text-sm text-zinc-200 hover:bg-white/5"
+                className="flex items-center gap-3 px-5 py-3.5 text-sm text-foreground hover:bg-accent"
               >
                 <BarChart3 className="size-5 shrink-0" />
                 <span>{t("liveRoom.controls.polls")}</span>

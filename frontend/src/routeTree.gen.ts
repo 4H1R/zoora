@@ -13,7 +13,6 @@ import { Route as GuestRouteImport } from './routes/_guest'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as LiveLiveIdRouteImport } from './routes/live/$liveId'
 import { Route as GuestLoginRouteImport } from './routes/_guest/login'
 import { Route as AuthOrgRouteImport } from './routes/_auth/org'
 import { Route as AuthOrgIndexRouteImport } from './routes/_auth/org/index'
@@ -21,6 +20,7 @@ import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin/index
 import { Route as AuthOrgSettingsRouteImport } from './routes/_auth/org/settings'
 import { Route as AuthOrgDashboardRouteImport } from './routes/_auth/org/dashboard'
 import { Route as AuthOrgCalendarRouteImport } from './routes/_auth/org/calendar'
+import { Route as AuthLiveLiveIdRouteImport } from './routes/_auth/live/$liveId'
 import { Route as AdminAdminDashboardRouteImport } from './routes/_admin/admin/dashboard'
 import { Route as AuthOrgUsersIndexRouteImport } from './routes/_auth/org/users/index'
 import { Route as AuthOrgRolesIndexRouteImport } from './routes/_auth/org/roles/index'
@@ -78,11 +78,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LiveLiveIdRoute = LiveLiveIdRouteImport.update({
-  id: '/live/$liveId',
-  path: '/live/$liveId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const GuestLoginRoute = GuestLoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -117,6 +112,11 @@ const AuthOrgCalendarRoute = AuthOrgCalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
   getParentRoute: () => AuthOrgRoute,
+} as any)
+const AuthLiveLiveIdRoute = AuthLiveLiveIdRouteImport.update({
+  id: '/live/$liveId',
+  path: '/live/$liveId',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AdminAdminDashboardRoute = AdminAdminDashboardRouteImport.update({
   id: '/admin/dashboard',
@@ -339,8 +339,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/org': typeof AuthOrgRouteWithChildren
   '/login': typeof GuestLoginRoute
-  '/live/$liveId': typeof LiveLiveIdRoute
   '/admin/dashboard': typeof AdminAdminDashboardRoute
+  '/live/$liveId': typeof AuthLiveLiveIdRoute
   '/org/calendar': typeof AuthOrgCalendarRoute
   '/org/dashboard': typeof AuthOrgDashboardRoute
   '/org/settings': typeof AuthOrgSettingsRoute
@@ -388,8 +388,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof GuestLoginRoute
-  '/live/$liveId': typeof LiveLiveIdRoute
   '/admin/dashboard': typeof AdminAdminDashboardRoute
+  '/live/$liveId': typeof AuthLiveLiveIdRoute
   '/org/calendar': typeof AuthOrgCalendarRoute
   '/org/dashboard': typeof AuthOrgDashboardRoute
   '/org/settings': typeof AuthOrgSettingsRoute
@@ -442,8 +442,8 @@ export interface FileRoutesById {
   '/_guest': typeof GuestRouteWithChildren
   '/_auth/org': typeof AuthOrgRouteWithChildren
   '/_guest/login': typeof GuestLoginRoute
-  '/live/$liveId': typeof LiveLiveIdRoute
   '/_admin/admin/dashboard': typeof AdminAdminDashboardRoute
+  '/_auth/live/$liveId': typeof AuthLiveLiveIdRoute
   '/_auth/org/calendar': typeof AuthOrgCalendarRoute
   '/_auth/org/dashboard': typeof AuthOrgDashboardRoute
   '/_auth/org/settings': typeof AuthOrgSettingsRoute
@@ -494,8 +494,8 @@ export interface FileRouteTypes {
     | '/'
     | '/org'
     | '/login'
-    | '/live/$liveId'
     | '/admin/dashboard'
+    | '/live/$liveId'
     | '/org/calendar'
     | '/org/dashboard'
     | '/org/settings'
@@ -543,8 +543,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
-    | '/live/$liveId'
     | '/admin/dashboard'
+    | '/live/$liveId'
     | '/org/calendar'
     | '/org/dashboard'
     | '/org/settings'
@@ -596,8 +596,8 @@ export interface FileRouteTypes {
     | '/_guest'
     | '/_auth/org'
     | '/_guest/login'
-    | '/live/$liveId'
     | '/_admin/admin/dashboard'
+    | '/_auth/live/$liveId'
     | '/_auth/org/calendar'
     | '/_auth/org/dashboard'
     | '/_auth/org/settings'
@@ -648,7 +648,6 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
   GuestRoute: typeof GuestRouteWithChildren
-  LiveLiveIdRoute: typeof LiveLiveIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -679,13 +678,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/live/$liveId': {
-      id: '/live/$liveId'
-      path: '/live/$liveId'
-      fullPath: '/live/$liveId'
-      preLoaderRoute: typeof LiveLiveIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_guest/login': {
@@ -736,6 +728,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/org/calendar'
       preLoaderRoute: typeof AuthOrgCalendarRouteImport
       parentRoute: typeof AuthOrgRoute
+    }
+    '/_auth/live/$liveId': {
+      id: '/_auth/live/$liveId'
+      path: '/live/$liveId'
+      fullPath: '/live/$liveId'
+      preLoaderRoute: typeof AuthLiveLiveIdRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/_admin/admin/dashboard': {
       id: '/_admin/admin/dashboard'
@@ -1126,10 +1125,12 @@ const AuthOrgRouteWithChildren =
 
 interface AuthRouteChildren {
   AuthOrgRoute: typeof AuthOrgRouteWithChildren
+  AuthLiveLiveIdRoute: typeof AuthLiveLiveIdRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthOrgRoute: AuthOrgRouteWithChildren,
+  AuthLiveLiveIdRoute: AuthLiveLiveIdRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
@@ -1149,7 +1150,6 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   GuestRoute: GuestRouteWithChildren,
-  LiveLiveIdRoute: LiveLiveIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
