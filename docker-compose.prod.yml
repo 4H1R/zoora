@@ -28,6 +28,9 @@ services:
   frontend:
     build:
       context: ./frontend
+      args:
+        VITE_BASE_DOMAIN: ${DOMAIN}
+        VITE_ADMIN_SUBDOMAIN: admin
     image: zoora-frontend:latest
     restart: unless-stopped
     networks: [zoora]
