@@ -6,13 +6,16 @@
 const BASE_DOMAIN = import.meta.env.VITE_BASE_DOMAIN ?? "localhost"
 const ADMIN_SUBDOMAIN = import.meta.env.VITE_ADMIN_SUBDOMAIN ?? "admin"
 
-// currentSlug returns the left-most host label, or "" for the apex.
+// currentSlug returns the left-most host label, or "" for the apex. The
+// canonical `www` host mirrors the apex (it serves the landing page), so it
+// also resolves to "".
 export function currentSlug(base = BASE_DOMAIN): string {
   const host = window.location.hostname
   if (host === base) return ""
   const suffix = `.${base}`
   if (!host.endsWith(suffix)) return ""
-  return host.slice(0, -suffix.length).split(".")[0]
+  const slug = host.slice(0, -suffix.length).split(".")[0]
+  return slug === "www" ? "" : slug
 }
 
 export function isAdminHost(): boolean {

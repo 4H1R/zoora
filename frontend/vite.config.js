@@ -28,7 +28,7 @@ export default defineConfig({
   server: {
     host: true,
     port: 3000,
-    allowedHosts: ['.localhost'],
+    allowedHosts: ['.localhost', '.zoora.local'],
     proxy: {
       // changeOrigin: false preserves Host: <slug>.localhost so the Go tenant
       // middleware resolves the right org from the subdomain.
@@ -36,6 +36,15 @@ export default defineConfig({
       // LiveKit signal WS. Browser->Docker-Desktop port 7880 forwards plain HTTP
       // but drops the WebSocket upgrade; route it through Vite (proven WS path)
       // so the upgrade actually reaches the container. ws:true enables upgrade.
+      '/rtc': { target: 'http://localhost:7880', changeOrigin: true, ws: true },
+    },
+  },
+  preview: {
+    host: true,
+    port: 3000,
+    allowedHosts: ['.localhost', '.zoora.local'],
+    proxy: {
+      '/api': { target: 'http://localhost:8080', changeOrigin: false },
       '/rtc': { target: 'http://localhost:7880', changeOrigin: true, ws: true },
     },
   },

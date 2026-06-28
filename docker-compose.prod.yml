@@ -1,29 +1,30 @@
 services:
-  traefik:
-    image: traefik:v3.1
-    restart: unless-stopped
-    command:
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
-      - --entrypoints.web.address=:80
-      - --entrypoints.websecure.address=:443
-      - --entrypoints.web.http.redirections.entrypoint.to=websecure
-      - --entrypoints.web.http.redirections.entrypoint.scheme=https
-      - --certificatesresolvers.le.acme.email=${ACME_EMAIL}
-      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
-      - --certificatesresolvers.le.acme.tlschallenge=true
-      # File provider supplies the static wildcard cert for tenant subdomains
-      # (the registrar has no DNS API, so ACME DNS-01 isn't available for *.).
-      - --providers.file.filename=/etc/traefik/dynamic.yml
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - "letsencrypt:/letsencrypt"
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro"
-      - "./traefik/certs:/certs:ro"
-    networks: [zoora]
+  # TLS + routing handled by the host's Caddy (see deploy/Caddyfile). Each
+  # service below publishes its port on 127.0.0.1 so only Caddy can reach it.
+  # To run the bundled Traefik instead, uncomment this and drop the host ports.
+  # traefik:
+  #   image: traefik:v3.1
+  #   restart: unless-stopped
+  #   command:
+  #     - --providers.docker=true
+  #     - --providers.docker.exposedbydefault=false
+  #     - --entrypoints.web.address=:80
+  #     - --entrypoints.websecure.address=:443
+  #     - --entrypoints.web.http.redirections.entrypoint.to=websecure
+  #     - --entrypoints.web.http.redirections.entrypoint.scheme=https
+  #     - --certificatesresolvers.le.acme.email=${ACME_EMAIL}
+  #     - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+  #     - --certificatesresolvers.le.acme.tlschallenge=true
+  #     - --providers.file.filename=/etc/traefik/dynamic.yml
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - "letsencrypt:/letsencrypt"
+  #     - "/var/run/docker.sock:/var/run/docker.sock:ro"
+  #     - "./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro"
+  #     - "./traefik/certs:/certs:ro"
+  #   networks: [zoora]
 
   frontend:
     build:
@@ -34,13 +35,26 @@ services:
     image: zoora-frontend:latest
     restart: unless-stopped
     networks: [zoora]
-    labels:
-      - traefik.enable=true
-      # Wildcard host: every tenant subdomain + the admin subdomain serve the SPA.
-      - traefik.http.routers.frontend.rule=HostRegexp(`^[a-z0-9-]+\.${DOMAIN}$`)
-      - traefik.http.routers.frontend.entrypoints=websecure
-      - traefik.http.routers.frontend.tls=true
-      - traefik.http.services.frontend.loadbalancer.server.port=80
+    # Caddy proxies every <slug>.<domain> here; nginx serves the SPA.
+    ports:
+      - "127.0.0.1:8081:80"
+    # Traefik routing (re-enable with the traefik service; drop the ports above).
+    # labels:
+    #   - traefik.enable=true
+    #   # Wildcard host: every tenant subdomain + admin + the canonical www serve the SPA.
+    #   - traefik.http.routers.frontend.rule=HostRegexp(`^[a-z0-9-]+\.${DOMAIN}$`)
+    #   - traefik.http.routers.frontend.entrypoints=websecure
+    #   - traefik.http.routers.frontend.tls=true
+    #   - traefik.http.services.frontend.loadbalancer.server.port=80
+    #   # Apex (root domain) → www canonical 301. Keeps cookies off the apex,
+    #   # which would otherwise leak to every tenant subdomain.
+    #   - traefik.http.routers.apex-redirect.rule=Host(`${DOMAIN}`)
+    #   - traefik.http.routers.apex-redirect.entrypoints=websecure
+    #   - traefik.http.routers.apex-redirect.tls.certresolver=le
+    #   - traefik.http.routers.apex-redirect.middlewares=apex-to-www
+    #   - traefik.http.middlewares.apex-to-www.redirectregex.regex=^https?://[^/]+/(.*)
+    #   - traefik.http.middlewares.apex-to-www.redirectregex.replacement=https://www.${DOMAIN}/$${1}
+    #   - traefik.http.middlewares.apex-to-www.redirectregex.permanent=true
 
   api:
     build:
@@ -70,14 +84,18 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
-    labels:
-      - traefik.enable=true
-      # Same wildcard host as the SPA, but /api takes priority and routes to Go.
-      - traefik.http.routers.api.rule=HostRegexp(`^[a-z0-9-]+\.${DOMAIN}$`) && PathPrefix(`/api`)
-      - traefik.http.routers.api.priority=100
-      - traefik.http.routers.api.entrypoints=websecure
-      - traefik.http.routers.api.tls=true
-      - traefik.http.services.api.loadbalancer.server.port=8080
+    # Caddy routes /api/* here directly; also the on-demand-TLS `ask` target.
+    ports:
+      - "127.0.0.1:8080:8080"
+    # Traefik routing (re-enable with the traefik service; drop the ports above).
+    # labels:
+    #   - traefik.enable=true
+    #   # Same wildcard host as the SPA, but /api takes priority and routes to Go.
+    #   - traefik.http.routers.api.rule=HostRegexp(`^[a-z0-9-]+\.${DOMAIN}$`) && PathPrefix(`/api`)
+    #   - traefik.http.routers.api.priority=100
+    #   - traefik.http.routers.api.entrypoints=websecure
+    #   - traefik.http.routers.api.tls=true
+    #   - traefik.http.services.api.loadbalancer.server.port=8080
 
   # worker: disabled for now — no task is enqueued and no scheduler exists,
   # so the only registered handler (livesession:auto-close) never fires.
@@ -193,12 +211,16 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.s3.rule=Host(`s3.${DOMAIN}`)
-      - traefik.http.routers.s3.entrypoints=websecure
-      - traefik.http.routers.s3.tls.certresolver=le
-      - traefik.http.services.s3.loadbalancer.server.port=9000
+    # Caddy proxies s3.<domain> here for presigned-URL traffic.
+    ports:
+      - "127.0.0.1:9000:9000"
+    # Traefik routing (re-enable with the traefik service; drop the ports above).
+    # labels:
+    #   - traefik.enable=true
+    #   - traefik.http.routers.s3.rule=Host(`s3.${DOMAIN}`)
+    #   - traefik.http.routers.s3.entrypoints=websecure
+    #   - traefik.http.routers.s3.tls.certresolver=le
+    #   - traefik.http.services.s3.loadbalancer.server.port=9000
 
   livekit:
     image: livekit/livekit-server:latest
@@ -209,17 +231,21 @@ services:
     volumes:
       - "./deploy/livekit.yaml:/etc/livekit.yaml:ro"
     ports:
+      # WebRTC media: direct on the host, not via Caddy.
       - "7881:7881"
       - "7882:7882/udp"
+      # Signaling (wss): Caddy proxies livekit.<domain> here.
+      - "127.0.0.1:7880:7880"
     depends_on:
       redis: {condition: service_healthy}
     networks: [zoora]
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.livekit.rule=Host(`livekit.${DOMAIN}`)
-      - traefik.http.routers.livekit.entrypoints=websecure
-      - traefik.http.routers.livekit.tls.certresolver=le
-      - traefik.http.services.livekit.loadbalancer.server.port=7880
+    # Traefik routing (re-enable with the traefik service; drop the 7880 port above).
+    # labels:
+    #   - traefik.enable=true
+    #   - traefik.http.routers.livekit.rule=Host(`livekit.${DOMAIN}`)
+    #   - traefik.http.routers.livekit.entrypoints=websecure
+    #   - traefik.http.routers.livekit.tls.certresolver=le
+    #   - traefik.http.services.livekit.loadbalancer.server.port=7880
 
 networks:
   zoora:

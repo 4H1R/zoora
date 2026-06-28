@@ -9,8 +9,8 @@ import { currentSlug } from "@/lib/tenant"
 import { useThemeStore } from "@/stores/theme"
 
 export const Route = createFileRoute("/")({
-  // The landing page only belongs on the apex host. On any tenant or admin
-  // subdomain, send `/` to `/login` — the `_guest` layout then bounces an
+  // The landing page only belongs on the apex / canonical www host. On any
+  // tenant or admin subdomain, send `/` to `/login` — the `_guest` layout bounces an
   // already-authenticated user on to `/org/dashboard` or `/admin/dashboard`.
   beforeLoad: () => {
     if (currentSlug() !== "") {

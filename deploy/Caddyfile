@@ -1,0 +1,51 @@
+{
+	email admin@zoora.ir
+	on_demand_tls {
+		ask http://127.0.0.1:8080/healthz
+	}
+}
+
+dev.m65tech.com {
+	encode zstd gzip
+	reverse_proxy localhost:8000
+}
+
+zoora.ir {
+	redir https://www.zoora.ir{uri} permanent
+}
+
+www.zoora.ir {
+	encode zstd gzip
+
+	@api path /api/*
+	handle @api {
+		reverse_proxy 127.0.0.1:8080
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:8081
+	}
+}
+
+s3.zoora.ir {
+	reverse_proxy 127.0.0.1:9000
+}
+
+livekit.zoora.ir {
+	reverse_proxy 127.0.0.1:7880
+}
+
+*.zoora.ir {
+	tls {
+		on_demand
+	}
+
+	@api path /api/*
+	handle @api {
+		reverse_proxy 127.0.0.1:8080
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:8081
+	}
+}

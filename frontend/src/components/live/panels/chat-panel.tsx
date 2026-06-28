@@ -57,7 +57,7 @@ export function ChatPanel({ chat, canModerate }: ChatPanelProps) {
                       type="button"
                       onClick={() => deleteMessage(msg.id)}
                       aria-label={t("liveRoom.chat.delete")}
-                      className="ms-auto hidden size-5 items-center justify-center rounded text-muted-foreground hover:text-red-400 group-hover:flex"
+                      className="ms-auto flex size-5 shrink-0 items-center justify-center rounded text-muted-foreground opacity-0 transition-opacity hover:text-red-400 focus-visible:opacity-100 group-hover:opacity-100"
                     >
                       <Trash2 className="size-3.5" />
                     </button>
