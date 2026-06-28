@@ -4,6 +4,8 @@ import ReactDOM from "react-dom/client"
 
 import { routeTree } from "./routeTree.gen"
 
+import { prefetchRoutes } from "./lib/prefetch"
+
 import "./i18n"
 import "./styles.css"
 
@@ -45,4 +47,8 @@ if (!rootElement.innerHTML) {
       <RouterProvider router={router} />
     </QueryClientProvider>
   )
+
+  // Warm all route chunks in the background once idle — Laravel's
+  // Vite::prefetch(concurrency: 3) equivalent. Complements defaultPreload.
+  prefetchRoutes(3)
 }

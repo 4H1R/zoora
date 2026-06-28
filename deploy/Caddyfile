@@ -15,6 +15,10 @@ zoora.ir {
 }
 
 www.zoora.ir {
+	# Explicit managed TLS so this name gets its own automation policy and is
+	# obtained proactively, instead of being shadowed (and skipped) by the
+	# *.zoora.ir on-demand wildcard below.
+	tls admin@zoora.ir
 	encode zstd gzip
 
 	@api path /api/*
@@ -28,10 +32,13 @@ www.zoora.ir {
 }
 
 s3.zoora.ir {
+	# Managed TLS (own policy) — keep it out of the on-demand wildcard's shadow.
+	tls admin@zoora.ir
 	reverse_proxy 127.0.0.1:9000
 }
 
 livekit.zoora.ir {
+	tls admin@zoora.ir
 	reverse_proxy 127.0.0.1:7880
 }
 
