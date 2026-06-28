@@ -14,15 +14,17 @@ import (
 )
 
 func TestGeneratePresignedURLs(t *testing.T) {
+	s3Client := s3.New(s3.Options{
+		BaseEndpoint: aws.String("http://s3.local.test"),
+		Region:       "us-east-1",
+		Credentials:  credentials.NewStaticCredentialsProvider("access", "secret", ""),
+		UsePathStyle: true,
+	})
 	client := &Client{
-		s3: s3.New(s3.Options{
-			BaseEndpoint: aws.String("http://s3.local.test"),
-			Region:       "us-east-1",
-			Credentials:  credentials.NewStaticCredentialsProvider("access", "secret", ""),
-			UsePathStyle: true,
-		}),
-		bucket: "zoora",
-		logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+		s3:      s3Client,
+		presign: s3Client,
+		bucket:  "zoora",
+		logger:  slog.New(slog.NewTextHandler(io.Discard, nil)),
 	}
 
 	uploadURL, err := client.GeneratePresignedUploadURL(context.Background(), "classes/1/file.pdf", 15*time.Minute)

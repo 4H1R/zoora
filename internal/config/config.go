@@ -16,6 +16,11 @@ type Config struct {
 	LiveKitAPIKey      string        `env:"LIVEKIT_API_KEY,required"`
 	LiveKitSecret      string        `env:"LIVEKIT_API_SECRET,required"`
 	S3Endpoint         string        `env:"S3_ENDPOINT,required"`
+	// S3PublicEndpoint is the browser-facing host used to sign upload/download
+	// URLs. The SDK client talks to S3Endpoint (internal, e.g. http://rustfs:9000)
+	// so boot-time calls don't depend on the public TLS edge. Falls back to
+	// S3Endpoint when unset (dev, where the two are the same host).
+	S3PublicEndpoint   string        `env:"S3_PUBLIC_ENDPOINT"`
 	S3Bucket           string        `env:"S3_BUCKET,required"`
 	S3AccessKey        string        `env:"S3_ACCESS_KEY,required"`
 	S3SecretKey        string        `env:"S3_SECRET_KEY,required"`

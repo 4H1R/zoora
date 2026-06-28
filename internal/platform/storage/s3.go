@@ -14,18 +14,33 @@ import (
 )
 
 type Client struct {
-	s3     *s3.Client
-	bucket string
-	logger *slog.Logger
+	s3      *s3.Client
+	presign *s3.Client
+	bucket  string
+	logger  *slog.Logger
 }
 
 func NewClient(cfg *config.Config, logger *slog.Logger) (*Client, error) {
-	s3Client := s3.New(s3.Options{
-		BaseEndpoint: aws.String(cfg.S3Endpoint),
+	opts := s3.Options{
 		Region:       cfg.S3Region,
 		Credentials:  credentials.NewStaticCredentialsProvider(cfg.S3AccessKey, cfg.S3SecretKey, ""),
 		UsePathStyle: true,
-	})
+	}
+
+	internalOpts := opts
+	internalOpts.BaseEndpoint = aws.String(cfg.S3Endpoint)
+	s3Client := s3.New(internalOpts)
+
+	// Presigned URLs are handed to browsers, so they must carry the public host.
+	// The presign client never dials S3 (signing is local), so pointing it at
+	// the public endpoint costs no connectivity at boot.
+	publicEndpoint := cfg.S3PublicEndpoint
+	if publicEndpoint == "" {
+		publicEndpoint = cfg.S3Endpoint
+	}
+	publicOpts := opts
+	publicOpts.BaseEndpoint = aws.String(publicEndpoint)
+	presignClient := s3.New(publicOpts)
 
 	_, err := s3Client.HeadBucket(context.Background(), &s3.HeadBucketInput{
 		Bucket: aws.String(cfg.S3Bucket),
@@ -45,11 +60,11 @@ func NewClient(cfg *config.Config, logger *slog.Logger) (*Client, error) {
 	}
 
 	logger.Info("S3 storage client initialized", "bucket", cfg.S3Bucket)
-	return &Client{s3: s3Client, bucket: cfg.S3Bucket, logger: logger}, nil
+	return &Client{s3: s3Client, presign: presignClient, bucket: cfg.S3Bucket, logger: logger}, nil
 }
 
 func (c *Client) GeneratePresignedUploadURL(ctx context.Context, key string, expiry time.Duration) (string, error) {
-	presigner := s3.NewPresignClient(c.s3)
+	presigner := s3.NewPresignClient(c.presign)
 	req, err := presigner.PresignPutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(c.bucket),
 		Key:    aws.String(key),
@@ -61,7 +76,7 @@ func (c *Client) GeneratePresignedUploadURL(ctx context.Context, key string, exp
 }
 
 func (c *Client) GeneratePresignedDownloadURL(ctx context.Context, key string, expiry time.Duration) (string, error) {
-	presigner := s3.NewPresignClient(c.s3)
+	presigner := s3.NewPresignClient(c.presign)
 	req, err := presigner.PresignGetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(c.bucket),
 		Key:    aws.String(key),
