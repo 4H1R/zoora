@@ -1,8 +1,5 @@
-{
-	email admin@zoora.ir
-	on_demand_tls {
-		ask http://127.0.0.1:8080/internal/tls-check
-	}
+(zoora_tls) {
+	tls /etc/caddy/certs/zoora/fullchain.pem /etc/caddy/certs/zoora/privatekey.pem
 }
 
 dev.m65tech.com {
@@ -11,11 +8,12 @@ dev.m65tech.com {
 }
 
 zoora.ir {
+	import zoora_tls
 	redir https://www.zoora.ir{uri} permanent
 }
 
 www.zoora.ir {
-	tls admin@zoora.ir
+	import zoora_tls
 	encode zstd gzip
 
 	@api path /api/*
@@ -29,19 +27,17 @@ www.zoora.ir {
 }
 
 s3.zoora.ir {
-	tls admin@zoora.ir
+	import zoora_tls
 	reverse_proxy 127.0.0.1:9000
 }
 
 livekit.zoora.ir {
-	tls admin@zoora.ir
+	import zoora_tls
 	reverse_proxy 127.0.0.1:7880
 }
 
 *.zoora.ir {
-	tls {
-		on_demand
-	}
+	import zoora_tls
 
 	@api path /api/*
 	handle @api {
