@@ -121,6 +121,10 @@ services:
   migrate:
     image: migrate/migrate:latest
     restart: "no"
+    # DATABASE_URL lets `make prod-migrate-reset` override the entrypoint and
+    # run drop+up without re-deriving the DSN; normal `up` uses `command` below.
+    environment:
+      DATABASE_URL: "postgres://${DB_USERNAME}:${DB_PASSWORD}@pgsql:5432/${DB_DATABASE}?sslmode=disable"
     command:
       - "-path"
       - "/migrations"

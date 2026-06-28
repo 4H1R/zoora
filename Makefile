@@ -2,7 +2,7 @@ EXEC := docker compose exec -T app
 EXEC_TTY := docker compose exec app
 PROD := docker compose --env-file .env.prod -f docker-compose.prod.yml
 
-.PHONY: up down build restart ps logs run-api run-worker migrate-up migrate-reset migrate-create test test-integration lint swagger seed shell prod prod-up prod-down prod-down-purge prod-logs
+.PHONY: up down build restart ps logs run-api run-worker migrate-up migrate-reset migrate-create test test-integration lint swagger seed shell prod prod-up prod-down prod-down-purge prod-logs prod-seed prod-migrate-reset prod-migrate-reset-seed
 
 up:
 	docker compose up -d
@@ -73,3 +73,11 @@ prod-down-purge:
 
 prod-logs:
 	$(PROD) logs -f
+
+prod-seed:
+	$(PROD) run --rm seed
+
+prod-migrate-reset:
+	$(PROD) run --rm --entrypoint sh migrate -c 'migrate -path /migrations -database "$$DATABASE_URL" drop -f && migrate -path /migrations -database "$$DATABASE_URL" up'
+
+prod-migrate-reset-seed: prod-migrate-reset prod-seed
