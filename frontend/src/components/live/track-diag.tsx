@@ -18,30 +18,38 @@ interface Stats {
 
 // DEV-ONLY diagnostic. Gated behind ?diag=1 (see stage.tsx).
 //
-// Attaches the active track to an offscreen <video>, samples it every 500ms,
-// paints it to a small visible <canvas>, and overlays live stats. Tells us on
-// the real device whether frames DECODE (w/h>0, readyState 4, currentTime
-// advancing, canvas brightness>0 = paint/compositing bug) or DON'T decode
-// (everything 0/frozen = codec/delivery problem). The corner canvas is the
-// visual tell: if it shows real content while the main <video> is black, the
-// fix is canvas rendering; if it is also black, decode/delivery is broken.
+// Shows three renderings of the SAME active track side by side so we can tell,
+// on the real device, which paint path works:
+//   1. <canvas>  — drawImage readback (known to work)
+//   2. RAW <video> — a plain element with NO app/LiveKit CSS. If this paints
+//      while the main stage stays black, an app/LiveKit style is the trigger
+//      (fix the CSS, skip canvas). If this is ALSO black, the bug is
+//      fundamental to <video> compositing here → canvas render is the fix.
+// Plus live stats (decode proof).
 export function TrackDiag({ trackRef }: TrackDiagProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const rawVideoRef = useRef<HTMLVideoElement>(null)
   const track = isTrackReference(trackRef) ? trackRef.publication.track : undefined
   const [stats, setStats] = useState<Stats | null>(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    const rawVideo = rawVideoRef.current
+    if (!canvas || !rawVideo) return
     const ctx = canvas.getContext("2d", { willReadFrequently: true })
     if (!ctx) return
 
+    // Sampling video drives the canvas (kept off the visible tree).
     const video = document.createElement("video")
     video.muted = true
     video.autoplay = true
     video.playsInline = true
-    if (track) track.attach(video)
+    if (track) {
+      track.attach(video)
+      track.attach(rawVideo) // raw on-DOM element, plain styling
+    }
     void video.play().catch(() => {})
+    void rawVideo.play().catch(() => {})
 
     let lastTime = -1
     const id = window.setInterval(() => {
@@ -77,14 +85,34 @@ export function TrackDiag({ trackRef }: TrackDiagProps) {
 
     return () => {
       window.clearInterval(id)
-      if (track) track.detach(video)
+      if (track) {
+        track.detach(video)
+        track.detach(rawVideo)
+      }
       video.srcObject = null
     }
   }, [track])
 
   return (
     <div className="absolute end-2 top-2 z-50 flex flex-col gap-1 rounded-lg bg-black/80 p-2 font-mono text-[10px] leading-tight text-lime-300">
-      <canvas ref={canvasRef} className="w-40 rounded border border-lime-500/40 bg-black" />
+      <div className="flex gap-1">
+        <div className="flex flex-col items-center gap-0.5">
+          <span>canvas</span>
+          <canvas ref={canvasRef} className="w-24 rounded border border-lime-500/40 bg-black" />
+        </div>
+        <div className="flex flex-col items-center gap-0.5">
+          <span>raw video</span>
+          {/* deliberately NO zoora/livekit classes — plain element */}
+          <video
+            ref={rawVideoRef}
+            muted
+            autoPlay
+            playsInline
+            className="w-24 rounded border border-fuchsia-500/40 bg-black"
+            style={{ width: "6rem", height: "auto", objectFit: "contain" }}
+          />
+        </div>
+      </div>
       {stats ? (
         <pre className="whitespace-pre-wrap">
 {`track:  ${stats.hasTrack}
