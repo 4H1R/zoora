@@ -4,6 +4,7 @@ import { Track } from "livekit-client"
 
 import type { StageContent } from "./use-stage"
 import { SlidesStage } from "./slides-stage"
+import { TrackDiag } from "./track-diag"
 import { WhiteboardStage } from "./whiteboard-stage"
 
 interface StageProps {
@@ -65,9 +66,16 @@ export function Stage({ stage, isHost, liveId, canDraw, onPageChange, onLoadNumP
   // rounded-corner + overflow:hidden clip composites correctly. Without it, some
   // GPUs (Android Chrome/Firefox, certain Windows drivers) paint the clipped
   // <video> black even though frames decode fine. See livekit-overrides.css.
+  // ?diag=1 overlays a dev-only diagnostic (offscreen sample + readback) to tell
+  // whether frames decode-but-paint-black vs never decode. Remove before ship.
+  const diag =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("diag") === "1"
+
   return (
-    <div className="h-full w-full transform-gpu overflow-hidden rounded-2xl bg-black">
+    <div className="relative h-full w-full transform-gpu overflow-hidden rounded-2xl bg-black">
       <ParticipantTile trackRef={active} className="h-full w-full" />
+      {diag && <TrackDiag trackRef={active} />}
     </div>
   )
 }
