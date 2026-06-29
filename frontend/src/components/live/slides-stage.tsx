@@ -2,16 +2,14 @@ import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { useState } from "react"
 import { Document, Page, pdfjs } from "react-pdf"
 import { useTranslation } from "react-i18next"
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url"
 
 import "react-pdf/dist/Page/AnnotationLayer.css"
 import "react-pdf/dist/Page/TextLayer.css"
 
 import { cn } from "@/lib/utils"
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url
-).toString()
+pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
 
 interface SlidesStageProps {
   url: string

@@ -1,5 +1,5 @@
 import { Link, useRouter } from "@tanstack/react-router"
-import { ChevronLeft, Hourglass, Radio } from "lucide-react"
+import { Hourglass, Radio } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import type {
@@ -10,7 +10,11 @@ import type { PreJoinChoices } from "./types"
 
 import { usePostLiveRoomsIdJoin } from "@/api/live-sessions/live-sessions"
 import { useGetUsersMe } from "@/api/users/users"
+import GridBackground from "@/components/auth/gradient-background"
+import { LanguageSwitcher } from "@/components/language-switcher"
+import { Logo } from "@/components/logo"
 import { SessionStatusPill } from "@/components/session/status-pill"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { UserAvatar } from "@/components/user-avatar"
@@ -61,25 +65,27 @@ export function PreJoinLobby({ room, liveId, onJoined }: PreJoinLobbyProps) {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-background text-foreground">
-      {/* atmosphere: a single, faint brand halo — adds depth without clutter */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[55vh] bg-[radial-gradient(55%_60%_at_50%_0%,color-mix(in_oklab,var(--primary)_9%,transparent),transparent_72%)]"
-      />
+    <div className="relative flex min-h-svh flex-col bg-muted/50 text-foreground">
+      {/* Shared auth atmosphere: faint grid + brand halo, same as the login page */}
+      <GridBackground />
 
-      <header className="flex items-center px-5 py-4 sm:px-8">
+      <header className="relative z-10 flex items-center justify-between px-5 py-4 sm:px-8">
         <Link
           to={orgId ? "/org" : "/"}
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="flex items-center"
+          aria-label={t("liveRoom.backToDashboard")}
         >
-          <ChevronLeft className="size-3.5 rtl:rotate-180" />
-          <span>{t("liveRoom.backToDashboard")}</span>
+          <Logo className="text-xl" />
         </Link>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <div className="mx-1 h-4 w-px bg-border/50" />
+          <LanguageSwitcher />
+        </div>
       </header>
 
-      <main className="flex flex-1 items-center justify-center px-5 pb-16">
-        <div className="flex w-full max-w-sm flex-col items-center rounded-3xl border border-border bg-card px-8 py-10 text-center">
+      <main className="relative z-10 flex flex-1 items-center justify-center px-5 pb-16">
+        <div className="flex w-full max-w-sm flex-col items-center rounded-3xl border border-border bg-card px-8 py-10 text-center shadow-sm">
           <SessionStatusPill status={room?.status === "active" ? "live" : isFinished ? "ended" : "scheduled"} />
 
           {className && (
