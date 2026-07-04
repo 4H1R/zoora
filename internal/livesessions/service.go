@@ -19,9 +19,9 @@ import (
 	"github.com/4H1R/zoora/internal/platform/queue"
 )
 
-// liveKitClient is a local interface so the service can be tested with a nil or
-// mock client. *lk.Client satisfies it automatically.
-type liveKitClient interface {
+// LiveKitClient is the LiveKit surface the service depends on, declared
+// locally so tests can inject a fake. *lk.Client satisfies it automatically.
+type LiveKitClient interface {
 	CreateRoom(ctx context.Context, roomName string, maxParticipants uint32) (*lkproto.Room, error)
 	DeleteRoom(ctx context.Context, roomName string) error
 	GenerateToken(roomName, identity, name, metadata string, sources []lkproto.TrackSource, roomAdmin bool) (string, error)
@@ -44,7 +44,7 @@ type service struct {
 	members      domain.ClassMemberRepository
 	chatSvc      domain.ChatService
 	tx           domain.Transactor
-	livekit      liveKitClient
+	livekit      LiveKitClient
 	queue        *queue.Client
 	// hostGracePeriod is how long a room may stay open after its last host
 	// leaves before the delayed close task (and the safety-net sweep) closes it.
@@ -62,7 +62,7 @@ func NewService(
 	members domain.ClassMemberRepository,
 	chatSvc domain.ChatService,
 	tx domain.Transactor,
-	livekit *lk.Client,
+	livekit LiveKitClient,
 	queueClient *queue.Client,
 	hostGracePeriod time.Duration,
 	logger *slog.Logger,
@@ -72,24 +72,20 @@ func NewService(
 	if hostGracePeriod <= 0 {
 		hostGracePeriod = 15 * time.Minute
 	}
-	// Avoid storing a typed nil in the liveKitClient interface — a typed nil
-	// satisfies the interface (non-nil interface) and bypasses the s.livekit != nil
-	// guards used throughout the service.
-	var lkClient liveKitClient
-	if livekit != nil {
-		lkClient = livekit
+	if livekit == nil {
+		panic("livesessions.NewService: livekit client is required")
 	}
 	return &service{
-		rooms:        rooms,
-		participants: participants,
-		recordings:   recordings,
-		whiteboards:  whiteboards,
-		sessions:     sessions,
-		classes:      classes,
-		members:      members,
-		chatSvc:      chatSvc,
+		rooms:           rooms,
+		participants:    participants,
+		recordings:      recordings,
+		whiteboards:     whiteboards,
+		sessions:        sessions,
+		classes:         classes,
+		members:         members,
+		chatSvc:         chatSvc,
 		tx:              tx,
-		livekit:         lkClient,
+		livekit:         livekit,
 		queue:           queueClient,
 		hostGracePeriod: hostGracePeriod,
 		logger:          logger,
@@ -174,11 +170,7 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreateLiveRoomDTO) 
 		return nil, domain.NewValidationError(map[string]string{"name": "required"})
 	}
 
-	cfg := dto.Config
-	if cfg.MaxParticipants <= 0 {
-		// Backfill only the participant cap; preserve caller-supplied flags.
-		cfg.MaxParticipants = domain.DefaultLiveRoomConfig().MaxParticipants
-	}
+	cfg := normalizeRoomConfig(dto.Config)
 
 	roomID := uuid.New()
 	room := &domain.LiveRoom{
@@ -199,7 +191,7 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreateLiveRoomDTO) 
 		chatName := fmt.Sprintf("Chat – %s", session.Name)
 		_, cErr := s.chatSvc.CreateChat(txCtx, domain.CreateChatDTO{
 			Name:      chatName,
-			ModelType: "live_session",
+			ModelType: domain.ChatModelLiveSession,
 			ModelID:   room.ID.String(),
 		})
 		return cErr
@@ -249,7 +241,7 @@ func (s *service) JoinRoom(ctx context.Context, roomID uuid.UUID) (*domain.JoinL
 		return nil, err
 	}
 	if room.Status == domain.LiveRoomStatusFinished {
-		return nil, domain.ErrForbidden
+		return nil, domain.NewValidationError(map[string]string{"status": "room already finished"})
 	}
 
 	isManager := s.canManageRoom(caller, class)
@@ -270,12 +262,22 @@ func (s *service) JoinRoom(ctx context.Context, roomID uuid.UUID) (*domain.JoinL
 	// lobby calls join, never start). The host joining auto-starts it so the
 	// LiveKit room actually exists; everyone else must wait for the host.
 	if room.Status == domain.LiveRoomStatusCreated {
-		if isModerator {
-			if _, err := s.startRoomInternal(ctx, room); err != nil {
+		if !isModerator {
+			return nil, domain.NewValidationError(map[string]string{"status": "room not started yet"})
+		}
+		if _, err := s.startRoomInternal(ctx, room); err != nil {
+			if !errors.Is(err, domain.ErrConflict) {
 				return nil, err
 			}
-		} else {
-			return nil, domain.NewValidationError(map[string]string{"status": "room not started yet"})
+			// Lost the auto-start race to a concurrent moderator join —
+			// reload and continue as long as the room ended up active.
+			room, err = s.rooms.FindByID(ctx, roomID)
+			if err != nil {
+				return nil, err
+			}
+			if room.Status != domain.LiveRoomStatusActive {
+				return nil, domain.NewValidationError(map[string]string{"status": "room not started yet"})
+			}
 		}
 	}
 
@@ -284,9 +286,6 @@ func (s *service) JoinRoom(ctx context.Context, roomID uuid.UUID) (*domain.JoinL
 	if _, err := s.livekit.CreateRoom(ctx, room.LiveKitRoomName, uint32(room.Config.MaxParticipants)); err != nil {
 		return nil, fmt.Errorf("livesessions.service.JoinRoom livekit: %w", err)
 	}
-
-	sources := publishSources(isModerator)
-	roomAdmin := isModerator
 
 	identity := caller.UserID.String()
 	displayName := caller.Name
@@ -299,19 +298,39 @@ func (s *service) JoinRoom(ctx context.Context, roomID uuid.UUID) (*domain.JoinL
 		role = domain.ParticipantRoleHost
 	}
 
-	token, err := s.livekit.GenerateToken(room.LiveKitRoomName, identity, displayName, participantMetadata(role), sources, roomAdmin)
+	// A rejoin (refresh, reconnect) reuses the open participation row instead
+	// of stacking a duplicate, and keeps any role a host granted mid-session
+	// (e.g. presenter) so the new token carries the same publish rights.
+	participant, err := s.participants.FindActiveByRoomAndUser(ctx, roomID, caller.UserID)
+	switch {
+	case err == nil:
+		if !isModerator {
+			role = participant.Role
+		}
+	case errors.Is(err, domain.ErrNotFound):
+		participant = nil
+	default:
+		return nil, err
+	}
+
+	canPublish := role == domain.ParticipantRoleHost || role == domain.ParticipantRolePresenter
+	sources := publishSources(canPublish)
+
+	token, err := s.livekit.GenerateToken(room.LiveKitRoomName, identity, displayName, participantMetadata(role), sources, isModerator)
 	if err != nil {
 		return nil, fmt.Errorf("livesessions.service.JoinRoom token: %w", err)
 	}
-	participant := &domain.LiveParticipant{
-		LiveRoomID: roomID,
-		UserID:     caller.UserID,
-		Identity:   identity,
-		Role:       role,
-		JoinedAt:   time.Now(),
-	}
-	if err := s.participants.Create(ctx, participant); err != nil {
-		return nil, err
+	if participant == nil {
+		participant = &domain.LiveParticipant{
+			LiveRoomID: roomID,
+			UserID:     caller.UserID,
+			Identity:   identity,
+			Role:       role,
+			JoinedAt:   time.Now(),
+		}
+		if err := s.participants.Create(ctx, participant); err != nil {
+			return nil, err
+		}
 	}
 
 	s.logger.Info("user joined live room",
@@ -326,7 +345,7 @@ func (s *service) JoinRoom(ctx context.Context, roomID uuid.UUID) (*domain.JoinL
 		Room:       room,
 	}
 
-	if chat, err := s.chatSvc.FindChatByModel(ctx, "live_session", roomID); err == nil {
+	if chat, err := s.chatSvc.FindChatByModel(ctx, domain.ChatModelLiveSession, roomID); err == nil {
 		resp.ChatID = &chat.ID
 	}
 
@@ -382,10 +401,11 @@ func (s *service) StartRoom(ctx context.Context, roomID uuid.UUID) (*domain.Live
 	return room, nil
 }
 
-// startRoomInternal creates the LiveKit room, promotes the DB row to active and
-// kicks off auto-recording. Callers must have already verified manage rights and
-// that the room is in the created state. Shared by StartRoom and JoinRoom (host
-// auto-start) so the two paths can never drift.
+// startRoomInternal creates the LiveKit room and promotes the DB row to active.
+// Callers must have already verified manage rights and that the room is in the
+// created state. Shared by StartRoom and JoinRoom (host auto-start) so the two
+// paths can never drift. Returns domain.ErrConflict when a concurrent start won
+// the created→active transition.
 func (s *service) startRoomInternal(ctx context.Context, room *domain.LiveRoom) (*domain.LiveRoom, error) {
 	if _, err := s.livekit.CreateRoom(ctx, room.LiveKitRoomName, uint32(room.Config.MaxParticipants)); err != nil {
 		return nil, fmt.Errorf("livesessions.service.startRoomInternal livekit: %w", err)
@@ -395,7 +415,7 @@ func (s *service) startRoomInternal(ctx context.Context, room *domain.LiveRoom) 
 	room.Status = domain.LiveRoomStatusActive
 	room.ActualStartTime = &now
 	room.HostLastSeenAt = &now
-	if err := s.rooms.Update(ctx, room); err != nil {
+	if err := s.rooms.Transition(ctx, room, domain.LiveRoomStatusCreated); err != nil {
 		return nil, err
 	}
 
@@ -417,30 +437,41 @@ func publishSources(isModerator bool) []lkproto.TrackSource {
 	return nil
 }
 
+// endRoomInternal finalizes an active room. The guarded active→finished
+// transition runs first so a concurrent close (webhook vs task vs sweep vs
+// manual end) short-circuits with domain.ErrConflict before any side effects.
+// Teardown steps after the transition are best-effort: each failure is logged
+// but never blocks the rest (the room is already finished in the DB).
 func (s *service) endRoomInternal(ctx context.Context, room *domain.LiveRoom) (*domain.LiveRoom, error) {
-	rec, err := s.recordings.FindActiveByRoom(ctx, room.ID)
-	if err == nil && s.livekit != nil {
-		_ = s.livekit.StopRecording(ctx, rec.EgressID)
-		now := time.Now()
-		rec.Status = domain.LiveRecordingStatusCompleted
-		rec.EndedAt = &now
-		_ = s.recordings.Update(ctx, rec)
-	}
-
 	now := time.Now()
 	room.Status = domain.LiveRoomStatusFinished
 	room.ActualEndTime = &now
-	if err := s.rooms.Update(ctx, room); err != nil {
+	if err := s.rooms.Transition(ctx, room, domain.LiveRoomStatusActive); err != nil {
 		return nil, err
 	}
 
-	_ = s.participants.MarkAllLeft(ctx, room.ID, now)
-
-	if s.livekit != nil {
-		_ = s.livekit.DeleteRoom(ctx, room.LiveKitRoomName)
+	if rec, err := s.recordings.FindActiveByRoom(ctx, room.ID); err == nil {
+		if err := s.livekit.StopRecording(ctx, rec.EgressID); err != nil {
+			s.logger.Error("end room: stop recording", "room_id", room.ID.String(), "egress_id", rec.EgressID, "error", err)
+		}
+		rec.Status = domain.LiveRecordingStatusCompleted
+		rec.EndedAt = &now
+		if err := s.recordings.Update(ctx, rec); err != nil {
+			s.logger.Error("end room: finalize recording", "room_id", room.ID.String(), "error", err)
+		}
+	} else if !errors.Is(err, domain.ErrNotFound) {
+		s.logger.Error("end room: lookup active recording", "room_id", room.ID.String(), "error", err)
 	}
 
-	if err := s.chatSvc.ArchiveByModel(ctx, "live_session", room.ID); err != nil {
+	if err := s.participants.MarkAllLeft(ctx, room.ID, now); err != nil {
+		s.logger.Error("end room: mark participants left", "room_id", room.ID.String(), "error", err)
+	}
+
+	if err := s.livekit.DeleteRoom(ctx, room.LiveKitRoomName); err != nil {
+		s.logger.Error("end room: delete livekit room", "room_id", room.ID.String(), "error", err)
+	}
+
+	if err := s.chatSvc.ArchiveByModel(ctx, domain.ChatModelLiveSession, room.ID); err != nil {
 		s.logger.Error("failed to archive chat for room", "room_id", room.ID.String(), "error", err)
 	}
 
@@ -516,11 +547,21 @@ func (s *service) UpdateRoomConfig(ctx context.Context, roomID uuid.UUID, dto do
 	if room.Status == domain.LiveRoomStatusFinished {
 		return nil, domain.NewValidationError(map[string]string{"status": "cannot update finished room"})
 	}
-	room.Config = *dto.Config
-	if err := s.rooms.Update(ctx, room); err != nil {
+	room.Config = normalizeRoomConfig(*dto.Config)
+	if err := s.rooms.UpdateConfig(ctx, room.ID, room.Config); err != nil {
 		return nil, err
 	}
 	return room, nil
+}
+
+// normalizeRoomConfig backfills only the participant cap (a non-positive value
+// would wrap to a huge uint32 at the LiveKit boundary); caller-supplied flags
+// are preserved. Shared by create and update so the two paths can't drift.
+func normalizeRoomConfig(cfg domain.LiveRoomConfig) domain.LiveRoomConfig {
+	if cfg.MaxParticipants <= 0 {
+		cfg.MaxParticipants = domain.DefaultLiveRoomConfig().MaxParticipants
+	}
+	return cfg
 }
 
 func (s *service) Heartbeat(ctx context.Context, roomID uuid.UUID) error {
@@ -528,19 +569,17 @@ func (s *service) Heartbeat(ctx context.Context, roomID uuid.UUID) error {
 	if !ok {
 		return domain.ErrForbidden
 	}
-	room, _, class, err := s.loadRoomWithClass(ctx, roomID)
+	_, _, class, err := s.loadRoomWithClass(ctx, roomID)
 	if err != nil {
 		return err
 	}
 	if !s.canManageRoom(caller, class) {
 		return domain.ErrForbidden
 	}
-	if room.Status != domain.LiveRoomStatusActive {
-		return nil
-	}
-	now := time.Now()
-	room.HostLastSeenAt = &now
-	return s.rooms.Update(ctx, room)
+	// Conditional touch: only bumps host_last_seen_at while the room is still
+	// active, so a heartbeat racing a close can never resurrect a finished
+	// room (a full save would write the stale status back).
+	return s.rooms.TouchHostLastSeen(ctx, roomID, time.Now())
 }
 
 func (s *service) List(ctx context.Context, q domain.ListLiveRoomsQuery) ([]domain.LiveRoom, int64, error) {
@@ -573,6 +612,14 @@ func (s *service) StartRecording(ctx context.Context, roomID uuid.UUID) (*domain
 	}
 	if room.Status != domain.LiveRoomStatusActive {
 		return nil, domain.NewValidationError(map[string]string{"status": "room must be active to record"})
+	}
+
+	// One active egress per room: a double-start would record (and bill) twice
+	// and orphan the loser, since teardown only stops one active recording.
+	if _, err := s.recordings.FindActiveByRoom(ctx, room.ID); err == nil {
+		return nil, domain.ErrConflict
+	} else if !errors.Is(err, domain.ErrNotFound) {
+		return nil, err
 	}
 
 	s3Path := fmt.Sprintf("recordings/%s/%s.mp4", room.ID.String(), uuid.New().String())
@@ -685,9 +732,7 @@ func (s *service) AutoCloseStaleRooms(ctx context.Context) error {
 		if present {
 			// Host is connected but not heartbeating (e.g. client-side heartbeat
 			// stalled). Refresh last-seen so we don't re-scan it every sweep.
-			now := time.Now()
-			r.HostLastSeenAt = &now
-			_ = s.rooms.Update(ctx, &r)
+			_ = s.rooms.TouchHostLastSeen(ctx, r.ID, time.Now())
 			continue
 		}
 		if _, err := s.endRoomInternal(ctx, &r); err != nil {
@@ -710,13 +755,16 @@ func closeTaskID(roomID uuid.UUID) string {
 }
 
 // hostPresent asks LiveKit (the source of truth for real-time presence) whether
-// any connected participant carries the host role in their metadata.
+// any connected participant carries the host role in their metadata. A room
+// LiveKit no longer knows (already torn down by its empty_timeout — exactly the
+// missed-webhook case the sweep exists for) counts as "no host present" so the
+// close paths can still finalize it instead of erroring forever.
 func (s *service) hostPresent(ctx context.Context, room *domain.LiveRoom) (bool, error) {
-	if s.livekit == nil {
-		return false, nil
-	}
 	parts, err := s.livekit.ListParticipants(ctx, room.LiveKitRoomName)
 	if err != nil {
+		if errors.Is(err, lk.ErrRoomNotFound) {
+			return false, nil
+		}
 		return false, fmt.Errorf("livesessions.service.hostPresent: %w", err)
 	}
 	for _, p := range parts {
@@ -773,10 +821,10 @@ func (s *service) disarmCloseIfNoHost(room *domain.LiveRoom) {
 }
 
 // OnLiveKitEvent reacts to a verified LiveKit webhook (see interface doc).
-func (s *service) OnLiveKitEvent(ctx context.Context, eventType, livekitRoomName string) error {
+func (s *service) OnLiveKitEvent(ctx context.Context, eventType, livekitRoomName, participantIdentity string) error {
 	switch eventType {
 	case webhook.EventParticipantLeft:
-		return s.onParticipantLeft(ctx, livekitRoomName)
+		return s.onParticipantLeft(ctx, livekitRoomName, participantIdentity)
 	case webhook.EventParticipantJoined:
 		return s.onParticipantJoined(ctx, livekitRoomName)
 	case webhook.EventRoomFinished:
@@ -786,7 +834,7 @@ func (s *service) OnLiveKitEvent(ctx context.Context, eventType, livekitRoomName
 	}
 }
 
-func (s *service) onParticipantLeft(ctx context.Context, lkRoomName string) error {
+func (s *service) onParticipantLeft(ctx context.Context, lkRoomName, identity string) error {
 	room, err := s.rooms.FindByLiveKitRoomName(ctx, lkRoomName)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
@@ -797,6 +845,17 @@ func (s *service) onParticipantLeft(ctx context.Context, lkRoomName string) erro
 	if room.Status != domain.LiveRoomStatusActive {
 		return nil
 	}
+
+	// Close the participation row server-side so attendance stays honest even
+	// when the client crashed and never called /leave. Best-effort: a missing
+	// row (client already left cleanly) is fine.
+	if identity != "" {
+		err := s.participants.MarkLeftByIdentity(ctx, room.ID, identity, time.Now())
+		if err != nil && !errors.Is(err, domain.ErrParticipantNotFound) {
+			s.logger.Error("participant_left: mark left", "room_id", room.ID.String(), "identity", identity, "error", err)
+		}
+	}
+
 	present, err := s.hostPresent(ctx, room)
 	if err != nil {
 		return err
@@ -878,6 +937,43 @@ func (s *service) CloseRoomIfNoHost(ctx context.Context, roomID uuid.UUID) error
 	return nil
 }
 
+// OnEgressEnded finalizes a recording from a LiveKit egress_ended webhook —
+// the authoritative source for file size, duration, and failure status
+// (StopRecording only knows the egress was asked to stop).
+func (s *service) OnEgressEnded(ctx context.Context, result domain.EgressResult) error {
+	rec, err := s.recordings.FindByEgressID(ctx, result.EgressID)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil
+		}
+		return err
+	}
+
+	rec.Status = domain.LiveRecordingStatusCompleted
+	if result.Failed {
+		rec.Status = domain.LiveRecordingStatusFailed
+	}
+	if result.SizeBytes > 0 {
+		rec.Size = result.SizeBytes
+	}
+	if result.Duration > 0 {
+		rec.Duration = int(result.Duration.Seconds())
+	}
+	if rec.EndedAt == nil {
+		now := time.Now()
+		rec.EndedAt = &now
+	}
+	if err := s.recordings.Update(ctx, rec); err != nil {
+		return fmt.Errorf("livesessions.service.OnEgressEnded: %w", err)
+	}
+	s.logger.Info("finalized recording from egress webhook",
+		"egress_id", result.EgressID,
+		"status", string(rec.Status),
+		"size", rec.Size,
+	)
+	return nil
+}
+
 const (
 	roomEventRoleChanged = "role_changed"
 	roomEventHand        = "hand"
@@ -905,9 +1001,6 @@ func (s *service) broadcastHand(ctx context.Context, roomName, identity string, 
 }
 
 func (s *service) broadcastRoomEvent(ctx context.Context, roomName, eventType string, data map[string]any) {
-	if s.livekit == nil {
-		return
-	}
 	payload, err := json.Marshal(map[string]any{"type": eventType, "data": data})
 	if err != nil {
 		s.logger.Error("broadcastRoomEvent: marshal", "event", eventType, "error", err)
@@ -948,10 +1041,8 @@ func (s *service) SetParticipantRole(ctx context.Context, roomID uuid.UUID, iden
 
 	isPresenter := dto.Role == domain.ParticipantRolePresenter
 	sources := publishSources(isPresenter)
-	if s.livekit != nil {
-		if err := s.livekit.UpdateParticipant(ctx, room.LiveKitRoomName, identity, participantMetadata(dto.Role), sources); err != nil {
-			return nil, fmt.Errorf("livesessions.service.SetParticipantRole livekit: %w", err)
-		}
+	if err := s.livekit.UpdateParticipant(ctx, room.LiveKitRoomName, identity, participantMetadata(dto.Role), sources); err != nil {
+		return nil, fmt.Errorf("livesessions.service.SetParticipantRole livekit: %w", err)
 	}
 
 	if err := s.participants.UpdateParticipantRole(ctx, roomID, identity, dto.Role); err != nil {
@@ -988,9 +1079,6 @@ func (s *service) MuteParticipant(ctx context.Context, roomID uuid.UUID, identit
 	}
 	if !s.canManageRoom(caller, class) {
 		return domain.ErrForbidden
-	}
-	if s.livekit == nil {
-		return nil
 	}
 	return s.livekit.MutePublishedTrack(ctx, room.LiveKitRoomName, identity, dto.TrackSID, dto.Muted)
 }

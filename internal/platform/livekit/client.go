@@ -2,6 +2,7 @@ package livekit
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -11,9 +12,15 @@ import (
 	"github.com/livekit/protocol/livekit"
 	"github.com/livekit/protocol/webhook"
 	lksdk "github.com/livekit/server-sdk-go/v2"
+	"github.com/twitchtv/twirp"
 
 	"github.com/4H1R/zoora/internal/config"
 )
+
+// ErrRoomNotFound reports that the LiveKit server no longer knows the room
+// (already torn down by its empty_timeout, or never created). Callers use it
+// to distinguish "room gone" from transient API failures.
+var ErrRoomNotFound = errors.New("livekit room not found")
 
 type Client struct {
 	roomClient      *lksdk.RoomServiceClient
@@ -159,6 +166,10 @@ func (c *Client) ListParticipants(ctx context.Context, roomName string) ([]*live
 		Room: roomName,
 	})
 	if err != nil {
+		var terr twirp.Error
+		if errors.As(err, &terr) && terr.Code() == twirp.NotFound {
+			return nil, fmt.Errorf("listing participants in %s: %w", roomName, ErrRoomNotFound)
+		}
 		return nil, fmt.Errorf("listing participants: %w", err)
 	}
 	return resp.Participants, nil

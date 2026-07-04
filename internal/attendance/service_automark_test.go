@@ -29,8 +29,14 @@ func (m *mLiveRoomRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Liv
 	}
 	return a.Get(0).(*domain.LiveRoom), a.Error(1)
 }
-func (m *mLiveRoomRepo) Update(ctx context.Context, r *domain.LiveRoom) error {
-	return m.Called(ctx, r).Error(0)
+func (m *mLiveRoomRepo) Transition(ctx context.Context, r *domain.LiveRoom, from domain.LiveRoomStatus) error {
+	return m.Called(ctx, r, from).Error(0)
+}
+func (m *mLiveRoomRepo) TouchHostLastSeen(ctx context.Context, roomID uuid.UUID, seenAt time.Time) error {
+	return m.Called(ctx, roomID, seenAt).Error(0)
+}
+func (m *mLiveRoomRepo) UpdateConfig(ctx context.Context, roomID uuid.UUID, cfg domain.LiveRoomConfig) error {
+	return m.Called(ctx, roomID, cfg).Error(0)
 }
 func (m *mLiveRoomRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
@@ -111,6 +117,9 @@ func (m *mParticipantRepo) SetHandRaised(ctx context.Context, roomID uuid.UUID, 
 }
 func (m *mParticipantRepo) MarkAllLeft(ctx context.Context, roomID uuid.UUID, leftAt time.Time) error {
 	return m.Called(ctx, roomID, leftAt).Error(0)
+}
+func (m *mParticipantRepo) MarkLeftByIdentity(ctx context.Context, roomID uuid.UUID, identity string, leftAt time.Time) error {
+	return m.Called(ctx, roomID, identity, leftAt).Error(0)
 }
 
 type fakeSettingsProvider struct{ percent int }

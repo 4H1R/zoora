@@ -63,7 +63,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		authed.POST("/live-rooms/:id/hand", perm(domain.PermLiveSessionsJoin), idParam, h.SetHand)
 		authed.PUT("/live-rooms/:id/participants/:identity/hand", perm(domain.PermLiveSessionsJoin), idParam, h.SetParticipantHand)
 		authed.POST("/live-rooms/:id/recordings", perm(domain.PermLiveSessionsManage), idParam, h.StartRecording)
-		authed.DELETE("/live-rooms/:id/recordings/:recordingId", perm(domain.PermLiveSessionsManage), idParam, recordingIDParam, h.StopRecording)
+		authed.POST("/live-rooms/:id/recordings/:recordingId/stop", perm(domain.PermLiveSessionsManage), idParam, recordingIDParam, h.StopRecording)
 		authed.GET("/live-rooms/:id/recordings", perm(domain.PermLiveSessionsView), idParam, h.ListRecordings)
 		authed.GET("/live-rooms/:id/whiteboard", perm(domain.PermLiveSessionsJoin), idParam, h.GetWhiteboard)
 		authed.PUT("/live-rooms/:id/whiteboard", perm(domain.PermLiveSessionsJoin), idParam, h.SaveWhiteboard)
@@ -353,7 +353,7 @@ func (h *Handler) StartRecording(c *gin.Context) {
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 403 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 404 {object} domain.Response{error=domain.ErrorBody}
-// @Router /live-rooms/{id}/recordings/{recordingId} [delete]
+// @Router /live-rooms/{id}/recordings/{recordingId}/stop [post]
 func (h *Handler) StopRecording(c *gin.Context) {
 	rec, err := h.svc.StopRecording(c.Request.Context(), httpx.UUIDParam(c, "recordingId"))
 	if err != nil {

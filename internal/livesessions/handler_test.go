@@ -100,8 +100,11 @@ func (m *mockLiveSessionSvc) AdminHardDelete(ctx context.Context, id uuid.UUID) 
 func (m *mockLiveSessionSvc) AutoCloseStaleRooms(ctx context.Context) error {
 	return m.Called(ctx).Error(0)
 }
-func (m *mockLiveSessionSvc) OnLiveKitEvent(ctx context.Context, eventType, livekitRoomName string) error {
-	return m.Called(ctx, eventType, livekitRoomName).Error(0)
+func (m *mockLiveSessionSvc) OnLiveKitEvent(ctx context.Context, eventType, livekitRoomName, participantIdentity string) error {
+	return m.Called(ctx, eventType, livekitRoomName, participantIdentity).Error(0)
+}
+func (m *mockLiveSessionSvc) OnEgressEnded(ctx context.Context, result domain.EgressResult) error {
+	return m.Called(ctx, result).Error(0)
 }
 func (m *mockLiveSessionSvc) CloseRoomIfNoHost(ctx context.Context, roomID uuid.UUID) error {
 	return m.Called(ctx, roomID).Error(0)
@@ -263,6 +266,19 @@ func TestHandler_StartRecording_Success(t *testing.T) {
 
 	w := doReq(t, r, "POST", "/api/v1/live-rooms/"+id.String()+"/recordings", nil)
 	assert.Equal(t, http.StatusCreated, w.Code)
+}
+
+func TestHandler_StopRecording_PostStopRoute(t *testing.T) {
+	r, svc := newLiveRouter(t)
+	roomID := uuid.New()
+	recID := uuid.New()
+	svc.On("StopRecording", mock.Anything, recID).
+		Return(&domain.LiveRecording{ID: recID, Status: domain.LiveRecordingStatusCompleted}, nil)
+
+	w := doReq(t, r, "POST",
+		"/api/v1/live-rooms/"+roomID.String()+"/recordings/"+recID.String()+"/stop", nil)
+	assert.Equal(t, http.StatusOK, w.Code)
+	svc.AssertExpectations(t)
 }
 
 func TestHandler_SetParticipantHand_Success(t *testing.T) {

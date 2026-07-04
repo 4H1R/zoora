@@ -49,6 +49,9 @@ const (
 	LiveRecordingStatusFailed    LiveRecordingStatus = "failed"
 )
 
+// ChatModelLiveSession is the polymorphic chat owner type for live rooms.
+const ChatModelLiveSession = "live_session"
+
 type LiveRoomConfig struct {
 	MaxParticipants int `json:"max_participants"`
 }
@@ -186,7 +189,16 @@ type SetHandDTO struct {
 type LiveRoomRepository interface {
 	Create(ctx context.Context, room *LiveRoom) error
 	FindByID(ctx context.Context, id uuid.UUID) (*LiveRoom, error)
-	Update(ctx context.Context, room *LiveRoom) error
+	// Transition persists the room's status/lifecycle timestamps only when the
+	// row's current status still equals `from`; returns ErrConflict when the
+	// guard fails so concurrent transitions can never clobber each other.
+	Transition(ctx context.Context, room *LiveRoom, from LiveRoomStatus) error
+	// TouchHostLastSeen bumps host_last_seen_at for an active room. A no-op
+	// (nil) when the room is missing or no longer active, so a late heartbeat
+	// can never resurrect a finished room.
+	TouchHostLastSeen(ctx context.Context, roomID uuid.UUID, seenAt time.Time) error
+	// UpdateConfig persists only the config column.
+	UpdateConfig(ctx context.Context, roomID uuid.UUID, cfg LiveRoomConfig) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, scope LiveRoomListScope, p ListParams) ([]LiveRoom, int64, error)
 	FindActiveRoomsWithStaleHost(ctx context.Context, staleDuration time.Duration) ([]LiveRoom, error)
@@ -207,12 +219,16 @@ type LiveParticipantRepository interface {
 	ListByRoom(ctx context.Context, roomID uuid.UUID, q ListLiveParticipantsQuery) ([]LiveParticipant, int64, error)
 	ListAllByRoom(ctx context.Context, roomID uuid.UUID) ([]LiveParticipant, error)
 	MarkAllLeft(ctx context.Context, roomID uuid.UUID, leftAt time.Time) error
+	// MarkLeftByIdentity closes the active participation row for one identity.
+	// Returns ErrParticipantNotFound when no active row exists.
+	MarkLeftByIdentity(ctx context.Context, roomID uuid.UUID, identity string, leftAt time.Time) error
 }
 
 type LiveRecordingRepository interface {
 	Create(ctx context.Context, r *LiveRecording) error
 	FindByID(ctx context.Context, id uuid.UUID) (*LiveRecording, error)
 	FindActiveByRoom(ctx context.Context, roomID uuid.UUID) (*LiveRecording, error)
+	FindByEgressID(ctx context.Context, egressID string) (*LiveRecording, error)
 	Update(ctx context.Context, r *LiveRecording) error
 	ListByRoom(ctx context.Context, roomID uuid.UUID, q ListLiveRecordingsQuery) ([]LiveRecording, int64, error)
 }
@@ -236,6 +252,15 @@ type SaveWhiteboardDTO struct {
 type LiveWhiteboardRepository interface {
 	Get(ctx context.Context, roomID uuid.UUID) (*LiveWhiteboard, error)
 	Upsert(ctx context.Context, roomID uuid.UUID, snapshot json.RawMessage) (*LiveWhiteboard, error)
+}
+
+// EgressResult carries the outcome of a finished LiveKit egress (recording)
+// webhook, translated so the domain stays free of LiveKit types.
+type EgressResult struct {
+	EgressID  string
+	Failed    bool
+	SizeBytes int64
+	Duration  time.Duration
 }
 
 type LiveSessionService interface {
@@ -276,11 +301,16 @@ type LiveSessionService interface {
 	AutoCloseStaleRooms(ctx context.Context) error
 
 	// OnLiveKitEvent reacts to a verified LiveKit webhook. The HTTP handler
-	// verifies the signature and passes only the event type and LiveKit room
-	// name so this interface stays free of LiveKit types. Drives the
-	// event-driven, no-host auto-close (grace-period timer arm/cancel) and
-	// finalizes rooms LiveKit tears down on its own empty_timeout.
-	OnLiveKitEvent(ctx context.Context, eventType, livekitRoomName string) error
+	// verifies the signature and passes only the event type, LiveKit room
+	// name, and participant identity (empty when the event carries none) so
+	// this interface stays free of LiveKit types. Drives the event-driven,
+	// no-host auto-close (grace-period timer arm/cancel), keeps participant
+	// join/leave rows honest, and finalizes rooms LiveKit tears down on its
+	// own empty_timeout.
+	OnLiveKitEvent(ctx context.Context, eventType, livekitRoomName, participantIdentity string) error
+	// OnEgressEnded finalizes a recording row from a LiveKit egress_ended
+	// webhook: size, duration, and completed/failed status.
+	OnEgressEnded(ctx context.Context, result EgressResult) error
 	// CloseRoomIfNoHost is the delayed task target: it closes the room only if
 	// LiveKit confirms no host is still present, so a host returning within the
 	// grace window keeps the room alive.

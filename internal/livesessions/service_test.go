@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	lkproto "github.com/livekit/protocol/livekit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
@@ -32,8 +33,14 @@ func (m *mockRoomRepo) ListByClassSession(ctx context.Context, sessionID uuid.UU
 	rooms, _ := a.Get(0).([]domain.LiveRoom)
 	return rooms, a.Error(1)
 }
-func (m *mockRoomRepo) Update(ctx context.Context, room *domain.LiveRoom) error {
-	return m.Called(ctx, room).Error(0)
+func (m *mockRoomRepo) Transition(ctx context.Context, room *domain.LiveRoom, from domain.LiveRoomStatus) error {
+	return m.Called(ctx, room, from).Error(0)
+}
+func (m *mockRoomRepo) TouchHostLastSeen(ctx context.Context, roomID uuid.UUID, seenAt time.Time) error {
+	return m.Called(ctx, roomID, seenAt).Error(0)
+}
+func (m *mockRoomRepo) UpdateConfig(ctx context.Context, roomID uuid.UUID, cfg domain.LiveRoomConfig) error {
+	return m.Called(ctx, roomID, cfg).Error(0)
 }
 func (m *mockRoomRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
@@ -112,6 +119,9 @@ func (m *mockParticipantRepo) SetHandRaised(ctx context.Context, roomID uuid.UUI
 func (m *mockParticipantRepo) MarkAllLeft(ctx context.Context, roomID uuid.UUID, leftAt time.Time) error {
 	return m.Called(ctx, roomID, leftAt).Error(0)
 }
+func (m *mockParticipantRepo) MarkLeftByIdentity(ctx context.Context, roomID uuid.UUID, identity string, leftAt time.Time) error {
+	return m.Called(ctx, roomID, identity, leftAt).Error(0)
+}
 
 type mockRecordingRepo struct{ mock.Mock }
 
@@ -127,6 +137,13 @@ func (m *mockRecordingRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain
 }
 func (m *mockRecordingRepo) FindActiveByRoom(ctx context.Context, roomID uuid.UUID) (*domain.LiveRecording, error) {
 	a := m.Called(ctx, roomID)
+	if a.Get(0) == nil {
+		return nil, a.Error(1)
+	}
+	return a.Get(0).(*domain.LiveRecording), a.Error(1)
+}
+func (m *mockRecordingRepo) FindByEgressID(ctx context.Context, egressID string) (*domain.LiveRecording, error) {
+	a := m.Called(ctx, egressID)
 	if a.Get(0) == nil {
 		return nil, a.Error(1)
 	}
@@ -359,6 +376,45 @@ func (noopTx) RunInTx(ctx context.Context, fn func(context.Context) error) error
 	return fn(ctx)
 }
 
+// fakeLiveKit is a permissive LiveKitClient fake: every call succeeds. Tests
+// override the function fields to steer or observe specific calls.
+type fakeLiveKit struct {
+	listParticipantsFn func(ctx context.Context, roomName string) ([]*lkproto.ParticipantInfo, error)
+
+	tokenMetadata  []string
+	tokenSources   [][]lkproto.TrackSource
+	tokenRoomAdmin []bool
+}
+
+func (f *fakeLiveKit) CreateRoom(_ context.Context, roomName string, _ uint32) (*lkproto.Room, error) {
+	return &lkproto.Room{Name: roomName}, nil
+}
+func (f *fakeLiveKit) DeleteRoom(context.Context, string) error { return nil }
+func (f *fakeLiveKit) GenerateToken(_, _, _, metadata string, sources []lkproto.TrackSource, roomAdmin bool) (string, error) {
+	f.tokenMetadata = append(f.tokenMetadata, metadata)
+	f.tokenSources = append(f.tokenSources, sources)
+	f.tokenRoomAdmin = append(f.tokenRoomAdmin, roomAdmin)
+	return "test-token", nil
+}
+func (f *fakeLiveKit) StartRecording(context.Context, string, string) (string, error) {
+	return "EG_test", nil
+}
+func (f *fakeLiveKit) StopRecording(context.Context, string) error { return nil }
+func (f *fakeLiveKit) ListParticipants(ctx context.Context, roomName string) ([]*lkproto.ParticipantInfo, error) {
+	if f.listParticipantsFn != nil {
+		return f.listParticipantsFn(ctx, roomName)
+	}
+	return nil, nil
+}
+func (f *fakeLiveKit) UpdateParticipant(context.Context, string, string, string, []lkproto.TrackSource) error {
+	return nil
+}
+func (f *fakeLiveKit) MutePublishedTrack(context.Context, string, string, string, bool) error {
+	return nil
+}
+func (f *fakeLiveKit) SendData(context.Context, string, []byte, []string) error { return nil }
+func (f *fakeLiveKit) PublicURL() string                                        { return "wss://livekit.test" }
+
 func newTestService(t *testing.T) (
 	domain.LiveSessionService,
 	*mockRoomRepo, *mockParticipantRepo, *mockRecordingRepo, *mockWhiteboardRepo,
@@ -366,25 +422,47 @@ func newTestService(t *testing.T) (
 	*mockChatService,
 ) {
 	t.Helper()
-	roomRepo := &mockRoomRepo{}
-	partRepo := &mockParticipantRepo{}
-	recRepo := &mockRecordingRepo{}
-	wbRepo := &mockWhiteboardRepo{}
-	sessRepo := &mockClassSessionRepo{}
-	classRepo := &mockClassRepo{}
-	memberRepo := &mockMemberRepo{}
-	chatSvc := &mockChatService{}
+	svc, f := newTestServiceLK(t)
+	return svc, f.rooms, f.parts, f.recs, f.wb, f.sess, f.classes, f.members, f.chat
+}
 
+// lkFixture bundles the mocks plus the LiveKit fake for tests that need to
+// steer or inspect LiveKit interactions.
+type lkFixture struct {
+	rooms   *mockRoomRepo
+	parts   *mockParticipantRepo
+	recs    *mockRecordingRepo
+	wb      *mockWhiteboardRepo
+	sess    *mockClassSessionRepo
+	classes *mockClassRepo
+	members *mockMemberRepo
+	chat    *mockChatService
+	lk      *fakeLiveKit
+}
+
+func newTestServiceLK(t *testing.T) (domain.LiveSessionService, *lkFixture) {
+	t.Helper()
+	f := &lkFixture{
+		rooms:   &mockRoomRepo{},
+		parts:   &mockParticipantRepo{},
+		recs:    &mockRecordingRepo{},
+		wb:      &mockWhiteboardRepo{},
+		sess:    &mockClassSessionRepo{},
+		classes: &mockClassRepo{},
+		members: &mockMemberRepo{},
+		chat:    &mockChatService{},
+		lk:      &fakeLiveKit{},
+	}
 	svc := livesessions.NewService(
-		roomRepo, partRepo, recRepo, wbRepo,
-		sessRepo, classRepo, memberRepo,
-		chatSvc, noopTx{},
-		nil, // livekit client
+		f.rooms, f.parts, f.recs, f.wb,
+		f.sess, f.classes, f.members,
+		f.chat, noopTx{},
+		f.lk,
 		nil, // queue client
 		15*time.Minute,
 		slog.Default(),
 	)
-	return svc, roomRepo, partRepo, recRepo, wbRepo, sessRepo, classRepo, memberRepo, chatSvc
+	return svc, f
 }
 
 var (
@@ -539,11 +617,28 @@ func TestHeartbeat_Teacher_Success(t *testing.T) {
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(room, nil)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
-	roomRepo.On("Update", mock.Anything, mock.AnythingOfType("*domain.LiveRoom")).Return(nil)
+	roomRepo.On("TouchHostLastSeen", mock.Anything, testRoomID, mock.AnythingOfType("time.Time")).Return(nil)
 
 	err := svc.Heartbeat(teacherCtx(), testRoomID)
 	assert.NoError(t, err)
 	roomRepo.AssertExpectations(t)
+}
+
+func TestHeartbeat_NeverFullSaves(t *testing.T) {
+	// A heartbeat racing a close must not write the whole row back (that would
+	// resurrect a finished room); only the conditional touch is allowed.
+	svc, roomRepo, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	room := testRoom()
+	room.Status = domain.LiveRoomStatusActive
+	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(room, nil)
+	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
+	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
+	roomRepo.On("TouchHostLastSeen", mock.Anything, testRoomID, mock.AnythingOfType("time.Time")).Return(nil)
+
+	err := svc.Heartbeat(teacherCtx(), testRoomID)
+	assert.NoError(t, err)
+	roomRepo.AssertNotCalled(t, "Transition")
+	roomRepo.AssertNotCalled(t, "UpdateConfig")
 }
 
 func TestList_NoCaller_Forbidden(t *testing.T) {
@@ -637,7 +732,7 @@ func TestEndRoom_ArchivesChat(t *testing.T) {
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
 
 	recRepo.On("FindActiveByRoom", mock.Anything, testRoomID).Return(nil, domain.ErrNotFound)
-	roomRepo.On("Update", mock.Anything, mock.AnythingOfType("*domain.LiveRoom")).Return(nil)
+	roomRepo.On("Transition", mock.Anything, mock.AnythingOfType("*domain.LiveRoom"), domain.LiveRoomStatusActive).Return(nil)
 	partRepo.On("MarkAllLeft", mock.Anything, testRoomID, mock.AnythingOfType("time.Time")).Return(nil)
 	chatSvc.On("ArchiveByModel", mock.Anything, "live_session", testRoomID).Return(nil)
 
@@ -678,7 +773,7 @@ func TestManageAny_NonOwner_CanManageRoom(t *testing.T) {
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(room, nil)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
-	roomRepo.On("Update", mock.Anything, mock.AnythingOfType("*domain.LiveRoom")).Return(nil)
+	roomRepo.On("TouchHostLastSeen", mock.Anything, testRoomID, mock.AnythingOfType("time.Time")).Return(nil)
 
 	err := svc.Heartbeat(manageAnyCtx(), testRoomID)
 	assert.NoError(t, err)
@@ -752,7 +847,7 @@ func TestUpdateAny_NonOwner_CanUpdateConfig(t *testing.T) {
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(room, nil)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
-	roomRepo.On("Update", mock.Anything, mock.AnythingOfType("*domain.LiveRoom")).Return(nil)
+	roomRepo.On("UpdateConfig", mock.Anything, testRoomID, mock.AnythingOfType("domain.LiveRoomConfig")).Return(nil)
 
 	ctx := domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      uuid.New(),
@@ -882,8 +977,7 @@ func TestMuteParticipant_Student_Forbidden(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 
-func TestMuteParticipant_Teacher_NilLivekit_NoError(t *testing.T) {
-	// livekit is nil in test service — MuteParticipant should succeed (no-op) when livekit is nil
+func TestMuteParticipant_Teacher_Success(t *testing.T) {
 	svc, roomRepo, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
 	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)

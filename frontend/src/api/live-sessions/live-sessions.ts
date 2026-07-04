@@ -25,11 +25,6 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  DeleteLiveRoomsIdRecordingsRecordingId200,
-  DeleteLiveRoomsIdRecordingsRecordingId400,
-  DeleteLiveRoomsIdRecordingsRecordingId401,
-  DeleteLiveRoomsIdRecordingsRecordingId403,
-  DeleteLiveRoomsIdRecordingsRecordingId404,
   GetLiveRooms200,
   GetLiveRooms401,
   GetLiveRooms403,
@@ -92,6 +87,11 @@ import type {
   PostLiveRoomsIdRecordings401,
   PostLiveRoomsIdRecordings403,
   PostLiveRoomsIdRecordings404,
+  PostLiveRoomsIdRecordingsRecordingIdStop200,
+  PostLiveRoomsIdRecordingsRecordingIdStop400,
+  PostLiveRoomsIdRecordingsRecordingIdStop401,
+  PostLiveRoomsIdRecordingsRecordingIdStop403,
+  PostLiveRoomsIdRecordingsRecordingIdStop404,
   PostLiveRoomsIdStart200,
   PostLiveRoomsIdStart400,
   PostLiveRoomsIdStart401,
@@ -1817,59 +1817,59 @@ export const usePostLiveRoomsIdRecordings = <TError = ErrorType<PostLiveRoomsIdR
       > => {
       return useMutation(getPostLiveRoomsIdRecordingsMutationOptions(options), queryClient);
     }
-    export type deleteLiveRoomsIdRecordingsRecordingIdResponse200 = {
-  data: DeleteLiveRoomsIdRecordingsRecordingId200
+    export type postLiveRoomsIdRecordingsRecordingIdStopResponse200 = {
+  data: PostLiveRoomsIdRecordingsRecordingIdStop200
   status: 200
 }
 
-export type deleteLiveRoomsIdRecordingsRecordingIdResponse400 = {
-  data: DeleteLiveRoomsIdRecordingsRecordingId400
+export type postLiveRoomsIdRecordingsRecordingIdStopResponse400 = {
+  data: PostLiveRoomsIdRecordingsRecordingIdStop400
   status: 400
 }
 
-export type deleteLiveRoomsIdRecordingsRecordingIdResponse401 = {
-  data: DeleteLiveRoomsIdRecordingsRecordingId401
+export type postLiveRoomsIdRecordingsRecordingIdStopResponse401 = {
+  data: PostLiveRoomsIdRecordingsRecordingIdStop401
   status: 401
 }
 
-export type deleteLiveRoomsIdRecordingsRecordingIdResponse403 = {
-  data: DeleteLiveRoomsIdRecordingsRecordingId403
+export type postLiveRoomsIdRecordingsRecordingIdStopResponse403 = {
+  data: PostLiveRoomsIdRecordingsRecordingIdStop403
   status: 403
 }
 
-export type deleteLiveRoomsIdRecordingsRecordingIdResponse404 = {
-  data: DeleteLiveRoomsIdRecordingsRecordingId404
+export type postLiveRoomsIdRecordingsRecordingIdStopResponse404 = {
+  data: PostLiveRoomsIdRecordingsRecordingIdStop404
   status: 404
 }
 
-export type deleteLiveRoomsIdRecordingsRecordingIdResponseSuccess = (deleteLiveRoomsIdRecordingsRecordingIdResponse200) & {
+export type postLiveRoomsIdRecordingsRecordingIdStopResponseSuccess = (postLiveRoomsIdRecordingsRecordingIdStopResponse200) & {
   headers: Headers;
 };
-export type deleteLiveRoomsIdRecordingsRecordingIdResponseError = (deleteLiveRoomsIdRecordingsRecordingIdResponse400 | deleteLiveRoomsIdRecordingsRecordingIdResponse401 | deleteLiveRoomsIdRecordingsRecordingIdResponse403 | deleteLiveRoomsIdRecordingsRecordingIdResponse404) & {
+export type postLiveRoomsIdRecordingsRecordingIdStopResponseError = (postLiveRoomsIdRecordingsRecordingIdStopResponse400 | postLiveRoomsIdRecordingsRecordingIdStopResponse401 | postLiveRoomsIdRecordingsRecordingIdStopResponse403 | postLiveRoomsIdRecordingsRecordingIdStopResponse404) & {
   headers: Headers;
 };
 
-export type deleteLiveRoomsIdRecordingsRecordingIdResponse = (deleteLiveRoomsIdRecordingsRecordingIdResponseSuccess | deleteLiveRoomsIdRecordingsRecordingIdResponseError)
+export type postLiveRoomsIdRecordingsRecordingIdStopResponse = (postLiveRoomsIdRecordingsRecordingIdStopResponseSuccess | postLiveRoomsIdRecordingsRecordingIdStopResponseError)
 
-export const getDeleteLiveRoomsIdRecordingsRecordingIdUrl = (id: string,
+export const getPostLiveRoomsIdRecordingsRecordingIdStopUrl = (id: string,
     recordingId: string,) => {
 
 
 
 
-  return `/live-rooms/${id}/recordings/${recordingId}`
+  return `/live-rooms/${id}/recordings/${recordingId}/stop`
 }
 
 /**
  * @summary Stop recording
  */
-export const deleteLiveRoomsIdRecordingsRecordingId = async (id: string,
-    recordingId: string, options?: RequestInit): Promise<deleteLiveRoomsIdRecordingsRecordingIdResponse> => {
+export const postLiveRoomsIdRecordingsRecordingIdStop = async (id: string,
+    recordingId: string, options?: RequestInit): Promise<postLiveRoomsIdRecordingsRecordingIdStopResponse> => {
 
-  return customInstance<deleteLiveRoomsIdRecordingsRecordingIdResponse>(getDeleteLiveRoomsIdRecordingsRecordingIdUrl(id,recordingId),
+  return customInstance<postLiveRoomsIdRecordingsRecordingIdStopResponse>(getPostLiveRoomsIdRecordingsRecordingIdStopUrl(id,recordingId),
   {
     ...options,
-    method: 'DELETE'
+    method: 'POST'
 
 
   }
@@ -1878,11 +1878,11 @@ export const deleteLiveRoomsIdRecordingsRecordingId = async (id: string,
 
 
 
-export const getDeleteLiveRoomsIdRecordingsRecordingIdMutationOptions = <TError = ErrorType<DeleteLiveRoomsIdRecordingsRecordingId400 | DeleteLiveRoomsIdRecordingsRecordingId401 | DeleteLiveRoomsIdRecordingsRecordingId403 | DeleteLiveRoomsIdRecordingsRecordingId404>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLiveRoomsIdRecordingsRecordingId>>, TError,{id: string;recordingId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteLiveRoomsIdRecordingsRecordingId>>, TError,{id: string;recordingId: string}, TContext> => {
+export const getPostLiveRoomsIdRecordingsRecordingIdStopMutationOptions = <TError = ErrorType<PostLiveRoomsIdRecordingsRecordingIdStop400 | PostLiveRoomsIdRecordingsRecordingIdStop401 | PostLiveRoomsIdRecordingsRecordingIdStop403 | PostLiveRoomsIdRecordingsRecordingIdStop404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdRecordingsRecordingIdStop>>, TError,{id: string;recordingId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdRecordingsRecordingIdStop>>, TError,{id: string;recordingId: string}, TContext> => {
 
-const mutationKey = ['deleteLiveRoomsIdRecordingsRecordingId'];
+const mutationKey = ['postLiveRoomsIdRecordingsRecordingIdStop'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -1892,10 +1892,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteLiveRoomsIdRecordingsRecordingId>>, {id: string;recordingId: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postLiveRoomsIdRecordingsRecordingIdStop>>, {id: string;recordingId: string}> = (props) => {
           const {id,recordingId} = props ?? {};
 
-          return  deleteLiveRoomsIdRecordingsRecordingId(id,recordingId,requestOptions)
+          return  postLiveRoomsIdRecordingsRecordingIdStop(id,recordingId,requestOptions)
         }
 
 
@@ -1905,22 +1905,22 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type DeleteLiveRoomsIdRecordingsRecordingIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteLiveRoomsIdRecordingsRecordingId>>>
+    export type PostLiveRoomsIdRecordingsRecordingIdStopMutationResult = NonNullable<Awaited<ReturnType<typeof postLiveRoomsIdRecordingsRecordingIdStop>>>
 
-    export type DeleteLiveRoomsIdRecordingsRecordingIdMutationError = ErrorType<DeleteLiveRoomsIdRecordingsRecordingId400 | DeleteLiveRoomsIdRecordingsRecordingId401 | DeleteLiveRoomsIdRecordingsRecordingId403 | DeleteLiveRoomsIdRecordingsRecordingId404>
+    export type PostLiveRoomsIdRecordingsRecordingIdStopMutationError = ErrorType<PostLiveRoomsIdRecordingsRecordingIdStop400 | PostLiveRoomsIdRecordingsRecordingIdStop401 | PostLiveRoomsIdRecordingsRecordingIdStop403 | PostLiveRoomsIdRecordingsRecordingIdStop404>
 
     /**
  * @summary Stop recording
  */
-export const useDeleteLiveRoomsIdRecordingsRecordingId = <TError = ErrorType<DeleteLiveRoomsIdRecordingsRecordingId400 | DeleteLiveRoomsIdRecordingsRecordingId401 | DeleteLiveRoomsIdRecordingsRecordingId403 | DeleteLiveRoomsIdRecordingsRecordingId404>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLiveRoomsIdRecordingsRecordingId>>, TError,{id: string;recordingId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const usePostLiveRoomsIdRecordingsRecordingIdStop = <TError = ErrorType<PostLiveRoomsIdRecordingsRecordingIdStop400 | PostLiveRoomsIdRecordingsRecordingIdStop401 | PostLiveRoomsIdRecordingsRecordingIdStop403 | PostLiveRoomsIdRecordingsRecordingIdStop404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdRecordingsRecordingIdStop>>, TError,{id: string;recordingId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteLiveRoomsIdRecordingsRecordingId>>,
+        Awaited<ReturnType<typeof postLiveRoomsIdRecordingsRecordingIdStop>>,
         TError,
         {id: string;recordingId: string},
         TContext
       > => {
-      return useMutation(getDeleteLiveRoomsIdRecordingsRecordingIdMutationOptions(options), queryClient);
+      return useMutation(getPostLiveRoomsIdRecordingsRecordingIdStopMutationOptions(options), queryClient);
     }
     export type postLiveRoomsIdStartResponse200 = {
   data: PostLiveRoomsIdStart200

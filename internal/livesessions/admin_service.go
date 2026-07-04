@@ -20,12 +20,7 @@ func (s *service) AdminList(ctx context.Context, q domain.AdminListLiveRoomsQuer
 	if _, err := s.requireAdmin(ctx); err != nil {
 		return nil, 0, err
 	}
-	if q.ListParams.Page < 1 {
-		q.ListParams.Page = 1
-	}
-	if q.ListParams.PageSize <= 0 {
-		q.ListParams.PageSize = domain.DefaultPageSize
-	}
+	// Pagination defaults are applied by listparams.Bind in the handler.
 	return s.rooms.AdminList(ctx, q)
 }
 
