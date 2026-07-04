@@ -788,6 +788,13 @@
         "loading": "در حال بارگذاری سوال…",
         "questionMissing": "سوال یافت نشد",
         "selectedOptions": "گزینه‌های انتخاب‌شده",
+        "options": "گزینه‌ها",
+        "correctAnswer": "پاسخ صحیح",
+        "studentChoice": "انتخاب دانش‌آموز",
+        "incorrectChoice": "انتخاب نادرست",
+        "expectedAnswer": "پاسخ مورد انتظار",
+        "gradingProgress": "روند تصحیح",
+        "gradedOf": "{{done}} از {{total}} تصحیح‌شده",
         "spent": "زمان صرف‌شده",
         "secondsShort": "ث"
       }

@@ -788,6 +788,13 @@
         "loading": "Loading question…",
         "questionMissing": "Question not found",
         "selectedOptions": "Selected options",
+        "options": "Options",
+        "correctAnswer": "Correct answer",
+        "studentChoice": "Student's choice",
+        "incorrectChoice": "Incorrect choice",
+        "expectedAnswer": "Expected answer",
+        "gradingProgress": "Grading progress",
+        "gradedOf": "{{done}} of {{total}} graded",
         "spent": "Time spent",
         "secondsShort": "s"
       }
