@@ -2,7 +2,7 @@
 // same shape ({ type, data }) via SendData for role/hand UI notifications.
 export type RoomEvent =
   | { type: "role_changed"; data: { identity: string; role: "host" | "presenter" | "viewer" } }
-  | { type: "hand"; data: { identity: string; raised: boolean } }
+  | { type: "hand"; data: { identity: string; raised: boolean; raisedAt?: number } }
   | { type: "stage"; data: { kind: "none" | "slides" | "whiteboard"; url?: string; page?: number; numPages?: number } }
   | { type: "request_stage"; data: Record<string, never> }
   | { type: "poll_launched"; data: { pollId: string; name: string; options: { label: string; value: string }[]; allowedAnswersCount: number } }

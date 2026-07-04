@@ -61,6 +61,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		authed.PUT("/live-rooms/:id/participants/:identity/role", perm(domain.PermLiveSessionsJoin), idParam, h.SetParticipantRole)
 		authed.POST("/live-rooms/:id/participants/:identity/mute", perm(domain.PermLiveSessionsJoin), idParam, h.MuteParticipant)
 		authed.POST("/live-rooms/:id/hand", perm(domain.PermLiveSessionsJoin), idParam, h.SetHand)
+		authed.PUT("/live-rooms/:id/participants/:identity/hand", perm(domain.PermLiveSessionsJoin), idParam, h.SetParticipantHand)
 		authed.POST("/live-rooms/:id/recordings", perm(domain.PermLiveSessionsManage), idParam, h.StartRecording)
 		authed.DELETE("/live-rooms/:id/recordings/:recordingId", perm(domain.PermLiveSessionsManage), idParam, recordingIDParam, h.StopRecording)
 		authed.GET("/live-rooms/:id/recordings", perm(domain.PermLiveSessionsView), idParam, h.ListRecordings)
@@ -440,6 +441,35 @@ func (h *Handler) SetHand(c *gin.Context) {
 		return
 	}
 	participant, err := h.svc.SetHand(c.Request.Context(), httpx.UUIDParam(c, "id"), dto)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, participant)
+}
+
+// SetParticipantHand lets a host lower or raise another participant's hand.
+// @Summary Set participant hand
+// @Tags LiveSessions
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "LiveRoom UUID"
+// @Param identity path string true "Participant identity"
+// @Param body body domain.SetHandDTO true "Hand data"
+// @Success 200 {object} domain.Response{data=domain.LiveParticipant}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /live-rooms/{id}/participants/{identity}/hand [put]
+func (h *Handler) SetParticipantHand(c *gin.Context) {
+	var dto domain.SetHandDTO
+	if err := httpx.Bind(c, &dto); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	participant, err := h.svc.SetParticipantHand(c.Request.Context(), httpx.UUIDParam(c, "id"), c.Param("identity"), dto)
 	if err != nil {
 		_ = c.Error(err)
 		return

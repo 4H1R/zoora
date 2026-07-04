@@ -6,11 +6,12 @@ import {
   setLogLevel,
   useCreateLayoutContext,
   useLocalParticipant,
+  useParticipants,
   useTracks,
 } from "@livekit/components-react"
 import { Track } from "livekit-client"
 import { Users } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -25,6 +26,7 @@ import {
   usePostLiveRoomsIdHand,
   usePostLiveRoomsIdLeave,
   usePostLiveRoomsIdParticipantsIdentityMute,
+  usePutLiveRoomsIdParticipantsIdentityHand,
   usePutLiveRoomsIdParticipantsIdentityRole,
 } from "@/api/live-sessions/live-sessions"
 import { postMediaPresign, getMediaIdDownloadUrl } from "@/api/media/media"
@@ -216,12 +218,55 @@ function RoomShell({
   const roleMutation = usePutLiveRoomsIdParticipantsIdentityRole()
   const muteMutation = usePostLiveRoomsIdParticipantsIdentityMute()
   const handMutation = usePostLiveRoomsIdHand()
+  const lowerHandMutation = usePutLiveRoomsIdParticipantsIdentityHand()
 
   const onToggleHand = () => handMutation.mutate({ id: liveId, data: { raised: !handRaised } })
   const onSetRole = (identity: string, r: "presenter" | "viewer") =>
     roleMutation.mutate({ id: liveId, identity, data: { role: r } })
   const onMute = (identity: string, trackSid: string) =>
     muteMutation.mutate({ id: liveId, identity, data: { track_sid: trackSid, muted: true } })
+  const onLowerHand = (identity: string) =>
+    lowerHandMutation.mutate({ id: liveId, identity, data: { raised: false } })
+
+  // Remote identities with a raised hand — drives the People badge and the
+  // host toast. Excludes self (you can't raise a hand at yourself).
+  const raisedIdentities = Object.entries(states)
+    .filter(([identity, s]) => s.handRaised && identity !== myIdentity)
+    .map(([identity]) => identity)
+  const raisedHandCount = raisedIdentities.length
+
+  // Host-only toast on each new raised hand (edge-detect false→true). Toasts are
+  // "armed" only after a short settle window: a host joining/reconnecting to a
+  // room with hands already up receives them as a burst of late-join re-announce
+  // events that trickle in just after mount — not synchronously — so a first-run
+  // baseline can't catch them. During the window we still record the baseline,
+  // so once armed only hands raised afterwards toast. The People queue covers the
+  // pre-existing ones.
+  const participants = useParticipants()
+  const prevRaisedRef = useRef<Set<string>>(new Set())
+  const toastArmedRef = useRef(false)
+  useEffect(() => {
+    if (!isHost) return
+    const id = setTimeout(() => {
+      toastArmedRef.current = true
+    }, 3000)
+    return () => {
+      toastArmedRef.current = false
+      clearTimeout(id)
+    }
+  }, [isHost])
+  useEffect(() => {
+    const raised = new Set(raisedIdentities)
+    if (isHost && toastArmedRef.current) {
+      for (const identity of raised) {
+        if (!prevRaisedRef.current.has(identity)) {
+          const p = participants.find((x) => x.identity === identity)
+          toast(t("liveRoom.people.handRaisedToast", { name: p?.name || identity }))
+        }
+      }
+    }
+    prevRaisedRef.current = raised
+  }, [raisedIdentities, isHost, participants, t])
 
   useEffect(() => {
     if (tab === "chat") setReadCount(chat.count)
@@ -268,6 +313,7 @@ function RoomShell({
             onEndRoom={onEndRoom}
             endPending={endPending}
             unread={unread}
+            raisedHandCount={raisedHandCount}
             handRaised={handRaised}
             onToggleHand={onToggleHand}
             canShareStage={canPublish(role)}
@@ -286,7 +332,10 @@ function RoomShell({
               className={cn(
                 // Solid bg, no backdrop-blur: floats over the <video> stage, and a
                 // backdrop-filter pass over a video paints it black on some GPUs.
-                "absolute end-4 top-4 z-20 flex size-9 items-center justify-center rounded-lg transition-colors",
+                "absolute end-4 z-20 flex size-9 items-center justify-center rounded-lg transition-colors",
+                // In whiteboard mode tldraw owns the top-end corner (undo/redo/…),
+                // so drop below its action row on phones; desktop has room at top.
+                stage.kind === "whiteboard" ? "top-16 sm:top-4" : "top-4",
                 railOpen
                   ? "bg-primary text-primary-foreground hover:bg-primary/90"
                   : "bg-black/70 text-zinc-200 hover:bg-black/80"
@@ -309,6 +358,7 @@ function RoomShell({
           liveId={liveId}
           onSetRole={onSetRole}
           onMute={onMute}
+          onLowerHand={onLowerHand}
           polls={polls}
           onVote={onVote}
           answerPending={answerMutation.isPending}

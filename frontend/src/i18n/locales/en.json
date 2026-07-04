@@ -2457,6 +2457,9 @@
       "mute": "Mute",
       "actions": "Actions",
       "handRaised": "Hand raised",
+      "raisedHands": "Raised hands ({{count}})",
+      "lowerHand": "Lower hand",
+      "handRaisedToast": "{{name}} raised their hand",
       "roles": {
         "host": "Host",
         "presenter": "Presenter",

@@ -2457,6 +2457,9 @@
       "mute": "بی‌صدا",
       "actions": "عملیات",
       "handRaised": "دست بالا",
+      "raisedHands": "دست‌های بالا ({{count}})",
+      "lowerHand": "پایین آوردن دست",
+      "handRaisedToast": "{{name}} دست خود را بالا برد",
       "roles": {
         "host": "میزبان",
         "presenter": "ارائه‌دهنده",

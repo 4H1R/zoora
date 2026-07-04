@@ -45,6 +45,7 @@ interface ControlBarProps {
   onEndRoom: () => void
   endPending: boolean
   unread: number
+  raisedHandCount: number
   handRaised: boolean
   onToggleHand: () => void
   canShareStage: boolean
@@ -54,7 +55,7 @@ interface ControlBarProps {
   onStartWhiteboard: () => void
 }
 
-export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, onEndRoom, endPending, unread, handRaised, onToggleHand, canShareStage, stageKind, onShareSlides, onStopStage, onStartWhiteboard }: ControlBarProps) {
+export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, onEndRoom, endPending, unread, raisedHandCount, handRaised, onToggleHand, canShareStage, stageKind, onShareSlides, onStopStage, onStartWhiteboard }: ControlBarProps) {
   const { t } = useTranslation()
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled, isScreenShareEnabled } = useLocalParticipant()
   const role = useRoomRole()
@@ -109,7 +110,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/55 to-transparent" />
       {/* Solid bg, no backdrop-blur: this bar floats over the <video> stage, and a
           backdrop-filter pass over a video makes it paint black on some GPUs. */}
-      <div className="pointer-events-auto relative flex items-center gap-1.5 rounded-2xl border border-white/10 bg-zinc-900/95 p-1.5 shadow-2xl shadow-black/50 sm:gap-2">
+      <div className="pointer-events-auto relative flex items-center gap-1.5 rounded-2xl border border-border bg-popover/95 p-1.5 shadow-2xl shadow-black/30 sm:gap-2">
 
         {/* Mic / Cam — publishers only */}
         {publisher && (
@@ -193,7 +194,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
           />
         )}
 
-        <span className="mx-0.5 h-7 w-px bg-white/10" />
+        <span className="mx-0.5 h-7 w-px bg-border" />
 
         {/* Raise hand — viewers only */}
         {!publisher && (
@@ -221,6 +222,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
           icon={Users}
           on
           active={tab === "people"}
+          badge={tab !== "people" ? raisedHandCount : 0}
           label={t("liveRoom.controls.people")}
           className="hidden sm:flex"
           onClick={() => togglePanel("people")}
@@ -244,7 +246,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
                 type="button"
                 aria-label={t("liveRoom.controls.more")}
                 title={t("liveRoom.controls.more")}
-                className="relative flex size-11 items-center justify-center rounded-xl text-zinc-200 transition-colors hover:bg-white/10 sm:hidden"
+                className="relative flex size-11 items-center justify-center rounded-xl text-foreground transition-colors hover:bg-accent sm:hidden"
               />
             }
           >
@@ -308,7 +310,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
           </SheetContent>
         </Sheet>
 
-        <span className="mx-0.5 h-7 w-px bg-white/10" />
+        <span className="mx-0.5 h-7 w-px bg-border" />
 
         {/* Leave */}
         <button
@@ -316,7 +318,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
           onClick={() => (isHost ? setLeaveOpen(true) : onLeave())}
           disabled={leavePending || endPending}
           title={t("liveRoom.leave")}
-          className="flex h-11 items-center gap-2 rounded-xl bg-red-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-red-400 disabled:opacity-60"
+          className="flex h-11 items-center gap-2 rounded-xl bg-destructive px-4 text-sm font-semibold text-white transition-colors hover:bg-destructive/90 disabled:opacity-60"
         >
           {leavePending || endPending ? <Spinner className="size-4" /> : <LogOut className="size-4 rtl:rotate-180" />}
           <span className="hidden sm:inline">{t("liveRoom.leave")}</span>
@@ -395,10 +397,10 @@ function CtrlButton({
       className={cn(
         "relative flex size-11 items-center justify-center rounded-xl transition-colors",
         danger && !on
-          ? "bg-red-500 text-white hover:bg-red-400"
+          ? "bg-destructive text-white hover:bg-destructive/90"
           : active
             ? "bg-primary text-primary-foreground hover:bg-primary/90"
-            : "text-zinc-200 hover:bg-white/10",
+            : "text-foreground hover:bg-accent",
         className,
       )}
     >

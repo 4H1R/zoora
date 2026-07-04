@@ -261,6 +261,7 @@ type LiveSessionService interface {
 	SetParticipantRole(ctx context.Context, roomID uuid.UUID, identity string, dto SetParticipantRoleDTO) (*LiveParticipant, error)
 	MuteParticipant(ctx context.Context, roomID uuid.UUID, identity string, dto MuteParticipantDTO) error
 	SetHand(ctx context.Context, roomID uuid.UUID, dto SetHandDTO) (*LiveParticipant, error)
+	SetParticipantHand(ctx context.Context, roomID uuid.UUID, identity string, dto SetHandDTO) (*LiveParticipant, error)
 
 	// GetWhiteboard returns the current snapshot for the room. Any participant
 	// (viewer or above) may read it. Returns an empty board if none saved yet.

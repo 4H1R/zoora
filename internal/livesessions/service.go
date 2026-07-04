@@ -894,6 +894,16 @@ func participantMetadata(role domain.ParticipantRole) string {
 	return string(b)
 }
 
+// broadcastHand emits a `hand` room event. `raisedAt` is included only when the
+// hand is raised and a timestamp is known, so the client queue can order hands.
+func (s *service) broadcastHand(ctx context.Context, roomName, identity string, raised bool, raisedAt *time.Time) {
+	data := map[string]any{"identity": identity, "raised": raised}
+	if raised && raisedAt != nil {
+		data["raisedAt"] = raisedAt.UnixMilli()
+	}
+	s.broadcastRoomEvent(ctx, roomName, roomEventHand, data)
+}
+
 func (s *service) broadcastRoomEvent(ctx context.Context, roomName, eventType string, data map[string]any) {
 	if s.livekit == nil {
 		return
@@ -949,6 +959,16 @@ func (s *service) SetParticipantRole(ctx context.Context, roomID uuid.UUID, iden
 	}
 	target.Role = dto.Role
 
+	// A promotion answers the raised hand — clear it so the queue drops the
+	// participant (who, as a publisher, loses the raise-hand button anyway).
+	if target.HandRaisedAt != nil {
+		if err := s.participants.SetHandRaised(ctx, roomID, identity, false); err != nil {
+			return nil, fmt.Errorf("livesessions.service.SetParticipantRole lower hand: %w", err)
+		}
+		target.HandRaisedAt = nil
+		s.broadcastHand(ctx, room.LiveKitRoomName, identity, false, nil)
+	}
+
 	s.broadcastRoomEvent(ctx, room.LiveKitRoomName, roomEventRoleChanged, map[string]any{
 		"identity": identity,
 		"role":     string(dto.Role),
@@ -995,10 +1015,36 @@ func (s *service) SetHand(ctx context.Context, roomID uuid.UUID, dto domain.SetH
 		return nil, err
 	}
 
-	s.broadcastRoomEvent(ctx, room.LiveKitRoomName, roomEventHand, map[string]any{
-		"identity": identity,
-		"raised":   dto.Raised,
-	})
+	s.broadcastHand(ctx, room.LiveKitRoomName, identity, dto.Raised, participant.HandRaisedAt)
+
+	return participant, nil
+}
+
+// SetParticipantHand lets a host lower (or raise) another participant's hand.
+// Authorization mirrors role/mute: only a room manager may call it.
+func (s *service) SetParticipantHand(ctx context.Context, roomID uuid.UUID, identity string, dto domain.SetHandDTO) (*domain.LiveParticipant, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	room, _, class, err := s.loadRoomWithClass(ctx, roomID)
+	if err != nil {
+		return nil, err
+	}
+	if !s.canManageRoom(caller, class) {
+		return nil, domain.ErrForbidden
+	}
+
+	if err := s.participants.SetHandRaised(ctx, roomID, identity, dto.Raised); err != nil {
+		return nil, fmt.Errorf("livesessions.service.SetParticipantHand: %w", err)
+	}
+
+	participant, err := s.participants.GetActiveParticipant(ctx, roomID, identity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.broadcastHand(ctx, room.LiveKitRoomName, identity, dto.Raised, participant.HandRaisedAt)
 
 	return participant, nil
 }

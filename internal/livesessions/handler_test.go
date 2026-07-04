@@ -119,6 +119,11 @@ func (m *mockLiveSessionSvc) SetHand(ctx context.Context, roomID uuid.UUID, dto 
 	p, _ := a.Get(0).(*domain.LiveParticipant)
 	return p, a.Error(1)
 }
+func (m *mockLiveSessionSvc) SetParticipantHand(ctx context.Context, roomID uuid.UUID, identity string, dto domain.SetHandDTO) (*domain.LiveParticipant, error) {
+	a := m.Called(ctx, roomID, identity, dto)
+	p, _ := a.Get(0).(*domain.LiveParticipant)
+	return p, a.Error(1)
+}
 func (m *mockLiveSessionSvc) GetWhiteboard(ctx context.Context, roomID uuid.UUID) (*domain.LiveWhiteboard, error) {
 	a := m.Called(ctx, roomID)
 	wb, _ := a.Get(0).(*domain.LiveWhiteboard)
@@ -258,6 +263,33 @@ func TestHandler_StartRecording_Success(t *testing.T) {
 
 	w := doReq(t, r, "POST", "/api/v1/live-rooms/"+id.String()+"/recordings", nil)
 	assert.Equal(t, http.StatusCreated, w.Code)
+}
+
+func TestHandler_SetParticipantHand_Success(t *testing.T) {
+	r, svc := newLiveRouter(t)
+	id := uuid.New()
+	svc.On("SetParticipantHand", mock.Anything, id, "user-9", domain.SetHandDTO{Raised: false}).
+		Return(&domain.LiveParticipant{Identity: "user-9"}, nil)
+
+	w := doReq(t, r, "PUT",
+		"/api/v1/live-rooms/"+id.String()+"/participants/user-9/hand",
+		map[string]any{"raised": false})
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	svc.AssertExpectations(t)
+}
+
+func TestHandler_SetParticipantHand_Forbidden_403(t *testing.T) {
+	r, svc := newLiveRouter(t)
+	id := uuid.New()
+	svc.On("SetParticipantHand", mock.Anything, id, "user-9", domain.SetHandDTO{Raised: false}).
+		Return((*domain.LiveParticipant)(nil), domain.ErrForbidden)
+
+	w := doReq(t, r, "PUT",
+		"/api/v1/live-rooms/"+id.String()+"/participants/user-9/hand",
+		map[string]any{"raised": false})
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
 }
 
 func TestAdminHandler_List_Success(t *testing.T) {

@@ -164,10 +164,90 @@
   background: transparent;
 }
 
-/* Whiteboard: lift tldraw's bottom toolbar/zoom UI above our floating ControlBar
-   (both anchor bottom-center, so the tldraw tools would otherwise sit on top of ours) */
+/* --- Whiteboard (tldraw) theming ---------------------------------------------
+   tldraw ships its own light/dark palette + blue accent + system font, so out of
+   the box it reads as a foreign app floating above our room. We keep tldraw's
+   own light/dark switch (driven from the app theme in whiteboard-stage.tsx) but
+   retint the accent to our brand green, route text to our font, and round the
+   panels/canvas to our radius so the tools feel native. Scoped to
+   .zoora-whiteboard so nothing leaks. */
+.zoora-whiteboard .tl-container {
+  /* Brand green replaces tldraw's blue for selection, focus rings and the
+     active-tool highlight — the single most obvious "this isn't ours" signal.
+     The brand token itself flips light/dark, so the accent adapts with the app. */
+  --tl-color-primary: var(--brand);
+  --tl-color-selected: var(--brand);
+  --tl-color-focus: var(--brand);
+  --tl-color-selection-stroke: var(--brand);
+
+  /* Retint every panel (toolbar, style menu, zoom, page menu) through tldraw's
+     own surface vars instead of chasing class names — so all panels adopt our
+     popover surface, border and divider and read as one family with the room. */
+  --tl-color-panel: var(--popover);
+  --tl-color-panel-contrast: var(--border);
+  --tl-color-low: var(--muted);
+  --tl-color-divider: var(--border);
+  --tl-color-low-border: var(--border);
+
+  /* Match our typography and round panels to echo the ControlBar / cards. */
+  --tl-font-sans: var(--font-sans);
+  --tl-radius-3: 0.6rem;
+  --tl-radius-4: 0.85rem;
+}
+
+/* Make tldraw's floating tool pill match our ControlBar exactly (same border,
+   radius and shadow) so on the canvas it reads as one of our own chrome bars
+   rather than a foreign panel. --tl-color-panel already maps to our popover. */
+.zoora-whiteboard .tlui-main-toolbar__tools,
+.zoora-whiteboard .tlui-style-panel__wrapper,
+.zoora-whiteboard .tlui-navigation-panel .tlui-button__panel,
+.zoora-whiteboard .tlui-menu-zone {
+  border: 1px solid var(--border);
+}
+.zoora-whiteboard .tlui-main-toolbar__tools {
+  border-radius: 1rem; /* echo ControlBar's rounded-2xl pill */
+  box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.35);
+}
+
+/* Lift tldraw's bottom toolbar/zoom UI above our floating ControlBar (both anchor
+   bottom-center, so the tldraw tools would otherwise sit on top of ours). Add the
+   safe-area inset so it also clears the home indicator on notched phones. */
 .zoora-whiteboard .tlui-layout__bottom {
-  padding-bottom: 5.5rem;
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* --- Phone: roomier, easier-to-hit tools -------------------------------------
+   tldraw's mobile defaults cram the horizontal toolbar into 43px buttons with
+   tiny 16px icons — it reads as a squished strip (see the reported screenshot).
+   Give the tools real touch targets and legible icons, and keep tldraw's top
+   panels clear of the room header / rail toggle with a small safe-area inset. */
+@media (max-width: 640px) {
+  .zoora-whiteboard .tlui-layout__mobile .tlui-main-toolbar--horizontal .tlui-button__tool {
+    width: 46px;
+    height: 48px;
+  }
+  .zoora-whiteboard
+    .tlui-layout__mobile
+    .tlui-main-toolbar--horizontal
+    .tlui-button__tool
+    > .tlui-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* A touch more air between the tool groups so the pill breathes. */
+  .zoora-whiteboard .tlui-layout__mobile .tlui-main-toolbar__inner {
+    gap: var(--tl-space-2);
+  }
+
+  /* Nudge the top zone (style panel + undo/redo actions) in from the edges so it
+     doesn't hug the corners under the floating header or collide with the
+     top-end rail toggle, and honour the notch. */
+  .zoora-whiteboard .tlui-layout__top {
+    padding: 0.4rem;
+    padding-top: calc(0.4rem + env(safe-area-inset-top, 0px));
+    gap: 0.4rem;
+  }
 }
 
 /* Phone landscape: float the header over the stage so content goes fullscreen */
