@@ -1,5 +1,5 @@
 import { useLocalParticipant } from "@livekit/components-react"
-import { useRef } from "react"
+import { useRef, useState } from "react"
 import {
   BarChart3,
   Hand,
@@ -19,6 +19,16 @@ import {
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Spinner } from "@/components/ui/spinner"
 import { cn } from "@/lib/utils"
@@ -32,6 +42,8 @@ interface ControlBarProps {
   closePanel: () => void
   onLeave: () => void
   leavePending: boolean
+  onEndRoom: () => void
+  endPending: boolean
   unread: number
   handRaised: boolean
   onToggleHand: () => void
@@ -42,12 +54,14 @@ interface ControlBarProps {
   onStartWhiteboard: () => void
 }
 
-export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, unread, handRaised, onToggleHand, canShareStage, stageKind, onShareSlides, onStopStage, onStartWhiteboard }: ControlBarProps) {
+export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, onEndRoom, endPending, unread, handRaised, onToggleHand, canShareStage, stageKind, onShareSlides, onStopStage, onStartWhiteboard }: ControlBarProps) {
   const { t } = useTranslation()
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled, isScreenShareEnabled } = useLocalParticipant()
   const role = useRoomRole()
+  const isHost = role === "host"
   const publisher = localParticipant.permissions?.canPublish ?? canPublish(role)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [leaveOpen, setLeaveOpen] = useState(false)
 
   const handleSlidesClick = () => {
     if (stageKind === "slides") {
@@ -299,15 +313,53 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, un
         {/* Leave */}
         <button
           type="button"
-          onClick={onLeave}
-          disabled={leavePending}
+          onClick={() => (isHost ? setLeaveOpen(true) : onLeave())}
+          disabled={leavePending || endPending}
           title={t("liveRoom.leave")}
           className="flex h-11 items-center gap-2 rounded-xl bg-red-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-red-400 disabled:opacity-60"
         >
-          {leavePending ? <Spinner className="size-4" /> : <LogOut className="size-4 rtl:rotate-180" />}
+          {leavePending || endPending ? <Spinner className="size-4" /> : <LogOut className="size-4 rtl:rotate-180" />}
           <span className="hidden sm:inline">{t("liveRoom.leave")}</span>
         </button>
       </div>
+
+      {isHost && (
+        <AlertDialog open={leaveOpen} onOpenChange={setLeaveOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("liveRoom.leaveDialog.title")}</AlertDialogTitle>
+              <AlertDialogDescription>{t("liveRoom.leaveDialog.description")}</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={leavePending || endPending}>
+                {t("common.cancel")}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                variant="outline"
+                disabled={leavePending || endPending}
+                onClick={() => {
+                  setLeaveOpen(false)
+                  onLeave()
+                }}
+              >
+                {leavePending ? <Spinner className="size-4" /> : null}
+                {t("liveRoom.leaveDialog.leaveOnly")}
+              </AlertDialogAction>
+              <AlertDialogAction
+                variant="destructive"
+                disabled={leavePending || endPending}
+                onClick={() => {
+                  setLeaveOpen(false)
+                  onEndRoom()
+                }}
+              >
+                {endPending ? <Spinner className="size-4" /> : null}
+                {t("liveRoom.leaveDialog.endRoom")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   )
 }

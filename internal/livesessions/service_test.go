@@ -48,6 +48,13 @@ func (m *mockRoomRepo) FindActiveRoomsWithStaleHost(ctx context.Context, d time.
 	rooms, _ := a.Get(0).([]domain.LiveRoom)
 	return rooms, a.Error(1)
 }
+func (m *mockRoomRepo) FindByLiveKitRoomName(ctx context.Context, name string) (*domain.LiveRoom, error) {
+	a := m.Called(ctx, name)
+	if a.Get(0) == nil {
+		return nil, a.Error(1)
+	}
+	return a.Get(0).(*domain.LiveRoom), a.Error(1)
+}
 func (m *mockRoomRepo) AdminList(ctx context.Context, q domain.AdminListLiveRoomsQuery) ([]domain.LiveRoom, int64, error) {
 	a := m.Called(ctx, q)
 	rooms, _ := a.Get(0).([]domain.LiveRoom)
@@ -374,6 +381,7 @@ func newTestService(t *testing.T) (
 		chatSvc, noopTx{},
 		nil, // livekit client
 		nil, // queue client
+		15*time.Minute,
 		slog.Default(),
 	)
 	return svc, roomRepo, partRepo, recRepo, wbRepo, sessRepo, classRepo, memberRepo, chatSvc

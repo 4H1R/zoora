@@ -2391,6 +2391,12 @@
     "joinError": "Failed to join session. Please try again.",
     "sessionEnded": "Session Ended",
     "leave": "Leave",
+    "leaveDialog": {
+      "title": "Leave session?",
+      "description": "Leave on your own, or close the room to end the session for everyone.",
+      "leaveOnly": "Leave",
+      "endRoom": "Leave & close room"
+    },
     "maxParticipants": "Max {{count}} participants",
     "backToDashboard": "Back to dashboard",
     "classStarted": "Class has started",

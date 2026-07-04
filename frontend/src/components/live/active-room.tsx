@@ -3,6 +3,7 @@ import {
   LayoutContextProvider,
   LiveKitRoom,
   RoomAudioRenderer,
+  setLogLevel,
   useCreateLayoutContext,
   useLocalParticipant,
   useTracks,
@@ -16,7 +17,11 @@ import { toast } from "sonner"
 import "@livekit/components-styles"
 import "./livekit-overrides.css"
 
+// Silence LiveKit's verbose signal/track console logs (info/debug); keep warnings + errors.
+setLogLevel("warn")
+
 import {
+  usePostLiveRoomsIdEnd,
   usePostLiveRoomsIdHand,
   usePostLiveRoomsIdLeave,
   usePostLiveRoomsIdParticipantsIdentityMute,
@@ -63,9 +68,14 @@ export function ActiveRoom({
   onDisconnect,
 }: ActiveRoomProps) {
   const leaveMutation = usePostLiveRoomsIdLeave()
+  const endMutation = usePostLiveRoomsIdEnd()
 
   const handleLeave = () => {
     leaveMutation.mutate({ id: liveId }, { onSettled: onDisconnect })
+  }
+
+  const handleEndRoom = () => {
+    endMutation.mutate({ id: liveId }, { onSettled: onDisconnect })
   }
 
   return (
@@ -85,6 +95,8 @@ export function ActiveRoom({
           className={className}
           onLeave={handleLeave}
           leavePending={leaveMutation.isPending}
+          onEndRoom={handleEndRoom}
+          endPending={endMutation.isPending}
           liveId={liveId}
           chatId={chatId}
         />
@@ -100,6 +112,8 @@ function RoomShell({
   className,
   onLeave,
   leavePending,
+  onEndRoom,
+  endPending,
   liveId,
   chatId,
 }: {
@@ -107,6 +121,8 @@ function RoomShell({
   className?: string
   onLeave: () => void
   leavePending: boolean
+  onEndRoom: () => void
+  endPending: boolean
   liveId: string
   chatId?: string
 }) {
@@ -249,6 +265,8 @@ function RoomShell({
             closePanel={() => setTab(null)}
             onLeave={onLeave}
             leavePending={leavePending}
+            onEndRoom={onEndRoom}
+            endPending={endPending}
             unread={unread}
             handRaised={handRaised}
             onToggleHand={onToggleHand}

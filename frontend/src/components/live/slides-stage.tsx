@@ -22,26 +22,44 @@ interface SlidesStageProps {
 
 export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPageChange }: SlidesStageProps) {
   const { t } = useTranslation()
-  const [containerWidth, setContainerWidth] = useState<number | undefined>(undefined)
+  const [container, setContainer] = useState<{ w: number; h: number } | undefined>(undefined)
+  const [aspect, setAspect] = useState<number | undefined>(undefined) // page width / height
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
-  // Measure container width when the div mounts so the PDF page fills it.
+  // Measure container width AND height so we can fit the whole page on screen.
+  // Keep the SAME state reference when dimensions are unchanged, otherwise the
+  // ref-callback reattaching every render would setState → re-render forever.
+  const applySize = (w: number, h: number) =>
+    setContainer((prev) => (prev && prev.w === w && prev.h === h ? prev : { w, h }))
+
   const measureRef = (el: HTMLDivElement | null) => {
     if (!el) return
     const observer = new ResizeObserver(([entry]) => {
-      setContainerWidth(entry.contentRect.width)
+      applySize(entry.contentRect.width, entry.contentRect.height)
     })
     observer.observe(el)
-    setContainerWidth(el.clientWidth)
+    applySize(el.clientWidth, el.clientHeight)
     return () => observer.disconnect()
   }
+
+  // Fit the page inside the container on BOTH axes (contain), preserving aspect
+  // ratio, so the entire slide is visible without scrolling. Falls back to
+  // full container width until the page's own aspect ratio is known.
+  const INSET = 16 // px of breathing room around the page; also avoids a phantom scrollbar
+  const fitWidth = (() => {
+    if (!container) return undefined
+    if (!aspect) return container.w
+    return Math.max(1, Math.min(container.w - INSET, (container.h - INSET) * aspect))
+  })()
 
   const clamp = (n: number) => Math.max(1, Math.min(n, numPages || 1))
 
   return (
     <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-2xl bg-black">
-      {/* PDF viewer */}
+      {/* PDF viewer — the page is sized to fit within both the container width
+          and height (contain), so the whole slide is visible without scrolling.
+          overflow-auto stays as a safety net for extreme aspect ratios. */}
       <div
         ref={measureRef}
         className="flex min-h-0 w-full flex-1 items-center justify-center overflow-auto"
@@ -63,8 +81,9 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
           >
             <Page
               pageNumber={page}
-              width={containerWidth}
+              width={fitWidth}
               loading={null}
+              onLoadSuccess={(p) => setAspect(p.originalWidth / p.originalHeight)}
             />
           </Document>
         )}

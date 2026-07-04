@@ -5,6 +5,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/hibiken/asynq"
+
 	"github.com/4H1R/zoora/internal/attendance"
 	"github.com/4H1R/zoora/internal/chat"
 	"github.com/4H1R/zoora/internal/classes"
@@ -70,9 +72,10 @@ func main() {
 		liveRoomRepo, liveParticipantRepo, liveRecordingRepo, liveWhiteboardRepo,
 		classSessionRepo, classRepo, classMemberRepo,
 		chatSvc, transactor,
-		livekitClient, queueClient, log,
+		livekitClient, queueClient, cfg.LiveRoomHostGracePeriod, log,
 	)
 	queueServer.HandleFunc(domain.TypeLiveSessionAutoClose, livesessions.NewAutoCloseHandler(liveSessionService))
+	queueServer.HandleFunc(domain.TypeLiveSessionCloseIfNoHost, livesessions.NewCloseIfNoHostHandler(liveSessionService))
 
 	attendanceRepo := attendance.NewRepository(db)
 	offlineRoomRepo := offlines.NewRoomRepository(db)
@@ -86,6 +89,27 @@ func main() {
 		orgSettingsService, authzResolver, log,
 	)
 	queueServer.HandleFunc(domain.TypeAttendanceAutoMark, attendance.NewAutoMarkHandler(attendanceService))
+
+	// Periodic safety net for missed LiveKit webhooks: re-scan for active rooms
+	// whose host went stale and close the ones LiveKit confirms are host-less.
+	// The event-driven webhook path is primary; this catches dropped events.
+	redisOpt, err := asynq.ParseRedisURI(cfg.RedisURL)
+	if err != nil {
+		log.Error("failed to parse redis URI for scheduler", "error", err)
+		os.Exit(1)
+	}
+	scheduler := asynq.NewScheduler(redisOpt, nil)
+	if _, err := scheduler.Register("@every 5m", asynq.NewTask(domain.TypeLiveSessionAutoClose, nil)); err != nil {
+		log.Error("failed to register auto-close schedule", "error", err)
+		os.Exit(1)
+	}
+	go func() {
+		log.Info("starting asynq scheduler")
+		if err := scheduler.Run(); err != nil {
+			log.Error("scheduler error", "error", err)
+			os.Exit(1)
+		}
+	}()
 
 	go func() {
 		log.Info("starting worker server")
@@ -101,6 +125,7 @@ func main() {
 
 	log.Info("shutting down worker...")
 
+	scheduler.Shutdown()
 	queueServer.Shutdown()
 
 	sqlDB, _ := db.DB()

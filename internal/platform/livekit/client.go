@@ -4,22 +4,25 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"time"
 
 	"github.com/livekit/protocol/auth"
 	"github.com/livekit/protocol/livekit"
+	"github.com/livekit/protocol/webhook"
 	lksdk "github.com/livekit/server-sdk-go/v2"
 
 	"github.com/4H1R/zoora/internal/config"
 )
 
 type Client struct {
-	roomClient *lksdk.RoomServiceClient
-	host       string
-	publicURL  string
-	apiKey     string
-	apiSecret  string
-	logger     *slog.Logger
+	roomClient      *lksdk.RoomServiceClient
+	host            string
+	publicURL       string
+	apiKey          string
+	apiSecret       string
+	webhookProvider auth.KeyProvider
+	logger          *slog.Logger
 }
 
 func NewClient(cfg *config.Config, logger *slog.Logger) *Client {
@@ -35,13 +38,25 @@ func NewClient(cfg *config.Config, logger *slog.Logger) *Client {
 	}
 
 	return &Client{
-		roomClient: roomClient,
-		host:       cfg.LiveKitHost,
-		publicURL:  publicURL,
-		apiKey:     cfg.LiveKitAPIKey,
-		apiSecret:  cfg.LiveKitSecret,
-		logger:     logger,
+		roomClient:      roomClient,
+		host:            cfg.LiveKitHost,
+		publicURL:       publicURL,
+		apiKey:          cfg.LiveKitAPIKey,
+		apiSecret:       cfg.LiveKitSecret,
+		webhookProvider: auth.NewSimpleKeyProvider(cfg.LiveKitAPIKey, cfg.LiveKitSecret),
+		logger:          logger,
 	}
+}
+
+// ParseWebhook verifies a LiveKit webhook request's signature (signed with the
+// same API key/secret pair) and returns the decoded event. A non-nil error
+// means the request is unauthenticated or malformed and must be rejected.
+func (c *Client) ParseWebhook(r *http.Request) (*livekit.WebhookEvent, error) {
+	event, err := webhook.ReceiveWebhookEvent(r, c.webhookProvider)
+	if err != nil {
+		return nil, fmt.Errorf("verifying LiveKit webhook: %w", err)
+	}
+	return event, nil
 }
 
 func (c *Client) CreateRoom(ctx context.Context, roomName string, maxParticipants uint32) (*livekit.Room, error) {

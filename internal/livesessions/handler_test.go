@@ -100,6 +100,12 @@ func (m *mockLiveSessionSvc) AdminHardDelete(ctx context.Context, id uuid.UUID) 
 func (m *mockLiveSessionSvc) AutoCloseStaleRooms(ctx context.Context) error {
 	return m.Called(ctx).Error(0)
 }
+func (m *mockLiveSessionSvc) OnLiveKitEvent(ctx context.Context, eventType, livekitRoomName string) error {
+	return m.Called(ctx, eventType, livekitRoomName).Error(0)
+}
+func (m *mockLiveSessionSvc) CloseRoomIfNoHost(ctx context.Context, roomID uuid.UUID) error {
+	return m.Called(ctx, roomID).Error(0)
+}
 func (m *mockLiveSessionSvc) SetParticipantRole(ctx context.Context, roomID uuid.UUID, identity string, dto domain.SetParticipantRoleDTO) (*domain.LiveParticipant, error) {
 	a := m.Called(ctx, roomID, identity, dto)
 	p, _ := a.Get(0).(*domain.LiveParticipant)
