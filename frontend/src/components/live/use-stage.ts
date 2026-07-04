@@ -1,3 +1,5 @@
+import { useRoomContext } from "@livekit/components-react"
+import { RoomEvent } from "livekit-client"
 import { useEffect, useRef, useState } from "react"
 
 import { decodeRoomEvent, encodeRoomEvent } from "./room-events"
@@ -14,9 +16,10 @@ export interface StageContent {
 // channel; all clients apply incoming stage events. Late joiners send
 // request_stage once after mount so the host can re-broadcast current state.
 export function useStage(isHost: boolean) {
+  const room = useRoomContext()
   const [stage, setStageLocal] = useState<StageContent>({ kind: "none" })
   const stageRef = useRef<StageContent>({ kind: "none" })
-  const requestedRef = useRef(false)
+  const receivedRef = useRef(false)
 
   const { send } = useRoomChannel(undefined, (msg) => {
     const event = decodeRoomEvent(msg.payload)
@@ -24,6 +27,7 @@ export function useStage(isHost: boolean) {
 
     if (event.type === "stage") {
       const next = event.data as StageContent
+      receivedRef.current = true
       stageRef.current = next
       setStageLocal(next)
     } else if (event.type === "request_stage" && isHost) {
@@ -32,15 +36,34 @@ export function useStage(isHost: boolean) {
     }
   })
 
-  // Non-host: ask the host for current stage once after mount (short delay so
-  // the data channel is ready). Guard with a ref so it fires exactly once.
+  // Host: whenever a participant connects, re-broadcast the current stage so
+  // late joiners get it without depending on their request timing. This is the
+  // reliable path — the joiner's request below is a fallback.
   useEffect(() => {
-    if (isHost || requestedRef.current) return
-    requestedRef.current = true
-    const timer = setTimeout(() => {
+    if (!isHost || !room) return
+    const onConnected = () => {
+      send(encodeRoomEvent({ type: "stage", data: stageRef.current }), { reliable: true })
+    }
+    room.on(RoomEvent.ParticipantConnected, onConnected)
+    return () => {
+      room.off(RoomEvent.ParticipantConnected, onConnected)
+    }
+  }, [isHost, room, send])
+
+  // Non-host: ask the host for the current stage after mount, retrying until a
+  // stage event arrives (the data channel may not be ready on the first try).
+  useEffect(() => {
+    if (isHost) return
+    let attempts = 0
+    const interval = setInterval(() => {
+      if (receivedRef.current || attempts >= 6) {
+        clearInterval(interval)
+        return
+      }
+      attempts += 1
       send(encodeRoomEvent({ type: "request_stage", data: {} }), { reliable: true })
     }, 800)
-    return () => clearTimeout(timer)
+    return () => clearInterval(interval)
   }, [isHost, send])
 
   // Host-only mutator: update local state AND broadcast to all participants.

@@ -104,10 +104,17 @@
 }
 
 /* --- Camera-off placeholder: Discord-style avatar void --- */
+/* Style ONLY the appearance here. Do NOT force `opacity: 1`: LiveKit keeps the
+   placeholder at opacity:0 and reveals it only via
+   `.lk-participant-tile[data-video-muted='true'][data-source='camera']`. Forcing
+   opacity:1 kept the (opaque) avatar painted OVER the live camera <video>, so
+   camera tiles rendered black/avatar even while frames decoded — the exact bug
+   we fixed for screenshare (screenshare escaped it by rendering an explicit
+   <VideoTrack> child, which skips the placeholder entirely). Let LiveKit toggle
+   visibility; we only theme it. */
 .zoora-live .lk-participant-placeholder {
   background: radial-gradient(120% 120% at 50% 35%, var(--muted) 0%, var(--card) 100%);
   color: color-mix(in oklab, var(--muted-foreground) 55%, transparent);
-  opacity: 1;
 }
 .zoora-live .lk-participant-placeholder svg {
   width: 30%;
