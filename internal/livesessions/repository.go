@@ -57,13 +57,42 @@ func (r *roomRepository) ListByClassSession(ctx context.Context, sessionID uuid.
 	return rooms, nil
 }
 
-func (r *roomRepository) Update(ctx context.Context, room *domain.LiveRoom) error {
-	result := database.DB(ctx, r.db).Save(room)
+// Transition persists status + lifecycle timestamps guarded by the expected
+// current status, so concurrent transitions (heartbeat vs webhook vs sweep)
+// can never clobber each other or resurrect a finished room.
+func (r *roomRepository) Transition(ctx context.Context, room *domain.LiveRoom, from domain.LiveRoomStatus) error {
+	result := r.baseQuery(ctx).
+		Where("id = ? AND status = ?", room.ID, from).
+		Select("status", "actual_start_time", "actual_end_time", "host_last_seen_at").
+		Updates(room)
 	if result.Error != nil {
-		if database.IsUniqueViolation(result.Error) {
-			return domain.ErrConflict
-		}
-		return fmt.Errorf("livesessions.roomRepository.Update: %w", result.Error)
+		return fmt.Errorf("livesessions.roomRepository.Transition: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return domain.ErrConflict
+	}
+	return nil
+}
+
+// TouchHostLastSeen bumps host_last_seen_at only while the room is active; a
+// stale heartbeat that races a close is a silent no-op.
+func (r *roomRepository) TouchHostLastSeen(ctx context.Context, roomID uuid.UUID, seenAt time.Time) error {
+	err := r.baseQuery(ctx).
+		Where("id = ? AND status = ?", roomID, domain.LiveRoomStatusActive).
+		Update("host_last_seen_at", seenAt).Error
+	if err != nil {
+		return fmt.Errorf("livesessions.roomRepository.TouchHostLastSeen: %w", err)
+	}
+	return nil
+}
+
+func (r *roomRepository) UpdateConfig(ctx context.Context, roomID uuid.UUID, cfg domain.LiveRoomConfig) error {
+	result := r.baseQuery(ctx).
+		Where("id = ?", roomID).
+		Select("config").
+		Updates(&domain.LiveRoom{Config: cfg})
+	if result.Error != nil {
+		return fmt.Errorf("livesessions.roomRepository.UpdateConfig: %w", result.Error)
 	}
 	if result.RowsAffected == 0 {
 		return domain.ErrNotFound
@@ -345,6 +374,22 @@ func (r *participantRepository) ListAllByRoom(ctx context.Context, roomID uuid.U
 	return participants, nil
 }
 
+func (r *participantRepository) MarkLeftByIdentity(ctx context.Context, roomID uuid.UUID, identity string, leftAt time.Time) error {
+	result := database.DB(ctx, r.db).Model(&domain.LiveParticipant{}).
+		Where("live_room_id = ? AND identity = ? AND left_at IS NULL", roomID, identity).
+		Updates(map[string]any{
+			"left_at":                leftAt,
+			"total_duration_seconds": gorm.Expr("EXTRACT(EPOCH FROM ? - joined_at)::int", leftAt),
+		})
+	if result.Error != nil {
+		return fmt.Errorf("livesessions.participantRepository.MarkLeftByIdentity: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return domain.ErrParticipantNotFound
+	}
+	return nil
+}
+
 func (r *participantRepository) MarkAllLeft(ctx context.Context, roomID uuid.UUID, leftAt time.Time) error {
 	result := database.DB(ctx, r.db).Model(&domain.LiveParticipant{}).
 		Where("live_room_id = ? AND left_at IS NULL", roomID).
@@ -395,6 +440,20 @@ func (r *recordingRepository) FindActiveByRoom(ctx context.Context, roomID uuid.
 			return nil, domain.ErrNotFound
 		}
 		return nil, fmt.Errorf("livesessions.recordingRepository.FindActiveByRoom: %w", err)
+	}
+	return &rec, nil
+}
+
+func (r *recordingRepository) FindByEgressID(ctx context.Context, egressID string) (*domain.LiveRecording, error) {
+	var rec domain.LiveRecording
+	err := database.DB(ctx, r.db).Model(&domain.LiveRecording{}).
+		Where("egress_id = ?", egressID).
+		First(&rec).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("livesessions.recordingRepository.FindByEgressID: %w", err)
 	}
 	return &rec, nil
 }

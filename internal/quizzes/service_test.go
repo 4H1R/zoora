@@ -277,24 +277,24 @@ func studentCtx(userID uuid.UUID) context.Context {
 }
 
 type testDeps struct {
-	quizRepo    *mQuizRepo
-	ruleRepo    *mRuleRepo
-	roomRepo    *mRoomRepo
-	subRepo     *mSubRepo
+	quizRepo     *mQuizRepo
+	ruleRepo     *mRuleRepo
+	roomRepo     *mRoomRepo
+	subRepo      *mSubRepo
 	questionRepo *mQRepo
-	classRepo   *mClassRepo
-	memberRepo  *mMemberRepo
+	classRepo    *mClassRepo
+	memberRepo   *mMemberRepo
 }
 
 func newDeps() testDeps {
 	return testDeps{
-		quizRepo:    &mQuizRepo{},
-		ruleRepo:    &mRuleRepo{},
-		roomRepo:    &mRoomRepo{},
-		subRepo:     &mSubRepo{},
+		quizRepo:     &mQuizRepo{},
+		ruleRepo:     &mRuleRepo{},
+		roomRepo:     &mRoomRepo{},
+		subRepo:      &mSubRepo{},
 		questionRepo: &mQRepo{},
-		classRepo:   &mClassRepo{},
-		memberRepo:  &mMemberRepo{},
+		classRepo:    &mClassRepo{},
+		memberRepo:   &mMemberRepo{},
 	}
 }
 
@@ -364,6 +364,8 @@ func TestQuizService_StartSubmission_Success(t *testing.T) {
 		Return(&domain.QuizRoom{ID: roomID, QuizID: quizID, StartedAt: &now}, nil)
 	d.subRepo.On("FindByQuizAndUser", ctx, quizID, studentID).
 		Return((*domain.QuizSubmission)(nil), domain.ErrNotFound)
+	d.ruleRepo.On("ListByQuiz", ctx, quizID, mock.Anything).
+		Return([]domain.QuizRule{}, int64(0), nil)
 	d.subRepo.On("Create", ctx, mock.AnythingOfType("*domain.QuizSubmission")).Return(nil)
 
 	svc := d.service()
@@ -371,6 +373,7 @@ func TestQuizService_StartSubmission_Success(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, domain.SubmissionStatusInProgress, sub.Status)
 	assert.Equal(t, studentID, sub.UserID)
+	assert.Equal(t, roomID, *sub.QuizRoomID)
 }
 
 func TestQuizService_StartSubmission_NotEnrolled_Forbidden(t *testing.T) {
@@ -470,6 +473,9 @@ func TestQuizService_SubmitQuiz_AutoGrading(t *testing.T) {
 		UserID:    studentID,
 		Status:    domain.SubmissionStatusInProgress,
 		StartedAt: startedAt,
+		QuestionSet: []domain.SubmissionQuestion{
+			{QuestionID: q1ID}, {QuestionID: q2ID}, {QuestionID: q3ID},
+		},
 	}
 
 	d.subRepo.On("FindByID", ctx, subID).Return(sub, nil)
@@ -594,12 +600,17 @@ func TestQuizService_GradeSubmission_Success(t *testing.T) {
 
 func TestQuizService_GradeSubmission_NotSubmitted_ValidationError(t *testing.T) {
 	teacherID := uuid.New()
+	quizID := uuid.New()
 	subID := uuid.New()
 	ctx := teacherCtx(teacherID)
 	d := newDeps()
 
+	// In-progress and still within the deadline → finalizeIfExpired is a no-op,
+	// so grading a not-yet-submitted attempt is a validation error.
 	d.subRepo.On("FindByID", ctx, subID).
-		Return(&domain.QuizSubmission{ID: subID, Status: domain.SubmissionStatusInProgress}, nil)
+		Return(&domain.QuizSubmission{ID: subID, QuizID: quizID, Status: domain.SubmissionStatusInProgress, StartedAt: time.Now()}, nil)
+	d.quizRepo.On("FindByID", ctx, quizID).
+		Return(&domain.Quiz{ID: quizID, DurationMinutes: 60}, nil)
 
 	svc := d.service()
 	_, err := svc.GradeSubmission(ctx, subID, domain.GradeSubmissionDTO{
@@ -639,7 +650,7 @@ func TestQuizService_SubmitQuiz_MultipleChoiceScoring(t *testing.T) {
 
 	startedAt := time.Now().Add(-5 * time.Minute)
 	d.subRepo.On("FindByID", ctx, subID).
-		Return(&domain.QuizSubmission{ID: subID, QuizID: quizID, UserID: studentID, Status: domain.SubmissionStatusInProgress, StartedAt: startedAt}, nil)
+		Return(&domain.QuizSubmission{ID: subID, QuizID: quizID, UserID: studentID, Status: domain.SubmissionStatusInProgress, StartedAt: startedAt, QuestionSet: []domain.SubmissionQuestion{{QuestionID: qID}}}, nil)
 	d.quizRepo.On("FindByID", ctx, quizID).
 		Return(&domain.Quiz{ID: quizID, DurationMinutes: 60}, nil)
 	d.roomRepo.On("FindOpenByQuizID", ctx, quizID).
@@ -685,7 +696,7 @@ func TestQuizService_SubmitQuiz_AppliesResolvedNegativeMarking(t *testing.T) {
 
 	startedAt := time.Now().Add(-5 * time.Minute)
 	d.subRepo.On("FindByID", ctx, subID).
-		Return(&domain.QuizSubmission{ID: subID, QuizID: quizID, UserID: studentID, Status: domain.SubmissionStatusInProgress, StartedAt: startedAt}, nil)
+		Return(&domain.QuizSubmission{ID: subID, QuizID: quizID, UserID: studentID, Status: domain.SubmissionStatusInProgress, StartedAt: startedAt, QuestionSet: []domain.SubmissionQuestion{{QuestionID: qID}}}, nil)
 	d.quizRepo.On("FindByID", ctx, quizID).
 		Return(&domain.Quiz{ID: quizID, DurationMinutes: 60}, nil)
 	d.roomRepo.On("FindOpenByQuizID", ctx, quizID).
@@ -729,7 +740,8 @@ func TestQuizService_ListQuestionsForTaking_AttachesNegativeConfig(t *testing.T)
 	quizID := uuid.New()
 	classID := uuid.New()
 	qID := uuid.New()
-	ctx := studentCtx(studentID)
+	// Manager preview path (listQuestionsComposed): composes rules live.
+	ctx := teacherCtx(studentID)
 	d := newDeps()
 
 	d.quizRepo.On("FindByID", ctx, quizID).
@@ -775,7 +787,8 @@ func TestQuizService_ListQuestionsForTaking_SanitizesAnswersAndDeduplicates(t *t
 	shortQID := uuid.New()
 	randomQID := uuid.New()
 	bankID := uuid.New()
-	ctx := studentCtx(studentID)
+	// Manager preview path (listQuestionsComposed): composes + dedups rules live.
+	ctx := teacherCtx(studentID)
 	d := newDeps()
 
 	d.quizRepo.On("FindByID", ctx, quizID).
@@ -871,4 +884,267 @@ func TestQuizService_ListMine_NoCaller_Forbidden(t *testing.T) {
 	svc := d.service()
 	_, _, err := svc.ListMine(context.Background(), domain.ListParams{Page: 1, PageSize: 20})
 	assert.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+func optionIDs(opts []domain.QuestionOption) []string {
+	out := make([]string, len(opts))
+	for i, o := range opts {
+		out[i] = o.ID
+	}
+	return out
+}
+
+func TestQuizService_Create_CopiesAntiCheatToggles(t *testing.T) {
+	teacherID := uuid.New()
+	classID := uuid.New()
+	orgID := uuid.New()
+	ctx := teacherCtx(teacherID)
+	d := newDeps()
+
+	d.classRepo.On("FindByID", ctx, classID).
+		Return(&domain.Class{ID: classID, OrganizationID: orgID, UserID: teacherID}, nil)
+	d.quizRepo.On("Create", ctx, mock.AnythingOfType("*domain.Quiz")).
+		Run(func(args mock.Arguments) {
+			q := args.Get(1).(*domain.Quiz)
+			assert.True(t, q.ShuffleOptions)
+			assert.True(t, q.TrackTabSwitches)
+			assert.True(t, q.DisableCopyPaste)
+		}).Return(nil)
+
+	svc := d.service()
+	_, err := svc.Create(ctx, domain.CreateQuizDTO{
+		ClassID:          classID,
+		Title:            "Exam",
+		DurationMinutes:  30,
+		ShuffleOptions:   true,
+		TrackTabSwitches: true,
+		DisableCopyPaste: true,
+	})
+	assert.NoError(t, err)
+}
+
+func TestQuizService_StartSubmission_FreezesQuestionSetAndGPS(t *testing.T) {
+	studentID := uuid.New()
+	quizID := uuid.New()
+	classID := uuid.New()
+	roomID := uuid.New()
+	bankID := uuid.New()
+	q1 := domain.Question{ID: uuid.New(), Type: domain.QuestionTypeChoice,
+		Options: []domain.QuestionOption{{ID: "o1"}, {ID: "o2"}, {ID: "o3"}}}
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	now := time.Now()
+	lat, lng, acc := 35.7, 51.4, 12.0
+	d.quizRepo.On("FindByID", ctx, quizID).
+		Return(&domain.Quiz{ID: quizID, ClassID: classID, ShuffleOptions: true, RequireGPS: true}, nil)
+	d.memberRepo.On("Exists", ctx, classID, studentID).Return(true, nil)
+	d.roomRepo.On("FindByID", ctx, roomID).
+		Return(&domain.QuizRoom{ID: roomID, QuizID: quizID, StartedAt: &now}, nil)
+	d.subRepo.On("FindByQuizAndUser", ctx, quizID, studentID).
+		Return((*domain.QuizSubmission)(nil), domain.ErrNotFound)
+	d.ruleRepo.On("ListByQuiz", ctx, quizID, mock.Anything).
+		Return([]domain.QuizRule{{Type: domain.QuizRuleTypeRandom, BankID: &bankID, Count: 1}}, int64(1), nil)
+	d.questionRepo.On("RandomByBank", ctx, bankID, 1).Return([]domain.Question{q1}, nil)
+	d.subRepo.On("Create", ctx, mock.AnythingOfType("*domain.QuizSubmission")).
+		Run(func(args mock.Arguments) {
+			sub := args.Get(1).(*domain.QuizSubmission)
+			assert.Len(t, sub.QuestionSet, 1)
+			assert.Equal(t, q1.ID, sub.QuestionSet[0].QuestionID)
+			assert.ElementsMatch(t, []string{"o1", "o2", "o3"}, sub.QuestionSet[0].OptionIDOrder)
+			assert.Equal(t, lat, *sub.GPSLat)
+			assert.Equal(t, acc, *sub.GPSAccuracy)
+			assert.Equal(t, roomID, *sub.QuizRoomID)
+		}).Return(nil)
+
+	svc := d.service()
+	_, err := svc.StartSubmission(ctx, quizID, domain.StartQuizSubmissionDTO{
+		QuizRoomID: roomID, GPSLat: &lat, GPSLng: &lng, GPSAccuracy: &acc,
+	})
+	assert.NoError(t, err)
+}
+
+func TestQuizService_StartSubmission_RequireGPSRejectsMissingCoords(t *testing.T) {
+	studentID := uuid.New()
+	quizID := uuid.New()
+	classID := uuid.New()
+	roomID := uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	now := time.Now()
+	d.quizRepo.On("FindByID", ctx, quizID).
+		Return(&domain.Quiz{ID: quizID, ClassID: classID, RequireGPS: true}, nil)
+	d.memberRepo.On("Exists", ctx, classID, studentID).Return(true, nil)
+	d.roomRepo.On("FindByID", ctx, roomID).
+		Return(&domain.QuizRoom{ID: roomID, QuizID: quizID, StartedAt: &now}, nil)
+	d.subRepo.On("FindByQuizAndUser", ctx, quizID, studentID).
+		Return((*domain.QuizSubmission)(nil), domain.ErrNotFound)
+
+	svc := d.service()
+	_, err := svc.StartSubmission(ctx, quizID, domain.StartQuizSubmissionDTO{QuizRoomID: roomID})
+	assert.ErrorIs(t, err, domain.ErrValidation)
+	d.subRepo.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+}
+
+func TestQuizService_ListQuestionsForTaking_UsesFrozenSetAndOrder(t *testing.T) {
+	studentID := uuid.New()
+	quizID := uuid.New()
+	classID := uuid.New()
+	qid := uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	frozen := []domain.SubmissionQuestion{{QuestionID: qid, OptionIDOrder: []string{"o3", "o1", "o2"}}}
+	d.quizRepo.On("FindByID", ctx, quizID).Return(&domain.Quiz{ID: quizID, ClassID: classID, UserID: uuid.New()}, nil)
+	d.memberRepo.On("Exists", ctx, classID, studentID).Return(true, nil)
+	d.subRepo.On("FindByQuizAndUser", ctx, quizID, studentID).
+		Return(&domain.QuizSubmission{ID: uuid.New(), QuizID: quizID, UserID: studentID,
+			Status: domain.SubmissionStatusInProgress, QuestionSet: frozen}, nil)
+	d.ruleRepo.On("ListByQuiz", ctx, quizID, mock.Anything).Return([]domain.QuizRule{}, int64(0), nil)
+	d.questionRepo.On("FindByIDs", ctx, []uuid.UUID{qid}).
+		Return([]domain.Question{{ID: qid, Type: domain.QuestionTypeChoice,
+			Options: []domain.QuestionOption{{ID: "o1", Value: "A", Score: 1}, {ID: "o2", Value: "B"}, {ID: "o3", Value: "C"}}}}, nil)
+
+	svc := d.service()
+	qs, err := svc.ListQuestionsForTaking(ctx, quizID)
+	assert.NoError(t, err)
+	assert.Len(t, qs, 1)
+	assert.Equal(t, []string{"o3", "o1", "o2"}, optionIDs(qs[0].Options))
+	for _, o := range qs[0].Options {
+		assert.Zero(t, o.Score)
+	}
+}
+
+func TestQuizService_SaveAnswer_UpsertsAndKeepsInProgress(t *testing.T) {
+	studentID := uuid.New()
+	subID := uuid.New()
+	quizID := uuid.New()
+	qid := uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	existing := &domain.QuizSubmission{ID: subID, QuizID: quizID, UserID: studentID, Status: domain.SubmissionStatusInProgress,
+		StartedAt: time.Now(), QuestionSet: []domain.SubmissionQuestion{{QuestionID: qid}}, Answers: []domain.SubmissionAnswer{}}
+	d.subRepo.On("FindByID", ctx, subID).Return(existing, nil)
+	d.quizRepo.On("FindByID", ctx, quizID).Return(&domain.Quiz{ID: quizID, DurationMinutes: 60}, nil)
+	d.subRepo.On("Update", ctx, mock.AnythingOfType("*domain.QuizSubmission")).
+		Run(func(args mock.Arguments) {
+			sub := args.Get(1).(*domain.QuizSubmission)
+			assert.Equal(t, domain.SubmissionStatusInProgress, sub.Status)
+			assert.Len(t, sub.Answers, 1)
+			assert.Equal(t, []string{"o1"}, sub.Answers[0].SelectedOptionIDs)
+			assert.Zero(t, sub.Answers[0].EarnedScore)
+			assert.Equal(t, 2, sub.TabHiddenCount)
+		}).Return(nil)
+
+	svc := d.service()
+	err := svc.SaveAnswer(ctx, subID, domain.SaveAnswerDTO{
+		QuestionID: qid, SelectedOptionIDs: []string{"o1"}, SpentSeconds: 9, TabHiddenCount: 2, TabHiddenSeconds: 40,
+	})
+	assert.NoError(t, err)
+}
+
+func TestQuizService_SaveAnswer_RejectsPastDeadline(t *testing.T) {
+	studentID := uuid.New()
+	subID := uuid.New()
+	quizID := uuid.New()
+	qid := uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	sub := &domain.QuizSubmission{ID: subID, QuizID: quizID, UserID: studentID,
+		Status: domain.SubmissionStatusInProgress, StartedAt: time.Now().Add(-2 * time.Hour),
+		QuestionSet: []domain.SubmissionQuestion{{QuestionID: qid}}, Answers: []domain.SubmissionAnswer{}}
+	d.subRepo.On("FindByID", ctx, subID).Return(sub, nil)
+	d.quizRepo.On("FindByID", ctx, quizID).Return(&domain.Quiz{ID: quizID, DurationMinutes: 30}, nil)
+	d.ruleRepo.On("ListByQuiz", ctx, quizID, mock.Anything).Return([]domain.QuizRule{}, int64(0), nil)
+	d.subRepo.On("Update", ctx, mock.AnythingOfType("*domain.QuizSubmission")).Return(nil)
+
+	svc := d.service()
+	err := svc.SaveAnswer(ctx, subID, domain.SaveAnswerDTO{QuestionID: qid, SelectedOptionIDs: []string{"o1"}})
+	assert.ErrorIs(t, err, domain.ErrConflict)
+}
+
+func TestQuizService_GetSubmission_LazyFinalizesPastDeadline(t *testing.T) {
+	teacherID := uuid.New()
+	subID := uuid.New()
+	quizID := uuid.New()
+	qid := uuid.New()
+	ctx := teacherCtx(teacherID)
+	d := newDeps()
+
+	started := time.Now().Add(-2 * time.Hour)
+	sub := &domain.QuizSubmission{ID: subID, QuizID: quizID, UserID: uuid.New(), Status: domain.SubmissionStatusInProgress,
+		StartedAt: started, QuestionSet: []domain.SubmissionQuestion{{QuestionID: qid}},
+		Answers: []domain.SubmissionAnswer{{QuestionID: qid, SelectedOptionIDs: []string{"o1"}}}}
+	d.subRepo.On("FindByID", ctx, subID).Return(sub, nil)
+	d.quizRepo.On("FindByID", ctx, quizID).Return(&domain.Quiz{ID: quizID, UserID: teacherID, DurationMinutes: 30}, nil)
+	d.questionRepo.On("FindByIDs", ctx, []uuid.UUID{qid}).
+		Return([]domain.Question{{ID: qid, Type: domain.QuestionTypeChoice,
+			Options: []domain.QuestionOption{{ID: "o1", Score: 1}}}}, nil)
+	d.ruleRepo.On("ListByQuiz", ctx, quizID, mock.Anything).Return([]domain.QuizRule{}, int64(0), nil)
+	d.subRepo.On("Update", ctx, mock.AnythingOfType("*domain.QuizSubmission")).Return(nil)
+
+	svc := d.service()
+	got, err := svc.GetSubmission(ctx, subID)
+	assert.NoError(t, err)
+	assert.Equal(t, domain.SubmissionStatusSubmitted, got.Status)
+	assert.NotNil(t, got.SubmittedAt)
+	assert.Equal(t, float64(1), got.TotalScore)
+}
+
+func TestQuizService_SubmitQuiz_MergesSavedAnswersAndFiltersFrozenSet(t *testing.T) {
+	studentID := uuid.New()
+	subID := uuid.New()
+	quizID := uuid.New()
+	q1, q2, qOutside := uuid.New(), uuid.New(), uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	sub := &domain.QuizSubmission{ID: subID, QuizID: quizID, UserID: studentID,
+		Status: domain.SubmissionStatusInProgress, StartedAt: time.Now(),
+		QuestionSet: []domain.SubmissionQuestion{{QuestionID: q1}, {QuestionID: q2}},
+		Answers:     []domain.SubmissionAnswer{{QuestionID: q1, SelectedOptionIDs: []string{"o1"}}}}
+	now := time.Now()
+	d.subRepo.On("FindByID", ctx, subID).Return(sub, nil)
+	d.quizRepo.On("FindByID", ctx, quizID).Return(&domain.Quiz{ID: quizID, DurationMinutes: 30}, nil)
+	d.roomRepo.On("FindOpenByQuizID", ctx, quizID).Return(&domain.QuizRoom{ID: uuid.New(), QuizID: quizID, StartedAt: &now}, nil)
+	d.ruleRepo.On("ListByQuiz", ctx, quizID, mock.Anything).Return([]domain.QuizRule{}, int64(0), nil)
+	d.questionRepo.On("FindByIDs", ctx, mock.Anything).
+		Return([]domain.Question{
+			{ID: q1, Type: domain.QuestionTypeChoice, Options: []domain.QuestionOption{{ID: "o1", Score: 1}}},
+			{ID: q2, Type: domain.QuestionTypeChoice, Options: []domain.QuestionOption{{ID: "o2", Score: 1}}},
+		}, nil)
+	d.subRepo.On("Update", ctx, mock.AnythingOfType("*domain.QuizSubmission")).
+		Run(func(args mock.Arguments) {
+			got := args.Get(1).(*domain.QuizSubmission)
+			assert.Equal(t, domain.SubmissionStatusSubmitted, got.Status)
+			assert.Len(t, got.Answers, 2)
+			for _, a := range got.Answers {
+				assert.NotEqual(t, qOutside, a.QuestionID)
+			}
+		}).Return(nil)
+
+	svc := d.service()
+	_, err := svc.SubmitQuiz(ctx, subID, domain.SubmitQuizDTO{Answers: []domain.SubmitAnswerDTO{
+		{QuestionID: q2, SelectedOptionIDs: []string{"o2"}},
+		{QuestionID: qOutside, SelectedOptionIDs: []string{"oX"}},
+	}})
+	assert.NoError(t, err)
+}
+
+func TestQuizService_AntiCheatReport_ForbiddenForNonManager(t *testing.T) {
+	otherTeacherID := uuid.New()
+	quizID := uuid.New()
+	ctx := studentCtx(otherTeacherID)
+	d := newDeps()
+
+	d.quizRepo.On("FindByID", ctx, quizID).
+		Return(&domain.Quiz{ID: quizID, UserID: uuid.New()}, nil)
+
+	svc := d.service()
+	_, err := svc.AntiCheatReport(ctx, quizID)
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+	d.subRepo.AssertNotCalled(t, "ListByQuiz", mock.Anything, mock.Anything, mock.Anything)
 }

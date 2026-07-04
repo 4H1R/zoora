@@ -39,6 +39,9 @@ import type {
   GetQuizzesId401,
   GetQuizzesId403,
   GetQuizzesId404,
+  GetQuizzesIdAntiCheat200,
+  GetQuizzesIdAntiCheat401,
+  GetQuizzesIdAntiCheat403,
   GetQuizzesIdQuestions200,
   GetQuizzesIdQuestions401,
   GetQuizzesIdQuestions403,
@@ -80,6 +83,7 @@ import type {
   GithubCom4H1RZooraInternalDomainCreateQuizRuleDTO,
   GithubCom4H1RZooraInternalDomainGradeSubmissionDTO,
   GithubCom4H1RZooraInternalDomainResponse,
+  GithubCom4H1RZooraInternalDomainSaveAnswerDTO,
   GithubCom4H1RZooraInternalDomainStartQuizSubmissionDTO,
   GithubCom4H1RZooraInternalDomainSubmitQuizDTO,
   GithubCom4H1RZooraInternalDomainUpdateQuizDTO,
@@ -111,6 +115,9 @@ import type {
   PostQuizzesRoomsRoomIdStart401,
   PostQuizzesRoomsRoomIdStart403,
   PostQuizzesRoomsRoomIdStart404,
+  PostQuizzesSubmissionsSubmissionIdAnswers400,
+  PostQuizzesSubmissionsSubmissionIdAnswers403,
+  PostQuizzesSubmissionsSubmissionIdAnswers409,
   PostQuizzesSubmissionsSubmissionIdGrade200,
   PostQuizzesSubmissionsSubmissionIdGrade400,
   PostQuizzesSubmissionsSubmissionIdGrade401,
@@ -1313,7 +1320,107 @@ export function useGetQuizzesSubmissionsSubmissionId<TData = Awaited<ReturnType<
 
 
 
-export type postQuizzesSubmissionsSubmissionIdGradeResponse200 = {
+export type postQuizzesSubmissionsSubmissionIdAnswersResponse204 = {
+  data: void
+  status: 204
+}
+
+export type postQuizzesSubmissionsSubmissionIdAnswersResponse400 = {
+  data: PostQuizzesSubmissionsSubmissionIdAnswers400
+  status: 400
+}
+
+export type postQuizzesSubmissionsSubmissionIdAnswersResponse403 = {
+  data: PostQuizzesSubmissionsSubmissionIdAnswers403
+  status: 403
+}
+
+export type postQuizzesSubmissionsSubmissionIdAnswersResponse409 = {
+  data: PostQuizzesSubmissionsSubmissionIdAnswers409
+  status: 409
+}
+
+export type postQuizzesSubmissionsSubmissionIdAnswersResponseSuccess = (postQuizzesSubmissionsSubmissionIdAnswersResponse204) & {
+  headers: Headers;
+};
+export type postQuizzesSubmissionsSubmissionIdAnswersResponseError = (postQuizzesSubmissionsSubmissionIdAnswersResponse400 | postQuizzesSubmissionsSubmissionIdAnswersResponse403 | postQuizzesSubmissionsSubmissionIdAnswersResponse409) & {
+  headers: Headers;
+};
+
+export type postQuizzesSubmissionsSubmissionIdAnswersResponse = (postQuizzesSubmissionsSubmissionIdAnswersResponseSuccess | postQuizzesSubmissionsSubmissionIdAnswersResponseError)
+
+export const getPostQuizzesSubmissionsSubmissionIdAnswersUrl = (submissionId: string,) => {
+
+
+
+
+  return `/quizzes/submissions/${submissionId}/answers`
+}
+
+/**
+ * Upserts a single answer into an in-progress submission and records tab-visibility counters. Does not grade or finalize. Used for crash-safe autosave on each "next".
+ * @summary Save one answer (incremental)
+ */
+export const postQuizzesSubmissionsSubmissionIdAnswers = async (submissionId: string,
+    githubCom4H1RZooraInternalDomainSaveAnswerDTO: GithubCom4H1RZooraInternalDomainSaveAnswerDTO, options?: RequestInit): Promise<postQuizzesSubmissionsSubmissionIdAnswersResponse> => {
+
+  return customInstance<postQuizzesSubmissionsSubmissionIdAnswersResponse>(getPostQuizzesSubmissionsSubmissionIdAnswersUrl(submissionId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(githubCom4H1RZooraInternalDomainSaveAnswerDTO)
+  }
+);}
+
+
+
+
+export const getPostQuizzesSubmissionsSubmissionIdAnswersMutationOptions = <TError = ErrorType<PostQuizzesSubmissionsSubmissionIdAnswers400 | PostQuizzesSubmissionsSubmissionIdAnswers403 | PostQuizzesSubmissionsSubmissionIdAnswers409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdAnswers>>, TError,{submissionId: string;data: GithubCom4H1RZooraInternalDomainSaveAnswerDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdAnswers>>, TError,{submissionId: string;data: GithubCom4H1RZooraInternalDomainSaveAnswerDTO}, TContext> => {
+
+const mutationKey = ['postQuizzesSubmissionsSubmissionIdAnswers'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdAnswers>>, {submissionId: string;data: GithubCom4H1RZooraInternalDomainSaveAnswerDTO}> = (props) => {
+          const {submissionId,data} = props ?? {};
+
+          return  postQuizzesSubmissionsSubmissionIdAnswers(submissionId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostQuizzesSubmissionsSubmissionIdAnswersMutationResult = NonNullable<Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdAnswers>>>
+    export type PostQuizzesSubmissionsSubmissionIdAnswersMutationBody = GithubCom4H1RZooraInternalDomainSaveAnswerDTO
+    export type PostQuizzesSubmissionsSubmissionIdAnswersMutationError = ErrorType<PostQuizzesSubmissionsSubmissionIdAnswers400 | PostQuizzesSubmissionsSubmissionIdAnswers403 | PostQuizzesSubmissionsSubmissionIdAnswers409>
+
+    /**
+ * @summary Save one answer (incremental)
+ */
+export const usePostQuizzesSubmissionsSubmissionIdAnswers = <TError = ErrorType<PostQuizzesSubmissionsSubmissionIdAnswers400 | PostQuizzesSubmissionsSubmissionIdAnswers403 | PostQuizzesSubmissionsSubmissionIdAnswers409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdAnswers>>, TError,{submissionId: string;data: GithubCom4H1RZooraInternalDomainSaveAnswerDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postQuizzesSubmissionsSubmissionIdAnswers>>,
+        TError,
+        {submissionId: string;data: GithubCom4H1RZooraInternalDomainSaveAnswerDTO},
+        TContext
+      > => {
+      return useMutation(getPostQuizzesSubmissionsSubmissionIdAnswersMutationOptions(options), queryClient);
+    }
+    export type postQuizzesSubmissionsSubmissionIdGradeResponse200 = {
   data: PostQuizzesSubmissionsSubmissionIdGrade200
   status: 200
 }
@@ -1854,7 +1961,132 @@ export const useDeleteQuizzesId = <TError = ErrorType<DeleteQuizzesId401 | Delet
       > => {
       return useMutation(getDeleteQuizzesIdMutationOptions(options), queryClient);
     }
-    export type getQuizzesIdQuestionsResponse200 = {
+    export type getQuizzesIdAntiCheatResponse200 = {
+  data: GetQuizzesIdAntiCheat200
+  status: 200
+}
+
+export type getQuizzesIdAntiCheatResponse401 = {
+  data: GetQuizzesIdAntiCheat401
+  status: 401
+}
+
+export type getQuizzesIdAntiCheatResponse403 = {
+  data: GetQuizzesIdAntiCheat403
+  status: 403
+}
+
+export type getQuizzesIdAntiCheatResponseSuccess = (getQuizzesIdAntiCheatResponse200) & {
+  headers: Headers;
+};
+export type getQuizzesIdAntiCheatResponseError = (getQuizzesIdAntiCheatResponse401 | getQuizzesIdAntiCheatResponse403) & {
+  headers: Headers;
+};
+
+export type getQuizzesIdAntiCheatResponse = (getQuizzesIdAntiCheatResponseSuccess | getQuizzesIdAntiCheatResponseError)
+
+export const getGetQuizzesIdAntiCheatUrl = (id: string,) => {
+
+
+
+
+  return `/quizzes/${id}/anti-cheat`
+}
+
+/**
+ * Advisory anti-cheat signals per submission (tab switches, GPS same-location clusters, fast answers). Never asserts guilt — for teacher review only.
+ * @summary Anti-cheat review report
+ */
+export const getQuizzesIdAntiCheat = async (id: string, options?: RequestInit): Promise<getQuizzesIdAntiCheatResponse> => {
+
+  return customInstance<getQuizzesIdAntiCheatResponse>(getGetQuizzesIdAntiCheatUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetQuizzesIdAntiCheatQueryKey = (id: string,) => {
+    return [
+    `/quizzes/${id}/anti-cheat`
+    ] as const;
+    }
+
+
+export const getGetQuizzesIdAntiCheatQueryOptions = <TData = Awaited<ReturnType<typeof getQuizzesIdAntiCheat>>, TError = ErrorType<GetQuizzesIdAntiCheat401 | GetQuizzesIdAntiCheat403>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdAntiCheat>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetQuizzesIdAntiCheatQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzesIdAntiCheat>>> = ({ signal }) => getQuizzesIdAntiCheat(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdAntiCheat>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetQuizzesIdAntiCheatQueryResult = NonNullable<Awaited<ReturnType<typeof getQuizzesIdAntiCheat>>>
+export type GetQuizzesIdAntiCheatQueryError = ErrorType<GetQuizzesIdAntiCheat401 | GetQuizzesIdAntiCheat403>
+
+
+export function useGetQuizzesIdAntiCheat<TData = Awaited<ReturnType<typeof getQuizzesIdAntiCheat>>, TError = ErrorType<GetQuizzesIdAntiCheat401 | GetQuizzesIdAntiCheat403>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdAntiCheat>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getQuizzesIdAntiCheat>>,
+          TError,
+          Awaited<ReturnType<typeof getQuizzesIdAntiCheat>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesIdAntiCheat<TData = Awaited<ReturnType<typeof getQuizzesIdAntiCheat>>, TError = ErrorType<GetQuizzesIdAntiCheat401 | GetQuizzesIdAntiCheat403>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdAntiCheat>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getQuizzesIdAntiCheat>>,
+          TError,
+          Awaited<ReturnType<typeof getQuizzesIdAntiCheat>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesIdAntiCheat<TData = Awaited<ReturnType<typeof getQuizzesIdAntiCheat>>, TError = ErrorType<GetQuizzesIdAntiCheat401 | GetQuizzesIdAntiCheat403>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdAntiCheat>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Anti-cheat review report
+ */
+
+export function useGetQuizzesIdAntiCheat<TData = Awaited<ReturnType<typeof getQuizzesIdAntiCheat>>, TError = ErrorType<GetQuizzesIdAntiCheat401 | GetQuizzesIdAntiCheat403>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdAntiCheat>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetQuizzesIdAntiCheatQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type getQuizzesIdQuestionsResponse200 = {
   data: GetQuizzesIdQuestions200
   status: 200
 }

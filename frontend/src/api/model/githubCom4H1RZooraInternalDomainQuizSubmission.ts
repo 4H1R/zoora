@@ -7,18 +7,33 @@
  */
 import type { GithubCom4H1RZooraInternalDomainQuiz } from './githubCom4H1RZooraInternalDomainQuiz';
 import type { GithubCom4H1RZooraInternalDomainSubmissionAnswer } from './githubCom4H1RZooraInternalDomainSubmissionAnswer';
+import type { GithubCom4H1RZooraInternalDomainSubmissionQuestion } from './githubCom4H1RZooraInternalDomainSubmissionQuestion';
 import type { GithubCom4H1RZooraInternalDomainSubmissionStatus } from './githubCom4H1RZooraInternalDomainSubmissionStatus';
 import type { GithubCom4H1RZooraInternalDomainUser } from './githubCom4H1RZooraInternalDomainUser';
 
 export interface GithubCom4H1RZooraInternalDomainQuizSubmission {
   answers?: GithubCom4H1RZooraInternalDomainSubmissionAnswer[];
   created_at?: string;
+  gps_accuracy?: number;
+  gps_denied?: boolean;
+  gps_lat?: number;
+  gps_lng?: number;
   id?: string;
+  /**
+     * QuestionSet is the frozen, per-student ordered question list (with option
+     * order) resolved at StartSubmission. QuizRoomID records the room the
+     * submission was started in, used to cap the deadline. The GPS/Tab fields are
+     * advisory anti-cheat signals.
+     */
+  question_set?: GithubCom4H1RZooraInternalDomainSubmissionQuestion[];
   quiz?: GithubCom4H1RZooraInternalDomainQuiz;
   quiz_id?: string;
+  quiz_room_id?: string;
   started_at?: string;
   status?: GithubCom4H1RZooraInternalDomainSubmissionStatus;
   submitted_at?: string;
+  tab_hidden_count?: number;
+  tab_hidden_seconds?: number;
   total_score?: number;
   updated_at?: string;
   user?: GithubCom4H1RZooraInternalDomainUser;

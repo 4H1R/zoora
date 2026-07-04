@@ -7,5 +7,9 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainStartQuizSubmissionDTO {
+  gps_accuracy?: number;
+  gps_denied?: boolean;
+  gps_lat?: number;
+  gps_lng?: number;
   quiz_room_id: string;
 }

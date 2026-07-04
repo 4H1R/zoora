@@ -12,6 +12,8 @@ import type { GithubCom4H1RZooraInternalDomainUpdateQuestionDTOType } from './gi
 
 export interface GithubCom4H1RZooraInternalDomainUpdateQuestionDTO {
   metadata?: GithubCom4H1RZooraInternalDomainQuestionMetadata[];
+  /** @minimum 0 */
+  min_seconds?: number;
   negative_mark_mode?: GithubCom4H1RZooraInternalDomainNegativeMarkMode;
   negative_value?: number;
   options?: GithubCom4H1RZooraInternalDomainQuestionOption[];

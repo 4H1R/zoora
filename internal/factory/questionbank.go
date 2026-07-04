@@ -40,6 +40,7 @@ func NewQuestion(bankID, orgID uuid.UUID, opts ...func(*domain.Question)) *domai
 		Text:           fakeQuestionText(id),
 		Type:           questionTypes[id%3],
 		Metadata:       []domain.QuestionMetadata{},
+		MinSeconds:     fake.IntRange(0, 20),
 	}
 	for _, o := range opts {
 		o(q)

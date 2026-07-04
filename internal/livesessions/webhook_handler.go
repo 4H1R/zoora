@@ -3,8 +3,11 @@ package livesessions
 import (
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	lkproto "github.com/livekit/protocol/livekit"
+	"github.com/livekit/protocol/webhook"
 
 	"github.com/4H1R/zoora/internal/domain"
 	lk "github.com/4H1R/zoora/internal/platform/livekit"
@@ -41,12 +44,41 @@ func (h *WebhookHandler) Handle(c *gin.Context) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
+
+	// Egress lifecycle events carry EgressInfo instead of (or alongside) Room.
+	if event.Event == webhook.EventEgressEnded && event.EgressInfo != nil {
+		if err := h.svc.OnEgressEnded(c.Request.Context(), egressResult(event.EgressInfo)); err != nil {
+			h.logger.Error("handling egress webhook", "egress_id", event.EgressInfo.EgressId, "error", err)
+		}
+		c.Status(http.StatusOK)
+		return
+	}
+
 	if event.Room == nil || event.Room.Name == "" {
 		c.Status(http.StatusOK)
 		return
 	}
-	if err := h.svc.OnLiveKitEvent(c.Request.Context(), event.Event, event.Room.Name); err != nil {
+	identity := ""
+	if event.Participant != nil {
+		identity = event.Participant.Identity
+	}
+	if err := h.svc.OnLiveKitEvent(c.Request.Context(), event.Event, event.Room.Name, identity); err != nil {
 		h.logger.Error("handling livekit webhook", "event", event.Event, "room", event.Room.Name, "error", err)
 	}
 	c.Status(http.StatusOK)
+}
+
+// egressResult translates LiveKit's EgressInfo into the domain result: failure
+// status plus size/duration from the first file result when present.
+func egressResult(info *lkproto.EgressInfo) domain.EgressResult {
+	res := domain.EgressResult{
+		EgressID: info.EgressId,
+		Failed: info.Status == lkproto.EgressStatus_EGRESS_FAILED ||
+			info.Status == lkproto.EgressStatus_EGRESS_ABORTED,
+	}
+	if files := info.GetFileResults(); len(files) > 0 && files[0] != nil {
+		res.SizeBytes = files[0].Size
+		res.Duration = time.Duration(files[0].Duration)
+	}
+	return res
 }

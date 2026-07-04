@@ -37,6 +37,15 @@ type Quiz struct {
 	NoBackNavigation bool      `gorm:"not null;default:false" json:"no_back_navigation"`
 	ShuffleQuestions bool      `gorm:"not null;default:false" json:"shuffle_questions"`
 
+	// Anti-cheat config toggles. Class A (enforced): ShuffleOptions. Class B
+	// (advisory signals): TrackTabSwitches, RequireGPS. Class C (frontend-only
+	// deterrents): DisableCopyPaste, DisableRightClickShortcuts.
+	ShuffleOptions             bool `gorm:"not null;default:false" json:"shuffle_options"`
+	TrackTabSwitches           bool `gorm:"not null;default:false" json:"track_tab_switches"`
+	RequireGPS                 bool `gorm:"not null;default:false" json:"require_gps"`
+	DisableCopyPaste           bool `gorm:"not null;default:false" json:"disable_copy_paste"`
+	DisableRightClickShortcuts bool `gorm:"not null;default:false" json:"disable_right_click_shortcuts"`
+
 	// Quiz-wide negative-marking override (Layer 2b). Fills gaps for questions
 	// (manual and random) lacking their own setting.
 	NegativeMarkMode NegativeMarkMode `gorm:"type:varchar(20);not null;default:'none'" json:"negative_mark_mode"`
@@ -117,23 +126,37 @@ type QuizRoom struct {
 }
 
 type CreateQuizDTO struct {
-	ClassID          uuid.UUID        `json:"class_id" binding:"required"`
-	Title            string           `json:"title" binding:"required,min=2"`
-	Description      string           `json:"description"`
-	DurationMinutes  int              `json:"duration_minutes" binding:"required,gt=0"`
-	NoBackNavigation bool             `json:"no_back_navigation"`
-	ShuffleQuestions bool             `json:"shuffle_questions"`
+	ClassID          uuid.UUID `json:"class_id" binding:"required"`
+	Title            string    `json:"title" binding:"required,min=2"`
+	Description      string    `json:"description"`
+	DurationMinutes  int       `json:"duration_minutes" binding:"required,gt=0"`
+	NoBackNavigation bool      `json:"no_back_navigation"`
+	ShuffleQuestions bool      `json:"shuffle_questions"`
+
+	ShuffleOptions             bool `json:"shuffle_options"`
+	TrackTabSwitches           bool `json:"track_tab_switches"`
+	RequireGPS                 bool `json:"require_gps"`
+	DisableCopyPaste           bool `json:"disable_copy_paste"`
+	DisableRightClickShortcuts bool `json:"disable_right_click_shortcuts"`
+
 	NegativeMarkMode NegativeMarkMode `json:"negative_mark_mode"`
 	NegativeValue    float64          `json:"negative_value"`
 	WrongsPerPoint   int              `json:"wrongs_per_point"`
 }
 
 type UpdateQuizDTO struct {
-	Title            *string           `json:"title" binding:"omitempty,min=2"`
-	Description      *string           `json:"description"`
-	DurationMinutes  *int              `json:"duration_minutes" binding:"omitempty,gt=0"`
-	NoBackNavigation *bool             `json:"no_back_navigation"`
-	ShuffleQuestions *bool             `json:"shuffle_questions"`
+	Title            *string `json:"title" binding:"omitempty,min=2"`
+	Description      *string `json:"description"`
+	DurationMinutes  *int    `json:"duration_minutes" binding:"omitempty,gt=0"`
+	NoBackNavigation *bool   `json:"no_back_navigation"`
+	ShuffleQuestions *bool   `json:"shuffle_questions"`
+
+	ShuffleOptions             *bool `json:"shuffle_options"`
+	TrackTabSwitches           *bool `json:"track_tab_switches"`
+	RequireGPS                 *bool `json:"require_gps"`
+	DisableCopyPaste           *bool `json:"disable_copy_paste"`
+	DisableRightClickShortcuts *bool `json:"disable_right_click_shortcuts"`
+
 	NegativeMarkMode *NegativeMarkMode `json:"negative_mark_mode"`
 	NegativeValue    *float64          `json:"negative_value"`
 	WrongsPerPoint   *int              `json:"wrongs_per_point"`
@@ -231,19 +254,41 @@ type SubmissionAnswer struct {
 	SpentSeconds      int       `json:"spent_seconds"`
 }
 
+// SubmissionQuestion is one frozen question in a student's submission: the
+// question id plus the shuffled display order of its option ids. Built once at
+// StartSubmission so reloads/resume are deterministic.
+type SubmissionQuestion struct {
+	QuestionID    uuid.UUID `json:"question_id"`
+	OptionIDOrder []string  `json:"option_id_order,omitempty"`
+}
+
 type QuizSubmission struct {
-	ID          uuid.UUID          `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	QuizID      uuid.UUID          `gorm:"type:uuid;not null;index;uniqueIndex:idx_quiz_submissions_quiz_user" json:"quiz_id"`
-	Quiz        *Quiz              `gorm:"foreignKey:QuizID" json:"quiz,omitempty"`
-	UserID      uuid.UUID          `gorm:"type:uuid;not null;index;uniqueIndex:idx_quiz_submissions_quiz_user" json:"user_id"`
-	User        *User              `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	Status      SubmissionStatus   `gorm:"type:varchar(20);not null;default:'in_progress'" json:"status"`
-	Answers     []SubmissionAnswer `gorm:"type:jsonb;serializer:json" json:"answers"`
-	TotalScore  float64            `gorm:"not null;default:0" json:"total_score"`
-	StartedAt   time.Time          `gorm:"not null" json:"started_at"`
-	SubmittedAt *time.Time         `json:"submitted_at"`
-	CreatedAt   time.Time          `json:"created_at"`
-	UpdatedAt   time.Time          `json:"updated_at"`
+	ID      uuid.UUID          `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	QuizID  uuid.UUID          `gorm:"type:uuid;not null;index;uniqueIndex:idx_quiz_submissions_quiz_user" json:"quiz_id"`
+	Quiz    *Quiz              `gorm:"foreignKey:QuizID" json:"quiz,omitempty"`
+	UserID  uuid.UUID          `gorm:"type:uuid;not null;index;uniqueIndex:idx_quiz_submissions_quiz_user" json:"user_id"`
+	User    *User              `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	Status  SubmissionStatus   `gorm:"type:varchar(20);not null;default:'in_progress'" json:"status"`
+	Answers []SubmissionAnswer `gorm:"type:jsonb;serializer:json" json:"answers"`
+
+	// QuestionSet is the frozen, per-student ordered question list (with option
+	// order) resolved at StartSubmission. QuizRoomID records the room the
+	// submission was started in, used to cap the deadline. The GPS/Tab fields are
+	// advisory anti-cheat signals.
+	QuestionSet      []SubmissionQuestion `gorm:"type:jsonb;serializer:json" json:"question_set"`
+	QuizRoomID       *uuid.UUID           `gorm:"type:uuid" json:"quiz_room_id,omitempty"`
+	TabHiddenCount   int                  `gorm:"not null;default:0" json:"tab_hidden_count"`
+	TabHiddenSeconds int                  `gorm:"not null;default:0" json:"tab_hidden_seconds"`
+	GPSLat           *float64             `gorm:"column:gps_lat" json:"gps_lat,omitempty"`
+	GPSLng           *float64             `gorm:"column:gps_lng" json:"gps_lng,omitempty"`
+	GPSAccuracy      *float64             `gorm:"column:gps_accuracy" json:"gps_accuracy,omitempty"`
+	GPSDenied        bool                 `gorm:"not null;default:false" json:"gps_denied"`
+
+	TotalScore  float64    `gorm:"not null;default:0" json:"total_score"`
+	StartedAt   time.Time  `gorm:"not null" json:"started_at"`
+	SubmittedAt *time.Time `json:"submitted_at"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
 // IsRoomOpen returns true when the quiz room window contains now.
@@ -267,7 +312,20 @@ func (r *QuizRoom) IsRoomOpenAt(t time.Time) bool {
 }
 
 type StartQuizSubmissionDTO struct {
-	QuizRoomID uuid.UUID `json:"quiz_room_id" binding:"required"`
+	QuizRoomID  uuid.UUID `json:"quiz_room_id" binding:"required"`
+	GPSLat      *float64  `json:"gps_lat"`
+	GPSLng      *float64  `json:"gps_lng"`
+	GPSAccuracy *float64  `json:"gps_accuracy"`
+	GPSDenied   bool      `json:"gps_denied"`
+}
+
+type SaveAnswerDTO struct {
+	QuestionID        uuid.UUID `json:"question_id" binding:"required"`
+	SelectedOptionIDs []string  `json:"selected_option_ids"`
+	Value             string    `json:"value"`
+	SpentSeconds      int       `json:"spent_seconds" binding:"gte=0"`
+	TabHiddenCount    int       `json:"tab_hidden_count" binding:"gte=0"`
+	TabHiddenSeconds  int       `json:"tab_hidden_seconds" binding:"gte=0"`
 }
 
 type SubmitAnswerDTO struct {
@@ -278,7 +336,11 @@ type SubmitAnswerDTO struct {
 }
 
 type SubmitQuizDTO struct {
-	Answers []SubmitAnswerDTO `json:"answers" binding:"required,dive"`
+	// Answers is optional: with incremental save the final submit may carry zero
+	// new answers ("finalize what's saved"). Merged into the saved answers.
+	Answers          []SubmitAnswerDTO `json:"answers" binding:"omitempty,dive"`
+	TabHiddenCount   int               `json:"tab_hidden_count" binding:"gte=0"`
+	TabHiddenSeconds int               `json:"tab_hidden_seconds" binding:"gte=0"`
 }
 
 type GradeAnswerDTO struct {
@@ -391,6 +453,37 @@ type QuizSubmissionRepository interface {
 	ListByQuiz(ctx context.Context, quizID uuid.UUID, q ListSubmissionsQuery) ([]QuizSubmission, int64, error)
 }
 
+// Anti-cheat review thresholds. Fixed constants: raw values are always stored
+// and shown; a threshold only decides which values get flagged.
+const (
+	TabHiddenWarnCount      = 3   // flag if a student left the tab more than this
+	SameLocationMeters      = 50  // two students within this distance are flagged
+	SameLocationMaxAccuracy = 100 // ignore coarse coords (accuracy worse than this)
+)
+
+// FastAnswerFlag marks an answer submitted faster than the question's declared
+// min_seconds. Advisory only.
+type FastAnswerFlag struct {
+	QuestionID   uuid.UUID `json:"question_id"`
+	SpentSeconds int       `json:"spent_seconds"`
+	MinSeconds   int       `json:"min_seconds"`
+}
+
+// SubmissionAntiCheatReport is the advisory, teacher-facing anti-cheat summary
+// for one submission. Never asserts guilt — the teacher reviews and decides.
+type SubmissionAntiCheatReport struct {
+	SubmissionID     uuid.UUID        `json:"submission_id"`
+	UserID           uuid.UUID        `json:"user_id"`
+	TabHiddenCount   int              `json:"tab_hidden_count"`
+	TabHiddenSeconds int              `json:"tab_hidden_seconds"`
+	TabFlagged       bool             `json:"tab_flagged"`
+	GPSDenied        bool             `json:"gps_denied"`
+	FastAnswers      []FastAnswerFlag `json:"fast_answers"`
+	// SameLocationUserIDs lists other students in this quiz whose recorded GPS is
+	// within SameLocationMeters (both accuracy < SameLocationMaxAccuracy).
+	SameLocationUserIDs []uuid.UUID `json:"same_location_user_ids"`
+}
+
 type QuizService interface {
 	Create(ctx context.Context, dto CreateQuizDTO) (*Quiz, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*Quiz, error)
@@ -413,10 +506,12 @@ type QuizService interface {
 
 	ListQuestionsForTaking(ctx context.Context, quizID uuid.UUID) ([]Question, error)
 	StartSubmission(ctx context.Context, quizID uuid.UUID, dto StartQuizSubmissionDTO) (*QuizSubmission, error)
+	SaveAnswer(ctx context.Context, submissionID uuid.UUID, dto SaveAnswerDTO) error
 	SubmitQuiz(ctx context.Context, submissionID uuid.UUID, dto SubmitQuizDTO) (*QuizSubmission, error)
 	GetSubmission(ctx context.Context, id uuid.UUID) (*QuizSubmission, error)
 	ListSubmissions(ctx context.Context, quizID uuid.UUID, q ListSubmissionsQuery) ([]QuizSubmission, int64, error)
 	GradeSubmission(ctx context.Context, id uuid.UUID, dto GradeSubmissionDTO) (*QuizSubmission, error)
+	AntiCheatReport(ctx context.Context, quizID uuid.UUID) ([]SubmissionAntiCheatReport, error)
 
 	AdminList(ctx context.Context, q AdminListQuizzesQuery) ([]Quiz, int64, error)
 	AdminHardDelete(ctx context.Context, id uuid.UUID) error

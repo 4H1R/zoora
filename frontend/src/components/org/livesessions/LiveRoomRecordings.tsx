@@ -8,9 +8,9 @@ import { toast } from "sonner"
 
 import {
   getGetLiveRoomsIdRecordingsQueryKey,
-  useDeleteLiveRoomsIdRecordingsRecordingId,
   useGetLiveRoomsIdRecordings,
   usePostLiveRoomsIdRecordings,
+  usePostLiveRoomsIdRecordingsRecordingIdStop,
 } from "@/api/live-sessions/live-sessions"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
@@ -63,7 +63,7 @@ export function LiveRoomRecordings({ roomId, isActive, canManage }: LiveRoomReco
     },
   })
 
-  const deleteMutation = useDeleteLiveRoomsIdRecordingsRecordingId({
+  const deleteMutation = usePostLiveRoomsIdRecordingsRecordingIdStop({
     mutation: {
       onSuccess: () => {
         toast.success(t("org.session.liveRooms.recordings.deleteSuccess"))

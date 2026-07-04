@@ -23,6 +23,7 @@ CREATE TABLE questions (
     negative_mark_mode VARCHAR(20) NOT NULL DEFAULT 'none',
     negative_value DOUBLE PRECISION NOT NULL DEFAULT 0,
     wrongs_per_point INTEGER NOT NULL DEFAULT 0,
+    min_seconds INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,
