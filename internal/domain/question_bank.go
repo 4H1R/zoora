@@ -86,6 +86,11 @@ type Question struct {
 	NegativeValue    float64          `gorm:"not null;default:0" json:"negative_value"`
 	WrongsPerPoint   int              `gorm:"not null;default:0" json:"wrongs_per_point"`
 
+	// MinSeconds is the teacher-declared minimum expected time to answer this
+	// question. 0 = no expectation. Advisory only: answers faster than this are
+	// flagged for review, never rejected.
+	MinSeconds int `gorm:"not null;default:0" json:"min_seconds"`
+
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
@@ -119,6 +124,7 @@ type CreateQuestionDTO struct {
 	NegativeMarkMode NegativeMarkMode   `json:"negative_mark_mode"`
 	NegativeValue    float64            `json:"negative_value"`
 	WrongsPerPoint   int                `json:"wrongs_per_point"`
+	MinSeconds       int                `json:"min_seconds" binding:"omitempty,gte=0"`
 }
 
 type UpdateQuestionDTO struct {
@@ -129,6 +135,7 @@ type UpdateQuestionDTO struct {
 	NegativeMarkMode *NegativeMarkMode  `json:"negative_mark_mode"`
 	NegativeValue    *float64           `json:"negative_value"`
 	WrongsPerPoint   *int               `json:"wrongs_per_point"`
+	MinSeconds       *int               `json:"min_seconds" binding:"omitempty,gte=0"`
 }
 
 // IsMultiSelect reports whether a choice question has more than one

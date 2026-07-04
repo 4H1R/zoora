@@ -9,12 +9,17 @@ import type { GithubCom4H1RZooraInternalDomainNegativeMarkMode } from './githubC
 
 export interface GithubCom4H1RZooraInternalDomainUpdateQuizDTO {
   description?: string;
+  disable_copy_paste?: boolean;
+  disable_right_click_shortcuts?: boolean;
   duration_minutes?: number;
   negative_mark_mode?: GithubCom4H1RZooraInternalDomainNegativeMarkMode;
   negative_value?: number;
   no_back_navigation?: boolean;
+  require_gps?: boolean;
+  shuffle_options?: boolean;
   shuffle_questions?: boolean;
   /** @minLength 2 */
   title?: string;
+  track_tab_switches?: boolean;
   wrongs_per_point?: number;
 }

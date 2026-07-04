@@ -25,6 +25,12 @@ export interface GithubCom4H1RZooraInternalDomainQuestion {
   is_multi_select?: boolean;
   metadata?: GithubCom4H1RZooraInternalDomainQuestionMetadata[];
   /**
+     * MinSeconds is the teacher-declared minimum expected time to answer this
+     * question. 0 = no expectation. Advisory only: answers faster than this are
+     * flagged for review, never rejected.
+     */
+  min_seconds?: number;
+  /**
      * NegativeConfig is the transient, score-free effective negative-marking
      * config attached by the "take" endpoint so the client can show penalties
      * without leaking the answer key. Never persisted.

@@ -14,6 +14,8 @@ export interface GithubCom4H1RZooraInternalDomainQuiz {
   class_id?: string;
   created_at?: string;
   description?: string;
+  disable_copy_paste?: boolean;
+  disable_right_click_shortcuts?: boolean;
   duration_minutes?: number;
   id?: string;
   /**
@@ -24,9 +26,17 @@ export interface GithubCom4H1RZooraInternalDomainQuiz {
   negative_value?: number;
   no_back_navigation?: boolean;
   organization_id?: string;
+  require_gps?: boolean;
+  /**
+     * Anti-cheat config toggles. Class A (enforced): ShuffleOptions. Class B
+     * (advisory signals): TrackTabSwitches, RequireGPS. Class C (frontend-only
+     * deterrents): DisableCopyPaste, DisableRightClickShortcuts.
+     */
+  shuffle_options?: boolean;
   shuffle_questions?: boolean;
   title?: string;
   total_score?: number;
+  track_tab_switches?: boolean;
   updated_at?: string;
   user?: GithubCom4H1RZooraInternalDomainUser;
   user_id?: string;

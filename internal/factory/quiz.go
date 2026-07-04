@@ -19,6 +19,7 @@ func NewQuiz(orgID, userID, classID uuid.UUID, opts ...func(*domain.Quiz)) *doma
 		DurationMinutes:  fake.IntRange(10, 60),
 		NoBackNavigation: fake.Bool(),
 		ShuffleQuestions: fake.Bool(),
+		ShuffleOptions:   fake.Bool(),
 	}
 	for _, o := range opts {
 		o(q)

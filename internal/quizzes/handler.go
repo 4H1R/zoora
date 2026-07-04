@@ -81,9 +81,11 @@ func (h *Handler) RegisterRoutes(
 		authed.GET("/quizzes/:id/questions", permAny(domain.PermQuizzesView, domain.PermQuizzesTake), idParam, h.ListQuestionsForTaking)
 		authed.POST("/quizzes/:id/submissions", permAny(domain.PermQuizzesView, domain.PermQuizzesTake), idParam, h.StartSubmission)
 		authed.GET("/quizzes/:id/submissions", perm(domain.PermQuizzesView), idParam, h.ListSubmissions)
+		authed.POST("/quizzes/submissions/:submissionId/answers", permAny(domain.PermQuizzesView, domain.PermQuizzesTake), submissionIDParam, h.SaveAnswer)
 		authed.POST("/quizzes/submissions/:submissionId/submit", permAny(domain.PermQuizzesView, domain.PermQuizzesTake), submissionIDParam, h.SubmitQuiz)
 		authed.GET("/quizzes/submissions/:submissionId", permAny(domain.PermQuizzesView, domain.PermQuizzesTake), submissionIDParam, h.GetSubmission)
 		authed.POST("/quizzes/submissions/:submissionId/grade", perm(domain.PermQuizzesUpdate), submissionIDParam, h.GradeSubmission)
+		authed.GET("/quizzes/:id/anti-cheat", perm(domain.PermQuizzesView), idParam, h.AntiCheatReport)
 	}
 }
 
@@ -515,6 +517,33 @@ func (h *Handler) StartSubmission(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusCreated, sub)
 }
 
+// SaveAnswer incrementally saves one answer during an in-progress submission.
+// @Summary Save one answer (incremental)
+// @Description Upserts a single answer into an in-progress submission and records tab-visibility counters. Does not grade or finalize. Used for crash-safe autosave on each "next".
+// @Tags Quizzes
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param submissionId path string true "Submission UUID"
+// @Param body body domain.SaveAnswerDTO true "Answer to save"
+// @Success 204 "No Content"
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 409 {object} domain.Response{error=domain.ErrorBody}
+// @Router /quizzes/submissions/{submissionId}/answers [post]
+func (h *Handler) SaveAnswer(c *gin.Context) {
+	var dto domain.SaveAnswerDTO
+	if err := httpx.Bind(c, &dto); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	if err := h.svc.SaveAnswer(c.Request.Context(), httpx.UUIDParam(c, "submissionId"), dto); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
 // SubmitQuiz finalizes a submission with answers and triggers auto-grading.
 // @Summary Submit quiz answers
 // @Description Submits answers for an in-progress submission. Auto-grades choice and short_answer questions. Enforces duration limit with 30s grace period.
@@ -542,6 +571,26 @@ func (h *Handler) SubmitQuiz(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, sub)
+}
+
+// AntiCheatReport returns advisory anti-cheat signals for a quiz's submissions.
+// @Summary Anti-cheat review report
+// @Description Advisory anti-cheat signals per submission (tab switches, GPS same-location clusters, fast answers). Never asserts guilt — for teacher review only.
+// @Tags Quizzes
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Quiz UUID"
+// @Success 200 {object} domain.Response{data=[]domain.SubmissionAntiCheatReport}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Router /quizzes/{id}/anti-cheat [get]
+func (h *Handler) AntiCheatReport(c *gin.Context) {
+	reports, err := h.svc.AntiCheatReport(c.Request.Context(), httpx.UUIDParam(c, "id"))
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, reports)
 }
 
 // @Summary Get quiz submission

@@ -8,5 +8,13 @@
 import type { GithubCom4H1RZooraInternalDomainSubmitAnswerDTO } from './githubCom4H1RZooraInternalDomainSubmitAnswerDTO';
 
 export interface GithubCom4H1RZooraInternalDomainSubmitQuizDTO {
-  answers: GithubCom4H1RZooraInternalDomainSubmitAnswerDTO[];
+  /**
+     * Answers is optional: with incremental save the final submit may carry zero
+     * new answers ("finalize what's saved"). Merged into the saved answers.
+     */
+  answers?: GithubCom4H1RZooraInternalDomainSubmitAnswerDTO[];
+  /** @minimum 0 */
+  tab_hidden_count?: number;
+  /** @minimum 0 */
+  tab_hidden_seconds?: number;
 }

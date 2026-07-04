@@ -85,17 +85,22 @@ func (s *service) Create(ctx context.Context, dto domain.CreateQuizDTO) (*domain
 		return nil, err
 	}
 	quiz := &domain.Quiz{
-		OrganizationID:   class.OrganizationID,
-		UserID:           caller.UserID,
-		ClassID:          dto.ClassID,
-		Title:            dto.Title,
-		Description:      dto.Description,
-		DurationMinutes:  dto.DurationMinutes,
-		NoBackNavigation: dto.NoBackNavigation,
-		ShuffleQuestions: dto.ShuffleQuestions,
-		NegativeMarkMode: mode,
-		NegativeValue:    val,
-		WrongsPerPoint:   wpp,
+		OrganizationID:             class.OrganizationID,
+		UserID:                     caller.UserID,
+		ClassID:                    dto.ClassID,
+		Title:                      dto.Title,
+		Description:                dto.Description,
+		DurationMinutes:            dto.DurationMinutes,
+		NoBackNavigation:           dto.NoBackNavigation,
+		ShuffleQuestions:           dto.ShuffleQuestions,
+		ShuffleOptions:             dto.ShuffleOptions,
+		TrackTabSwitches:           dto.TrackTabSwitches,
+		RequireGPS:                 dto.RequireGPS,
+		DisableCopyPaste:           dto.DisableCopyPaste,
+		DisableRightClickShortcuts: dto.DisableRightClickShortcuts,
+		NegativeMarkMode:           mode,
+		NegativeValue:              val,
+		WrongsPerPoint:             wpp,
 	}
 	if err := s.repo.Create(ctx, quiz); err != nil {
 		return nil, err
@@ -153,6 +158,21 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateQui
 	}
 	if dto.ShuffleQuestions != nil {
 		quiz.ShuffleQuestions = *dto.ShuffleQuestions
+	}
+	if dto.ShuffleOptions != nil {
+		quiz.ShuffleOptions = *dto.ShuffleOptions
+	}
+	if dto.TrackTabSwitches != nil {
+		quiz.TrackTabSwitches = *dto.TrackTabSwitches
+	}
+	if dto.RequireGPS != nil {
+		quiz.RequireGPS = *dto.RequireGPS
+	}
+	if dto.DisableCopyPaste != nil {
+		quiz.DisableCopyPaste = *dto.DisableCopyPaste
+	}
+	if dto.DisableRightClickShortcuts != nil {
+		quiz.DisableRightClickShortcuts = *dto.DisableRightClickShortcuts
 	}
 	if dto.NegativeMarkMode != nil {
 		quiz.NegativeMarkMode = *dto.NegativeMarkMode

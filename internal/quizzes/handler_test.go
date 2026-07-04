@@ -109,6 +109,9 @@ func (m *mockQuizSvc) StartSubmission(ctx context.Context, quizID uuid.UUID, dto
 	s, _ := a.Get(0).(*domain.QuizSubmission)
 	return s, a.Error(1)
 }
+func (m *mockQuizSvc) SaveAnswer(ctx context.Context, submissionID uuid.UUID, dto domain.SaveAnswerDTO) error {
+	return m.Called(ctx, submissionID, dto).Error(0)
+}
 func (m *mockQuizSvc) SubmitQuiz(ctx context.Context, submissionID uuid.UUID, dto domain.SubmitQuizDTO) (*domain.QuizSubmission, error) {
 	a := m.Called(ctx, submissionID, dto)
 	s, _ := a.Get(0).(*domain.QuizSubmission)
@@ -133,6 +136,11 @@ func (m *mockQuizSvc) AdminList(ctx context.Context, q domain.AdminListQuizzesQu
 	a := m.Called(ctx, q)
 	qs, _ := a.Get(0).([]domain.Quiz)
 	return qs, a.Get(1).(int64), a.Error(2)
+}
+func (m *mockQuizSvc) AntiCheatReport(ctx context.Context, quizID uuid.UUID) ([]domain.SubmissionAntiCheatReport, error) {
+	a := m.Called(ctx, quizID)
+	r, _ := a.Get(0).([]domain.SubmissionAntiCheatReport)
+	return r, a.Error(1)
 }
 func (m *mockQuizSvc) AdminHardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)

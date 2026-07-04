@@ -244,6 +244,7 @@ func (s *service) CreateQuestion(ctx context.Context, bankID uuid.UUID, dto doma
 		NegativeMarkMode: mode,
 		NegativeValue:    val,
 		WrongsPerPoint:   wpp,
+		MinSeconds:       dto.MinSeconds,
 	}
 	if err := s.questions.Create(ctx, question); err != nil {
 		return nil, err
@@ -309,6 +310,9 @@ func (s *service) UpdateQuestion(ctx context.Context, id uuid.UUID, dto domain.U
 	}
 	if dto.WrongsPerPoint != nil {
 		question.WrongsPerPoint = *dto.WrongsPerPoint
+	}
+	if dto.MinSeconds != nil {
+		question.MinSeconds = *dto.MinSeconds
 	}
 	mode, val, wpp := domain.NormalizeNegativeMark(question.NegativeMarkMode, question.NegativeValue, question.WrongsPerPoint)
 	if question.Type != domain.QuestionTypeChoice {
