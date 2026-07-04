@@ -65,21 +65,21 @@ type QuestionBank struct {
 	ID             uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
 	OrganizationID uuid.UUID      `gorm:"type:uuid;not null;index" json:"organization_id"`
 	Name           string         `gorm:"not null" json:"name"`
-	Description string         `json:"description"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
+	Description    string         `json:"description"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 type Question struct {
-	ID             uuid.UUID        `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	OrganizationID uuid.UUID        `gorm:"type:uuid;not null;index" json:"organization_id"`
-	BankID         uuid.UUID        `gorm:"type:uuid;not null;index" json:"bank_id"`
-	Bank      *QuestionBank    `gorm:"foreignKey:BankID" json:"bank,omitempty"`
-	Text      string             `gorm:"not null" json:"text"`
-	Type      QuestionType       `gorm:"type:varchar(20);not null" json:"type"`
-	Options   []QuestionOption   `gorm:"type:jsonb;serializer:json" json:"options"`
-	Metadata  []QuestionMetadata `gorm:"type:jsonb;serializer:json" json:"metadata"`
+	ID             uuid.UUID          `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	OrganizationID uuid.UUID          `gorm:"type:uuid;not null;index" json:"organization_id"`
+	BankID         uuid.UUID          `gorm:"type:uuid;not null;index" json:"bank_id"`
+	Bank           *QuestionBank      `gorm:"foreignKey:BankID" json:"bank,omitempty"`
+	Text           string             `gorm:"not null" json:"text"`
+	Type           QuestionType       `gorm:"type:varchar(20);not null" json:"type"`
+	Options        []QuestionOption   `gorm:"type:jsonb;serializer:json" json:"options"`
+	Metadata       []QuestionMetadata `gorm:"type:jsonb;serializer:json" json:"metadata"`
 
 	// Negative-marking default for this question (Layer 1). choice-only.
 	NegativeMarkMode NegativeMarkMode `gorm:"type:varchar(20);not null;default:'none'" json:"negative_mark_mode"`

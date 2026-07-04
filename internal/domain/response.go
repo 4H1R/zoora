@@ -7,9 +7,9 @@ import (
 )
 
 type Response struct {
-	Success bool        `json:"success"`
-	Data    interface{} `json:"data,omitempty"`
-	Error   *ErrorBody  `json:"error,omitempty"`
+	Success bool       `json:"success"`
+	Data    any        `json:"data,omitempty"`
+	Error   *ErrorBody `json:"error,omitempty"`
 }
 
 type ErrorBody struct {
@@ -19,19 +19,19 @@ type ErrorBody struct {
 }
 
 type PaginatedData struct {
-	Items    interface{} `json:"items"`
-	Total    int64       `json:"total"`
-	Offset   int         `json:"offset,omitempty"`
-	Limit    int         `json:"limit,omitempty"`
-	Page     int         `json:"page,omitempty"`
-	PageSize int         `json:"page_size,omitempty"`
+	Items    any   `json:"items"`
+	Total    int64 `json:"total"`
+	Offset   int   `json:"offset,omitempty"`
+	Limit    int   `json:"limit,omitempty"`
+	Page     int   `json:"page,omitempty"`
+	PageSize int   `json:"page_size,omitempty"`
 }
 
 // NewPaginatedFromParams builds a PaginatedData using the page-based shape
 // (Page/PageSize) from a ListParams. Use this for endpoints adopting the
 // standardized list pattern; endpoints still on offset/limit can keep
 // setting those fields directly.
-func NewPaginatedFromParams(items interface{}, total int64, p ListParams) PaginatedData {
+func NewPaginatedFromParams(items any, total int64, p ListParams) PaginatedData {
 	return PaginatedData{
 		Items:    items,
 		Total:    total,
@@ -40,7 +40,7 @@ func NewPaginatedFromParams(items interface{}, total int64, p ListParams) Pagina
 	}
 }
 
-func SuccessResponse(c *gin.Context, status int, data interface{}) {
+func SuccessResponse(c *gin.Context, status int, data any) {
 	c.JSON(status, Response{
 		Success: true,
 		Data:    data,

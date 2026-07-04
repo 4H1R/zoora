@@ -80,18 +80,18 @@ type LiveRoom struct {
 }
 
 type LiveParticipant struct {
-	ID                   uuid.UUID  `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	LiveRoomID           uuid.UUID  `gorm:"type:uuid;not null;index" json:"live_room_id"`
-	LiveRoom             *LiveRoom  `gorm:"foreignKey:LiveRoomID" json:"live_room,omitempty"`
-	UserID               uuid.UUID  `gorm:"type:uuid;not null;index" json:"user_id"`
-	User                 *User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	ID                   uuid.UUID       `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	LiveRoomID           uuid.UUID       `gorm:"type:uuid;not null;index" json:"live_room_id"`
+	LiveRoom             *LiveRoom       `gorm:"foreignKey:LiveRoomID" json:"live_room,omitempty"`
+	UserID               uuid.UUID       `gorm:"type:uuid;not null;index" json:"user_id"`
+	User                 *User           `gorm:"foreignKey:UserID" json:"user,omitempty"`
 	Identity             string          `gorm:"type:varchar(255);not null" json:"identity"`
 	Role                 ParticipantRole `gorm:"type:varchar(20);not null;default:'viewer'" json:"role"`
 	HandRaisedAt         *time.Time      `json:"hand_raised_at"`
 	JoinedAt             time.Time       `gorm:"not null" json:"joined_at"`
-	LeftAt               *time.Time `json:"left_at"`
-	TotalDurationSeconds int        `gorm:"not null;default:0" json:"total_duration_seconds"`
-	CreatedAt            time.Time  `json:"created_at"`
+	LeftAt               *time.Time      `json:"left_at"`
+	TotalDurationSeconds int             `gorm:"not null;default:0" json:"total_duration_seconds"`
+	CreatedAt            time.Time       `json:"created_at"`
 }
 
 type LiveRecording struct {

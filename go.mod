@@ -1,6 +1,6 @@
 module github.com/4H1R/zoora
 
-go 1.25.2
+go 1.26.4
 
 require (
 	github.com/alicebob/miniredis/v2 v2.38.0

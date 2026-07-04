@@ -331,7 +331,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 		counts.Users++
 
 		studentRole := presetRoles[domain.PresetRoleStudent]
-		for s := 0; s < 4; s++ {
+		for range 4 {
 			st := factory.NewUser(org.ID, func(u *domain.User) {
 				u.OrganizationID = &org.ID
 				u.RoleID = &studentRole.ID
@@ -373,7 +373,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 
 	for _, org := range orgs {
 		bd := &orgBankData{}
-		for b := 0; b < 2; b++ {
+		for range 2 {
 			bank := factory.NewQuestionBank(org.ID)
 			if err := db.WithContext(ctx).Create(bank).Error; err != nil {
 				return nil, fmt.Errorf("creating question bank: %w", err)
@@ -447,7 +447,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 		ou := usersByOrg[org.ID]
 		bd := banksByOrg[org.ID]
 
-		for c := 0; c < 2; c++ {
+		for c := range 2 {
 			teacher := ou.teachers[c%len(ou.teachers)]
 			class := factory.NewClass(org.ID, teacher.ID, func(cl *domain.Class) {
 				cl.TotalUsers = 30
@@ -468,7 +468,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 
 			// 10. ClassSessions
 			var sessions []*domain.ClassSession
-			for i := 0; i < 3; i++ {
+			for range 3 {
 				s := factory.NewClassSession(class.ID, func(s *domain.ClassSession) {
 					s.StartTime = time.Now().Add(time.Duration(counts.ClassSessions+1) * 24 * time.Hour)
 				})
@@ -536,7 +536,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 
 			// 14. QuizSubmissions
 			subCount := min(2, len(ou.students))
-			for s := 0; s < subCount; s++ {
+			for s := range subCount {
 				student := ou.students[s]
 				var answers []domain.SubmissionAnswer
 				totalScore := 0.0

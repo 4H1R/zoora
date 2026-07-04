@@ -10,12 +10,12 @@ import (
 type GradebookColumnType string
 
 const (
-	GradebookColumnAutoAttendance GradebookColumnType = "auto_attendance"
-	GradebookColumnAutoPractice   GradebookColumnType = "auto_practice"
-	GradebookColumnAutoQuiz       GradebookColumnType = "auto_quiz"
-	GradebookColumnManualGrade    GradebookColumnType = "manual_grade"
+	GradebookColumnAutoAttendance   GradebookColumnType = "auto_attendance"
+	GradebookColumnAutoPractice     GradebookColumnType = "auto_practice"
+	GradebookColumnAutoQuiz         GradebookColumnType = "auto_quiz"
+	GradebookColumnManualGrade      GradebookColumnType = "manual_grade"
 	GradebookColumnManualAttendance GradebookColumnType = "manual_attendance"
-	GradebookColumnManualText     GradebookColumnType = "manual_text"
+	GradebookColumnManualText       GradebookColumnType = "manual_text"
 )
 
 func (t GradebookColumnType) Valid() bool {

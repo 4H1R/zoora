@@ -69,13 +69,13 @@ type AdminListOfflineRoomsQuery struct {
 }
 
 type OfflineRoomView struct {
-	ID             uuid.UUID    `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	OfflineRoomID  uuid.UUID    `gorm:"type:uuid;not null;index" json:"offline_room_id"`
-	OfflineRoom    *OfflineRoom `gorm:"foreignKey:OfflineRoomID" json:"offline_room,omitempty"`
-	UserID         uuid.UUID    `gorm:"type:uuid;not null;index" json:"user_id"`
-	User           *User        `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	ViewedAt       time.Time    `gorm:"not null;default:NOW()" json:"viewed_at"`
-	DurationSeconds int         `gorm:"not null;default:0" json:"duration_seconds"`
+	ID              uuid.UUID    `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	OfflineRoomID   uuid.UUID    `gorm:"type:uuid;not null;index" json:"offline_room_id"`
+	OfflineRoom     *OfflineRoom `gorm:"foreignKey:OfflineRoomID" json:"offline_room,omitempty"`
+	UserID          uuid.UUID    `gorm:"type:uuid;not null;index" json:"user_id"`
+	User            *User        `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	ViewedAt        time.Time    `gorm:"not null;default:NOW()" json:"viewed_at"`
+	DurationSeconds int          `gorm:"not null;default:0" json:"duration_seconds"`
 }
 
 type OfflineRoomRepository interface {

@@ -25,7 +25,7 @@ func newAuthSvcWithRedis(t *testing.T) (domain.AuthService, *mockUserRepo, *redi
 
 // redisClient wraps the go-redis client so tests can read values back without
 // importing go-redis directly.
-type redisClient struct{ c interface{} }
+type redisClient struct{ c any }
 
 func TestAdminRevokeSessions_SetsTimestamp(t *testing.T) {
 	svc, _, _ := newAuthSvcWithRedis(t)

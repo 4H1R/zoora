@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -192,11 +193,9 @@ func RequireAnyPermission(permissions ...domain.PermissionName) gin.HandlerFunc 
 			return
 		}
 
-		for _, p := range permissions {
-			if caller.HasPermission(p) {
-				c.Next()
-				return
-			}
+		if slices.ContainsFunc(permissions, caller.HasPermission) {
+			c.Next()
+			return
 		}
 
 		domain.ErrorResponse(c, domain.ErrForbidden)

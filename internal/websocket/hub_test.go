@@ -27,7 +27,7 @@ func TestHubAddRemoveAndRoomClientCount(t *testing.T) {
 func TestHubEnforcesPerUserConnectionLimit(t *testing.T) {
 	hub := NewHub(slog.New(slog.NewTextHandler(io.Discard, nil)))
 	clients := make([]*Client, 0, maxConnectionsPerUser+1)
-	for i := 0; i < maxConnectionsPerUser+1; i++ {
+	for range maxConnectionsPerUser + 1 {
 		client := &Client{send: make(chan *Message, 1), userID: "u1", room: "room-1"}
 		clients = append(clients, client)
 		hub.addClient(client)

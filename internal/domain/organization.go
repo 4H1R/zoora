@@ -24,10 +24,10 @@ type Organization struct {
 	Description string             `json:"description"`
 	Status      OrganizationStatus `gorm:"not null;default:'active'" json:"status"`
 	// TotalUsers is computed (live COUNT of non-deleted users), not a stored column.
-	TotalUsers int `gorm:"-" json:"total_users"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
+	TotalUsers int            `gorm:"-" json:"total_users"`
+	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
+	DeletedAt  gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 type CreateOrganizationDTO struct {

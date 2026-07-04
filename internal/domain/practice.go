@@ -34,7 +34,7 @@ type PracticeRoomStats struct {
 // PracticeRoomView enriches a room with viewer-relative state for the hub page.
 type PracticeRoomView struct {
 	PracticeRoom
-	Status       string              `json:"status"`                 // derived student status
+	Status       string              `json:"status"` // derived student status
 	MySubmission *PracticeSubmission `json:"my_submission,omitempty"`
 	Stats        *PracticeRoomStats  `json:"stats,omitempty"` // present only when CanGrade
 	CanGrade     bool                `json:"can_grade"`

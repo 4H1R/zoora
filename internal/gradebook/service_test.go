@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/4H1R/zoora/internal/platform/authz"
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/gradebook"
+	"github.com/4H1R/zoora/internal/platform/authz"
 )
 
 type mColRepo struct{ mock.Mock }

@@ -2,12 +2,12 @@ package httpx
 
 import (
 	"errors"
-	"strconv"
-	"strings"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"strconv"
+	"strings"
 
 	"github.com/4H1R/zoora/internal/domain"
 )
@@ -56,10 +56,7 @@ func BoolQuery(c *gin.Context, key string) *bool {
 // Pagination pulls offset/limit from query with sane defaults + caps.
 func Pagination(c *gin.Context) (offset, limit int) {
 	offset = QueryInt(c, "offset", 0)
-	limit = QueryInt(c, "limit", 20)
-	if limit > 100 {
-		limit = 100
-	}
+	limit = min(QueryInt(c, "limit", 20), 100)
 	return
 }
 

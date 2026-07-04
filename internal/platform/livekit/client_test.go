@@ -14,9 +14,9 @@ import (
 func TestNewClientPublicURLFallbackAndOverride(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	cfg := &config.Config{
-		LiveKitHost:    "ws://livekit:7880",
-		LiveKitAPIKey:  "api-key",
-		LiveKitSecret:  "secret",
+		LiveKitHost:   "ws://livekit:7880",
+		LiveKitAPIKey: "api-key",
+		LiveKitSecret: "secret",
 	}
 
 	client := NewClient(cfg, logger)

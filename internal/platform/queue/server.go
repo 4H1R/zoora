@@ -57,11 +57,11 @@ func NewAsynqLogger(logger *slog.Logger) *AsynqLogger {
 	return &AsynqLogger{logger: logger}
 }
 
-func (l *AsynqLogger) Debug(args ...interface{}) { l.logger.Debug(fmt.Sprint(args...)) }
-func (l *AsynqLogger) Info(args ...interface{})  { l.logger.Info(fmt.Sprint(args...)) }
-func (l *AsynqLogger) Warn(args ...interface{})  { l.logger.Warn(fmt.Sprint(args...)) }
-func (l *AsynqLogger) Error(args ...interface{}) { l.logger.Error(fmt.Sprint(args...)) }
-func (l *AsynqLogger) Fatal(args ...interface{}) {
+func (l *AsynqLogger) Debug(args ...any) { l.logger.Debug(fmt.Sprint(args...)) }
+func (l *AsynqLogger) Info(args ...any)  { l.logger.Info(fmt.Sprint(args...)) }
+func (l *AsynqLogger) Warn(args ...any)  { l.logger.Warn(fmt.Sprint(args...)) }
+func (l *AsynqLogger) Error(args ...any) { l.logger.Error(fmt.Sprint(args...)) }
+func (l *AsynqLogger) Fatal(args ...any) {
 	l.logger.Error(fmt.Sprint(args...))
 	os.Exit(1)
 }

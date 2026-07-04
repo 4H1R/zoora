@@ -125,9 +125,9 @@ type AddChatMemberDTO struct {
 }
 
 type SendMessageDTO struct {
-	ParentMessageID *string     `json:"parent_message_id" binding:"omitempty,uuid"`
-	MessageType     MessageType `json:"message_type" binding:"required"`
-	Content         string      `json:"content" binding:"required,min=1,max=10000"`
+	ParentMessageID *string          `json:"parent_message_id" binding:"omitempty,uuid"`
+	MessageType     MessageType      `json:"message_type" binding:"required"`
+	Content         string           `json:"content" binding:"required,min=1,max=10000"`
 	Attachments     *json.RawMessage `json:"attachments"`
 }
 
@@ -145,8 +145,8 @@ type ListMessagesQuery struct {
 }
 
 type ListChatsQuery struct {
-	ModelType  string     `form:"model_type"`
-	ModelID    *uuid.UUID `form:"-"`
+	ModelType  string      `form:"model_type"`
+	ModelID    *uuid.UUID  `form:"-"`
 	Status     *ChatStatus `form:"status"`
 	ListParams ListParams  `form:"-"`
 }

@@ -8,18 +8,18 @@ import (
 )
 
 type Config struct {
-	Port               string        `env:"PORT"               envDefault:"8080"`
-	DatabaseURL        string        `env:"DATABASE_URL,required"`
-	RedisURL           string        `env:"REDIS_URL,required"`
-	LiveKitHost        string        `env:"LIVEKIT_HOST,required"`
-	LiveKitPublicURL   string        `env:"LIVEKIT_PUBLIC_URL"`
-	LiveKitAPIKey      string        `env:"LIVEKIT_API_KEY,required"`
-	LiveKitSecret      string        `env:"LIVEKIT_API_SECRET,required"`
+	Port             string `env:"PORT"               envDefault:"8080"`
+	DatabaseURL      string `env:"DATABASE_URL,required"`
+	RedisURL         string `env:"REDIS_URL,required"`
+	LiveKitHost      string `env:"LIVEKIT_HOST,required"`
+	LiveKitPublicURL string `env:"LIVEKIT_PUBLIC_URL"`
+	LiveKitAPIKey    string `env:"LIVEKIT_API_KEY,required"`
+	LiveKitSecret    string `env:"LIVEKIT_API_SECRET,required"`
 	// LiveRoomHostGracePeriod is how long a live room may stay open after its
 	// last host leaves before it is auto-closed. Drives both the webhook-driven
 	// delayed close task and the periodic safety-net sweep.
 	LiveRoomHostGracePeriod time.Duration `env:"LIVE_ROOM_HOST_GRACE_PERIOD" envDefault:"15m"`
-	S3Endpoint         string        `env:"S3_ENDPOINT,required"`
+	S3Endpoint              string        `env:"S3_ENDPOINT,required"`
 	// S3PublicEndpoint is the browser-facing host used to sign upload/download
 	// URLs. The SDK client talks to S3Endpoint (internal, e.g. http://rustfs:9000)
 	// so boot-time calls don't depend on the public TLS edge. Falls back to

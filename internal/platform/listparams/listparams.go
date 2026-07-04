@@ -10,6 +10,7 @@ package listparams
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -32,10 +33,7 @@ func Bind(c *gin.Context, cfg domain.ListConfig) domain.ListParams {
 	}
 	pageSize = min(pageSize, domain.MaxPageSize)
 
-	page := httpx.QueryInt(c, "page", 1)
-	if page < 1 {
-		page = 1
-	}
+	page := max(httpx.QueryInt(c, "page", 1), 1)
 
 	p := domain.ListParams{
 		Page:     page,
@@ -113,10 +111,5 @@ func Paginate[T any](base *gorm.DB, p domain.ListParams, dst *[]T) (int64, error
 }
 
 func contains(s []string, v string) bool {
-	for _, x := range s {
-		if x == v {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(s, v)
 }

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"slices"
 
 	"github.com/google/uuid"
 )
@@ -17,12 +18,7 @@ type Caller struct {
 }
 
 func (c Caller) HasPermission(perm PermissionName) bool {
-	for _, p := range c.Permissions {
-		if p == string(perm) {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(c.Permissions, string(perm))
 }
 
 // HasAny reports whether the caller is an admin or holds at least one of the
@@ -31,12 +27,7 @@ func (c Caller) HasAny(perms ...PermissionName) bool {
 	if c.IsAdmin {
 		return true
 	}
-	for _, p := range perms {
-		if c.HasPermission(p) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(perms, c.HasPermission)
 }
 
 // CanManage implements the owner-or-any authz tier: admins and holders of the

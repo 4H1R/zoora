@@ -153,11 +153,11 @@ func TestHandlerCreateValidationDoesNotCallService(t *testing.T) {
 	r, svc := newPollRouter(t)
 
 	w := do(t, r, http.MethodPost, "/api/v1/polls", map[string]any{
-		"model_type":             "class",
-		"model_id":               uuid.New().String(),
-		"name":                   "A",
-		"allowed_answers_count":  0,
-		"options":                []map[string]string{{"label": "Only", "value": "only"}},
+		"model_type":            "class",
+		"model_id":              uuid.New().String(),
+		"name":                  "A",
+		"allowed_answers_count": 0,
+		"options":               []map[string]string{{"label": "Only", "value": "only"}},
 	})
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
