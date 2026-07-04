@@ -15,6 +15,12 @@ export interface GithubCom4H1RZooraInternalDomainCreateQuizRuleDTO {
   count?: number;
   is_dynamic?: boolean;
   negative_default_mode?: GithubCom4H1RZooraInternalDomainNegativeMarkMode;
+  /**
+     * Optional explicit numbers for the rule-wide default; nil derives from each
+     * question's option count. per_wrong uses Value, accumulative uses WrongsPerPoint.
+     */
+  negative_default_value?: number;
+  negative_default_wrongs_per_point?: number;
   negative_overrides?: GithubCom4H1RZooraInternalDomainQuizQuestionNegativeOverride[];
   question_ids?: string[];
   type: GithubCom4H1RZooraInternalDomainCreateQuizRuleDTOType;

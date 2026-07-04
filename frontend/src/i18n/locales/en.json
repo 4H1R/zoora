@@ -725,7 +725,12 @@
         "negativeDefault": {
           "label": "Default negative marking",
           "keepDefault": "Keep question default",
-          "hint": "Applies to all multiple-choice questions added from this bank."
+          "hint": "Applies to all multiple-choice questions added from this bank.",
+          "errors": {
+            "required": "Enter a penalty value.",
+            "positive": "Value must be greater than 0.",
+            "range": "Enter a whole number between 2 and 5."
+          }
         }
       },
       "toolbar": {

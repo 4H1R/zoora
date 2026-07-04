@@ -194,15 +194,16 @@ func TestResolveNegativeMark_RuleDefault(t *testing.T) {
 	quizWide := NegativeMarkConfig{Mode: NegativeMarkPerWrong, NegativeValue: 0.9}
 
 	// none rule default forces no penalty even over the question's own L1 default.
-	forceNone := NegativeMarkNone
-	got := ResolveNegativeMark(q, nil, &forceNone, quizWide)
+	forceNone := &NegativeMarkConfig{Mode: NegativeMarkNone}
+	got := ResolveNegativeMark(q, nil, forceNone, quizWide)
 	if got.Mode != NegativeMarkNone {
 		t.Fatalf("rule default none must force none, got %+v", got)
 	}
 
-	// per_wrong derives negative_value from the option count (4 => 0.25).
-	perWrong := NegativeMarkPerWrong
-	got = ResolveNegativeMark(q, nil, &perWrong, quizWide)
+	// per_wrong with no explicit value derives negative_value from the option
+	// count (4 => 0.25).
+	perWrong := &NegativeMarkConfig{Mode: NegativeMarkPerWrong}
+	got = ResolveNegativeMark(q, nil, perWrong, quizWide)
 	if got.Mode != NegativeMarkPerWrong || got.NegativeValue != FractionFor(4) {
 		t.Fatalf("rule default per_wrong should auto-fraction from options, got %+v", got)
 	}
@@ -210,23 +211,37 @@ func TestResolveNegativeMark_RuleDefault(t *testing.T) {
 		t.Fatalf("per_wrong fraction = value, got %v", got.Fraction)
 	}
 
-	// accumulative derives wrongs_per_point = clamp(optionCount, 2, 5).
-	accumulative := NegativeMarkAccumulative
-	got = ResolveNegativeMark(q, nil, &accumulative, quizWide)
+	// per_wrong with an explicit value uses it verbatim, not the option-count fraction.
+	perWrongExplicit := &NegativeMarkConfig{Mode: NegativeMarkPerWrong, NegativeValue: 0.75}
+	got = ResolveNegativeMark(q, nil, perWrongExplicit, quizWide)
+	if got.Mode != NegativeMarkPerWrong || got.NegativeValue != 0.75 {
+		t.Fatalf("explicit per_wrong value should win over derivation, got %+v", got)
+	}
+
+	// accumulative with no explicit value derives wrongs_per_point = clamp(optionCount, 2, 5).
+	accumulative := &NegativeMarkConfig{Mode: NegativeMarkAccumulative}
+	got = ResolveNegativeMark(q, nil, accumulative, quizWide)
 	if got.Mode != NegativeMarkAccumulative || got.WrongsPerPoint != 4 {
 		t.Fatalf("rule default accumulative should clamp option count, got %+v", got)
 	}
 
+	// accumulative with an explicit wrongs_per_point uses it verbatim.
+	accumulativeExplicit := &NegativeMarkConfig{Mode: NegativeMarkAccumulative, WrongsPerPoint: 5}
+	got = ResolveNegativeMark(q, nil, accumulativeExplicit, quizWide)
+	if got.Mode != NegativeMarkAccumulative || got.WrongsPerPoint != 5 {
+		t.Fatalf("explicit accumulative wrongs should win over derivation, got %+v", got)
+	}
+
 	// Two-option question clamps up to the minimum of 2.
 	twoOpt := Question{Options: []QuestionOption{{ID: "a"}, {ID: "b"}}}
-	got = ResolveNegativeMark(twoOpt, nil, &accumulative, quizWide)
+	got = ResolveNegativeMark(twoOpt, nil, accumulative, quizWide)
 	if got.WrongsPerPoint != 2 {
 		t.Fatalf("accumulative should clamp to 2 min, got %+v", got)
 	}
 
 	// Per-question override beats the rule default.
 	override := &QuizQuestionNegativeOverride{QuestionID: qid, Mode: NegativeMarkPerWrong, NegativeValue: 0.5}
-	got = ResolveNegativeMark(q, override, &forceNone, quizWide)
+	got = ResolveNegativeMark(q, override, forceNone, quizWide)
 	if got.Mode != NegativeMarkPerWrong || got.NegativeValue != 0.5 {
 		t.Fatalf("override should beat rule default, got %+v", got)
 	}

@@ -42,9 +42,13 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
+import { cn } from "@/lib/utils"
 
 const NEGATIVE_MODES = ["none", "per_wrong", "accumulative"] as const
 type NegativeMode = (typeof NEGATIVE_MODES)[number]
+
+// Modes that require an explicit penalty value from the user.
+const NEGATIVE_VALUE_MODES: NegativeMode[] = ["per_wrong", "accumulative"]
 
 // The negative-marking default for a whole selection. "default" keeps each
 // question's own setting; a mode becomes the rule-wide default sent to the
@@ -66,6 +70,9 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
   const [selected, setSelected] = useState<Record<string, boolean>>({})
   const [randomCount, setRandomCount] = useState<number>(5)
   const [negDefault, setNegDefault] = useState<NegativeDefault>("default")
+  // Explicit penalty value for the rule-wide default (per_wrong / accumulative).
+  // Held as a string so the field can be empty and validated inline.
+  const [negValue, setNegValue] = useState<string>("")
 
   useEffect(() => {
     if (open) {
@@ -73,8 +80,28 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
       setSelected({})
       setRandomCount(5)
       setNegDefault("default")
+      setNegValue("")
     }
   }, [open])
+
+  // Switching mode resets the value: hidden modes clear it, and per_wrong ↔
+  // accumulative carry different units so a stale number would mislead.
+  const changeNegDefault = (value: NegativeDefault) => {
+    setNegDefault(value)
+    setNegValue("")
+  }
+
+  const showNegValue =
+    negDefault !== "default" && NEGATIVE_VALUE_MODES.includes(negDefault)
+  const negValueError: "required" | "positive" | "range" | null = (() => {
+    if (!showNegValue) return null
+    if (negValue.trim() === "") return "required"
+    const n = Number(negValue)
+    if (Number.isNaN(n) || n <= 0) return "positive"
+    if (negDefault === "accumulative" && (!Number.isInteger(n) || n < 2 || n > 5))
+      return "range"
+    return null
+  })()
 
   const { data: rulesData, isLoading: rulesLoading } = useGetQuizzesIdRules(
     quizId ?? "",
@@ -121,9 +148,14 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
     .map(([k]) => k)
 
   const negativeDefaultMode = negDefault === "default" ? undefined : negDefault
+  // The single value input maps to a different backend field per mode.
+  const negativeDefaultValue =
+    negDefault === "per_wrong" ? Number(negValue) : undefined
+  const negativeDefaultWrongsPerPoint =
+    negDefault === "accumulative" ? Number(negValue) : undefined
 
   const addManualRule = () => {
-    if (!quizId || !bankId || selectedIds.length === 0) return
+    if (!quizId || !bankId || selectedIds.length === 0 || negValueError) return
     createRule.mutate({
       id: quizId,
       data: {
@@ -133,12 +165,14 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
         count: selectedIds.length,
         is_dynamic: false,
         negative_default_mode: negativeDefaultMode,
+        negative_default_value: negativeDefaultValue,
+        negative_default_wrongs_per_point: negativeDefaultWrongsPerPoint,
       },
     })
   }
 
   const addRandomRule = () => {
-    if (!quizId || !bankId || randomCount <= 0) return
+    if (!quizId || !bankId || randomCount <= 0 || negValueError) return
     createRule.mutate({
       id: quizId,
       data: {
@@ -147,6 +181,8 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
         count: randomCount,
         is_dynamic: true,
         negative_default_mode: negativeDefaultMode,
+        negative_default_value: negativeDefaultValue,
+        negative_default_wrongs_per_point: negativeDefaultWrongsPerPoint,
       },
     })
   }
@@ -227,7 +263,13 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
                   <FieldLabel>{t("admin.quizzes.questions.bank")}</FieldLabel>
                   <BankPicker value={bankId} onChange={setBankId} />
                 </Field>
-                <NegativeDefaultField value={negDefault} onChange={setNegDefault} />
+                <NegativeDefaultField
+                  value={negDefault}
+                  onChange={changeNegDefault}
+                  numberValue={negValue}
+                  onNumberValueChange={setNegValue}
+                  error={negValueError}
+                />
                 {bankId && (
                   <Field>
                     <FieldLabel className="flex items-center justify-between">
@@ -272,7 +314,12 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
                   <Button
                     type="button"
                     onClick={addManualRule}
-                    disabled={!bankId || selectedIds.length === 0 || createRule.isPending}
+                    disabled={
+                      !bankId ||
+                      selectedIds.length === 0 ||
+                      !!negValueError ||
+                      createRule.isPending
+                    }
                   >
                     {t("admin.quizzes.questions.addManual")}
                   </Button>
@@ -286,7 +333,13 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
                   <FieldLabel>{t("admin.quizzes.questions.bank")}</FieldLabel>
                   <BankPicker value={bankId} onChange={setBankId} />
                 </Field>
-                <NegativeDefaultField value={negDefault} onChange={setNegDefault} />
+                <NegativeDefaultField
+                  value={negDefault}
+                  onChange={changeNegDefault}
+                  numberValue={negValue}
+                  onNumberValueChange={setNegValue}
+                  error={negValueError}
+                />
                 <Field>
                   <FieldLabel>{t("admin.quizzes.questions.count")}</FieldLabel>
                   <Input
@@ -303,7 +356,9 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
                   <Button
                     type="button"
                     onClick={addRandomRule}
-                    disabled={!bankId || randomCount <= 0 || createRule.isPending}
+                    disabled={
+                      !bankId || randomCount <= 0 || !!negValueError || createRule.isPending
+                    }
                   >
                     {t("admin.quizzes.questions.addRandom")}
                   </Button>
@@ -320,14 +375,32 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
 interface NegativeDefaultFieldProps {
   value: NegativeDefault
   onChange: (value: NegativeDefault) => void
+  numberValue: string
+  onNumberValueChange: (value: string) => void
+  error: "required" | "positive" | "range" | null
 }
 
 // One negative-marking default for the whole selection. Applies to every
-// multiple-choice question added from the bank — manual and random alike. The
-// backend derives each question's penalty from its option count, so there are
-// no numeric inputs here.
-function NegativeDefaultField({ value, onChange }: NegativeDefaultFieldProps) {
+// multiple-choice question added from the bank — manual and random alike. For
+// per_wrong / accumulative the user enters the penalty value; the field below
+// collapses smoothly for the modes that don't take one.
+function NegativeDefaultField({
+  value,
+  onChange,
+  numberValue,
+  onNumberValueChange,
+  error,
+}: NegativeDefaultFieldProps) {
   const { t } = useTranslation()
+  const showValue = value === "per_wrong" || value === "accumulative"
+  const isAccumulative = value === "accumulative"
+  const valueLabel = isAccumulative
+    ? t("admin.questions.form.negativeMark.wrongsPerPoint")
+    : t("admin.questions.form.negativeMark.negativeValue")
+  const valueHint = isAccumulative
+    ? t("admin.questions.form.negativeMark.accumulativeHint")
+    : t("admin.questions.form.negativeMark.perWrongHint")
+
   return (
     <Field>
       <FieldLabel>{t("admin.quizzes.questions.negativeDefault.label")}</FieldLabel>
@@ -355,6 +428,37 @@ function NegativeDefaultField({ value, onChange }: NegativeDefaultFieldProps) {
       <p className="text-muted-foreground text-xs">
         {t("admin.quizzes.questions.negativeDefault.hint")}
       </p>
+
+      <div
+        className={cn(
+          "grid transition-all duration-200 ease-out",
+          showValue
+            ? "mt-1 grid-rows-[1fr] opacity-100"
+            : "grid-rows-[0fr] opacity-0"
+        )}
+      >
+        <div className="overflow-hidden">
+          <FieldLabel htmlFor="neg-default-value">{valueLabel}</FieldLabel>
+          <Input
+            id="neg-default-value"
+            type="number"
+            inputMode="decimal"
+            min={isAccumulative ? 2 : 0}
+            max={isAccumulative ? 5 : undefined}
+            step={isAccumulative ? 1 : "any"}
+            value={numberValue}
+            aria-invalid={!!error}
+            onChange={(e) => onNumberValueChange(e.target.value)}
+          />
+          {error ? (
+            <p className="text-destructive text-xs">
+              {t(`admin.quizzes.questions.negativeDefault.errors.${error}`)}
+            </p>
+          ) : (
+            <p className="text-muted-foreground text-xs">{valueHint}</p>
+          )}
+        </div>
+      </div>
     </Field>
   )
 }

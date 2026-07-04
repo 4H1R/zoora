@@ -102,23 +102,31 @@ func NormalizeNegativeMark(mode NegativeMarkMode, value float64, wrongsPerPoint 
 // attempt, applying the priority: per-Q override > rule default > question
 // default > quiz-wide > none. The Fraction field is set for display.
 //
-// ruleDefault is the rule-wide default (Layer 2-bank). Being a nullable mode
-// with no stored numbers, its per_wrong/accumulative variants derive their
-// numbers from the question's option count; "none" forces no penalty even when
-// the question carries its own default. nil falls through to the question.
-func ResolveNegativeMark(q Question, override *QuizQuestionNegativeOverride, ruleDefault *NegativeMarkMode, quizWide NegativeMarkConfig) NegativeMarkConfig {
+// ruleDefault is the rule-wide default (Layer 2-bank). Its per_wrong/accumulative
+// variants use the explicit number carried on the config when set (>0), and
+// otherwise derive it from the question's option count; "none" forces no penalty
+// even when the question carries its own default. nil falls through to the question.
+func ResolveNegativeMark(q Question, override *QuizQuestionNegativeOverride, ruleDefault *NegativeMarkConfig, quizWide NegativeMarkConfig) NegativeMarkConfig {
 	var cfg NegativeMarkConfig
 	switch {
 	case override != nil && override.Mode != NegativeMarkNone && override.Mode.Valid():
 		cfg = NegativeMarkConfig{Mode: override.Mode, NegativeValue: override.NegativeValue, WrongsPerPoint: override.WrongsPerPoint}
-	case ruleDefault != nil && ruleDefault.Valid():
-		switch *ruleDefault {
+	case ruleDefault != nil && ruleDefault.Mode.Valid():
+		switch ruleDefault.Mode {
 		case NegativeMarkNone:
 			return NegativeMarkConfig{Mode: NegativeMarkNone}
 		case NegativeMarkPerWrong:
-			cfg = NegativeMarkConfig{Mode: NegativeMarkPerWrong, NegativeValue: FractionFor(len(q.Options))}
+			value := ruleDefault.NegativeValue
+			if value <= 0 {
+				value = FractionFor(len(q.Options))
+			}
+			cfg = NegativeMarkConfig{Mode: NegativeMarkPerWrong, NegativeValue: value}
 		case NegativeMarkAccumulative:
-			cfg = NegativeMarkConfig{Mode: NegativeMarkAccumulative, WrongsPerPoint: clampInt(len(q.Options), 2, 5)}
+			wpp := ruleDefault.WrongsPerPoint
+			if wpp < 2 || wpp > 5 {
+				wpp = clampInt(len(q.Options), 2, 5)
+			}
+			cfg = NegativeMarkConfig{Mode: NegativeMarkAccumulative, WrongsPerPoint: wpp}
 		}
 	case q.NegativeMarkMode != NegativeMarkNone && q.NegativeMarkMode.Valid():
 		cfg = NegativeMarkConfig{Mode: q.NegativeMarkMode, NegativeValue: q.NegativeValue, WrongsPerPoint: q.WrongsPerPoint}

@@ -74,12 +74,34 @@ type QuizRule struct {
 	// NegativeDefaultMode is the rule-wide negative-marking default (Layer 2-bank)
 	// applied to every choice question this rule contributes — manual and random
 	// alike. nil keeps each question's own default; "none" forces no penalty.
-	// "per_wrong"/"accumulative" derive their numbers per question from its option
-	// count at grade time, so no numeric fields are stored here.
 	NegativeDefaultMode *NegativeMarkMode `gorm:"type:varchar(20)" json:"negative_default_mode,omitempty"`
+
+	// NegativeDefaultValue (per_wrong) and NegativeDefaultWrongsPerPoint
+	// (accumulative) are the optional explicit numbers for the rule-wide default.
+	// nil means "derive per question from its option count at grade time"; a set
+	// value applies as-is to every choice question this rule contributes.
+	NegativeDefaultValue          *float64 `gorm:"type:double precision" json:"negative_default_value,omitempty"`
+	NegativeDefaultWrongsPerPoint *int     `gorm:"type:int" json:"negative_default_wrongs_per_point,omitempty"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// NegativeDefaultConfig builds the rule-wide default as a NegativeMarkConfig, or
+// nil when the rule keeps each question's own default. A zero numeric field
+// signals "derive from the question's option count" to ResolveNegativeMark.
+func (r QuizRule) NegativeDefaultConfig() *NegativeMarkConfig {
+	if r.NegativeDefaultMode == nil {
+		return nil
+	}
+	cfg := &NegativeMarkConfig{Mode: *r.NegativeDefaultMode}
+	if r.NegativeDefaultValue != nil {
+		cfg.NegativeValue = *r.NegativeDefaultValue
+	}
+	if r.NegativeDefaultWrongsPerPoint != nil {
+		cfg.WrongsPerPoint = *r.NegativeDefaultWrongsPerPoint
+	}
+	return cfg
 }
 
 type QuizRoom struct {
@@ -125,6 +147,10 @@ type CreateQuizRuleDTO struct {
 	IsDynamic           bool                           `json:"is_dynamic"`
 	NegativeOverrides   []QuizQuestionNegativeOverride `json:"negative_overrides"`
 	NegativeDefaultMode *NegativeMarkMode              `json:"negative_default_mode"`
+	// Optional explicit numbers for the rule-wide default; nil derives from each
+	// question's option count. per_wrong uses Value, accumulative uses WrongsPerPoint.
+	NegativeDefaultValue          *float64 `json:"negative_default_value"`
+	NegativeDefaultWrongsPerPoint *int     `json:"negative_default_wrongs_per_point"`
 }
 
 type UpdateQuizRuleDTO struct {
@@ -135,6 +161,10 @@ type UpdateQuizRuleDTO struct {
 	IsDynamic           *bool                          `json:"is_dynamic"`
 	NegativeOverrides   []QuizQuestionNegativeOverride `json:"negative_overrides"`
 	NegativeDefaultMode *NegativeMarkMode              `json:"negative_default_mode"`
+	// Optional explicit numbers for the rule-wide default; nil derives from each
+	// question's option count. per_wrong uses Value, accumulative uses WrongsPerPoint.
+	NegativeDefaultValue          *float64 `json:"negative_default_value"`
+	NegativeDefaultWrongsPerPoint *int     `json:"negative_default_wrongs_per_point"`
 }
 
 type CreateQuizRoomDTO struct {

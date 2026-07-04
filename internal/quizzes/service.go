@@ -343,18 +343,21 @@ func (s *service) CreateRule(ctx context.Context, quizID uuid.UUID, dto domain.C
 	if err != nil {
 		return nil, err
 	}
-	if err := validateRuleNegativeDefault(dto.NegativeDefaultMode); err != nil {
+	if err := validateRuleNegativeDefault(dto.NegativeDefaultMode, dto.NegativeDefaultValue, dto.NegativeDefaultWrongsPerPoint); err != nil {
 		return nil, err
 	}
+	ndValue, ndWrongs := normalizeRuleNegativeDefault(dto.NegativeDefaultMode, dto.NegativeDefaultValue, dto.NegativeDefaultWrongsPerPoint)
 	rule := &domain.QuizRule{
-		QuizID:              quizID,
-		Type:                dto.Type,
-		BankID:              dto.BankID,
-		QuestionIDs:         questionIDs,
-		Count:               dto.Count,
-		IsDynamic:           dto.IsDynamic,
-		NegativeOverrides:   overrides,
-		NegativeDefaultMode: dto.NegativeDefaultMode,
+		QuizID:                        quizID,
+		Type:                          dto.Type,
+		BankID:                        dto.BankID,
+		QuestionIDs:                   questionIDs,
+		Count:                         dto.Count,
+		IsDynamic:                     dto.IsDynamic,
+		NegativeOverrides:             overrides,
+		NegativeDefaultMode:           dto.NegativeDefaultMode,
+		NegativeDefaultValue:          ndValue,
+		NegativeDefaultWrongsPerPoint: ndWrongs,
 	}
 	if err := s.rules.Create(ctx, rule); err != nil {
 		return nil, err
@@ -427,10 +430,11 @@ func (s *service) UpdateRule(ctx context.Context, id uuid.UUID, dto domain.Updat
 		rule.NegativeOverrides = overrides
 	}
 	if dto.NegativeDefaultMode != nil {
-		if err := validateRuleNegativeDefault(dto.NegativeDefaultMode); err != nil {
+		if err := validateRuleNegativeDefault(dto.NegativeDefaultMode, dto.NegativeDefaultValue, dto.NegativeDefaultWrongsPerPoint); err != nil {
 			return nil, err
 		}
 		rule.NegativeDefaultMode = dto.NegativeDefaultMode
+		rule.NegativeDefaultValue, rule.NegativeDefaultWrongsPerPoint = normalizeRuleNegativeDefault(dto.NegativeDefaultMode, dto.NegativeDefaultValue, dto.NegativeDefaultWrongsPerPoint)
 	}
 	if err := s.rules.Update(ctx, rule); err != nil {
 		return nil, err
@@ -441,16 +445,45 @@ func (s *service) UpdateRule(ctx context.Context, id uuid.UUID, dto domain.Updat
 	return rule, nil
 }
 
-// validateRuleNegativeDefault accepts only nil (keep question default) or one
-// of the valid modes (none/per_wrong/accumulative) for a rule-wide default.
-func validateRuleNegativeDefault(mode *domain.NegativeMarkMode) error {
+// validateRuleNegativeDefault accepts nil (keep question default) or one of the
+// valid modes (none/per_wrong/accumulative) for a rule-wide default. The numeric
+// fields are optional (nil derives from option count), but when supplied they
+// must be in range for their mode: per_wrong value > 0, accumulative wrongs 2-5.
+func validateRuleNegativeDefault(mode *domain.NegativeMarkMode, value *float64, wrongsPerPoint *int) error {
 	if mode == nil {
 		return nil
 	}
 	if !mode.Valid() {
 		return domain.NewValidationError(map[string]string{"negative_default_mode": "invalid mode"})
 	}
+	switch *mode {
+	case domain.NegativeMarkPerWrong:
+		if value != nil && *value <= 0 {
+			return domain.NewValidationError(map[string]string{"negative_default_value": "must be greater than 0"})
+		}
+	case domain.NegativeMarkAccumulative:
+		if wrongsPerPoint != nil && (*wrongsPerPoint < 2 || *wrongsPerPoint > 5) {
+			return domain.NewValidationError(map[string]string{"negative_default_wrongs_per_point": "must be between 2 and 5"})
+		}
+	}
 	return nil
+}
+
+// normalizeRuleNegativeDefault keeps only the numeric field relevant to the mode
+// so stored rows stay clean: per_wrong keeps value, accumulative keeps wrongs,
+// none/nil clears both.
+func normalizeRuleNegativeDefault(mode *domain.NegativeMarkMode, value *float64, wrongsPerPoint *int) (*float64, *int) {
+	if mode == nil {
+		return nil, nil
+	}
+	switch *mode {
+	case domain.NegativeMarkPerWrong:
+		return value, nil
+	case domain.NegativeMarkAccumulative:
+		return nil, wrongsPerPoint
+	default:
+		return nil, nil
+	}
 }
 
 // normalizeNegativeOverrides normalizes and validates each per-question

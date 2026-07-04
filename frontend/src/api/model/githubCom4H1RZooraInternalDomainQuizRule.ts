@@ -22,10 +22,16 @@ export interface GithubCom4H1RZooraInternalDomainQuizRule {
      * NegativeDefaultMode is the rule-wide negative-marking default (Layer 2-bank)
      * applied to every choice question this rule contributes — manual and random
      * alike. nil keeps each question's own default; "none" forces no penalty.
-     * "per_wrong"/"accumulative" derive their numbers per question from its option
-     * count at grade time, so no numeric fields are stored here.
      */
   negative_default_mode?: GithubCom4H1RZooraInternalDomainNegativeMarkMode;
+  /**
+     * NegativeDefaultValue (per_wrong) and NegativeDefaultWrongsPerPoint
+     * (accumulative) are the optional explicit numbers for the rule-wide default.
+     * nil means "derive per question from its option count at grade time"; a set
+     * value applies as-is to every choice question this rule contributes.
+     */
+  negative_default_value?: number;
+  negative_default_wrongs_per_point?: number;
   /** NegativeOverrides holds per-question negative-marking overrides (Layer 2a). */
   negative_overrides?: GithubCom4H1RZooraInternalDomainQuizQuestionNegativeOverride[];
   question_ids?: string[];
