@@ -26,17 +26,21 @@ CREATE TABLE live_participants (
     live_room_id           UUID NOT NULL,
     user_id                UUID NOT NULL,
     identity               VARCHAR(255) NOT NULL,
+    role                   VARCHAR(20) NOT NULL DEFAULT 'viewer',
+    hand_raised_at         TIMESTAMPTZ,
     joined_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     left_at                TIMESTAMPTZ,
     total_duration_seconds INT NOT NULL DEFAULT 0,
     created_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_live_participants_room FOREIGN KEY (live_room_id) REFERENCES live_rooms (id) ON DELETE CASCADE,
-    CONSTRAINT fk_live_participants_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    CONSTRAINT fk_live_participants_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    CONSTRAINT chk_live_participants_role CHECK (role IN ('host', 'presenter', 'viewer'))
 );
 
 CREATE INDEX idx_live_participants_room_id ON live_participants (live_room_id);
 CREATE INDEX idx_live_participants_user_id ON live_participants (user_id);
 CREATE INDEX idx_live_participants_active ON live_participants (live_room_id, user_id) WHERE left_at IS NULL;
+CREATE INDEX idx_live_participants_role ON live_participants (live_room_id, role);
 
 CREATE TABLE live_recordings (
     id           UUID PRIMARY KEY DEFAULT uuidv7(),

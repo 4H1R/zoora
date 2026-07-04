@@ -20,7 +20,3 @@ CREATE TABLE role_permissions (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT role_permissions_role_id_permission_id_unique UNIQUE (role_id, permission_id)
 );
-
--- Single role per user via FK on users table.
-ALTER TABLE users ADD COLUMN role_id UUID REFERENCES roles (id) ON DELETE SET NULL;
-CREATE INDEX idx_users_role_id ON users (role_id);

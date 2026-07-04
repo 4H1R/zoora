@@ -3,6 +3,7 @@ CREATE TABLE users (
     name VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
     organization_id UUID,
+    role_id UUID,
     username VARCHAR(255) NOT NULL,
     is_admin BOOL NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -10,10 +11,15 @@ CREATE TABLE users (
     deleted_at TIMESTAMPTZ,
     disabled_at TIMESTAMPTZ,
     disabled_by UUID,
-    disabled_reason TEXT
+    disabled_reason TEXT,
+    CONSTRAINT fk_users_organization_id FOREIGN KEY (organization_id) REFERENCES organizations (id) ON DELETE SET NULL,
+    CONSTRAINT fk_users_role_id FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE SET NULL
 );
 
 CREATE INDEX idx_users_deleted_at ON users (deleted_at);
+
+-- Single role per user via FK.
+CREATE INDEX idx_users_role_id ON users (role_id);
 
 -- Backs per-org member counts: COUNT(*) WHERE organization_id = ? AND deleted_at IS NULL.
 CREATE INDEX idx_users_organization_id ON users (organization_id) WHERE deleted_at IS NULL;

@@ -15,6 +15,3 @@ CREATE INDEX idx_organizations_deleted_at ON organizations (deleted_at);
 CREATE UNIQUE INDEX idx_organizations_slug
     ON organizations (slug)
     WHERE deleted_at IS NULL;
-
-ALTER TABLE users
-    ADD CONSTRAINT fk_users_organization_id FOREIGN KEY (organization_id) REFERENCES organizations (id) ON DELETE SET NULL;
