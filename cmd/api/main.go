@@ -164,7 +164,7 @@ func main() {
 		liveRoomRepo, liveParticipantRepo, liveRecordingRepo, liveWhiteboardRepo,
 		classSessionRepo, classRepo, classMemberRepo,
 		chatService, transactor,
-		livekitClient, queueClient, log,
+		livekitClient, queueClient, cfg.LiveRoomHostGracePeriod, log,
 	)
 	offlineService := offlines.NewService(offlineRoomRepo, offlineViewRepo, classSessionRepo, classRepo, classMemberRepo, log)
 	practiceService := practices.NewService(practiceRoomRepo, practiceSubRepo, classSessionRepo, classRepo, classMemberRepo, log)
@@ -203,6 +203,12 @@ func main() {
 	// Caddy on-demand TLS gate: only mint certs for real tenant subdomains.
 	router.GET("/internal/tls-check", middleware.OnDemandTLSCheck(redisClient, orgRepo, cfg.BaseDomain, cfg.AdminSubdomain))
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// LiveKit server webhooks: unauthenticated + non-tenant-scoped. Auth is the
+	// signed Authorization header (verified in the handler); rooms resolve by
+	// globally-unique LiveKit room name. Must sit outside the tenant group.
+	liveWebhookHandler := livesessions.NewWebhookHandler(livekitClient, liveSessionService, log)
+	liveWebhookHandler.RegisterRoutes(router.Group("/webhooks"))
 
 	v1 := router.Group("/api/v1", tenantMiddleware)
 

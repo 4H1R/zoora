@@ -160,6 +160,17 @@ func (r *roomRepository) FindActiveRoomsWithStaleHost(ctx context.Context, stale
 	return rooms, nil
 }
 
+func (r *roomRepository) FindByLiveKitRoomName(ctx context.Context, name string) (*domain.LiveRoom, error) {
+	var room domain.LiveRoom
+	if err := r.baseQuery(ctx).First(&room, "livekit_room_name = ?", name).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("livesessions.roomRepository.FindByLiveKitRoomName: %w", err)
+	}
+	return &room, nil
+}
+
 func (r *roomRepository) AdminList(ctx context.Context, q domain.AdminListLiveRoomsQuery) ([]domain.LiveRoom, int64, error) {
 	db := database.DB(ctx, r.db)
 	base := db.Model(&domain.LiveRoom{}).

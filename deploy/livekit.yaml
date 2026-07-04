@@ -6,3 +6,12 @@ rtc:
   use_external_ip: true
 redis:
   address: redis:6379
+# Server webhooks drive the no-host auto-close (participant_left/joined,
+# room_finished). Delivered over the internal docker network straight to the
+# API container, so no Caddy/TLS routing is involved.
+# api_key MUST equal LIVEKIT_API_KEY in .env.prod — LiveKit signs each webhook
+# with it and the API verifies against that same key/secret pair.
+webhook:
+  api_key: CHANGE_ME_KEY
+  urls:
+    - http://api:8080/webhooks/livekit

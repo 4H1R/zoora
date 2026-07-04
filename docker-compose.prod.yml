@@ -98,26 +98,30 @@ services:
     #   - traefik.http.routers.api.tls=true
     #   - traefik.http.services.api.loadbalancer.server.port=8080
 
-  # worker: disabled for now — no task is enqueued and no scheduler exists,
-  # so the only registered handler (livesession:auto-close) never fires.
-  # Re-enable once an enqueue site or Asynq scheduler is added.
-  # worker:
-  #   image: zoora-backend:latest
-  #   command: ["worker"]
-  #   restart: unless-stopped
-  #   env_file: [.env.prod]
-  #   environment:
-  #     ENVIRONMENT: production
-  #     DATABASE_URL: "postgres://${DB_USERNAME}:${DB_PASSWORD}@pgsql:5432/${DB_DATABASE}?sslmode=disable"
-  #     REDIS_URL: "redis://redis:6379"
-  #     LIVEKIT_HOST: "http://livekit:7880"
-  #     LIVEKIT_PUBLIC_URL: "wss://livekit.${DOMAIN}"
-  #     S3_ENDPOINT: "https://s3.${DOMAIN}"
-  #   depends_on:
-  #     pgsql: {condition: service_healthy}
-  #     redis: {condition: service_healthy}
-  #     migrate: {condition: service_completed_successfully}
-  #   networks: [zoora]
+  # Processes Asynq tasks and runs the periodic scheduler (@every 5m stale-room
+  # auto-close). Required for attendance auto-mark, no-host delayed close, and
+  # stale-room sweep — all enqueue tasks that sit unconsumed without this.
+  worker:
+    image: zoora-backend:latest
+    command: ["worker"]
+    restart: unless-stopped
+    env_file: [.env.prod]
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: "postgres://${DB_USERNAME}:${DB_PASSWORD}@pgsql:5432/${DB_DATABASE}?sslmode=disable"
+      REDIS_URL: "redis://redis:6379"
+      LIVEKIT_HOST: "http://livekit:7880"
+      LIVEKIT_PUBLIC_URL: "wss://livekit.${DOMAIN}"
+      S3_ENDPOINT: "http://rustfs:9000"
+      S3_PUBLIC_ENDPOINT: "https://s3.${DOMAIN}"
+      BASE_DOMAIN: "${DOMAIN}"
+      ADMIN_SUBDOMAIN: "admin"
+    depends_on:
+      pgsql: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+      api: {condition: service_started}
+    networks: [zoora]
 
   migrate:
     image: migrate/migrate:latest

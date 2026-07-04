@@ -190,6 +190,7 @@ type LiveRoomRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, scope LiveRoomListScope, p ListParams) ([]LiveRoom, int64, error)
 	FindActiveRoomsWithStaleHost(ctx context.Context, staleDuration time.Duration) ([]LiveRoom, error)
+	FindByLiveKitRoomName(ctx context.Context, name string) (*LiveRoom, error)
 	ListByClassSession(ctx context.Context, sessionID uuid.UUID) ([]LiveRoom, error)
 	AdminList(ctx context.Context, q AdminListLiveRoomsQuery) ([]LiveRoom, int64, error)
 	HardDelete(ctx context.Context, id uuid.UUID) error
@@ -272,4 +273,15 @@ type LiveSessionService interface {
 	AdminHardDelete(ctx context.Context, roomID uuid.UUID) error
 
 	AutoCloseStaleRooms(ctx context.Context) error
+
+	// OnLiveKitEvent reacts to a verified LiveKit webhook. The HTTP handler
+	// verifies the signature and passes only the event type and LiveKit room
+	// name so this interface stays free of LiveKit types. Drives the
+	// event-driven, no-host auto-close (grace-period timer arm/cancel) and
+	// finalizes rooms LiveKit tears down on its own empty_timeout.
+	OnLiveKitEvent(ctx context.Context, eventType, livekitRoomName string) error
+	// CloseRoomIfNoHost is the delayed task target: it closes the room only if
+	// LiveKit confirms no host is still present, so a host returning within the
+	// grace window keeps the room alive.
+	CloseRoomIfNoHost(ctx context.Context, roomID uuid.UUID) error
 }

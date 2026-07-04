@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	lkproto "github.com/livekit/protocol/livekit"
+	"github.com/livekit/protocol/webhook"
 
 	"github.com/4H1R/zoora/internal/domain"
 	lk "github.com/4H1R/zoora/internal/platform/livekit"
@@ -45,7 +46,10 @@ type service struct {
 	tx           domain.Transactor
 	livekit      liveKitClient
 	queue        *queue.Client
-	logger       *slog.Logger
+	// hostGracePeriod is how long a room may stay open after its last host
+	// leaves before the delayed close task (and the safety-net sweep) closes it.
+	hostGracePeriod time.Duration
+	logger          *slog.Logger
 }
 
 func NewService(
@@ -60,8 +64,14 @@ func NewService(
 	tx domain.Transactor,
 	livekit *lk.Client,
 	queueClient *queue.Client,
+	hostGracePeriod time.Duration,
 	logger *slog.Logger,
 ) domain.LiveSessionService {
+	// Guard against a zero/unset grace period closing rooms the instant their
+	// host blips; fall back to the documented 15-minute default.
+	if hostGracePeriod <= 0 {
+		hostGracePeriod = 15 * time.Minute
+	}
 	// Avoid storing a typed nil in the liveKitClient interface — a typed nil
 	// satisfies the interface (non-nil interface) and bypasses the s.livekit != nil
 	// guards used throughout the service.
@@ -78,10 +88,11 @@ func NewService(
 		classes:      classes,
 		members:      members,
 		chatSvc:      chatSvc,
-		tx:           tx,
-		livekit:      lkClient,
-		queue:        queueClient,
-		logger:       logger,
+		tx:              tx,
+		livekit:         lkClient,
+		queue:           queueClient,
+		hostGracePeriod: hostGracePeriod,
+		logger:          logger,
 	}
 }
 
@@ -655,13 +666,30 @@ func (s *service) ListParticipants(ctx context.Context, roomID uuid.UUID, q doma
 	return s.participants.ListByRoom(ctx, roomID, q)
 }
 
+// AutoCloseStaleRooms is the periodic safety net for missed LiveKit webhooks.
+// It finds active rooms whose host heartbeat has gone stale past the grace
+// period, then — critically — cross-checks LiveKit before closing so a stale
+// heartbeat alone can never tear down a room that still has a host connected.
 func (s *service) AutoCloseStaleRooms(ctx context.Context) error {
-	rooms, err := s.rooms.FindActiveRoomsWithStaleHost(ctx, 1*time.Hour)
+	rooms, err := s.rooms.FindActiveRoomsWithStaleHost(ctx, s.hostGracePeriod)
 	if err != nil {
 		return err
 	}
 	for _, room := range rooms {
 		r := room
+		present, err := s.hostPresent(ctx, &r)
+		if err != nil {
+			s.logger.Error("auto-close: host presence check failed", "room_id", r.ID.String(), "error", err)
+			continue
+		}
+		if present {
+			// Host is connected but not heartbeating (e.g. client-side heartbeat
+			// stalled). Refresh last-seen so we don't re-scan it every sweep.
+			now := time.Now()
+			r.HostLastSeenAt = &now
+			_ = s.rooms.Update(ctx, &r)
+			continue
+		}
 		if _, err := s.endRoomInternal(ctx, &r); err != nil {
 			s.logger.Error("auto-close failed",
 				"room_id", r.ID.String(),
@@ -671,6 +699,182 @@ func (s *service) AutoCloseStaleRooms(ctx context.Context) error {
 		}
 		s.logger.Info("auto-closed stale room", "room_id", r.ID.String())
 	}
+	return nil
+}
+
+// closeTaskID is the room-scoped, deterministic Asynq task ID for the delayed
+// no-host close. Deterministic so re-arming is idempotent (ErrTaskIDConflict)
+// and so a returning host can cancel the exact pending task.
+func closeTaskID(roomID uuid.UUID) string {
+	return "livesession-close-" + roomID.String()
+}
+
+// hostPresent asks LiveKit (the source of truth for real-time presence) whether
+// any connected participant carries the host role in their metadata.
+func (s *service) hostPresent(ctx context.Context, room *domain.LiveRoom) (bool, error) {
+	if s.livekit == nil {
+		return false, nil
+	}
+	parts, err := s.livekit.ListParticipants(ctx, room.LiveKitRoomName)
+	if err != nil {
+		return false, fmt.Errorf("livesessions.service.hostPresent: %w", err)
+	}
+	for _, p := range parts {
+		if p.Metadata == "" {
+			continue
+		}
+		var meta struct {
+			Role string `json:"role"`
+		}
+		if json.Unmarshal([]byte(p.Metadata), &meta) == nil &&
+			meta.Role == string(domain.ParticipantRoleHost) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// armCloseIfNoHost schedules the delayed no-host close for a room. Idempotent:
+// if a timer is already armed (same deterministic task ID) it is left running
+// so the grace window keeps counting from the first host departure.
+func (s *service) armCloseIfNoHost(ctx context.Context, room *domain.LiveRoom) {
+	if s.queue == nil {
+		return
+	}
+	payload, err := json.Marshal(domain.LiveSessionCloseIfNoHostPayload{RoomID: room.ID})
+	if err != nil {
+		s.logger.Error("arm close-if-no-host: marshal", "room_id", room.ID.String(), "error", err)
+		return
+	}
+	task := asynq.NewTask(domain.TypeLiveSessionCloseIfNoHost, payload)
+	_, err = s.queue.Enqueue(task,
+		asynq.TaskID(closeTaskID(room.ID)),
+		asynq.Queue("default"),
+		asynq.ProcessIn(s.hostGracePeriod),
+	)
+	if err != nil && !errors.Is(err, asynq.ErrTaskIDConflict) {
+		s.logger.Error("arm close-if-no-host: enqueue", "room_id", room.ID.String(), "error", err)
+		return
+	}
+	s.logger.Info("armed no-host close", "room_id", room.ID.String(), "grace", s.hostGracePeriod.String())
+}
+
+// disarmCloseIfNoHost cancels a pending no-host close (best effort) when a host
+// reconnects within the grace window.
+func (s *service) disarmCloseIfNoHost(room *domain.LiveRoom) {
+	if s.queue == nil {
+		return
+	}
+	if err := s.queue.Cancel("default", closeTaskID(room.ID)); err != nil {
+		s.logger.Error("disarm close-if-no-host", "room_id", room.ID.String(), "error", err)
+		return
+	}
+	s.logger.Info("disarmed no-host close", "room_id", room.ID.String())
+}
+
+// OnLiveKitEvent reacts to a verified LiveKit webhook (see interface doc).
+func (s *service) OnLiveKitEvent(ctx context.Context, eventType, livekitRoomName string) error {
+	switch eventType {
+	case webhook.EventParticipantLeft:
+		return s.onParticipantLeft(ctx, livekitRoomName)
+	case webhook.EventParticipantJoined:
+		return s.onParticipantJoined(ctx, livekitRoomName)
+	case webhook.EventRoomFinished:
+		return s.onRoomFinished(ctx, livekitRoomName)
+	default:
+		return nil
+	}
+}
+
+func (s *service) onParticipantLeft(ctx context.Context, lkRoomName string) error {
+	room, err := s.rooms.FindByLiveKitRoomName(ctx, lkRoomName)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil
+		}
+		return err
+	}
+	if room.Status != domain.LiveRoomStatusActive {
+		return nil
+	}
+	present, err := s.hostPresent(ctx, room)
+	if err != nil {
+		return err
+	}
+	if present {
+		return nil
+	}
+	s.armCloseIfNoHost(ctx, room)
+	return nil
+}
+
+func (s *service) onParticipantJoined(ctx context.Context, lkRoomName string) error {
+	room, err := s.rooms.FindByLiveKitRoomName(ctx, lkRoomName)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil
+		}
+		return err
+	}
+	if room.Status != domain.LiveRoomStatusActive {
+		return nil
+	}
+	present, err := s.hostPresent(ctx, room)
+	if err != nil {
+		return err
+	}
+	if present {
+		s.disarmCloseIfNoHost(room)
+	}
+	return nil
+}
+
+func (s *service) onRoomFinished(ctx context.Context, lkRoomName string) error {
+	room, err := s.rooms.FindByLiveKitRoomName(ctx, lkRoomName)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil
+		}
+		return err
+	}
+	if room.Status != domain.LiveRoomStatusActive {
+		return nil
+	}
+	// LiveKit tore the room down itself (its own empty_timeout, or all
+	// participants incl. host disconnected). Finalize our side.
+	if _, err := s.endRoomInternal(ctx, room); err != nil {
+		return err
+	}
+	s.logger.Info("finalized room after livekit room_finished", "room_id", room.ID.String())
+	return nil
+}
+
+// CloseRoomIfNoHost is the delayed-task target: close the room only if LiveKit
+// confirms no host is present. A host who returned within the grace window
+// keeps the room alive.
+func (s *service) CloseRoomIfNoHost(ctx context.Context, roomID uuid.UUID) error {
+	room, err := s.rooms.FindByID(ctx, roomID)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil
+		}
+		return err
+	}
+	if room.Status != domain.LiveRoomStatusActive {
+		return nil
+	}
+	present, err := s.hostPresent(ctx, room)
+	if err != nil {
+		return err
+	}
+	if present {
+		s.logger.Info("no-host close skipped: host present", "room_id", room.ID.String())
+		return nil
+	}
+	if _, err := s.endRoomInternal(ctx, room); err != nil {
+		return err
+	}
+	s.logger.Info("closed room: no host after grace period", "room_id", room.ID.String())
 	return nil
 }
 

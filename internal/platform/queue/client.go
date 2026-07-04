@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -8,8 +9,9 @@ import (
 )
 
 type Client struct {
-	inner  *asynq.Client
-	logger *slog.Logger
+	inner     *asynq.Client
+	inspector *asynq.Inspector
+	logger    *slog.Logger
 }
 
 func NewClient(redisURL string, logger *slog.Logger) (*Client, error) {
@@ -19,9 +21,10 @@ func NewClient(redisURL string, logger *slog.Logger) (*Client, error) {
 	}
 
 	client := asynq.NewClient(opts)
+	inspector := asynq.NewInspector(opts)
 	logger.Info("asynq client initialized")
 
-	return &Client{inner: client, logger: logger}, nil
+	return &Client{inner: client, inspector: inspector, logger: logger}, nil
 }
 
 func (c *Client) Enqueue(task *asynq.Task, opts ...asynq.Option) (*asynq.TaskInfo, error) {
@@ -34,6 +37,22 @@ func (c *Client) Enqueue(task *asynq.Task, opts ...asynq.Option) (*asynq.TaskInf
 	return info, nil
 }
 
+// Cancel removes a pending/scheduled task by ID from the given queue. A task
+// that has already run (or never existed) is treated as success — callers use
+// this to best-effort defuse a scheduled task, so a missing task is the goal
+// state, not an error.
+func (c *Client) Cancel(queue, taskID string) error {
+	err := c.inspector.DeleteTask(queue, taskID)
+	if err == nil || errors.Is(err, asynq.ErrTaskNotFound) || errors.Is(err, asynq.ErrQueueNotFound) {
+		return nil
+	}
+	c.logger.Error("failed to cancel task", "queue", queue, "id", taskID, "error", err)
+	return fmt.Errorf("canceling task %s: %w", taskID, err)
+}
+
 func (c *Client) Close() error {
+	if err := c.inspector.Close(); err != nil {
+		c.logger.Error("failed to close asynq inspector", "error", err)
+	}
 	return c.inner.Close()
 }

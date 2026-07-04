@@ -50,6 +50,11 @@ func (m *mLiveRoomRepo) ListByClassSession(ctx context.Context, sessionID uuid.U
 	res, _ := a.Get(0).([]domain.LiveRoom)
 	return res, a.Error(1)
 }
+func (m *mLiveRoomRepo) FindByLiveKitRoomName(ctx context.Context, name string) (*domain.LiveRoom, error) {
+	a := m.Called(ctx, name)
+	res, _ := a.Get(0).(*domain.LiveRoom)
+	return res, a.Error(1)
+}
 func (m *mLiveRoomRepo) AdminList(ctx context.Context, q domain.AdminListLiveRoomsQuery) ([]domain.LiveRoom, int64, error) {
 	a := m.Called(ctx, q)
 	res, _ := a.Get(0).([]domain.LiveRoom)
