@@ -140,7 +140,7 @@ export function eventLink(
       return { to: "/live/$liveId", params: { liveId: entity } }
     case "quiz":
       return {
-        to: "/org/exams/$quizId/take",
+        to: "/quiz/$quizId",
         params: { quizId: entity },
       }
     case "offline":

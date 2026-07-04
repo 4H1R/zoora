@@ -33,7 +33,7 @@ export function ExamAction({ exam }: { exam: MyExam }) {
   return (
     <div className="flex shrink-0 items-center gap-3">
       {exam.state === "open" && (
-        <Link to="/org/exams/$quizId/take" params={{ quizId: exam.quiz_id! }}>
+        <Link to="/quiz/$quizId" params={{ quizId: exam.quiz_id! }}>
           <Button size="sm">{t("org.exams.start")}</Button>
         </Link>
       )}

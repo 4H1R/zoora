@@ -17,6 +17,7 @@ import { Route as GuestLoginRouteImport } from './routes/_guest/login'
 import { Route as AuthOrgRouteImport } from './routes/_auth/org'
 import { Route as AuthOrgIndexRouteImport } from './routes/_auth/org/index'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin/index'
+import { Route as AuthQuizQuizIdRouteImport } from './routes/_auth/quiz/$quizId'
 import { Route as AuthOrgSettingsRouteImport } from './routes/_auth/org/settings'
 import { Route as AuthOrgDashboardRouteImport } from './routes/_auth/org/dashboard'
 import { Route as AuthOrgCalendarRouteImport } from './routes/_auth/org/calendar'
@@ -48,7 +49,6 @@ import { Route as AdminAdminClassesIndexRouteImport } from './routes/_admin/admi
 import { Route as AdminAdminAttendanceIndexRouteImport } from './routes/_admin/admin/attendance/index'
 import { Route as AuthOrgOfflinesOfflineIdRouteImport } from './routes/_auth/org/offlines/$offlineId'
 import { Route as AuthOrgClassesClassIdRouteImport } from './routes/_auth/org/classes/$classId'
-import { Route as AuthOrgExamsQuizIdTakeRouteImport } from './routes/_auth/org/exams/$quizId.take'
 import { Route as AuthOrgClassesClassSessionsClassSessionIdRouteImport } from './routes/_auth/org/classes/class-sessions/$classSessionId'
 import { Route as AuthOrgClassesClassIdGradebookRouteImport } from './routes/_auth/org/classes/$classId_.gradebook'
 import { Route as AdminAdminClassesClassIdSessionsRouteImport } from './routes/_admin/admin/classes/$classId/sessions'
@@ -59,7 +59,6 @@ import { Route as AdminAdminClassesClassIdOfflinesRouteImport } from './routes/_
 import { Route as AdminAdminClassesClassIdMembersRouteImport } from './routes/_admin/admin/classes/$classId/members'
 import { Route as AdminAdminClassesClassIdLiveRoomsRouteImport } from './routes/_admin/admin/classes/$classId/live-rooms'
 import { Route as AdminAdminClassesClassIdGradebookRouteImport } from './routes/_admin/admin/classes/$classId/gradebook'
-import { Route as AuthOrgClassesClassSessionsClassSessionIdQuizzesQuizIdTakeRouteImport } from './routes/_auth/org/classes/class-sessions/$classSessionId_.quizzes.$quizId.take'
 
 const GuestRoute = GuestRouteImport.update({
   id: '/_guest',
@@ -97,6 +96,11 @@ const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
   getParentRoute: () => AdminRoute,
+} as any)
+const AuthQuizQuizIdRoute = AuthQuizQuizIdRouteImport.update({
+  id: '/quiz/$quizId',
+  path: '/quiz/$quizId',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AuthOrgSettingsRoute = AuthOrgSettingsRouteImport.update({
   id: '/settings',
@@ -263,11 +267,6 @@ const AuthOrgClassesClassIdRoute = AuthOrgClassesClassIdRouteImport.update({
   path: '/classes/$classId',
   getParentRoute: () => AuthOrgRoute,
 } as any)
-const AuthOrgExamsQuizIdTakeRoute = AuthOrgExamsQuizIdTakeRouteImport.update({
-  id: '/exams/$quizId/take',
-  path: '/exams/$quizId/take',
-  getParentRoute: () => AuthOrgRoute,
-} as any)
 const AuthOrgClassesClassSessionsClassSessionIdRoute =
   AuthOrgClassesClassSessionsClassSessionIdRouteImport.update({
     id: '/classes/class-sessions/$classSessionId',
@@ -328,12 +327,6 @@ const AdminAdminClassesClassIdGradebookRoute =
     path: '/admin/classes/$classId/gradebook',
     getParentRoute: () => AdminRoute,
   } as any)
-const AuthOrgClassesClassSessionsClassSessionIdQuizzesQuizIdTakeRoute =
-  AuthOrgClassesClassSessionsClassSessionIdQuizzesQuizIdTakeRouteImport.update({
-    id: '/classes/class-sessions/$classSessionId_/quizzes/$quizId/take',
-    path: '/classes/class-sessions/$classSessionId/quizzes/$quizId/take',
-    getParentRoute: () => AuthOrgRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -344,6 +337,7 @@ export interface FileRoutesByFullPath {
   '/org/calendar': typeof AuthOrgCalendarRoute
   '/org/dashboard': typeof AuthOrgDashboardRoute
   '/org/settings': typeof AuthOrgSettingsRoute
+  '/quiz/$quizId': typeof AuthQuizQuizIdRoute
   '/admin/': typeof AdminAdminIndexRoute
   '/org/': typeof AuthOrgIndexRoute
   '/org/classes/$classId': typeof AuthOrgClassesClassIdRoute
@@ -382,8 +376,6 @@ export interface FileRoutesByFullPath {
   '/admin/classes/$classId/sessions': typeof AdminAdminClassesClassIdSessionsRoute
   '/org/classes/$classId/gradebook': typeof AuthOrgClassesClassIdGradebookRoute
   '/org/classes/class-sessions/$classSessionId': typeof AuthOrgClassesClassSessionsClassSessionIdRoute
-  '/org/exams/$quizId/take': typeof AuthOrgExamsQuizIdTakeRoute
-  '/org/classes/class-sessions/$classSessionId/quizzes/$quizId/take': typeof AuthOrgClassesClassSessionsClassSessionIdQuizzesQuizIdTakeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -393,6 +385,7 @@ export interface FileRoutesByTo {
   '/org/calendar': typeof AuthOrgCalendarRoute
   '/org/dashboard': typeof AuthOrgDashboardRoute
   '/org/settings': typeof AuthOrgSettingsRoute
+  '/quiz/$quizId': typeof AuthQuizQuizIdRoute
   '/admin': typeof AdminAdminIndexRoute
   '/org': typeof AuthOrgIndexRoute
   '/org/classes/$classId': typeof AuthOrgClassesClassIdRoute
@@ -431,8 +424,6 @@ export interface FileRoutesByTo {
   '/admin/classes/$classId/sessions': typeof AdminAdminClassesClassIdSessionsRoute
   '/org/classes/$classId/gradebook': typeof AuthOrgClassesClassIdGradebookRoute
   '/org/classes/class-sessions/$classSessionId': typeof AuthOrgClassesClassSessionsClassSessionIdRoute
-  '/org/exams/$quizId/take': typeof AuthOrgExamsQuizIdTakeRoute
-  '/org/classes/class-sessions/$classSessionId/quizzes/$quizId/take': typeof AuthOrgClassesClassSessionsClassSessionIdQuizzesQuizIdTakeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -447,6 +438,7 @@ export interface FileRoutesById {
   '/_auth/org/calendar': typeof AuthOrgCalendarRoute
   '/_auth/org/dashboard': typeof AuthOrgDashboardRoute
   '/_auth/org/settings': typeof AuthOrgSettingsRoute
+  '/_auth/quiz/$quizId': typeof AuthQuizQuizIdRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
   '/_auth/org/': typeof AuthOrgIndexRoute
   '/_auth/org/classes/$classId': typeof AuthOrgClassesClassIdRoute
@@ -485,8 +477,6 @@ export interface FileRoutesById {
   '/_admin/admin/classes/$classId/sessions': typeof AdminAdminClassesClassIdSessionsRoute
   '/_auth/org/classes/$classId_/gradebook': typeof AuthOrgClassesClassIdGradebookRoute
   '/_auth/org/classes/class-sessions/$classSessionId': typeof AuthOrgClassesClassSessionsClassSessionIdRoute
-  '/_auth/org/exams/$quizId/take': typeof AuthOrgExamsQuizIdTakeRoute
-  '/_auth/org/classes/class-sessions/$classSessionId_/quizzes/$quizId/take': typeof AuthOrgClassesClassSessionsClassSessionIdQuizzesQuizIdTakeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -499,6 +489,7 @@ export interface FileRouteTypes {
     | '/org/calendar'
     | '/org/dashboard'
     | '/org/settings'
+    | '/quiz/$quizId'
     | '/admin/'
     | '/org/'
     | '/org/classes/$classId'
@@ -537,8 +528,6 @@ export interface FileRouteTypes {
     | '/admin/classes/$classId/sessions'
     | '/org/classes/$classId/gradebook'
     | '/org/classes/class-sessions/$classSessionId'
-    | '/org/exams/$quizId/take'
-    | '/org/classes/class-sessions/$classSessionId/quizzes/$quizId/take'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -548,6 +537,7 @@ export interface FileRouteTypes {
     | '/org/calendar'
     | '/org/dashboard'
     | '/org/settings'
+    | '/quiz/$quizId'
     | '/admin'
     | '/org'
     | '/org/classes/$classId'
@@ -586,8 +576,6 @@ export interface FileRouteTypes {
     | '/admin/classes/$classId/sessions'
     | '/org/classes/$classId/gradebook'
     | '/org/classes/class-sessions/$classSessionId'
-    | '/org/exams/$quizId/take'
-    | '/org/classes/class-sessions/$classSessionId/quizzes/$quizId/take'
   id:
     | '__root__'
     | '/'
@@ -601,6 +589,7 @@ export interface FileRouteTypes {
     | '/_auth/org/calendar'
     | '/_auth/org/dashboard'
     | '/_auth/org/settings'
+    | '/_auth/quiz/$quizId'
     | '/_admin/admin/'
     | '/_auth/org/'
     | '/_auth/org/classes/$classId'
@@ -639,8 +628,6 @@ export interface FileRouteTypes {
     | '/_admin/admin/classes/$classId/sessions'
     | '/_auth/org/classes/$classId_/gradebook'
     | '/_auth/org/classes/class-sessions/$classSessionId'
-    | '/_auth/org/exams/$quizId/take'
-    | '/_auth/org/classes/class-sessions/$classSessionId_/quizzes/$quizId/take'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -707,6 +694,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminAdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/_auth/quiz/$quizId': {
+      id: '/_auth/quiz/$quizId'
+      path: '/quiz/$quizId'
+      fullPath: '/quiz/$quizId'
+      preLoaderRoute: typeof AuthQuizQuizIdRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/_auth/org/settings': {
       id: '/_auth/org/settings'
@@ -925,13 +919,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthOrgClassesClassIdRouteImport
       parentRoute: typeof AuthOrgRoute
     }
-    '/_auth/org/exams/$quizId/take': {
-      id: '/_auth/org/exams/$quizId/take'
-      path: '/exams/$quizId/take'
-      fullPath: '/org/exams/$quizId/take'
-      preLoaderRoute: typeof AuthOrgExamsQuizIdTakeRouteImport
-      parentRoute: typeof AuthOrgRoute
-    }
     '/_auth/org/classes/class-sessions/$classSessionId': {
       id: '/_auth/org/classes/class-sessions/$classSessionId'
       path: '/classes/class-sessions/$classSessionId'
@@ -1001,13 +988,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/classes/$classId/gradebook'
       preLoaderRoute: typeof AdminAdminClassesClassIdGradebookRouteImport
       parentRoute: typeof AdminRoute
-    }
-    '/_auth/org/classes/class-sessions/$classSessionId_/quizzes/$quizId/take': {
-      id: '/_auth/org/classes/class-sessions/$classSessionId_/quizzes/$quizId/take'
-      path: '/classes/class-sessions/$classSessionId/quizzes/$quizId/take'
-      fullPath: '/org/classes/class-sessions/$classSessionId/quizzes/$quizId/take'
-      preLoaderRoute: typeof AuthOrgClassesClassSessionsClassSessionIdQuizzesQuizIdTakeRouteImport
-      parentRoute: typeof AuthOrgRoute
     }
   }
 }
@@ -1091,8 +1071,6 @@ interface AuthOrgRouteChildren {
   AuthOrgUsersIndexRoute: typeof AuthOrgUsersIndexRoute
   AuthOrgClassesClassIdGradebookRoute: typeof AuthOrgClassesClassIdGradebookRoute
   AuthOrgClassesClassSessionsClassSessionIdRoute: typeof AuthOrgClassesClassSessionsClassSessionIdRoute
-  AuthOrgExamsQuizIdTakeRoute: typeof AuthOrgExamsQuizIdTakeRoute
-  AuthOrgClassesClassSessionsClassSessionIdQuizzesQuizIdTakeRoute: typeof AuthOrgClassesClassSessionsClassSessionIdQuizzesQuizIdTakeRoute
 }
 
 const AuthOrgRouteChildren: AuthOrgRouteChildren = {
@@ -1115,9 +1093,6 @@ const AuthOrgRouteChildren: AuthOrgRouteChildren = {
   AuthOrgClassesClassIdGradebookRoute: AuthOrgClassesClassIdGradebookRoute,
   AuthOrgClassesClassSessionsClassSessionIdRoute:
     AuthOrgClassesClassSessionsClassSessionIdRoute,
-  AuthOrgExamsQuizIdTakeRoute: AuthOrgExamsQuizIdTakeRoute,
-  AuthOrgClassesClassSessionsClassSessionIdQuizzesQuizIdTakeRoute:
-    AuthOrgClassesClassSessionsClassSessionIdQuizzesQuizIdTakeRoute,
 }
 
 const AuthOrgRouteWithChildren =
@@ -1126,11 +1101,13 @@ const AuthOrgRouteWithChildren =
 interface AuthRouteChildren {
   AuthOrgRoute: typeof AuthOrgRouteWithChildren
   AuthLiveLiveIdRoute: typeof AuthLiveLiveIdRoute
+  AuthQuizQuizIdRoute: typeof AuthQuizQuizIdRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthOrgRoute: AuthOrgRouteWithChildren,
   AuthLiveLiveIdRoute: AuthLiveLiveIdRoute,
+  AuthQuizQuizIdRoute: AuthQuizQuizIdRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)

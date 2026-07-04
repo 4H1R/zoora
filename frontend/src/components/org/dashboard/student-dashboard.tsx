@@ -133,7 +133,7 @@ export function StudentDashboard() {
                     {t(`org.exams.state.${e.state}`)}
                   </Badge>
                   {e.state === "open" && (
-                    <Link to="/org/exams/$quizId/take" params={{ quizId: e.quiz_id! }}>
+                    <Link to="/quiz/$quizId" params={{ quizId: e.quiz_id! }}>
                       <Button size="sm">{t("org.exams.start")}</Button>
                     </Link>
                   )}
