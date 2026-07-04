@@ -1,8 +1,9 @@
-import { useDataChannel, useRoomContext } from "@livekit/components-react"
+import { useRoomContext } from "@livekit/components-react"
 import { RoomEvent } from "livekit-client"
 import { useEffect, useRef, useState } from "react"
 
 import { decodeRoomEvent, encodeRoomEvent } from "./room-events"
+import { useRoomChannel } from "./use-room-channel"
 
 export interface LivePoll {
   pollId: string
@@ -31,7 +32,7 @@ export function useRoomPolls(isHost: boolean) {
   activePollRef.current = activePoll
   resultsRef.current = results
 
-  const { send } = useDataChannel((msg) => {
+  const { send } = useRoomChannel(undefined, (msg) => {
     const event = decodeRoomEvent(msg.payload)
     if (!event) return
 

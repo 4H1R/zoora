@@ -2489,6 +2489,20 @@
       "camera": "Camera",
       "microphone": "Microphone",
       "unknown": "Unknown device"
+    },
+    "connection": {
+      "title": "Connection",
+      "good": "Good",
+      "poor": "Poor",
+      "lost": "Lost",
+      "unknown": "Unknown",
+      "ping": "Ping",
+      "jitter": "Jitter",
+      "packetLoss": "Packet loss",
+      "bitrate": "Bitrate",
+      "ms": "ms",
+      "kbps": "kbps",
+      "na": "—"
     }
   },
   "media": {

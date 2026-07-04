@@ -157,6 +157,12 @@
   background: transparent;
 }
 
+/* Whiteboard: lift tldraw's bottom toolbar/zoom UI above our floating ControlBar
+   (both anchor bottom-center, so the tldraw tools would otherwise sit on top of ours) */
+.zoora-whiteboard .tlui-layout__bottom {
+  padding-bottom: 5.5rem;
+}
+
 /* Phone landscape: float the header over the stage so content goes fullscreen */
 @media (max-width: 932px) and (orientation: landscape) {
   .zoora-live > header {

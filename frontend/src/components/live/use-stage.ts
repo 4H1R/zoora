@@ -1,7 +1,7 @@
-import { useDataChannel } from "@livekit/components-react"
 import { useEffect, useRef, useState } from "react"
 
 import { decodeRoomEvent, encodeRoomEvent } from "./room-events"
+import { useRoomChannel } from "./use-room-channel"
 
 export interface StageContent {
   kind: "none" | "slides" | "whiteboard"
@@ -18,7 +18,7 @@ export function useStage(isHost: boolean) {
   const stageRef = useRef<StageContent>({ kind: "none" })
   const requestedRef = useRef(false)
 
-  const { send } = useDataChannel((msg) => {
+  const { send } = useRoomChannel(undefined, (msg) => {
     const event = decodeRoomEvent(msg.payload)
     if (!event) return
 

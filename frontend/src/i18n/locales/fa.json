@@ -2489,6 +2489,20 @@
       "camera": "دوربین",
       "microphone": "میکروفن",
       "unknown": "دستگاه ناشناس"
+    },
+    "connection": {
+      "title": "اتصال",
+      "good": "خوب",
+      "poor": "ضعیف",
+      "lost": "قطع",
+      "unknown": "نامشخص",
+      "ping": "پینگ",
+      "jitter": "لرزش",
+      "packetLoss": "افت بسته",
+      "bitrate": "نرخ داده",
+      "ms": "میلی‌ثانیه",
+      "kbps": "کیلوبیت/ث",
+      "na": "—"
     }
   },
   "media": {

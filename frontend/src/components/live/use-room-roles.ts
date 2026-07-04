@@ -1,7 +1,7 @@
-import { useDataChannel } from "@livekit/components-react"
 import { useState } from "react"
 
 import { decodeRoomEvent } from "./room-events"
+import { useRoomChannel } from "./use-room-channel"
 import type { RoomRole } from "./room-role"
 
 export interface ParticipantState {
@@ -14,7 +14,7 @@ export interface ParticipantState {
 export function useRoomRoles(seed: Record<string, ParticipantState>) {
   const [states, setStates] = useState<Record<string, ParticipantState>>(seed)
 
-  useDataChannel((msg) => {
+  useRoomChannel(undefined, (msg) => {
     const event = decodeRoomEvent(msg.payload)
     if (!event) return
     if (event.type === "role_changed") {

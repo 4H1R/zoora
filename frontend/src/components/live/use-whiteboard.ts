@@ -1,4 +1,3 @@
-import { useDataChannel } from "@livekit/components-react"
 import { useEffect, useRef, useState } from "react"
 import { createTLStore, getSnapshot, loadSnapshot } from "tldraw"
 import type { TLRecord, TLStore, TLStoreSnapshot } from "tldraw"
@@ -8,6 +7,8 @@ import {
   usePutLiveRoomsIdWhiteboard,
 } from "@/api/live-sessions/live-sessions"
 import type { GithubCom4H1RZooraInternalDomainSaveWhiteboardDTOSnapshot } from "@/api/model"
+
+import { useRoomChannel } from "./use-room-channel"
 
 // ---- diff wire format -------------------------------------------------------
 
@@ -58,7 +59,9 @@ export function useWhiteboard(liveId: string, canDraw: boolean): UseWhiteboardRe
   // useState with an initializer function creates the store exactly once
   const [store] = useState<TLStore>(() => createTLStore())
 
-  const { send } = useDataChannel<"tldraw">("tldraw", (msg) => {
+  // Incoming diffs on the "tldraw" topic. useRoomChannel keeps the channel and
+  // send stable (see its docs for the lazy-observer crash it avoids).
+  const { send } = useRoomChannel("tldraw", (msg) => {
     const diff = decodeDiff(msg.payload)
     if (!diff) return
     store.mergeRemoteChanges(() => {
@@ -71,9 +74,6 @@ export function useWhiteboard(liveId: string, canDraw: boolean): UseWhiteboardRe
       }
     })
   })
-
-  const sendRef = useRef(send)
-  sendRef.current = send
 
   // Load persisted snapshot on mount
   const { data: whiteboardRes } = useGetLiveRoomsIdWhiteboard(liveId)
@@ -108,7 +108,7 @@ export function useWhiteboard(liveId: string, canDraw: boolean): UseWhiteboardRe
               updated: Record<string, [TLRecord, TLRecord]>
               removed: Record<string, TLRecord>
             }
-            sendRef.current(encodeDiff(changes), { reliable: true })
+            send(encodeDiff(changes), { reliable: true })
           },
           { source: "user", scope: "document" },
         )
@@ -141,7 +141,7 @@ export function useWhiteboard(liveId: string, canDraw: boolean): UseWhiteboardRe
         saveTimerRef.current = null
       }
     }
-  }, [canDraw, liveId, store])
+  }, [canDraw, liveId, store, send])
 
   return { store }
 }
