@@ -1,0 +1,26 @@
+diff --git a/dist-cjs/lib/license/LicenseProvider.js b/dist-cjs/lib/license/LicenseProvider.js
+index f411fec977286da954b0b94e966c26aea9ededb3..9d632da87525cf981780908b56cfeb0dc1c50399 100644
+--- a/dist-cjs/lib/license/LicenseProvider.js
++++ b/dist-cjs/lib/license/LicenseProvider.js
+@@ -32,7 +32,7 @@ const import_meta = {};
+ const LicenseContext = (0, import_react.createContext)({});
+ const useLicenseContext = () => (0, import_react.useContext)(LicenseContext);
+ function shouldHideEditorAfterDelay(licenseState) {
+-  return licenseState === "expired" || licenseState === "unlicensed-production";
++  return false;
+ }
+ const LICENSE_TIMEOUT = 5e3;
+ function LicenseProvider({
+diff --git a/dist-esm/lib/license/LicenseProvider.mjs b/dist-esm/lib/license/LicenseProvider.mjs
+index 6b50326efaef9a991d9da4a1a76dc1923237a5d7..b5cda3211958e25ece25020624ee3c6e539566a3 100644
+--- a/dist-esm/lib/license/LicenseProvider.mjs
++++ b/dist-esm/lib/license/LicenseProvider.mjs
+@@ -5,7 +5,7 @@ import { LicenseManager } from "./LicenseManager.mjs";
+ const LicenseContext = createContext({});
+ const useLicenseContext = () => useContext(LicenseContext);
+ function shouldHideEditorAfterDelay(licenseState) {
+-  return licenseState === "expired" || licenseState === "unlicensed-production";
++  return false;
+ }
+ const LICENSE_TIMEOUT = 5e3;
+ function LicenseProvider({

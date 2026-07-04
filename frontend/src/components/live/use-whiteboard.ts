@@ -85,9 +85,25 @@ export function useWhiteboard(liveId: string, canDraw: boolean): UseWhiteboardRe
     // Guard: skip if the snapshot is empty or has no keys (empty board)
     if (!document || Object.keys(document).length === 0) return
     snapshotLoadedRef.current = true
-    store.mergeRemoteChanges(() => {
-      loadSnapshot(store, { document: document as unknown as TLStoreSnapshot })
-    })
+
+    // Don't clobber a board that already has content. This GET can resolve several
+    // seconds after mount (network latency); by then the user may have drawn or
+    // remote diffs may have arrived. loadSnapshot REPLACES the whole store, so
+    // applying a stale (or empty) persisted snapshot here would wipe the live
+    // board — it visibly "closes" while the toolbar/icon stay active. The
+    // persisted snapshot is only a cold-start seed for an untouched board.
+    const existingShapes = store.query.records("shape").get()
+    if (existingShapes.length > 0) return
+
+    try {
+      store.mergeRemoteChanges(() => {
+        loadSnapshot(store, { document: document as unknown as TLStoreSnapshot })
+      })
+    } catch (err) {
+      // A snapshot from an incompatible tldraw schema can fail to migrate. Keep
+      // the live board rather than crashing the stage; log for prod diagnosis.
+      console.warn("[whiteboard] failed to load persisted snapshot", err)
+    }
   }, [whiteboardRes, store])
 
   // Persistence mutation — only used when canDraw

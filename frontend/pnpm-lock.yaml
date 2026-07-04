@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@tldraw/editor@5.1.1': e48237484c174ab068e8d6b248afe2d91b63c2d71b6390c62b5caf50980eccf6
+
 importers:
 
   .:
@@ -6187,7 +6190,7 @@ snapshots:
 
   '@tldraw/driver@5.1.1(@floating-ui/dom@1.7.6)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
-      '@tldraw/editor': 5.1.1(@floating-ui/dom@1.7.6)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@tldraw/editor': 5.1.1(patch_hash=e48237484c174ab068e8d6b248afe2d91b63c2d71b6390c62b5caf50980eccf6)(@floating-ui/dom@1.7.6)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tldraw/utils': 5.1.1
     transitivePeerDependencies:
       - '@floating-ui/dom'
@@ -6196,7 +6199,7 @@ snapshots:
       - react
       - react-dom
 
-  '@tldraw/editor@5.1.1(@floating-ui/dom@1.7.6)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
+  '@tldraw/editor@5.1.1(patch_hash=e48237484c174ab068e8d6b248afe2d91b63c2d71b6390c62b5caf50980eccf6)(@floating-ui/dom@1.7.6)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@tiptap/core': 3.27.1(@tiptap/pm@3.27.1)
       '@tiptap/pm': 3.27.1
@@ -7844,7 +7847,7 @@ snapshots:
       '@tiptap/react': 3.27.1(@floating-ui/dom@1.7.6)(@tiptap/core@3.27.1(@tiptap/pm@3.27.1))(@tiptap/pm@3.27.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tiptap/starter-kit': 3.27.1
       '@tldraw/driver': 5.1.1(@floating-ui/dom@1.7.6)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@tldraw/editor': 5.1.1(@floating-ui/dom@1.7.6)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@tldraw/editor': 5.1.1(patch_hash=e48237484c174ab068e8d6b248afe2d91b63c2d71b6390c62b5caf50980eccf6)(@floating-ui/dom@1.7.6)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tldraw/store': 5.1.1(react@19.2.7)
       classnames: 2.5.1
       idb: 7.1.1
