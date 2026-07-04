@@ -149,7 +149,7 @@ func TestResolveNegativeMark_Priority(t *testing.T) {
 	override := &QuizQuestionNegativeOverride{QuestionID: qid, Mode: NegativeMarkPerWrong, NegativeValue: 0.5}
 	quizWide := NegativeMarkConfig{Mode: NegativeMarkAccumulative, WrongsPerPoint: 4}
 
-	got := ResolveNegativeMark(q, override, quizWide)
+	got := ResolveNegativeMark(q, override, nil, quizWide)
 	if got.Mode != NegativeMarkPerWrong || got.NegativeValue != 0.5 {
 		t.Fatalf("override should win, got %+v", got)
 	}
@@ -157,7 +157,7 @@ func TestResolveNegativeMark_Priority(t *testing.T) {
 		t.Fatalf("per_wrong fraction = value, got %v", got.Fraction)
 	}
 
-	got = ResolveNegativeMark(q, nil, quizWide)
+	got = ResolveNegativeMark(q, nil, nil, quizWide)
 	if got.Mode != NegativeMarkAccumulative || got.WrongsPerPoint != 3 {
 		t.Fatalf("question default should win, got %+v", got)
 	}
@@ -166,19 +166,74 @@ func TestResolveNegativeMark_Priority(t *testing.T) {
 	}
 
 	none := Question{NegativeMarkMode: NegativeMarkNone}
-	got = ResolveNegativeMark(none, nil, quizWide)
+	got = ResolveNegativeMark(none, nil, nil, quizWide)
 	if got.Mode != NegativeMarkAccumulative || got.WrongsPerPoint != 4 {
 		t.Fatalf("quiz-wide should fill gap, got %+v", got)
 	}
 
 	noneOverride := &QuizQuestionNegativeOverride{QuestionID: qid, Mode: NegativeMarkNone}
-	got = ResolveNegativeMark(q, noneOverride, quizWide)
+	got = ResolveNegativeMark(q, noneOverride, nil, quizWide)
 	if got.Mode != NegativeMarkAccumulative || got.WrongsPerPoint != 3 {
 		t.Fatalf("none override ignored => question default, got %+v", got)
 	}
 
-	got = ResolveNegativeMark(none, nil, NegativeMarkConfig{Mode: NegativeMarkNone})
+	got = ResolveNegativeMark(none, nil, nil, NegativeMarkConfig{Mode: NegativeMarkNone})
 	if got.Mode != NegativeMarkNone {
 		t.Fatalf("expected none, got %+v", got)
+	}
+}
+
+func TestResolveNegativeMark_RuleDefault(t *testing.T) {
+	qid := uuid.New()
+	// A choice question with its own L1 default and 4 options.
+	q := Question{
+		NegativeMarkMode: NegativeMarkAccumulative,
+		WrongsPerPoint:   3,
+		Options:          []QuestionOption{{ID: "a"}, {ID: "b"}, {ID: "c"}, {ID: "d"}},
+	}
+	quizWide := NegativeMarkConfig{Mode: NegativeMarkPerWrong, NegativeValue: 0.9}
+
+	// none rule default forces no penalty even over the question's own L1 default.
+	forceNone := NegativeMarkNone
+	got := ResolveNegativeMark(q, nil, &forceNone, quizWide)
+	if got.Mode != NegativeMarkNone {
+		t.Fatalf("rule default none must force none, got %+v", got)
+	}
+
+	// per_wrong derives negative_value from the option count (4 => 0.25).
+	perWrong := NegativeMarkPerWrong
+	got = ResolveNegativeMark(q, nil, &perWrong, quizWide)
+	if got.Mode != NegativeMarkPerWrong || got.NegativeValue != FractionFor(4) {
+		t.Fatalf("rule default per_wrong should auto-fraction from options, got %+v", got)
+	}
+	if got.Fraction != FractionFor(4) {
+		t.Fatalf("per_wrong fraction = value, got %v", got.Fraction)
+	}
+
+	// accumulative derives wrongs_per_point = clamp(optionCount, 2, 5).
+	accumulative := NegativeMarkAccumulative
+	got = ResolveNegativeMark(q, nil, &accumulative, quizWide)
+	if got.Mode != NegativeMarkAccumulative || got.WrongsPerPoint != 4 {
+		t.Fatalf("rule default accumulative should clamp option count, got %+v", got)
+	}
+
+	// Two-option question clamps up to the minimum of 2.
+	twoOpt := Question{Options: []QuestionOption{{ID: "a"}, {ID: "b"}}}
+	got = ResolveNegativeMark(twoOpt, nil, &accumulative, quizWide)
+	if got.WrongsPerPoint != 2 {
+		t.Fatalf("accumulative should clamp to 2 min, got %+v", got)
+	}
+
+	// Per-question override beats the rule default.
+	override := &QuizQuestionNegativeOverride{QuestionID: qid, Mode: NegativeMarkPerWrong, NegativeValue: 0.5}
+	got = ResolveNegativeMark(q, override, &forceNone, quizWide)
+	if got.Mode != NegativeMarkPerWrong || got.NegativeValue != 0.5 {
+		t.Fatalf("override should beat rule default, got %+v", got)
+	}
+
+	// nil rule default falls through to the question's own L1 default.
+	got = ResolveNegativeMark(q, nil, nil, quizWide)
+	if got.Mode != NegativeMarkAccumulative || got.WrongsPerPoint != 3 {
+		t.Fatalf("nil rule default should fall through to question, got %+v", got)
 	}
 }

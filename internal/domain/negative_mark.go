@@ -99,13 +99,27 @@ func NormalizeNegativeMark(mode NegativeMarkMode, value float64, wrongsPerPoint 
 }
 
 // ResolveNegativeMark returns the effective config for a question in an
-// attempt, applying the priority: rule override > question default >
-// quiz-wide > none. The Fraction field is set for display.
-func ResolveNegativeMark(q Question, override *QuizQuestionNegativeOverride, quizWide NegativeMarkConfig) NegativeMarkConfig {
+// attempt, applying the priority: per-Q override > rule default > question
+// default > quiz-wide > none. The Fraction field is set for display.
+//
+// ruleDefault is the rule-wide default (Layer 2-bank). Being a nullable mode
+// with no stored numbers, its per_wrong/accumulative variants derive their
+// numbers from the question's option count; "none" forces no penalty even when
+// the question carries its own default. nil falls through to the question.
+func ResolveNegativeMark(q Question, override *QuizQuestionNegativeOverride, ruleDefault *NegativeMarkMode, quizWide NegativeMarkConfig) NegativeMarkConfig {
 	var cfg NegativeMarkConfig
 	switch {
 	case override != nil && override.Mode != NegativeMarkNone && override.Mode.Valid():
 		cfg = NegativeMarkConfig{Mode: override.Mode, NegativeValue: override.NegativeValue, WrongsPerPoint: override.WrongsPerPoint}
+	case ruleDefault != nil && ruleDefault.Valid():
+		switch *ruleDefault {
+		case NegativeMarkNone:
+			return NegativeMarkConfig{Mode: NegativeMarkNone}
+		case NegativeMarkPerWrong:
+			cfg = NegativeMarkConfig{Mode: NegativeMarkPerWrong, NegativeValue: FractionFor(len(q.Options))}
+		case NegativeMarkAccumulative:
+			cfg = NegativeMarkConfig{Mode: NegativeMarkAccumulative, WrongsPerPoint: clampInt(len(q.Options), 2, 5)}
+		}
 	case q.NegativeMarkMode != NegativeMarkNone && q.NegativeMarkMode.Valid():
 		cfg = NegativeMarkConfig{Mode: q.NegativeMarkMode, NegativeValue: q.NegativeValue, WrongsPerPoint: q.WrongsPerPoint}
 	case quizWide.Mode != NegativeMarkNone && quizWide.Mode.Valid():
@@ -115,6 +129,17 @@ func ResolveNegativeMark(q Question, override *QuizQuestionNegativeOverride, qui
 	}
 	cfg.Fraction = fractionForConfig(cfg)
 	return cfg
+}
+
+// clampInt returns n bounded to the inclusive [lo, hi] range.
+func clampInt(n, lo, hi int) int {
+	if n < lo {
+		return lo
+	}
+	if n > hi {
+		return hi
+	}
+	return n
 }
 
 func fractionForConfig(c NegativeMarkConfig) float64 {

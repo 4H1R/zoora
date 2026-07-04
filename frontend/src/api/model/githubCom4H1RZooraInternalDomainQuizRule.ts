@@ -5,6 +5,7 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
+import type { GithubCom4H1RZooraInternalDomainNegativeMarkMode } from './githubCom4H1RZooraInternalDomainNegativeMarkMode';
 import type { GithubCom4H1RZooraInternalDomainQuestionBank } from './githubCom4H1RZooraInternalDomainQuestionBank';
 import type { GithubCom4H1RZooraInternalDomainQuiz } from './githubCom4H1RZooraInternalDomainQuiz';
 import type { GithubCom4H1RZooraInternalDomainQuizQuestionNegativeOverride } from './githubCom4H1RZooraInternalDomainQuizQuestionNegativeOverride';
@@ -17,6 +18,14 @@ export interface GithubCom4H1RZooraInternalDomainQuizRule {
   created_at?: string;
   id?: string;
   is_dynamic?: boolean;
+  /**
+     * NegativeDefaultMode is the rule-wide negative-marking default (Layer 2-bank)
+     * applied to every choice question this rule contributes — manual and random
+     * alike. nil keeps each question's own default; "none" forces no penalty.
+     * "per_wrong"/"accumulative" derive their numbers per question from its option
+     * count at grade time, so no numeric fields are stored here.
+     */
+  negative_default_mode?: GithubCom4H1RZooraInternalDomainNegativeMarkMode;
   /** NegativeOverrides holds per-question negative-marking overrides (Layer 2a). */
   negative_overrides?: GithubCom4H1RZooraInternalDomainQuizQuestionNegativeOverride[];
   question_ids?: string[];

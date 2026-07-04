@@ -722,9 +722,10 @@
           "manual": "Manual",
           "random": "Random"
         },
-        "override": {
-          "label": "Negative marking for this question",
-          "keepDefault": "Keep question default"
+        "negativeDefault": {
+          "label": "Default negative marking",
+          "keepDefault": "Keep question default",
+          "hint": "Applies to all multiple-choice questions added from this bank."
         }
       },
       "toolbar": {

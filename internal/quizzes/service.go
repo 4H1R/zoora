@@ -343,14 +343,18 @@ func (s *service) CreateRule(ctx context.Context, quizID uuid.UUID, dto domain.C
 	if err != nil {
 		return nil, err
 	}
+	if err := validateRuleNegativeDefault(dto.NegativeDefaultMode); err != nil {
+		return nil, err
+	}
 	rule := &domain.QuizRule{
-		QuizID:            quizID,
-		Type:              dto.Type,
-		BankID:            dto.BankID,
-		QuestionIDs:       questionIDs,
-		Count:             dto.Count,
-		IsDynamic:         dto.IsDynamic,
-		NegativeOverrides: overrides,
+		QuizID:              quizID,
+		Type:                dto.Type,
+		BankID:              dto.BankID,
+		QuestionIDs:         questionIDs,
+		Count:               dto.Count,
+		IsDynamic:           dto.IsDynamic,
+		NegativeOverrides:   overrides,
+		NegativeDefaultMode: dto.NegativeDefaultMode,
 	}
 	if err := s.rules.Create(ctx, rule); err != nil {
 		return nil, err
@@ -422,6 +426,12 @@ func (s *service) UpdateRule(ctx context.Context, id uuid.UUID, dto domain.Updat
 		}
 		rule.NegativeOverrides = overrides
 	}
+	if dto.NegativeDefaultMode != nil {
+		if err := validateRuleNegativeDefault(dto.NegativeDefaultMode); err != nil {
+			return nil, err
+		}
+		rule.NegativeDefaultMode = dto.NegativeDefaultMode
+	}
 	if err := s.rules.Update(ctx, rule); err != nil {
 		return nil, err
 	}
@@ -429,6 +439,18 @@ func (s *service) UpdateRule(ctx context.Context, id uuid.UUID, dto domain.Updat
 		s.logger.Warn("failed to recompute quiz total", "quiz_id", rule.QuizID.String(), "err", err)
 	}
 	return rule, nil
+}
+
+// validateRuleNegativeDefault accepts only nil (keep question default) or one
+// of the valid modes (none/per_wrong/accumulative) for a rule-wide default.
+func validateRuleNegativeDefault(mode *domain.NegativeMarkMode) error {
+	if mode == nil {
+		return nil
+	}
+	if !mode.Valid() {
+		return domain.NewValidationError(map[string]string{"negative_default_mode": "invalid mode"})
+	}
+	return nil
 }
 
 // normalizeNegativeOverrides normalizes and validates each per-question

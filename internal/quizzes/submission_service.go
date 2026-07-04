@@ -61,7 +61,7 @@ func (s *service) ListQuestionsForTaking(ctx context.Context, quizID uuid.UUID) 
 				if ov, ok := ovByQ[picked[i].ID]; ok {
 					ovPtr = &ov
 				}
-				cfg := domain.ResolveNegativeMark(picked[i], ovPtr, quizWide)
+				cfg := domain.ResolveNegativeMark(picked[i], ovPtr, r.NegativeDefaultMode, quizWide)
 				if cfg.Mode != domain.NegativeMarkNone {
 					sanitized.NegativeConfig = &cfg
 				}
@@ -238,9 +238,27 @@ func (s *service) SubmitQuiz(ctx context.Context, submissionID uuid.UUID, dto do
 	}
 	quizWide := domain.NegativeMarkConfig{Mode: quiz.NegativeMarkMode, NegativeValue: quiz.NegativeValue, WrongsPerPoint: quiz.WrongsPerPoint}
 	overrideByQ := make(map[uuid.UUID]domain.QuizQuestionNegativeOverride)
+	// Rule-wide defaults resolved by question: manual rules attach their default
+	// to explicit QuestionIDs; random rules attach theirs to every question in
+	// the referenced bank (question IDs are unknown until grade time).
+	defaultByQ := make(map[uuid.UUID]*domain.NegativeMarkMode)
+	defaultByBank := make(map[uuid.UUID]*domain.NegativeMarkMode)
 	for _, r := range rules {
 		for _, ov := range r.NegativeOverrides {
 			overrideByQ[ov.QuestionID] = ov
+		}
+		if r.NegativeDefaultMode == nil {
+			continue
+		}
+		switch r.Type {
+		case domain.QuizRuleTypeManual:
+			for _, qid := range r.QuestionIDs {
+				defaultByQ[qid] = r.NegativeDefaultMode
+			}
+		case domain.QuizRuleTypeRandom:
+			if r.BankID != nil {
+				defaultByBank[*r.BankID] = r.NegativeDefaultMode
+			}
 		}
 	}
 	cfgFor := func(q *domain.Question) domain.NegativeMarkConfig {
@@ -248,7 +266,11 @@ func (s *service) SubmitQuiz(ctx context.Context, submissionID uuid.UUID, dto do
 		if ov, ok := overrideByQ[q.ID]; ok {
 			ovPtr = &ov
 		}
-		return domain.ResolveNegativeMark(*q, ovPtr, quizWide)
+		ruleDefault := defaultByQ[q.ID]
+		if ruleDefault == nil {
+			ruleDefault = defaultByBank[q.BankID]
+		}
+		return domain.ResolveNegativeMark(*q, ovPtr, ruleDefault, quizWide)
 	}
 
 	answers := make([]domain.SubmissionAnswer, 0, len(dto.Answers))

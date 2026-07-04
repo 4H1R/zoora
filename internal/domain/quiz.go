@@ -24,18 +24,18 @@ func (t QuizRuleType) Valid() bool {
 }
 
 type Quiz struct {
-	ID               uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	OrganizationID   uuid.UUID      `gorm:"type:uuid;not null;index" json:"organization_id"`
-	UserID           uuid.UUID      `gorm:"type:uuid;not null;index" json:"user_id"`
-	User             *User          `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	ClassID          uuid.UUID      `gorm:"type:uuid;not null;index" json:"class_id"`
-	Class            *Class         `gorm:"foreignKey:ClassID" json:"class,omitempty"`
-	Title            string         `gorm:"not null" json:"title"`
-	Description      string         `json:"description"`
-	DurationMinutes  int            `gorm:"not null" json:"duration_minutes"`
-	TotalScore       float64        `gorm:"not null;default:0" json:"total_score"`
-	NoBackNavigation bool           `gorm:"not null;default:false" json:"no_back_navigation"`
-	ShuffleQuestions bool           `gorm:"not null;default:false" json:"shuffle_questions"`
+	ID               uuid.UUID `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	OrganizationID   uuid.UUID `gorm:"type:uuid;not null;index" json:"organization_id"`
+	UserID           uuid.UUID `gorm:"type:uuid;not null;index" json:"user_id"`
+	User             *User     `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	ClassID          uuid.UUID `gorm:"type:uuid;not null;index" json:"class_id"`
+	Class            *Class    `gorm:"foreignKey:ClassID" json:"class,omitempty"`
+	Title            string    `gorm:"not null" json:"title"`
+	Description      string    `json:"description"`
+	DurationMinutes  int       `gorm:"not null" json:"duration_minutes"`
+	TotalScore       float64   `gorm:"not null;default:0" json:"total_score"`
+	NoBackNavigation bool      `gorm:"not null;default:false" json:"no_back_navigation"`
+	ShuffleQuestions bool      `gorm:"not null;default:false" json:"shuffle_questions"`
 
 	// Quiz-wide negative-marking override (Layer 2b). Fills gaps for questions
 	// (manual and random) lacking their own setting.
@@ -70,6 +70,13 @@ type QuizRule struct {
 
 	// NegativeOverrides holds per-question negative-marking overrides (Layer 2a).
 	NegativeOverrides []QuizQuestionNegativeOverride `gorm:"type:jsonb;serializer:json" json:"negative_overrides"`
+
+	// NegativeDefaultMode is the rule-wide negative-marking default (Layer 2-bank)
+	// applied to every choice question this rule contributes — manual and random
+	// alike. nil keeps each question's own default; "none" forces no penalty.
+	// "per_wrong"/"accumulative" derive their numbers per question from its option
+	// count at grade time, so no numeric fields are stored here.
+	NegativeDefaultMode *NegativeMarkMode `gorm:"type:varchar(20)" json:"negative_default_mode,omitempty"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -111,21 +118,23 @@ type UpdateQuizDTO struct {
 }
 
 type CreateQuizRuleDTO struct {
-	Type              QuizRuleType                   `json:"type" binding:"required,oneof=manual random"`
-	BankID            *uuid.UUID                     `json:"bank_id"`
-	QuestionIDs       []uuid.UUID                    `json:"question_ids"`
-	Count             int                            `json:"count" binding:"gte=0"`
-	IsDynamic         bool                           `json:"is_dynamic"`
-	NegativeOverrides []QuizQuestionNegativeOverride `json:"negative_overrides"`
+	Type                QuizRuleType                   `json:"type" binding:"required,oneof=manual random"`
+	BankID              *uuid.UUID                     `json:"bank_id"`
+	QuestionIDs         []uuid.UUID                    `json:"question_ids"`
+	Count               int                            `json:"count" binding:"gte=0"`
+	IsDynamic           bool                           `json:"is_dynamic"`
+	NegativeOverrides   []QuizQuestionNegativeOverride `json:"negative_overrides"`
+	NegativeDefaultMode *NegativeMarkMode              `json:"negative_default_mode"`
 }
 
 type UpdateQuizRuleDTO struct {
-	Type              *QuizRuleType                  `json:"type" binding:"omitempty,oneof=manual random"`
-	BankID            *uuid.UUID                     `json:"bank_id"`
-	QuestionIDs       []uuid.UUID                    `json:"question_ids"`
-	Count             *int                           `json:"count" binding:"omitempty,gte=0"`
-	IsDynamic         *bool                          `json:"is_dynamic"`
-	NegativeOverrides []QuizQuestionNegativeOverride `json:"negative_overrides"`
+	Type                *QuizRuleType                  `json:"type" binding:"omitempty,oneof=manual random"`
+	BankID              *uuid.UUID                     `json:"bank_id"`
+	QuestionIDs         []uuid.UUID                    `json:"question_ids"`
+	Count               *int                           `json:"count" binding:"omitempty,gte=0"`
+	IsDynamic           *bool                          `json:"is_dynamic"`
+	NegativeOverrides   []QuizQuestionNegativeOverride `json:"negative_overrides"`
+	NegativeDefaultMode *NegativeMarkMode              `json:"negative_default_mode"`
 }
 
 type CreateQuizRoomDTO struct {
