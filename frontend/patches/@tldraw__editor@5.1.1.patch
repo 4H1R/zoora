@@ -1,3 +1,33 @@
+diff --git a/dist-cjs/lib/license/LicenseManager.js b/dist-cjs/lib/license/LicenseManager.js
+index e8535402c2ec3b3704ee07e43a787991fa532a24..81e29773e04e4e9b6da4d67b9bef807c2c910c54 100644
+--- a/dist-cjs/lib/license/LicenseManager.js
++++ b/dist-cjs/lib/license/LicenseManager.js
+@@ -301,25 +301,8 @@ class LicenseManager {
+     }
+   }
+   outputMessages(messages, type = "error") {
+-    if (this.isTest) return;
+-    if (this.verbose) {
+-      this.outputDelimiter(type);
+-      for (const message of messages) {
+-        const bgColor = type === "warning" ? "orange" : "crimson";
+-        console.log(
+-          `%c${message}`,
+-          `color: white; background: ${bgColor}; padding: 2px; border-radius: 3px;`
+-        );
+-      }
+-      this.outputDelimiter(type);
+-    }
+   }
+   outputDelimiter(type = "error") {
+-    const bgColor = type === "warning" ? "orange" : "crimson";
+-    console.log(
+-      "%c-------------------------------------------------------------------",
+-      `color: white; background: ${bgColor}; padding: 2px; border-radius: 3px;`
+-    );
+   }
+   static className = "tl-watermark_SEE-LICENSE";
+ }
 diff --git a/dist-cjs/lib/license/LicenseProvider.js b/dist-cjs/lib/license/LicenseProvider.js
 index f411fec977286da954b0b94e966c26aea9ededb3..9d632da87525cf981780908b56cfeb0dc1c50399 100644
 --- a/dist-cjs/lib/license/LicenseProvider.js
@@ -11,6 +41,36 @@ index f411fec977286da954b0b94e966c26aea9ededb3..9d632da87525cf981780908b56cfeb0d
  }
  const LICENSE_TIMEOUT = 5e3;
  function LicenseProvider({
+diff --git a/dist-esm/lib/license/LicenseManager.mjs b/dist-esm/lib/license/LicenseManager.mjs
+index 0bca4ef176fe8a2dc225c62a73caf74e90c4124b..7d594e5897862ebbf035aa6bcefc90e66cb0f431 100644
+--- a/dist-esm/lib/license/LicenseManager.mjs
++++ b/dist-esm/lib/license/LicenseManager.mjs
+@@ -275,25 +275,8 @@ class LicenseManager {
+     }
+   }
+   outputMessages(messages, type = "error") {
+-    if (this.isTest) return;
+-    if (this.verbose) {
+-      this.outputDelimiter(type);
+-      for (const message of messages) {
+-        const bgColor = type === "warning" ? "orange" : "crimson";
+-        console.log(
+-          `%c${message}`,
+-          `color: white; background: ${bgColor}; padding: 2px; border-radius: 3px;`
+-        );
+-      }
+-      this.outputDelimiter(type);
+-    }
+   }
+   outputDelimiter(type = "error") {
+-    const bgColor = type === "warning" ? "orange" : "crimson";
+-    console.log(
+-      "%c-------------------------------------------------------------------",
+-      `color: white; background: ${bgColor}; padding: 2px; border-radius: 3px;`
+-    );
+   }
+   static className = "tl-watermark_SEE-LICENSE";
+ }
 diff --git a/dist-esm/lib/license/LicenseProvider.mjs b/dist-esm/lib/license/LicenseProvider.mjs
 index 6b50326efaef9a991d9da4a1a76dc1923237a5d7..b5cda3211958e25ece25020624ee3c6e539566a3 100644
 --- a/dist-esm/lib/license/LicenseProvider.mjs

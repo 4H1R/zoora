@@ -3,6 +3,7 @@ import {
   LayoutContextProvider,
   LiveKitRoom,
   RoomAudioRenderer,
+  setLogLevel,
   useCreateLayoutContext,
   useLocalParticipant,
   useTracks,
@@ -15,6 +16,9 @@ import { toast } from "sonner"
 
 import "@livekit/components-styles"
 import "./livekit-overrides.css"
+
+// Silence LiveKit's verbose signal/track console logs (info/debug); keep warnings + errors.
+setLogLevel("warn")
 
 import {
   usePostLiveRoomsIdHand,
