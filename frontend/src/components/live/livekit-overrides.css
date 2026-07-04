@@ -22,6 +22,14 @@
   --lk-accent-fg: var(--brand-fg);
   --lk-border-color: var(--border);
   --lk-grid-gap: 0.75rem;
+
+  /* Overlay chips that float over a <video> (name label, focus toggle). Solid
+     rgba only — NO backdrop-filter (paints black on some GPUs). These flip with
+     the theme so light mode gets a light chip + dark text, dark mode the reverse. */
+  --lk-overlay-bg: rgba(255, 255, 255, 0.82);
+  --lk-overlay-hover-bg: rgba(255, 255, 255, 0.95);
+  --lk-overlay-fg: #18181b;
+  --lk-overlay-border: rgba(9, 9, 11, 0.1);
 }
 
 /* [data-lk-theme=default] hardcodes color-scheme:dark — follow our theme. */
@@ -30,6 +38,12 @@
 }
 .dark .zoora-live[data-lk-theme] {
   color-scheme: dark;
+}
+.dark .zoora-live {
+  --lk-overlay-bg: rgba(9, 9, 11, 0.78);
+  --lk-overlay-hover-bg: rgba(9, 9, 11, 0.9);
+  --lk-overlay-fg: #fafafa;
+  --lk-overlay-border: rgba(255, 255, 255, 0.12);
 }
 
 /* --- Layout containers fill their parent --- */
@@ -63,24 +77,24 @@
 .zoora-live .lk-participant-tile {
   position: relative;
   border-radius: 0.9rem;
-  overflow: hidden;
+  /* IMPORTANT: beat LiveKit's base `.lk-participant-tile{overflow:hidden}`.
+     A <video> clipped by a rounded, overflow:hidden ANCESTOR paints BLACK on
+     some GPUs (Android Firefox, certain Windows drivers) — frames decode fine
+     but never present. Just OMITTING `overflow` here does NOT work: the base
+     rule still applies the clip. We MUST set it visible explicitly. The video
+     element rounds its own corners below (self-clip is safe). */
+  overflow: visible;
   background: var(--card);
   border: 1px solid var(--border);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
   transition: box-shadow 150ms ease, border-color 150ms ease;
-  /* Own GPU layer so the border-radius + overflow:hidden clip composites
-     correctly. A clipped <video> paints BLACK on some GPUs (Android
-     Chrome/Firefox, certain Windows drivers) — frames decode fine but the
-     clipped surface never presents. translateZ(0) gives the container its own
-     compositing layer so the rounded clip renders. Covers main stage + rail. */
-  transform: translateZ(0);
 }
 
-/* Promote the video itself to a clean composited layer too — belt and
-   suspenders for the same black-clipped-video bug. */
-.zoora-live .lk-participant-tile video {
-  transform: translateZ(0);
-  backface-visibility: hidden;
+/* Round the media/placeholder themselves (self-clip is safe; ancestor-clip is
+   not) so corners still look right without an overflow:hidden ancestor. */
+.zoora-live .lk-participant-media-video,
+.zoora-live .lk-participant-placeholder {
+  border-radius: inherit;
 }
 
 /* Speaking ring — brand green, subtle */
@@ -108,8 +122,12 @@
   inset-block-end: 0.55rem;
 }
 .zoora-live .lk-participant-metadata-item {
-  background: rgba(9, 9, 11, 0.6);
-  backdrop-filter: blur(8px);
+  /* Solid background — NO backdrop-filter. A backdrop-filter compositing pass
+     over a <video> makes it paint black on some GPUs (Android Firefox, certain
+     Windows drivers). Solid rgba avoids that path entirely. Theme-aware. */
+  background: var(--lk-overlay-bg);
+  color: var(--lk-overlay-fg);
+  border: 1px solid var(--lk-overlay-border);
   border-radius: 0.55rem;
   padding: 0.22rem 0.5rem;
   font-size: 0.76rem;
@@ -122,11 +140,17 @@
   border-radius: 1rem;
 }
 
-/* LiveKit's own focus toggle chrome — keep but match theme */
+/* LiveKit's own focus toggle chrome — solid bg, NO backdrop-filter (see above). */
 .zoora-live .lk-focus-toggle-button {
-  background: rgba(9, 9, 11, 0.55);
-  backdrop-filter: blur(8px);
+  background: var(--lk-overlay-bg);
+  color: var(--lk-overlay-fg);
+  border: 1px solid var(--lk-overlay-border);
   border-radius: 0.5rem;
+}
+/* Beat LiveKit's `.lk-button:not(:disabled):hover` (its --lk-control-hover-bg is
+   hardcoded dark). Same specificity → ours wins on source order (imported last). */
+.zoora-live .lk-focus-toggle-button:hover {
+  background: var(--lk-overlay-hover-bg);
 }
 
 .zoora-live .lk-connection-quality {

@@ -1,4 +1,4 @@
-import { ParticipantTile, isTrackReference, useTracks } from "@livekit/components-react"
+import { isTrackReference, ParticipantTile, useTracks } from "@livekit/components-react"
 import { Track } from "livekit-client"
 
 // Camera tiles for whoever is publishing video (host/presenters). Viewers never
@@ -23,13 +23,9 @@ export function WebcamRail({ orientation }: { orientation: "vertical" | "horizon
       {tracks.map((tr) => (
         <div
           key={tr.publication.trackSid}
-          className={
-            vertical
-              ? "aspect-video w-full shrink-0 overflow-hidden rounded-xl bg-black"
-              : "aspect-video h-20 shrink-0 overflow-hidden rounded-xl bg-black"
-          }
+          className={vertical ? "aspect-video w-full shrink-0" : "aspect-video h-20 shrink-0"}
         >
-          <ParticipantTile trackRef={tr} className="h-full w-full" />
+          <ParticipantTile trackRef={tr} className="size-full" />
         </div>
       ))}
     </div>

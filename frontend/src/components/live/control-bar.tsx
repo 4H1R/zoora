@@ -93,7 +93,9 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, un
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center pb-4 sm:pb-5">
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/55 to-transparent" />
-      <div className="pointer-events-auto relative flex items-center gap-1.5 rounded-2xl border border-white/10 bg-zinc-900/85 p-1.5 shadow-2xl shadow-black/50 backdrop-blur-xl sm:gap-2">
+      {/* Solid bg, no backdrop-blur: this bar floats over the <video> stage, and a
+          backdrop-filter pass over a video makes it paint black on some GPUs. */}
+      <div className="pointer-events-auto relative flex items-center gap-1.5 rounded-2xl border border-white/10 bg-zinc-900/95 p-1.5 shadow-2xl shadow-black/50 sm:gap-2">
 
         {/* Mic / Cam — publishers only */}
         {publisher && (

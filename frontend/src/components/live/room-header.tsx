@@ -29,8 +29,10 @@ export function RoomHeader({ sessionName, className }: { sessionName: string; cl
   const connected = state === ConnectionState.Connected
   const reconnecting = state === ConnectionState.Reconnecting || state === ConnectionState.SignalReconnecting
 
+  // Solid bg, no backdrop-blur: in landscape this header floats over the <video>
+  // stage, and a backdrop-filter pass over a video paints it black on some GPUs.
   return (
-    <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-background/80 px-4 py-2.5 backdrop-blur-md sm:px-5">
+    <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-2.5 sm:px-5">
       <div className="flex min-w-0 items-center gap-3">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
           <MonitorPlay className="size-5" />

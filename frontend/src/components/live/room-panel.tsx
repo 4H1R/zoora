@@ -11,6 +11,7 @@ import { PollsPanel } from "./panels/polls-panel"
 import type { RoomRole } from "./room-role"
 import type { RoomTab } from "./types"
 import type { useRoomChat } from "./use-room-chat"
+import type { RoomPolls } from "./use-room-polls"
 
 interface RoomPanelProps {
   tab: RoomTab
@@ -24,9 +25,12 @@ interface RoomPanelProps {
   liveId: string
   onSetRole: (identity: string, role: "presenter" | "viewer") => void
   onMute: (identity: string, trackSid: string) => void
+  polls: RoomPolls
+  onVote: (value: string) => void
+  answerPending: boolean
 }
 
-type TabsInnerProps = Pick<RoomPanelProps, "tab" | "setTab" | "chat" | "unread" | "states" | "isHost" | "liveId" | "onSetRole" | "onMute">
+type TabsInnerProps = Pick<RoomPanelProps, "tab" | "setTab" | "chat" | "unread" | "states" | "isHost" | "liveId" | "onSetRole" | "onMute" | "polls" | "onVote" | "answerPending">
 
 function TabsInner({
   tab,
@@ -38,6 +42,9 @@ function TabsInner({
   liveId,
   onSetRole,
   onMute,
+  polls,
+  onVote,
+  answerPending,
 }: TabsInnerProps) {
   const { t } = useTranslation()
   return (
@@ -77,13 +84,19 @@ function TabsInner({
         />
       </TabsContent>
       <TabsContent value="polls" className="flex min-h-0 flex-1 flex-col">
-        <PollsPanel liveId={liveId} isHost={isHost} />
+        <PollsPanel
+          liveId={liveId}
+          isHost={isHost}
+          polls={polls}
+          onVote={onVote}
+          answerPending={answerPending}
+        />
       </TabsContent>
     </Tabs>
   )
 }
 
-export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, isHost, liveId, onSetRole, onMute }: RoomPanelProps) {
+export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, isHost, liveId, onSetRole, onMute, polls, onVote, answerPending }: RoomPanelProps) {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
   if (!open) return null
@@ -106,6 +119,9 @@ export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, is
             liveId={liveId}
             onSetRole={onSetRole}
             onMute={onMute}
+            polls={polls}
+            onVote={onVote}
+            answerPending={answerPending}
           />
         </SheetContent>
       </Sheet>
@@ -135,6 +151,9 @@ export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, is
         liveId={liveId}
         onSetRole={onSetRole}
         onMute={onMute}
+        polls={polls}
+        onVote={onVote}
+        answerPending={answerPending}
       />
     </aside>
   )

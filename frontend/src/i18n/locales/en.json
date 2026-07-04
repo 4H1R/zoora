@@ -2475,12 +2475,16 @@
       "yes": "Yes",
       "no": "No",
       "results": "Results",
-      "removeOption": "Remove option"
+      "removeOption": "Remove option",
+      "history": "Past polls",
+      "launchError": "Couldn't start the poll",
+      "voteError": "Couldn't submit your vote"
     },
     "panel": {
       "title": "Room"
     },
     "toggleRail": "Toggle camera rail",
+    "screenShareLabel": "{{name}}'s screen",
     "device": {
       "camera": "Camera",
       "microphone": "Microphone",

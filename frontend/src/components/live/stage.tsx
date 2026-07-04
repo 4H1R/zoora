@@ -1,10 +1,11 @@
-import { ParticipantTile, useTracks } from "@livekit/components-react"
+import { ParticipantTile, useTracks, VideoTrack } from "@livekit/components-react"
 import { isTrackReference } from "@livekit/components-react"
 import { Track } from "livekit-client"
+import { MonitorUp } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import type { StageContent } from "./use-stage"
 import { SlidesStage } from "./slides-stage"
-import { TrackDiag } from "./track-diag"
 import { WhiteboardStage } from "./whiteboard-stage"
 
 interface StageProps {
@@ -19,6 +20,7 @@ interface StageProps {
 // The single content surface.
 // Priority: whiteboard > slides (host-shared PDF) > screenshare > presenter camera > empty.
 export function Stage({ stage, isHost, liveId, canDraw, onPageChange, onLoadNumPages }: StageProps) {
+  const { t } = useTranslation()
   const tracks = useTracks(
     [
       { source: Track.Source.ScreenShare, withPlaceholder: false },
@@ -27,12 +29,10 @@ export function Stage({ stage, isHost, liveId, canDraw, onPageChange, onLoadNumP
     { onlySubscribed: false }
   )
 
-  // Whiteboard takes top priority
   if (stage.kind === "whiteboard") {
     return <WhiteboardStage liveId={liveId} canDraw={canDraw} />
   }
 
-  // Slides take priority over screenshare/camera
   if (stage.kind === "slides" && stage.url) {
     return (
       <SlidesStage
@@ -62,20 +62,27 @@ export function Stage({ stage, isHost, liveId, canDraw, onPageChange, onLoadNumP
     return <div className="h-full w-full rounded-2xl border border-border bg-muted/30" />
   }
 
-  // transform-gpu forces this clipping container onto its own GPU layer so the
-  // rounded-corner + overflow:hidden clip composites correctly. Without it, some
-  // GPUs (Android Chrome/Firefox, certain Windows drivers) paint the clipped
-  // <video> black even though frames decode fine. See livekit-overrides.css.
-  // ?diag=1 overlays a dev-only diagnostic (offscreen sample + readback) to tell
-  // whether frames decode-but-paint-black vs never decode. Remove before ship.
-  const diag =
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).get("diag") === "1"
+  // LiveKit's default ParticipantTile hardcodes an English "'s screen" suffix on
+  // screen-share tiles, so we supply our own translated label there. Camera tiles
+  // only show the participant name (no English), so keep the default.
+  const isScreenShare = active.publication.source === Track.Source.ScreenShare
+  const participantName = active.participant.name || active.participant.identity
 
   return (
-    <div className="relative h-full w-full transform-gpu overflow-hidden rounded-2xl bg-black">
-      <ParticipantTile trackRef={active} className="h-full w-full" />
-      {diag && <TrackDiag trackRef={active} />}
+    <div className="relative h-full w-full">
+      {isScreenShare ? (
+        <ParticipantTile trackRef={active} className="size-full">
+          <VideoTrack trackRef={active} />
+          <div className="lk-participant-metadata">
+            <div className="lk-participant-metadata-item">
+              <MonitorUp className="me-1 size-3.5" />
+              <span>{t("liveRoom.screenShareLabel", { name: participantName })}</span>
+            </div>
+          </div>
+        </ParticipantTile>
+      ) : (
+        <ParticipantTile trackRef={active} className="size-full" />
+      )}
     </div>
   )
 }

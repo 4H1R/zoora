@@ -1,61 +1,15 @@
-import { BarChart3, Plus, Trash2 } from "lucide-react"
+import { BarChart3, ChevronDown, History, Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 
-import { useGetPollsIdResults, usePostPolls, usePostPollsIdAnswer } from "@/api/polls/polls"
+import { useGetPolls, useGetPollsIdResults, usePostPolls } from "@/api/polls/polls"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
-import type { LivePoll, PollResults } from "../use-room-polls"
-import { useRoomPolls } from "../use-room-polls"
-
-interface PollsBarProps {
-  options: { label: string; value: string }[]
-  counts: Record<string, number>
-  total: number
-}
-
-function PollsBar({ options, counts, total }: PollsBarProps) {
-  const { t } = useTranslation()
-  return (
-    <div className="flex flex-col gap-2">
-      {options.map((opt) => {
-        const count = counts[opt.value] ?? 0
-        const pct = total > 0 ? Math.round((count / total) * 100) : 0
-        return (
-          <div key={opt.value} className="flex flex-col gap-1">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{opt.label}</span>
-              <span className="font-mono text-muted-foreground">
-                {t("liveRoom.polls.votes", { count })}
-              </span>
-            </div>
-            <div
-              className="relative h-5 overflow-hidden rounded-sm bg-muted"
-              role="meter"
-              aria-valuenow={pct}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-label={opt.label}
-            >
-              <div
-                className="absolute inset-y-0 start-0 rounded-sm bg-primary transition-all duration-500"
-                style={{ width: `${pct}%` }}
-              />
-              <span className="absolute inset-0 flex items-center px-2 text-[10px] font-semibold text-primary-foreground mix-blend-normal">
-                {pct}%
-              </span>
-            </div>
-          </div>
-        )
-      })}
-      <p className="mt-1 text-right text-[10px] text-muted-foreground">
-        {t("liveRoom.polls.votes", { count: total })}
-      </p>
-    </div>
-  )
-}
+import type { LivePoll, PollResults, RoomPolls } from "../use-room-polls"
+import { PollBars } from "./poll-bars"
 
 // ---------------------------------------------------------------------------
 // Host: Create-poll form
@@ -112,9 +66,15 @@ function CreatePollForm({ liveId, onLaunch }: CreatePollFormProps) {
       },
       {
         onSuccess: (res) => {
-          if (res.status !== 201) return
+          if (res.status !== 201) {
+            toast.error(t("liveRoom.polls.launchError"))
+            return
+          }
           const id = res.data.data?.id
-          if (!id) return
+          if (!id) {
+            toast.error(t("liveRoom.polls.launchError"))
+            return
+          }
           onLaunch({
             pollId: id,
             name,
@@ -125,6 +85,7 @@ function CreatePollForm({ liveId, onLaunch }: CreatePollFormProps) {
           setMode("single")
           setOptions(["", ""])
         },
+        onError: () => toast.error(t("liveRoom.polls.launchError")),
       },
     )
   }
@@ -250,7 +211,7 @@ function HostActivePoll({ activePoll, onReveal, onClose }: HostActivePollProps) 
   return (
     <div className="flex flex-col gap-4 p-3">
       <p className="text-sm font-semibold text-foreground">{activePoll.name}</p>
-      <PollsBar options={activePoll.options} counts={counts} total={total} />
+      <PollBars options={activePoll.options} counts={counts} total={total} />
       <div className="flex gap-2">
         <Button size="sm" className="flex-1" onClick={handleReveal}>
           {t("liveRoom.polls.reveal")}
@@ -264,48 +225,114 @@ function HostActivePoll({ activePoll, onReveal, onClose }: HostActivePollProps) 
 }
 
 // ---------------------------------------------------------------------------
+// Host: Past-polls history (review results of closed polls)
+// ---------------------------------------------------------------------------
+interface HistoryRowProps {
+  id: string
+  name: string
+  options: { label: string; value: string }[]
+}
+
+function HistoryPollRow({ id, name, options }: HistoryRowProps) {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+
+  const resultsQuery = useGetPollsIdResults(id, { query: { enabled: open } })
+  const data = resultsQuery.data?.status === 200 ? resultsQuery.data.data.data : null
+  const counts: Record<string, number> = {}
+  for (const opt of options) counts[opt.value] = data?.counts?.[opt.value] ?? 0
+  const total = data?.total ?? 0
+
+  return (
+    <div className="rounded-md border border-border">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-start text-sm text-foreground hover:bg-accent"
+      >
+        <span className="truncate">{name}</span>
+        <ChevronDown className={cn("size-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} />
+      </button>
+      {open && (
+        <div className="border-t border-border p-3">
+          {resultsQuery.isLoading ? (
+            <p className="text-xs text-muted-foreground">{t("common.loading")}</p>
+          ) : (
+            <PollBars options={options} counts={counts} total={total} />
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+interface PollHistoryProps {
+  liveId: string
+  activePollId?: string
+}
+
+function PollHistory({ liveId, activePollId }: PollHistoryProps) {
+  const { t } = useTranslation()
+
+  const query = useGetPolls(
+    { model_type: "live_session", model_id: liveId, order_by: "created_at", order_dir: "desc" },
+    { query: { refetchInterval: 10000 } },
+  )
+
+  const polls = query.data?.status === 200 ? (query.data.data.data?.items ?? []) : []
+  // Exclude the currently-running poll — it has its own live view above.
+  const past = polls.filter((p) => p.id && p.id !== activePollId)
+
+  if (past.length === 0) return null
+
+  return (
+    <div className="flex flex-col gap-2 px-3 pb-3">
+      <p className="flex items-center gap-1.5 pt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <History className="size-3.5" />
+        {t("liveRoom.polls.history")}
+      </p>
+      {past.map((p) => (
+        <HistoryPollRow
+          key={p.id}
+          id={p.id!}
+          name={p.name ?? "—"}
+          options={(p.options ?? []).map((o) => ({ label: o.label ?? "", value: o.value ?? "" }))}
+        />
+      ))}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main PollsPanel
 // ---------------------------------------------------------------------------
 interface PollsPanelProps {
   liveId: string
   isHost: boolean
+  polls: RoomPolls
+  onVote: (value: string) => void
+  answerPending: boolean
 }
 
-export function PollsPanel({ liveId, isHost }: PollsPanelProps) {
+export function PollsPanel({ liveId, isHost, polls, onVote, answerPending }: PollsPanelProps) {
   const { t } = useTranslation()
-  const { activePoll, results, hasAnswered, launchPoll, revealResults, closePoll, markAnswered } =
-    useRoomPolls()
-
-  const answerMutation = usePostPollsIdAnswer()
-
-  function handleVote(value: string) {
-    if (!activePoll) return
-    answerMutation.mutate(
-      { id: activePoll.pollId, data: { options: [value] } },
-      { onSuccess: () => markAnswered() },
-    )
-  }
+  const { activePoll, results, hasAnswered, launchPoll, revealResults, closePoll } = polls
 
   // ---- HOST ----
   if (isHost) {
-    if (!activePoll) {
-      return (
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-          <p className="px-3 pt-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {t("liveRoom.polls.create")}
-          </p>
-          <CreatePollForm liveId={liveId} onLaunch={launchPoll} />
-        </div>
-      )
-    }
-
     return (
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        <HostActivePoll
-          activePoll={activePoll}
-          onReveal={revealResults}
-          onClose={closePoll}
-        />
+        {activePoll ? (
+          <HostActivePoll activePoll={activePoll} onReveal={revealResults} onClose={closePoll} />
+        ) : (
+          <>
+            <p className="px-3 pt-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {t("liveRoom.polls.create")}
+            </p>
+            <CreatePollForm liveId={liveId} onLaunch={launchPoll} />
+          </>
+        )}
+        <PollHistory liveId={liveId} activePollId={activePoll?.pollId} />
       </div>
     )
   }
@@ -330,7 +357,7 @@ export function PollsPanel({ liveId, isHost }: PollsPanelProps) {
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {t("liveRoom.polls.results")}
         </p>
-        <PollsBar options={activePoll.options} counts={results.counts} total={results.total} />
+        <PollBars options={activePoll.options} counts={results.counts} total={results.total} />
       </div>
     )
   }
@@ -345,7 +372,7 @@ export function PollsPanel({ liveId, isHost }: PollsPanelProps) {
     )
   }
 
-  // Show voting options
+  // Active poll: vote (also surfaced as a modal popup)
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
       <p className="text-sm font-semibold text-foreground">{activePoll.name}</p>
@@ -354,8 +381,8 @@ export function PollsPanel({ liveId, isHost }: PollsPanelProps) {
           <button
             key={opt.value}
             type="button"
-            disabled={answerMutation.isPending}
-            onClick={() => handleVote(opt.value)}
+            disabled={answerPending}
+            onClick={() => onVote(opt.value)}
             className="w-full rounded-md border border-border bg-muted px-4 py-2.5 text-start text-sm text-foreground transition-colors hover:border-primary hover:bg-primary/10 disabled:opacity-50"
           >
             {opt.label}

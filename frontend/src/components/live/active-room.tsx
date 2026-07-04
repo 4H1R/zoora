@@ -23,9 +23,11 @@ import {
   usePutLiveRoomsIdParticipantsIdentityRole,
 } from "@/api/live-sessions/live-sessions"
 import { postMediaPresign, getMediaIdDownloadUrl } from "@/api/media/media"
+import { usePostPollsIdAnswer } from "@/api/polls/polls"
 import { cn } from "@/lib/utils"
 
 import { ControlBar } from "./control-bar"
+import { VotePollModal } from "./panels/vote-poll-modal"
 import { ReconnectOverlay } from "./reconnect-overlay"
 import { RoomHeader } from "./room-header"
 import { RoomPanel } from "./room-panel"
@@ -33,6 +35,7 @@ import { canPublish, RoomRoleContext, type RoomRole, useRoomRole } from "./room-
 import { Stage } from "./stage"
 import type { PreJoinChoices, RoomTab } from "./types"
 import { useRoomChat } from "./use-room-chat"
+import { useRoomPolls } from "./use-room-polls"
 import { useRoomRoles } from "./use-room-roles"
 import { useStage } from "./use-stage"
 import { WebcamRail } from "./webcam-rail"
@@ -123,6 +126,21 @@ function RoomShell({
 
   const { stage, setStage } = useStage(isHost)
   const canDraw = localParticipant.permissions?.canPublish ?? false
+
+  // Poll session lives at room level so its data-channel listener stays mounted
+  // regardless of which tab/panel is open. Viewers get a modal popup to vote.
+  const polls = useRoomPolls(isHost)
+  const answerMutation = usePostPollsIdAnswer()
+  const onVote = (value: string) => {
+    if (!polls.activePoll) return
+    answerMutation.mutate(
+      { id: polls.activePoll.pollId, data: { options: [value] } },
+      {
+        onSuccess: () => polls.markAnswered(),
+        onError: () => toast.error(t("liveRoom.polls.voteError")),
+      },
+    )
+  }
 
   // Camera publishers drive the webcam rail; with none, the rail (and its toggle) has nothing to show.
   const hasCameras =
@@ -248,10 +266,12 @@ function RoomShell({
               aria-label={t("liveRoom.toggleRail")}
               aria-pressed={railOpen}
               className={cn(
-                "absolute end-4 top-4 z-20 flex size-9 items-center justify-center rounded-lg backdrop-blur-md transition-colors",
+                // Solid bg, no backdrop-blur: floats over the <video> stage, and a
+                // backdrop-filter pass over a video paints it black on some GPUs.
+                "absolute end-4 top-4 z-20 flex size-9 items-center justify-center rounded-lg transition-colors",
                 railOpen
                   ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                  : "bg-black/50 text-zinc-200 hover:bg-black/70"
+                  : "bg-black/70 text-zinc-200 hover:bg-black/80"
               )}
             >
               <Users className="size-4" />
@@ -271,8 +291,21 @@ function RoomShell({
           liveId={liveId}
           onSetRole={onSetRole}
           onMute={onMute}
+          polls={polls}
+          onVote={onVote}
+          answerPending={answerMutation.isPending}
         />
       </div>
+
+      {!isHost && (
+        <VotePollModal
+          activePoll={polls.activePoll}
+          results={polls.results}
+          hasAnswered={polls.hasAnswered}
+          isPending={answerMutation.isPending}
+          onVote={onVote}
+        />
+      )}
     </LayoutContextProvider>
   )
 }

@@ -2475,12 +2475,16 @@
       "yes": "بله",
       "no": "خیر",
       "results": "نتایج",
-      "removeOption": "حذف گزینه"
+      "removeOption": "حذف گزینه",
+      "history": "نظرسنجی‌های پیشین",
+      "launchError": "شروع نظرسنجی ناموفق بود",
+      "voteError": "ثبت رای ناموفق بود"
     },
     "panel": {
       "title": "اتاق"
     },
     "toggleRail": "نمایش/پنهان دوربین‌ها",
+    "screenShareLabel": "صفحهٔ نمایش {{name}}",
     "device": {
       "camera": "دوربین",
       "microphone": "میکروفن",
