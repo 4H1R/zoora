@@ -64,7 +64,7 @@ func TestRoleCreationAndAssignment(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	v1 := router.Group("/api/v1")
-	authMiddleware := auth.Middleware(jwtService, nil, roleRepo, userRepo)
+	authMiddleware := auth.Middleware(jwtService, nil, roleRepo, userRepo, nil)
 	perm := func(domain.PermissionName) gin.HandlerFunc { return func(c *gin.Context) { c.Next() } }
 	roleHandler.RegisterRoutes(v1, authMiddleware, perm)
 

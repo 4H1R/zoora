@@ -53,7 +53,7 @@ func TestAdminCreatesUser(t *testing.T) {
 	router := gin.New()
 	v1 := router.Group("/api/v1")
 
-	authMiddleware := auth.Middleware(jwtService, nil, roleRepo, userRepo)
+	authMiddleware := auth.Middleware(jwtService, nil, roleRepo, userRepo, nil)
 	perm := auth.RequirePermission
 	handler := users.NewHandler(userSvc)
 	handler.RegisterRoutes(v1, authMiddleware, perm)

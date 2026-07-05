@@ -46,7 +46,7 @@ func TestOrganizationCRUD(t *testing.T) {
 	router := gin.New()
 	router.Use(middleware.ErrorHandler(logger))
 	v1 := router.Group("/api/v1")
-	authMiddleware := auth.Middleware(jwtService, nil, nil, userRepo)
+	authMiddleware := auth.Middleware(jwtService, nil, nil, userRepo, nil)
 	perm := func(domain.PermissionName) gin.HandlerFunc { return func(c *gin.Context) { c.Next() } }
 	handler.RegisterRoutes(v1, authMiddleware, perm)
 
