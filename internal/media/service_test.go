@@ -54,6 +54,19 @@ func (m *mediaRepoMock) ListByModel(ctx context.Context, modelType string, model
 	return items, args.Error(1)
 }
 
+func (m *mediaRepoMock) ListFolders(ctx context.Context, orgID uuid.UUID) ([]domain.MediaFolder, error) {
+	args := m.Called(ctx, orgID)
+	folders, _ := args.Get(0).([]domain.MediaFolder)
+	return folders, args.Error(1)
+}
+
+func (m *mediaRepoMock) ListFiles(ctx context.Context, orgID uuid.UUID, modelType string, p domain.ListParams) ([]domain.Media, int64, error) {
+	args := m.Called(ctx, orgID, modelType, p)
+	items, _ := args.Get(0).([]domain.Media)
+	total, _ := args.Get(1).(int64)
+	return items, total, args.Error(2)
+}
+
 func newMediaService(repo *mediaRepoMock, store *storageMock) domain.MediaService {
 	return media.NewService(repo, store, nil, slog.Default())
 }

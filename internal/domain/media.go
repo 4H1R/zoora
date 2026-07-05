@@ -82,6 +82,10 @@ type MediaRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*Media, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	ListByModel(ctx context.Context, modelType string, modelID uuid.UUID, collection string) ([]Media, error)
+	// ListFolders aggregates an org's media rows by model_type.
+	ListFolders(ctx context.Context, orgID uuid.UUID) ([]MediaFolder, error)
+	// ListFiles pages through one org's media rows of a single model_type.
+	ListFiles(ctx context.Context, orgID uuid.UUID, modelType string, p ListParams) ([]Media, int64, error)
 }
 
 type PresignDownloadResponse struct {
