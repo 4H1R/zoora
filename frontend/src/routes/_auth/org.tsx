@@ -4,6 +4,7 @@ import { AccessProvider } from "react-access-engine"
 import { useTranslation } from "react-i18next"
 
 import { useGetUsersMe } from "@/api/users/users"
+import { MajorModal } from "@/components/changelog/major-modal"
 import { WhatsNewButton } from "@/components/changelog/whats-new-button"
 import { LanguageSwitcher } from "@/components/language-switcher"
 // import { LiveClock } from "@/components/live-clock"
@@ -79,6 +80,7 @@ function RouteComponent() {
                 <ThemeToggle />
               </div>
             </header>
+            <MajorModal />
             <MobileBreadcrumb className="px-4 pb-2 pt-4 md:hidden" />
             <div className="container flex flex-1 flex-col gap-4 py-4">
               <Outlet />
