@@ -1,3 +1,21 @@
+# Shared config anchors — single source of truth to prevent drift between
+# services (a mismatched value here is what crash-looped livekit before).
+# Postgres DSN: referenced by api, worker, seed, and migrate (env + command).
+x-db-dsn: &db-dsn "postgres://${DB_USERNAME}:${DB_PASSWORD}@pgsql:5432/${DB_DATABASE}?sslmode=disable"
+
+# Common backend env for the Go binaries (api / worker / seed). Extra keys are
+# harmless to a binary that doesn't read them, so all three share one block.
+x-backend-env: &backend-env
+    ENVIRONMENT: production
+    DATABASE_URL: *db-dsn
+    REDIS_URL: "redis://redis:6379"
+    LIVEKIT_HOST: "http://livekit:7880"
+    LIVEKIT_PUBLIC_URL: "wss://livekit.${DOMAIN}"
+    S3_ENDPOINT: "http://rustfs:9000"
+    S3_PUBLIC_ENDPOINT: "https://s3.${DOMAIN}"
+    BASE_DOMAIN: "${DOMAIN}"
+    ADMIN_SUBDOMAIN: "admin"
+
 services:
     # TLS + routing handled by the host's Caddy (see deploy/Caddyfile). Each
     # service below publishes its port on 127.0.0.1 so only Caddy can reach it.
@@ -64,15 +82,7 @@ services:
         restart: unless-stopped
         env_file: [.env.prod]
         environment:
-            ENVIRONMENT: production
-            DATABASE_URL: "postgres://${DB_USERNAME}:${DB_PASSWORD}@pgsql:5432/${DB_DATABASE}?sslmode=disable"
-            REDIS_URL: "redis://redis:6379"
-            LIVEKIT_HOST: "http://livekit:7880"
-            LIVEKIT_PUBLIC_URL: "wss://livekit.${DOMAIN}"
-            S3_ENDPOINT: "http://rustfs:9000"
-            S3_PUBLIC_ENDPOINT: "https://s3.${DOMAIN}"
-            BASE_DOMAIN: "${DOMAIN}"
-            ADMIN_SUBDOMAIN: "admin"
+            <<: *backend-env
         depends_on:
             pgsql: { condition: service_healthy }
             redis: { condition: service_healthy }
@@ -107,15 +117,7 @@ services:
         restart: unless-stopped
         env_file: [.env.prod]
         environment:
-            ENVIRONMENT: production
-            DATABASE_URL: "postgres://${DB_USERNAME}:${DB_PASSWORD}@pgsql:5432/${DB_DATABASE}?sslmode=disable"
-            REDIS_URL: "redis://redis:6379"
-            LIVEKIT_HOST: "http://livekit:7880"
-            LIVEKIT_PUBLIC_URL: "wss://livekit.${DOMAIN}"
-            S3_ENDPOINT: "http://rustfs:9000"
-            S3_PUBLIC_ENDPOINT: "https://s3.${DOMAIN}"
-            BASE_DOMAIN: "${DOMAIN}"
-            ADMIN_SUBDOMAIN: "admin"
+            <<: *backend-env
         depends_on:
             pgsql: { condition: service_healthy }
             redis: { condition: service_healthy }
@@ -129,12 +131,12 @@ services:
         # DATABASE_URL lets `make prod-migrate-reset` override the entrypoint and
         # run drop+up without re-deriving the DSN; normal `up` uses `command` below.
         environment:
-            DATABASE_URL: "postgres://${DB_USERNAME}:${DB_PASSWORD}@pgsql:5432/${DB_DATABASE}?sslmode=disable"
+            DATABASE_URL: *db-dsn
         command:
             - "-path"
             - "/migrations"
             - "-database"
-            - "postgres://${DB_USERNAME}:${DB_PASSWORD}@pgsql:5432/${DB_DATABASE}?sslmode=disable"
+            - *db-dsn
             - "up"
         volumes:
             - "./migrations:/migrations:ro"
@@ -162,12 +164,7 @@ services:
         profiles: ["seed"]
         env_file: [.env.prod]
         environment:
-            ENVIRONMENT: production
-            DATABASE_URL: "postgres://${DB_USERNAME}:${DB_PASSWORD}@pgsql:5432/${DB_DATABASE}?sslmode=disable"
-            REDIS_URL: "redis://redis:6379"
-            LIVEKIT_HOST: "http://livekit:7880"
-            S3_ENDPOINT: "http://rustfs:9000"
-            S3_PUBLIC_ENDPOINT: "https://s3.${DOMAIN}"
+            <<: *backend-env
         depends_on:
             migrate: { condition: service_completed_successfully }
         networks: [zoora]
