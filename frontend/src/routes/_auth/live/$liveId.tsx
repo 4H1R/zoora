@@ -1,15 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useState } from "react"
-import { useTranslation } from "react-i18next"
-
 import type { GithubCom4H1RZooraInternalDomainJoinLiveRoomResponse } from "@/api/model"
 import type { PreJoinChoices } from "@/components/live/types"
 
-import { useGetLiveRoomsId } from "@/api/live-sessions/live-sessions"
+import { useQueryClient } from "@tanstack/react-query"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { useState } from "react"
+import { useTranslation } from "react-i18next"
+
+import { getGetLiveRoomsIdQueryKey, useGetLiveRoomsId } from "@/api/live-sessions/live-sessions"
 import { useGetUsersMe } from "@/api/users/users"
 import { ActiveRoom } from "@/components/live/active-room"
-import { deriveRoomRole } from "@/components/live/room-role"
 import { PreJoinLobby } from "@/components/live/prejoin-lobby"
+import { deriveRoomRole } from "@/components/live/room-role"
 import { Spinner } from "@/components/ui/spinner"
 
 export const Route = createFileRoute("/_auth/live/$liveId")({
@@ -24,6 +25,8 @@ interface Connection {
 function RouteComponent() {
   const { liveId } = Route.useParams()
   const { t } = useTranslation()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [connection, setConnection] = useState<Connection | null>(null)
   const { data: meData } = useGetUsersMe()
   const me = meData?.status === 200 ? meData.data.data : undefined
@@ -43,10 +46,33 @@ function RouteComponent() {
 
   const room = (data?.status === 200 && data.data.data) || undefined
 
+  // Back to the lobby, but force the room status to refetch so it reflects
+  // reality (e.g. flips to "finished" after the host closes the room) instead
+  // of showing a stale "Join" button.
+  const returnToLobby = () => {
+    setConnection(null)
+    queryClient.invalidateQueries({ queryKey: getGetLiveRoomsIdQueryKey(liveId) })
+  }
+
+  // Host closing the room for everyone: send them to the class session page
+  // rather than dropping them back on a lobby that still offers a Join button.
+  const handleEnded = () => {
+    const sessionId = room?.class_session_id ?? room?.class_session?.id
+    if (role === "host" && sessionId) {
+      setConnection(null)
+      navigate({
+        to: "/org/classes/class-sessions/$classSessionId",
+        params: { classSessionId: sessionId },
+      })
+      return
+    }
+    returnToLobby()
+  }
+
   if (isPending) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <Spinner className="size-8 text-primary" />
+      <div className="bg-background flex h-screen items-center justify-center">
+        <Spinner className="text-primary size-8" />
       </div>
     )
   }
@@ -62,7 +88,8 @@ function RouteComponent() {
         liveId={liveId}
         chatId={connection.data.chat_id}
         role={role}
-        onDisconnect={() => setConnection(null)}
+        onDisconnect={returnToLobby}
+        onEnded={handleEnded}
       />
     )
   }

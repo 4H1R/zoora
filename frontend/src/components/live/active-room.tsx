@@ -19,23 +19,23 @@ import { toast } from "sonner"
 import "@livekit/components-styles"
 import "./livekit-overrides.css"
 
-// Silence LiveKit's verbose signal/track console logs (info/debug); keep warnings + errors.
-setLogLevel("warn")
+import type { RoomRole } from "./room-role"
+import type { PreJoinChoices, RoomTab } from "./types"
 
 import {
   getGetLiveRoomsIdRecordingsQueryKey,
+  useDeleteLiveRoomsIdParticipantsIdentity,
   useGetLiveRoomsIdRecordings,
   usePostLiveRoomsIdEnd,
   usePostLiveRoomsIdHand,
   usePostLiveRoomsIdLeave,
+  usePostLiveRoomsIdParticipantsIdentityMute,
   usePostLiveRoomsIdRecordings,
   usePostLiveRoomsIdRecordingsRecordingIdStop,
-  useDeleteLiveRoomsIdParticipantsIdentity,
-  usePostLiveRoomsIdParticipantsIdentityMute,
   usePutLiveRoomsIdParticipantsIdentityHand,
   usePutLiveRoomsIdParticipantsIdentityRole,
 } from "@/api/live-sessions/live-sessions"
-import { postMediaPresign, getMediaIdDownloadUrl } from "@/api/media/media"
+import { getMediaIdDownloadUrl, postMediaPresign } from "@/api/media/media"
 import { usePostPollsIdAnswer } from "@/api/polls/polls"
 import { cn } from "@/lib/utils"
 
@@ -44,15 +44,17 @@ import { VotePollModal } from "./panels/vote-poll-modal"
 import { ReconnectOverlay } from "./reconnect-overlay"
 import { RoomHeader } from "./room-header"
 import { RoomPanel } from "./room-panel"
-import { canPublish, RoomRoleContext, type RoomRole, useRoomRole } from "./room-role"
+import { canPublish, RoomRoleContext, useRoomRole } from "./room-role"
 import { Stage } from "./stage"
-import type { PreJoinChoices, RoomTab } from "./types"
 import { usePublishPresence } from "./use-publish-presence"
 import { useRoomChat } from "./use-room-chat"
 import { useRoomPolls } from "./use-room-polls"
 import { useRoomRoles } from "./use-room-roles"
 import { useStage } from "./use-stage"
 import { WebcamRail } from "./webcam-rail"
+
+// Silence LiveKit's verbose signal/track console logs (info/debug); keep warnings + errors.
+setLogLevel("warn")
 
 interface ActiveRoomProps {
   token: string
@@ -64,6 +66,7 @@ interface ActiveRoomProps {
   chatId?: string
   role: RoomRole
   onDisconnect: () => void
+  onEnded: () => void
 }
 
 export function ActiveRoom({
@@ -75,6 +78,7 @@ export function ActiveRoom({
   chatId,
   role,
   onDisconnect,
+  onEnded,
 }: ActiveRoomProps) {
   const { t } = useTranslation()
   const leaveMutation = usePostLiveRoomsIdLeave()
@@ -94,7 +98,7 @@ export function ActiveRoom({
   }
 
   const handleEndRoom = () => {
-    endMutation.mutate({ id: liveId }, { onSettled: onDisconnect })
+    endMutation.mutate({ id: liveId }, { onSettled: onEnded })
   }
 
   return (
@@ -107,7 +111,7 @@ export function ActiveRoom({
         video={false}
         onDisconnected={handleDisconnected}
         data-lk-theme="default"
-        className="zoora-live relative flex flex-col overflow-hidden bg-background text-foreground"
+        className="zoora-live bg-background text-foreground relative flex flex-col overflow-hidden"
       >
         <RoomShell
           sessionName={sessionName}
@@ -176,7 +180,7 @@ function RoomShell({
       {
         onSuccess: () => polls.markAnswered(),
         onError: () => toast.error(t("liveRoom.polls.voteError")),
-      },
+      }
     )
   }
 
@@ -269,7 +273,7 @@ function RoomShell({
             invalidateRecordings()
           },
           onError: () => toast.error(t("liveRoom.recording.stopError")),
-        },
+        }
       )
     } else {
       startRecording.mutate(
@@ -280,7 +284,7 @@ function RoomShell({
             invalidateRecordings()
           },
           onError: () => toast.error(t("liveRoom.recording.startError")),
-        },
+        }
       )
     }
   }
@@ -290,15 +294,14 @@ function RoomShell({
     roleMutation.mutate({ id: liveId, identity, data: { role: r } })
   const onMute = (identity: string, trackSid: string) =>
     muteMutation.mutate({ id: liveId, identity, data: { track_sid: trackSid, muted: true } })
-  const onLowerHand = (identity: string) =>
-    lowerHandMutation.mutate({ id: liveId, identity, data: { raised: false } })
+  const onLowerHand = (identity: string) => lowerHandMutation.mutate({ id: liveId, identity, data: { raised: false } })
   const onRemove = (identity: string, name: string) =>
     removeMutation.mutate(
       { id: liveId, identity },
       {
         onSuccess: () => toast.success(t("liveRoom.people.removed", { name })),
         onError: () => toast.error(t("liveRoom.people.removeError")),
-      },
+      }
     )
 
   // Remote identities with a raised hand — drives the People badge and the
@@ -349,11 +352,7 @@ function RoomShell({
 
   return (
     <LayoutContextProvider value={layoutContext}>
-      <RoomHeader
-        sessionName={sessionName}
-        className={className}
-        onOpenPeople={() => setTab("people")}
-      />
+      <RoomHeader sessionName={sessionName} className={className} onOpenPeople={() => setTab("people")} />
 
       <div className="flex min-h-0 flex-1">
         <div className="relative flex min-w-0 flex-1 flex-col">

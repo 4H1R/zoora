@@ -2447,6 +2447,11 @@
     "joinSession": "Join Session",
     "joinError": "Failed to join session. Please try again.",
     "sessionEnded": "Session Ended",
+    "finished": {
+      "title": "This class has finished",
+      "hint": "The session is over. Recordings, if any, will appear on the class page.",
+      "backToDashboard": "Back to dashboard"
+    },
     "leave": "Leave",
     "leaveDialog": {
       "title": "Leave session?",
