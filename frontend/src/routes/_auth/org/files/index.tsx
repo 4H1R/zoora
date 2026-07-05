@@ -1,137 +1,103 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { ArrowLeftIcon, FolderLockIcon, Share2Icon, SparklesIcon, UploadCloudIcon } from "lucide-react"
+import { FolderOpenIcon, UploadCloudIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import { Button } from "@/components/ui/button"
+import { useGetFilesFolders } from "@/api/media/media"
+import { SHARED_FOLDER, folderStyle, formatBytes } from "@/components/org/files/utils"
+import { PageHeader } from "@/components/page-header"
+import { EmptyState } from "@/components/ui/empty-state"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useOrgGuard } from "@/lib/access"
 import { orgHead } from "@/lib/org-head"
+import { cn } from "@/lib/utils"
 
 export const Route = createFileRoute("/_auth/org/files/")({
   head: () => orgHead("org.nav.files"),
-  component: RouteComponent,
+  component: FilesPage,
 })
 
-const FEATURES = [
-  { key: "upload", icon: UploadCloudIcon },
-  { key: "organize", icon: FolderLockIcon },
-  { key: "share", icon: Share2Icon },
-] as const
-
-// Each floating card keeps its resting rotation/offset while the float keyframe
-// animates between --float-base and --float-lift (see styles.css).
-const DECK = [
-  {
-    className: "animate-float-slow start-1 top-5 size-20 -rotate-[14deg]",
-    style: {
-      "--float-base": "translateY(0) rotate(-14deg)",
-      "--float-lift": "translateY(-7px) rotate(-14deg)",
-    },
-    widths: ["w-full", "w-2/3", "w-3/4"],
-    front: false,
-  },
-  {
-    className: "animate-float end-1 top-4 size-20 rotate-[14deg]",
-    style: {
-      "animationDelay": "-1.6s",
-      "--float-base": "translateY(0) rotate(14deg)",
-      "--float-lift": "translateY(-7px) rotate(14deg)",
-    },
-    widths: ["w-3/4", "w-full", "w-1/2"],
-    front: false,
-  },
-  {
-    className:
-      "animate-float bg-card start-1/2 top-0 size-24 -translate-x-1/2 border-primary/30 shadow-primary/10 rtl:translate-x-1/2",
-    style: {
-      "--float-base": "translateY(0)",
-      "--float-lift": "translateY(-10px)",
-    },
-    widths: ["w-full", "w-5/6", "w-2/3"],
-    front: true,
-  },
-] as const
-
-function RouteComponent() {
+function FilesPage() {
   const { t } = useTranslation()
-  const allowed = useOrgGuard(["media:view"])
+  const allowed = useOrgGuard(["media:view_any"])
+
+  const { data, isLoading } = useGetFilesFolders({ query: { enabled: allowed } })
+  const folders = (data?.status === 200 && data.data.data) || []
+
+  // Shared folder is pinned first — it's the only folder that accepts uploads.
+  const sorted = [...folders].sort((a, b) =>
+    a.model_type === SHARED_FOLDER ? -1 : b.model_type === SHARED_FOLDER ? 1 : 0
+  )
+
   if (!allowed) return null
 
   return (
-    <div className="relative isolate flex min-h-[70vh] flex-col items-center justify-center overflow-hidden rounded-2xl border px-6 py-16 text-center sm:py-24">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_70%_55%_at_50%_0%,var(--color-primary)/12%,transparent_70%)]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 opacity-50 [mask-image:radial-gradient(ellipse_55%_45%_at_50%_35%,black,transparent)]"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, var(--border) 1px, transparent 1px), linear-gradient(to bottom, var(--border) 1px, transparent 1px)",
-          backgroundSize: "44px 44px",
-        }}
-      />
+    <div className="flex flex-col gap-6">
+      <PageHeader title={t("filesPage.title")} />
+      <p className="text-muted-foreground -mt-4 text-sm">{t("filesPage.description")}</p>
 
-      <div aria-hidden className="relative mb-12 h-28 w-48">
-        <div className="bg-primary/25 absolute inset-x-8 top-6 -z-10 h-20 rounded-full blur-2xl" />
-        {DECK.map((card, i) => (
-          <div
-            key={i}
-            className={`absolute flex flex-col gap-1.5 rounded-xl border p-2.5 ${card.front ? "" : "border-border/70 bg-card/95"} shadow-lg backdrop-blur-sm ${card.className}`}
-            style={card.style as React.CSSProperties}
-          >
-            <div className={`mb-0.5 h-4 rounded-md ${card.front ? "bg-primary/20" : "bg-muted"}`} />
-            {card.widths.map((w, j) => (
-              <div key={j} className={`h-1.5 rounded-full ${card.front ? "bg-primary/15" : "bg-muted"} ${w}`} />
-            ))}
-          </div>
-        ))}
-      </div>
-
-      <span className="bg-primary/10 text-primary ring-primary/20 mb-5 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset">
-        <SparklesIcon className="size-3.5 shrink-0" />
-        {t("org.files.comingSoon.badge")}
-      </span>
-
-      <h1 className="max-w-xl text-3xl font-bold tracking-tight text-balance sm:text-4xl">
-        {t("org.files.comingSoon.title")}
-      </h1>
-      <p className="text-muted-foreground mt-3 max-w-md text-sm text-pretty sm:text-base">
-        {t("org.files.comingSoon.description")}
-      </p>
-
-      <div className="mt-10 grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
-        {FEATURES.map(({ key, icon: Icon }) => (
-          <div
-            key={key}
-            className="bg-background/50 flex flex-col items-center gap-2 rounded-xl border p-4 text-center backdrop-blur-sm transition-colors"
-          >
-            <span className="bg-primary/10 text-primary flex size-9 items-center justify-center rounded-lg">
-              <Icon className="size-5" />
-            </span>
-            <p className="text-sm font-medium">{t(`org.files.comingSoon.features.${key}.title`)}</p>
-            <p className="text-muted-foreground text-xs leading-snug">
-              {t(`org.files.comingSoon.features.${key}.desc`)}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-10 flex flex-col items-center gap-4">
-        <span className="text-muted-foreground inline-flex items-center gap-2 text-xs font-medium">
-          <span className="relative flex size-2">
-            <span className="bg-primary/40 absolute inline-flex size-full animate-ping rounded-full" />
-            <span className="bg-primary relative inline-flex size-2 rounded-full" />
-          </span>
-          {t("org.files.comingSoon.status")}
-        </span>
-        <Link to="/org/dashboard">
-          <Button variant="outline" size="sm">
-            <ArrowLeftIcon data-icon="inline-start" className="rtl:rotate-180" />
-            {t("org.files.comingSoon.back")}
-          </Button>
-        </Link>
-      </div>
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-36 rounded-2xl" />
+          ))}
+        </div>
+      ) : sorted.length === 0 ? (
+        <EmptyState icon={FolderOpenIcon} title={t("filesPage.empty")} />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {sorted.map((folder) => {
+            const type = folder.model_type ?? ""
+            const isShared = type === SHARED_FOLDER
+            const { icon: Icon, tint } = folderStyle(type)
+            return (
+              <Link
+                key={type}
+                to="/org/files/$folder"
+                params={{ folder: type }}
+                className={cn(
+                  "group bg-card relative flex flex-col gap-4 overflow-hidden rounded-2xl border p-5 transition-all",
+                  "hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5",
+                  isShared && "border-primary/30"
+                )}
+              >
+                {/* Soft top wash echoes the folder tint without shouting. */}
+                <div
+                  aria-hidden
+                  className={cn(
+                    "pointer-events-none absolute inset-x-0 top-0 h-16 opacity-60",
+                    "bg-[radial-gradient(ellipse_80%_100%_at_50%_0%,var(--color-primary)/6%,transparent)]"
+                  )}
+                />
+                <div className="flex items-start justify-between">
+                  <span
+                    className={cn(
+                      "flex size-11 items-center justify-center rounded-xl transition-transform group-hover:scale-105",
+                      tint
+                    )}
+                  >
+                    <Icon className="size-5" />
+                  </span>
+                  {isShared && (
+                    <span className="bg-primary/10 text-primary inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium">
+                      <UploadCloudIcon className="size-3" />
+                      {t("filesPage.actions.upload")}
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">
+                    {t(`filesPage.folders.${type}`, { defaultValue: type })}
+                  </p>
+                  <p className="text-muted-foreground mt-0.5 text-xs">
+                    {t("filesPage.fileCount", { count: folder.file_count ?? 0 })}
+                    {(folder.total_size ?? 0) > 0 && <> · {formatBytes(folder.total_size ?? 0)}</>}
+                  </p>
+                </div>
+              </Link>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

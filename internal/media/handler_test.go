@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -29,8 +30,8 @@ func (m *mockMediaSvc) PresignUpload(ctx context.Context, dto domain.PresignUplo
 	return resp, a.Error(1)
 }
 
-func (m *mockMediaSvc) PresignDownload(ctx context.Context, id uuid.UUID) (*domain.PresignDownloadResponse, error) {
-	a := m.Called(ctx, id)
+func (m *mockMediaSvc) PresignDownload(ctx context.Context, id uuid.UUID, expiry time.Duration) (*domain.PresignDownloadResponse, error) {
+	a := m.Called(ctx, id, expiry)
 	resp, _ := a.Get(0).(*domain.PresignDownloadResponse)
 	return resp, a.Error(1)
 }
@@ -53,6 +54,19 @@ func (m *mockMediaSvc) ListByModel(ctx context.Context, modelType string, modelI
 
 func (m *mockMediaSvc) CleanupByModel(ctx context.Context, modelType string, modelID uuid.UUID, collection string) error {
 	return m.Called(ctx, modelType, modelID, collection).Error(0)
+}
+
+func (m *mockMediaSvc) ListFolders(ctx context.Context) ([]domain.MediaFolder, error) {
+	a := m.Called(ctx)
+	folders, _ := a.Get(0).([]domain.MediaFolder)
+	return folders, a.Error(1)
+}
+
+func (m *mockMediaSvc) ListFiles(ctx context.Context, modelType string, p domain.ListParams) ([]domain.Media, int64, error) {
+	a := m.Called(ctx, modelType, p)
+	items, _ := a.Get(0).([]domain.Media)
+	total, _ := a.Get(1).(int64)
+	return items, total, a.Error(2)
 }
 
 func newMediaRouter(t *testing.T) (*gin.Engine, *mockMediaSvc) {
@@ -148,7 +162,7 @@ func TestHandlerGetNotFoundMaps404(t *testing.T) {
 func TestHandlerPresignDownloadSuccess(t *testing.T) {
 	r, svc := newMediaRouter(t)
 	id := uuid.New()
-	svc.On("PresignDownload", mock.Anything, id).
+	svc.On("PresignDownload", mock.Anything, id, time.Hour).
 		Return(&domain.PresignDownloadResponse{URL: "https://download.example.test", Key: "key"}, nil)
 
 	w := do(t, r, http.MethodGet, "/api/v1/media/"+id.String()+"/download-url", nil)
@@ -183,6 +197,49 @@ func TestHandlerListByModelValidatesModelID(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	svc.AssertNotCalled(t, "ListByModel")
+}
+
+func TestHandlerListFoldersSuccess(t *testing.T) {
+	r, svc := newMediaRouter(t)
+	svc.On("ListFolders", mock.Anything).Return([]domain.MediaFolder{
+		{ModelType: "organization", FileCount: 3, TotalSize: 42},
+	}, nil)
+	w := do(t, r, http.MethodGet, "/api/v1/files/folders", nil)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), `"model_type":"organization"`)
+}
+
+func TestHandlerListFilesRequiresModelType(t *testing.T) {
+	r, svc := newMediaRouter(t)
+	w := do(t, r, http.MethodGet, "/api/v1/files", nil)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	svc.AssertNotCalled(t, "ListFiles")
+}
+
+func TestHandlerListFilesSuccess(t *testing.T) {
+	r, svc := newMediaRouter(t)
+	svc.On("ListFiles", mock.Anything, "live_room", mock.AnythingOfType("domain.ListParams")).
+		Return([]domain.Media{{ID: uuid.New(), Name: "a.pdf"}}, int64(1), nil)
+	w := do(t, r, http.MethodGet, "/api/v1/files?model_type=live_room&search=a", nil)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), `"total":1`)
+}
+
+func TestHandlerPresignDownloadRejectsUnknownExpiry(t *testing.T) {
+	r, svc := newMediaRouter(t)
+	w := do(t, r, http.MethodGet, "/api/v1/media/"+uuid.NewString()+"/download-url?expiry=2d", nil)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	svc.AssertNotCalled(t, "PresignDownload")
+}
+
+func TestHandlerPresignDownloadPassesExpiry(t *testing.T) {
+	r, svc := newMediaRouter(t)
+	id := uuid.New()
+	svc.On("PresignDownload", mock.Anything, id, 7*24*time.Hour).
+		Return(&domain.PresignDownloadResponse{URL: "https://signed", Key: "k"}, nil)
+	w := do(t, r, http.MethodGet, "/api/v1/media/"+id.String()+"/download-url?expiry=7d", nil)
+	assert.Equal(t, http.StatusOK, w.Code)
+	svc.AssertExpectations(t)
 }
 
 func TestHandlerListByModelSuccess(t *testing.T) {

@@ -115,6 +115,6 @@ export const ORG_ROUTES: Record<OrgRouteKey, OrgRouteSpec> = {
     i18nKey: "org.nav.files",
     icon: <FileIcon />,
     segment: "files",
-    perms: ["media:view"],
+    perms: ["media:view_any"],
   },
 }

@@ -13,8 +13,12 @@ import (
 )
 
 const (
-	presignExpiry         = 15 * time.Minute
-	presignDownloadExpiry = 1 * time.Hour
+	presignExpiry            = 15 * time.Minute
+	presignDownloadExpiry    = 1 * time.Hour
+	presignDownloadMaxExpiry = 7 * 24 * time.Hour // SigV4 hard limit
+	// maxSharedUploadSize caps the declared size of Shared-folder uploads.
+	// Advisory: a presigned PUT cannot enforce the actual byte count.
+	maxSharedUploadSize = 200 << 20
 )
 
 // objectStorage is the subset of the S3 storage client the media service needs.
@@ -50,6 +54,16 @@ func (s *service) PresignUpload(ctx context.Context, dto domain.PresignUploadDTO
 		}
 	}
 
+	sharedUpload := dto.ModelType == domain.MediaModelOrganization
+	if sharedUpload {
+		if caller.OrgID == nil || dto.ModelID != caller.OrgID.String() {
+			return nil, domain.NewValidationError(map[string]string{"model_id": "must be your organization id"})
+		}
+		if dto.Size > maxSharedUploadSize {
+			return nil, domain.NewValidationError(map[string]string{"size": "must be at most 200 MB"})
+		}
+	}
+
 	modelID, _ := uuid.Parse(dto.ModelID)
 
 	m := &domain.Media{
@@ -63,6 +77,13 @@ func (s *service) PresignUpload(ctx context.Context, dto domain.PresignUploadDTO
 		Disk:             "s3",
 		Size:             dto.Size,
 		CustomProperties: json.RawMessage(`{}`),
+	}
+
+	if sharedUpload {
+		// All Shared uploads live under one model_id + collection, so the raw
+		// file name IS the S3 key tail — prefix it to prevent overwrites.
+		m.CollectionName = domain.MediaCollectionShared
+		m.FileName = uuid.NewString()[:8] + "-" + dto.FileName
 	}
 
 	if err := s.repo.Create(ctx, m); err != nil {
@@ -87,16 +108,38 @@ func (s *service) PresignUpload(ctx context.Context, dto domain.PresignUploadDTO
 	}, nil
 }
 
-func (s *service) PresignDownload(ctx context.Context, id uuid.UUID) (*domain.PresignDownloadResponse, error) {
-	if _, ok := domain.CallerFromCtx(ctx); !ok {
+// authorizeOrgAccess hides media belonging to another tenant. Platform-global
+// rows (nil OrganizationID, e.g. changelog assets) stay reachable by any
+// authenticated caller; admins bypass. Returns ErrNotFound rather than
+// ErrForbidden so cross-org probing can't confirm an ID exists.
+func authorizeOrgAccess(caller domain.Caller, m *domain.Media) error {
+	if m.OrganizationID == nil || caller.IsAdmin {
+		return nil
+	}
+	if caller.OrgID == nil || *caller.OrgID != *m.OrganizationID {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+func (s *service) PresignDownload(ctx context.Context, id uuid.UUID, expiry time.Duration) (*domain.PresignDownloadResponse, error) {
+	if expiry <= 0 {
+		expiry = presignDownloadExpiry
+	}
+	expiry = min(expiry, presignDownloadMaxExpiry)
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
 		return nil, domain.ErrForbidden
 	}
 	m, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
+	if err := authorizeOrgAccess(caller, m); err != nil {
+		return nil, err
+	}
 	key := m.S3Key()
-	url, err := s.storage.GeneratePresignedDownloadURL(ctx, key, presignDownloadExpiry)
+	url, err := s.storage.GeneratePresignedDownloadURL(ctx, key, expiry)
 	if err != nil {
 		return nil, err
 	}
@@ -104,11 +147,18 @@ func (s *service) PresignDownload(ctx context.Context, id uuid.UUID) (*domain.Pr
 }
 
 func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*domain.Media, error) {
-	_, ok := domain.CallerFromCtx(ctx)
+	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	return s.repo.FindByID(ctx, id)
+	m, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if err := authorizeOrgAccess(caller, m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
@@ -121,6 +171,9 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	}
 	m, err := s.repo.FindByID(ctx, id)
 	if err != nil {
+		return err
+	}
+	if err := authorizeOrgAccess(caller, m); err != nil {
 		return err
 	}
 	// Drop the object first; if the row delete then fails the object is already
@@ -157,10 +210,59 @@ func (s *service) CleanupByModel(ctx context.Context, modelType string, modelID 
 	return nil
 }
 
+// requireOrgViewAny is the shared gate for the org files page endpoints.
+func requireOrgViewAny(ctx context.Context) (domain.Caller, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok || caller.OrgID == nil {
+		return domain.Caller{}, domain.ErrForbidden
+	}
+	if !caller.IsAdmin && !caller.HasPermission(domain.PermMediaViewAny) {
+		return domain.Caller{}, domain.ErrForbidden
+	}
+	return caller, nil
+}
+
+func (s *service) ListFolders(ctx context.Context) ([]domain.MediaFolder, error) {
+	caller, err := requireOrgViewAny(ctx)
+	if err != nil {
+		return nil, err
+	}
+	folders, err := s.repo.ListFolders(ctx, *caller.OrgID)
+	if err != nil {
+		return nil, err
+	}
+	// The Shared folder is always offered so the page can accept uploads
+	// before the first file exists.
+	for _, f := range folders {
+		if f.ModelType == domain.MediaModelOrganization {
+			return folders, nil
+		}
+	}
+	return append(folders, domain.MediaFolder{ModelType: domain.MediaModelOrganization}), nil
+}
+
+func (s *service) ListFiles(ctx context.Context, modelType string, p domain.ListParams) ([]domain.Media, int64, error) {
+	caller, err := requireOrgViewAny(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	return s.repo.ListFiles(ctx, *caller.OrgID, modelType, p)
+}
+
 func (s *service) ListByModel(ctx context.Context, modelType string, modelID uuid.UUID, collection string) ([]domain.Media, error) {
-	_, ok := domain.CallerFromCtx(ctx)
+	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	return s.repo.ListByModel(ctx, modelType, modelID, collection)
+	items, err := s.repo.ListByModel(ctx, modelType, modelID, collection)
+	if err != nil {
+		return nil, err
+	}
+	visible := items[:0]
+	for _, m := range items {
+		if authorizeOrgAccess(caller, &m) == nil {
+			visible = append(visible, m)
+		}
+	}
+	return visible, nil
 }

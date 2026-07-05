@@ -119,8 +119,6 @@
   --tracking-caps: 0.06em;
 
   --animate-pulse-dot: pulse-dot 1.4s ease-in-out infinite;
-  --animate-float: float 6s var(--ease-in-out) infinite;
-  --animate-float-slow: float 8.5s var(--ease-in-out) infinite;
   --animate-reveal: reveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-aurora: aurora 22s ease-in-out infinite;
   --animate-aurora-slow: aurora 30s ease-in-out infinite reverse;
@@ -143,16 +141,6 @@
     }
     50% {
       opacity: 0.35;
-    }
-  }
-
-  @keyframes float {
-    0%,
-    100% {
-      transform: var(--float-base, translateY(0));
-    }
-    50% {
-      transform: var(--float-lift, translateY(-9px));
     }
   }
 

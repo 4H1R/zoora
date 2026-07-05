@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_auth/org/offlines/$offlineId")({
 
 function AttachmentViewer({ media }: { media: Media }) {
   const { t } = useTranslation()
-  const downloadQuery = useGetMediaIdDownloadUrl(media.id ?? "", {
+  const downloadQuery = useGetMediaIdDownloadUrl(media.id ?? "", undefined, {
     query: { enabled: !!media.id, staleTime: 30 * 60 * 1000 },
   })
   const url = (downloadQuery.data?.status === 200 && downloadQuery.data.data.data?.url) || null

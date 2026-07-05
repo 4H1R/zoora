@@ -14,6 +14,10 @@ import (
 const (
 	MediaModelLiveRoom    = "live_room"
 	MediaCollectionSlides = "slides"
+	// MediaModelOrganization is the model type for standalone files uploaded
+	// into an org's Shared folder on the files page; ModelID is the org ID.
+	MediaModelOrganization = "organization"
+	MediaCollectionShared  = "shared"
 )
 
 type Media struct {
@@ -78,6 +82,10 @@ type MediaRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*Media, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	ListByModel(ctx context.Context, modelType string, modelID uuid.UUID, collection string) ([]Media, error)
+	// ListFolders aggregates an org's media rows by model_type.
+	ListFolders(ctx context.Context, orgID uuid.UUID) ([]MediaFolder, error)
+	// ListFiles pages through one org's media rows of a single model_type.
+	ListFiles(ctx context.Context, orgID uuid.UUID, modelType string, p ListParams) ([]Media, int64, error)
 }
 
 type PresignDownloadResponse struct {
@@ -85,12 +93,27 @@ type PresignDownloadResponse struct {
 	Key string `json:"key"`
 }
 
+// MediaFolder is one row of the org files page's folder view: a model_type
+// bucket with aggregate stats. Folder display names are translated client-side.
+type MediaFolder struct {
+	ModelType string `json:"model_type"`
+	FileCount int64  `json:"file_count"`
+	TotalSize int64  `json:"total_size"`
+}
+
 type MediaService interface {
 	PresignUpload(ctx context.Context, dto PresignUploadDTO) (*PresignUploadResponse, error)
-	PresignDownload(ctx context.Context, id uuid.UUID) (*PresignDownloadResponse, error)
+	// PresignDownload returns a presigned GET URL valid for the given expiry;
+	// non-positive falls back to the service default, over-max clamps to 7d.
+	PresignDownload(ctx context.Context, id uuid.UUID, expiry time.Duration) (*PresignDownloadResponse, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*Media, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	ListByModel(ctx context.Context, modelType string, modelID uuid.UUID, collection string) ([]Media, error)
+	// ListFolders returns the org files page's folder view. Requires
+	// media:view_any (or admin) and an org-scoped caller.
+	ListFolders(ctx context.Context) ([]MediaFolder, error)
+	// ListFiles pages one folder (model_type) of the caller's org.
+	ListFiles(ctx context.Context, modelType string, p ListParams) ([]Media, int64, error)
 	// CleanupByModel purges a whole collection (rows + S3 objects) for a model.
 	// System-level: no caller authz — invoked from background jobs only.
 	CleanupByModel(ctx context.Context, modelType string, modelID uuid.UUID, collection string) error

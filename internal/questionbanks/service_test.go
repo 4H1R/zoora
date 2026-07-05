@@ -101,6 +101,17 @@ func (m *mockMediaRepo) ListByModel(ctx context.Context, modelType string, model
 	ms, _ := a.Get(0).([]domain.Media)
 	return ms, a.Error(1)
 }
+func (m *mockMediaRepo) ListFolders(ctx context.Context, orgID uuid.UUID) ([]domain.MediaFolder, error) {
+	a := m.Called(ctx, orgID)
+	fs, _ := a.Get(0).([]domain.MediaFolder)
+	return fs, a.Error(1)
+}
+func (m *mockMediaRepo) ListFiles(ctx context.Context, orgID uuid.UUID, modelType string, p domain.ListParams) ([]domain.Media, int64, error) {
+	a := m.Called(ctx, orgID, modelType, p)
+	ms, _ := a.Get(0).([]domain.Media)
+	total, _ := a.Get(1).(int64)
+	return ms, total, a.Error(2)
+}
 func (m *mockQuestionRepo) FindByIDs(ctx context.Context, ids []uuid.UUID) ([]domain.Question, error) {
 	a := m.Called(ctx, ids)
 	qs, _ := a.Get(0).([]domain.Question)
