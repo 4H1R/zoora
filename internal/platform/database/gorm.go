@@ -2,7 +2,9 @@ package database
 
 import (
 	"fmt"
+	"log"
 	"log/slog"
+	"os"
 	"time"
 
 	"gorm.io/driver/postgres"
@@ -16,8 +18,18 @@ func NewConnection(databaseURL string, slogLogger *slog.Logger, logQueries bool)
 		logLevel = logger.Info
 	}
 
+	gormLogger := logger.New(
+		log.New(os.Stderr, "\r\n", log.LstdFlags),
+		logger.Config{
+			SlowThreshold:             200 * time.Millisecond,
+			LogLevel:                  logLevel,
+			IgnoreRecordNotFoundError: true, // ErrRecordNotFound is handled in repos, not a real error
+			Colorful:                  false,
+		},
+	)
+
 	db, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{
-		Logger: logger.Default.LogMode(logLevel),
+		Logger: gormLogger,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("opening database connection: %w", err)
