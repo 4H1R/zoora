@@ -211,7 +211,9 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
           />
         )}
 
-        <span className="mx-0.5 h-7 w-px bg-border" />
+        {/* Divider — only when publisher-side controls precede it, else it
+            orphans at the bar edge next to the hand icon for viewers */}
+        {publisher && <span className="mx-0.5 h-7 w-px bg-border" />}
 
         {/* Raise hand — viewers only */}
         {!publisher && (
