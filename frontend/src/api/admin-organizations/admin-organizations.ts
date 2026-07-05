@@ -42,6 +42,9 @@ import type {
   GetAdminOrganizationsStats401,
   GetAdminOrganizationsStats403,
   GetAdminOrganizationsStats500,
+  GetAdminPlans200,
+  GetAdminPlans401,
+  GetAdminPlans403,
   GithubCom4H1RZooraInternalDomainAdminCreateOrganizationDTO,
   GithubCom4H1RZooraInternalDomainAdminUpdateOrganizationDTO,
   GithubCom4H1RZooraInternalDomainResponse,
@@ -1021,3 +1024,127 @@ export const usePostAdminOrganizationsIdRestore = <TError = ErrorType<PostAdminO
       > => {
       return useMutation(getPostAdminOrganizationsIdRestoreMutationOptions(options), queryClient);
     }
+    export type getAdminPlansResponse200 = {
+  data: GetAdminPlans200
+  status: 200
+}
+
+export type getAdminPlansResponse401 = {
+  data: GetAdminPlans401
+  status: 401
+}
+
+export type getAdminPlansResponse403 = {
+  data: GetAdminPlans403
+  status: 403
+}
+
+export type getAdminPlansResponseSuccess = (getAdminPlansResponse200) & {
+  headers: Headers;
+};
+export type getAdminPlansResponseError = (getAdminPlansResponse401 | getAdminPlansResponse403) & {
+  headers: Headers;
+};
+
+export type getAdminPlansResponse = (getAdminPlansResponseSuccess | getAdminPlansResponseError)
+
+export const getGetAdminPlansUrl = () => {
+
+
+
+
+  return `/admin/plans`
+}
+
+/**
+ * @summary [Admin] Plan catalog
+ */
+export const getAdminPlans = async ( options?: RequestInit): Promise<getAdminPlansResponse> => {
+
+  return customInstance<getAdminPlansResponse>(getGetAdminPlansUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminPlansQueryKey = () => {
+    return [
+    `/admin/plans`
+    ] as const;
+    }
+
+
+export const getGetAdminPlansQueryOptions = <TData = Awaited<ReturnType<typeof getAdminPlans>>, TError = ErrorType<GetAdminPlans401 | GetAdminPlans403>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPlans>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminPlansQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminPlans>>> = ({ signal }) => getAdminPlans({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminPlans>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminPlansQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminPlans>>>
+export type GetAdminPlansQueryError = ErrorType<GetAdminPlans401 | GetAdminPlans403>
+
+
+export function useGetAdminPlans<TData = Awaited<ReturnType<typeof getAdminPlans>>, TError = ErrorType<GetAdminPlans401 | GetAdminPlans403>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPlans>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminPlans>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminPlans>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminPlans<TData = Awaited<ReturnType<typeof getAdminPlans>>, TError = ErrorType<GetAdminPlans401 | GetAdminPlans403>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPlans>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminPlans>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminPlans>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminPlans<TData = Awaited<ReturnType<typeof getAdminPlans>>, TError = ErrorType<GetAdminPlans401 | GetAdminPlans403>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPlans>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary [Admin] Plan catalog
+ */
+
+export function useGetAdminPlans<TData = Awaited<ReturnType<typeof getAdminPlans>>, TError = ErrorType<GetAdminPlans401 | GetAdminPlans403>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPlans>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminPlansQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+

@@ -30,6 +30,7 @@ func (h *AdminHandler) RegisterAdminRoutes(group *gin.RouterGroup) {
 
 	group.GET("/organizations", h.List)
 	group.GET("/organizations/stats", h.Stats)
+	group.GET("/plans", h.Plans)
 	group.POST("/organizations", h.Create)
 	group.GET("/organizations/:id", idParam, h.Get)
 	group.PUT("/organizations/:id", idParam, h.Update)
@@ -162,6 +163,20 @@ func (h *AdminHandler) Update(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, org)
+}
+
+// Plans returns the static plan catalog (tiers, features, limits) for the admin
+// plan picker.
+// @Summary [Admin] Plan catalog
+// @Tags Admin/Organizations
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} domain.Response{data=[]domain.PlanInfo}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Router /admin/plans [get]
+func (h *AdminHandler) Plans(c *gin.Context) {
+	domain.SuccessResponse(c, http.StatusOK, domain.PublicCatalog())
 }
 
 // SetPlan assigns a subscription plan and optional expiry to an organization.

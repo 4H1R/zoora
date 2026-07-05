@@ -113,6 +113,26 @@ var PlanCatalog = map[Plan]Entitlements{
 	},
 }
 
+// PlanInfo is the public, serializable shape of a plan's entitlements, for the
+// admin UI plan picker. The internal Entitlements maps are unexported, so this
+// projects them into a stable JSON contract.
+type PlanInfo struct {
+	Plan     Plan             `json:"plan"`
+	Features map[Feature]bool `json:"features"`
+	Limits   map[Limit]int64  `json:"limits"`
+}
+
+// PublicCatalog returns the plan catalog in tier order for API responses.
+func PublicCatalog() []PlanInfo {
+	order := []Plan{PlanFree, PlanPro, PlanEnterprise}
+	out := make([]PlanInfo, 0, len(order))
+	for _, p := range order {
+		ent := PlanCatalog[p]
+		out = append(out, PlanInfo{Plan: p, Features: ent.features, Limits: ent.limits})
+	}
+	return out
+}
+
 // EffectiveEntitlements resolves the entitlements an org actually gets right now:
 // the stored plan while active, downgraded to Free once expiresAt has passed.
 // A nil expiresAt means perpetual. An unknown plan resolves to Free.
