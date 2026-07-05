@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 
 import { useGetUsersMe } from "@/api/users/users"
 import { MajorModal } from "@/components/changelog/major-modal"
-import { WhatsNewButton } from "@/components/changelog/whats-new-button"
+import { NavZoora } from "@/components/changelog/nav-zoora"
 import { LanguageSwitcher } from "@/components/language-switcher"
 // import { LiveClock } from "@/components/live-clock"
 import { BreadcrumbProvider } from "@/components/layout/breadcrumb-context"
@@ -32,6 +32,7 @@ const SEGMENT_KEYS: Record<string, string> = {
     Object.values(ORG_ROUTES).map((spec) => [spec.segment, spec.i18nKey])
   ),
   members: "org.nav.members",
+  "whats-new": "whatsNew.title",
 }
 
 function RouteComponent() {
@@ -63,7 +64,12 @@ function RouteComponent() {
     <AccessProvider config={access.config} user={access.user}>
       <BreadcrumbProvider>
         <SidebarProvider>
-          <AppSidebar user={user} navGroups={navGroups} side={sidebarSide} />
+          <AppSidebar
+            user={user}
+            navGroups={navGroups}
+            side={sidebarSide}
+            contentExtra={<NavZoora />}
+          />
           <SidebarInset>
             <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
               <SidebarTrigger className="md:hidden" />
@@ -75,7 +81,6 @@ function RouteComponent() {
               />
               <div className="ms-auto flex items-center gap-2">
                 {/* <LiveClock className="me-1 hidden sm:flex" /> */}
-                <WhatsNewButton />
                 <LanguageSwitcher />
                 <ThemeToggle />
               </div>

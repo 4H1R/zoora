@@ -1158,7 +1158,19 @@
       "insertMedia": "Insert media",
       "uploadFailed": "Upload failed",
       "deleted": "Entry deleted",
-      "confirmDelete": "Delete this entry permanently?"
+      "confirmDelete": "Delete this entry permanently?",
+      "createFailed": "Could not create entry",
+      "starterBody": "## What's new\n\n- ",
+      "subtitle": "Draft, publish and manage release notes",
+      "empty": "No entries yet",
+      "emptyHint": "Create your first changelog entry to announce a release.",
+      "createdOn": "Created {{date}}",
+      "publishedOn": "Published {{date}}",
+      "stats": {
+        "total": "Total entries",
+        "published": "Published",
+        "drafts": "Drafts"
+      }
     }
   },
   "classes": {
@@ -1236,7 +1248,8 @@
       "practices": "Practices",
       "grades": "Grades",
       "attendance": "Attendance",
-      "recordings": "Recordings"
+      "recordings": "Recordings",
+      "zoora": "Zoora"
     },
     "practices": {
       "title": "Practices",
@@ -2660,7 +2673,12 @@
   "whatsNew": {
     "title": "What's New",
     "subtitle": "Latest updates and improvements",
+    "eyebrow": "Changelog",
     "empty": "No updates yet.",
+    "emptyHint": "New releases and improvements will land here.",
+    "count_one": "{{count}} release",
+    "count_other": "{{count}} releases",
+    "latest": "Latest",
     "major": "Major",
     "seeAll": "See all",
     "gotIt": "Got it"

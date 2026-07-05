@@ -22,11 +22,13 @@ export function AppSidebar({
   user,
   navGroups,
   headerExtra,
+  contentExtra,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   user?: GithubCom4H1RZooraInternalDomainUser
   navGroups: NavGroup[]
   headerExtra?: React.ReactNode
+  contentExtra?: React.ReactNode
 }) {
   const { state, setOpenMobile } = useSidebar()
   const pathname = useRouterState({ select: (s) => s.location.pathname })
@@ -52,6 +54,7 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain groups={navGroups} />
+        {contentExtra}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />
