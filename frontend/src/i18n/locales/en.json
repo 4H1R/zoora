@@ -1440,29 +1440,6 @@
         "status": "Status"
       }
     },
-    "files": {
-      "comingSoon": {
-        "badge": "Coming soon",
-        "title": "A home for every file",
-        "description": "Centralized storage for your organization is on the way — upload, organize, and share documents across every class from one place.",
-        "features": {
-          "upload": {
-            "title": "Drag & drop uploads",
-            "desc": "Add files in seconds, straight from your desktop."
-          },
-          "organize": {
-            "title": "Class-scoped folders",
-            "desc": "Keep materials neatly grouped by class and member."
-          },
-          "share": {
-            "title": "Secure sharing",
-            "desc": "Permission-aware links that respect your roles."
-          }
-        },
-        "status": "In active development",
-        "back": "Back to dashboard"
-      }
-    },
     "dashboard": {
       "overview": "Overview",
       "welcome": "Welcome back",

@@ -50,6 +50,7 @@ import { Route as AdminAdminClassesIndexRouteImport } from './routes/_admin/admi
 import { Route as AdminAdminChangelogIndexRouteImport } from './routes/_admin/admin/changelog/index'
 import { Route as AdminAdminAttendanceIndexRouteImport } from './routes/_admin/admin/attendance/index'
 import { Route as AuthOrgOfflinesOfflineIdRouteImport } from './routes/_auth/org/offlines/$offlineId'
+import { Route as AuthOrgFilesFolderRouteImport } from './routes/_auth/org/files/$folder'
 import { Route as AuthOrgClassesClassIdRouteImport } from './routes/_auth/org/classes/$classId'
 import { Route as AdminAdminChangelogIdRouteImport } from './routes/_admin/admin/changelog/$id'
 import { Route as AuthOrgClassesClassSessionsClassSessionIdRouteImport } from './routes/_auth/org/classes/class-sessions/$classSessionId'
@@ -276,6 +277,11 @@ const AuthOrgOfflinesOfflineIdRoute =
     path: '/offlines/$offlineId',
     getParentRoute: () => AuthOrgRoute,
   } as any)
+const AuthOrgFilesFolderRoute = AuthOrgFilesFolderRouteImport.update({
+  id: '/files/$folder',
+  path: '/files/$folder',
+  getParentRoute: () => AuthOrgRoute,
+} as any)
 const AuthOrgClassesClassIdRoute = AuthOrgClassesClassIdRouteImport.update({
   id: '/classes/$classId',
   path: '/classes/$classId',
@@ -362,6 +368,7 @@ export interface FileRoutesByFullPath {
   '/org/': typeof AuthOrgIndexRoute
   '/admin/changelog/$id': typeof AdminAdminChangelogIdRoute
   '/org/classes/$classId': typeof AuthOrgClassesClassIdRoute
+  '/org/files/$folder': typeof AuthOrgFilesFolderRoute
   '/org/offlines/$offlineId': typeof AuthOrgOfflinesOfflineIdRoute
   '/admin/attendance/': typeof AdminAdminAttendanceIndexRoute
   '/admin/changelog/': typeof AdminAdminChangelogIndexRoute
@@ -413,6 +420,7 @@ export interface FileRoutesByTo {
   '/org': typeof AuthOrgIndexRoute
   '/admin/changelog/$id': typeof AdminAdminChangelogIdRoute
   '/org/classes/$classId': typeof AuthOrgClassesClassIdRoute
+  '/org/files/$folder': typeof AuthOrgFilesFolderRoute
   '/org/offlines/$offlineId': typeof AuthOrgOfflinesOfflineIdRoute
   '/admin/attendance': typeof AdminAdminAttendanceIndexRoute
   '/admin/changelog': typeof AdminAdminChangelogIndexRoute
@@ -469,6 +477,7 @@ export interface FileRoutesById {
   '/_auth/org/': typeof AuthOrgIndexRoute
   '/_admin/admin/changelog/$id': typeof AdminAdminChangelogIdRoute
   '/_auth/org/classes/$classId': typeof AuthOrgClassesClassIdRoute
+  '/_auth/org/files/$folder': typeof AuthOrgFilesFolderRoute
   '/_auth/org/offlines/$offlineId': typeof AuthOrgOfflinesOfflineIdRoute
   '/_admin/admin/attendance/': typeof AdminAdminAttendanceIndexRoute
   '/_admin/admin/changelog/': typeof AdminAdminChangelogIndexRoute
@@ -523,6 +532,7 @@ export interface FileRouteTypes {
     | '/org/'
     | '/admin/changelog/$id'
     | '/org/classes/$classId'
+    | '/org/files/$folder'
     | '/org/offlines/$offlineId'
     | '/admin/attendance/'
     | '/admin/changelog/'
@@ -574,6 +584,7 @@ export interface FileRouteTypes {
     | '/org'
     | '/admin/changelog/$id'
     | '/org/classes/$classId'
+    | '/org/files/$folder'
     | '/org/offlines/$offlineId'
     | '/admin/attendance'
     | '/admin/changelog'
@@ -629,6 +640,7 @@ export interface FileRouteTypes {
     | '/_auth/org/'
     | '/_admin/admin/changelog/$id'
     | '/_auth/org/classes/$classId'
+    | '/_auth/org/files/$folder'
     | '/_auth/org/offlines/$offlineId'
     | '/_admin/admin/attendance/'
     | '/_admin/admin/changelog/'
@@ -963,6 +975,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthOrgOfflinesOfflineIdRouteImport
       parentRoute: typeof AuthOrgRoute
     }
+    '/_auth/org/files/$folder': {
+      id: '/_auth/org/files/$folder'
+      path: '/files/$folder'
+      fullPath: '/org/files/$folder'
+      preLoaderRoute: typeof AuthOrgFilesFolderRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
     '/_auth/org/classes/$classId': {
       id: '/_auth/org/classes/$classId'
       path: '/classes/$classId'
@@ -1121,6 +1140,7 @@ interface AuthOrgRouteChildren {
   AuthOrgWhatsNewRoute: typeof AuthOrgWhatsNewRoute
   AuthOrgIndexRoute: typeof AuthOrgIndexRoute
   AuthOrgClassesClassIdRoute: typeof AuthOrgClassesClassIdRoute
+  AuthOrgFilesFolderRoute: typeof AuthOrgFilesFolderRoute
   AuthOrgOfflinesOfflineIdRoute: typeof AuthOrgOfflinesOfflineIdRoute
   AuthOrgAttendanceIndexRoute: typeof AuthOrgAttendanceIndexRoute
   AuthOrgClassesIndexRoute: typeof AuthOrgClassesIndexRoute
@@ -1143,6 +1163,7 @@ const AuthOrgRouteChildren: AuthOrgRouteChildren = {
   AuthOrgWhatsNewRoute: AuthOrgWhatsNewRoute,
   AuthOrgIndexRoute: AuthOrgIndexRoute,
   AuthOrgClassesClassIdRoute: AuthOrgClassesClassIdRoute,
+  AuthOrgFilesFolderRoute: AuthOrgFilesFolderRoute,
   AuthOrgOfflinesOfflineIdRoute: AuthOrgOfflinesOfflineIdRoute,
   AuthOrgAttendanceIndexRoute: AuthOrgAttendanceIndexRoute,
   AuthOrgClassesIndexRoute: AuthOrgClassesIndexRoute,
