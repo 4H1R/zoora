@@ -42,7 +42,7 @@ func TestMiddleware_ValidToken(t *testing.T) {
 	assert.NoError(t, err)
 
 	repo := newUserRepo(userID, false)
-	router.GET("/test", auth.Middleware(svc, nil, nil, repo), func(c *gin.Context) {
+	router.GET("/test", auth.Middleware(svc, nil, nil, repo, nil), func(c *gin.Context) {
 		assert.Equal(t, userID, auth.GetUserID(c))
 		assert.False(t, auth.GetIsAdmin(c))
 		c.Status(http.StatusOK)
@@ -58,7 +58,7 @@ func TestMiddleware_ValidToken(t *testing.T) {
 
 func TestMiddleware_NoToken(t *testing.T) {
 	router, svc := setupTestRouter()
-	router.GET("/test", auth.Middleware(svc, nil, nil, nil), func(c *gin.Context) {
+	router.GET("/test", auth.Middleware(svc, nil, nil, nil, nil), func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})
 
@@ -76,7 +76,7 @@ func TestRequireAdmin_AdminUser(t *testing.T) {
 	token, _ := svc.GenerateToken(userID)
 
 	repo := newUserRepo(userID, true)
-	router.GET("/test", auth.Middleware(svc, nil, nil, repo), auth.RequireAdmin(), func(c *gin.Context) {
+	router.GET("/test", auth.Middleware(svc, nil, nil, repo, nil), auth.RequireAdmin(), func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})
 
@@ -95,7 +95,7 @@ func TestRequireAdmin_NonAdmin(t *testing.T) {
 	token, _ := svc.GenerateToken(userID)
 
 	repo := newUserRepo(userID, false)
-	router.GET("/test", auth.Middleware(svc, nil, nil, repo), auth.RequireAdmin(), func(c *gin.Context) {
+	router.GET("/test", auth.Middleware(svc, nil, nil, repo, nil), auth.RequireAdmin(), func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})
 
@@ -114,7 +114,7 @@ func TestRequirePermission_AdminBypass(t *testing.T) {
 	token, _ := svc.GenerateToken(userID)
 
 	repo := newUserRepo(userID, true)
-	router.GET("/test", auth.Middleware(svc, nil, nil, repo), auth.RequirePermission(domain.PermUsersCreate), func(c *gin.Context) {
+	router.GET("/test", auth.Middleware(svc, nil, nil, repo, nil), auth.RequirePermission(domain.PermUsersCreate), func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})
 

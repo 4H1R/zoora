@@ -21,6 +21,7 @@ import (
 	"github.com/4H1R/zoora/internal/chat"
 	"github.com/4H1R/zoora/internal/classes"
 	"github.com/4H1R/zoora/internal/config"
+	"github.com/4H1R/zoora/internal/entitlements"
 	"github.com/4H1R/zoora/internal/gradebook"
 	"github.com/4H1R/zoora/internal/livesessions"
 	"github.com/4H1R/zoora/internal/media"
@@ -133,8 +134,9 @@ func main() {
 	chatMemberRepo := chat.NewMemberRepository(db)
 	chatMessageRepo := chat.NewMessageRepository(db)
 	chatReactionRepo := chat.NewReactionRepository(db)
+	entitlementRepo := entitlements.NewRepository(db)
 
-	authMiddleware := auth.Middleware(jwtService, redisClient, roleRepo, userRepo)
+	authMiddleware := auth.Middleware(jwtService, redisClient, roleRepo, userRepo, entitlementRepo)
 	tenantMiddleware := middleware.Tenant(redisClient, orgRepo, cfg.BaseDomain, cfg.AdminSubdomain)
 
 	authzResolver := authz.NewResolver(classMemberRepo)
