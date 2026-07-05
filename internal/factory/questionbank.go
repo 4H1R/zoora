@@ -61,10 +61,19 @@ func NewQuestion(bankID, orgID uuid.UUID, opts ...func(*domain.Question)) *domai
 			}
 			q.Options = []domain.QuestionOption{opt}
 		case domain.QuestionTypeDescriptive:
-			q.Options = []domain.QuestionOption{{
-				ID:    uuid.New().String(),
-				Score: float64(fake.IntRange(1, 5)),
-			}}
+			// Rubric concepts: each option is a weighted concept the answer
+			// should mention; synonyms are alternative phrasings.
+			count := fake.IntRange(2, 4)
+			q.Options = make([]domain.QuestionOption, count)
+			for i := range count {
+				q.Options[i] = domain.QuestionOption{
+					ID:       uuid.New().String(),
+					Value:    fakeSentence(fake.IntRange(1, 2)),
+					Score:    float64(fake.IntRange(1, 3)),
+					Synonyms: []string{fakeSentence(1)},
+				}
+			}
+			q.ModelAnswer = fakeSentence(12)
 		}
 	}
 	// Negative marking only applies to choice questions; occasionally set a mode.

@@ -41,8 +41,13 @@ func TestNewQuestion_Descriptive(t *testing.T) {
 	})
 
 	assert.Equal(t, domain.QuestionTypeDescriptive, q.Type)
-	assert.Len(t, q.Options, 1)
-	assert.Greater(t, q.Options[0].Score, 0.0)
+	assert.GreaterOrEqual(t, len(q.Options), 2)
+	for _, o := range q.Options {
+		assert.NotEmpty(t, o.Value)
+		assert.Greater(t, o.Score, 0.0)
+		assert.NotEmpty(t, o.Synonyms)
+	}
+	assert.NotEmpty(t, q.ModelAnswer)
 }
 
 func TestNewQuestion_DefaultType(t *testing.T) {

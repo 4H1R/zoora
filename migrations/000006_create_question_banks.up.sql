@@ -19,6 +19,7 @@ CREATE TABLE questions (
     text TEXT NOT NULL,
     type VARCHAR(20) NOT NULL,
     options JSONB NOT NULL DEFAULT '[]',
+    model_answer TEXT NOT NULL DEFAULT '',
     metadata JSONB NOT NULL DEFAULT '[]',
     negative_mark_mode VARCHAR(20) NOT NULL DEFAULT 'none',
     negative_value DOUBLE PRECISION NOT NULL DEFAULT 0,

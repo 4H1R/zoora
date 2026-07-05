@@ -8,8 +8,17 @@
 
 export interface GithubCom4H1RZooraInternalDomainSubmissionAnswer {
   earned_score?: number;
+  matched_concepts?: string[];
   question_id?: string;
   selected_option_ids?: string[];
+  similarity_pct?: number;
   spent_seconds?: number;
+  /**
+     * Advisory auto-grading signals for descriptive answers, computed at
+     * finalize from the question's rubric options and model answer. They never
+     * affect EarnedScore/TotalScore and are stripped from student-facing reads
+     * — the teacher confirms or overrides them during manual grading.
+     */
+  suggested_score?: number;
   value?: string;
 }

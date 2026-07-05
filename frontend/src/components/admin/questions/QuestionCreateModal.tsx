@@ -39,6 +39,8 @@ const optionSchema = z.object({
   value: z.string(),
   score: z.coerce.number(),
   image_media_id: z.string().nullable().optional(),
+  // Comma-separated in the form; converted to string[] on submit.
+  synonyms: z.string().optional(),
 })
 
 const metadataSchema = z.object({
@@ -51,8 +53,17 @@ const baseSchema = z.object({
   text: z.string().min(1),
   type: z.enum(TYPE_VALUES),
   options: z.array(optionSchema),
+  model_answer: z.string().optional(),
   metadata: z.array(metadataSchema),
 })
+
+function parseSynonyms(raw?: string): string[] | undefined {
+  const list = (raw ?? "")
+    .split(/[,،]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+  return list.length > 0 ? list : undefined
+}
 
 type FormInput = z.input<typeof baseSchema>
 type FormValues = z.infer<typeof baseSchema>
@@ -80,6 +91,7 @@ function defaultOptionsFor(type: QType): FormOption[] {
     case "short_answer":
       return [{ id: nextOptId(), value: "", score: 1 }]
     case "descriptive":
+      // Rubric: each option is a weighted concept the answer should mention.
       return [{ id: nextOptId(), value: "", score: 1 }]
   }
 }
@@ -118,6 +130,7 @@ export function QuestionCreateModal({
       text: "",
       type: "descriptive",
       options: defaultOptionsFor("descriptive"),
+      model_answer: "",
       metadata: [],
     },
   })
@@ -134,6 +147,7 @@ export function QuestionCreateModal({
             value: o.value ?? "",
             score: o.score ?? 0,
             image_media_id: o.image_media_id ?? null,
+            synonyms: (o.synonyms ?? []).join(", "),
           }))
         : defaultOptionsFor(type)
       form.reset({
@@ -141,6 +155,7 @@ export function QuestionCreateModal({
         text: question.text ?? "",
         type,
         options: opts,
+        model_answer: question.model_answer ?? "",
         metadata: (question.metadata ?? []).map((m) => ({
           type: "photo" as const,
           media_id: m.media_id ?? "",
@@ -152,6 +167,7 @@ export function QuestionCreateModal({
         text: "",
         type: "descriptive",
         options: defaultOptionsFor("descriptive"),
+        model_answer: "",
         metadata: [],
       })
     }
@@ -196,15 +212,13 @@ export function QuestionCreateModal({
   const handleTypeChange = (next: QType) => {
     form.setValue("type", next, { shouldValidate: true })
     const current = form.getValues("options") as FormOption[]
-    if (next === "choice" && current.length < 2) {
-      form.setValue("options", defaultOptionsFor("choice"))
-    } else if ((next === "short_answer" || next === "descriptive") && current.length < 1) {
-      form.setValue("options", defaultOptionsFor(next))
-    } else if (next === "descriptive") {
-      form.setValue(
-        "options",
-        current.map((o) => ({ ...o, value: "" }))
-      )
+    if (next === "choice") {
+      if (current.length < 2) form.setValue("options", defaultOptionsFor("choice"))
+    } else if (next === "short_answer") {
+      if (current.length < 1) form.setValue("options", defaultOptionsFor("short_answer"))
+    } else {
+      // descriptive: options are weighted rubric concepts.
+      if (current.length < 1) form.setValue("options", defaultOptionsFor("descriptive"))
     }
   }
 
@@ -217,9 +231,13 @@ export function QuestionCreateModal({
 
     const isChoice = values.type === "choice"
     const options = values.options.map((o) => ({
-      ...o,
+      id: o.id,
+      value: o.value,
+      score: o.score,
       image_media_id: isChoice ? (o.image_media_id ?? undefined) : undefined,
+      synonyms: isChoice ? undefined : parseSynonyms(o.synonyms),
     }))
+    const modelAnswer = values.type === "descriptive" ? (values.model_answer ?? "") : ""
 
     if (isEdit) {
       if (!question?.id) return
@@ -229,6 +247,7 @@ export function QuestionCreateModal({
           text: values.text,
           type: values.type,
           options,
+          model_answer: modelAnswer,
           metadata: values.metadata,
           negative_mark_mode: "none",
           negative_value: 0,
@@ -248,6 +267,7 @@ export function QuestionCreateModal({
           text: values.text,
           type: values.type,
           options,
+          model_answer: modelAnswer,
           metadata: values.metadata,
           negative_mark_mode: "none",
           negative_value: 0,
@@ -258,7 +278,6 @@ export function QuestionCreateModal({
   })
 
   const errors = form.formState.errors
-  const showValueField = type !== "descriptive"
   const minOptions = type === "choice" ? 2 : 1
 
   return (
@@ -324,42 +343,42 @@ export function QuestionCreateModal({
           <FieldLabel className="flex items-center justify-between">
             <span>
               {type === "descriptive"
-                ? t("admin.questions.form.maxScore")
+                ? t("admin.questions.form.rubric")
                 : t("admin.questions.form.options")}
             </span>
-            {type !== "descriptive" && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  optsArr.append({ id: nextOptId(), value: "", score: 0 })
-                }
-              >
-                <PlusIcon data-icon="inline-start" />
-                {t("admin.questions.form.addOption")}
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                optsArr.append({ id: nextOptId(), value: "", score: type === "choice" ? 0 : 1 })
+              }
+            >
+              <PlusIcon data-icon="inline-start" />
+              {t("admin.questions.form.addOption")}
+            </Button>
           </FieldLabel>
           <div className="flex flex-col gap-2">
             {optsArr.fields.map((field, idx) => (
               <div key={field.id} className="flex flex-col gap-2">
                 <div className="flex items-start gap-2">
-                  {showValueField && (
-                    <Input
-                      className="flex-1"
-                      placeholder={t("admin.questions.form.optionValuePlaceholder")}
-                      {...form.register(`options.${idx}.value`)}
-                    />
-                  )}
+                  <Input
+                    className="flex-1"
+                    placeholder={
+                      type === "descriptive"
+                        ? t("admin.questions.form.conceptPlaceholder")
+                        : t("admin.questions.form.optionValuePlaceholder")
+                    }
+                    {...form.register(`options.${idx}.value`)}
+                  />
                   <Input
                     type="number"
                     step="any"
-                    className={showValueField ? "w-24" : "flex-1"}
+                    className="w-24"
                     placeholder={t("admin.questions.form.scorePlaceholder")}
                     {...form.register(`options.${idx}.score`, { valueAsNumber: true })}
                   />
-                  {type !== "descriptive" && optsArr.fields.length > minOptions && (
+                  {optsArr.fields.length > minOptions && (
                     <Button
                       type="button"
                       variant="ghost"
@@ -371,6 +390,12 @@ export function QuestionCreateModal({
                     </Button>
                   )}
                 </div>
+                {type !== "choice" && (
+                  <Input
+                    placeholder={t("admin.questions.form.synonymsPlaceholder")}
+                    {...form.register(`options.${idx}.synonyms`)}
+                  />
+                )}
                 {type === "choice" && (
                   <div className="ps-1">
                     <OptionImageControl
@@ -391,6 +416,17 @@ export function QuestionCreateModal({
             </p>
           </div>
         </Field>
+
+        {type === "descriptive" && (
+          <Field>
+            <FieldLabel>{t("admin.questions.form.modelAnswer")}</FieldLabel>
+            <Textarea
+              {...form.register("model_answer")}
+              placeholder={t("admin.questions.form.modelAnswerPlaceholder")}
+              rows={3}
+            />
+          </Field>
+        )}
 
         <Field>
           <FieldLabel>{t("admin.questions.form.photos.label")}</FieldLabel>

@@ -14,6 +14,7 @@ export interface GithubCom4H1RZooraInternalDomainCreateQuestionDTO {
   metadata?: GithubCom4H1RZooraInternalDomainQuestionMetadata[];
   /** @minimum 0 */
   min_seconds?: number;
+  model_answer?: string;
   negative_mark_mode?: GithubCom4H1RZooraInternalDomainNegativeMarkMode;
   negative_value?: number;
   options?: GithubCom4H1RZooraInternalDomainQuestionOption[];

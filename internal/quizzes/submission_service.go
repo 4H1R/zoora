@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"math/rand"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -301,6 +300,7 @@ func sanitizeQuestionForTaking(q domain.Question) domain.Question {
 	case domain.QuestionTypeShortAnswer, domain.QuestionTypeDescriptive:
 		q.Options = []domain.QuestionOption{}
 	}
+	q.ModelAnswer = ""
 	return q
 }
 
@@ -466,6 +466,7 @@ func (s *service) SubmitQuiz(ctx context.Context, submissionID uuid.UUID, dto do
 		return nil, err
 	}
 	if finalized {
+		stripSuggestions(sub)
 		return sub, nil
 	}
 	if sub.Status != domain.SubmissionStatusInProgress {
@@ -531,6 +532,8 @@ func (s *service) SubmitQuiz(ctx context.Context, submissionID uuid.UUID, dto do
 		"user_id", caller.UserID.String(),
 		"total_score", sub.TotalScore,
 	)
+	// Students never see the advisory grading signals on their own submission.
+	stripSuggestions(sub)
 	return sub, nil
 }
 
@@ -560,6 +563,10 @@ func (s *service) gradeAndFinalize(ctx context.Context, sub *domain.QuizSubmissi
 	for i := range sub.Answers {
 		if q, ok := qMap[sub.Answers[i].QuestionID]; ok {
 			sub.Answers[i].EarnedScore = gradeAnswer(q, sub.Answers[i], cfgFor(q))
+			if q.Type == domain.QuestionTypeDescriptive {
+				sub.Answers[i].SuggestedScore, sub.Answers[i].MatchedConcepts, sub.Answers[i].SimilarityPct =
+					suggestDescriptive(q, sub.Answers[i].Value)
+			}
 		}
 		total += sub.Answers[i].EarnedScore
 	}
@@ -620,6 +627,7 @@ func (s *service) GetSubmission(ctx context.Context, id uuid.UUID) (*domain.Quiz
 	}
 
 	if sub.UserID == caller.UserID {
+		stripSuggestions(sub)
 		return sub, nil
 	}
 
@@ -644,12 +652,22 @@ func (s *service) ListSubmissions(ctx context.Context, quizID uuid.UUID, q domai
 		return nil, 0, err
 	}
 
-	if !canManageQuiz(caller, quiz) {
+	manager := canManageQuiz(caller, quiz)
+	if !manager {
 		userID := caller.UserID
 		q.UserID = &userID
 	}
 
-	return s.submissions.ListByQuiz(ctx, quizID, q)
+	subs, total, err := s.submissions.ListByQuiz(ctx, quizID, q)
+	if err != nil {
+		return nil, 0, err
+	}
+	if !manager {
+		for i := range subs {
+			stripSuggestions(&subs[i])
+		}
+	}
+	return subs, total, nil
 }
 
 func (s *service) GradeSubmission(ctx context.Context, id uuid.UUID, dto domain.GradeSubmissionDTO) (*domain.QuizSubmission, error) {
@@ -744,16 +762,29 @@ func gradeChoice(options []domain.QuestionOption, selectedIDs []string, cfg doma
 	return positive - cfg.Penalty(wrongCount)
 }
 
+// gradeShortAnswer matches the student's answer against every accepted
+// option value and synonym. Pass 1 compares normalized text; pass 2 retries
+// spacing-insensitively (ZWNJ/space/attached forms compare equal) and is
+// skipped for purely numeric accepted answers so "1 5" never matches "15".
 func gradeShortAnswer(options []domain.QuestionOption, value string) float64 {
-	normalized := normalizeString(value)
+	normalized := normalizeText(value)
+	compact := normalizeCompact(value)
 	for _, o := range options {
-		if o.Score > 0 && normalizeString(o.Value) == normalized {
-			return o.Score
+		if o.Score <= 0 {
+			continue
+		}
+		for _, accepted := range append([]string{o.Value}, o.Synonyms...) {
+			want := normalizeText(accepted)
+			if want == "" {
+				continue
+			}
+			if want == normalized {
+				return o.Score
+			}
+			if !isNumericAnswer(accepted) && normalizeCompact(accepted) == compact {
+				return o.Score
+			}
 		}
 	}
 	return 0
-}
-
-func normalizeString(s string) string {
-	return strings.ToLower(strings.TrimSpace(strings.Join(strings.Fields(s), " ")))
 }

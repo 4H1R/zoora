@@ -1148,3 +1148,141 @@ func TestQuizService_AntiCheatReport_ForbiddenForNonManager(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 	d.subRepo.AssertNotCalled(t, "ListByQuiz", mock.Anything, mock.Anything, mock.Anything)
 }
+
+func TestQuizService_SubmitQuiz_DescriptiveSuggestions_PersistedButStrippedForStudent(t *testing.T) {
+	studentID := uuid.New()
+	quizID := uuid.New()
+	subID := uuid.New()
+	qID := uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	sub := &domain.QuizSubmission{
+		ID:          subID,
+		QuizID:      quizID,
+		UserID:      studentID,
+		Status:      domain.SubmissionStatusInProgress,
+		StartedAt:   time.Now().Add(-5 * time.Minute),
+		QuestionSet: []domain.SubmissionQuestion{{QuestionID: qID}},
+	}
+
+	d.subRepo.On("FindByID", ctx, subID).Return(sub, nil)
+	d.quizRepo.On("FindByID", ctx, quizID).
+		Return(&domain.Quiz{ID: quizID, DurationMinutes: 60}, nil)
+	d.roomRepo.On("FindOpenByQuizID", ctx, quizID).
+		Return(&domain.QuizRoom{ID: uuid.New(), QuizID: quizID}, nil)
+	d.ruleRepo.On("ListByQuiz", ctx, quizID, domain.ListParams{Page: 1, PageSize: 10000}).
+		Return([]domain.QuizRule{}, int64(0), nil)
+	d.questionRepo.On("FindByIDs", ctx, mock.Anything).Return([]domain.Question{
+		{
+			ID: qID, Type: domain.QuestionTypeDescriptive,
+			ModelAnswer: "گیاهان با فتوسنتز غذا می‌سازند",
+			Options: []domain.QuestionOption{
+				{ID: "c1", Value: "فتوسنتز", Score: 2},
+				{ID: "c2", Value: "کلروفیل", Score: 1},
+			},
+		},
+	}, nil)
+
+	var persisted []domain.SubmissionAnswer
+	d.subRepo.On("Update", ctx, mock.AnythingOfType("*domain.QuizSubmission")).
+		Run(func(args mock.Arguments) {
+			got := args.Get(1).(*domain.QuizSubmission)
+			persisted = append([]domain.SubmissionAnswer(nil), got.Answers...)
+		}).Return(nil)
+
+	svc := d.service()
+	result, err := svc.SubmitQuiz(ctx, subID, domain.SubmitQuizDTO{
+		Answers: []domain.SubmitAnswerDTO{
+			{QuestionID: qID, Value: "گیاهان از طریق فتوسنتز غذا تولید می‌کنند", SpentSeconds: 60},
+		},
+	})
+
+	assert.NoError(t, err)
+	// persisted answer carries the advisory suggestion
+	if assert.Len(t, persisted, 1) {
+		if assert.NotNil(t, persisted[0].SuggestedScore) {
+			assert.Equal(t, 2.0, *persisted[0].SuggestedScore)
+		}
+		assert.Equal(t, []string{"فتوسنتز"}, persisted[0].MatchedConcepts)
+		assert.NotNil(t, persisted[0].SimilarityPct)
+	}
+	// earned score still 0 and total unaffected
+	assert.Equal(t, 0.0, persisted[0].EarnedScore)
+	assert.Equal(t, 0.0, result.TotalScore)
+	// student-facing return is stripped
+	assert.Nil(t, result.Answers[0].SuggestedScore)
+	assert.Nil(t, result.Answers[0].MatchedConcepts)
+	assert.Nil(t, result.Answers[0].SimilarityPct)
+}
+
+func TestQuizService_GetSubmission_SuggestionsVisibilityByRole(t *testing.T) {
+	studentID := uuid.New()
+	teacherID := uuid.New()
+	quizID := uuid.New()
+	subID := uuid.New()
+	score := 2.0
+	sim := 80.0
+
+	makeSub := func() *domain.QuizSubmission {
+		return &domain.QuizSubmission{
+			ID: subID, QuizID: quizID, UserID: studentID,
+			Status: domain.SubmissionStatusSubmitted,
+			Answers: []domain.SubmissionAnswer{{
+				QuestionID:      uuid.New(),
+				SuggestedScore:  &score,
+				MatchedConcepts: []string{"فتوسنتز"},
+				SimilarityPct:   &sim,
+			}},
+		}
+	}
+
+	t.Run("owner student gets stripped", func(t *testing.T) {
+		ctx := studentCtx(studentID)
+		d := newDeps()
+		d.subRepo.On("FindByID", ctx, subID).Return(makeSub(), nil)
+		svc := d.service()
+		got, err := svc.GetSubmission(ctx, subID)
+		assert.NoError(t, err)
+		assert.Nil(t, got.Answers[0].SuggestedScore)
+		assert.Nil(t, got.Answers[0].MatchedConcepts)
+		assert.Nil(t, got.Answers[0].SimilarityPct)
+	})
+
+	t.Run("manager sees suggestions", func(t *testing.T) {
+		ctx := teacherCtx(teacherID)
+		d := newDeps()
+		d.subRepo.On("FindByID", ctx, subID).Return(makeSub(), nil)
+		d.quizRepo.On("FindByID", ctx, quizID).
+			Return(&domain.Quiz{ID: quizID, UserID: teacherID}, nil)
+		svc := d.service()
+		got, err := svc.GetSubmission(ctx, subID)
+		assert.NoError(t, err)
+		if assert.NotNil(t, got.Answers[0].SuggestedScore) {
+			assert.Equal(t, 2.0, *got.Answers[0].SuggestedScore)
+		}
+	})
+}
+
+func TestQuizService_ListSubmissions_StripsSuggestionsForStudent(t *testing.T) {
+	studentID := uuid.New()
+	quizID := uuid.New()
+	score := 2.0
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	d.quizRepo.On("FindByID", ctx, quizID).
+		Return(&domain.Quiz{ID: quizID, UserID: uuid.New()}, nil)
+	d.memberRepo.On("Exists", ctx, mock.Anything, studentID).Return(true, nil)
+	d.subRepo.On("ListByQuiz", ctx, quizID, mock.Anything).
+		Return([]domain.QuizSubmission{{
+			ID: uuid.New(), QuizID: quizID, UserID: studentID,
+			Status:  domain.SubmissionStatusSubmitted,
+			Answers: []domain.SubmissionAnswer{{QuestionID: uuid.New(), SuggestedScore: &score}},
+		}}, int64(1), nil)
+
+	svc := d.service()
+	subs, _, err := svc.ListSubmissions(ctx, quizID, domain.ListSubmissionsQuery{})
+	assert.NoError(t, err)
+	assert.Nil(t, subs[0].Answers[0].SuggestedScore)
+}

@@ -31,6 +31,12 @@ export interface GithubCom4H1RZooraInternalDomainQuestion {
      */
   min_seconds?: number;
   /**
+     * ModelAnswer is the teacher's reference answer for descriptive questions.
+     * Used only to compute the advisory similarity signal shown during manual
+     * grading — never affects the score, never sent to students.
+     */
+  model_answer?: string;
+  /**
      * NegativeConfig is the transient, score-free effective negative-marking
      * config attached by the "take" endpoint so the client can show penalties
      * without leaking the answer key. Never persisted.

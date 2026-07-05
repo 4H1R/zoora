@@ -31,6 +31,12 @@ type QuestionOption struct {
 	Value        string     `json:"value"`
 	Score        float64    `json:"score"`
 	ImageMediaID *uuid.UUID `json:"image_media_id,omitempty"`
+
+	// Synonyms are alternative accepted phrasings of Value. For short_answer
+	// options they are extra accepted answers; for descriptive rubric concepts
+	// they are alternative wordings that count as mentioning the concept.
+	// Unused for choice options.
+	Synonyms []string `json:"synonyms,omitempty"`
 }
 
 type QuestionMetadataType string
@@ -81,6 +87,11 @@ type Question struct {
 	Options        []QuestionOption   `gorm:"type:jsonb;serializer:json" json:"options"`
 	Metadata       []QuestionMetadata `gorm:"type:jsonb;serializer:json" json:"metadata"`
 
+	// ModelAnswer is the teacher's reference answer for descriptive questions.
+	// Used only to compute the advisory similarity signal shown during manual
+	// grading — never affects the score, never sent to students.
+	ModelAnswer string `gorm:"not null;default:''" json:"model_answer"`
+
 	// Negative-marking default for this question (Layer 1). choice-only.
 	NegativeMarkMode NegativeMarkMode `gorm:"type:varchar(20);not null;default:'none'" json:"negative_mark_mode"`
 	NegativeValue    float64          `gorm:"not null;default:0" json:"negative_value"`
@@ -120,6 +131,7 @@ type CreateQuestionDTO struct {
 	Text             string             `json:"text" binding:"required,min=1"`
 	Type             QuestionType       `json:"type" binding:"required,oneof=descriptive short_answer choice"`
 	Options          []QuestionOption   `json:"options"`
+	ModelAnswer      string             `json:"model_answer"`
 	Metadata         []QuestionMetadata `json:"metadata"`
 	NegativeMarkMode NegativeMarkMode   `json:"negative_mark_mode"`
 	NegativeValue    float64            `json:"negative_value"`
@@ -131,6 +143,7 @@ type UpdateQuestionDTO struct {
 	Text             *string            `json:"text" binding:"omitempty,min=1"`
 	Type             *QuestionType      `json:"type" binding:"omitempty,oneof=descriptive short_answer choice"`
 	Options          []QuestionOption   `json:"options"`
+	ModelAnswer      *string            `json:"model_answer"`
 	Metadata         []QuestionMetadata `json:"metadata"`
 	NegativeMarkMode *NegativeMarkMode  `json:"negative_mark_mode"`
 	NegativeValue    *float64           `json:"negative_value"`
@@ -159,7 +172,18 @@ func (q *Question) IsMultiSelect() bool {
 
 // MaxScore returns the highest option score. Negative-only sets return 0.
 // For multi-select choice questions, returns the sum of positive scores.
+// For descriptive questions, options are additive rubric concepts, so the
+// max is the sum of all weights.
 func (q *Question) MaxScore() float64 {
+	if q.Type == QuestionTypeDescriptive {
+		var sum float64
+		for _, o := range q.Options {
+			if o.Score > 0 {
+				sum += o.Score
+			}
+		}
+		return sum
+	}
 	if q.IsMultiSelect() {
 		var sum float64
 		for _, o := range q.Options {

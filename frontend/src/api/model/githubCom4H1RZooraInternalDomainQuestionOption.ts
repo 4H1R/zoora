@@ -10,5 +10,12 @@ export interface GithubCom4H1RZooraInternalDomainQuestionOption {
   id?: string;
   image_media_id?: string;
   score?: number;
+  /**
+     * Synonyms are alternative accepted phrasings of Value. For short_answer
+     * options they are extra accepted answers; for descriptive rubric concepts
+     * they are alternative wordings that count as mentioning the concept.
+     * Unused for choice options.
+     */
+  synonyms?: string[];
   value?: string;
 }

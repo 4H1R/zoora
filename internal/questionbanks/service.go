@@ -240,6 +240,7 @@ func (s *service) CreateQuestion(ctx context.Context, bankID uuid.UUID, dto doma
 		Text:             dto.Text,
 		Type:             dto.Type,
 		Options:          options,
+		ModelAnswer:      dto.ModelAnswer,
 		Metadata:         metadata,
 		NegativeMarkMode: mode,
 		NegativeValue:    val,
@@ -295,6 +296,9 @@ func (s *service) UpdateQuestion(ctx context.Context, id uuid.UUID, dto domain.U
 	}
 	if dto.Options != nil {
 		question.Options = dto.Options
+	}
+	if dto.ModelAnswer != nil {
+		question.ModelAnswer = *dto.ModelAnswer
 	}
 	question.Options = clearOptionImagesForNonChoice(question.Type, question.Options)
 	if dto.Options != nil || dto.Type != nil {

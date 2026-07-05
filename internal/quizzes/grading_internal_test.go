@@ -6,6 +6,42 @@ import (
 	"github.com/4H1R/zoora/internal/domain"
 )
 
+func TestGradeShortAnswer(t *testing.T) {
+	opts := func(value float64, v string, syns ...string) []domain.QuestionOption {
+		return []domain.QuestionOption{{ID: "a1", Value: v, Score: value, Synonyms: syns}}
+	}
+	cases := []struct {
+		name    string
+		options []domain.QuestionOption
+		value   string
+		want    float64
+	}{
+		{"exact match", opts(2, "photosynthesis"), "Photosynthesis", 2},
+		{"whitespace and case", opts(2, "ice cream"), "  ICE   Cream ", 2},
+		{"arabic yeh vs persian yeh", opts(3, "علی"), "علي", 3},
+		{"arabic kaf", opts(3, "کتاب"), "كتاب", 3},
+		{"persian digits vs latin", opts(1, "۱۵"), "15", 1},
+		{"diacritics ignored", opts(2, "مدرسه"), "مَدْرَسَة", 2},
+		{"zwnj vs attached", opts(2, "می‌روم"), "میروم", 2},
+		{"zwnj vs spaced (pass 2)", opts(2, "می‌روم"), "می روم", 2},
+		{"spaced vs attached english (pass 2)", opts(1, "ice cream"), "icecream", 1},
+		{"numeric guard: spaced digits stay distinct", opts(1, "15"), "1 5", 0},
+		{"numeric exact still works", opts(1, "15"), "۱۵", 1},
+		{"synonym matches", opts(2, "photosynthesis", "فتوسنتز"), "فتوسنتز", 2},
+		{"synonym pass 2", opts(2, "photosynthesis", "نور ساخت"), "نورساخت", 2},
+		{"wrong answer", opts(2, "photosynthesis"), "respiration", 0},
+		{"zero-score option never matches", []domain.QuestionOption{{ID: "a1", Value: "x", Score: 0}}, "x", 0},
+		{"empty student answer", opts(2, "photosynthesis"), "", 0},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := gradeShortAnswer(c.options, c.value); got != c.want {
+				t.Fatalf("gradeShortAnswer = %v, want %v", got, c.want)
+			}
+		})
+	}
+}
+
 func TestGradeChoiceWithNegative(t *testing.T) {
 	opts := []domain.QuestionOption{
 		{ID: "c1", Value: "correct", Score: 1},

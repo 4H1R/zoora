@@ -796,7 +796,14 @@
         "gradingProgress": "Grading progress",
         "gradedOf": "{{done}} of {{total}} graded",
         "spent": "Time spent",
-        "secondsShort": "s"
+        "secondsShort": "s",
+        "suggestedScore": "Suggested score",
+        "applySuggestion": "Apply",
+        "similarity": "Similarity to model answer",
+        "matchedConcepts": "Matched concepts",
+        "rubric": "Rubric",
+        "modelAnswer": "Model answer",
+        "suggestionHint": "Advisory only — computed from rubric keyword matching, never shown to students."
       }
     },
     "questionBanks": {
@@ -912,7 +919,7 @@
         "hints": {
           "choice": "Add at least 2 options. Correct options get a positive score; distractors can be 0 or negative.",
           "short_answer": "List accepted answers with a non-negative score each.",
-          "descriptive": "Set the maximum score graders can award for this open-ended question."
+          "descriptive": "Add weighted rubric concepts the answer should mention — the suggested score is the sum of matched weights. Synonyms and a model answer improve the suggestion."
         },
         "errors": {
           "choice": "Choice questions need at least 2 options.",
@@ -948,7 +955,12 @@
           "wrongsPerPoint": "Wrong answers per 1 point lost",
           "perWrongHint": "Each selected wrong option deducts this many points.",
           "accumulativeHint": "Every this-many wrong selections deducts 1 point (between 2 and 5)."
-        }
+        },
+        "rubric": "Grading rubric",
+        "conceptPlaceholder": "Concept the answer should mention",
+        "synonymsPlaceholder": "Synonyms (comma-separated)",
+        "modelAnswer": "Model answer",
+        "modelAnswerPlaceholder": "Reference answer used to compute the similarity signal…"
       },
       "toolbar": {
         "sort": "Sort",
