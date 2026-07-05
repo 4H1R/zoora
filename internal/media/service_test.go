@@ -3,6 +3,7 @@ package media_test
 import (
 	"context"
 	"log/slog"
+	"strings"
 	"testing"
 	"time"
 
@@ -279,6 +280,62 @@ func TestMediaOrgScopeAllowsOwnOrgGlobalAndAdmin(t *testing.T) {
 		repo.On("FindByID", ctx, mediaID).Return(&domain.Media{ID: mediaID, OrganizationID: &other}, nil)
 		_, err := svc.GetByID(ctx, mediaID)
 		assert.NoError(t, err)
+	})
+}
+
+func TestMediaPresignUploadSharedFolder(t *testing.T) {
+	orgID := uuid.New()
+
+	base := func() domain.PresignUploadDTO {
+		return domain.PresignUploadDTO{
+			ModelType: domain.MediaModelOrganization,
+			ModelID:   orgID.String(),
+			FileName:  "report.pdf",
+			MimeType:  "application/pdf",
+			Size:      100,
+		}
+	}
+
+	t.Run("rejects foreign org id", func(t *testing.T) {
+		repo := &mediaRepoMock{}
+		svc := newMediaService(repo, &storageMock{})
+		dto := base()
+		dto.ModelID = uuid.NewString()
+		_, err := svc.PresignUpload(orgCtx(orgID), dto)
+		var verr *domain.ValidationError
+		assert.ErrorAs(t, err, &verr)
+		repo.AssertNotCalled(t, "Create")
+	})
+
+	t.Run("rejects oversized declared size", func(t *testing.T) {
+		repo := &mediaRepoMock{}
+		svc := newMediaService(repo, &storageMock{})
+		dto := base()
+		dto.Size = 201 << 20
+		_, err := svc.PresignUpload(orgCtx(orgID), dto)
+		var verr *domain.ValidationError
+		assert.ErrorAs(t, err, &verr)
+		repo.AssertNotCalled(t, "Create")
+	})
+
+	t.Run("forces shared collection and uniquifies key filename", func(t *testing.T) {
+		repo := &mediaRepoMock{}
+		store := &storageMock{}
+		svc := newMediaService(repo, store)
+		ctx := orgCtx(orgID)
+		repo.On("Create", ctx, mock.MatchedBy(func(m *domain.Media) bool {
+			return m.CollectionName == domain.MediaCollectionShared &&
+				m.Name == "report.pdf" &&
+				m.FileName != "report.pdf" &&
+				strings.HasSuffix(m.FileName, "-report.pdf")
+		})).Return(nil)
+		store.On("GeneratePresignedUploadURL", ctx, mock.Anything, mock.Anything).Return("https://signed", nil)
+
+		resp, err := svc.PresignUpload(ctx, base())
+
+		assert.NoError(t, err)
+		assert.Equal(t, "https://signed", resp.UploadURL)
+		repo.AssertExpectations(t)
 	})
 }
 

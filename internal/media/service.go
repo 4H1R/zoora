@@ -16,6 +16,9 @@ const (
 	presignExpiry            = 15 * time.Minute
 	presignDownloadExpiry    = 1 * time.Hour
 	presignDownloadMaxExpiry = 7 * 24 * time.Hour // SigV4 hard limit
+	// maxSharedUploadSize caps the declared size of Shared-folder uploads.
+	// Advisory: a presigned PUT cannot enforce the actual byte count.
+	maxSharedUploadSize = 200 << 20
 )
 
 // objectStorage is the subset of the S3 storage client the media service needs.
@@ -51,6 +54,16 @@ func (s *service) PresignUpload(ctx context.Context, dto domain.PresignUploadDTO
 		}
 	}
 
+	sharedUpload := dto.ModelType == domain.MediaModelOrganization
+	if sharedUpload {
+		if caller.OrgID == nil || dto.ModelID != caller.OrgID.String() {
+			return nil, domain.NewValidationError(map[string]string{"model_id": "must be your organization id"})
+		}
+		if dto.Size > maxSharedUploadSize {
+			return nil, domain.NewValidationError(map[string]string{"size": "must be at most 200 MB"})
+		}
+	}
+
 	modelID, _ := uuid.Parse(dto.ModelID)
 
 	m := &domain.Media{
@@ -64,6 +77,13 @@ func (s *service) PresignUpload(ctx context.Context, dto domain.PresignUploadDTO
 		Disk:             "s3",
 		Size:             dto.Size,
 		CustomProperties: json.RawMessage(`{}`),
+	}
+
+	if sharedUpload {
+		// All Shared uploads live under one model_id + collection, so the raw
+		// file name IS the S3 key tail — prefix it to prevent overwrites.
+		m.CollectionName = domain.MediaCollectionShared
+		m.FileName = uuid.NewString()[:8] + "-" + dto.FileName
 	}
 
 	if err := s.repo.Create(ctx, m); err != nil {
