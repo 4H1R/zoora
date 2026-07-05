@@ -29,10 +29,6 @@ www.zoora.ir {
 s3.zoora.ir {
 	import zoora_tls
 
-	# Browser uploads/downloads via presigned URLs from the SPA. RustFS S3-API
-	# CORS is unreliable, so terminate CORS here: answer preflight directly and
-	# normalize the origin header on real responses (strip upstream to avoid a
-	# duplicate Access-Control-Allow-Origin).
 	@preflight method OPTIONS
 	handle @preflight {
 		header Access-Control-Allow-Origin "https://app.zoora.ir"
@@ -44,9 +40,10 @@ s3.zoora.ir {
 
 	handle {
 		reverse_proxy 127.0.0.1:9000 {
-			header_down -Access-Control-Allow-Origin
-			header_down +Access-Control-Allow-Origin "https://app.zoora.ir"
-			header_down +Access-Control-Expose-Headers "ETag"
+			# Replace (no +/-) so any Access-Control-Allow-Origin RustFS emits is
+			# overwritten, never duplicated — Firefox rejects two ACAO values.
+			header_down Access-Control-Allow-Origin "https://app.zoora.ir"
+			header_down Access-Control-Expose-Headers "ETag"
 		}
 	}
 }
