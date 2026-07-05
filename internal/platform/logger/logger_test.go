@@ -10,7 +10,7 @@ import (
 
 func TestNewReturnsUsableLogger(t *testing.T) {
 	for _, isDevelopment := range []bool{true, false} {
-		l := New(isDevelopment)
+		l := New(isDevelopment, "")
 		if l == nil {
 			t.Fatalf("New(%v) returned nil", isDevelopment)
 		}

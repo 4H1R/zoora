@@ -57,7 +57,7 @@ import (
 // @name Authorization
 // @description Enter your JWT token with the "Bearer " prefix, e.g. "Bearer eyJhbGci..."
 func main() {
-	log := logger.New(false)
+	log := logger.New(false, "")
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -70,8 +70,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	log = logger.New(cfg.IsDevelopment(), cfg.LogLevel)
 	if cfg.IsDevelopment() {
-		log = logger.New(true)
 		gin.SetMode(gin.DebugMode)
 	} else {
 		gin.SetMode(gin.ReleaseMode)
@@ -194,6 +194,7 @@ func main() {
 		os.Exit(1)
 	}
 	router.Use(
+		middleware.RequestID(),
 		middleware.Recovery(log),
 		middleware.ErrorHandler(log),
 		middleware.Logging(log),

@@ -24,19 +24,22 @@ type Config struct {
 	// URLs. The SDK client talks to S3Endpoint (internal, e.g. http://rustfs:9000)
 	// so boot-time calls don't depend on the public TLS edge. Falls back to
 	// S3Endpoint when unset (dev, where the two are the same host).
-	S3PublicEndpoint   string        `env:"S3_PUBLIC_ENDPOINT"`
-	S3Bucket           string        `env:"S3_BUCKET,required"`
+	S3PublicEndpoint string `env:"S3_PUBLIC_ENDPOINT"`
+	S3Bucket         string `env:"S3_BUCKET,required"`
 	// S3PublicBucket holds anonymously-readable assets (changelog media) served
 	// to browsers via permanent, non-expiring URLs. Falls back to S3Bucket when
 	// unset, but in that case objects are NOT public — set it in every real env.
-	S3PublicBucket     string        `env:"S3_PUBLIC_BUCKET"`
-	S3AccessKey        string        `env:"S3_ACCESS_KEY,required"`
-	S3SecretKey        string        `env:"S3_SECRET_KEY,required"`
-	S3Region           string        `env:"S3_REGION"          envDefault:"us-east-1"`
-	JWTSecret          string        `env:"JWT_SECRET,required"`
-	JWTExpiry          time.Duration `env:"JWT_EXPIRY"         envDefault:"24h"`
-	Environment        string        `env:"ENVIRONMENT"        envDefault:"development"`
-	CORSAllowedOrigins []string      `env:"CORS_ALLOWED_ORIGINS" envSeparator:"," envDefault:"*"`
+	S3PublicBucket string        `env:"S3_PUBLIC_BUCKET"`
+	S3AccessKey    string        `env:"S3_ACCESS_KEY,required"`
+	S3SecretKey    string        `env:"S3_SECRET_KEY,required"`
+	S3Region       string        `env:"S3_REGION"          envDefault:"us-east-1"`
+	JWTSecret      string        `env:"JWT_SECRET,required"`
+	JWTExpiry      time.Duration `env:"JWT_EXPIRY"         envDefault:"24h"`
+	Environment    string        `env:"ENVIRONMENT"        envDefault:"development"`
+	// LogLevel overrides the log threshold (debug/info/warn/error). Empty falls
+	// back to debug in development, info in production.
+	LogLevel           string   `env:"LOG_LEVEL"`
+	CORSAllowedOrigins []string `env:"CORS_ALLOWED_ORIGINS" envSeparator:"," envDefault:"*"`
 	// BaseDomain is the apex the app is served under. Host parsing strips this
 	// suffix to recover the tenant/admin subdomain label. Dev: "localhost".
 	BaseDomain string `env:"BASE_DOMAIN" envDefault:"localhost"`

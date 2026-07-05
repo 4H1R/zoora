@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/hibiken/asynq"
+
+	"github.com/4H1R/zoora/internal/domain"
 )
 
 type Server struct {
@@ -31,8 +34,42 @@ func NewServer(redisURL string, logger *slog.Logger) (*Server, error) {
 	})
 
 	mux := asynq.NewServeMux()
+	mux.Use(loggingMiddleware(logger))
 
 	return &Server{inner: srv, mux: mux, logger: logger}, nil
+}
+
+// loggingMiddleware logs one line per processed task with its type, id, retry
+// state, latency, and outcome — the worker-side equivalent of HTTP access logs.
+// It also stamps the task id onto the context so any log the handler emits is
+// correlated back to the same task.
+func loggingMiddleware(logger *slog.Logger) asynq.MiddlewareFunc {
+	return func(next asynq.Handler) asynq.Handler {
+		return asynq.HandlerFunc(func(ctx context.Context, task *asynq.Task) error {
+			taskID, _ := asynq.GetTaskID(ctx)
+			retry, _ := asynq.GetRetryCount(ctx)
+			maxRetry, _ := asynq.GetMaxRetry(ctx)
+			queueName, _ := asynq.GetQueueName(ctx)
+
+			ctx = domain.WithTaskID(ctx, taskID)
+			start := time.Now()
+			err := next.ProcessTask(ctx, task)
+
+			attrs := []any{
+				"task_type", task.Type(),
+				"queue", queueName,
+				"retry", retry,
+				"max_retry", maxRetry,
+				"latency_ms", time.Since(start).Milliseconds(),
+			}
+			if err != nil {
+				logger.ErrorContext(ctx, "task failed", append(attrs, "error", err)...)
+			} else {
+				logger.InfoContext(ctx, "task completed", attrs...)
+			}
+			return err
+		})
+	}
 }
 
 func (s *Server) HandleFunc(pattern string, handler func(ctx context.Context, task *asynq.Task) error) {

@@ -25,7 +25,7 @@ import (
 )
 
 func main() {
-	log := logger.New(false)
+	log := logger.New(false, "")
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -33,9 +33,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if cfg.IsDevelopment() {
-		log = logger.New(true)
-	}
+	log = logger.New(cfg.IsDevelopment(), cfg.LogLevel)
 
 	db, err := database.NewConnection(cfg.DatabaseURL, log, cfg.IsDevelopment())
 	if err != nil {

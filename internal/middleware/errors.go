@@ -35,7 +35,7 @@ func ErrorHandler(logger *slog.Logger) gin.HandlerFunc {
 		}
 
 		if status >= http.StatusInternalServerError {
-			logger.Error("request error",
+			logger.ErrorContext(c.Request.Context(), "request error",
 				"err", err,
 				"method", c.Request.Method,
 				"path", c.Request.URL.Path,
