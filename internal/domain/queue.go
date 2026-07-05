@@ -7,6 +7,7 @@ const (
 	TypeLiveSessionCloseIfNoHost = "livesession:close-if-no-host"
 	TypeAttendanceAutoMark       = "attendance:auto-mark"
 	TypeMediaCleanup             = "media:cleanup"
+	TypeRecordingRetentionSweep  = "recording:retention-sweep"
 )
 
 // LiveSessionCloseIfNoHostPayload is the Asynq payload for the delayed,
