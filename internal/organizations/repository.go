@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -46,6 +47,19 @@ func (r *repository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Organi
 	}
 	org.TotalUsers = int(count)
 	return &org, nil
+}
+
+func (r *repository) UpdatePlan(ctx context.Context, id uuid.UUID, plan domain.Plan, expiresAt *time.Time) error {
+	res := database.DB(ctx, r.db).Model(&domain.Organization{}).
+		Where("id = ?", id).
+		Updates(map[string]any{"plan": plan, "plan_expires_at": expiresAt})
+	if res.Error != nil {
+		return fmt.Errorf("organizations.repository.UpdatePlan: %w", res.Error)
+	}
+	if res.RowsAffected == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
 }
 
 func (r *repository) FindBySlug(ctx context.Context, slug string) (*domain.Organization, error) {

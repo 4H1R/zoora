@@ -86,7 +86,7 @@ func TestCreateRole(t *testing.T) {
 
 	permID := uuid.New()
 
-	caller := domain.Caller{UserID: uuid.New()}
+	caller := domain.Caller{UserID: uuid.New(), Ent: domain.PlanCatalog[domain.PlanPro]}
 	ctx := domain.WithCaller(context.Background(), caller)
 
 	perms := []domain.Permission{{ID: permID, Name: "users:view"}}
@@ -105,4 +105,42 @@ func TestCreateRole(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, "Viewer", role.Name)
+}
+
+func TestCreateRole_FreePlanRejectsCustomRole(t *testing.T) {
+	svc := roles.NewService(&mockRoleRepo{}, &mockPermRepo{}, noopTx{}, nil, slog.Default())
+	caller := domain.Caller{UserID: uuid.New(), Ent: domain.PlanCatalog[domain.PlanFree]}
+	ctx := domain.WithCaller(context.Background(), caller)
+
+	orgID := uuid.New()
+	_, err := svc.Create(ctx, domain.CreateRoleDTO{
+		OrganizationID: &orgID,
+		Name:           "Viewer",
+		PermissionIDs:  []uuid.UUID{uuid.New()},
+	})
+	assert.ErrorIs(t, err, domain.ErrFeatureNotInPlan)
+}
+
+func TestCreateRole_AdminBypassesFeatureGateForPresets(t *testing.T) {
+	logger := slog.Default()
+	roleRepo := &mockRoleRepo{}
+	permRepo := &mockPermRepo{}
+	permID := uuid.New()
+
+	// Admin carries Free entitlements but must still create preset roles.
+	caller := domain.Caller{UserID: uuid.New(), IsAdmin: true, Ent: domain.PlanCatalog[domain.PlanFree]}
+	ctx := domain.WithCaller(context.Background(), caller)
+
+	permRepo.On("FindByIDs", ctx, []uuid.UUID{permID}).Return([]domain.Permission{{ID: permID, Name: "users:view"}}, nil)
+	roleRepo.On("Create", ctx, mock.AnythingOfType("*domain.Role")).Return(nil)
+	roleRepo.On("SetPermissions", ctx, mock.AnythingOfType("uuid.UUID"), []uuid.UUID{permID}).Return(nil)
+
+	svc := roles.NewService(roleRepo, permRepo, noopTx{}, nil, logger)
+	role, err := svc.Create(ctx, domain.CreateRoleDTO{
+		IsPreset:      true,
+		Name:          "Manager",
+		PermissionIDs: []uuid.UUID{permID},
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, "Manager", role.Name)
 }

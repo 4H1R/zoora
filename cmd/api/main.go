@@ -21,6 +21,7 @@ import (
 	"github.com/4H1R/zoora/internal/chat"
 	"github.com/4H1R/zoora/internal/classes"
 	"github.com/4H1R/zoora/internal/config"
+	"github.com/4H1R/zoora/internal/entitlements"
 	"github.com/4H1R/zoora/internal/gradebook"
 	"github.com/4H1R/zoora/internal/livesessions"
 	"github.com/4H1R/zoora/internal/media"
@@ -133,8 +134,10 @@ func main() {
 	chatMemberRepo := chat.NewMemberRepository(db)
 	chatMessageRepo := chat.NewMessageRepository(db)
 	chatReactionRepo := chat.NewReactionRepository(db)
+	entitlementRepo := entitlements.NewRepository(db)
+	entitlementService := entitlements.NewService(entitlementRepo)
 
-	authMiddleware := auth.Middleware(jwtService, redisClient, roleRepo, userRepo)
+	authMiddleware := auth.Middleware(jwtService, redisClient, roleRepo, userRepo, entitlementRepo)
 	tenantMiddleware := middleware.Tenant(redisClient, orgRepo, cfg.BaseDomain, cfg.AdminSubdomain)
 
 	authzResolver := authz.NewResolver(classMemberRepo)
@@ -142,7 +145,7 @@ func main() {
 	orgSettingsRepo := orgsettings.NewRepository(db)
 	orgSettingsService := orgsettings.NewService(orgSettingsRepo, log)
 
-	userService := users.NewService(userRepo, roleRepo, log)
+	userService := users.NewService(userRepo, roleRepo, entitlementService, log)
 	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, log)
 	classService := classes.NewService(classRepo, classSessionRepo, classMemberRepo, log)
 	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, log)
@@ -159,7 +162,7 @@ func main() {
 
 	roleService := roles.NewService(roleRepo, permRepo, transactor, redisClient, log)
 	authBusinessService := auth.NewAuthService(userRepo, jwtService, redisClient, log)
-	mediaService := media.NewService(mediaRepo, storageClient, log)
+	mediaService := media.NewService(mediaRepo, storageClient, entitlementService, log)
 	changelogService := changelog.NewServiceWithMedia(changelogRepo, mediaRepo, storageClient, log)
 	livekitClient := lk.NewClient(cfg, log)
 	chatService := chat.NewService(chatRepo, chatMemberRepo, chatMessageRepo, chatReactionRepo, transactor, log)
@@ -167,7 +170,7 @@ func main() {
 		liveRoomRepo, liveParticipantRepo, liveRecordingRepo, liveWhiteboardRepo,
 		classSessionRepo, classRepo, classMemberRepo,
 		chatService, transactor,
-		livekitClient, queueClient, cfg.LiveRoomHostGracePeriod, log,
+		livekitClient, queueClient, entitlementService, cfg.LiveRoomHostGracePeriod, log,
 	)
 	offlineService := offlines.NewService(offlineRoomRepo, offlineViewRepo, classSessionRepo, classRepo, classMemberRepo, log)
 	practiceService := practices.NewService(practiceRoomRepo, practiceSubRepo, classSessionRepo, classRepo, classMemberRepo, log)

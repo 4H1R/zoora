@@ -47,13 +47,13 @@ func TestAdminCreatesUser(t *testing.T) {
 	roleRepo := roles.NewRoleRepository(db)
 	admin := seedUser(t, userRepo, &org.ID, "users-admin", true)
 
-	userSvc := users.NewService(userRepo, roleRepo, logger)
+	userSvc := users.NewService(userRepo, roleRepo, nil, logger)
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	v1 := router.Group("/api/v1")
 
-	authMiddleware := auth.Middleware(jwtService, nil, roleRepo, userRepo)
+	authMiddleware := auth.Middleware(jwtService, nil, roleRepo, userRepo, nil)
 	perm := auth.RequirePermission
 	handler := users.NewHandler(userSvc)
 	handler.RegisterRoutes(v1, authMiddleware, perm)

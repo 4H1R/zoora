@@ -39,7 +39,7 @@ func TestMiddleware_RevokedBeforeIssuance_Rejects(t *testing.T) {
 		strconv.FormatInt(future, 10), time.Hour).Err())
 
 	token, _ := svc.GenerateToken(userID)
-	router.GET("/t", auth.Middleware(svc, rdb, nil, nil), func(c *gin.Context) { c.Status(http.StatusOK) })
+	router.GET("/t", auth.Middleware(svc, rdb, nil, nil, nil), func(c *gin.Context) { c.Status(http.StatusOK) })
 
 	req, _ := http.NewRequest("GET", "/t", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
@@ -57,7 +57,7 @@ func TestMiddleware_IssuedAfterRevocation_Accepts(t *testing.T) {
 		strconv.FormatInt(past, 10), time.Hour).Err())
 
 	token, _ := svc.GenerateToken(userID)
-	router.GET("/t", auth.Middleware(svc, rdb, nil, nil), func(c *gin.Context) { c.Status(http.StatusOK) })
+	router.GET("/t", auth.Middleware(svc, rdb, nil, nil, nil), func(c *gin.Context) { c.Status(http.StatusOK) })
 
 	req, _ := http.NewRequest("GET", "/t", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
@@ -71,7 +71,7 @@ func TestMiddleware_NoRevocationMarker_Accepts(t *testing.T) {
 	userID := uuid.New()
 
 	token, _ := svc.GenerateToken(userID)
-	router.GET("/t", auth.Middleware(svc, rdb, nil, nil), func(c *gin.Context) { c.Status(http.StatusOK) })
+	router.GET("/t", auth.Middleware(svc, rdb, nil, nil, nil), func(c *gin.Context) { c.Status(http.StatusOK) })
 
 	req, _ := http.NewRequest("GET", "/t", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
@@ -86,7 +86,7 @@ func TestMiddleware_NilRedis_SkipsRevocationCheck(t *testing.T) {
 
 	token, _ := svc.GenerateToken(userID)
 	// nil rdb → no check path.
-	router.GET("/t", auth.Middleware(svc, nil, nil, nil), func(c *gin.Context) { c.Status(http.StatusOK) })
+	router.GET("/t", auth.Middleware(svc, nil, nil, nil, nil), func(c *gin.Context) { c.Status(http.StatusOK) })
 
 	req, _ := http.NewRequest("GET", "/t", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
@@ -105,7 +105,7 @@ func TestMiddleware_RedisError_FailsClosed(t *testing.T) {
 	assert.NoError(t, rdb.Set(context.Background(), auth.RevokedKey(userID.String()),
 		"not-a-number", time.Hour).Err())
 
-	router.GET("/t", auth.Middleware(svc, rdb, nil, nil), func(c *gin.Context) { c.Status(http.StatusOK) })
+	router.GET("/t", auth.Middleware(svc, rdb, nil, nil, nil), func(c *gin.Context) { c.Status(http.StatusOK) })
 
 	req, _ := http.NewRequest("GET", "/t", nil)
 	req.Header.Set("Authorization", "Bearer "+token)

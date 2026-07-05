@@ -15,7 +15,17 @@ type Caller struct {
 	Permissions []string
 	Username    string
 	Name        string
+	// Ent is the effective entitlement snapshot for the caller's org, resolved
+	// at auth-middleware time (Free for admins / unauthenticated). Mirrors how
+	// Permissions is loaded — see internal/auth/middleware.go.
+	Ent Entitlements
 }
+
+// HasFeature reports whether the caller's plan includes feature f.
+func (c Caller) HasFeature(f Feature) bool { return c.Ent.Can(f) }
+
+// Limit returns the ceiling for l on the caller's plan (0 = unlimited).
+func (c Caller) Limit(l Limit) int64 { return c.Ent.Limit(l) }
 
 func (c Caller) HasPermission(perm PermissionName) bool {
 	return slices.Contains(c.Permissions, string(perm))

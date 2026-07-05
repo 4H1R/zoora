@@ -203,6 +203,41 @@ func TestStartRecording_ActiveRecordingExists_Conflict(t *testing.T) {
 	f.recs.AssertNotCalled(t, "Create")
 }
 
+func TestStartRecording_FreePlanRejected(t *testing.T) {
+	svc, f := newTestServiceLK(t)
+	stubRoomLookups(f, activeTestRoom())
+
+	_, err := svc.StartRecording(freeTeacherCtx(), testRoomID)
+	assert.ErrorIs(t, err, domain.ErrFeatureNotInPlan)
+	f.recs.AssertNotCalled(t, "Create")
+}
+
+func TestStartRoom_ConcurrentRoomLimitReached(t *testing.T) {
+	svc, f := newTestServiceLKEnt(t, fakeEntSvc{
+		concurrentErr: domain.NewLimitError(domain.PlanFree, domain.LimitConcurrentRooms, 1, 1),
+	})
+	stubRoomLookups(f, testRoom()) // created state
+
+	_, err := svc.StartRoom(teacherCtx(), testRoomID)
+	assert.ErrorIs(t, err, domain.ErrPlanLimitReached)
+	// The room must not have been promoted to active.
+	f.rooms.AssertNotCalled(t, "Transition", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestUpdateRoomConfig_FreePlanClampsMaxParticipants(t *testing.T) {
+	svc, f := newTestServiceLK(t)
+	stubRoomLookups(f, activeTestRoom())
+	f.rooms.On("UpdateConfig", mock.Anything, testRoomID, mock.MatchedBy(func(cfg domain.LiveRoomConfig) bool {
+		return cfg.MaxParticipants == 25 // Free ceiling
+	})).Return(nil)
+
+	cfg := domain.LiveRoomConfig{MaxParticipants: 50} // above the Free ceiling
+	room, err := svc.UpdateRoomConfig(freeTeacherCtx(), testRoomID, domain.UpdateLiveRoomConfigDTO{Config: &cfg})
+	assert.NoError(t, err)
+	assert.Equal(t, 25, room.Config.MaxParticipants)
+	f.rooms.AssertExpectations(t)
+}
+
 // --- Config ------------------------------------------------------------------
 
 func TestUpdateRoomConfig_NonPositiveMax_BackfillsDefault(t *testing.T) {

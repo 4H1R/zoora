@@ -16,6 +16,9 @@ type ErrorBody struct {
 	Code    string            `json:"code"`
 	Message string            `json:"message"`
 	Fields  map[string]string `json:"fields,omitempty"`
+	// Plan carries plan-gate detail (feature/limit/current/ceiling) for 402
+	// responses so the client can render an upgrade prompt.
+	Plan *PlanError `json:"plan_detail,omitempty"`
 }
 
 type PaginatedData struct {
@@ -54,6 +57,10 @@ func ErrorResponse(c *gin.Context, err error) {
 	var ve *ValidationError
 	if errors.As(err, &ve) && len(ve.Fields) > 0 {
 		body.Fields = ve.Fields
+	}
+	var pe *PlanError
+	if errors.As(err, &pe) {
+		body.Plan = pe
 	}
 	c.JSON(status, Response{Success: false, Error: body})
 }

@@ -24,7 +24,7 @@ func nonAdminCtx() context.Context {
 }
 
 func TestAdminList_Forbidden_WhenNotAdmin(t *testing.T) {
-	svc := users.NewService(&mockUserRepo{}, &mockRoleRepo{}, slog.Default())
+	svc := users.NewService(&mockUserRepo{}, &mockRoleRepo{}, nil, slog.Default())
 	_, _, err := svc.AdminList(nonAdminCtx(), domain.AdminListUsersQuery{})
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
@@ -39,7 +39,7 @@ func TestAdminList_ClampsPagination(t *testing.T) {
 		return q.ListParams.Page == 3 && q.ListParams.PageSize == 20
 	})).Return([]domain.User{}, int64(0), nil).Once()
 
-	svc := users.NewService(repo, &mockRoleRepo{}, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, slog.Default())
 	_, _, err := svc.AdminList(ctx, domain.AdminListUsersQuery{ListParams: domain.ListParams{Page: 0, PageSize: 0}})
 	assert.NoError(t, err)
 	_, _, err = svc.AdminList(ctx, domain.AdminListUsersQuery{ListParams: domain.ListParams{Page: 3, PageSize: 20}})
@@ -57,7 +57,7 @@ func TestAdminCreate_HashesPasswordAndHonorsFlags(t *testing.T) {
 		return bcrypt.CompareHashAndPassword([]byte(u.Password), []byte("Secret1A")) == nil
 	})).Return(nil)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, slog.Default())
 	user, err := svc.AdminCreate(ctx, domain.AdminCreateUserDTO{
 		Username: "u", Name: "X", Password: "Secret1A",
 		IsAdmin: true,
@@ -68,7 +68,7 @@ func TestAdminCreate_HashesPasswordAndHonorsFlags(t *testing.T) {
 }
 
 func TestAdminCreate_Forbidden_WhenNotAdmin(t *testing.T) {
-	svc := users.NewService(&mockUserRepo{}, &mockRoleRepo{}, slog.Default())
+	svc := users.NewService(&mockUserRepo{}, &mockRoleRepo{}, nil, slog.Default())
 	_, err := svc.AdminCreate(nonAdminCtx(), domain.AdminCreateUserDTO{
 		Username: "u", Name: "X", Password: "Secret1A",
 	})
@@ -87,7 +87,7 @@ func TestAdminUpdate_MergesFieldsAndAllowsAdminFlag(t *testing.T) {
 		return u.Name == "New" && u.IsAdmin
 	})).Return(nil)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, slog.Default())
 	newName := "New"
 	isAdmin := true
 	user, err := svc.AdminUpdate(ctx, userID, domain.AdminUpdateUserDTO{
@@ -105,7 +105,7 @@ func TestAdminUpdate_NotFound(t *testing.T) {
 	id := uuid.New()
 	repo.On("FindByID", ctx, id).Return(nil, domain.ErrNotFound)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, slog.Default())
 	_, err := svc.AdminUpdate(ctx, id, domain.AdminUpdateUserDTO{})
 	assert.ErrorIs(t, err, domain.ErrNotFound)
 }
@@ -121,7 +121,7 @@ func TestAdminForceResetPassword_NoCurrentPasswordNeeded(t *testing.T) {
 		return bcrypt.CompareHashAndPassword([]byte(u.Password), []byte("NewPass1A")) == nil
 	})).Return(nil)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, slog.Default())
 	err := svc.AdminForceResetPassword(ctx, userID, domain.AdminForceResetPasswordDTO{NewPassword: "NewPass1A"})
 	assert.NoError(t, err)
 	repo.AssertExpectations(t)
@@ -131,7 +131,7 @@ func TestAdminHardDelete_BlocksSelfDestruct(t *testing.T) {
 	ctx, adminID := adminUserCtx()
 	repo := &mockUserRepo{}
 
-	svc := users.NewService(repo, &mockRoleRepo{}, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, slog.Default())
 	err := svc.AdminHardDelete(ctx, adminID)
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 	repo.AssertNotCalled(t, "HardDelete")
@@ -144,7 +144,7 @@ func TestAdminHardDelete_Success(t *testing.T) {
 
 	repo.On("HardDelete", ctx, target).Return(nil)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, slog.Default())
 	err := svc.AdminHardDelete(ctx, target)
 	assert.NoError(t, err)
 	repo.AssertExpectations(t)
@@ -152,7 +152,7 @@ func TestAdminHardDelete_Success(t *testing.T) {
 
 func TestAdmin_NoCaller_Forbidden(t *testing.T) {
 	repo := &mockUserRepo{}
-	svc := users.NewService(repo, &mockRoleRepo{}, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, slog.Default())
 
 	_, _, err := svc.AdminList(context.Background(), domain.AdminListUsersQuery{})
 	assert.ErrorIs(t, err, domain.ErrForbidden)

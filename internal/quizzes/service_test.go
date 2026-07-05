@@ -267,6 +267,16 @@ func teacherCtx(userID uuid.UUID) context.Context {
 	return domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      userID,
 		Permissions: []string{"quizzes:update_any", "quizzes:create", "quizzes:view", "quizzes:delete"},
+		Ent:         domain.PlanCatalog[domain.PlanPro],
+	})
+}
+
+// freeTeacherCtx is a teacher on the Free plan (no advanced anti-cheat).
+func freeTeacherCtx(userID uuid.UUID) context.Context {
+	return domain.WithCaller(context.Background(), domain.Caller{
+		UserID:      userID,
+		Permissions: []string{"quizzes:update_any", "quizzes:create", "quizzes:view", "quizzes:delete"},
+		Ent:         domain.PlanCatalog[domain.PlanFree],
 	})
 }
 
@@ -918,6 +928,50 @@ func TestQuizService_Create_CopiesAntiCheatToggles(t *testing.T) {
 		DurationMinutes:  30,
 		ShuffleOptions:   true,
 		TrackTabSwitches: true,
+		DisableCopyPaste: true,
+	})
+	assert.NoError(t, err)
+}
+
+func TestQuizService_Create_FreePlanRejectsAdvancedAntiCheat(t *testing.T) {
+	teacherID := uuid.New()
+	classID := uuid.New()
+	orgID := uuid.New()
+	ctx := freeTeacherCtx(teacherID)
+	d := newDeps()
+
+	d.classRepo.On("FindByID", ctx, classID).
+		Return(&domain.Class{ID: classID, OrganizationID: orgID, UserID: teacherID}, nil)
+
+	svc := d.service()
+	// TrackTabSwitches is an advanced (backend-cost) anti-cheat signal → gated.
+	_, err := svc.Create(ctx, domain.CreateQuizDTO{
+		ClassID:          classID,
+		Title:            "Exam",
+		DurationMinutes:  30,
+		TrackTabSwitches: true,
+	})
+	assert.ErrorIs(t, err, domain.ErrFeatureNotInPlan)
+	d.quizRepo.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+}
+
+func TestQuizService_Create_FreePlanAllowsBasicAntiCheat(t *testing.T) {
+	teacherID := uuid.New()
+	classID := uuid.New()
+	orgID := uuid.New()
+	ctx := freeTeacherCtx(teacherID)
+	d := newDeps()
+
+	d.classRepo.On("FindByID", ctx, classID).
+		Return(&domain.Class{ID: classID, OrganizationID: orgID, UserID: teacherID}, nil)
+	d.quizRepo.On("Create", ctx, mock.AnythingOfType("*domain.Quiz")).Return(nil)
+
+	svc := d.service()
+	// Frontend-only deterrents are not gated.
+	_, err := svc.Create(ctx, domain.CreateQuizDTO{
+		ClassID:          classID,
+		Title:            "Exam",
+		DurationMinutes:  30,
 		DisableCopyPaste: true,
 	})
 	assert.NoError(t, err)

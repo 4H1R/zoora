@@ -83,6 +83,14 @@ func (m *mockOrganizationSvc) AdminRestore(ctx context.Context, id uuid.UUID) er
 	return m.Called(ctx, id).Error(0)
 }
 
+func (m *mockOrganizationSvc) SetPlan(ctx context.Context, id uuid.UUID, dto domain.SetPlanDTO) (*domain.Organization, error) {
+	args := m.Called(ctx, id, dto)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Organization), args.Error(1)
+}
+
 func newOrganizationRouter(t *testing.T) (*gin.Engine, *mockOrganizationSvc) {
 	t.Helper()
 	gin.SetMode(gin.TestMode)

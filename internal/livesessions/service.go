@@ -15,6 +15,7 @@ import (
 	"github.com/livekit/protocol/webhook"
 
 	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/entitlements"
 	lk "github.com/4H1R/zoora/internal/platform/livekit"
 	"github.com/4H1R/zoora/internal/platform/queue"
 )
@@ -47,6 +48,7 @@ type service struct {
 	tx           domain.Transactor
 	livekit      LiveKitClient
 	queue        *queue.Client
+	ent          entitlements.Service
 	// hostGracePeriod is how long a room may stay open after its last host
 	// leaves before the delayed close task (and the safety-net sweep) closes it.
 	hostGracePeriod time.Duration
@@ -65,6 +67,7 @@ func NewService(
 	tx domain.Transactor,
 	livekit LiveKitClient,
 	queueClient *queue.Client,
+	ent entitlements.Service,
 	hostGracePeriod time.Duration,
 	logger *slog.Logger,
 ) domain.LiveSessionService {
@@ -88,6 +91,7 @@ func NewService(
 		tx:              tx,
 		livekit:         livekit,
 		queue:           queueClient,
+		ent:             ent,
 		hostGracePeriod: hostGracePeriod,
 		logger:          logger,
 	}
@@ -171,7 +175,7 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreateLiveRoomDTO) 
 		return nil, domain.NewValidationError(map[string]string{"name": "required"})
 	}
 
-	cfg := normalizeRoomConfig(dto.Config)
+	cfg := normalizeRoomConfig(dto.Config, int(caller.Ent.Limit(domain.LimitMaxParticipants)))
 
 	roomID := uuid.New()
 	room := &domain.LiveRoom{
@@ -266,7 +270,7 @@ func (s *service) JoinRoom(ctx context.Context, roomID uuid.UUID) (*domain.JoinL
 		if !isModerator {
 			return nil, domain.NewValidationError(map[string]string{"status": "room not started yet"})
 		}
-		if _, err := s.startRoomInternal(ctx, room); err != nil {
+		if _, err := s.startRoomInternal(ctx, room, class.OrganizationID, caller.Ent); err != nil {
 			if !errors.Is(err, domain.ErrConflict) {
 				return nil, err
 			}
@@ -391,7 +395,7 @@ func (s *service) StartRoom(ctx context.Context, roomID uuid.UUID) (*domain.Live
 		return nil, domain.NewValidationError(map[string]string{"status": "room must be in created state to start"})
 	}
 
-	if _, err := s.startRoomInternal(ctx, room); err != nil {
+	if _, err := s.startRoomInternal(ctx, room, class.OrganizationID, caller.Ent); err != nil {
 		return nil, err
 	}
 
@@ -407,7 +411,13 @@ func (s *service) StartRoom(ctx context.Context, roomID uuid.UUID) (*domain.Live
 // created state. Shared by StartRoom and JoinRoom (host auto-start) so the two
 // paths can never drift. Returns domain.ErrConflict when a concurrent start won
 // the created→active transition.
-func (s *service) startRoomInternal(ctx context.Context, room *domain.LiveRoom) (*domain.LiveRoom, error) {
+func (s *service) startRoomInternal(ctx context.Context, room *domain.LiveRoom, orgID uuid.UUID, ent domain.Entitlements) (*domain.LiveRoom, error) {
+	// Enforce the org's concurrent-active-rooms limit before the room goes live.
+	if s.ent != nil {
+		if err := s.ent.CheckConcurrentRoomsLimit(ctx, orgID, ent); err != nil {
+			return nil, err
+		}
+	}
 	if _, err := s.livekit.CreateRoom(ctx, room.LiveKitRoomName, uint32(room.Config.MaxParticipants)); err != nil {
 		return nil, fmt.Errorf("livesessions.service.startRoomInternal livekit: %w", err)
 	}
@@ -580,19 +590,24 @@ func (s *service) UpdateRoomConfig(ctx context.Context, roomID uuid.UUID, dto do
 	if room.Status == domain.LiveRoomStatusFinished {
 		return nil, domain.NewValidationError(map[string]string{"status": "cannot update finished room"})
 	}
-	room.Config = normalizeRoomConfig(*dto.Config)
+	room.Config = normalizeRoomConfig(*dto.Config, int(caller.Ent.Limit(domain.LimitMaxParticipants)))
 	if err := s.rooms.UpdateConfig(ctx, room.ID, room.Config); err != nil {
 		return nil, err
 	}
 	return room, nil
 }
 
-// normalizeRoomConfig backfills only the participant cap (a non-positive value
-// would wrap to a huge uint32 at the LiveKit boundary); caller-supplied flags
-// are preserved. Shared by create and update so the two paths can't drift.
-func normalizeRoomConfig(cfg domain.LiveRoomConfig) domain.LiveRoomConfig {
-	if cfg.MaxParticipants <= 0 {
-		cfg.MaxParticipants = domain.DefaultLiveRoomConfig().MaxParticipants
+// normalizeRoomConfig sets the participant cap from the org's plan: a
+// non-positive request defaults to the plan ceiling, and a request above the
+// ceiling is clamped down to it. Caller-supplied flags are preserved. Shared by
+// create and update so the two paths can't drift. A non-positive ceiling (no
+// plan resolved) falls back to the built-in default.
+func normalizeRoomConfig(cfg domain.LiveRoomConfig, ceiling int) domain.LiveRoomConfig {
+	if ceiling <= 0 {
+		ceiling = domain.DefaultLiveRoomConfig().MaxParticipants
+	}
+	if cfg.MaxParticipants <= 0 || cfg.MaxParticipants > ceiling {
+		cfg.MaxParticipants = ceiling
 	}
 	return cfg
 }
@@ -642,6 +657,9 @@ func (s *service) StartRecording(ctx context.Context, roomID uuid.UUID) (*domain
 	}
 	if !s.canManageRoom(caller, class) {
 		return nil, domain.ErrForbidden
+	}
+	if !caller.HasFeature(domain.FeatureRecording) {
+		return nil, domain.NewFeatureError(caller.Ent.Plan, domain.FeatureRecording)
 	}
 	if room.Status != domain.LiveRoomStatusActive {
 		return nil, domain.NewValidationError(map[string]string{"status": "room must be active to record"})

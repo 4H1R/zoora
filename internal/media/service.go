@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/entitlements"
 )
 
 const (
@@ -28,17 +29,25 @@ type objectStorage interface {
 type service struct {
 	repo    domain.MediaRepository
 	storage objectStorage
+	ent     entitlements.Service
 	logger  *slog.Logger
 }
 
-func NewService(repo domain.MediaRepository, storage objectStorage, logger *slog.Logger) domain.MediaService {
-	return &service{repo: repo, storage: storage, logger: logger}
+func NewService(repo domain.MediaRepository, storage objectStorage, ent entitlements.Service, logger *slog.Logger) domain.MediaService {
+	return &service{repo: repo, storage: storage, ent: ent, logger: logger}
 }
 
 func (s *service) PresignUpload(ctx context.Context, dto domain.PresignUploadDTO) (*domain.PresignUploadResponse, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
+	}
+
+	// Enforce the org's storage quota against declared upload size.
+	if caller.OrgID != nil && s.ent != nil {
+		if err := s.ent.CheckStorageLimit(ctx, *caller.OrgID, caller.Ent, dto.Size); err != nil {
+			return nil, err
+		}
 	}
 
 	modelID, _ := uuid.Parse(dto.ModelID)

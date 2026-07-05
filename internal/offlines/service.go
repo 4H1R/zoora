@@ -90,6 +90,9 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreateOfflineRoomDT
 	if !caller.IsAdmin && !caller.HasPermission(domain.PermOfflinesCreateAny) && caller.UserID != class.UserID {
 		return nil, domain.ErrForbidden
 	}
+	if !caller.HasFeature(domain.FeatureOfflineRooms) {
+		return nil, domain.NewFeatureError(caller.Ent.Plan, domain.FeatureOfflineRooms)
+	}
 	room := &domain.OfflineRoom{
 		OrganizationID: class.OrganizationID,
 		ClassID:        class.ID,

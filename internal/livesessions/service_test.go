@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/entitlements"
 	"github.com/4H1R/zoora/internal/livesessions"
 )
 
@@ -450,7 +451,22 @@ type lkFixture struct {
 	lk      *fakeLiveKit
 }
 
+// fakeEntSvc injects canned entitlement-limit results for livesession tests.
+type fakeEntSvc struct{ concurrentErr error }
+
+func (f fakeEntSvc) CheckUserLimit(context.Context, uuid.UUID, domain.Entitlements) error { return nil }
+func (f fakeEntSvc) CheckStorageLimit(context.Context, uuid.UUID, domain.Entitlements, int64) error {
+	return nil
+}
+func (f fakeEntSvc) CheckConcurrentRoomsLimit(context.Context, uuid.UUID, domain.Entitlements) error {
+	return f.concurrentErr
+}
+
 func newTestServiceLK(t *testing.T) (domain.LiveSessionService, *lkFixture) {
+	return newTestServiceLKEnt(t, fakeEntSvc{})
+}
+
+func newTestServiceLKEnt(t *testing.T, ent entitlements.Service) (domain.LiveSessionService, *lkFixture) {
 	t.Helper()
 	f := &lkFixture{
 		rooms:   &mockRoomRepo{},
@@ -469,6 +485,7 @@ func newTestServiceLK(t *testing.T) (domain.LiveSessionService, *lkFixture) {
 		f.chat, noopTx{},
 		f.lk,
 		nil, // queue client
+		ent,
 		15*time.Minute,
 		slog.Default(),
 	)
@@ -491,6 +508,16 @@ func teacherCtx() context.Context {
 	return domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      testTeacherID,
 		Permissions: []string{"live_sessions:manage", "live_sessions:create", "live_sessions:view", "live_sessions:update", "live_sessions:join"},
+		Ent:         domain.PlanCatalog[domain.PlanPro],
+	})
+}
+
+// freeTeacherCtx is a teacher on the Free plan (no recording feature).
+func freeTeacherCtx() context.Context {
+	return domain.WithCaller(context.Background(), domain.Caller{
+		UserID:      testTeacherID,
+		Permissions: []string{"live_sessions:manage", "live_sessions:create", "live_sessions:view", "live_sessions:update", "live_sessions:join"},
+		Ent:         domain.PlanCatalog[domain.PlanFree],
 	})
 }
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -70,6 +71,10 @@ func (m *orgRepoMock) HardDelete(ctx context.Context, id uuid.UUID) error {
 
 func (m *orgRepoMock) Restore(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
+}
+
+func (m *orgRepoMock) UpdatePlan(ctx context.Context, id uuid.UUID, plan domain.Plan, expiresAt *time.Time) error {
+	return m.Called(ctx, id, plan, expiresAt).Error(0)
 }
 
 // noopSettingsRepo satisfies domain.OrganizationSettingsRepository; org-create
@@ -242,4 +247,44 @@ func TestOrganizationAdminMethodsRequireAdminAndDefaultPagination(t *testing.T) 
 	assert.NoError(t, svc.AdminHardDelete(ctx, orgID))
 	repo.On("Restore", ctx, orgID).Return(nil)
 	assert.NoError(t, svc.AdminRestore(ctx, orgID))
+}
+
+func TestSetPlanRequiresAdmin(t *testing.T) {
+	repo := &orgRepoMock{}
+	svc := newOrganizationService(repo)
+
+	orgID := uuid.New()
+	nonAdmin := orgCaller(uuid.New(), &orgID, false)
+	_, err := svc.SetPlan(nonAdmin, orgID, domain.SetPlanDTO{Plan: domain.PlanPro})
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+	repo.AssertNotCalled(t, "UpdatePlan", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestSetPlanRejectsUnknownPlan(t *testing.T) {
+	repo := &orgRepoMock{}
+	svc := newOrganizationService(repo)
+
+	id := uuid.New()
+	_, err := svc.SetPlan(orgAdminCtx(), id, domain.SetPlanDTO{Plan: domain.Plan("bogus")})
+	assert.ErrorIs(t, err, domain.ErrValidation)
+	repo.AssertNotCalled(t, "UpdatePlan", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestSetPlanPersistsAndReturnsOrg(t *testing.T) {
+	repo := &orgRepoMock{}
+	svc := newOrganizationService(repo)
+
+	id := uuid.New()
+	exp := time.Unix(1_800_000_000, 0)
+	existing := &domain.Organization{ID: id, Name: "o", Slug: "s", Plan: domain.PlanFree}
+	updated := &domain.Organization{ID: id, Name: "o", Slug: "s", Plan: domain.PlanPro, PlanExpiresAt: &exp}
+
+	repo.On("FindByID", mock.Anything, id).Return(existing, nil).Once()
+	repo.On("UpdatePlan", mock.Anything, id, domain.PlanPro, &exp).Return(nil).Once()
+	repo.On("FindByID", mock.Anything, id).Return(updated, nil).Once()
+
+	got, err := svc.SetPlan(orgAdminCtx(), id, domain.SetPlanDTO{Plan: domain.PlanPro, ExpiresAt: &exp})
+	assert.NoError(t, err)
+	assert.Equal(t, domain.PlanPro, got.Plan)
+	repo.AssertExpectations(t)
 }

@@ -42,9 +42,13 @@ import type {
   GetAdminOrganizationsStats401,
   GetAdminOrganizationsStats403,
   GetAdminOrganizationsStats500,
+  GetAdminPlans200,
+  GetAdminPlans401,
+  GetAdminPlans403,
   GithubCom4H1RZooraInternalDomainAdminCreateOrganizationDTO,
   GithubCom4H1RZooraInternalDomainAdminUpdateOrganizationDTO,
   GithubCom4H1RZooraInternalDomainResponse,
+  GithubCom4H1RZooraInternalDomainSetPlanDTO,
   PostAdminOrganizations201,
   PostAdminOrganizations400,
   PostAdminOrganizations401,
@@ -61,7 +65,12 @@ import type {
   PutAdminOrganizationsId403,
   PutAdminOrganizationsId404,
   PutAdminOrganizationsId409,
-  PutAdminOrganizationsId500
+  PutAdminOrganizationsId500,
+  PutAdminOrganizationsIdPlan200,
+  PutAdminOrganizationsIdPlan400,
+  PutAdminOrganizationsIdPlan401,
+  PutAdminOrganizationsIdPlan403,
+  PutAdminOrganizationsIdPlan404
 } from '../model';
 
 import { customInstance } from '.././mutator/custom-instance';
@@ -807,6 +816,111 @@ export const useDeleteAdminOrganizationsId = <TError = ErrorType<DeleteAdminOrga
       > => {
       return useMutation(getDeleteAdminOrganizationsIdMutationOptions(options), queryClient);
     }
+    export type putAdminOrganizationsIdPlanResponse200 = {
+  data: PutAdminOrganizationsIdPlan200
+  status: 200
+}
+
+export type putAdminOrganizationsIdPlanResponse400 = {
+  data: PutAdminOrganizationsIdPlan400
+  status: 400
+}
+
+export type putAdminOrganizationsIdPlanResponse401 = {
+  data: PutAdminOrganizationsIdPlan401
+  status: 401
+}
+
+export type putAdminOrganizationsIdPlanResponse403 = {
+  data: PutAdminOrganizationsIdPlan403
+  status: 403
+}
+
+export type putAdminOrganizationsIdPlanResponse404 = {
+  data: PutAdminOrganizationsIdPlan404
+  status: 404
+}
+
+export type putAdminOrganizationsIdPlanResponseSuccess = (putAdminOrganizationsIdPlanResponse200) & {
+  headers: Headers;
+};
+export type putAdminOrganizationsIdPlanResponseError = (putAdminOrganizationsIdPlanResponse400 | putAdminOrganizationsIdPlanResponse401 | putAdminOrganizationsIdPlanResponse403 | putAdminOrganizationsIdPlanResponse404) & {
+  headers: Headers;
+};
+
+export type putAdminOrganizationsIdPlanResponse = (putAdminOrganizationsIdPlanResponseSuccess | putAdminOrganizationsIdPlanResponseError)
+
+export const getPutAdminOrganizationsIdPlanUrl = (id: string,) => {
+
+
+
+
+  return `/admin/organizations/${id}/plan`
+}
+
+/**
+ * Assign a subscription plan (free/pro/enterprise) and optional expiry. Omit expires_at for a perpetual plan; an expired plan downgrades to free.
+ * @summary [Admin] Set organization plan
+ */
+export const putAdminOrganizationsIdPlan = async (id: string,
+    githubCom4H1RZooraInternalDomainSetPlanDTO: GithubCom4H1RZooraInternalDomainSetPlanDTO, options?: RequestInit): Promise<putAdminOrganizationsIdPlanResponse> => {
+
+  return customInstance<putAdminOrganizationsIdPlanResponse>(getPutAdminOrganizationsIdPlanUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(githubCom4H1RZooraInternalDomainSetPlanDTO)
+  }
+);}
+
+
+
+
+export const getPutAdminOrganizationsIdPlanMutationOptions = <TError = ErrorType<PutAdminOrganizationsIdPlan400 | PutAdminOrganizationsIdPlan401 | PutAdminOrganizationsIdPlan403 | PutAdminOrganizationsIdPlan404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putAdminOrganizationsIdPlan>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainSetPlanDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof putAdminOrganizationsIdPlan>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainSetPlanDTO}, TContext> => {
+
+const mutationKey = ['putAdminOrganizationsIdPlan'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putAdminOrganizationsIdPlan>>, {id: string;data: GithubCom4H1RZooraInternalDomainSetPlanDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  putAdminOrganizationsIdPlan(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutAdminOrganizationsIdPlanMutationResult = NonNullable<Awaited<ReturnType<typeof putAdminOrganizationsIdPlan>>>
+    export type PutAdminOrganizationsIdPlanMutationBody = GithubCom4H1RZooraInternalDomainSetPlanDTO
+    export type PutAdminOrganizationsIdPlanMutationError = ErrorType<PutAdminOrganizationsIdPlan400 | PutAdminOrganizationsIdPlan401 | PutAdminOrganizationsIdPlan403 | PutAdminOrganizationsIdPlan404>
+
+    /**
+ * @summary [Admin] Set organization plan
+ */
+export const usePutAdminOrganizationsIdPlan = <TError = ErrorType<PutAdminOrganizationsIdPlan400 | PutAdminOrganizationsIdPlan401 | PutAdminOrganizationsIdPlan403 | PutAdminOrganizationsIdPlan404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putAdminOrganizationsIdPlan>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainSetPlanDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putAdminOrganizationsIdPlan>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainSetPlanDTO},
+        TContext
+      > => {
+      return useMutation(getPutAdminOrganizationsIdPlanMutationOptions(options), queryClient);
+    }
     export type postAdminOrganizationsIdRestoreResponse200 = {
   data: GithubCom4H1RZooraInternalDomainResponse
   status: 200
@@ -910,3 +1024,127 @@ export const usePostAdminOrganizationsIdRestore = <TError = ErrorType<PostAdminO
       > => {
       return useMutation(getPostAdminOrganizationsIdRestoreMutationOptions(options), queryClient);
     }
+    export type getAdminPlansResponse200 = {
+  data: GetAdminPlans200
+  status: 200
+}
+
+export type getAdminPlansResponse401 = {
+  data: GetAdminPlans401
+  status: 401
+}
+
+export type getAdminPlansResponse403 = {
+  data: GetAdminPlans403
+  status: 403
+}
+
+export type getAdminPlansResponseSuccess = (getAdminPlansResponse200) & {
+  headers: Headers;
+};
+export type getAdminPlansResponseError = (getAdminPlansResponse401 | getAdminPlansResponse403) & {
+  headers: Headers;
+};
+
+export type getAdminPlansResponse = (getAdminPlansResponseSuccess | getAdminPlansResponseError)
+
+export const getGetAdminPlansUrl = () => {
+
+
+
+
+  return `/admin/plans`
+}
+
+/**
+ * @summary [Admin] Plan catalog
+ */
+export const getAdminPlans = async ( options?: RequestInit): Promise<getAdminPlansResponse> => {
+
+  return customInstance<getAdminPlansResponse>(getGetAdminPlansUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminPlansQueryKey = () => {
+    return [
+    `/admin/plans`
+    ] as const;
+    }
+
+
+export const getGetAdminPlansQueryOptions = <TData = Awaited<ReturnType<typeof getAdminPlans>>, TError = ErrorType<GetAdminPlans401 | GetAdminPlans403>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPlans>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminPlansQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminPlans>>> = ({ signal }) => getAdminPlans({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminPlans>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminPlansQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminPlans>>>
+export type GetAdminPlansQueryError = ErrorType<GetAdminPlans401 | GetAdminPlans403>
+
+
+export function useGetAdminPlans<TData = Awaited<ReturnType<typeof getAdminPlans>>, TError = ErrorType<GetAdminPlans401 | GetAdminPlans403>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPlans>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminPlans>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminPlans>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminPlans<TData = Awaited<ReturnType<typeof getAdminPlans>>, TError = ErrorType<GetAdminPlans401 | GetAdminPlans403>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPlans>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminPlans>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminPlans>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminPlans<TData = Awaited<ReturnType<typeof getAdminPlans>>, TError = ErrorType<GetAdminPlans401 | GetAdminPlans403>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPlans>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary [Admin] Plan catalog
+ */
+
+export function useGetAdminPlans<TData = Awaited<ReturnType<typeof getAdminPlans>>, TError = ErrorType<GetAdminPlans401 | GetAdminPlans403>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminPlans>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminPlansQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+

@@ -5,12 +5,14 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 
 	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/entitlements"
 	"github.com/4H1R/zoora/internal/platform/cache"
 )
 
@@ -21,7 +23,7 @@ const (
 
 // Middleware validates the JWT, loads user permissions from cache/DB, and
 // injects a fully-populated Caller into the request context.
-func Middleware(jwt *JWTService, rdb *redis.Client, roleRepo domain.RoleRepository, userRepo domain.UserRepository) gin.HandlerFunc {
+func Middleware(jwt *JWTService, rdb *redis.Client, roleRepo domain.RoleRepository, userRepo domain.UserRepository, entRepo entitlements.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		header := c.GetHeader("Authorization")
 		if header == "" {
@@ -72,6 +74,14 @@ func Middleware(jwt *JWTService, rdb *redis.Client, roleRepo domain.RoleReposito
 
 			if !user.IsAdmin && user.RoleID != nil {
 				caller.Permissions = loadPermissions(c, rdb, roleRepo, *user.RoleID)
+			}
+
+			// Resolve the org's effective entitlement snapshot (Free when the
+			// caller has no org or resolution fails). Mirrors loadPermissions:
+			// cache -> repo -> cache.
+			caller.Ent = domain.PlanCatalog[domain.PlanFree]
+			if caller.OrgID != nil && entRepo != nil {
+				caller.Ent = loadEntitlements(c, rdb, entRepo, *caller.OrgID)
 			}
 		}
 
@@ -125,6 +135,29 @@ func loadPermissions(c *gin.Context, rdb *redis.Client, roleRepo domain.RoleRepo
 		_ = cache.SetRolePermissions(ctx, rdb, roleID, perms)
 	}
 	return perms
+}
+
+// loadEntitlements resolves the org's effective entitlement snapshot, mirroring
+// loadPermissions: cache -> repo -> cache, then downgrade-on-expiry via
+// EffectiveEntitlements. Fails closed to Free when the org can't be resolved.
+func loadEntitlements(c *gin.Context, rdb *redis.Client, entRepo entitlements.Repository, orgID uuid.UUID) domain.Entitlements {
+	ctx := c.Request.Context()
+	now := time.Now()
+
+	if rdb != nil {
+		if cp, err := cache.GetOrgPlan(ctx, rdb, orgID); err == nil {
+			return domain.EffectiveEntitlements(domain.Plan(cp.Plan), cp.ExpiresAt, now)
+		}
+	}
+
+	plan, exp, err := entRepo.GetOrgPlan(ctx, orgID)
+	if err != nil {
+		return domain.PlanCatalog[domain.PlanFree]
+	}
+	if rdb != nil {
+		_ = cache.SetOrgPlan(ctx, rdb, orgID, string(plan), exp)
+	}
+	return domain.EffectiveEntitlements(plan, exp, now)
 }
 
 func isRevoked(c *gin.Context, rdb *redis.Client, claims *Claims) bool {

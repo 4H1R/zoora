@@ -23,11 +23,18 @@ type Organization struct {
 	Slug        string             `gorm:"not null;uniqueIndex" json:"slug"`
 	Description string             `json:"description"`
 	Status      OrganizationStatus `gorm:"not null;default:'active'" json:"status"`
+	Plan          Plan       `gorm:"type:varchar(20);not null;default:'free'" json:"plan"`
+	PlanExpiresAt *time.Time `json:"plan_expires_at,omitempty"`
 	// TotalUsers is computed (live COUNT of non-deleted users), not a stored column.
 	TotalUsers int            `gorm:"-" json:"total_users"`
 	CreatedAt  time.Time      `json:"created_at"`
 	UpdatedAt  time.Time      `json:"updated_at"`
 	DeletedAt  gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+// EffectivePlan returns the plan actually in force now (Free if expired).
+func (o *Organization) EffectivePlan(now time.Time) Plan {
+	return EffectiveEntitlements(o.Plan, o.PlanExpiresAt, now).Plan
 }
 
 type CreateOrganizationDTO struct {
@@ -80,6 +87,12 @@ type AdminUpdateOrganizationDTO struct {
 	Status      *OrganizationStatus `json:"status" binding:"omitempty,oneof=active trial suspended archived"`
 }
 
+// SetPlanDTO is the request body for PUT /admin/organizations/:id/plan.
+type SetPlanDTO struct {
+	Plan      Plan       `json:"plan" binding:"required"`
+	ExpiresAt *time.Time `json:"expires_at"` // nil = perpetual
+}
+
 type OrganizationRepository interface {
 	Create(ctx context.Context, org *Organization) error
 	FindByID(ctx context.Context, id uuid.UUID) (*Organization, error)
@@ -93,6 +106,7 @@ type OrganizationRepository interface {
 	AdminList(ctx context.Context, q AdminListOrganizationsQuery) ([]Organization, int64, error)
 	HardDelete(ctx context.Context, id uuid.UUID) error
 	Restore(ctx context.Context, id uuid.UUID) error
+	UpdatePlan(ctx context.Context, id uuid.UUID, plan Plan, expiresAt *time.Time) error
 }
 
 type OrganizationService interface {
@@ -109,4 +123,5 @@ type OrganizationService interface {
 	AdminUpdate(ctx context.Context, id uuid.UUID, dto AdminUpdateOrganizationDTO) (*Organization, error)
 	AdminHardDelete(ctx context.Context, id uuid.UUID) error
 	AdminRestore(ctx context.Context, id uuid.UUID) error
+	SetPlan(ctx context.Context, id uuid.UUID, dto SetPlanDTO) (*Organization, error)
 }

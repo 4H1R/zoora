@@ -72,7 +72,7 @@ func main() {
 		liveRoomRepo, liveParticipantRepo, liveRecordingRepo, liveWhiteboardRepo,
 		classSessionRepo, classRepo, classMemberRepo,
 		chatSvc, transactor,
-		livekitClient, queueClient, cfg.LiveRoomHostGracePeriod, log,
+		livekitClient, queueClient, nil, cfg.LiveRoomHostGracePeriod, log,
 	)
 	queueServer.HandleFunc(domain.TypeLiveSessionAutoClose, livesessions.NewAutoCloseHandler(liveSessionService))
 	queueServer.HandleFunc(domain.TypeLiveSessionCloseIfNoHost, livesessions.NewCloseIfNoHostHandler(liveSessionService))
@@ -96,8 +96,11 @@ func main() {
 		os.Exit(1)
 	}
 	mediaRepo := media.NewRepository(db)
-	mediaService := media.NewService(mediaRepo, storageClient, log)
+	mediaService := media.NewService(mediaRepo, storageClient, nil, log)
 	queueServer.HandleFunc(domain.TypeMediaCleanup, media.NewCleanupHandler(mediaService))
+
+	retentionSweeper := livesessions.NewRetentionSweeper(livesessions.NewRetentionRepository(db), storageClient, log)
+	queueServer.HandleFunc(domain.TypeRecordingRetentionSweep, livesessions.NewRetentionSweepHandler(retentionSweeper))
 
 	// Periodic safety net for missed LiveKit webhooks: re-scan for active rooms
 	// whose host went stale and close the ones LiveKit confirms are host-less.
@@ -110,6 +113,10 @@ func main() {
 	scheduler := asynq.NewScheduler(redisOpt, nil)
 	if _, err := scheduler.Register("@every 5m", asynq.NewTask(domain.TypeLiveSessionAutoClose, nil)); err != nil {
 		log.Error("failed to register auto-close schedule", "error", err)
+		os.Exit(1)
+	}
+	if _, err := scheduler.Register("@every 24h", asynq.NewTask(domain.TypeRecordingRetentionSweep, nil)); err != nil {
+		log.Error("failed to register recording-retention schedule", "error", err)
 		os.Exit(1)
 	}
 	go func() {
