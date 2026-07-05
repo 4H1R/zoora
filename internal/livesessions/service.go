@@ -643,6 +643,9 @@ func (s *service) StartRecording(ctx context.Context, roomID uuid.UUID) (*domain
 	if !s.canManageRoom(caller, class) {
 		return nil, domain.ErrForbidden
 	}
+	if !caller.HasFeature(domain.FeatureRecording) {
+		return nil, domain.NewFeatureError(caller.Ent.Plan, domain.FeatureRecording)
+	}
 	if room.Status != domain.LiveRoomStatusActive {
 		return nil, domain.NewValidationError(map[string]string{"status": "room must be active to record"})
 	}

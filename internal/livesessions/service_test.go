@@ -491,6 +491,16 @@ func teacherCtx() context.Context {
 	return domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      testTeacherID,
 		Permissions: []string{"live_sessions:manage", "live_sessions:create", "live_sessions:view", "live_sessions:update", "live_sessions:join"},
+		Ent:         domain.PlanCatalog[domain.PlanPro],
+	})
+}
+
+// freeTeacherCtx is a teacher on the Free plan (no recording feature).
+func freeTeacherCtx() context.Context {
+	return domain.WithCaller(context.Background(), domain.Caller{
+		UserID:      testTeacherID,
+		Permissions: []string{"live_sessions:manage", "live_sessions:create", "live_sessions:view", "live_sessions:update", "live_sessions:join"},
+		Ent:         domain.PlanCatalog[domain.PlanFree],
 	})
 }
 

@@ -53,6 +53,11 @@ func (s *service) Create(ctx context.Context, dto domain.CreateRoleDTO) (*domain
 	if !dto.IsPreset && dto.OrganizationID == nil {
 		return nil, fmt.Errorf("organization_id is required for non-preset roles: %w", domain.ErrValidation)
 	}
+	// Custom (non-preset) role creation is a plan feature. Admins (who create
+	// preset roles) bypass, since they carry Free entitlements.
+	if !caller.IsAdmin && !caller.HasFeature(domain.FeatureCustomRoles) {
+		return nil, domain.NewFeatureError(caller.Ent.Plan, domain.FeatureCustomRoles)
+	}
 
 	perms, err := s.permRepo.FindByIDs(ctx, dto.PermissionIDs)
 	if err != nil {

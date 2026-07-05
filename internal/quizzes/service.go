@@ -80,6 +80,9 @@ func (s *service) Create(ctx context.Context, dto domain.CreateQuizDTO) (*domain
 	if !canManageClass(caller, class) {
 		return nil, domain.ErrForbidden
 	}
+	if (dto.TrackTabSwitches || dto.RequireGPS) && !caller.HasFeature(domain.FeatureAdvancedAntiCheat) {
+		return nil, domain.NewFeatureError(caller.Ent.Plan, domain.FeatureAdvancedAntiCheat)
+	}
 	mode, val, wpp := domain.NormalizeNegativeMark(dto.NegativeMarkMode, dto.NegativeValue, dto.WrongsPerPoint)
 	if err := domain.ValidateNegativeMark(mode, val, wpp); err != nil {
 		return nil, err
@@ -143,6 +146,11 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateQui
 	}
 	if !canManageQuiz(caller, quiz) {
 		return nil, domain.ErrForbidden
+	}
+	wantsTab := dto.TrackTabSwitches != nil && *dto.TrackTabSwitches
+	wantsGPS := dto.RequireGPS != nil && *dto.RequireGPS
+	if (wantsTab || wantsGPS) && !caller.HasFeature(domain.FeatureAdvancedAntiCheat) {
+		return nil, domain.NewFeatureError(caller.Ent.Plan, domain.FeatureAdvancedAntiCheat)
 	}
 	if dto.Title != nil {
 		quiz.Title = *dto.Title

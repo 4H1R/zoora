@@ -203,6 +203,15 @@ func TestStartRecording_ActiveRecordingExists_Conflict(t *testing.T) {
 	f.recs.AssertNotCalled(t, "Create")
 }
 
+func TestStartRecording_FreePlanRejected(t *testing.T) {
+	svc, f := newTestServiceLK(t)
+	stubRoomLookups(f, activeTestRoom())
+
+	_, err := svc.StartRecording(freeTeacherCtx(), testRoomID)
+	assert.ErrorIs(t, err, domain.ErrFeatureNotInPlan)
+	f.recs.AssertNotCalled(t, "Create")
+}
+
 // --- Config ------------------------------------------------------------------
 
 func TestUpdateRoomConfig_NonPositiveMax_BackfillsDefault(t *testing.T) {
