@@ -6,12 +6,15 @@
  * OpenAPI spec version: 1.0
  */
 import type { GithubCom4H1RZooraInternalDomainOrganizationStatus } from './githubCom4H1RZooraInternalDomainOrganizationStatus';
+import type { GithubCom4H1RZooraInternalDomainPlan } from './githubCom4H1RZooraInternalDomainPlan';
 
 export interface GithubCom4H1RZooraInternalDomainOrganization {
   created_at?: string;
   description?: string;
   id?: string;
   name?: string;
+  plan?: GithubCom4H1RZooraInternalDomainPlan;
+  plan_expires_at?: string;
   slug?: string;
   status?: GithubCom4H1RZooraInternalDomainOrganizationStatus;
   /** TotalUsers is computed (live COUNT of non-deleted users), not a stored column. */

@@ -637,6 +637,7 @@ export * from './githubCom4H1RZooraInternalDomainPaginatedData';
 export * from './githubCom4H1RZooraInternalDomainParticipantRole';
 export * from './githubCom4H1RZooraInternalDomainPermission';
 export * from './githubCom4H1RZooraInternalDomainPermissionName';
+export * from './githubCom4H1RZooraInternalDomainPlan';
 export * from './githubCom4H1RZooraInternalDomainPlanError';
 export * from './githubCom4H1RZooraInternalDomainPoll';
 export * from './githubCom4H1RZooraInternalDomainPollAnswer';
