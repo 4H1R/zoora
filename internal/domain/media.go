@@ -109,6 +109,11 @@ type MediaService interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*Media, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	ListByModel(ctx context.Context, modelType string, modelID uuid.UUID, collection string) ([]Media, error)
+	// ListFolders returns the org files page's folder view. Requires
+	// media:view_any (or admin) and an org-scoped caller.
+	ListFolders(ctx context.Context) ([]MediaFolder, error)
+	// ListFiles pages one folder (model_type) of the caller's org.
+	ListFiles(ctx context.Context, modelType string, p ListParams) ([]Media, int64, error)
 	// CleanupByModel purges a whole collection (rows + S3 objects) for a model.
 	// System-level: no caller authz — invoked from background jobs only.
 	CleanupByModel(ctx context.Context, modelType string, modelID uuid.UUID, collection string) error

@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/media"
@@ -366,6 +367,76 @@ func TestMediaPresignDownloadClampsExpiry(t *testing.T) {
 			store.AssertExpectations(t)
 		})
 	}
+}
+
+func TestMediaListFoldersAuthzAndSharedPin(t *testing.T) {
+	orgID := uuid.New()
+
+	t.Run("requires media:view_any", func(t *testing.T) {
+		repo := &mediaRepoMock{}
+		svc := newMediaService(repo, &storageMock{})
+		_, err := svc.ListFolders(orgCtx(orgID, string(domain.PermMediaView)))
+		assert.ErrorIs(t, err, domain.ErrForbidden)
+		repo.AssertNotCalled(t, "ListFolders")
+	})
+
+	t.Run("requires org-scoped caller", func(t *testing.T) {
+		repo := &mediaRepoMock{}
+		svc := newMediaService(repo, &storageMock{})
+		_, err := svc.ListFolders(mediaCtx(false, string(domain.PermMediaViewAny)))
+		assert.ErrorIs(t, err, domain.ErrForbidden)
+	})
+
+	t.Run("appends shared folder when absent", func(t *testing.T) {
+		repo := &mediaRepoMock{}
+		svc := newMediaService(repo, &storageMock{})
+		ctx := orgCtx(orgID, string(domain.PermMediaViewAny))
+		repo.On("ListFolders", ctx, orgID).Return([]domain.MediaFolder{
+			{ModelType: "live_room", FileCount: 2, TotalSize: 30},
+		}, nil)
+		folders, err := svc.ListFolders(ctx)
+		assert.NoError(t, err)
+		require.Len(t, folders, 2)
+		assert.Equal(t, domain.MediaModelOrganization, folders[1].ModelType)
+		assert.Zero(t, folders[1].FileCount)
+	})
+
+	t.Run("keeps shared folder when present", func(t *testing.T) {
+		repo := &mediaRepoMock{}
+		svc := newMediaService(repo, &storageMock{})
+		ctx := orgCtx(orgID, string(domain.PermMediaViewAny))
+		repo.On("ListFolders", ctx, orgID).Return([]domain.MediaFolder{
+			{ModelType: domain.MediaModelOrganization, FileCount: 1, TotalSize: 5},
+		}, nil)
+		folders, err := svc.ListFolders(ctx)
+		assert.NoError(t, err)
+		require.Len(t, folders, 1)
+		assert.Equal(t, int64(1), folders[0].FileCount)
+	})
+}
+
+func TestMediaListFilesAuthz(t *testing.T) {
+	orgID := uuid.New()
+
+	t.Run("requires media:view_any", func(t *testing.T) {
+		repo := &mediaRepoMock{}
+		svc := newMediaService(repo, &storageMock{})
+		_, _, err := svc.ListFiles(orgCtx(orgID), "live_room", domain.ListParams{Page: 1, PageSize: 20})
+		assert.ErrorIs(t, err, domain.ErrForbidden)
+	})
+
+	t.Run("delegates to repo with caller org", func(t *testing.T) {
+		repo := &mediaRepoMock{}
+		svc := newMediaService(repo, &storageMock{})
+		ctx := orgCtx(orgID, string(domain.PermMediaViewAny))
+		p := domain.ListParams{Page: 1, PageSize: 20}
+		repo.On("ListFiles", ctx, orgID, "live_room", p).
+			Return([]domain.Media{{ID: uuid.New()}}, int64(1), nil)
+		items, total, err := svc.ListFiles(ctx, "live_room", p)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(1), total)
+		assert.Len(t, items, 1)
+	})
 }
 
 func TestMediaPresignUpload_StorageQuotaExceeded(t *testing.T) {

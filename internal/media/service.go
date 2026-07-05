@@ -210,6 +210,45 @@ func (s *service) CleanupByModel(ctx context.Context, modelType string, modelID 
 	return nil
 }
 
+// requireOrgViewAny is the shared gate for the org files page endpoints.
+func requireOrgViewAny(ctx context.Context) (domain.Caller, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok || caller.OrgID == nil {
+		return domain.Caller{}, domain.ErrForbidden
+	}
+	if !caller.IsAdmin && !caller.HasPermission(domain.PermMediaViewAny) {
+		return domain.Caller{}, domain.ErrForbidden
+	}
+	return caller, nil
+}
+
+func (s *service) ListFolders(ctx context.Context) ([]domain.MediaFolder, error) {
+	caller, err := requireOrgViewAny(ctx)
+	if err != nil {
+		return nil, err
+	}
+	folders, err := s.repo.ListFolders(ctx, *caller.OrgID)
+	if err != nil {
+		return nil, err
+	}
+	// The Shared folder is always offered so the page can accept uploads
+	// before the first file exists.
+	for _, f := range folders {
+		if f.ModelType == domain.MediaModelOrganization {
+			return folders, nil
+		}
+	}
+	return append(folders, domain.MediaFolder{ModelType: domain.MediaModelOrganization}), nil
+}
+
+func (s *service) ListFiles(ctx context.Context, modelType string, p domain.ListParams) ([]domain.Media, int64, error) {
+	caller, err := requireOrgViewAny(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	return s.repo.ListFiles(ctx, *caller.OrgID, modelType, p)
+}
+
 func (s *service) ListByModel(ctx context.Context, modelType string, modelID uuid.UUID, collection string) ([]domain.Media, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {

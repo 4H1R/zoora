@@ -28,6 +28,14 @@ import type {
   DeleteMediaId401,
   DeleteMediaId403,
   DeleteMediaId404,
+  GetFiles200,
+  GetFiles400,
+  GetFiles401,
+  GetFiles403,
+  GetFilesFolders200,
+  GetFilesFolders401,
+  GetFilesFolders403,
+  GetFilesParams,
   GetMedia200,
   GetMedia400,
   GetMedia401,
@@ -70,6 +78,268 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export type getFilesResponse200 = {
+  data: GetFiles200
+  status: 200
+}
+
+export type getFilesResponse400 = {
+  data: GetFiles400
+  status: 400
+}
+
+export type getFilesResponse401 = {
+  data: GetFiles401
+  status: 401
+}
+
+export type getFilesResponse403 = {
+  data: GetFiles403
+  status: 403
+}
+
+export type getFilesResponseSuccess = (getFilesResponse200) & {
+  headers: Headers;
+};
+export type getFilesResponseError = (getFilesResponse400 | getFilesResponse401 | getFilesResponse403) & {
+  headers: Headers;
+};
+
+export type getFilesResponse = (getFilesResponseSuccess | getFilesResponseError)
+
+export const getGetFilesUrl = (params: GetFilesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/files?${stringifiedParams}` : `/files`
+}
+
+/**
+ * Paginated, searchable list of the caller's org media of one model_type. Requires media:view_any.
+ * @summary List org files in a folder
+ */
+export const getFiles = async (params: GetFilesParams, options?: RequestInit): Promise<getFilesResponse> => {
+
+  return customInstance<getFilesResponse>(getGetFilesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetFilesQueryKey = (params?: GetFilesParams,) => {
+    return [
+    `/files`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetFilesQueryOptions = <TData = Awaited<ReturnType<typeof getFiles>>, TError = ErrorType<GetFiles400 | GetFiles401 | GetFiles403>>(params: GetFilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFiles>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFilesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFiles>>> = ({ signal }) => getFiles(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFiles>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetFilesQueryResult = NonNullable<Awaited<ReturnType<typeof getFiles>>>
+export type GetFilesQueryError = ErrorType<GetFiles400 | GetFiles401 | GetFiles403>
+
+
+export function useGetFiles<TData = Awaited<ReturnType<typeof getFiles>>, TError = ErrorType<GetFiles400 | GetFiles401 | GetFiles403>>(
+ params: GetFilesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFiles>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFiles>>,
+          TError,
+          Awaited<ReturnType<typeof getFiles>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFiles<TData = Awaited<ReturnType<typeof getFiles>>, TError = ErrorType<GetFiles400 | GetFiles401 | GetFiles403>>(
+ params: GetFilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFiles>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFiles>>,
+          TError,
+          Awaited<ReturnType<typeof getFiles>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFiles<TData = Awaited<ReturnType<typeof getFiles>>, TError = ErrorType<GetFiles400 | GetFiles401 | GetFiles403>>(
+ params: GetFilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFiles>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List org files in a folder
+ */
+
+export function useGetFiles<TData = Awaited<ReturnType<typeof getFiles>>, TError = ErrorType<GetFiles400 | GetFiles401 | GetFiles403>>(
+ params: GetFilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFiles>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetFilesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type getFilesFoldersResponse200 = {
+  data: GetFilesFolders200
+  status: 200
+}
+
+export type getFilesFoldersResponse401 = {
+  data: GetFilesFolders401
+  status: 401
+}
+
+export type getFilesFoldersResponse403 = {
+  data: GetFilesFolders403
+  status: 403
+}
+
+export type getFilesFoldersResponseSuccess = (getFilesFoldersResponse200) & {
+  headers: Headers;
+};
+export type getFilesFoldersResponseError = (getFilesFoldersResponse401 | getFilesFoldersResponse403) & {
+  headers: Headers;
+};
+
+export type getFilesFoldersResponse = (getFilesFoldersResponseSuccess | getFilesFoldersResponseError)
+
+export const getGetFilesFoldersUrl = () => {
+
+
+
+
+  return `/files/folders`
+}
+
+/**
+ * Aggregates the caller's org media by model_type for the files page. Requires media:view_any.
+ * @summary List org file folders
+ */
+export const getFilesFolders = async ( options?: RequestInit): Promise<getFilesFoldersResponse> => {
+
+  return customInstance<getFilesFoldersResponse>(getGetFilesFoldersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetFilesFoldersQueryKey = () => {
+    return [
+    `/files/folders`
+    ] as const;
+    }
+
+
+export const getGetFilesFoldersQueryOptions = <TData = Awaited<ReturnType<typeof getFilesFolders>>, TError = ErrorType<GetFilesFolders401 | GetFilesFolders403>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFilesFolders>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFilesFoldersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFilesFolders>>> = ({ signal }) => getFilesFolders({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFilesFolders>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetFilesFoldersQueryResult = NonNullable<Awaited<ReturnType<typeof getFilesFolders>>>
+export type GetFilesFoldersQueryError = ErrorType<GetFilesFolders401 | GetFilesFolders403>
+
+
+export function useGetFilesFolders<TData = Awaited<ReturnType<typeof getFilesFolders>>, TError = ErrorType<GetFilesFolders401 | GetFilesFolders403>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFilesFolders>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFilesFolders>>,
+          TError,
+          Awaited<ReturnType<typeof getFilesFolders>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFilesFolders<TData = Awaited<ReturnType<typeof getFilesFolders>>, TError = ErrorType<GetFilesFolders401 | GetFilesFolders403>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFilesFolders>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFilesFolders>>,
+          TError,
+          Awaited<ReturnType<typeof getFilesFolders>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFilesFolders<TData = Awaited<ReturnType<typeof getFilesFolders>>, TError = ErrorType<GetFilesFolders401 | GetFilesFolders403>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFilesFolders>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List org file folders
+ */
+
+export function useGetFilesFolders<TData = Awaited<ReturnType<typeof getFilesFolders>>, TError = ErrorType<GetFilesFolders401 | GetFilesFolders403>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFilesFolders>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetFilesFoldersQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
 
 export type getMediaResponse200 = {
   data: GetMedia200
