@@ -4,6 +4,7 @@ import { AccessProvider } from "react-access-engine"
 import { useTranslation } from "react-i18next"
 
 import { useGetUsersMe } from "@/api/users/users"
+import { WhatsNewButton } from "@/components/changelog/whats-new-button"
 import { LanguageSwitcher } from "@/components/language-switcher"
 // import { LiveClock } from "@/components/live-clock"
 import { BreadcrumbProvider } from "@/components/layout/breadcrumb-context"
@@ -73,6 +74,7 @@ function RouteComponent() {
               />
               <div className="ms-auto flex items-center gap-2">
                 {/* <LiveClock className="me-1 hidden sm:flex" /> */}
+                <WhatsNewButton />
                 <LanguageSwitcher />
                 <ThemeToggle />
               </div>
