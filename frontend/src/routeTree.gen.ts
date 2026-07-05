@@ -18,6 +18,7 @@ import { Route as AuthOrgRouteImport } from './routes/_auth/org'
 import { Route as AuthOrgIndexRouteImport } from './routes/_auth/org/index'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin/index'
 import { Route as AuthQuizQuizIdRouteImport } from './routes/_auth/quiz/$quizId'
+import { Route as AuthOrgWhatsNewRouteImport } from './routes/_auth/org/whats-new'
 import { Route as AuthOrgSettingsRouteImport } from './routes/_auth/org/settings'
 import { Route as AuthOrgDashboardRouteImport } from './routes/_auth/org/dashboard'
 import { Route as AuthOrgCalendarRouteImport } from './routes/_auth/org/calendar'
@@ -101,6 +102,11 @@ const AuthQuizQuizIdRoute = AuthQuizQuizIdRouteImport.update({
   id: '/quiz/$quizId',
   path: '/quiz/$quizId',
   getParentRoute: () => AuthRoute,
+} as any)
+const AuthOrgWhatsNewRoute = AuthOrgWhatsNewRouteImport.update({
+  id: '/whats-new',
+  path: '/whats-new',
+  getParentRoute: () => AuthOrgRoute,
 } as any)
 const AuthOrgSettingsRoute = AuthOrgSettingsRouteImport.update({
   id: '/settings',
@@ -337,6 +343,7 @@ export interface FileRoutesByFullPath {
   '/org/calendar': typeof AuthOrgCalendarRoute
   '/org/dashboard': typeof AuthOrgDashboardRoute
   '/org/settings': typeof AuthOrgSettingsRoute
+  '/org/whats-new': typeof AuthOrgWhatsNewRoute
   '/quiz/$quizId': typeof AuthQuizQuizIdRoute
   '/admin/': typeof AdminAdminIndexRoute
   '/org/': typeof AuthOrgIndexRoute
@@ -385,6 +392,7 @@ export interface FileRoutesByTo {
   '/org/calendar': typeof AuthOrgCalendarRoute
   '/org/dashboard': typeof AuthOrgDashboardRoute
   '/org/settings': typeof AuthOrgSettingsRoute
+  '/org/whats-new': typeof AuthOrgWhatsNewRoute
   '/quiz/$quizId': typeof AuthQuizQuizIdRoute
   '/admin': typeof AdminAdminIndexRoute
   '/org': typeof AuthOrgIndexRoute
@@ -438,6 +446,7 @@ export interface FileRoutesById {
   '/_auth/org/calendar': typeof AuthOrgCalendarRoute
   '/_auth/org/dashboard': typeof AuthOrgDashboardRoute
   '/_auth/org/settings': typeof AuthOrgSettingsRoute
+  '/_auth/org/whats-new': typeof AuthOrgWhatsNewRoute
   '/_auth/quiz/$quizId': typeof AuthQuizQuizIdRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
   '/_auth/org/': typeof AuthOrgIndexRoute
@@ -489,6 +498,7 @@ export interface FileRouteTypes {
     | '/org/calendar'
     | '/org/dashboard'
     | '/org/settings'
+    | '/org/whats-new'
     | '/quiz/$quizId'
     | '/admin/'
     | '/org/'
@@ -537,6 +547,7 @@ export interface FileRouteTypes {
     | '/org/calendar'
     | '/org/dashboard'
     | '/org/settings'
+    | '/org/whats-new'
     | '/quiz/$quizId'
     | '/admin'
     | '/org'
@@ -589,6 +600,7 @@ export interface FileRouteTypes {
     | '/_auth/org/calendar'
     | '/_auth/org/dashboard'
     | '/_auth/org/settings'
+    | '/_auth/org/whats-new'
     | '/_auth/quiz/$quizId'
     | '/_admin/admin/'
     | '/_auth/org/'
@@ -701,6 +713,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/quiz/$quizId'
       preLoaderRoute: typeof AuthQuizQuizIdRouteImport
       parentRoute: typeof AuthRoute
+    }
+    '/_auth/org/whats-new': {
+      id: '/_auth/org/whats-new'
+      path: '/whats-new'
+      fullPath: '/org/whats-new'
+      preLoaderRoute: typeof AuthOrgWhatsNewRouteImport
+      parentRoute: typeof AuthOrgRoute
     }
     '/_auth/org/settings': {
       id: '/_auth/org/settings'
@@ -1056,6 +1075,7 @@ interface AuthOrgRouteChildren {
   AuthOrgCalendarRoute: typeof AuthOrgCalendarRoute
   AuthOrgDashboardRoute: typeof AuthOrgDashboardRoute
   AuthOrgSettingsRoute: typeof AuthOrgSettingsRoute
+  AuthOrgWhatsNewRoute: typeof AuthOrgWhatsNewRoute
   AuthOrgIndexRoute: typeof AuthOrgIndexRoute
   AuthOrgClassesClassIdRoute: typeof AuthOrgClassesClassIdRoute
   AuthOrgOfflinesOfflineIdRoute: typeof AuthOrgOfflinesOfflineIdRoute
@@ -1077,6 +1097,7 @@ const AuthOrgRouteChildren: AuthOrgRouteChildren = {
   AuthOrgCalendarRoute: AuthOrgCalendarRoute,
   AuthOrgDashboardRoute: AuthOrgDashboardRoute,
   AuthOrgSettingsRoute: AuthOrgSettingsRoute,
+  AuthOrgWhatsNewRoute: AuthOrgWhatsNewRoute,
   AuthOrgIndexRoute: AuthOrgIndexRoute,
   AuthOrgClassesClassIdRoute: AuthOrgClassesClassIdRoute,
   AuthOrgOfflinesOfflineIdRoute: AuthOrgOfflinesOfflineIdRoute,
