@@ -125,6 +125,16 @@
   --animate-aurora: aurora 22s ease-in-out infinite;
   --animate-aurora-slow: aurora 30s ease-in-out infinite reverse;
   --animate-sheen: sheen 7s ease-in-out infinite;
+  --animate-install-sweep: install-sweep 4s ease-in-out infinite;
+
+  @keyframes install-sweep {
+    0% {
+      transform: translateX(-120%) skewX(-12deg);
+    }
+    100% {
+      transform: translateX(520%) skewX(-12deg);
+    }
+  }
 
   @keyframes pulse-dot {
     0%,

@@ -2,7 +2,19 @@
   "pwa": {
     "updateTitle": "A new version of Zoora is available.",
     "updateAction": "Reload",
-    "offlineReady": "Zoora is ready to work offline."
+    "offlineReady": "Zoora is ready to work offline.",
+    "install": {
+      "title": "Install the Zoora app",
+      "description": "Add Zoora to your home screen for a fullscreen, faster experience that works offline.",
+      "action": "Install",
+      "dismiss": "Dismiss",
+      "ios": {
+        "title": "Add Zoora to your Home Screen",
+        "description": "Install straight from Safari in two quick steps.",
+        "step1": "Tap the Share button in Safari's toolbar.",
+        "step2": "Choose \"Add to Home Screen\", then tap Add."
+      }
+    }
   },
   "comingSoon": {
     "status": "In private beta — launching 2026",

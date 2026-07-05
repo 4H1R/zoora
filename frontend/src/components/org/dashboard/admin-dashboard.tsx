@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 
 import { useGetUsersMe } from "@/api/users/users"
 import { Eyebrow } from "@/components/eyebrow"
+import { InstallAppBanner } from "@/components/pwa/install-app-banner"
 import { TileGrid } from "@/components/org/dashboard/tile-grid"
 import { useDashboardTiles } from "@/components/org/dashboard/use-dashboard-tiles"
 import { useGreeting } from "@/components/org/dashboard/use-greeting"
@@ -48,6 +49,8 @@ export function AdminDashboard() {
           </h1>
         </div>
       </div>
+
+      <InstallAppBanner />
 
       {/* Tiles gated by permission */}
       {tiles.length > 0 ? (

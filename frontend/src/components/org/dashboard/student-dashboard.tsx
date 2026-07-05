@@ -11,6 +11,7 @@ import { useGetGradebookMe } from "@/api/gradebook/gradebook"
 import { useGetQuizzesMe } from "@/api/quizzes/quizzes"
 import { useGetUsersMe } from "@/api/users/users"
 import { Eyebrow } from "@/components/eyebrow"
+import { InstallAppBanner } from "@/components/pwa/install-app-banner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -89,6 +90,8 @@ export function StudentDashboard() {
         <Eyebrow className="text-primary">{t("org.dashboard.overview")}</Eyebrow>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{greeting}</h1>
       </div>
+
+      <InstallAppBanner />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card className="gap-0 overflow-hidden p-0">
