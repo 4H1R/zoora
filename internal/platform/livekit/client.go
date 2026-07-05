@@ -110,6 +110,9 @@ func (c *Client) GenerateToken(roomName, identity, name, metadata string, source
 	}
 	grant.SetCanSubscribe(true)
 	grant.SetCanPublishData(true)
+	// Lets each client publish its own device/OS/browser + live network stats
+	// into its participant attributes, which hosts read in the People panel.
+	grant.SetCanUpdateOwnMetadata(true)
 	if roomAdmin {
 		grant.RoomAdmin = true
 	}
@@ -185,6 +188,9 @@ func (c *Client) UpdateParticipant(ctx context.Context, roomName, identity, meta
 			CanPublish:        canPublish,
 			CanPublishData:    true,
 			CanPublishSources: sources,
+			// Preserve self-attribute publishing (device/network presence) across
+			// role changes — this permission set replaces the token grant.
+			CanUpdateMetadata: true,
 		},
 	}
 	if metadata != "" {
@@ -193,6 +199,22 @@ func (c *Client) UpdateParticipant(ctx context.Context, roomName, identity, meta
 	_, err := c.roomClient.UpdateParticipant(ctx, req)
 	if err != nil {
 		return fmt.Errorf("updating participant %s in %s: %w", identity, roomName, err)
+	}
+	return nil
+}
+
+func (c *Client) RemoveParticipant(ctx context.Context, roomName, identity string) error {
+	_, err := c.roomClient.RemoveParticipant(ctx, &livekit.RoomParticipantIdentity{
+		Room:     roomName,
+		Identity: identity,
+	})
+	if err != nil {
+		var terr twirp.Error
+		if errors.As(err, &terr) && terr.Code() == twirp.NotFound {
+			// Room or participant already gone — treat as success (idempotent kick).
+			return nil
+		}
+		return fmt.Errorf("removing participant %s from %s: %w", identity, roomName, err)
 	}
 	return nil
 }

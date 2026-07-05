@@ -8,8 +8,17 @@ import (
 	"github.com/google/uuid"
 )
 
+// Polymorphic media identifiers. These strings are also written by the
+// frontend when it uploads (e.g. live-room slides), so they must not change
+// without updating the client.
+const (
+	MediaModelLiveRoom    = "live_room"
+	MediaCollectionSlides = "slides"
+)
+
 type Media struct {
 	ID               uuid.UUID       `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	OrganizationID   *uuid.UUID      `gorm:"type:uuid" json:"organization_id,omitempty"`
 	ModelType        string          `gorm:"type:varchar(100);not null" json:"model_type"`
 	ModelID          uuid.UUID       `gorm:"type:uuid;not null" json:"model_id"`
 	CollectionName   string          `gorm:"type:varchar(100);not null;default:''" json:"collection_name"`
@@ -24,9 +33,16 @@ type Media struct {
 	UpdatedAt        time.Time       `json:"updated_at"`
 }
 
-// S3Key returns the object storage path for this media record.
+// S3Key returns the object storage path for this media record. Objects are
+// namespaced per tenant under orgs/{org_id}/ so a single bucket isolates each
+// organization's files by key prefix. Records with no organization (e.g.
+// platform-admin uploads) fall back to the un-prefixed path.
 func (m Media) S3Key() string {
-	return m.ModelType + "/" + m.ModelID.String() + "/" + m.CollectionName + "/" + m.FileName
+	base := m.ModelType + "/" + m.ModelID.String() + "/" + m.CollectionName + "/" + m.FileName
+	if m.OrganizationID != nil {
+		return "orgs/" + m.OrganizationID.String() + "/" + base
+	}
+	return base
 }
 
 type CreateMediaDTO struct {
@@ -75,4 +91,7 @@ type MediaService interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*Media, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	ListByModel(ctx context.Context, modelType string, modelID uuid.UUID, collection string) ([]Media, error)
+	// CleanupByModel purges a whole collection (rows + S3 objects) for a model.
+	// System-level: no caller authz — invoked from background jobs only.
+	CleanupByModel(ctx context.Context, modelType string, modelID uuid.UUID, collection string) error
 }

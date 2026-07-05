@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -12,6 +13,22 @@ import (
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/media"
 )
+
+type storageMock struct{ mock.Mock }
+
+func (m *storageMock) GeneratePresignedUploadURL(ctx context.Context, key string, expiry time.Duration) (string, error) {
+	a := m.Called(ctx, key, expiry)
+	return a.String(0), a.Error(1)
+}
+
+func (m *storageMock) GeneratePresignedDownloadURL(ctx context.Context, key string, expiry time.Duration) (string, error) {
+	a := m.Called(ctx, key, expiry)
+	return a.String(0), a.Error(1)
+}
+
+func (m *storageMock) DeleteObject(ctx context.Context, key string) error {
+	return m.Called(ctx, key).Error(0)
+}
 
 type mediaRepoMock struct{ mock.Mock }
 
@@ -37,8 +54,8 @@ func (m *mediaRepoMock) ListByModel(ctx context.Context, modelType string, model
 	return items, args.Error(1)
 }
 
-func newMediaService(repo *mediaRepoMock) domain.MediaService {
-	return media.NewService(repo, nil, slog.Default())
+func newMediaService(repo *mediaRepoMock, store *storageMock) domain.MediaService {
+	return media.NewService(repo, store, slog.Default())
 }
 
 func mediaCtx(isAdmin bool, perms ...string) context.Context {
@@ -47,7 +64,7 @@ func mediaCtx(isAdmin bool, perms ...string) context.Context {
 
 func TestMediaGetAndListRequireCaller(t *testing.T) {
 	repo := &mediaRepoMock{}
-	svc := newMediaService(repo)
+	svc := newMediaService(repo, &storageMock{})
 	mediaID := uuid.New()
 	modelID := uuid.New()
 
@@ -83,8 +100,12 @@ func TestMediaDeleteRequiresAdminOrDeleteAnyPermission(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := &mediaRepoMock{}
-			svc := newMediaService(repo)
+			store := &storageMock{}
+			svc := newMediaService(repo, store)
 			if tt.allowed {
+				repo.On("FindByID", tt.ctx, mediaID).
+					Return(&domain.Media{ID: mediaID, ModelType: "practice", ModelID: uuid.New(), FileName: "file.pdf"}, nil)
+				store.On("DeleteObject", tt.ctx, mock.Anything).Return(nil)
 				repo.On("Delete", tt.ctx, mediaID).Return(nil)
 			}
 
@@ -93,6 +114,7 @@ func TestMediaDeleteRequiresAdminOrDeleteAnyPermission(t *testing.T) {
 			if tt.allowed {
 				assert.NoError(t, err)
 				repo.AssertExpectations(t)
+				store.AssertExpectations(t)
 			} else {
 				assert.ErrorIs(t, err, domain.ErrForbidden)
 				repo.AssertNotCalled(t, "Delete")
@@ -101,9 +123,33 @@ func TestMediaDeleteRequiresAdminOrDeleteAnyPermission(t *testing.T) {
 	}
 }
 
+func TestMediaCleanupByModelDeletesObjectsAndRows(t *testing.T) {
+	repo := &mediaRepoMock{}
+	store := &storageMock{}
+	svc := newMediaService(repo, store)
+	modelID := uuid.New()
+
+	items := []domain.Media{
+		{ID: uuid.New(), ModelType: domain.MediaModelLiveRoom, ModelID: modelID, CollectionName: domain.MediaCollectionSlides, FileName: "a.pdf"},
+		{ID: uuid.New(), ModelType: domain.MediaModelLiveRoom, ModelID: modelID, CollectionName: domain.MediaCollectionSlides, FileName: "b.pdf"},
+	}
+	ctx := context.Background()
+	repo.On("ListByModel", ctx, domain.MediaModelLiveRoom, modelID, domain.MediaCollectionSlides).Return(items, nil)
+	for _, m := range items {
+		store.On("DeleteObject", ctx, m.S3Key()).Return(nil)
+		repo.On("Delete", ctx, m.ID).Return(nil)
+	}
+
+	err := svc.CleanupByModel(ctx, domain.MediaModelLiveRoom, modelID, domain.MediaCollectionSlides)
+
+	assert.NoError(t, err)
+	repo.AssertExpectations(t)
+	store.AssertExpectations(t)
+}
+
 func TestMediaPresignUploadRequiresCallerBeforeRepositoryWrite(t *testing.T) {
 	repo := &mediaRepoMock{}
-	svc := newMediaService(repo)
+	svc := newMediaService(repo, &storageMock{})
 
 	resp, err := svc.PresignUpload(context.Background(), domain.PresignUploadDTO{
 		ModelType:      "practice",

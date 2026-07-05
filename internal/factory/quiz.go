@@ -64,6 +64,7 @@ func NewQuizSubmission(quizID, userID uuid.UUID, opts ...func(*domain.QuizSubmis
 		UserID:      userID,
 		Status:      domain.SubmissionStatusSubmitted,
 		Answers:     []domain.SubmissionAnswer{},
+		QuestionSet: []domain.SubmissionQuestion{},
 		TotalScore:  0,
 		StartedAt:   now,
 		SubmittedAt: &submittedAt,

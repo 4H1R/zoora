@@ -117,6 +117,9 @@ func (m *mockLiveSessionSvc) SetParticipantRole(ctx context.Context, roomID uuid
 func (m *mockLiveSessionSvc) MuteParticipant(ctx context.Context, roomID uuid.UUID, identity string, dto domain.MuteParticipantDTO) error {
 	return m.Called(ctx, roomID, identity, dto).Error(0)
 }
+func (m *mockLiveSessionSvc) RemoveParticipant(ctx context.Context, roomID uuid.UUID, identity string) error {
+	return m.Called(ctx, roomID, identity).Error(0)
+}
 func (m *mockLiveSessionSvc) SetHand(ctx context.Context, roomID uuid.UUID, dto domain.SetHandDTO) (*domain.LiveParticipant, error) {
 	a := m.Called(ctx, roomID, dto)
 	p, _ := a.Get(0).(*domain.LiveParticipant)

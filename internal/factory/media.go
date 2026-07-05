@@ -11,7 +11,9 @@ import (
 
 func NewMedia(opts ...func(*domain.Media)) *domain.Media {
 	id := nextID()
+	orgID := uuid.New()
 	m := &domain.Media{
+		OrganizationID:   &orgID,
 		ModelType:        fake.RandomString([]string{"user", "class", "organization"}),
 		ModelID:          uuid.New(),
 		CollectionName:   fake.RandomString([]string{"avatar", "documents", "attachments"}),

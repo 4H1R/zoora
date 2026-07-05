@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
+import { resolveOptionLabel } from "../poll-labels"
 import type { LivePoll, PollResults } from "../use-room-polls"
 import { PollBars } from "./poll-bars"
 
@@ -18,7 +19,8 @@ interface VotePollModalProps {
 // independent of the side panel / tabs so students can't miss it.
 export function VotePollModal({ activePoll, results, hasAnswered, isPending, onVote }: VotePollModalProps) {
   const { t } = useTranslation()
-  const open = activePoll !== null
+  // Auto-close for the student once they've voted; reopen only if the host reveals results.
+  const open = activePoll !== null && (results !== null || !hasAnswered)
 
   return (
     <Dialog open={open}>
@@ -54,7 +56,7 @@ export function VotePollModal({ activePoll, results, hasAnswered, isPending, onV
                     onClick={() => onVote(opt.value)}
                     className="w-full rounded-md border border-border bg-muted px-4 py-2.5 text-start text-sm text-foreground transition-colors hover:border-primary hover:bg-primary/10 disabled:opacity-50"
                   >
-                    {opt.label}
+                    {resolveOptionLabel(opt.value, opt.label, t)}
                   </button>
                 ))}
               </div>

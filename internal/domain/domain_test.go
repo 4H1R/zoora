@@ -121,3 +121,20 @@ func TestMediaS3KeyIncludesModelCollectionAndFile(t *testing.T) {
 		t.Fatalf("S3Key() = %q, want %q", got, want)
 	}
 }
+
+func TestMediaS3KeyNamespacesByOrganization(t *testing.T) {
+	orgID := uuid.New()
+	modelID := uuid.New()
+	m := Media{
+		OrganizationID: &orgID,
+		ModelType:      "practice",
+		ModelID:        modelID,
+		CollectionName: "attachments",
+		FileName:       "solution.pdf",
+	}
+
+	want := "orgs/" + orgID.String() + "/practice/" + modelID.String() + "/attachments/solution.pdf"
+	if got := m.S3Key(); got != want {
+		t.Fatalf("S3Key() = %q, want %q", got, want)
+	}
+}

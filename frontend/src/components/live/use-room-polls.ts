@@ -37,14 +37,20 @@ export function useRoomPolls(isHost: boolean) {
     if (!event) return
 
     if (event.type === "poll_launched") {
+      // Host re-broadcasts the same poll to late-joiners on ParticipantConnected.
+      // Only reset answer/result state for a genuinely new poll — otherwise a
+      // re-broadcast would clear a student's `hasAnswered` and reopen the modal.
+      const isSamePoll = activePollRef.current?.pollId === event.data.pollId
       setActivePoll({
         pollId: event.data.pollId,
         name: event.data.name,
         options: event.data.options,
         allowedAnswersCount: event.data.allowedAnswersCount,
       })
-      setResults(null)
-      setHasAnswered(false)
+      if (!isSamePoll) {
+        setResults(null)
+        setHasAnswered(false)
+      }
     } else if (event.type === "poll_results") {
       setResults({ counts: event.data.counts, total: event.data.total })
     } else if (event.type === "poll_closed") {

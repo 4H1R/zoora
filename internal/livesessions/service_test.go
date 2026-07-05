@@ -379,7 +379,8 @@ func (noopTx) RunInTx(ctx context.Context, fn func(context.Context) error) error
 // fakeLiveKit is a permissive LiveKitClient fake: every call succeeds. Tests
 // override the function fields to steer or observe specific calls.
 type fakeLiveKit struct {
-	listParticipantsFn func(ctx context.Context, roomName string) ([]*lkproto.ParticipantInfo, error)
+	listParticipantsFn  func(ctx context.Context, roomName string) ([]*lkproto.ParticipantInfo, error)
+	removeParticipantFn func(ctx context.Context, roomName, identity string) error
 
 	tokenMetadata  []string
 	tokenSources   [][]lkproto.TrackSource
@@ -410,6 +411,12 @@ func (f *fakeLiveKit) UpdateParticipant(context.Context, string, string, string,
 	return nil
 }
 func (f *fakeLiveKit) MutePublishedTrack(context.Context, string, string, string, bool) error {
+	return nil
+}
+func (f *fakeLiveKit) RemoveParticipant(ctx context.Context, roomName, identity string) error {
+	if f.removeParticipantFn != nil {
+		return f.removeParticipantFn(ctx, roomName, identity)
+	}
 	return nil
 }
 func (f *fakeLiveKit) SendData(context.Context, string, []byte, []string) error { return nil }
@@ -985,6 +992,70 @@ func TestMuteParticipant_Teacher_Success(t *testing.T) {
 
 	err := svc.MuteParticipant(teacherCtx(), testRoomID, testStudentID.String(), domain.MuteParticipantDTO{TrackSID: "TR_abc", Muted: true})
 	assert.NoError(t, err)
+}
+
+// ---------------------------------------------------------------------------
+// RemoveParticipant tests
+// ---------------------------------------------------------------------------
+
+func TestRemoveParticipant_Student_Forbidden(t *testing.T) {
+	svc, roomRepo, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
+	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
+	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
+
+	err := svc.RemoveParticipant(studentCtx(), testRoomID, testStudentID.String())
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+func TestRemoveParticipant_Self_Error(t *testing.T) {
+	svc, roomRepo, _, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
+	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
+	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
+
+	err := svc.RemoveParticipant(teacherCtx(), testRoomID, testTeacherID.String())
+	assert.ErrorIs(t, err, domain.ErrCannotRemoveSelf)
+}
+
+func TestRemoveParticipant_TargetIsHost_Error(t *testing.T) {
+	svc, roomRepo, partRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
+	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
+	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
+
+	otherHost := &domain.LiveParticipant{
+		ID:         uuid.New(),
+		LiveRoomID: testRoomID,
+		UserID:     testStudentID,
+		Identity:   testStudentID.String(),
+		Role:       domain.ParticipantRoleHost,
+	}
+	partRepo.On("GetActiveParticipant", mock.Anything, testRoomID, testStudentID.String()).Return(otherHost, nil)
+
+	err := svc.RemoveParticipant(teacherCtx(), testRoomID, testStudentID.String())
+	assert.ErrorIs(t, err, domain.ErrCannotRemoveHost)
+}
+
+func TestRemoveParticipant_Teacher_Success(t *testing.T) {
+	svc, roomRepo, partRepo, _, _, sessRepo, classRepo, _, _ := newTestService(t)
+	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(testRoom(), nil)
+	sessRepo.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
+	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
+
+	viewer := &domain.LiveParticipant{
+		ID:         uuid.New(),
+		LiveRoomID: testRoomID,
+		UserID:     testStudentID,
+		Identity:   testStudentID.String(),
+		Role:       domain.ParticipantRoleViewer,
+	}
+	partRepo.On("GetActiveParticipant", mock.Anything, testRoomID, testStudentID.String()).Return(viewer, nil)
+	partRepo.On("MarkLeftByIdentity", mock.Anything, testRoomID, testStudentID.String(), mock.Anything).Return(nil)
+
+	err := svc.RemoveParticipant(teacherCtx(), testRoomID, testStudentID.String())
+	assert.NoError(t, err)
+	partRepo.AssertExpectations(t)
 }
 
 // ---------------------------------------------------------------------------

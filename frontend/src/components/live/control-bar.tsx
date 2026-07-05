@@ -2,6 +2,7 @@ import { useLocalParticipant } from "@livekit/components-react"
 import { useRef, useState } from "react"
 import {
   BarChart3,
+  Circle,
   Hand,
   LogOut,
   type LucideIcon,
@@ -12,6 +13,7 @@ import {
   MoreHorizontal,
   PenLine,
   Presentation,
+  Square,
   Users,
   Video,
   VideoOff,
@@ -53,9 +55,12 @@ interface ControlBarProps {
   onShareSlides: (file: File) => void
   onStopStage: () => void
   onStartWhiteboard: () => void
+  isRecording: boolean
+  recordingPending: boolean
+  onToggleRecording: () => void
 }
 
-export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, onEndRoom, endPending, unread, raisedHandCount, handRaised, onToggleHand, canShareStage, stageKind, onShareSlides, onStopStage, onStartWhiteboard }: ControlBarProps) {
+export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, onEndRoom, endPending, unread, raisedHandCount, handRaised, onToggleHand, canShareStage, stageKind, onShareSlides, onStopStage, onStartWhiteboard, isRecording, recordingPending, onToggleRecording }: ControlBarProps) {
   const { t } = useTranslation()
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled, isScreenShareEnabled } = useLocalParticipant()
   const role = useRoomRole()
@@ -63,6 +68,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
   const publisher = localParticipant.permissions?.canPublish ?? canPublish(role)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [leaveOpen, setLeaveOpen] = useState(false)
+  const [recordOpen, setRecordOpen] = useState(false)
 
   const handleSlidesClick = () => {
     if (stageKind === "slides") {
@@ -194,6 +200,17 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
           />
         )}
 
+        {/* Record — host only, desktop only */}
+        {isHost && (
+          <RecordButton
+            recording={isRecording}
+            pending={recordingPending}
+            label={isRecording ? t("liveRoom.controls.stopRecording") : t("liveRoom.controls.startRecording")}
+            className="hidden sm:flex"
+            onClick={() => setRecordOpen(true)}
+          />
+        )}
+
         <span className="mx-0.5 h-7 w-px bg-border" />
 
         {/* Raise hand — viewers only */}
@@ -290,6 +307,21 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
                   <span>{stageKind === "whiteboard" ? t("liveRoom.controls.stopWhiteboard") : t("liveRoom.controls.whiteboard")}</span>
                 </button>
               )}
+              {isHost && (
+                <button
+                  type="button"
+                  onClick={() => setRecordOpen(true)}
+                  disabled={recordingPending}
+                  className="flex items-center gap-3 px-5 py-3.5 text-sm text-foreground hover:bg-accent disabled:opacity-60"
+                >
+                  {isRecording ? (
+                    <Square className="size-5 shrink-0 fill-red-600 text-red-600" />
+                  ) : (
+                    <Circle className="size-5 shrink-0 fill-red-600 text-red-600" />
+                  )}
+                  <span>{isRecording ? t("liveRoom.controls.stopRecording") : t("liveRoom.controls.startRecording")}</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => togglePanel("people")}
@@ -324,6 +356,37 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
           <span className="hidden sm:inline">{t("liveRoom.leave")}</span>
         </button>
       </div>
+
+      {isHost && (
+        <AlertDialog open={recordOpen} onOpenChange={setRecordOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {isRecording ? t("liveRoom.recording.stopDialog.title") : t("liveRoom.recording.startDialog.title")}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {isRecording
+                  ? t("liveRoom.recording.stopDialog.description")
+                  : t("liveRoom.recording.startDialog.description")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={recordingPending}>{t("common.cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                variant={isRecording ? "destructive" : "default"}
+                disabled={recordingPending}
+                onClick={() => {
+                  setRecordOpen(false)
+                  onToggleRecording()
+                }}
+              >
+                {recordingPending ? <Spinner className="size-4" /> : null}
+                {isRecording ? t("liveRoom.controls.stopRecording") : t("liveRoom.controls.startRecording")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
 
       {isHost && (
         <AlertDialog open={leaveOpen} onOpenChange={setLeaveOpen}>
@@ -409,6 +472,50 @@ function CtrlButton({
         <span className="absolute -end-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
           {badge > 9 ? "9+" : badge}
         </span>
+      )}
+    </button>
+  )
+}
+
+// Recording toggle. Idle: a solid red dot that grows on hover ("arm to record").
+// Live: a red-filled tile with a stop glyph under a slow pulsing halo, so the
+// recording state reads at a glance across the bar.
+function RecordButton({
+  recording,
+  pending,
+  label,
+  className,
+  onClick,
+}: {
+  recording: boolean
+  pending: boolean
+  label: string
+  className?: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={pending}
+      aria-label={label}
+      aria-pressed={recording}
+      title={label}
+      className={cn(
+        "group relative flex size-11 items-center justify-center rounded-xl transition-colors disabled:opacity-60",
+        recording ? "bg-red-600 text-white hover:bg-red-600/90" : "text-foreground hover:bg-accent",
+        className,
+      )}
+    >
+      {pending ? (
+        <Spinner className="size-5" />
+      ) : recording ? (
+        <span className="relative flex size-5 items-center justify-center">
+          <span className="absolute inline-flex size-5 animate-ping rounded-full bg-white/40" />
+          <Square className="relative size-2.5 fill-current" />
+        </span>
+      ) : (
+        <Circle className="size-5 fill-red-600 text-red-600 transition-transform group-hover:scale-110" />
       )}
     </button>
   )

@@ -9,7 +9,8 @@ import {
   useParticipants,
   useTracks,
 } from "@livekit/components-react"
-import { Track } from "livekit-client"
+import { useQueryClient } from "@tanstack/react-query"
+import { DisconnectReason, Track } from "livekit-client"
 import { Users } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -22,9 +23,14 @@ import "./livekit-overrides.css"
 setLogLevel("warn")
 
 import {
+  getGetLiveRoomsIdRecordingsQueryKey,
+  useGetLiveRoomsIdRecordings,
   usePostLiveRoomsIdEnd,
   usePostLiveRoomsIdHand,
   usePostLiveRoomsIdLeave,
+  usePostLiveRoomsIdRecordings,
+  usePostLiveRoomsIdRecordingsRecordingIdStop,
+  useDeleteLiveRoomsIdParticipantsIdentity,
   usePostLiveRoomsIdParticipantsIdentityMute,
   usePutLiveRoomsIdParticipantsIdentityHand,
   usePutLiveRoomsIdParticipantsIdentityRole,
@@ -41,6 +47,7 @@ import { RoomPanel } from "./room-panel"
 import { canPublish, RoomRoleContext, type RoomRole, useRoomRole } from "./room-role"
 import { Stage } from "./stage"
 import type { PreJoinChoices, RoomTab } from "./types"
+import { usePublishPresence } from "./use-publish-presence"
 import { useRoomChat } from "./use-room-chat"
 import { useRoomPolls } from "./use-room-polls"
 import { useRoomRoles } from "./use-room-roles"
@@ -69,11 +76,21 @@ export function ActiveRoom({
   role,
   onDisconnect,
 }: ActiveRoomProps) {
+  const { t } = useTranslation()
   const leaveMutation = usePostLiveRoomsIdLeave()
   const endMutation = usePostLiveRoomsIdEnd()
 
   const handleLeave = () => {
     leaveMutation.mutate({ id: liveId }, { onSettled: onDisconnect })
+  }
+
+  // A host kick surfaces as a LiveKit PARTICIPANT_REMOVED disconnect — tell the
+  // booted user why before tearing the room down (which returns them to lobby).
+  const handleDisconnected = (reason?: DisconnectReason) => {
+    if (reason === DisconnectReason.PARTICIPANT_REMOVED) {
+      toast.error(t("liveRoom.people.youWereRemoved"))
+    }
+    onDisconnect()
   }
 
   const handleEndRoom = () => {
@@ -88,7 +105,7 @@ export function ActiveRoom({
         // Viewers can't publish; publishers start muted and enable in-room.
         audio={false}
         video={false}
-        onDisconnected={onDisconnect}
+        onDisconnected={handleDisconnected}
         data-lk-theme="default"
         className="zoora-live relative flex flex-col overflow-hidden bg-background text-foreground"
       >
@@ -136,6 +153,9 @@ function RoomShell({
   const [railOpen, setRailOpen] = useState(false) // hidden by default (mobile-first)
 
   const { localParticipant } = useLocalParticipant()
+  // Every client self-publishes device/OS/browser + live network stats into its
+  // participant attributes so hosts can inspect any participant (people panel).
+  usePublishPresence()
   const states = useRoomRoles({})
   const role = useRoomRole()
   const isHost = role === "host"
@@ -219,6 +239,51 @@ function RoomShell({
   const muteMutation = usePostLiveRoomsIdParticipantsIdentityMute()
   const handMutation = usePostLiveRoomsIdHand()
   const lowerHandMutation = usePutLiveRoomsIdParticipantsIdentityHand()
+  const removeMutation = useDeleteLiveRoomsIdParticipantsIdentity()
+
+  // Recording — host only. Poll the list to know if an egress is live (status
+  // "started") and to pick up the async webhook-driven transition to completed.
+  const queryClient = useQueryClient()
+  const recordingsQuery = useGetLiveRoomsIdRecordings(liveId, undefined, {
+    query: { enabled: isHost, refetchInterval: 15000 },
+  })
+  const activeRecording =
+    recordingsQuery.data?.status === 200
+      ? recordingsQuery.data.data.data?.items?.find((r) => r.status === "started")
+      : undefined
+  const isRecording = Boolean(activeRecording)
+  const invalidateRecordings = () =>
+    queryClient.invalidateQueries({ queryKey: getGetLiveRoomsIdRecordingsQueryKey(liveId) })
+  const startRecording = usePostLiveRoomsIdRecordings()
+  const stopRecording = usePostLiveRoomsIdRecordingsRecordingIdStop()
+  const recordingPending = startRecording.isPending || stopRecording.isPending
+
+  const onToggleRecording = () => {
+    if (recordingPending) return
+    if (activeRecording?.id) {
+      stopRecording.mutate(
+        { id: liveId, recordingId: activeRecording.id },
+        {
+          onSuccess: () => {
+            toast.success(t("liveRoom.recording.stopped"))
+            invalidateRecordings()
+          },
+          onError: () => toast.error(t("liveRoom.recording.stopError")),
+        },
+      )
+    } else {
+      startRecording.mutate(
+        { id: liveId },
+        {
+          onSuccess: () => {
+            toast.success(t("liveRoom.recording.started"))
+            invalidateRecordings()
+          },
+          onError: () => toast.error(t("liveRoom.recording.startError")),
+        },
+      )
+    }
+  }
 
   const onToggleHand = () => handMutation.mutate({ id: liveId, data: { raised: !handRaised } })
   const onSetRole = (identity: string, r: "presenter" | "viewer") =>
@@ -227,6 +292,14 @@ function RoomShell({
     muteMutation.mutate({ id: liveId, identity, data: { track_sid: trackSid, muted: true } })
   const onLowerHand = (identity: string) =>
     lowerHandMutation.mutate({ id: liveId, identity, data: { raised: false } })
+  const onRemove = (identity: string, name: string) =>
+    removeMutation.mutate(
+      { id: liveId, identity },
+      {
+        onSuccess: () => toast.success(t("liveRoom.people.removed", { name })),
+        onError: () => toast.error(t("liveRoom.people.removeError")),
+      },
+    )
 
   // Remote identities with a raised hand — drives the People badge and the
   // host toast. Excludes self (you can't raise a hand at yourself).
@@ -276,7 +349,11 @@ function RoomShell({
 
   return (
     <LayoutContextProvider value={layoutContext}>
-      <RoomHeader sessionName={sessionName} className={className} />
+      <RoomHeader
+        sessionName={sessionName}
+        className={className}
+        onOpenPeople={() => setTab("people")}
+      />
 
       <div className="flex min-h-0 flex-1">
         <div className="relative flex min-w-0 flex-1 flex-col">
@@ -321,6 +398,9 @@ function RoomShell({
             onShareSlides={onShareSlides}
             onStopStage={onStopStage}
             onStartWhiteboard={onStartWhiteboard}
+            isRecording={isRecording}
+            recordingPending={recordingPending}
+            onToggleRecording={onToggleRecording}
           />
 
           {hasCameras && (
@@ -359,6 +439,7 @@ function RoomShell({
           onSetRole={onSetRole}
           onMute={onMute}
           onLowerHand={onLowerHand}
+          onRemove={onRemove}
           polls={polls}
           onVote={onVote}
           answerPending={answerMutation.isPending}

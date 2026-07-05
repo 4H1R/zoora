@@ -87,6 +87,19 @@ func (c *Client) GeneratePresignedDownloadURL(ctx context.Context, key string, e
 	return req.URL, nil
 }
 
+// DeleteObject removes an object from the bucket. S3 delete is idempotent —
+// deleting a missing key returns success — so callers need not pre-check.
+func (c *Client) DeleteObject(ctx context.Context, key string) error {
+	_, err := c.s3.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(c.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return fmt.Errorf("deleting object: %w", err)
+	}
+	return nil
+}
+
 func (c *Client) HeadObject(ctx context.Context, key string) (*s3.HeadObjectOutput, error) {
 	resp, err := c.s3.HeadObject(ctx, &s3.HeadObjectInput{
 		Bucket: aws.String(c.bucket),

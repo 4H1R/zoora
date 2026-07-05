@@ -25,21 +25,27 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
   const [containerWidth, setContainerWidth] = useState<number | undefined>(undefined)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState("")
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const wheelLock = useRef(false)
 
-  // Measure the scroll viewport width so the page renders at full width. Keep
-  // the SAME value when unchanged, otherwise the ref-callback reattaching every
-  // render would setState → re-render forever.
-  const measureRef = (el: HTMLDivElement | null) => {
-    scrollRef.current = el
+  // Measure the scroll viewport width so the page renders at full width. Attach
+  // the observer ONCE (an inline ref-callback gets a new identity every render,
+  // so React would detach/reattach it — and spin up a fresh ResizeObserver —
+  // on every render). The `scrollbar-gutter: stable` on the container keeps this
+  // width constant whether or not the scrollbar is showing; without it, a tall
+  // page's scrollbar shrinks the content width → page re-renders narrower →
+  // scrollbar disappears → width grows → re-renders forever.
+  useEffect(() => {
+    const el = scrollRef.current
     if (!el) return
     const apply = (w: number) => setContainerWidth((prev) => (prev === w ? prev : w))
     const observer = new ResizeObserver(([entry]) => apply(entry.contentRect.width))
     observer.observe(el)
     apply(el.clientWidth)
     return () => observer.disconnect()
-  }
+  }, [])
 
   // Fit the page to the full viewport width. Portrait / tall pages then overflow
   // vertically, giving a real scrollbar + wheel scroll. Landscape slides fit
@@ -48,6 +54,19 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
   const fitWidth = containerWidth ? Math.max(1, containerWidth - INSET) : undefined
 
   const clamp = (n: number) => Math.max(1, Math.min(n, numPages || 1))
+
+  // Host: click the current-page number to jump directly to a page. Opens a tiny
+  // inline input seeded with the current page; Enter commits, Escape/blur cancels.
+  const openEditor = () => {
+    if (!isHost) return
+    setDraft(String(page))
+    setEditing(true)
+  }
+  const commitDraft = () => {
+    const n = parseInt(draft, 10)
+    if (Number.isFinite(n)) onPageChange(clamp(n))
+    setEditing(false)
+  }
 
   // Host: wheel scrolls a tall page, then flips to the prev/next page once the
   // scroll hits the top/bottom edge (or immediately when the page fits). A short
@@ -122,9 +141,9 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
           flex-center container would clip the overflowing top, making it
           unreachable). */}
       <div
-        ref={measureRef}
+        ref={scrollRef}
         onWheel={onWheel}
-        className="min-h-0 w-full flex-1 overflow-auto"
+        className="min-h-0 w-full flex-1 overflow-auto [scrollbar-gutter:stable]"
       >
         <div className="flex min-h-full w-full items-center justify-center py-2">
           {error ? (
@@ -182,9 +201,40 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
             )}
 
             <div className="flex select-none items-center gap-1.5 px-3 text-sm tabular-nums">
-              <span key={page} className="animate-in fade-in zoom-in-95 font-semibold text-white duration-200">
-                {page}
-              </span>
+              {editing ? (
+                <input
+                  type="number"
+                  min={1}
+                  max={numPages}
+                  autoFocus
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onBlur={() => setEditing(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") commitDraft()
+                    else if (e.key === "Escape") setEditing(false)
+                  }}
+                  aria-label={t("liveRoom.stage.goToPage")}
+                  className={cn(
+                    "w-10 rounded-md bg-white/10 text-center font-semibold text-white outline-none",
+                    "ring-1 ring-white/20 focus:ring-white/40",
+                    "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  )}
+                />
+              ) : isHost ? (
+                <button
+                  type="button"
+                  onClick={openEditor}
+                  className="animate-in fade-in zoom-in-95 rounded-md px-1 font-semibold text-white duration-200 hover:bg-white/10"
+                  aria-label={t("liveRoom.stage.goToPage")}
+                >
+                  {page}
+                </button>
+              ) : (
+                <span key={page} className="animate-in fade-in zoom-in-95 font-semibold text-white duration-200">
+                  {page}
+                </span>
+              )}
               <span className="text-zinc-500">/</span>
               <span className="text-zinc-400">{numPages}</span>
             </div>

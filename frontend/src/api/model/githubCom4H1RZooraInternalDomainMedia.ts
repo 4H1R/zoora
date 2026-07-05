@@ -18,6 +18,7 @@ export interface GithubCom4H1RZooraInternalDomainMedia {
   model_type?: string;
   name?: string;
   order_column?: number;
+  organization_id?: string;
   size?: number;
   updated_at?: string;
 }
