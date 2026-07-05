@@ -135,6 +135,7 @@ func main() {
 	chatMessageRepo := chat.NewMessageRepository(db)
 	chatReactionRepo := chat.NewReactionRepository(db)
 	entitlementRepo := entitlements.NewRepository(db)
+	entitlementService := entitlements.NewService(entitlementRepo)
 
 	authMiddleware := auth.Middleware(jwtService, redisClient, roleRepo, userRepo, entitlementRepo)
 	tenantMiddleware := middleware.Tenant(redisClient, orgRepo, cfg.BaseDomain, cfg.AdminSubdomain)
@@ -144,7 +145,7 @@ func main() {
 	orgSettingsRepo := orgsettings.NewRepository(db)
 	orgSettingsService := orgsettings.NewService(orgSettingsRepo, log)
 
-	userService := users.NewService(userRepo, roleRepo, log)
+	userService := users.NewService(userRepo, roleRepo, entitlementService, log)
 	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, log)
 	classService := classes.NewService(classRepo, classSessionRepo, classMemberRepo, log)
 	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, log)

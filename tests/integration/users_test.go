@@ -47,7 +47,7 @@ func TestAdminCreatesUser(t *testing.T) {
 	roleRepo := roles.NewRoleRepository(db)
 	admin := seedUser(t, userRepo, &org.ID, "users-admin", true)
 
-	userSvc := users.NewService(userRepo, roleRepo, logger)
+	userSvc := users.NewService(userRepo, roleRepo, nil, logger)
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()

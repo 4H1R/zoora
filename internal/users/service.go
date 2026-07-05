@@ -10,16 +10,18 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/entitlements"
 )
 
 type service struct {
 	repo     domain.UserRepository
 	roleRepo domain.RoleRepository
+	ent      entitlements.Service
 	logger   *slog.Logger
 }
 
-func NewService(repo domain.UserRepository, roleRepo domain.RoleRepository, logger *slog.Logger) domain.UserService {
-	return &service{repo: repo, roleRepo: roleRepo, logger: logger}
+func NewService(repo domain.UserRepository, roleRepo domain.RoleRepository, ent entitlements.Service, logger *slog.Logger) domain.UserService {
+	return &service{repo: repo, roleRepo: roleRepo, ent: ent, logger: logger}
 }
 
 func (s *service) isManagerRole(ctx context.Context, roleID uuid.UUID) bool {
@@ -37,6 +39,13 @@ func (s *service) Create(ctx context.Context, dto domain.CreateUserDTO) (*domain
 	}
 	if !caller.IsAdmin {
 		dto.IsAdmin = false
+	}
+
+	// Enforce the org's seat limit (grandfather: blocks new creation only).
+	if caller.OrgID != nil && s.ent != nil {
+		if err := s.ent.CheckUserLimit(ctx, *caller.OrgID, caller.Ent); err != nil {
+			return nil, err
+		}
 	}
 
 	hashed, err := bcrypt.GenerateFromPassword([]byte(dto.Password), bcrypt.DefaultCost)
