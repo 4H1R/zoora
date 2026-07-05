@@ -218,7 +218,7 @@ func TestMediaOrgScopeHidesOtherTenants(t *testing.T) {
 		store := &storageMock{}
 		svc := newMediaService(repo, store)
 		repo.On("FindByID", ctx, mediaID).Return(foreign, nil)
-		_, err := svc.PresignDownload(ctx, mediaID)
+		_, err := svc.PresignDownload(ctx, mediaID, 0)
 		assert.ErrorIs(t, err, domain.ErrNotFound)
 		store.AssertNotCalled(t, "GeneratePresignedDownloadURL")
 	})
@@ -280,6 +280,35 @@ func TestMediaOrgScopeAllowsOwnOrgGlobalAndAdmin(t *testing.T) {
 		_, err := svc.GetByID(ctx, mediaID)
 		assert.NoError(t, err)
 	})
+}
+
+func TestMediaPresignDownloadClampsExpiry(t *testing.T) {
+	mediaID := uuid.New()
+	for _, tt := range []struct {
+		name string
+		in   time.Duration
+		want time.Duration
+	}{
+		{name: "zero falls back to 1h", in: 0, want: time.Hour},
+		{name: "24h passes through", in: 24 * time.Hour, want: 24 * time.Hour},
+		{name: "over 7d clamps to 7d", in: 30 * 24 * time.Hour, want: 7 * 24 * time.Hour},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &mediaRepoMock{}
+			store := &storageMock{}
+			svc := newMediaService(repo, store)
+			ctx := mediaCtx(false)
+			m := &domain.Media{ID: mediaID, ModelType: "live_room", ModelID: uuid.New(), FileName: "a.pdf"}
+			repo.On("FindByID", ctx, mediaID).Return(m, nil)
+			store.On("GeneratePresignedDownloadURL", ctx, m.S3Key(), tt.want).Return("https://signed", nil)
+
+			resp, err := svc.PresignDownload(ctx, mediaID, tt.in)
+
+			assert.NoError(t, err)
+			assert.Equal(t, "https://signed", resp.URL)
+			store.AssertExpectations(t)
+		})
+	}
 }
 
 func TestMediaPresignUpload_StorageQuotaExceeded(t *testing.T) {

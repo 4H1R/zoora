@@ -103,7 +103,9 @@ type MediaFolder struct {
 
 type MediaService interface {
 	PresignUpload(ctx context.Context, dto PresignUploadDTO) (*PresignUploadResponse, error)
-	PresignDownload(ctx context.Context, id uuid.UUID) (*PresignDownloadResponse, error)
+	// PresignDownload returns a presigned GET URL valid for the given expiry;
+	// non-positive falls back to the service default, over-max clamps to 7d.
+	PresignDownload(ctx context.Context, id uuid.UUID, expiry time.Duration) (*PresignDownloadResponse, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*Media, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	ListByModel(ctx context.Context, modelType string, modelID uuid.UUID, collection string) ([]Media, error)

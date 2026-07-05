@@ -2,6 +2,7 @@ package media
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -77,19 +78,35 @@ func (h *Handler) Get(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, m)
 }
 
-// PresignDownload returns a short-lived presigned GET URL for a media object.
+// shareExpiries whitelists the client-selectable share-link lifetimes.
+// 7d is the SigV4 presign maximum.
+var shareExpiries = map[string]time.Duration{
+	"1h":  time.Hour,
+	"24h": 24 * time.Hour,
+	"7d":  7 * 24 * time.Hour,
+}
+
+// PresignDownload returns a presigned GET URL for a media object.
 // @Summary Get presigned download URL
 // @Description Returns a presigned URL that grants temporary read access to the underlying S3 object.
 // @Tags Media
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Media UUID"
+// @Param expiry query string false "Link lifetime" Enums(1h, 24h, 7d) default(1h)
 // @Success 200 {object} domain.Response{data=domain.PresignDownloadResponse}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 404 {object} domain.Response{error=domain.ErrorBody}
 // @Router /media/{id}/download-url [get]
 func (h *Handler) PresignDownload(c *gin.Context) {
-	resp, err := h.svc.PresignDownload(c.Request.Context(), httpx.UUIDParam(c, "id"))
+	expiryParam := c.DefaultQuery("expiry", "1h")
+	expiry, ok := shareExpiries[expiryParam]
+	if !ok {
+		_ = c.Error(domain.NewValidationError(map[string]string{"expiry": "must be one of 1h, 24h, 7d"}))
+		return
+	}
+	resp, err := h.svc.PresignDownload(c.Request.Context(), httpx.UUIDParam(c, "id"), expiry)
 	if err != nil {
 		_ = c.Error(err)
 		return

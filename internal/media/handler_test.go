@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -29,8 +30,8 @@ func (m *mockMediaSvc) PresignUpload(ctx context.Context, dto domain.PresignUplo
 	return resp, a.Error(1)
 }
 
-func (m *mockMediaSvc) PresignDownload(ctx context.Context, id uuid.UUID) (*domain.PresignDownloadResponse, error) {
-	a := m.Called(ctx, id)
+func (m *mockMediaSvc) PresignDownload(ctx context.Context, id uuid.UUID, expiry time.Duration) (*domain.PresignDownloadResponse, error) {
+	a := m.Called(ctx, id, expiry)
 	resp, _ := a.Get(0).(*domain.PresignDownloadResponse)
 	return resp, a.Error(1)
 }
@@ -148,7 +149,7 @@ func TestHandlerGetNotFoundMaps404(t *testing.T) {
 func TestHandlerPresignDownloadSuccess(t *testing.T) {
 	r, svc := newMediaRouter(t)
 	id := uuid.New()
-	svc.On("PresignDownload", mock.Anything, id).
+	svc.On("PresignDownload", mock.Anything, id, time.Hour).
 		Return(&domain.PresignDownloadResponse{URL: "https://download.example.test", Key: "key"}, nil)
 
 	w := do(t, r, http.MethodGet, "/api/v1/media/"+id.String()+"/download-url", nil)
@@ -183,6 +184,23 @@ func TestHandlerListByModelValidatesModelID(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	svc.AssertNotCalled(t, "ListByModel")
+}
+
+func TestHandlerPresignDownloadRejectsUnknownExpiry(t *testing.T) {
+	r, svc := newMediaRouter(t)
+	w := do(t, r, http.MethodGet, "/api/v1/media/"+uuid.NewString()+"/download-url?expiry=2d", nil)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	svc.AssertNotCalled(t, "PresignDownload")
+}
+
+func TestHandlerPresignDownloadPassesExpiry(t *testing.T) {
+	r, svc := newMediaRouter(t)
+	id := uuid.New()
+	svc.On("PresignDownload", mock.Anything, id, 7*24*time.Hour).
+		Return(&domain.PresignDownloadResponse{URL: "https://signed", Key: "k"}, nil)
+	w := do(t, r, http.MethodGet, "/api/v1/media/"+id.String()+"/download-url?expiry=7d", nil)
+	assert.Equal(t, http.StatusOK, w.Code)
+	svc.AssertExpectations(t)
 }
 
 func TestHandlerListByModelSuccess(t *testing.T) {

@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	presignExpiry         = 15 * time.Minute
-	presignDownloadExpiry = 1 * time.Hour
+	presignExpiry            = 15 * time.Minute
+	presignDownloadExpiry    = 1 * time.Hour
+	presignDownloadMaxExpiry = 7 * 24 * time.Hour // SigV4 hard limit
 )
 
 // objectStorage is the subset of the S3 storage client the media service needs.
@@ -101,7 +102,11 @@ func authorizeOrgAccess(caller domain.Caller, m *domain.Media) error {
 	return nil
 }
 
-func (s *service) PresignDownload(ctx context.Context, id uuid.UUID) (*domain.PresignDownloadResponse, error) {
+func (s *service) PresignDownload(ctx context.Context, id uuid.UUID, expiry time.Duration) (*domain.PresignDownloadResponse, error) {
+	if expiry <= 0 {
+		expiry = presignDownloadExpiry
+	}
+	expiry = min(expiry, presignDownloadMaxExpiry)
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
@@ -114,7 +119,7 @@ func (s *service) PresignDownload(ctx context.Context, id uuid.UUID) (*domain.Pr
 		return nil, err
 	}
 	key := m.S3Key()
-	url, err := s.storage.GeneratePresignedDownloadURL(ctx, key, presignDownloadExpiry)
+	url, err := s.storage.GeneratePresignedDownloadURL(ctx, key, expiry)
 	if err != nil {
 		return nil, err
 	}
