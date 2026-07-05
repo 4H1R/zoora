@@ -14,6 +14,10 @@ import (
 const (
 	MediaModelLiveRoom    = "live_room"
 	MediaCollectionSlides = "slides"
+	// MediaModelOrganization is the model type for standalone files uploaded
+	// into an org's Shared folder on the files page; ModelID is the org ID.
+	MediaModelOrganization = "organization"
+	MediaCollectionShared  = "shared"
 )
 
 type Media struct {
@@ -83,6 +87,14 @@ type MediaRepository interface {
 type PresignDownloadResponse struct {
 	URL string `json:"url"`
 	Key string `json:"key"`
+}
+
+// MediaFolder is one row of the org files page's folder view: a model_type
+// bucket with aggregate stats. Folder display names are translated client-side.
+type MediaFolder struct {
+	ModelType string `json:"model_type"`
+	FileCount int64  `json:"file_count"`
+	TotalSize int64  `json:"total_size"`
 }
 
 type MediaService interface {

@@ -70,6 +70,7 @@ export const GithubCom4H1RZooraInternalDomainPermissionName = {
   PermChatsWrite: 'chats:write',
   PermChatsManage: 'chats:manage',
   PermMediaView: 'media:view',
+  PermMediaViewAny: 'media:view_any',
   PermMediaCreate: 'media:create',
   PermMediaDelete: 'media:delete',
   PermMediaDeleteAny: 'media:delete_any',

@@ -25,7 +25,7 @@ var ManagerPermissions = []PermissionName{
 	PermPollsUpdate, PermPollsUpdateAny, PermPollsDelete,
 	PermChatsView, PermChatsCreate, PermChatsUpdate, PermChatsDelete,
 	PermChatsWrite, PermChatsManage,
-	PermMediaView, PermMediaCreate, PermMediaDelete, PermMediaDeleteAny,
+	PermMediaView, PermMediaViewAny, PermMediaCreate, PermMediaDelete, PermMediaDeleteAny,
 	PermPracticesView, PermPracticesViewAny, PermPracticesCreate, PermPracticesCreateAny,
 	PermPracticesUpdate, PermPracticesUpdateAny, PermPracticesDelete, PermPracticesDeleteAny,
 	PermPracticesSubmit, PermPracticesGrade,
