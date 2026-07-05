@@ -28,7 +28,27 @@ www.zoora.ir {
 
 s3.zoora.ir {
 	import zoora_tls
-	reverse_proxy 127.0.0.1:9000
+
+	# Browser uploads/downloads via presigned URLs from the SPA. RustFS S3-API
+	# CORS is unreliable, so terminate CORS here: answer preflight directly and
+	# normalize the origin header on real responses (strip upstream to avoid a
+	# duplicate Access-Control-Allow-Origin).
+	@preflight method OPTIONS
+	handle @preflight {
+		header Access-Control-Allow-Origin "https://app.zoora.ir"
+		header Access-Control-Allow-Methods "GET, PUT, POST, DELETE, HEAD"
+		header Access-Control-Allow-Headers "*"
+		header Access-Control-Max-Age "3600"
+		respond 204
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:9000 {
+			header_down -Access-Control-Allow-Origin
+			header_down +Access-Control-Allow-Origin "https://app.zoora.ir"
+			header_down +Access-Control-Expose-Headers "ETag"
+		}
+	}
 }
 
 console.zoora.ir {
