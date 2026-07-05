@@ -96,7 +96,7 @@ func main() {
 		os.Exit(1)
 	}
 	mediaRepo := media.NewRepository(db)
-	mediaService := media.NewService(mediaRepo, storageClient, log)
+	mediaService := media.NewService(mediaRepo, storageClient, nil, log)
 	queueServer.HandleFunc(domain.TypeMediaCleanup, media.NewCleanupHandler(mediaService))
 
 	// Periodic safety net for missed LiveKit webhooks: re-scan for active rooms

@@ -55,11 +55,24 @@ func (m *mediaRepoMock) ListByModel(ctx context.Context, modelType string, model
 }
 
 func newMediaService(repo *mediaRepoMock, store *storageMock) domain.MediaService {
-	return media.NewService(repo, store, slog.Default())
+	return media.NewService(repo, store, nil, slog.Default())
 }
 
 func mediaCtx(isAdmin bool, perms ...string) context.Context {
 	return domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New(), IsAdmin: isAdmin, Permissions: perms})
+}
+
+// fakeEntService injects a canned CheckStorageLimit result for quota tests.
+type fakeEntService struct{ storageErr error }
+
+func (f fakeEntService) CheckUserLimit(context.Context, uuid.UUID, domain.Entitlements) error {
+	return nil
+}
+func (f fakeEntService) CheckStorageLimit(context.Context, uuid.UUID, domain.Entitlements, int64) error {
+	return f.storageErr
+}
+func (f fakeEntService) CheckConcurrentRoomsLimit(context.Context, uuid.UUID, domain.Entitlements) error {
+	return nil
 }
 
 func TestMediaGetAndListRequireCaller(t *testing.T) {
@@ -162,5 +175,22 @@ func TestMediaPresignUploadRequiresCallerBeforeRepositoryWrite(t *testing.T) {
 
 	assert.Nil(t, resp)
 	assert.ErrorIs(t, err, domain.ErrForbidden)
+	repo.AssertNotCalled(t, "Create")
+}
+
+func TestMediaPresignUpload_StorageQuotaExceeded(t *testing.T) {
+	repo := &mediaRepoMock{}
+	orgID := uuid.New()
+	ent := fakeEntService{storageErr: domain.NewLimitError(domain.PlanFree, domain.LimitStorageGB, 1, 1)}
+	svc := media.NewService(repo, &storageMock{}, ent, slog.Default())
+
+	ctx := domain.WithCaller(context.Background(), domain.Caller{
+		UserID: uuid.New(), OrgID: &orgID, Ent: domain.PlanCatalog[domain.PlanFree],
+	})
+	_, err := svc.PresignUpload(ctx, domain.PresignUploadDTO{
+		ModelType: "practice", ModelID: uuid.NewString(), CollectionName: "attachments",
+		FileName: "f.pdf", MimeType: "application/pdf", Size: 1,
+	})
+	assert.ErrorIs(t, err, domain.ErrPlanLimitReached)
 	repo.AssertNotCalled(t, "Create")
 }
