@@ -64,12 +64,22 @@ func NewQuizSubmission(quizID, userID uuid.UUID, opts ...func(*domain.QuizSubmis
 		UserID:      userID,
 		Status:      domain.SubmissionStatusSubmitted,
 		Answers:     []domain.SubmissionAnswer{},
+		QuestionSet: []domain.SubmissionQuestion{},
 		TotalScore:  0,
 		StartedAt:   now,
 		SubmittedAt: &submittedAt,
 	}
 	for _, o := range opts {
 		o(s)
+	}
+	// question_set/answers are NOT NULL in the DB and a nil slice serializes
+	// to SQL NULL (bypassing the column default), so opts that set them to
+	// nil must fall back to [].
+	if s.QuestionSet == nil {
+		s.QuestionSet = []domain.SubmissionQuestion{}
+	}
+	if s.Answers == nil {
+		s.Answers = []domain.SubmissionAnswer{}
 	}
 	return s
 }

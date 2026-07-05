@@ -560,8 +560,22 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 						SpentSeconds:      60,
 					})
 				}
+				// Frozen per-student question set mirroring the answers, as
+				// StartSubmission would have built it.
+				questionSet := make([]domain.SubmissionQuestion, 0, len(bankQuestions))
+				for _, q := range bankQuestions {
+					var order []string
+					if q.Type == domain.QuestionTypeChoice {
+						order = make([]string, len(q.Options))
+						for i, o := range q.Options {
+							order[i] = o.ID
+						}
+					}
+					questionSet = append(questionSet, domain.SubmissionQuestion{QuestionID: q.ID, OptionIDOrder: order})
+				}
 				sub := factory.NewQuizSubmission(quiz.ID, student.ID, func(qs *domain.QuizSubmission) {
 					qs.Answers = answers
+					qs.QuestionSet = questionSet
 					qs.TotalScore = totalScore
 					qs.Status = domain.SubmissionStatusGraded
 				})

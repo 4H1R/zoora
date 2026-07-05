@@ -68,4 +68,7 @@ func TestNewQuizSubmission(t *testing.T) {
 	assert.Equal(t, domain.SubmissionStatusSubmitted, s.Status)
 	assert.False(t, s.StartedAt.IsZero())
 	assert.NotNil(t, s.SubmittedAt)
+	// question_set is NOT NULL in the DB; a nil slice serializes to SQL NULL
+	// (bypassing the column default), so the factory must always emit at least [].
+	assert.NotNil(t, s.QuestionSet)
 }
