@@ -1151,7 +1151,39 @@
     },
     "roleAdmin": "مدیر پلتفرم",
     "roleStaff": "مدیر",
-    "roleMember": "عضو"
+    "roleMember": "عضو",
+    "changelog": {
+      "title": "تغییرات",
+      "new": "مورد جدید",
+      "untitled": "بدون عنوان",
+      "editTitle": "ویرایش مورد",
+      "draft": "پیش‌نویس",
+      "published": "منتشرشده",
+      "publishedToast": "مورد منتشر شد",
+      "saveDraft": "ذخیره پیش‌نویس",
+      "saved": "ذخیره شد",
+      "publish": "انتشار",
+      "unpublish": "لغو انتشار",
+      "version": "برچسب نسخه",
+      "major": "نسخه مهم (نمایش پنجره)",
+      "titlePh": "عنوان",
+      "insertMedia": "درج رسانه",
+      "uploadFailed": "بارگذاری ناموفق بود",
+      "deleted": "مورد حذف شد",
+      "confirmDelete": "این مورد برای همیشه حذف شود؟",
+      "createFailed": "ایجاد مورد ناموفق بود",
+      "starterBody": "## تازه‌ها\n\n- ",
+      "subtitle": "پیش‌نویس، انتشار و مدیریت یادداشت‌های نسخه",
+      "empty": "هنوز موردی نیست",
+      "emptyHint": "برای اعلام یک نسخه، اولین مورد تغییرات را بسازید.",
+      "createdOn": "ایجاد {{date}}",
+      "publishedOn": "انتشار {{date}}",
+      "stats": {
+        "total": "کل موارد",
+        "published": "منتشرشده",
+        "drafts": "پیش‌نویس‌ها"
+      }
+    }
   },
   "classes": {
     "sessions": {
@@ -1300,7 +1332,8 @@
       "practices": "تکالیف",
       "grades": "نمرات",
       "attendance": "حضور و غیاب",
-      "recordings": "ضبط‌ها"
+      "recordings": "ضبط‌ها",
+      "zoora": "زورا"
     },
     "practices": {
       "title": "تکالیف",
@@ -2648,5 +2681,18 @@
       "mode": "حالت",
       "type": "نوع"
     }
+  },
+  "whatsNew": {
+    "title": "تازه‌ها",
+    "subtitle": "آخرین به‌روزرسانی‌ها و بهبودها",
+    "eyebrow": "تغییرات",
+    "empty": "هنوز به‌روزرسانی‌ای نیست.",
+    "emptyHint": "نسخه‌ها و بهبودهای تازه اینجا نمایش داده می‌شوند.",
+    "count_one": "{{count}} نسخه",
+    "count_other": "{{count}} نسخه",
+    "latest": "جدیدترین",
+    "major": "مهم",
+    "seeAll": "مشاهده همه",
+    "gotIt": "متوجه شدم"
   }
 }

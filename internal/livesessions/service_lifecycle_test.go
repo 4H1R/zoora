@@ -165,6 +165,7 @@ func TestAutoClose_LiveKitRoomGone_StillClosesRoom(t *testing.T) {
 	f.rooms.On("Transition", mock.Anything, mock.AnythingOfType("*domain.LiveRoom"), domain.LiveRoomStatusActive).
 		Return(nil)
 	f.parts.On("MarkAllLeft", mock.Anything, testRoomID, mock.AnythingOfType("time.Time")).Return(nil)
+	f.wb.On("Delete", mock.Anything, testRoomID).Return(nil)
 	f.chat.On("ArchiveByModel", mock.Anything, domain.ChatModelLiveSession, testRoomID).Return(nil)
 
 	err := svc.AutoCloseStaleRooms(context.Background())

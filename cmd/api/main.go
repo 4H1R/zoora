@@ -17,6 +17,7 @@ import (
 	"github.com/4H1R/zoora/internal/attendance"
 	"github.com/4H1R/zoora/internal/auth"
 	"github.com/4H1R/zoora/internal/calendar"
+	"github.com/4H1R/zoora/internal/changelog"
 	"github.com/4H1R/zoora/internal/chat"
 	"github.com/4H1R/zoora/internal/classes"
 	"github.com/4H1R/zoora/internal/config"
@@ -117,6 +118,7 @@ func main() {
 	quizRoomRepo := quizzes.NewRoomRepository(db)
 	quizSubmissionRepo := quizzes.NewSubmissionRepository(db)
 	mediaRepo := media.NewRepository(db)
+	changelogRepo := changelog.NewRepository(db)
 	liveRoomRepo := livesessions.NewRoomRepository(db)
 	liveParticipantRepo := livesessions.NewParticipantRepository(db)
 	liveRecordingRepo := livesessions.NewRecordingRepository(db)
@@ -158,6 +160,7 @@ func main() {
 	roleService := roles.NewService(roleRepo, permRepo, transactor, redisClient, log)
 	authBusinessService := auth.NewAuthService(userRepo, jwtService, redisClient, log)
 	mediaService := media.NewService(mediaRepo, storageClient, log)
+	changelogService := changelog.NewServiceWithMedia(changelogRepo, mediaRepo, storageClient, log)
 	livekitClient := lk.NewClient(cfg, log)
 	chatService := chat.NewService(chatRepo, chatMemberRepo, chatMessageRepo, chatReactionRepo, transactor, log)
 	liveSessionService := livesessions.NewService(
@@ -241,6 +244,9 @@ func main() {
 	mediaHandler := media.NewHandler(mediaService)
 	mediaHandler.RegisterRoutes(v1, authMiddleware, perm)
 
+	changelogHandler := changelog.NewHandler(changelogService)
+	changelogHandler.RegisterRoutes(v1, authMiddleware)
+
 	liveSessionHandler := livesessions.NewHandler(liveSessionService)
 	liveSessionHandler.RegisterRoutes(v1, authMiddleware, perm)
 
@@ -287,9 +293,10 @@ func main() {
 	adminPollHandler := polls.NewAdminHandler(pollService)
 	adminRoleHandler := roles.NewAdminHandler(roleService)
 	adminAttendanceHandler := attendance.NewAdminHandler(attendanceService)
+	adminChangelogHandler := changelog.NewAdminHandler(changelogService)
 
 	adminGroup := v1.Group("/admin", authMiddleware, auth.RequireAdmin())
-	admin.RegisterRoutes(adminGroup, adminUserHandler, adminOrgHandler, adminClassHandler, adminQuestionBankHandler, adminQuizHandler, adminLiveSessionHandler, adminOfflineHandler, adminPracticeHandler, adminPollHandler, adminRoleHandler, adminAttendanceHandler)
+	admin.RegisterRoutes(adminGroup, adminUserHandler, adminOrgHandler, adminClassHandler, adminQuestionBankHandler, adminQuizHandler, adminLiveSessionHandler, adminOfflineHandler, adminPracticeHandler, adminPollHandler, adminRoleHandler, adminAttendanceHandler, adminChangelogHandler)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,

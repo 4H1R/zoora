@@ -174,6 +174,9 @@ func (m *mockWhiteboardRepo) Upsert(ctx context.Context, roomID uuid.UUID, snaps
 	}
 	return a.Get(0).(*domain.LiveWhiteboard), a.Error(1)
 }
+func (m *mockWhiteboardRepo) Delete(ctx context.Context, roomID uuid.UUID) error {
+	return m.Called(ctx, roomID).Error(0)
+}
 
 type mockClassSessionRepo struct{ mock.Mock }
 
@@ -731,7 +734,7 @@ func TestCreateRoom_BlankName_Validation(t *testing.T) {
 }
 
 func TestEndRoom_ArchivesChat(t *testing.T) {
-	svc, roomRepo, partRepo, recRepo, _, sessRepo, classRepo, _, chatSvc := newTestService(t)
+	svc, roomRepo, partRepo, recRepo, wbRepo, sessRepo, classRepo, _, chatSvc := newTestService(t)
 	room := testRoom()
 	room.Status = domain.LiveRoomStatusActive
 	roomRepo.On("FindByID", mock.Anything, testRoomID).Return(room, nil)
@@ -741,6 +744,7 @@ func TestEndRoom_ArchivesChat(t *testing.T) {
 	recRepo.On("FindActiveByRoom", mock.Anything, testRoomID).Return(nil, domain.ErrNotFound)
 	roomRepo.On("Transition", mock.Anything, mock.AnythingOfType("*domain.LiveRoom"), domain.LiveRoomStatusActive).Return(nil)
 	partRepo.On("MarkAllLeft", mock.Anything, testRoomID, mock.AnythingOfType("time.Time")).Return(nil)
+	wbRepo.On("Delete", mock.Anything, testRoomID).Return(nil)
 	chatSvc.On("ArchiveByModel", mock.Anything, "live_session", testRoomID).Return(nil)
 
 	result, err := svc.EndRoom(teacherCtx(), testRoomID)

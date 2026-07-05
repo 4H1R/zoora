@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -14,10 +15,12 @@ import (
 )
 
 type Client struct {
-	s3      *s3.Client
-	presign *s3.Client
-	bucket  string
-	logger  *slog.Logger
+	s3             *s3.Client
+	presign        *s3.Client
+	bucket         string
+	publicBucket   string
+	publicEndpoint string
+	logger         *slog.Logger
 }
 
 func NewClient(cfg *config.Config, logger *slog.Logger) (*Client, error) {
@@ -59,8 +62,46 @@ func NewClient(cfg *config.Config, logger *slog.Logger) (*Client, error) {
 		}
 	}
 
-	logger.Info("S3 storage client initialized", "bucket", cfg.S3Bucket)
-	return &Client{s3: s3Client, presign: presignClient, bucket: cfg.S3Bucket, logger: logger}, nil
+	publicBucket := cfg.S3PublicBucket
+	if publicBucket == "" {
+		publicBucket = cfg.S3Bucket // fallback: not actually public, dev-only
+	}
+	if publicBucket != cfg.S3Bucket {
+		if _, err := s3Client.HeadBucket(context.Background(), &s3.HeadBucketInput{
+			Bucket: aws.String(publicBucket),
+		}); err != nil {
+			if cfg.IsDevelopment() {
+				if _, cErr := s3Client.CreateBucket(context.Background(), &s3.CreateBucketInput{
+					Bucket: aws.String(publicBucket),
+				}); cErr != nil {
+					return nil, fmt.Errorf("creating public S3 bucket: %w", cErr)
+				}
+				logger.Info("created public S3 bucket", "bucket", publicBucket)
+			} else {
+				return nil, fmt.Errorf("public S3 bucket not accessible: %w", err)
+			}
+		}
+		// Best-effort anonymous read policy so permanent URLs resolve in the
+		// browser. RustFS/S3 accept a standard bucket policy; a failure here is
+		// logged, not fatal (policy may be managed out-of-band in prod).
+		policy := fmt.Sprintf(`{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":"s3:GetObject","Resource":"arn:aws:s3:::%s/*"}]}`, publicBucket)
+		if _, err := s3Client.PutBucketPolicy(context.Background(), &s3.PutBucketPolicyInput{
+			Bucket: aws.String(publicBucket),
+			Policy: aws.String(policy),
+		}); err != nil {
+			logger.Warn("set public bucket policy failed (set manually if assets 403)", "bucket", publicBucket, "error", err)
+		}
+	}
+
+	logger.Info("S3 storage client initialized", "bucket", cfg.S3Bucket, "public_bucket", publicBucket)
+	return &Client{
+		s3:             s3Client,
+		presign:        presignClient,
+		bucket:         cfg.S3Bucket,
+		publicBucket:   publicBucket,
+		publicEndpoint: publicEndpoint,
+		logger:         logger,
+	}, nil
 }
 
 func (c *Client) GeneratePresignedUploadURL(ctx context.Context, key string, expiry time.Duration) (string, error) {
@@ -116,4 +157,36 @@ func (c *Client) HeadBucket(ctx context.Context) error {
 		Bucket: aws.String(c.bucket),
 	})
 	return err
+}
+
+// PublicPresignUpload returns a presigned PUT URL that targets the public
+// bucket. The uploaded object is world-readable via PublicURL(key).
+func (c *Client) PublicPresignUpload(ctx context.Context, key string, expiry time.Duration) (string, error) {
+	presigner := s3.NewPresignClient(c.presign)
+	req, err := presigner.PresignPutObject(ctx, &s3.PutObjectInput{
+		Bucket: aws.String(c.publicBucket),
+		Key:    aws.String(key),
+	}, s3.WithPresignExpires(expiry))
+	if err != nil {
+		return "", fmt.Errorf("generating public presigned upload URL: %w", err)
+	}
+	return req.URL, nil
+}
+
+// PublicURL builds the permanent, non-signed browser URL for a public object.
+// Uses the public endpoint (never the internal S3 host browsers can't reach).
+func (c *Client) PublicURL(key string) string {
+	return strings.TrimRight(c.publicEndpoint, "/") + "/" + c.publicBucket + "/" + key
+}
+
+// DeletePublicObject removes an object from the public bucket. Idempotent.
+func (c *Client) DeletePublicObject(ctx context.Context, key string) error {
+	_, err := c.s3.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(c.publicBucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return fmt.Errorf("deleting public object: %w", err)
+	}
+	return nil
 }

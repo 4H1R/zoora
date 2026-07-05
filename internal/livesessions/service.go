@@ -476,6 +476,16 @@ func (s *service) endRoomInternal(ctx context.Context, room *domain.LiveRoom) (*
 		s.logger.Error("failed to archive chat for room", "room_id", room.ID.String(), "error", err)
 	}
 
+	// The whiteboard snapshot is only readable during an active session
+	// (JoinRoom rejects finished rooms), so it is dead data once the room ends.
+	if err := s.whiteboards.Delete(ctx, room.ID); err != nil {
+		s.logger.Error("end room: delete whiteboard", "room_id", room.ID.String(), "error", err)
+	}
+
+	// Clear any pending no-host close task; the room is already finished so the
+	// task would otherwise linger in Redis until it fires and self-cancels.
+	s.disarmCloseIfNoHost(room)
+
 	s.enqueueAutoMark(ctx, room)
 	s.enqueueSlidesCleanup(ctx, room)
 
@@ -692,12 +702,21 @@ func (s *service) StopRecording(ctx context.Context, recordingID uuid.UUID) (*do
 		return nil, domain.NewValidationError(map[string]string{"status": "recording not active"})
 	}
 
+	now := time.Now()
+	status := domain.LiveRecordingStatusCompleted
 	if err := s.livekit.StopRecording(ctx, rec.EgressID); err != nil {
-		return nil, fmt.Errorf("livesessions.service.StopRecording: %w", err)
+		// The egress already terminated on LiveKit's side (commonly it aborted
+		// before the user hit stop — e.g. the composite template never loaded).
+		// Reconcile the record as failed and return it instead of 500ing.
+		if !errors.Is(err, lk.ErrEgressNotActive) {
+			return nil, fmt.Errorf("livesessions.service.StopRecording: %w", err)
+		}
+		s.logger.Warn("stop recording: egress already terminal, marking failed",
+			"recording_id", rec.ID.String(), "egress_id", rec.EgressID)
+		status = domain.LiveRecordingStatusFailed
 	}
 
-	now := time.Now()
-	rec.Status = domain.LiveRecordingStatusCompleted
+	rec.Status = status
 	rec.EndedAt = &now
 	rec.Duration = int(now.Sub(rec.StartedAt).Seconds())
 	if err := s.recordings.Update(ctx, rec); err != nil {

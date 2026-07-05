@@ -22,6 +22,12 @@ import (
 // to distinguish "room gone" from transient API failures.
 var ErrRoomNotFound = errors.New("livekit room not found")
 
+// ErrEgressNotActive reports that an egress can no longer be stopped because it
+// already reached a terminal state (aborted or completed) on LiveKit's side —
+// e.g. it aborted before the user hit stop. Callers treat StopEgress as a no-op
+// and reconcile their own record instead of surfacing a hard failure.
+var ErrEgressNotActive = errors.New("livekit egress not active")
+
 type Client struct {
 	roomClient      *lksdk.RoomServiceClient
 	host            string
@@ -158,6 +164,13 @@ func (c *Client) StopRecording(ctx context.Context, egressID string) error {
 		EgressId: egressID,
 	})
 	if err != nil {
+		// A terminal egress (already aborted/completed) rejects StopEgress with
+		// failed_precondition ("egress with status ... cannot be stopped").
+		// Surface a typed sentinel so the caller can reconcile instead of 500ing.
+		var terr twirp.Error
+		if errors.As(err, &terr) && terr.Code() == twirp.FailedPrecondition {
+			return fmt.Errorf("stopping recording %s: %w", egressID, ErrEgressNotActive)
+		}
 		return fmt.Errorf("stopping recording: %w", err)
 	}
 	c.logger.Info("recording stopped", "egress_id", egressID)

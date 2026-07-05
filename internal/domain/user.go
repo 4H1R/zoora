@@ -19,6 +19,7 @@ type User struct {
 	Role           *Role          `gorm:"foreignKey:RoleID" json:"role,omitempty"`
 	CreatedAt      time.Time      `json:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at"`
+	ChangelogLastSeenAt *time.Time `gorm:"column:changelog_last_seen_at" json:"-"`
 	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`
 	DisabledAt     *time.Time     `gorm:"index" json:"disabled_at,omitempty"`
 	DisabledBy     *uuid.UUID     `gorm:"type:uuid" json:"disabled_by,omitempty"`

@@ -102,10 +102,13 @@ services:
             - "${FORWARD_LIVEKIT_UDP_PORT:-7882}:7882/udp"
         environment:
             LIVEKIT_KEYS: "${LIVEKIT_API_KEY:-devkey}: ${LIVEKIT_API_SECRET:-devsecret}"
-            # Redis-backed message bus so the separate egress worker can reach the
-            # server over psrpc. The bare --dev flag uses an in-process bus that
-            # egress can't join, which makes StartRoomCompositeEgress hang (→ 502).
-            LIVEKIT_CONFIG_BODY: |
+            # NOTE: livekit-server reads its config body from $LIVEKIT_CONFIG —
+            # NOT $LIVEKIT_CONFIG_BODY. With the wrong name the redis block below
+            # was silently dropped, leaving single-node in-memory routing. The
+            # separate egress worker only reaches the server over the redis psrpc
+            # bus, so it never received the job and StartRoomCompositeEgress hung
+            # until the client's deadline (→ 502). Redis here = shared bus.
+            LIVEKIT_CONFIG: |
                 redis:
                     address: redis:6379
         command: --dev --bind 0.0.0.0 --node-ip 127.0.0.1

@@ -26,6 +26,10 @@ type Config struct {
 	// S3Endpoint when unset (dev, where the two are the same host).
 	S3PublicEndpoint   string        `env:"S3_PUBLIC_ENDPOINT"`
 	S3Bucket           string        `env:"S3_BUCKET,required"`
+	// S3PublicBucket holds anonymously-readable assets (changelog media) served
+	// to browsers via permanent, non-expiring URLs. Falls back to S3Bucket when
+	// unset, but in that case objects are NOT public — set it in every real env.
+	S3PublicBucket     string        `env:"S3_PUBLIC_BUCKET"`
 	S3AccessKey        string        `env:"S3_ACCESS_KEY,required"`
 	S3SecretKey        string        `env:"S3_SECRET_KEY,required"`
 	S3Region           string        `env:"S3_REGION"          envDefault:"us-east-1"`

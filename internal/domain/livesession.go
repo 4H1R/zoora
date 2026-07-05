@@ -252,6 +252,9 @@ type SaveWhiteboardDTO struct {
 type LiveWhiteboardRepository interface {
 	Get(ctx context.Context, roomID uuid.UUID) (*LiveWhiteboard, error)
 	Upsert(ctx context.Context, roomID uuid.UUID, snapshot json.RawMessage) (*LiveWhiteboard, error)
+	// Delete removes the whiteboard snapshot for the given room. Idempotent:
+	// deleting a room with no whiteboard is not an error.
+	Delete(ctx context.Context, roomID uuid.UUID) error
 }
 
 // EgressResult carries the outcome of a finished LiveKit egress (recording)

@@ -14,6 +14,7 @@ import {
   LayoutDashboardIcon,
   SchoolIcon,
   ShieldIcon,
+  SparklesIcon,
   TrophyIcon,
   UsersIcon,
   VideoIcon,
@@ -41,6 +42,7 @@ export function AppSidebar({
       items: [
         { title: t("admin.dashboard.title"), url: "/admin/dashboard", icon: <LayoutDashboardIcon /> },
         { title: t("admin.organizations"), url: "/admin/organizations", icon: <Building2Icon /> },
+        { title: t("admin.changelog.title"), url: "/admin/changelog", icon: <SparklesIcon /> },
       ],
     },
     {
