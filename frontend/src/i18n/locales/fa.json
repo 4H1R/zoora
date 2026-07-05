@@ -1139,7 +1139,27 @@
     },
     "roleAdmin": "مدیر پلتفرم",
     "roleStaff": "مدیر",
-    "roleMember": "عضو"
+    "roleMember": "عضو",
+    "changelog": {
+      "title": "تغییرات",
+      "new": "مورد جدید",
+      "untitled": "بدون عنوان",
+      "editTitle": "ویرایش مورد",
+      "draft": "پیش‌نویس",
+      "published": "منتشرشده",
+      "publishedToast": "مورد منتشر شد",
+      "saveDraft": "ذخیره پیش‌نویس",
+      "saved": "ذخیره شد",
+      "publish": "انتشار",
+      "unpublish": "لغو انتشار",
+      "version": "برچسب نسخه",
+      "major": "نسخه مهم (نمایش پنجره)",
+      "titlePh": "عنوان",
+      "insertMedia": "درج رسانه",
+      "uploadFailed": "بارگذاری ناموفق بود",
+      "deleted": "مورد حذف شد",
+      "confirmDelete": "این مورد برای همیشه حذف شود؟"
+    }
   },
   "classes": {
     "sessions": {
@@ -2636,5 +2656,13 @@
       "mode": "حالت",
       "type": "نوع"
     }
+  },
+  "whatsNew": {
+    "title": "تازه‌ها",
+    "subtitle": "آخرین به‌روزرسانی‌ها و بهبودها",
+    "empty": "هنوز به‌روزرسانی‌ای نیست.",
+    "major": "مهم",
+    "seeAll": "مشاهده همه",
+    "gotIt": "متوجه شدم"
   }
 }

@@ -1139,7 +1139,27 @@
     },
     "roleAdmin": "Platform admin",
     "roleStaff": "Manager",
-    "roleMember": "Member"
+    "roleMember": "Member",
+    "changelog": {
+      "title": "Changelog",
+      "new": "New entry",
+      "untitled": "Untitled",
+      "editTitle": "Edit entry",
+      "draft": "Draft",
+      "published": "Published",
+      "publishedToast": "Entry published",
+      "saveDraft": "Save draft",
+      "saved": "Saved",
+      "publish": "Publish",
+      "unpublish": "Unpublish",
+      "version": "Version label",
+      "major": "Major release (show modal)",
+      "titlePh": "Title",
+      "insertMedia": "Insert media",
+      "uploadFailed": "Upload failed",
+      "deleted": "Entry deleted",
+      "confirmDelete": "Delete this entry permanently?"
+    }
   },
   "classes": {
     "sessions": {
@@ -2636,5 +2656,13 @@
       "mode": "mode",
       "type": "type"
     }
+  },
+  "whatsNew": {
+    "title": "What's New",
+    "subtitle": "Latest updates and improvements",
+    "empty": "No updates yet.",
+    "major": "Major",
+    "seeAll": "See all",
+    "gotIt": "Got it"
   }
 }
