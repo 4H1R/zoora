@@ -6,9 +6,15 @@
  * OpenAPI spec version: 1.0
  */
 import type { GithubCom4H1RZooraInternalDomainErrorBodyFields } from './githubCom4H1RZooraInternalDomainErrorBodyFields';
+import type { GithubCom4H1RZooraInternalDomainPlanError } from './githubCom4H1RZooraInternalDomainPlanError';
 
 export interface GithubCom4H1RZooraInternalDomainErrorBody {
   code?: string;
   fields?: GithubCom4H1RZooraInternalDomainErrorBodyFields;
   message?: string;
+  /**
+     * Plan carries plan-gate detail (feature/limit/current/ceiling) for 402
+     * responses so the client can render an upgrade prompt.
+     */
+  plan_detail?: GithubCom4H1RZooraInternalDomainPlanError;
 }

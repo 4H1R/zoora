@@ -23,7 +23,42 @@ var (
 	ErrCannotRemoveHost       = errors.New("cannot remove a host from the room")
 	ErrCannotRemoveSelf       = errors.New("cannot remove yourself from the room")
 	ErrWhiteboardNotFound     = errors.New("whiteboard not found")
+
+	// Plan / entitlement gates (mapped to HTTP 402 Payment Required).
+	ErrFeatureNotInPlan = errors.New("feature not available on current plan")
+	ErrPlanLimitReached = errors.New("plan limit reached")
 )
+
+// PlanError carries machine-readable context for a plan/entitlement gate so the
+// frontend can render an upgrade prompt. Unwraps to its sentinel so
+// errors.Is(err, ErrFeatureNotInPlan) / ErrPlanLimitReached works.
+type PlanError struct {
+	Sentinel error  `json:"-"` // ErrFeatureNotInPlan or ErrPlanLimitReached
+	Plan     string `json:"plan"`
+	Feature  string `json:"feature,omitempty"` // set for feature gates
+	Limit    string `json:"limit,omitempty"`   // set for limit gates
+	Current  int64  `json:"current,omitempty"`
+	Ceiling  int64  `json:"ceiling,omitempty"`
+}
+
+func (e *PlanError) Error() string {
+	if e.Feature != "" {
+		return fmt.Sprintf("feature %q not available on plan %q", e.Feature, e.Plan)
+	}
+	return fmt.Sprintf("limit %q reached on plan %q (%d/%d)", e.Limit, e.Plan, e.Current, e.Ceiling)
+}
+
+func (e *PlanError) Unwrap() error { return e.Sentinel }
+
+// NewFeatureError builds a 402 feature-gate error.
+func NewFeatureError(plan Plan, f Feature) *PlanError {
+	return &PlanError{Sentinel: ErrFeatureNotInPlan, Plan: string(plan), Feature: string(f)}
+}
+
+// NewLimitError builds a 402 limit-gate error.
+func NewLimitError(plan Plan, l Limit, current, ceiling int64) *PlanError {
+	return &PlanError{Sentinel: ErrPlanLimitReached, Plan: string(plan), Limit: string(l), Current: current, Ceiling: ceiling}
+}
 
 // ValidationError carries per-field validation failures.
 // Unwraps to ErrValidation so errors.Is(err, ErrValidation) works.
@@ -81,6 +116,10 @@ func MapError(err error) (int, string) {
 		return http.StatusConflict, "CANNOT_REMOVE_SELF"
 	case errors.Is(err, ErrWhiteboardNotFound):
 		return http.StatusNotFound, "WHITEBOARD_NOT_FOUND"
+	case errors.Is(err, ErrFeatureNotInPlan):
+		return http.StatusPaymentRequired, "FEATURE_NOT_IN_PLAN"
+	case errors.Is(err, ErrPlanLimitReached):
+		return http.StatusPaymentRequired, "PLAN_LIMIT_REACHED"
 	case errors.Is(err, ErrValidation):
 		return http.StatusBadRequest, "VALIDATION_ERROR"
 	default:
