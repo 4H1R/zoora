@@ -33,6 +33,7 @@ func (h *AdminHandler) RegisterAdminRoutes(group *gin.RouterGroup) {
 	group.POST("/organizations", h.Create)
 	group.GET("/organizations/:id", idParam, h.Get)
 	group.PUT("/organizations/:id", idParam, h.Update)
+	group.PUT("/organizations/:id/plan", idParam, h.SetPlan)
 	group.DELETE("/organizations/:id", idParam, h.HardDelete)
 	group.POST("/organizations/:id/restore", idParam, h.Restore)
 }
@@ -156,6 +157,35 @@ func (h *AdminHandler) Update(c *gin.Context) {
 		return
 	}
 	org, err := h.svc.AdminUpdate(c.Request.Context(), httpx.UUIDParam(c, "id"), dto)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, org)
+}
+
+// SetPlan assigns a subscription plan and optional expiry to an organization.
+// @Summary [Admin] Set organization plan
+// @Description Assign a subscription plan (free/pro/enterprise) and optional expiry. Omit expires_at for a perpetual plan; an expired plan downgrades to free.
+// @Tags Admin/Organizations
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Organization ID"
+// @Param request body domain.SetPlanDTO true "Plan assignment"
+// @Success 200 {object} domain.Response{data=domain.Organization}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /admin/organizations/{id}/plan [put]
+func (h *AdminHandler) SetPlan(c *gin.Context) {
+	var dto domain.SetPlanDTO
+	if err := httpx.Bind(c, &dto); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	org, err := h.svc.SetPlan(c.Request.Context(), httpx.UUIDParam(c, "id"), dto)
 	if err != nil {
 		_ = c.Error(err)
 		return

@@ -106,6 +106,7 @@ type OrganizationRepository interface {
 	AdminList(ctx context.Context, q AdminListOrganizationsQuery) ([]Organization, int64, error)
 	HardDelete(ctx context.Context, id uuid.UUID) error
 	Restore(ctx context.Context, id uuid.UUID) error
+	UpdatePlan(ctx context.Context, id uuid.UUID, plan Plan, expiresAt *time.Time) error
 }
 
 type OrganizationService interface {
@@ -122,4 +123,5 @@ type OrganizationService interface {
 	AdminUpdate(ctx context.Context, id uuid.UUID, dto AdminUpdateOrganizationDTO) (*Organization, error)
 	AdminHardDelete(ctx context.Context, id uuid.UUID) error
 	AdminRestore(ctx context.Context, id uuid.UUID) error
+	SetPlan(ctx context.Context, id uuid.UUID, dto SetPlanDTO) (*Organization, error)
 }

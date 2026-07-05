@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/platform/cache"
 )
 
 func (s *service) requireAdmin(ctx context.Context) (domain.Caller, error) {
@@ -107,6 +108,34 @@ func (s *service) AdminHardDelete(ctx context.Context, id uuid.UUID) error {
 		"deleted_by", caller.UserID.String(),
 	)
 	return nil
+}
+
+func (s *service) SetPlan(ctx context.Context, id uuid.UUID, dto domain.SetPlanDTO) (*domain.Organization, error) {
+	caller, err := s.requireAdmin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !dto.Plan.Valid() {
+		return nil, domain.NewValidationError(map[string]string{"plan": "unknown plan"})
+	}
+	if _, err := s.repo.FindByID(ctx, id); err != nil {
+		return nil, err // ErrNotFound bubbles
+	}
+	if err := s.repo.UpdatePlan(ctx, id, dto.Plan, dto.ExpiresAt); err != nil {
+		return nil, err
+	}
+	// Invalidate the cached entitlement snapshot so the next request re-resolves.
+	if s.redis != nil {
+		if err := cache.InvalidateOrgPlan(ctx, s.redis, id); err != nil {
+			s.logger.Warn("invalidating org plan cache", "org_id", id.String(), "error", err)
+		}
+	}
+	s.logger.Info("admin set organization plan",
+		"org_id", id.String(),
+		"plan", string(dto.Plan),
+		"set_by", caller.UserID.String(),
+	)
+	return s.repo.FindByID(ctx, id)
 }
 
 func (s *service) AdminRestore(ctx context.Context, id uuid.UUID) error {
