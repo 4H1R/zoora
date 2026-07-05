@@ -585,20 +585,11 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 			for s := range subCount {
 				student := ou.students[s]
 				var answers []domain.SubmissionAnswer
-				var questionSet []domain.SubmissionQuestion
 				totalScore := 0.0
 				for _, q := range bankQuestions {
 					earned := 0.0
 					var selectedIDs []string
 					var value string
-					optionOrder := make([]string, len(q.Options))
-					for i, opt := range q.Options {
-						optionOrder[i] = opt.ID
-					}
-					questionSet = append(questionSet, domain.SubmissionQuestion{
-						QuestionID:    q.ID,
-						OptionIDOrder: optionOrder,
-					})
 					if q.Type == domain.QuestionTypeChoice && len(q.Options) > 0 {
 						selectedIDs = []string{q.Options[0].ID}
 						earned = q.Options[0].Score
