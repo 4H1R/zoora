@@ -524,3 +524,15 @@ func (r *whiteboardRepository) Upsert(ctx context.Context, roomID uuid.UUID, sna
 	// Re-fetch to get the persisted row (created_at / updated_at from DB).
 	return r.Get(ctx, roomID)
 }
+
+// Delete removes the whiteboard snapshot for the given room. Idempotent: a
+// missing row is a no-op, not an error.
+func (r *whiteboardRepository) Delete(ctx context.Context, roomID uuid.UUID) error {
+	err := database.DB(ctx, r.db).
+		Where("live_room_id = ?", roomID).
+		Delete(&domain.LiveWhiteboard{}).Error
+	if err != nil {
+		return fmt.Errorf("livesessions.whiteboardRepository.Delete: %w", err)
+	}
+	return nil
+}
