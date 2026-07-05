@@ -275,6 +275,24 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 	}
 	counts.Users++
 
+	// Sample published changelog entry so the What's New feed isn't empty in dev.
+	changelogPublishedAt := time.Now()
+	changelogVersion := "v1.0.0"
+	changelogEntry := domain.ChangelogEntry{
+		Version:     &changelogVersion,
+		TitleEn:     "Welcome to Zoora",
+		TitleFa:     "به زورا خوش آمدید",
+		BodyEn:      "## New\n\n- Live classrooms\n- Quizzes & practices\n\nEnjoy!",
+		BodyFa:      "## جدید\n\n- کلاس‌های زنده\n- آزمون‌ها و تمرین‌ها",
+		IsMajor:     true,
+		PublishedAt: &changelogPublishedAt,
+	}
+	if err := db.WithContext(ctx).
+		Where("title_en = ?", changelogEntry.TitleEn).
+		FirstOrCreate(&changelogEntry).Error; err != nil {
+		return nil, fmt.Errorf("seeding changelog: %w", err)
+	}
+
 	for i, org := range orgs {
 		ou := &orgUsers{}
 
