@@ -47,9 +47,11 @@ import { Route as AdminAdminLiveRoomsIndexRouteImport } from './routes/_admin/ad
 import { Route as AdminAdminGradebookIndexRouteImport } from './routes/_admin/admin/gradebook/index'
 import { Route as AdminAdminCorrectionsIndexRouteImport } from './routes/_admin/admin/corrections/index'
 import { Route as AdminAdminClassesIndexRouteImport } from './routes/_admin/admin/classes/index'
+import { Route as AdminAdminChangelogIndexRouteImport } from './routes/_admin/admin/changelog/index'
 import { Route as AdminAdminAttendanceIndexRouteImport } from './routes/_admin/admin/attendance/index'
 import { Route as AuthOrgOfflinesOfflineIdRouteImport } from './routes/_auth/org/offlines/$offlineId'
 import { Route as AuthOrgClassesClassIdRouteImport } from './routes/_auth/org/classes/$classId'
+import { Route as AdminAdminChangelogIdRouteImport } from './routes/_admin/admin/changelog/$id'
 import { Route as AuthOrgClassesClassSessionsClassSessionIdRouteImport } from './routes/_auth/org/classes/class-sessions/$classSessionId'
 import { Route as AuthOrgClassesClassIdGradebookRouteImport } from './routes/_auth/org/classes/$classId_.gradebook'
 import { Route as AdminAdminClassesClassIdSessionsRouteImport } from './routes/_admin/admin/classes/$classId/sessions'
@@ -256,6 +258,12 @@ const AdminAdminClassesIndexRoute = AdminAdminClassesIndexRouteImport.update({
   path: '/admin/classes/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAdminChangelogIndexRoute =
+  AdminAdminChangelogIndexRouteImport.update({
+    id: '/admin/changelog/',
+    path: '/admin/changelog/',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminAdminAttendanceIndexRoute =
   AdminAdminAttendanceIndexRouteImport.update({
     id: '/admin/attendance/',
@@ -272,6 +280,11 @@ const AuthOrgClassesClassIdRoute = AuthOrgClassesClassIdRouteImport.update({
   id: '/classes/$classId',
   path: '/classes/$classId',
   getParentRoute: () => AuthOrgRoute,
+} as any)
+const AdminAdminChangelogIdRoute = AdminAdminChangelogIdRouteImport.update({
+  id: '/admin/changelog/$id',
+  path: '/admin/changelog/$id',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AuthOrgClassesClassSessionsClassSessionIdRoute =
   AuthOrgClassesClassSessionsClassSessionIdRouteImport.update({
@@ -347,9 +360,11 @@ export interface FileRoutesByFullPath {
   '/quiz/$quizId': typeof AuthQuizQuizIdRoute
   '/admin/': typeof AdminAdminIndexRoute
   '/org/': typeof AuthOrgIndexRoute
+  '/admin/changelog/$id': typeof AdminAdminChangelogIdRoute
   '/org/classes/$classId': typeof AuthOrgClassesClassIdRoute
   '/org/offlines/$offlineId': typeof AuthOrgOfflinesOfflineIdRoute
   '/admin/attendance/': typeof AdminAdminAttendanceIndexRoute
+  '/admin/changelog/': typeof AdminAdminChangelogIndexRoute
   '/admin/classes/': typeof AdminAdminClassesIndexRoute
   '/admin/corrections/': typeof AdminAdminCorrectionsIndexRoute
   '/admin/gradebook/': typeof AdminAdminGradebookIndexRoute
@@ -396,9 +411,11 @@ export interface FileRoutesByTo {
   '/quiz/$quizId': typeof AuthQuizQuizIdRoute
   '/admin': typeof AdminAdminIndexRoute
   '/org': typeof AuthOrgIndexRoute
+  '/admin/changelog/$id': typeof AdminAdminChangelogIdRoute
   '/org/classes/$classId': typeof AuthOrgClassesClassIdRoute
   '/org/offlines/$offlineId': typeof AuthOrgOfflinesOfflineIdRoute
   '/admin/attendance': typeof AdminAdminAttendanceIndexRoute
+  '/admin/changelog': typeof AdminAdminChangelogIndexRoute
   '/admin/classes': typeof AdminAdminClassesIndexRoute
   '/admin/corrections': typeof AdminAdminCorrectionsIndexRoute
   '/admin/gradebook': typeof AdminAdminGradebookIndexRoute
@@ -450,9 +467,11 @@ export interface FileRoutesById {
   '/_auth/quiz/$quizId': typeof AuthQuizQuizIdRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
   '/_auth/org/': typeof AuthOrgIndexRoute
+  '/_admin/admin/changelog/$id': typeof AdminAdminChangelogIdRoute
   '/_auth/org/classes/$classId': typeof AuthOrgClassesClassIdRoute
   '/_auth/org/offlines/$offlineId': typeof AuthOrgOfflinesOfflineIdRoute
   '/_admin/admin/attendance/': typeof AdminAdminAttendanceIndexRoute
+  '/_admin/admin/changelog/': typeof AdminAdminChangelogIndexRoute
   '/_admin/admin/classes/': typeof AdminAdminClassesIndexRoute
   '/_admin/admin/corrections/': typeof AdminAdminCorrectionsIndexRoute
   '/_admin/admin/gradebook/': typeof AdminAdminGradebookIndexRoute
@@ -502,9 +521,11 @@ export interface FileRouteTypes {
     | '/quiz/$quizId'
     | '/admin/'
     | '/org/'
+    | '/admin/changelog/$id'
     | '/org/classes/$classId'
     | '/org/offlines/$offlineId'
     | '/admin/attendance/'
+    | '/admin/changelog/'
     | '/admin/classes/'
     | '/admin/corrections/'
     | '/admin/gradebook/'
@@ -551,9 +572,11 @@ export interface FileRouteTypes {
     | '/quiz/$quizId'
     | '/admin'
     | '/org'
+    | '/admin/changelog/$id'
     | '/org/classes/$classId'
     | '/org/offlines/$offlineId'
     | '/admin/attendance'
+    | '/admin/changelog'
     | '/admin/classes'
     | '/admin/corrections'
     | '/admin/gradebook'
@@ -604,9 +627,11 @@ export interface FileRouteTypes {
     | '/_auth/quiz/$quizId'
     | '/_admin/admin/'
     | '/_auth/org/'
+    | '/_admin/admin/changelog/$id'
     | '/_auth/org/classes/$classId'
     | '/_auth/org/offlines/$offlineId'
     | '/_admin/admin/attendance/'
+    | '/_admin/admin/changelog/'
     | '/_admin/admin/classes/'
     | '/_admin/admin/corrections/'
     | '/_admin/admin/gradebook/'
@@ -917,6 +942,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminClassesIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/admin/changelog/': {
+      id: '/_admin/admin/changelog/'
+      path: '/admin/changelog'
+      fullPath: '/admin/changelog/'
+      preLoaderRoute: typeof AdminAdminChangelogIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/admin/attendance/': {
       id: '/_admin/admin/attendance/'
       path: '/admin/attendance'
@@ -937,6 +969,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/org/classes/$classId'
       preLoaderRoute: typeof AuthOrgClassesClassIdRouteImport
       parentRoute: typeof AuthOrgRoute
+    }
+    '/_admin/admin/changelog/$id': {
+      id: '/_admin/admin/changelog/$id'
+      path: '/admin/changelog/$id'
+      fullPath: '/admin/changelog/$id'
+      preLoaderRoute: typeof AdminAdminChangelogIdRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/_auth/org/classes/class-sessions/$classSessionId': {
       id: '/_auth/org/classes/class-sessions/$classSessionId'
@@ -1014,7 +1053,9 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminAdminDashboardRoute: typeof AdminAdminDashboardRoute
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
+  AdminAdminChangelogIdRoute: typeof AdminAdminChangelogIdRoute
   AdminAdminAttendanceIndexRoute: typeof AdminAdminAttendanceIndexRoute
+  AdminAdminChangelogIndexRoute: typeof AdminAdminChangelogIndexRoute
   AdminAdminClassesIndexRoute: typeof AdminAdminClassesIndexRoute
   AdminAdminCorrectionsIndexRoute: typeof AdminAdminCorrectionsIndexRoute
   AdminAdminGradebookIndexRoute: typeof AdminAdminGradebookIndexRoute
@@ -1041,7 +1082,9 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAdminDashboardRoute: AdminAdminDashboardRoute,
   AdminAdminIndexRoute: AdminAdminIndexRoute,
+  AdminAdminChangelogIdRoute: AdminAdminChangelogIdRoute,
   AdminAdminAttendanceIndexRoute: AdminAdminAttendanceIndexRoute,
+  AdminAdminChangelogIndexRoute: AdminAdminChangelogIndexRoute,
   AdminAdminClassesIndexRoute: AdminAdminClassesIndexRoute,
   AdminAdminCorrectionsIndexRoute: AdminAdminCorrectionsIndexRoute,
   AdminAdminGradebookIndexRoute: AdminAdminGradebookIndexRoute,
