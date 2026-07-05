@@ -2699,6 +2699,53 @@
       "type": "type"
     }
   },
+  "filesPage": {
+    "title": "Files",
+    "description": "All files across your organization",
+    "folders": {
+      "organization": "Shared files",
+      "live_room": "Online classes",
+      "live_session": "Live sessions",
+      "offline_room": "Offline classes",
+      "practice": "Practices",
+      "practice_submission": "Practice submissions",
+      "question": "Questions"
+    },
+    "fileCount": "{{count}} files",
+    "empty": "No files here yet",
+    "searchPlaceholder": "Search files…",
+    "columns": {
+      "name": "Name",
+      "size": "Size",
+      "type": "Type",
+      "createdAt": "Uploaded"
+    },
+    "actions": {
+      "download": "Download",
+      "share": "Share",
+      "delete": "Delete",
+      "upload": "Upload files"
+    },
+    "share": {
+      "title": "Share temporary link",
+      "description": "Anyone with this link can download the file until it expires.",
+      "expiry": "Link lifetime",
+      "expiry1h": "1 hour",
+      "expiry24h": "24 hours",
+      "expiry7d": "7 days",
+      "copy": "Copy link",
+      "copied": "Link copied"
+    },
+    "deleteConfirm": {
+      "title": "Delete file?",
+      "description": "“{{name}}” from {{folder}} will be permanently deleted."
+    },
+    "upload": {
+      "tooLarge": "File is larger than 200 MB",
+      "failed": "Upload failed",
+      "success": "Uploaded"
+    }
+  },
   "whatsNew": {
     "title": "What's New",
     "subtitle": "Latest updates and improvements",
