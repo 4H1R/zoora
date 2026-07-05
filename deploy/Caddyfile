@@ -31,6 +31,11 @@ s3.zoora.ir {
 	reverse_proxy 127.0.0.1:9000
 }
 
+console.zoora.ir {
+	import zoora_tls
+	reverse_proxy 127.0.0.1:9001
+}
+
 livekit.zoora.ir {
 	import zoora_tls
 	reverse_proxy 127.0.0.1:7880

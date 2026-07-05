@@ -211,6 +211,9 @@ services:
       RUSTFS_SECRET_KEY: "${S3_SECRET_KEY}"
       RUSTFS_EXTERNAL_ADDRESS: "https://s3.${DOMAIN}"
       RUSTFS_CORS_ALLOWED_ORIGINS: "https://app.${DOMAIN}"
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: "0.0.0.0:9001"
+      RUSTFS_CONSOLE_CORS_ALLOWED_ORIGINS: "https://console.${DOMAIN}"
       RUSTFS_LOG_LEVEL: info
     volumes:
       - "rustfs-data:/data"
@@ -221,9 +224,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    # Caddy proxies s3.<domain> here for presigned-URL traffic.
+    # Caddy proxies s3.<domain> here for presigned-URL traffic,
+    # console.<domain> to the admin console on 9001.
     ports:
       - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     # Traefik routing (re-enable with the traefik service; drop the ports above).
     # labels:
     #   - traefik.enable=true
