@@ -87,12 +87,30 @@ func (s *service) PresignUpload(ctx context.Context, dto domain.PresignUploadDTO
 	}, nil
 }
 
+// authorizeOrgAccess hides media belonging to another tenant. Platform-global
+// rows (nil OrganizationID, e.g. changelog assets) stay reachable by any
+// authenticated caller; admins bypass. Returns ErrNotFound rather than
+// ErrForbidden so cross-org probing can't confirm an ID exists.
+func authorizeOrgAccess(caller domain.Caller, m *domain.Media) error {
+	if m.OrganizationID == nil || caller.IsAdmin {
+		return nil
+	}
+	if caller.OrgID == nil || *caller.OrgID != *m.OrganizationID {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
 func (s *service) PresignDownload(ctx context.Context, id uuid.UUID) (*domain.PresignDownloadResponse, error) {
-	if _, ok := domain.CallerFromCtx(ctx); !ok {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
 		return nil, domain.ErrForbidden
 	}
 	m, err := s.repo.FindByID(ctx, id)
 	if err != nil {
+		return nil, err
+	}
+	if err := authorizeOrgAccess(caller, m); err != nil {
 		return nil, err
 	}
 	key := m.S3Key()
@@ -104,11 +122,18 @@ func (s *service) PresignDownload(ctx context.Context, id uuid.UUID) (*domain.Pr
 }
 
 func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*domain.Media, error) {
-	_, ok := domain.CallerFromCtx(ctx)
+	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	return s.repo.FindByID(ctx, id)
+	m, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if err := authorizeOrgAccess(caller, m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
@@ -121,6 +146,9 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	}
 	m, err := s.repo.FindByID(ctx, id)
 	if err != nil {
+		return err
+	}
+	if err := authorizeOrgAccess(caller, m); err != nil {
 		return err
 	}
 	// Drop the object first; if the row delete then fails the object is already
@@ -158,9 +186,19 @@ func (s *service) CleanupByModel(ctx context.Context, modelType string, modelID 
 }
 
 func (s *service) ListByModel(ctx context.Context, modelType string, modelID uuid.UUID, collection string) ([]domain.Media, error) {
-	_, ok := domain.CallerFromCtx(ctx)
+	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	return s.repo.ListByModel(ctx, modelType, modelID, collection)
+	items, err := s.repo.ListByModel(ctx, modelType, modelID, collection)
+	if err != nil {
+		return nil, err
+	}
+	visible := items[:0]
+	for _, m := range items {
+		if authorizeOrgAccess(caller, &m) == nil {
+			visible = append(visible, m)
+		}
+	}
+	return visible, nil
 }

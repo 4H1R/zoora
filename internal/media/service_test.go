@@ -191,6 +191,97 @@ func TestMediaPresignUploadRequiresCallerBeforeRepositoryWrite(t *testing.T) {
 	repo.AssertNotCalled(t, "Create")
 }
 
+func orgCtx(orgID uuid.UUID, perms ...string) context.Context {
+	return domain.WithCaller(context.Background(), domain.Caller{
+		UserID: uuid.New(), OrgID: &orgID, Permissions: perms,
+	})
+}
+
+func TestMediaOrgScopeHidesOtherTenants(t *testing.T) {
+	myOrg := uuid.New()
+	otherOrg := uuid.New()
+	mediaID := uuid.New()
+	foreign := &domain.Media{ID: mediaID, OrganizationID: &otherOrg, FileName: "leak.pdf"}
+
+	ctx := orgCtx(myOrg, string(domain.PermMediaDeleteAny))
+
+	t.Run("GetByID", func(t *testing.T) {
+		repo := &mediaRepoMock{}
+		svc := newMediaService(repo, &storageMock{})
+		repo.On("FindByID", ctx, mediaID).Return(foreign, nil)
+		_, err := svc.GetByID(ctx, mediaID)
+		assert.ErrorIs(t, err, domain.ErrNotFound)
+	})
+
+	t.Run("PresignDownload", func(t *testing.T) {
+		repo := &mediaRepoMock{}
+		store := &storageMock{}
+		svc := newMediaService(repo, store)
+		repo.On("FindByID", ctx, mediaID).Return(foreign, nil)
+		_, err := svc.PresignDownload(ctx, mediaID)
+		assert.ErrorIs(t, err, domain.ErrNotFound)
+		store.AssertNotCalled(t, "GeneratePresignedDownloadURL")
+	})
+
+	t.Run("Delete", func(t *testing.T) {
+		repo := &mediaRepoMock{}
+		store := &storageMock{}
+		svc := newMediaService(repo, store)
+		repo.On("FindByID", ctx, mediaID).Return(foreign, nil)
+		err := svc.Delete(ctx, mediaID)
+		assert.ErrorIs(t, err, domain.ErrNotFound)
+		repo.AssertNotCalled(t, "Delete")
+		store.AssertNotCalled(t, "DeleteObject")
+	})
+
+	t.Run("ListByModel filters foreign rows", func(t *testing.T) {
+		repo := &mediaRepoMock{}
+		svc := newMediaService(repo, &storageMock{})
+		modelID := uuid.New()
+		repo.On("ListByModel", ctx, "live_room", modelID, "").Return([]domain.Media{
+			{ID: uuid.New(), OrganizationID: &myOrg},
+			{ID: uuid.New(), OrganizationID: &otherOrg},
+			{ID: uuid.New(), OrganizationID: nil}, // platform-global stays visible
+		}, nil)
+		items, err := svc.ListByModel(ctx, "live_room", modelID, "")
+		assert.NoError(t, err)
+		assert.Len(t, items, 2)
+	})
+}
+
+func TestMediaOrgScopeAllowsOwnOrgGlobalAndAdmin(t *testing.T) {
+	myOrg := uuid.New()
+	mediaID := uuid.New()
+
+	t.Run("own org", func(t *testing.T) {
+		repo := &mediaRepoMock{}
+		svc := newMediaService(repo, &storageMock{})
+		ctx := orgCtx(myOrg)
+		repo.On("FindByID", ctx, mediaID).Return(&domain.Media{ID: mediaID, OrganizationID: &myOrg}, nil)
+		_, err := svc.GetByID(ctx, mediaID)
+		assert.NoError(t, err)
+	})
+
+	t.Run("platform-global row", func(t *testing.T) {
+		repo := &mediaRepoMock{}
+		svc := newMediaService(repo, &storageMock{})
+		ctx := orgCtx(myOrg)
+		repo.On("FindByID", ctx, mediaID).Return(&domain.Media{ID: mediaID}, nil)
+		_, err := svc.GetByID(ctx, mediaID)
+		assert.NoError(t, err)
+	})
+
+	t.Run("admin crosses orgs", func(t *testing.T) {
+		repo := &mediaRepoMock{}
+		svc := newMediaService(repo, &storageMock{})
+		ctx := mediaCtx(true)
+		other := uuid.New()
+		repo.On("FindByID", ctx, mediaID).Return(&domain.Media{ID: mediaID, OrganizationID: &other}, nil)
+		_, err := svc.GetByID(ctx, mediaID)
+		assert.NoError(t, err)
+	})
+}
+
 func TestMediaPresignUpload_StorageQuotaExceeded(t *testing.T) {
 	repo := &mediaRepoMock{}
 	orgID := uuid.New()
