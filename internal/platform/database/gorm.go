@@ -10,9 +10,9 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func NewConnection(databaseURL string, slogLogger *slog.Logger) (*gorm.DB, error) {
-	logLevel := logger.Warn
-	if slogLogger != nil {
+func NewConnection(databaseURL string, slogLogger *slog.Logger, logQueries bool) (*gorm.DB, error) {
+	logLevel := logger.Error
+	if logQueries {
 		logLevel = logger.Info
 	}
 

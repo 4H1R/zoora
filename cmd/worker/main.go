@@ -37,7 +37,7 @@ func main() {
 		log = logger.New(true)
 	}
 
-	db, err := database.NewConnection(cfg.DatabaseURL, log)
+	db, err := database.NewConnection(cfg.DatabaseURL, log, cfg.IsDevelopment())
 	if err != nil {
 		log.Error("failed to connect to database", "error", err)
 		os.Exit(1)
