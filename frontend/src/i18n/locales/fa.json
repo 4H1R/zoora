@@ -1,4 +1,9 @@
 {
+  "pwa": {
+    "updateTitle": "نسخهٔ جدید زورا در دسترس است.",
+    "updateAction": "بارگذاری مجدد",
+    "offlineReady": "زورا آمادهٔ کار به‌صورت آفلاین است."
+  },
   "comingSoon": {
     "status": "نسخهٔ بتای خصوصی — عرضه در ۲۰۲۶",
     "kicker": "کلاس‌های مجازی، از نو",
@@ -2461,12 +2466,32 @@
       "shareSlides": "اشتراک اسلاید",
       "stopSlides": "توقف اسلاید",
       "whiteboard": "وایت‌برد",
-      "stopWhiteboard": "توقف وایت‌برد"
+      "stopWhiteboard": "توقف وایت‌برد",
+      "startRecording": "شروع ضبط",
+      "stopRecording": "توقف ضبط"
+    },
+    "recording": {
+      "started": "ضبط شروع شد",
+      "stopped": "ضبط متوقف شد",
+      "startError": "شروع ضبط ناموفق بود",
+      "stopError": "توقف ضبط ناموفق بود",
+      "startDialog": {
+        "title": "شروع ضبط؟",
+        "description": "این کلاس ضبط و ذخیره می‌شود. ممکن است به شرکت‌کنندگان اطلاع داده شود که ضبط در حال انجام است."
+      },
+      "stopDialog": {
+        "title": "توقف ضبط؟",
+        "description": "ضبط پایان می‌یابد و ویدیو پردازش و ذخیره می‌شود. بعداً می‌توانید ضبط جدیدی شروع کنید."
+      }
     },
     "people": {
       "makePresenter": "ارائه‌دهنده کن",
       "makeViewer": "بیننده کن",
       "mute": "بی‌صدا",
+      "remove": "حذف",
+      "removed": "{{name}} از کلاس حذف شد",
+      "removeError": "حذف شرکت‌کننده ممکن نشد",
+      "youWereRemoved": "شما توسط میزبان از کلاس حذف شدید",
       "actions": "عملیات",
       "handRaised": "دست بالا",
       "raisedHands": "دست‌های بالا ({{count}})",
@@ -2476,6 +2501,20 @@
         "host": "میزبان",
         "presenter": "ارائه‌دهنده",
         "viewer": "بیننده"
+      },
+      "info": {
+        "view": "مشاهده جزئیات",
+        "title": "جزئیات شرکت‌کننده",
+        "device": "دستگاه",
+        "os": "سیستم‌عامل",
+        "browser": "مرورگر",
+        "network": "شبکه",
+        "unknown": "نامشخص",
+        "deviceType": {
+          "mobile": "موبایل",
+          "tablet": "تبلت",
+          "desktop": "دسکتاپ"
+        }
       }
     },
     "chat": {
@@ -2489,7 +2528,8 @@
       "slidesError": "بارگذاری اسلاید ناموفق بود",
       "pageOf": "{{page}} / {{total}}",
       "prevPage": "صفحه قبل",
-      "nextPage": "صفحه بعد"
+      "nextPage": "صفحه بعد",
+      "goToPage": "رفتن به صفحه"
     },
     "polls": {
       "comingSoon": "نظرسنجی‌ها به‌زودی",
@@ -2533,10 +2573,11 @@
       "ping": "پینگ",
       "jitter": "لرزش",
       "packetLoss": "افت بسته",
-      "bitrate": "نرخ داده",
       "ms": "میلی‌ثانیه",
       "kbps": "کیلوبیت/ث",
-      "na": "—"
+      "na": "—",
+      "downlink": "دانلود",
+      "uplink": "آپلود"
     }
   },
   "media": {

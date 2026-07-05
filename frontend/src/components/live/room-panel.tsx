@@ -26,12 +26,13 @@ interface RoomPanelProps {
   onSetRole: (identity: string, role: "presenter" | "viewer") => void
   onMute: (identity: string, trackSid: string) => void
   onLowerHand: (identity: string) => void
+  onRemove: (identity: string, name: string) => void
   polls: RoomPolls
   onVote: (value: string) => void
   answerPending: boolean
 }
 
-type TabsInnerProps = Pick<RoomPanelProps, "tab" | "setTab" | "chat" | "unread" | "states" | "isHost" | "liveId" | "onSetRole" | "onMute" | "onLowerHand" | "polls" | "onVote" | "answerPending">
+type TabsInnerProps = Pick<RoomPanelProps, "tab" | "setTab" | "chat" | "unread" | "states" | "isHost" | "liveId" | "onSetRole" | "onMute" | "onLowerHand" | "onRemove" | "polls" | "onVote" | "answerPending">
 
 function TabsInner({
   tab,
@@ -44,6 +45,7 @@ function TabsInner({
   onSetRole,
   onMute,
   onLowerHand,
+  onRemove,
   polls,
   onVote,
   answerPending,
@@ -84,6 +86,7 @@ function TabsInner({
           onSetRole={onSetRole}
           onMute={onMute}
           onLowerHand={onLowerHand}
+          onRemove={onRemove}
         />
       </TabsContent>
       <TabsContent value="polls" className="flex min-h-0 flex-1 flex-col">
@@ -99,7 +102,7 @@ function TabsInner({
   )
 }
 
-export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, isHost, liveId, onSetRole, onMute, onLowerHand, polls, onVote, answerPending }: RoomPanelProps) {
+export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, isHost, liveId, onSetRole, onMute, onLowerHand, onRemove, polls, onVote, answerPending }: RoomPanelProps) {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
   if (!open) return null
@@ -123,6 +126,7 @@ export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, is
             onSetRole={onSetRole}
             onMute={onMute}
             onLowerHand={onLowerHand}
+            onRemove={onRemove}
             polls={polls}
             onVote={onVote}
             answerPending={answerPending}
@@ -156,6 +160,7 @@ export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, is
         onSetRole={onSetRole}
         onMute={onMute}
         onLowerHand={onLowerHand}
+        onRemove={onRemove}
         polls={polls}
         onVote={onVote}
         answerPending={answerPending}

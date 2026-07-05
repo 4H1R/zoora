@@ -1,5 +1,5 @@
 import { useConnectionState, useParticipants } from "@livekit/components-react"
-import { ConnectionQuality, ConnectionState } from "livekit-client"
+import { ConnectionState } from "livekit-client"
 import { MonitorPlay, Users } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -7,7 +7,9 @@ import { useTranslation } from "react-i18next"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
-import { useConnectionStats, type ConnectionStats } from "./use-connection-stats"
+import { NetStatList, QUALITY_COLOR, SignalBars, qualityLabel } from "./connection-quality"
+import type { NetStats } from "./presence"
+import { useConnectionStats } from "./use-connection-stats"
 
 function formatElapsed(seconds: number): string {
   const h = Math.floor(seconds / 3600)
@@ -17,68 +19,9 @@ function formatElapsed(seconds: number): string {
   return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`
 }
 
-const QUALITY_BARS: Record<ConnectionQuality, number> = {
-  [ConnectionQuality.Excellent]: 3,
-  [ConnectionQuality.Good]: 2,
-  [ConnectionQuality.Poor]: 1,
-  [ConnectionQuality.Lost]: 0,
-  [ConnectionQuality.Unknown]: 0,
-}
-
-const QUALITY_COLOR: Record<ConnectionQuality, string> = {
-  [ConnectionQuality.Excellent]: "text-emerald-400",
-  [ConnectionQuality.Good]: "text-emerald-400",
-  [ConnectionQuality.Poor]: "text-amber-400",
-  [ConnectionQuality.Lost]: "text-red-400",
-  [ConnectionQuality.Unknown]: "text-muted-foreground",
-}
-
-function SignalBars({ quality }: { quality: ConnectionQuality }) {
-  const filled = QUALITY_BARS[quality] ?? 0
-  const color = QUALITY_COLOR[quality] ?? "text-muted-foreground"
-  const heights = ["h-1.5", "h-2.5", "h-3.5"]
-  return (
-    <span className="flex items-end gap-0.5" dir="ltr">
-      {heights.map((h, i) => (
-        <span
-          key={h}
-          className={cn(
-            "w-1 rounded-sm",
-            h,
-            i < filled ? cn(color, "bg-current") : "bg-current text-muted-foreground/25"
-          )}
-        />
-      ))}
-    </span>
-  )
-}
-
-function StatRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-4 text-xs">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-mono text-foreground" dir="ltr">
-        {value}
-      </span>
-    </div>
-  )
-}
-
-function ConnectionInfo({ stats }: { stats: ConnectionStats }) {
+function ConnectionInfo({ stats }: { stats: NetStats }) {
   const { t } = useTranslation()
-  const { quality, rtt, jitter, packetLoss, downKbps } = stats
-
-  const qualityLabel =
-    quality === ConnectionQuality.Excellent || quality === ConnectionQuality.Good
-      ? t("liveRoom.connection.good")
-      : quality === ConnectionQuality.Poor
-        ? t("liveRoom.connection.poor")
-        : quality === ConnectionQuality.Lost
-          ? t("liveRoom.connection.lost")
-          : t("liveRoom.connection.unknown")
-
-  const na = t("liveRoom.connection.na")
-  const fmtMs = (v: number | null) => (v == null ? na : `${v} ${t("liveRoom.connection.ms")}`)
+  const { quality } = stats
 
   return (
     <Popover>
@@ -92,27 +35,24 @@ function ConnectionInfo({ stats }: { stats: ConnectionStats }) {
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-foreground">{t("liveRoom.connection.title")}</span>
           <span className={cn("text-xs font-medium", QUALITY_COLOR[quality] ?? "text-muted-foreground")}>
-            {qualityLabel}
+            {qualityLabel(quality, t)}
           </span>
         </div>
-        <div className="space-y-1.5">
-          <StatRow label={t("liveRoom.connection.ping")} value={fmtMs(rtt)} />
-          <StatRow label={t("liveRoom.connection.jitter")} value={fmtMs(jitter)} />
-          <StatRow
-            label={t("liveRoom.connection.packetLoss")}
-            value={packetLoss == null ? na : `${packetLoss.toFixed(1)} %`}
-          />
-          <StatRow
-            label={t("liveRoom.connection.bitrate")}
-            value={downKbps == null ? na : `${downKbps} ${t("liveRoom.connection.kbps")}`}
-          />
-        </div>
+        <NetStatList net={stats} showUplink />
       </PopoverContent>
     </Popover>
   )
 }
 
-export function RoomHeader({ sessionName, className }: { sessionName: string; className?: string }) {
+export function RoomHeader({
+  sessionName,
+  className,
+  onOpenPeople,
+}: {
+  sessionName: string
+  className?: string
+  onOpenPeople?: () => void
+}) {
   const { t } = useTranslation()
   const participants = useParticipants()
   const state = useConnectionState()
@@ -162,12 +102,18 @@ export function RoomHeader({ sessionName, className }: { sessionName: string; cl
 
         {connected && <ConnectionInfo stats={stats} />}
 
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground">
+        <button
+          type="button"
+          onClick={onOpenPeople}
+          aria-label={t("liveRoom.controls.people")}
+          title={t("liveRoom.controls.people")}
+          className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted/70"
+        >
           <Users className="size-3.5 text-muted-foreground" />
           <span className="font-mono" dir="ltr">
             {participants.length}
           </span>
-        </span>
+        </button>
 
         <span className="hidden rounded-full bg-muted px-2.5 py-1 font-mono text-xs text-muted-foreground sm:inline-block" dir="ltr">
           {formatElapsed(elapsed)}

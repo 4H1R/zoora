@@ -51,6 +51,10 @@ func (m *mockMediaSvc) ListByModel(ctx context.Context, modelType string, modelI
 	return items, a.Error(1)
 }
 
+func (m *mockMediaSvc) CleanupByModel(ctx context.Context, modelType string, modelID uuid.UUID, collection string) error {
+	return m.Called(ctx, modelType, modelID, collection).Error(0)
+}
+
 func newMediaRouter(t *testing.T) (*gin.Engine, *mockMediaSvc) {
 	t.Helper()
 	gin.SetMode(gin.TestMode)

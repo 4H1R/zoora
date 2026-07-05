@@ -13,6 +13,7 @@ import (
 	"github.com/4H1R/zoora/internal/config"
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/livesessions"
+	"github.com/4H1R/zoora/internal/media"
 	"github.com/4H1R/zoora/internal/offlines"
 	"github.com/4H1R/zoora/internal/orgsettings"
 	"github.com/4H1R/zoora/internal/platform/authz"
@@ -20,6 +21,7 @@ import (
 	lk "github.com/4H1R/zoora/internal/platform/livekit"
 	"github.com/4H1R/zoora/internal/platform/logger"
 	"github.com/4H1R/zoora/internal/platform/queue"
+	"github.com/4H1R/zoora/internal/platform/storage"
 )
 
 func main() {
@@ -89,6 +91,15 @@ func main() {
 		orgSettingsService, authzResolver, log,
 	)
 	queueServer.HandleFunc(domain.TypeAttendanceAutoMark, attendance.NewAutoMarkHandler(attendanceService))
+
+	storageClient, err := storage.NewClient(cfg, log)
+	if err != nil {
+		log.Error("failed to initialize storage client", "error", err)
+		os.Exit(1)
+	}
+	mediaRepo := media.NewRepository(db)
+	mediaService := media.NewService(mediaRepo, storageClient, log)
+	queueServer.HandleFunc(domain.TypeMediaCleanup, media.NewCleanupHandler(mediaService))
 
 	// Periodic safety net for missed LiveKit webhooks: re-scan for active rooms
 	// whose host went stale and close the ones LiveKit confirms are host-less.

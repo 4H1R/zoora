@@ -285,6 +285,9 @@ type LiveSessionService interface {
 
 	SetParticipantRole(ctx context.Context, roomID uuid.UUID, identity string, dto SetParticipantRoleDTO) (*LiveParticipant, error)
 	MuteParticipant(ctx context.Context, roomID uuid.UUID, identity string, dto MuteParticipantDTO) error
+	// RemoveParticipant ejects a participant from the room. Host-only; a host
+	// may not remove another host or themselves.
+	RemoveParticipant(ctx context.Context, roomID uuid.UUID, identity string) error
 	SetHand(ctx context.Context, roomID uuid.UUID, dto SetHandDTO) (*LiveParticipant, error)
 	SetParticipantHand(ctx context.Context, roomID uuid.UUID, identity string, dto SetHandDTO) (*LiveParticipant, error)
 

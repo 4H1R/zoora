@@ -1,5 +1,7 @@
 import { useTranslation } from "react-i18next"
 
+import { resolveOptionLabel } from "../poll-labels"
+
 interface PollBarsProps {
   options: { label: string; value: string }[]
   counts: Record<string, number>
@@ -15,10 +17,11 @@ export function PollBars({ options, counts, total }: PollBarsProps) {
       {options.map((opt) => {
         const count = counts[opt.value] ?? 0
         const pct = total > 0 ? Math.round((count / total) * 100) : 0
+        const label = resolveOptionLabel(opt.value, opt.label, t)
         return (
           <div key={opt.value} className="flex flex-col gap-1">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{opt.label}</span>
+              <span>{label}</span>
               <span className="font-mono text-muted-foreground">
                 {t("liveRoom.polls.votes", { count })}
               </span>
@@ -29,7 +32,7 @@ export function PollBars({ options, counts, total }: PollBarsProps) {
               aria-valuenow={pct}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label={opt.label}
+              aria-label={label}
             >
               <div
                 className="absolute inset-y-0 start-0 rounded-sm bg-primary transition-all duration-500"

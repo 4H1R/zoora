@@ -1,4 +1,9 @@
 {
+  "pwa": {
+    "updateTitle": "A new version of Zoora is available.",
+    "updateAction": "Reload",
+    "offlineReady": "Zoora is ready to work offline."
+  },
   "comingSoon": {
     "status": "In private beta — launching 2026",
     "kicker": "Virtual classrooms, reimagined",
@@ -2461,12 +2466,32 @@
       "shareSlides": "Share slides",
       "stopSlides": "Stop slides",
       "whiteboard": "Whiteboard",
-      "stopWhiteboard": "Stop whiteboard"
+      "stopWhiteboard": "Stop whiteboard",
+      "startRecording": "Start recording",
+      "stopRecording": "Stop recording"
+    },
+    "recording": {
+      "started": "Recording started",
+      "stopped": "Recording stopped",
+      "startError": "Couldn't start recording",
+      "stopError": "Couldn't stop recording",
+      "startDialog": {
+        "title": "Start recording?",
+        "description": "This class will be recorded and saved. Participants may be notified that recording is in progress."
+      },
+      "stopDialog": {
+        "title": "Stop recording?",
+        "description": "Recording will end and the video will be processed and saved. You can start a new recording later."
+      }
     },
     "people": {
       "makePresenter": "Make presenter",
       "makeViewer": "Make viewer",
       "mute": "Mute",
+      "remove": "Remove",
+      "removed": "{{name}} was removed from the class",
+      "removeError": "Couldn't remove participant",
+      "youWereRemoved": "You were removed from the class by the host",
       "actions": "Actions",
       "handRaised": "Hand raised",
       "raisedHands": "Raised hands ({{count}})",
@@ -2476,6 +2501,20 @@
         "host": "Host",
         "presenter": "Presenter",
         "viewer": "Viewer"
+      },
+      "info": {
+        "view": "View details",
+        "title": "Participant details",
+        "device": "Device",
+        "os": "OS",
+        "browser": "Browser",
+        "network": "Network",
+        "unknown": "Unknown",
+        "deviceType": {
+          "mobile": "Mobile",
+          "tablet": "Tablet",
+          "desktop": "Desktop"
+        }
       }
     },
     "chat": {
@@ -2489,7 +2528,8 @@
       "slidesError": "Couldn't load slides",
       "pageOf": "{{page}} / {{total}}",
       "prevPage": "Previous page",
-      "nextPage": "Next page"
+      "nextPage": "Next page",
+      "goToPage": "Go to page"
     },
     "polls": {
       "comingSoon": "Polls are coming soon",
@@ -2533,10 +2573,11 @@
       "ping": "Ping",
       "jitter": "Jitter",
       "packetLoss": "Packet loss",
-      "bitrate": "Bitrate",
       "ms": "ms",
       "kbps": "kbps",
-      "na": "—"
+      "na": "—",
+      "downlink": "Download",
+      "uplink": "Upload"
     }
   },
   "media": {

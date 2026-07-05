@@ -60,6 +60,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		authed.GET("/live-rooms/:id/participants", perm(domain.PermLiveSessionsView), idParam, h.ListParticipants)
 		authed.PUT("/live-rooms/:id/participants/:identity/role", perm(domain.PermLiveSessionsJoin), idParam, h.SetParticipantRole)
 		authed.POST("/live-rooms/:id/participants/:identity/mute", perm(domain.PermLiveSessionsJoin), idParam, h.MuteParticipant)
+		authed.DELETE("/live-rooms/:id/participants/:identity", perm(domain.PermLiveSessionsJoin), idParam, h.RemoveParticipant)
 		authed.POST("/live-rooms/:id/hand", perm(domain.PermLiveSessionsJoin), idParam, h.SetHand)
 		authed.PUT("/live-rooms/:id/participants/:identity/hand", perm(domain.PermLiveSessionsJoin), idParam, h.SetParticipantHand)
 		authed.POST("/live-rooms/:id/recordings", perm(domain.PermLiveSessionsManage), idParam, h.StartRecording)
@@ -414,6 +415,28 @@ func (h *Handler) MuteParticipant(c *gin.Context) {
 		return
 	}
 	if err := h.svc.MuteParticipant(c.Request.Context(), httpx.UUIDParam(c, "id"), c.Param("identity"), dto); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, nil)
+}
+
+// RemoveParticipant ejects a participant from a live room.
+// @Summary Remove participant
+// @Description Host-only. Ejects a participant from the room. A host cannot remove another host or themselves.
+// @Tags LiveSessions
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "LiveRoom UUID"
+// @Param identity path string true "Participant identity"
+// @Success 200 {object} domain.Response
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 409 {object} domain.Response{error=domain.ErrorBody}
+// @Router /live-rooms/{id}/participants/{identity} [delete]
+func (h *Handler) RemoveParticipant(c *gin.Context) {
+	if err := h.svc.RemoveParticipant(c.Request.Context(), httpx.UUIDParam(c, "id"), c.Param("identity")); err != nil {
 		_ = c.Error(err)
 		return
 	}

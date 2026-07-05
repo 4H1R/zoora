@@ -1,5 +1,6 @@
 CREATE TABLE media (
     id              UUID PRIMARY KEY DEFAULT uuidv7(),
+    organization_id UUID         REFERENCES organizations (id) ON DELETE CASCADE,
     model_type      VARCHAR(100) NOT NULL,
     model_id        UUID         NOT NULL,
     collection_name VARCHAR(100) NOT NULL DEFAULT '',
@@ -14,5 +15,6 @@ CREATE TABLE media (
     updated_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX idx_media_organization ON media (organization_id);
 CREATE INDEX idx_media_model ON media (model_type, model_id);
 CREATE INDEX idx_media_collection ON media (model_type, model_id, collection_name);

@@ -20,6 +20,8 @@ var (
 	ErrInvalidParticipantRole = errors.New("invalid participant role")
 	ErrParticipantNotFound    = errors.New("participant not found")
 	ErrCannotChangeHostRole   = errors.New("cannot change the host role")
+	ErrCannotRemoveHost       = errors.New("cannot remove a host from the room")
+	ErrCannotRemoveSelf       = errors.New("cannot remove yourself from the room")
 	ErrWhiteboardNotFound     = errors.New("whiteboard not found")
 )
 
@@ -73,6 +75,10 @@ func MapError(err error) (int, string) {
 		return http.StatusUnprocessableEntity, "INVALID_PARTICIPANT_ROLE"
 	case errors.Is(err, ErrCannotChangeHostRole):
 		return http.StatusConflict, "CANNOT_CHANGE_HOST_ROLE"
+	case errors.Is(err, ErrCannotRemoveHost):
+		return http.StatusConflict, "CANNOT_REMOVE_HOST"
+	case errors.Is(err, ErrCannotRemoveSelf):
+		return http.StatusConflict, "CANNOT_REMOVE_SELF"
 	case errors.Is(err, ErrWhiteboardNotFound):
 		return http.StatusNotFound, "WHITEBOARD_NOT_FOUND"
 	case errors.Is(err, ErrValidation):

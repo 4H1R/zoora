@@ -30,6 +30,7 @@ type LiveKitClient interface {
 	ListParticipants(ctx context.Context, roomName string) ([]*lkproto.ParticipantInfo, error)
 	UpdateParticipant(ctx context.Context, roomName, identity, metadata string, sources []lkproto.TrackSource) error
 	MutePublishedTrack(ctx context.Context, roomName, identity, trackSID string, muted bool) error
+	RemoveParticipant(ctx context.Context, roomName, identity string) error
 	SendData(ctx context.Context, roomName string, payload []byte, destinationIdentities []string) error
 	PublicURL() string
 }
@@ -476,6 +477,7 @@ func (s *service) endRoomInternal(ctx context.Context, room *domain.LiveRoom) (*
 	}
 
 	s.enqueueAutoMark(ctx, room)
+	s.enqueueSlidesCleanup(ctx, room)
 
 	return room, nil
 }
@@ -501,6 +503,27 @@ func (s *service) enqueueAutoMark(ctx context.Context, room *domain.LiveRoom) {
 	}
 	if _, err := s.queue.Enqueue(asynq.NewTask(domain.TypeAttendanceAutoMark, payload)); err != nil {
 		s.logger.Error("auto-mark enqueue", "room_id", room.ID.String(), "error", err)
+	}
+}
+
+// enqueueSlidesCleanup schedules deletion of the slide PDFs the host shared into
+// this room (media rows + S3 objects). Best-effort: failures are logged and
+// never block room teardown.
+func (s *service) enqueueSlidesCleanup(ctx context.Context, room *domain.LiveRoom) {
+	if s.queue == nil {
+		return
+	}
+	payload, err := json.Marshal(domain.MediaCleanupPayload{
+		ModelType:      domain.MediaModelLiveRoom,
+		ModelID:        room.ID,
+		CollectionName: domain.MediaCollectionSlides,
+	})
+	if err != nil {
+		s.logger.Error("slides cleanup enqueue: marshal payload", "room_id", room.ID.String(), "error", err)
+		return
+	}
+	if _, err := s.queue.Enqueue(asynq.NewTask(domain.TypeMediaCleanup, payload)); err != nil {
+		s.logger.Error("slides cleanup enqueue", "room_id", room.ID.String(), "error", err)
 	}
 }
 
@@ -622,8 +645,16 @@ func (s *service) StartRecording(ctx context.Context, roomID uuid.UUID) (*domain
 		return nil, err
 	}
 
-	s3Path := fmt.Sprintf("recordings/%s/%s.mp4", room.ID.String(), uuid.New().String())
-	egressID, err := s.livekit.StartRecording(ctx, room.LiveKitRoomName, s3Path)
+	// Namespace recording objects per tenant (orgs/{org_id}/…) so a single
+	// bucket isolates each organization's files by key prefix, matching the
+	// media object layout.
+	s3Path := fmt.Sprintf("orgs/%s/recordings/%s/%s.mp4", class.OrganizationID.String(), room.ID.String(), uuid.New().String())
+	// Bound the egress start: if no egress worker is available the LiveKit RPC
+	// blocks until the client gives up, which surfaces to the browser as a 502.
+	// A deadline turns that into a clean, fast error instead.
+	startCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	egressID, err := s.livekit.StartRecording(startCtx, room.LiveKitRoomName, s3Path)
 	if err != nil {
 		return nil, fmt.Errorf("livesessions.service.StartRecording: %w", err)
 	}
@@ -977,6 +1008,7 @@ func (s *service) OnEgressEnded(ctx context.Context, result domain.EgressResult)
 const (
 	roomEventRoleChanged = "role_changed"
 	roomEventHand        = "hand"
+	roomEventRemoved     = "removed"
 )
 
 // participantMetadata encodes a participant's room role into the LiveKit
@@ -1081,6 +1113,53 @@ func (s *service) MuteParticipant(ctx context.Context, roomID uuid.UUID, identit
 		return domain.ErrForbidden
 	}
 	return s.livekit.MutePublishedTrack(ctx, room.LiveKitRoomName, identity, dto.TrackSID, dto.Muted)
+}
+
+func (s *service) RemoveParticipant(ctx context.Context, roomID uuid.UUID, identity string) error {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return domain.ErrForbidden
+	}
+	room, _, class, err := s.loadRoomWithClass(ctx, roomID)
+	if err != nil {
+		return err
+	}
+	if !s.canManageRoom(caller, class) {
+		return domain.ErrForbidden
+	}
+
+	// A host may not eject a fellow host (hosts are immutable for the session),
+	// nor themselves — mirrors the SetParticipantRole/mute guardrails.
+	if identity == caller.UserID.String() {
+		return domain.ErrCannotRemoveSelf
+	}
+	target, err := s.participants.GetActiveParticipant(ctx, roomID, identity)
+	if err != nil {
+		return err
+	}
+	if target.Role == domain.ParticipantRoleHost {
+		return domain.ErrCannotRemoveHost
+	}
+
+	// Disconnect at LiveKit first (idempotent — a NotFound is swallowed), then
+	// close the participation row. The participant_left webhook is the backstop
+	// but we mark left here so the DB is honest even without webhook delivery.
+	if err := s.livekit.RemoveParticipant(ctx, room.LiveKitRoomName, identity); err != nil {
+		return fmt.Errorf("livesessions.service.RemoveParticipant livekit: %w", err)
+	}
+	if err := s.participants.MarkLeftByIdentity(ctx, roomID, identity, time.Now()); err != nil {
+		return fmt.Errorf("livesessions.service.RemoveParticipant persist: %w", err)
+	}
+
+	s.broadcastRoomEvent(ctx, room.LiveKitRoomName, roomEventRemoved, map[string]any{
+		"identity": identity,
+	})
+	s.logger.Info("host removed participant from live room",
+		"room_id", roomID.String(),
+		"identity", identity,
+		"by_user_id", caller.UserID.String(),
+	)
+	return nil
 }
 
 func (s *service) SetHand(ctx context.Context, roomID uuid.UUID, dto domain.SetHandDTO) (*domain.LiveParticipant, error) {

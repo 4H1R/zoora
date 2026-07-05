@@ -1,6 +1,7 @@
 import { useParticipants } from "@livekit/components-react"
 import { Track, type Participant } from "livekit-client"
-import { ArrowUp, Crown, Eye, Hand, Mic, MicOff, MonitorUp, MoreVertical, Users, Video, VideoOff } from "lucide-react"
+import { ArrowUp, Crown, Eye, Hand, Info, Mic, MicOff, MonitorUp, MoreVertical, UserX, Users, Video, VideoOff } from "lucide-react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -9,11 +10,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 
 import type { RoomRole } from "../room-role"
+import { ParticipantInfoDialog } from "./participant-info-dialog"
 
 interface PeoplePanelProps {
   states: Record<string, { role: RoomRole; handRaised: boolean; handRaisedAt?: number }>
@@ -21,6 +24,7 @@ interface PeoplePanelProps {
   onSetRole: (identity: string, role: "presenter" | "viewer") => void
   onMute: (identity: string, trackSid: string) => void
   onLowerHand: (identity: string) => void
+  onRemove: (identity: string, name: string) => void
 }
 
 // The backend stamps each participant's room role into LiveKit metadata at join
@@ -64,9 +68,11 @@ function RoleBadge({ role }: { role: RoomRole }) {
   )
 }
 
-export function PeoplePanel({ states, isHost, onSetRole, onMute, onLowerHand }: PeoplePanelProps) {
+export function PeoplePanel({ states, isHost, onSetRole, onMute, onLowerHand, onRemove }: PeoplePanelProps) {
   const { t } = useTranslation()
   const participants = useParticipants()
+  // Host-only: clicking a participant opens a details dialog (device, OS, network).
+  const [selected, setSelected] = useState<Participant | null>(null)
 
   const raisedQueue = participants
     .filter((p) => states[p.identity]?.handRaised)
@@ -76,6 +82,7 @@ export function PeoplePanel({ states, isHost, onSetRole, onMute, onLowerHand }: 
     )
 
   return (
+    <>
     <ScrollArea className="min-h-0 flex-1">
       {isHost && raisedQueue.length > 0 && (
         <div className="border-b border-border bg-primary/5 px-3 py-3">
@@ -151,7 +158,7 @@ export function PeoplePanel({ states, isHost, onSetRole, onMute, onLowerHand }: 
                   )}
                   {p.isMicrophoneEnabled ? <Mic className="size-4" /> : <MicOff className="size-4 text-red-400/80" />}
                   {p.isCameraEnabled ? <Video className="size-4" /> : <VideoOff className="size-4 text-muted-foreground" />}
-                  {canManage && (
+                  {isHost && (
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         render={
@@ -166,24 +173,47 @@ export function PeoplePanel({ states, isHost, onSetRole, onMute, onLowerHand }: 
                           </button>
                         }
                       />
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() =>
-                            onSetRole(p.identity, participantRole === "presenter" ? "viewer" : "presenter")
-                          }
-                        >
-                          {participantRole === "presenter"
-                            ? t("liveRoom.people.makeViewer")
-                            : t("liveRoom.people.makePresenter")}
+                      <DropdownMenuContent align="end" className="min-w-44 [&_[role=menuitem]]:whitespace-nowrap">
+                        <DropdownMenuItem onClick={() => setSelected(p)}>
+                          <Info className="size-4" />
+                          {t("liveRoom.people.info.view")}
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          disabled={!micSid}
-                          onClick={() => {
-                            if (micSid) onMute(p.identity, micSid)
-                          }}
-                        >
-                          {t("liveRoom.people.mute")}
-                        </DropdownMenuItem>
+                        {canManage && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() =>
+                                onSetRole(p.identity, participantRole === "presenter" ? "viewer" : "presenter")
+                              }
+                            >
+                              {participantRole === "presenter" ? (
+                                <Eye className="size-4" />
+                              ) : (
+                                <ArrowUp className="size-4" />
+                              )}
+                              {participantRole === "presenter"
+                                ? t("liveRoom.people.makeViewer")
+                                : t("liveRoom.people.makePresenter")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              disabled={!micSid}
+                              onClick={() => {
+                                if (micSid) onMute(p.identity, micSid)
+                              }}
+                            >
+                              <MicOff className="size-4" />
+                              {t("liveRoom.people.mute")}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              variant="destructive"
+                              onClick={() => onRemove(p.identity, name)}
+                            >
+                              <UserX className="size-4" />
+                              {t("liveRoom.people.remove")}
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}
@@ -194,5 +224,11 @@ export function PeoplePanel({ states, isHost, onSetRole, onMute, onLowerHand }: 
         </ul>
       )}
     </ScrollArea>
+    <ParticipantInfoDialog
+      participant={selected}
+      role={selected ? resolveRole(selected, states) : "viewer"}
+      onClose={() => setSelected(null)}
+    />
+    </>
   )
 }

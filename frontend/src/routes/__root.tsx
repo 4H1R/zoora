@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next"
 
 import { ErrorScreen } from "@/components/error-screen"
 import { NotFound } from "@/components/not-found"
+import { PWAUpdater } from "@/components/pwa-updater"
 import { DirectionProvider } from "@/components/ui/direction"
 import { Toaster } from "@/components/ui/sonner"
 import { languages } from "@/i18n"
@@ -44,6 +45,7 @@ function RootComponent() {
       <HeadContent />
       <Outlet />
       <Toaster />
+      <PWAUpdater />
       {/*<ReactQueryDevtools buttonPosition="bottom-left" />
       <TanStackRouterDevtools position="bottom-right" />*/}
     </DirectionProvider>

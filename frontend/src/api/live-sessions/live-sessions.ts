@@ -25,6 +25,10 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  DeleteLiveRoomsIdParticipantsIdentity401,
+  DeleteLiveRoomsIdParticipantsIdentity403,
+  DeleteLiveRoomsIdParticipantsIdentity404,
+  DeleteLiveRoomsIdParticipantsIdentity409,
   GetLiveRooms200,
   GetLiveRooms401,
   GetLiveRooms403,
@@ -1251,7 +1255,113 @@ export function useGetLiveRoomsIdParticipants<TData = Awaited<ReturnType<typeof 
 
 
 
-export type putLiveRoomsIdParticipantsIdentityHandResponse200 = {
+export type deleteLiveRoomsIdParticipantsIdentityResponse200 = {
+  data: GithubCom4H1RZooraInternalDomainResponse
+  status: 200
+}
+
+export type deleteLiveRoomsIdParticipantsIdentityResponse401 = {
+  data: DeleteLiveRoomsIdParticipantsIdentity401
+  status: 401
+}
+
+export type deleteLiveRoomsIdParticipantsIdentityResponse403 = {
+  data: DeleteLiveRoomsIdParticipantsIdentity403
+  status: 403
+}
+
+export type deleteLiveRoomsIdParticipantsIdentityResponse404 = {
+  data: DeleteLiveRoomsIdParticipantsIdentity404
+  status: 404
+}
+
+export type deleteLiveRoomsIdParticipantsIdentityResponse409 = {
+  data: DeleteLiveRoomsIdParticipantsIdentity409
+  status: 409
+}
+
+export type deleteLiveRoomsIdParticipantsIdentityResponseSuccess = (deleteLiveRoomsIdParticipantsIdentityResponse200) & {
+  headers: Headers;
+};
+export type deleteLiveRoomsIdParticipantsIdentityResponseError = (deleteLiveRoomsIdParticipantsIdentityResponse401 | deleteLiveRoomsIdParticipantsIdentityResponse403 | deleteLiveRoomsIdParticipantsIdentityResponse404 | deleteLiveRoomsIdParticipantsIdentityResponse409) & {
+  headers: Headers;
+};
+
+export type deleteLiveRoomsIdParticipantsIdentityResponse = (deleteLiveRoomsIdParticipantsIdentityResponseSuccess | deleteLiveRoomsIdParticipantsIdentityResponseError)
+
+export const getDeleteLiveRoomsIdParticipantsIdentityUrl = (id: string,
+    identity: string,) => {
+
+
+
+
+  return `/live-rooms/${id}/participants/${identity}`
+}
+
+/**
+ * Host-only. Ejects a participant from the room. A host cannot remove another host or themselves.
+ * @summary Remove participant
+ */
+export const deleteLiveRoomsIdParticipantsIdentity = async (id: string,
+    identity: string, options?: RequestInit): Promise<deleteLiveRoomsIdParticipantsIdentityResponse> => {
+
+  return customInstance<deleteLiveRoomsIdParticipantsIdentityResponse>(getDeleteLiveRoomsIdParticipantsIdentityUrl(id,identity),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteLiveRoomsIdParticipantsIdentityMutationOptions = <TError = ErrorType<DeleteLiveRoomsIdParticipantsIdentity401 | DeleteLiveRoomsIdParticipantsIdentity403 | DeleteLiveRoomsIdParticipantsIdentity404 | DeleteLiveRoomsIdParticipantsIdentity409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLiveRoomsIdParticipantsIdentity>>, TError,{id: string;identity: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteLiveRoomsIdParticipantsIdentity>>, TError,{id: string;identity: string}, TContext> => {
+
+const mutationKey = ['deleteLiveRoomsIdParticipantsIdentity'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteLiveRoomsIdParticipantsIdentity>>, {id: string;identity: string}> = (props) => {
+          const {id,identity} = props ?? {};
+
+          return  deleteLiveRoomsIdParticipantsIdentity(id,identity,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteLiveRoomsIdParticipantsIdentityMutationResult = NonNullable<Awaited<ReturnType<typeof deleteLiveRoomsIdParticipantsIdentity>>>
+
+    export type DeleteLiveRoomsIdParticipantsIdentityMutationError = ErrorType<DeleteLiveRoomsIdParticipantsIdentity401 | DeleteLiveRoomsIdParticipantsIdentity403 | DeleteLiveRoomsIdParticipantsIdentity404 | DeleteLiveRoomsIdParticipantsIdentity409>
+
+    /**
+ * @summary Remove participant
+ */
+export const useDeleteLiveRoomsIdParticipantsIdentity = <TError = ErrorType<DeleteLiveRoomsIdParticipantsIdentity401 | DeleteLiveRoomsIdParticipantsIdentity403 | DeleteLiveRoomsIdParticipantsIdentity404 | DeleteLiveRoomsIdParticipantsIdentity409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLiveRoomsIdParticipantsIdentity>>, TError,{id: string;identity: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteLiveRoomsIdParticipantsIdentity>>,
+        TError,
+        {id: string;identity: string},
+        TContext
+      > => {
+      return useMutation(getDeleteLiveRoomsIdParticipantsIdentityMutationOptions(options), queryClient);
+    }
+    export type putLiveRoomsIdParticipantsIdentityHandResponse200 = {
   data: PutLiveRoomsIdParticipantsIdentityHand200
   status: 200
 }

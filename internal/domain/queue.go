@@ -6,6 +6,7 @@ const (
 	TypeLiveSessionAutoClose     = "livesession:auto-close"
 	TypeLiveSessionCloseIfNoHost = "livesession:close-if-no-host"
 	TypeAttendanceAutoMark       = "attendance:auto-mark"
+	TypeMediaCleanup             = "media:cleanup"
 )
 
 // LiveSessionCloseIfNoHostPayload is the Asynq payload for the delayed,
@@ -21,4 +22,13 @@ type LiveSessionCloseIfNoHostPayload struct {
 type AttendanceAutoMarkPayload struct {
 	ClassID   uuid.UUID `json:"class_id"`
 	SessionID uuid.UUID `json:"session_id"`
+}
+
+// MediaCleanupPayload is the Asynq payload for purging a polymorphic media
+// collection (rows + underlying S3 objects). Enqueued, for example, when a
+// live room finishes to drop the slides the host shared.
+type MediaCleanupPayload struct {
+	ModelType      string    `json:"model_type"`
+	ModelID        uuid.UUID `json:"model_id"`
+	CollectionName string    `json:"collection_name"`
 }

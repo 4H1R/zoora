@@ -3,6 +3,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import tailwindcss from '@tailwindcss/vite'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -17,6 +18,65 @@ export default defineConfig({
     react({
       babel: {
         plugins: ['babel-plugin-react-compiler'],
+      },
+    }),
+    VitePWA({
+      // 'prompt' — we surface an in-app toast (see src/pwa.ts) instead of
+      // silently reloading, so a live meeting/recording is never interrupted.
+      registerType: 'prompt',
+      // Registration is wired manually via virtual:pwa-register in src/pwa.ts.
+      injectRegister: null,
+      // Cache the app shell + hashed static assets. Fonts (woff2) included so
+      // Geist/Vazirmatn render offline.
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
+        // The live-room bundle (livekit + tldraw + pdfjs) is ~2.7 MB and lazily
+        // loaded only when entering a room. Keep it out of the install-time
+        // precache — the runtime rule below caches it on first use instead.
+        globIgnores: ['**/_liveId-*.js'],
+        // SPA fallback: unmatched navigations serve index.html so deep links
+        // work offline. Never intercept the API or LiveKit signalling paths.
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api/, /^\/rtc/],
+        // Never cache auth'd API responses. Hashed JS/CSS chunks are
+        // immutable, so cache them stale-while-revalidate as they're requested
+        // — covers the excluded live-room chunk and any future big splits.
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) =>
+              request.destination === "script" ||
+              request.destination === "style" ||
+              request.destination === "worker",
+            handler: "StaleWhileRevalidate",
+            options: { cacheName: "app-assets" },
+          },
+        ],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+      },
+      includeAssets: ['favicon.svg', 'favicon-32.png', 'apple-touch-icon.png'],
+      manifest: {
+        name: 'Zoora — Virtual Classrooms & Video Meetings',
+        short_name: 'Zoora',
+        description:
+          'Run live online classes, video meetings, and recordings on one secure multi-tenant platform.',
+        theme_color: '#16a34a',
+        background_color: '#ffffff',
+        display: 'standalone',
+        orientation: 'any',
+        start_url: '/',
+        scope: '/',
+        categories: ['education', 'productivity', 'business'],
+        icons: [
+          { src: '/pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
+      },
+      // Keep the SW out of dev so it never shadows Vite HMR or the /api and
+      // /rtc proxies.
+      devOptions: {
+        enabled: false,
       },
     }),
   ],

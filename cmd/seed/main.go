@@ -318,6 +318,19 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 			}
 			ou.students = append(ou.students, user1)
 			counts.Users++
+
+			// Fixed user2 — second debug student in Zoora Demo org
+			user2 := factory.NewUser(org.ID, func(u *domain.User) {
+				u.OrganizationID = &org.ID
+				u.Username = "user2"
+				u.Name = factory.T("User Two", "کاربر دو")
+				u.RoleID = &studentRole.ID
+			})
+			if err := db.WithContext(ctx).Create(user2).Error; err != nil {
+				return nil, fmt.Errorf("creating user2: %w", err)
+			}
+			ou.students = append(ou.students, user2)
+			counts.Users++
 		}
 
 		teacher := factory.NewUser(org.ID, func(u *domain.User) {
@@ -345,17 +358,29 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 		usersByOrg[org.ID] = ou
 	}
 
-	// 6. Media — avatars for each user
-	allUsers := []*domain.User{admin}
-	for _, org := range orgs {
-		ou := usersByOrg[org.ID]
-		allUsers = append(allUsers, ou.teachers...)
-		allUsers = append(allUsers, ou.students...)
+	// 6. Media — avatars for each user. Media objects are tenant-namespaced by
+	// organization_id (S3 key prefix orgs/{org_id}/…), so carry each user's org
+	// through to the media row. The platform admin belongs to no org (nil).
+	type avatarOwner struct {
+		user  *domain.User
+		orgID *uuid.UUID
 	}
-	for _, u := range allUsers {
+	avatarOwners := []avatarOwner{{user: admin, orgID: nil}}
+	for _, org := range orgs {
+		orgID := org.ID
+		ou := usersByOrg[org.ID]
+		for _, t := range ou.teachers {
+			avatarOwners = append(avatarOwners, avatarOwner{user: t, orgID: &orgID})
+		}
+		for _, st := range ou.students {
+			avatarOwners = append(avatarOwners, avatarOwner{user: st, orgID: &orgID})
+		}
+	}
+	for _, ao := range avatarOwners {
 		m := factory.NewMedia(func(m *domain.Media) {
+			m.OrganizationID = ao.orgID
 			m.ModelType = "user"
-			m.ModelID = u.ID
+			m.ModelID = ao.user.ID
 			m.CollectionName = "avatar"
 		})
 		if err := db.WithContext(ctx).Create(m).Error; err != nil {
@@ -396,7 +421,9 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 					return nil, fmt.Errorf("creating question: %w", err)
 				}
 				if i == 0 {
+					orgID := org.ID
 					photo := factory.NewMedia(func(m *domain.Media) {
+						m.OrganizationID = &orgID
 						m.ModelType = domain.QuestionMediaModelType
 						m.ModelID = q.ID
 						m.CollectionName = domain.QuestionPhotosCollection
@@ -413,6 +440,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 					// real option-photos media row.
 					if q.Type == domain.QuestionTypeChoice && len(q.Options) > 0 {
 						optPhoto := factory.NewMedia(func(m *domain.Media) {
+							m.OrganizationID = &orgID
 							m.ModelType = domain.QuestionMediaModelType
 							m.ModelID = q.ID
 							m.CollectionName = domain.QuestionOptionPhotosCollection
@@ -539,11 +567,20 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 			for s := range subCount {
 				student := ou.students[s]
 				var answers []domain.SubmissionAnswer
+				var questionSet []domain.SubmissionQuestion
 				totalScore := 0.0
 				for _, q := range bankQuestions {
 					earned := 0.0
 					var selectedIDs []string
 					var value string
+					optionOrder := make([]string, len(q.Options))
+					for i, opt := range q.Options {
+						optionOrder[i] = opt.ID
+					}
+					questionSet = append(questionSet, domain.SubmissionQuestion{
+						QuestionID:    q.ID,
+						OptionIDOrder: optionOrder,
+					})
 					if q.Type == domain.QuestionTypeChoice && len(q.Options) > 0 {
 						selectedIDs = []string{q.Options[0].ID}
 						earned = q.Options[0].Score
@@ -832,4 +869,5 @@ func printSummary(c *seedCounts) {
 	fmt.Println("  manager1 / password (Manager preset in Zoora Demo org)")
 	fmt.Println("  manager2 / password (Manager preset in Zoora Demo org)")
 	fmt.Println("  user1 / password    (Student in Zoora Demo org)")
+	fmt.Println("  user2 / password    (Student in Zoora Demo org)")
 }
