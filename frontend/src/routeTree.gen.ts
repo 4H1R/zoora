@@ -28,6 +28,7 @@ import { Route as AuthOrgUsersIndexRouteImport } from './routes/_auth/org/users/
 import { Route as AuthOrgRolesIndexRouteImport } from './routes/_auth/org/roles/index'
 import { Route as AuthOrgPracticesIndexRouteImport } from './routes/_auth/org/practices/index'
 import { Route as AuthOrgOnlineClassesIndexRouteImport } from './routes/_auth/org/online-classes/index'
+import { Route as AuthOrgNotificationsIndexRouteImport } from './routes/_auth/org/notifications/index'
 import { Route as AuthOrgMediasIndexRouteImport } from './routes/_auth/org/medias/index'
 import { Route as AuthOrgGradesIndexRouteImport } from './routes/_auth/org/grades/index'
 import { Route as AuthOrgFilesIndexRouteImport } from './routes/_auth/org/files/index'
@@ -155,6 +156,12 @@ const AuthOrgOnlineClassesIndexRoute =
   AuthOrgOnlineClassesIndexRouteImport.update({
     id: '/online-classes/',
     path: '/online-classes/',
+    getParentRoute: () => AuthOrgRoute,
+  } as any)
+const AuthOrgNotificationsIndexRoute =
+  AuthOrgNotificationsIndexRouteImport.update({
+    id: '/notifications/',
+    path: '/notifications/',
     getParentRoute: () => AuthOrgRoute,
   } as any)
 const AuthOrgMediasIndexRoute = AuthOrgMediasIndexRouteImport.update({
@@ -391,6 +398,7 @@ export interface FileRoutesByFullPath {
   '/org/files/': typeof AuthOrgFilesIndexRoute
   '/org/grades/': typeof AuthOrgGradesIndexRoute
   '/org/medias/': typeof AuthOrgMediasIndexRoute
+  '/org/notifications/': typeof AuthOrgNotificationsIndexRoute
   '/org/online-classes/': typeof AuthOrgOnlineClassesIndexRoute
   '/org/practices/': typeof AuthOrgPracticesIndexRoute
   '/org/roles/': typeof AuthOrgRolesIndexRoute
@@ -443,6 +451,7 @@ export interface FileRoutesByTo {
   '/org/files': typeof AuthOrgFilesIndexRoute
   '/org/grades': typeof AuthOrgGradesIndexRoute
   '/org/medias': typeof AuthOrgMediasIndexRoute
+  '/org/notifications': typeof AuthOrgNotificationsIndexRoute
   '/org/online-classes': typeof AuthOrgOnlineClassesIndexRoute
   '/org/practices': typeof AuthOrgPracticesIndexRoute
   '/org/roles': typeof AuthOrgRolesIndexRoute
@@ -500,6 +509,7 @@ export interface FileRoutesById {
   '/_auth/org/files/': typeof AuthOrgFilesIndexRoute
   '/_auth/org/grades/': typeof AuthOrgGradesIndexRoute
   '/_auth/org/medias/': typeof AuthOrgMediasIndexRoute
+  '/_auth/org/notifications/': typeof AuthOrgNotificationsIndexRoute
   '/_auth/org/online-classes/': typeof AuthOrgOnlineClassesIndexRoute
   '/_auth/org/practices/': typeof AuthOrgPracticesIndexRoute
   '/_auth/org/roles/': typeof AuthOrgRolesIndexRoute
@@ -555,6 +565,7 @@ export interface FileRouteTypes {
     | '/org/files/'
     | '/org/grades/'
     | '/org/medias/'
+    | '/org/notifications/'
     | '/org/online-classes/'
     | '/org/practices/'
     | '/org/roles/'
@@ -607,6 +618,7 @@ export interface FileRouteTypes {
     | '/org/files'
     | '/org/grades'
     | '/org/medias'
+    | '/org/notifications'
     | '/org/online-classes'
     | '/org/practices'
     | '/org/roles'
@@ -663,6 +675,7 @@ export interface FileRouteTypes {
     | '/_auth/org/files/'
     | '/_auth/org/grades/'
     | '/_auth/org/medias/'
+    | '/_auth/org/notifications/'
     | '/_auth/org/online-classes/'
     | '/_auth/org/practices/'
     | '/_auth/org/roles/'
@@ -819,6 +832,13 @@ declare module '@tanstack/react-router' {
       path: '/online-classes'
       fullPath: '/org/online-classes/'
       preLoaderRoute: typeof AuthOrgOnlineClassesIndexRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
+    '/_auth/org/notifications/': {
+      id: '/_auth/org/notifications/'
+      path: '/notifications'
+      fullPath: '/org/notifications/'
+      preLoaderRoute: typeof AuthOrgNotificationsIndexRouteImport
       parentRoute: typeof AuthOrgRoute
     }
     '/_auth/org/medias/': {
@@ -1148,6 +1168,7 @@ interface AuthOrgRouteChildren {
   AuthOrgFilesIndexRoute: typeof AuthOrgFilesIndexRoute
   AuthOrgGradesIndexRoute: typeof AuthOrgGradesIndexRoute
   AuthOrgMediasIndexRoute: typeof AuthOrgMediasIndexRoute
+  AuthOrgNotificationsIndexRoute: typeof AuthOrgNotificationsIndexRoute
   AuthOrgOnlineClassesIndexRoute: typeof AuthOrgOnlineClassesIndexRoute
   AuthOrgPracticesIndexRoute: typeof AuthOrgPracticesIndexRoute
   AuthOrgRolesIndexRoute: typeof AuthOrgRolesIndexRoute
@@ -1171,6 +1192,7 @@ const AuthOrgRouteChildren: AuthOrgRouteChildren = {
   AuthOrgFilesIndexRoute: AuthOrgFilesIndexRoute,
   AuthOrgGradesIndexRoute: AuthOrgGradesIndexRoute,
   AuthOrgMediasIndexRoute: AuthOrgMediasIndexRoute,
+  AuthOrgNotificationsIndexRoute: AuthOrgNotificationsIndexRoute,
   AuthOrgOnlineClassesIndexRoute: AuthOrgOnlineClassesIndexRoute,
   AuthOrgPracticesIndexRoute: AuthOrgPracticesIndexRoute,
   AuthOrgRolesIndexRoute: AuthOrgRolesIndexRoute,

@@ -7,6 +7,7 @@ import { useGetUsersMe } from "@/api/users/users"
 import { MajorModal } from "@/components/changelog/major-modal"
 import { NavZoora } from "@/components/changelog/nav-zoora"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { NotificationBell } from "@/components/notifications/notification-bell"
 // import { LiveClock } from "@/components/live-clock"
 import { BreadcrumbProvider } from "@/components/layout/breadcrumb-context"
 import { AppSidebar } from "@/components/layout/app-sidebar"
@@ -33,6 +34,7 @@ const SEGMENT_KEYS: Record<string, string> = {
   ),
   members: "org.nav.members",
   "whats-new": "whatsNew.title",
+  notifications: "notifications.title",
 }
 
 function RouteComponent() {
@@ -81,6 +83,7 @@ function RouteComponent() {
               />
               <div className="ms-auto flex items-center gap-2">
                 {/* <LiveClock className="me-1 hidden sm:flex" /> */}
+                <NotificationBell to="/org/notifications" />
                 <LanguageSwitcher />
                 <ThemeToggle />
               </div>
