@@ -15,8 +15,11 @@ type OrganizationSettings struct {
 	ID                                uuid.UUID `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
 	OrganizationID                    uuid.UUID `gorm:"type:uuid;not null;uniqueIndex" json:"organization_id"`
 	AttendancePresentThresholdPercent int       `gorm:"not null;default:75" json:"attendance_present_threshold_percent"`
-	CreatedAt                         time.Time `json:"created_at"`
-	UpdatedAt                         time.Time `json:"updated_at"`
+	// SMSEnabled gates the SMS delivery channel per org (platform pays per
+	// message). SuperAdmin-controlled — not part of the org-facing update DTO.
+	SMSEnabled bool      `gorm:"not null;default:false" json:"sms_enabled"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 func (OrganizationSettings) TableName() string { return "organization_settings" }
@@ -34,6 +37,10 @@ type UpdateOrganizationSettingsDTO struct {
 	AttendancePresentThresholdPercent *int `json:"attendance_present_threshold_percent" binding:"omitempty,min=1,max=100"`
 }
 
+type AdminUpdateOrgSettingsDTO struct {
+	SMSEnabled *bool `json:"sms_enabled" binding:"required"`
+}
+
 type OrganizationSettingsRepository interface {
 	Create(ctx context.Context, s *OrganizationSettings) error
 	FindByOrgID(ctx context.Context, orgID uuid.UUID) (*OrganizationSettings, error)
@@ -43,6 +50,8 @@ type OrganizationSettingsRepository interface {
 type OrganizationSettingsService interface {
 	Get(ctx context.Context, orgID uuid.UUID) (*OrganizationSettings, error)
 	Update(ctx context.Context, orgID uuid.UUID, dto UpdateOrganizationSettingsDTO) (*OrganizationSettings, error)
+	// AdminUpdate mutates superAdmin-only settings (SMS gate).
+	AdminUpdate(ctx context.Context, orgID uuid.UUID, dto AdminUpdateOrgSettingsDTO) (*OrganizationSettings, error)
 }
 
 // OrganizationSettingsProvider is the read-only port other features (e.g.

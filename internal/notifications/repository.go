@@ -223,3 +223,100 @@ func (r *repository) RoleExistsInScope(ctx context.Context, roleID uuid.UUID, or
 	}
 	return n > 0, nil
 }
+
+func (r *repository) CreateDeliveries(ctx context.Context, deliveries []domain.NotificationDelivery) error {
+	if len(deliveries) == 0 {
+		return nil
+	}
+	err := database.DB(ctx, r.db).
+		Clauses(clause.OnConflict{DoNothing: true}).
+		CreateInBatches(deliveries, recipientInsertBatchSize).Error
+	if err != nil {
+		return fmt.Errorf("notifications.repository.CreateDeliveries: %w", err)
+	}
+	return nil
+}
+
+func (r *repository) ListDeliveriesByIDs(ctx context.Context, ids []uuid.UUID) ([]domain.NotificationDelivery, error) {
+	var items []domain.NotificationDelivery
+	if err := database.DB(ctx, r.db).Where("id IN ?", ids).Find(&items).Error; err != nil {
+		return nil, fmt.Errorf("notifications.repository.ListDeliveriesByIDs: %w", err)
+	}
+	return items, nil
+}
+
+func (r *repository) ListPendingDeliveries(ctx context.Context, notificationID uuid.UUID, channel domain.ConnectorType) ([]domain.NotificationDelivery, error) {
+	var items []domain.NotificationDelivery
+	err := database.DB(ctx, r.db).
+		Where("notification_id = ? AND channel = ? AND status = ?", notificationID, channel, domain.DeliveryPending).
+		Find(&items).Error
+	if err != nil {
+		return nil, fmt.Errorf("notifications.repository.ListPendingDeliveries: %w", err)
+	}
+	return items, nil
+}
+
+func (r *repository) MarkDeliveries(ctx context.Context, ids []uuid.UUID, status domain.NotificationDeliveryStatus, errMsg *string, sentAt time.Time) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	updates := map[string]any{"status": status, "error": errMsg}
+	if status == domain.DeliverySent {
+		updates["sent_at"] = sentAt
+	}
+	err := database.DB(ctx, r.db).Model(&domain.NotificationDelivery{}).
+		Where("id IN ?", ids).Updates(updates).Error
+	if err != nil {
+		return fmt.Errorf("notifications.repository.MarkDeliveries: %w", err)
+	}
+	return nil
+}
+
+func (r *repository) CountRecipients(ctx context.Context, notificationID uuid.UUID) (int64, error) {
+	var n int64
+	err := database.DB(ctx, r.db).Model(&domain.NotificationRecipient{}).
+		Where("notification_id = ?", notificationID).Count(&n).Error
+	if err != nil {
+		return 0, fmt.Errorf("notifications.repository.CountRecipients: %w", err)
+	}
+	return n, nil
+}
+
+func (r *repository) DeliveryReport(ctx context.Context, notificationID uuid.UUID) ([]domain.NotificationChannelReport, error) {
+	type row struct {
+		Channel domain.ConnectorType
+		Status  domain.NotificationDeliveryStatus
+		N       int64
+	}
+	var rows []row
+	err := database.DB(ctx, r.db).Model(&domain.NotificationDelivery{}).
+		Select("channel, status, COUNT(*) as n").
+		Where("notification_id = ?", notificationID).
+		Group("channel, status").Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("notifications.repository.DeliveryReport: %w", err)
+	}
+	byChannel := map[domain.ConnectorType]*domain.NotificationChannelReport{}
+	order := []domain.ConnectorType{}
+	for _, rw := range rows {
+		rep, ok := byChannel[rw.Channel]
+		if !ok {
+			rep = &domain.NotificationChannelReport{Channel: rw.Channel}
+			byChannel[rw.Channel] = rep
+			order = append(order, rw.Channel)
+		}
+		switch rw.Status {
+		case domain.DeliveryPending:
+			rep.Pending = rw.N
+		case domain.DeliverySent:
+			rep.Sent = rw.N
+		case domain.DeliveryFailed:
+			rep.Failed = rw.N
+		}
+	}
+	out := make([]domain.NotificationChannelReport, 0, len(order))
+	for _, ch := range order {
+		out = append(out, *byChannel[ch])
+	}
+	return out, nil
+}

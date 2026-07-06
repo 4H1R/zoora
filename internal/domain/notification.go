@@ -110,6 +110,43 @@ type NotificationRecipient struct {
 
 func (NotificationRecipient) TableName() string { return "notification_recipients" }
 
+type NotificationDeliveryStatus string
+
+const (
+	DeliveryPending NotificationDeliveryStatus = "pending"
+	DeliverySent    NotificationDeliveryStatus = "sent"
+	DeliveryFailed  NotificationDeliveryStatus = "failed"
+)
+
+// NotificationDelivery snapshots one channel send. Target is copied from the
+// connector at fan-out time so later unlinking can't break in-flight sends.
+type NotificationDelivery struct {
+	ID             uuid.UUID                  `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	NotificationID uuid.UUID                  `gorm:"type:uuid;not null;index" json:"notification_id"`
+	UserID         uuid.UUID                  `gorm:"type:uuid;not null" json:"user_id"`
+	Channel        ConnectorType              `gorm:"type:varchar(20);not null" json:"channel"`
+	Target         string                     `gorm:"type:varchar(500);not null" json:"target"`
+	Status         NotificationDeliveryStatus `gorm:"type:varchar(10);not null;default:'pending'" json:"status"`
+	Error          *string                    `json:"error,omitempty"`
+	SentAt         *time.Time                 `json:"sent_at,omitempty"`
+	CreatedAt      time.Time                  `json:"created_at"`
+}
+
+func (NotificationDelivery) TableName() string { return "notification_deliveries" }
+
+// NotificationDeliveryReport aggregates delivery outcomes for the sender UI.
+type NotificationDeliveryReport struct {
+	Recipients int64                       `json:"recipients"`
+	Channels   []NotificationChannelReport `json:"channels"`
+}
+
+type NotificationChannelReport struct {
+	Channel ConnectorType `json:"channel"`
+	Pending int64         `json:"pending"`
+	Sent    int64         `json:"sent"`
+	Failed  int64         `json:"failed"`
+}
+
 // --- DTOs ---
 
 type NotificationAudienceDTO struct {
@@ -170,6 +207,15 @@ type NotificationRepository interface {
 	// org: role.organization_id = orgID OR role is a global preset. Nil orgID
 	// (superAdmin) matches any role.
 	RoleExistsInScope(ctx context.Context, roleID uuid.UUID, orgID *uuid.UUID) (bool, error)
+
+	// CreateDeliveries bulk-inserts pending delivery rows, ignoring conflicts
+	// so fan-out retries are idempotent. Rows get IDs populated.
+	CreateDeliveries(ctx context.Context, deliveries []NotificationDelivery) error
+	ListDeliveriesByIDs(ctx context.Context, ids []uuid.UUID) ([]NotificationDelivery, error)
+	ListPendingDeliveries(ctx context.Context, notificationID uuid.UUID, channel ConnectorType) ([]NotificationDelivery, error)
+	MarkDeliveries(ctx context.Context, ids []uuid.UUID, status NotificationDeliveryStatus, errMsg *string, sentAt time.Time) error
+	CountRecipients(ctx context.Context, notificationID uuid.UUID) (int64, error)
+	DeliveryReport(ctx context.Context, notificationID uuid.UUID) ([]NotificationChannelReport, error)
 }
 
 type NotificationService interface {
@@ -181,4 +227,10 @@ type NotificationService interface {
 	ListSent(ctx context.Context, p ListParams) ([]Notification, int64, error)
 	// Fanout is the worker entry: resolves the audience and inserts recipients.
 	Fanout(ctx context.Context, notificationID uuid.UUID) error
+	// Report returns the delivery report; sender or superAdmin only.
+	Report(ctx context.Context, notificationID uuid.UUID) (*NotificationDeliveryReport, error)
+	// DeliverBot / DeliverSMS / DeliverPush are worker task entries.
+	DeliverBot(ctx context.Context, deliveryID uuid.UUID) error
+	DeliverSMS(ctx context.Context, notificationID uuid.UUID, deliveryIDs []uuid.UUID) error
+	DeliverPush(ctx context.Context, notificationID uuid.UUID, deliveryIDs []uuid.UUID) error
 }

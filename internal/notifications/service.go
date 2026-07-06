@@ -313,3 +313,23 @@ func (s *service) resolveAudience(ctx context.Context, n *domain.Notification) (
 		return nil, fmt.Errorf("notifications.service.resolveAudience: unknown audience type %q", a.Type)
 	}
 }
+
+// Report / DeliverBot / DeliverSMS / DeliverPush are the channel-delivery
+// entries. Full behavior is added by the delivery pipeline (Task 6); these
+// placeholders satisfy the interface until then.
+
+func (s *service) Report(ctx context.Context, notificationID uuid.UUID) (*domain.NotificationDeliveryReport, error) {
+	return nil, fmt.Errorf("notifications.service.Report: not implemented")
+}
+
+func (s *service) DeliverBot(ctx context.Context, deliveryID uuid.UUID) error {
+	return fmt.Errorf("notifications.service.DeliverBot: not implemented")
+}
+
+func (s *service) DeliverSMS(ctx context.Context, notificationID uuid.UUID, deliveryIDs []uuid.UUID) error {
+	return fmt.Errorf("notifications.service.DeliverSMS: not implemented")
+}
+
+func (s *service) DeliverPush(ctx context.Context, notificationID uuid.UUID, deliveryIDs []uuid.UUID) error {
+	return fmt.Errorf("notifications.service.DeliverPush: not implemented")
+}

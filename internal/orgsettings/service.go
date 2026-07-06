@@ -57,6 +57,32 @@ func (s *service) Update(ctx context.Context, orgID uuid.UUID, dto domain.Update
 	return settings, nil
 }
 
+// AdminUpdate mutates superAdmin-only settings (SMS gate).
+func (s *service) AdminUpdate(ctx context.Context, orgID uuid.UUID, dto domain.AdminUpdateOrgSettingsDTO) (*domain.OrganizationSettings, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok || !caller.IsAdmin {
+		return nil, domain.ErrForbidden
+	}
+	settings, err := s.repo.FindByOrgID(ctx, orgID)
+	if err != nil {
+		if !errors.Is(err, domain.ErrNotFound) {
+			return nil, err
+		}
+		settings = domain.NewDefaultOrganizationSettings(orgID)
+		if err := s.repo.Create(ctx, settings); err != nil {
+			return nil, err
+		}
+	}
+	if dto.SMSEnabled != nil {
+		settings.SMSEnabled = *dto.SMSEnabled
+	}
+	if err := s.repo.Update(ctx, settings); err != nil {
+		return nil, err
+	}
+	s.logger.Info("organization settings admin-updated", "org_id", orgID.String())
+	return settings, nil
+}
+
 var (
 	_ domain.OrganizationSettingsService  = (*service)(nil)
 	_ domain.OrganizationSettingsProvider = (*service)(nil)
