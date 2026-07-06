@@ -1,6 +1,7 @@
 import type { AppPermission } from "@/lib/access"
 
 import {
+  BellIcon,
   CalendarCheckIcon,
   CalendarIcon,
   ClipboardListIcon,
@@ -30,6 +31,7 @@ export type OrgRouteKey =
   | "roles"
   | "settings"
   | "files"
+  | "notifications"
 
 // OrgRouteSpec is the single source of truth for the per-route metadata shared
 // between the sidebar nav (org-nav.tsx) and the dashboard tiles
@@ -116,5 +118,10 @@ export const ORG_ROUTES: Record<OrgRouteKey, OrgRouteSpec> = {
     icon: <FileIcon />,
     segment: "files",
     perms: ["media:view_any"],
+  },
+  notifications: {
+    i18nKey: "notifications.title",
+    icon: <BellIcon />,
+    segment: "notifications",
   },
 }

@@ -56,7 +56,8 @@
     "daysShort": "d",
     "hoursShort": "h",
     "minutesShort": "m",
-    "secondsShort": "s"
+    "secondsShort": "s",
+    "date": "Date"
   },
   "common": {
     "brandName": "Zoora",

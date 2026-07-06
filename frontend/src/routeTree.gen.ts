@@ -51,6 +51,7 @@ import { Route as AdminAdminClassesIndexRouteImport } from './routes/_admin/admi
 import { Route as AdminAdminChangelogIndexRouteImport } from './routes/_admin/admin/changelog/index'
 import { Route as AdminAdminAttendanceIndexRouteImport } from './routes/_admin/admin/attendance/index'
 import { Route as AuthOrgOfflinesOfflineIdRouteImport } from './routes/_auth/org/offlines/$offlineId'
+import { Route as AuthOrgNotificationsSendRouteImport } from './routes/_auth/org/notifications/send'
 import { Route as AuthOrgFilesFolderRouteImport } from './routes/_auth/org/files/$folder'
 import { Route as AuthOrgClassesClassIdRouteImport } from './routes/_auth/org/classes/$classId'
 import { Route as AdminAdminChangelogIdRouteImport } from './routes/_admin/admin/changelog/$id'
@@ -284,6 +285,12 @@ const AuthOrgOfflinesOfflineIdRoute =
     path: '/offlines/$offlineId',
     getParentRoute: () => AuthOrgRoute,
   } as any)
+const AuthOrgNotificationsSendRoute =
+  AuthOrgNotificationsSendRouteImport.update({
+    id: '/notifications/send',
+    path: '/notifications/send',
+    getParentRoute: () => AuthOrgRoute,
+  } as any)
 const AuthOrgFilesFolderRoute = AuthOrgFilesFolderRouteImport.update({
   id: '/files/$folder',
   path: '/files/$folder',
@@ -376,6 +383,7 @@ export interface FileRoutesByFullPath {
   '/admin/changelog/$id': typeof AdminAdminChangelogIdRoute
   '/org/classes/$classId': typeof AuthOrgClassesClassIdRoute
   '/org/files/$folder': typeof AuthOrgFilesFolderRoute
+  '/org/notifications/send': typeof AuthOrgNotificationsSendRoute
   '/org/offlines/$offlineId': typeof AuthOrgOfflinesOfflineIdRoute
   '/admin/attendance/': typeof AdminAdminAttendanceIndexRoute
   '/admin/changelog/': typeof AdminAdminChangelogIndexRoute
@@ -429,6 +437,7 @@ export interface FileRoutesByTo {
   '/admin/changelog/$id': typeof AdminAdminChangelogIdRoute
   '/org/classes/$classId': typeof AuthOrgClassesClassIdRoute
   '/org/files/$folder': typeof AuthOrgFilesFolderRoute
+  '/org/notifications/send': typeof AuthOrgNotificationsSendRoute
   '/org/offlines/$offlineId': typeof AuthOrgOfflinesOfflineIdRoute
   '/admin/attendance': typeof AdminAdminAttendanceIndexRoute
   '/admin/changelog': typeof AdminAdminChangelogIndexRoute
@@ -487,6 +496,7 @@ export interface FileRoutesById {
   '/_admin/admin/changelog/$id': typeof AdminAdminChangelogIdRoute
   '/_auth/org/classes/$classId': typeof AuthOrgClassesClassIdRoute
   '/_auth/org/files/$folder': typeof AuthOrgFilesFolderRoute
+  '/_auth/org/notifications/send': typeof AuthOrgNotificationsSendRoute
   '/_auth/org/offlines/$offlineId': typeof AuthOrgOfflinesOfflineIdRoute
   '/_admin/admin/attendance/': typeof AdminAdminAttendanceIndexRoute
   '/_admin/admin/changelog/': typeof AdminAdminChangelogIndexRoute
@@ -543,6 +553,7 @@ export interface FileRouteTypes {
     | '/admin/changelog/$id'
     | '/org/classes/$classId'
     | '/org/files/$folder'
+    | '/org/notifications/send'
     | '/org/offlines/$offlineId'
     | '/admin/attendance/'
     | '/admin/changelog/'
@@ -596,6 +607,7 @@ export interface FileRouteTypes {
     | '/admin/changelog/$id'
     | '/org/classes/$classId'
     | '/org/files/$folder'
+    | '/org/notifications/send'
     | '/org/offlines/$offlineId'
     | '/admin/attendance'
     | '/admin/changelog'
@@ -653,6 +665,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/changelog/$id'
     | '/_auth/org/classes/$classId'
     | '/_auth/org/files/$folder'
+    | '/_auth/org/notifications/send'
     | '/_auth/org/offlines/$offlineId'
     | '/_admin/admin/attendance/'
     | '/_admin/admin/changelog/'
@@ -995,6 +1008,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthOrgOfflinesOfflineIdRouteImport
       parentRoute: typeof AuthOrgRoute
     }
+    '/_auth/org/notifications/send': {
+      id: '/_auth/org/notifications/send'
+      path: '/notifications/send'
+      fullPath: '/org/notifications/send'
+      preLoaderRoute: typeof AuthOrgNotificationsSendRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
     '/_auth/org/files/$folder': {
       id: '/_auth/org/files/$folder'
       path: '/files/$folder'
@@ -1161,6 +1181,7 @@ interface AuthOrgRouteChildren {
   AuthOrgIndexRoute: typeof AuthOrgIndexRoute
   AuthOrgClassesClassIdRoute: typeof AuthOrgClassesClassIdRoute
   AuthOrgFilesFolderRoute: typeof AuthOrgFilesFolderRoute
+  AuthOrgNotificationsSendRoute: typeof AuthOrgNotificationsSendRoute
   AuthOrgOfflinesOfflineIdRoute: typeof AuthOrgOfflinesOfflineIdRoute
   AuthOrgAttendanceIndexRoute: typeof AuthOrgAttendanceIndexRoute
   AuthOrgClassesIndexRoute: typeof AuthOrgClassesIndexRoute
@@ -1185,6 +1206,7 @@ const AuthOrgRouteChildren: AuthOrgRouteChildren = {
   AuthOrgIndexRoute: AuthOrgIndexRoute,
   AuthOrgClassesClassIdRoute: AuthOrgClassesClassIdRoute,
   AuthOrgFilesFolderRoute: AuthOrgFilesFolderRoute,
+  AuthOrgNotificationsSendRoute: AuthOrgNotificationsSendRoute,
   AuthOrgOfflinesOfflineIdRoute: AuthOrgOfflinesOfflineIdRoute,
   AuthOrgAttendanceIndexRoute: AuthOrgAttendanceIndexRoute,
   AuthOrgClassesIndexRoute: AuthOrgClassesIndexRoute,

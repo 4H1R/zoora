@@ -56,7 +56,8 @@
     "daysShort": "روز",
     "hoursShort": "س",
     "minutesShort": "د",
-    "secondsShort": "ث"
+    "secondsShort": "ث",
+    "date": "تاریخ"
   },
   "common": {
     "brandName": "زورا",

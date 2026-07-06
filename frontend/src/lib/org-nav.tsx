@@ -23,7 +23,10 @@ export function buildOrgNavGroups(
       label: t("org.nav.learning"),
       keys: ["online-classes", "exams", "practices", "grades", "attendance"],
     },
-    { label: t("org.nav.management"), keys: ["users", "roles", "settings", "files"] },
+    {
+      label: t("org.nav.management"),
+      keys: ["users", "roles", "settings", "files", "notifications"],
+    },
   ]
 
   return groups

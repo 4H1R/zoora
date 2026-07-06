@@ -1,8 +1,8 @@
 import type { GithubCom4H1RZooraInternalDomainNotificationInboxItem as InboxItem } from "@/api/model"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { BellIcon, CheckCheckIcon } from "lucide-react"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { BellIcon, CheckCheckIcon, SendIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
@@ -19,6 +19,7 @@ import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Spinner } from "@/components/ui/spinner"
+import { useCanAny } from "@/lib/access"
 import { orgHead } from "@/lib/org-head"
 
 const PAGE_SIZE = 20
@@ -38,6 +39,7 @@ function NotificationsInboxPage() {
   const { page } = Route.useSearch()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const canSend = useCanAny(["notifications:send", "notifications:send_any"])
 
   const { data, isLoading } = useGetNotifications({ page, page_size: PAGE_SIZE })
   const pageData = (data?.status === 200 && data.data.data) || undefined
@@ -65,15 +67,23 @@ function NotificationsInboxPage() {
       <PageHeader
         title={t("notifications.title")}
         actions={
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={markAllRead.isPending}
-            onClick={() => markAllRead.mutate()}
-          >
-            <CheckCheckIcon />
-            {t("notifications.markAllRead")}
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={markAllRead.isPending}
+              onClick={() => markAllRead.mutate()}
+            >
+              <CheckCheckIcon />
+              {t("notifications.markAllRead")}
+            </Button>
+            {canSend && (
+              <Button size="sm" render={<Link to="/org/notifications/send" />}>
+                <SendIcon />
+                {t("notifications.send.title")}
+              </Button>
+            )}
+          </>
         }
       />
 
