@@ -35,7 +35,7 @@ export function ChatPanel({ chat, canModerate }: ChatPanelProps) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <ScrollArea className="flex-1">
+      <ScrollArea className="min-h-0 flex-1">
         <div className="flex flex-col gap-3 p-3">
           {messages.length === 0 && (
             <div className="flex flex-col items-center gap-2 py-12 text-center text-muted-foreground">
