@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
@@ -19,10 +20,14 @@ import (
 	"github.com/4H1R/zoora/internal/offlines"
 	"github.com/4H1R/zoora/internal/orgsettings"
 	"github.com/4H1R/zoora/internal/platform/authz"
+	"github.com/4H1R/zoora/internal/platform/bots"
+	"github.com/4H1R/zoora/internal/platform/cache"
 	"github.com/4H1R/zoora/internal/platform/database"
 	lk "github.com/4H1R/zoora/internal/platform/livekit"
 	"github.com/4H1R/zoora/internal/platform/logger"
+	"github.com/4H1R/zoora/internal/platform/push"
 	"github.com/4H1R/zoora/internal/platform/queue"
+	"github.com/4H1R/zoora/internal/platform/sms"
 	"github.com/4H1R/zoora/internal/platform/storage"
 )
 
@@ -92,16 +97,75 @@ func main() {
 	)
 	queueServer.HandleFunc(domain.TypeAttendanceAutoMark, attendance.NewAutoMarkHandler(attendanceService))
 
+	// --- notification delivery channels (all optional; empty disables one) ---
+	var telegramBot, baleBot *bots.Client
+	if cfg.TelegramBotToken != "" {
+		telegramBot, err = bots.NewClient(bots.Config{BaseURL: "https://api.telegram.org", Token: cfg.TelegramBotToken, ProxyURL: cfg.TelegramProxyURL}, log)
+		if err != nil {
+			log.Error("telegram bot init failed", "error", err)
+			os.Exit(1)
+		}
+	}
+	if cfg.BaleBotToken != "" {
+		baleBot, err = bots.NewClient(bots.Config{BaseURL: "https://tapi.bale.ai", Token: cfg.BaleBotToken, ProxyURL: cfg.BaleProxyURL}, log)
+		if err != nil {
+			log.Error("bale bot init failed", "error", err)
+			os.Exit(1)
+		}
+	}
+	var smsSender domain.SMSSender
+	if cfg.KavenegarAPIKey != "" {
+		smsSender = sms.NewKavenegar(sms.Config{APIKey: cfg.KavenegarAPIKey, Sender: cfg.KavenegarSender, OTPTemplate: cfg.KavenegarOTPTemplate}, log)
+	}
+	var pushSender domain.PushSender
+	if cfg.FCMCredentialsFile != "" {
+		pushSender, err = push.NewFCM(context.Background(), cfg.FCMCredentialsFile, log)
+		if err != nil {
+			log.Error("fcm init failed", "error", err)
+			os.Exit(1)
+		}
+	}
+
+	// Interface-nil pitfall: assigning a nil *bots.Client into an interface
+	// field yields a non-nil interface. Assign bot senders conditionally.
+	senders := notifications.Senders{SMS: smsSender, Push: pushSender}
+	if telegramBot != nil {
+		senders.Telegram = telegramBot
+	}
+	if baleBot != nil {
+		senders.Bale = baleBot
+	}
+
 	connectorRepo := connectors.NewRepository(db)
 	notificationRepo := notifications.NewRepository(db)
 	notificationService := notifications.NewService(
 		notificationRepo, classRepo, connectorRepo, orgSettingsService,
-		nil, notifications.Senders{}, 0, log,
+		nil, senders, 0, log,
 	)
 	queueServer.HandleFunc(domain.TypeNotificationFanout, notifications.NewFanoutHandler(notificationService))
 	queueServer.HandleFunc(domain.TypeNotificationDeliverBot, notifications.NewDeliverBotHandler(notificationService))
 	queueServer.HandleFunc(domain.TypeNotificationDeliverSMS, notifications.NewDeliverSMSHandler(notificationService))
 	queueServer.HandleFunc(domain.TypeNotificationDeliverPush, notifications.NewDeliverPushHandler(notificationService))
+
+	// Bot pollers complete connector links via /start <token>. They need redis
+	// (link tokens) and the connector service.
+	redisClient, err := cache.NewRedisClient(cfg.RedisURL, log)
+	if err != nil {
+		log.Error("failed to connect to redis", "error", err)
+		os.Exit(1)
+	}
+	connectorService := connectors.NewService(connectorRepo, redisClient, smsSender, connectors.BotLinkConfig{
+		TelegramBotUsername: cfg.TelegramBotUsername,
+		BaleBotUsername:     cfg.BaleBotUsername,
+	}, log)
+	pollCtx, pollCancel := context.WithCancel(context.Background())
+	defer pollCancel()
+	if telegramBot != nil {
+		go connectors.NewPoller(telegramBot, connectorService, domain.ConnectorTelegram, log).Run(pollCtx)
+	}
+	if baleBot != nil {
+		go connectors.NewPoller(baleBot, connectorService, domain.ConnectorBale, log).Run(pollCtx)
+	}
 
 	storageClient, err := storage.NewClient(cfg, log)
 	if err != nil {
@@ -154,11 +218,13 @@ func main() {
 
 	log.Info("shutting down worker...")
 
+	pollCancel()
 	scheduler.Shutdown()
 	queueServer.Shutdown()
 
 	sqlDB, _ := db.DB()
 	sqlDB.Close()
+	redisClient.Close()
 
 	log.Info("worker stopped")
 }

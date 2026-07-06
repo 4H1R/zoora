@@ -46,9 +46,14 @@ import type {
   GetAdminPlans401,
   GetAdminPlans403,
   GithubCom4H1RZooraInternalDomainAdminCreateOrganizationDTO,
+  GithubCom4H1RZooraInternalDomainAdminUpdateOrgSettingsDTO,
   GithubCom4H1RZooraInternalDomainAdminUpdateOrganizationDTO,
   GithubCom4H1RZooraInternalDomainResponse,
   GithubCom4H1RZooraInternalDomainSetPlanDTO,
+  PatchAdminOrganizationsIdSettings200,
+  PatchAdminOrganizationsIdSettings400,
+  PatchAdminOrganizationsIdSettings401,
+  PatchAdminOrganizationsIdSettings403,
   PostAdminOrganizations201,
   PostAdminOrganizations400,
   PostAdminOrganizations401,
@@ -1023,6 +1028,105 @@ export const usePostAdminOrganizationsIdRestore = <TError = ErrorType<PostAdminO
         TContext
       > => {
       return useMutation(getPostAdminOrganizationsIdRestoreMutationOptions(options), queryClient);
+    }
+    export type patchAdminOrganizationsIdSettingsResponse200 = {
+  data: PatchAdminOrganizationsIdSettings200
+  status: 200
+}
+
+export type patchAdminOrganizationsIdSettingsResponse400 = {
+  data: PatchAdminOrganizationsIdSettings400
+  status: 400
+}
+
+export type patchAdminOrganizationsIdSettingsResponse401 = {
+  data: PatchAdminOrganizationsIdSettings401
+  status: 401
+}
+
+export type patchAdminOrganizationsIdSettingsResponse403 = {
+  data: PatchAdminOrganizationsIdSettings403
+  status: 403
+}
+
+export type patchAdminOrganizationsIdSettingsResponseSuccess = (patchAdminOrganizationsIdSettingsResponse200) & {
+  headers: Headers;
+};
+export type patchAdminOrganizationsIdSettingsResponseError = (patchAdminOrganizationsIdSettingsResponse400 | patchAdminOrganizationsIdSettingsResponse401 | patchAdminOrganizationsIdSettingsResponse403) & {
+  headers: Headers;
+};
+
+export type patchAdminOrganizationsIdSettingsResponse = (patchAdminOrganizationsIdSettingsResponseSuccess | patchAdminOrganizationsIdSettingsResponseError)
+
+export const getPatchAdminOrganizationsIdSettingsUrl = (id: string,) => {
+
+
+
+
+  return `/admin/organizations/${id}/settings`
+}
+
+/**
+ * @summary [Admin] Update org settings (SMS gate)
+ */
+export const patchAdminOrganizationsIdSettings = async (id: string,
+    githubCom4H1RZooraInternalDomainAdminUpdateOrgSettingsDTO: GithubCom4H1RZooraInternalDomainAdminUpdateOrgSettingsDTO, options?: RequestInit): Promise<patchAdminOrganizationsIdSettingsResponse> => {
+
+  return customInstance<patchAdminOrganizationsIdSettingsResponse>(getPatchAdminOrganizationsIdSettingsUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(githubCom4H1RZooraInternalDomainAdminUpdateOrgSettingsDTO)
+  }
+);}
+
+
+
+
+export const getPatchAdminOrganizationsIdSettingsMutationOptions = <TError = ErrorType<PatchAdminOrganizationsIdSettings400 | PatchAdminOrganizationsIdSettings401 | PatchAdminOrganizationsIdSettings403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchAdminOrganizationsIdSettings>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainAdminUpdateOrgSettingsDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof patchAdminOrganizationsIdSettings>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainAdminUpdateOrgSettingsDTO}, TContext> => {
+
+const mutationKey = ['patchAdminOrganizationsIdSettings'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof patchAdminOrganizationsIdSettings>>, {id: string;data: GithubCom4H1RZooraInternalDomainAdminUpdateOrgSettingsDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  patchAdminOrganizationsIdSettings(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PatchAdminOrganizationsIdSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof patchAdminOrganizationsIdSettings>>>
+    export type PatchAdminOrganizationsIdSettingsMutationBody = GithubCom4H1RZooraInternalDomainAdminUpdateOrgSettingsDTO
+    export type PatchAdminOrganizationsIdSettingsMutationError = ErrorType<PatchAdminOrganizationsIdSettings400 | PatchAdminOrganizationsIdSettings401 | PatchAdminOrganizationsIdSettings403>
+
+    /**
+ * @summary [Admin] Update org settings (SMS gate)
+ */
+export const usePatchAdminOrganizationsIdSettings = <TError = ErrorType<PatchAdminOrganizationsIdSettings400 | PatchAdminOrganizationsIdSettings401 | PatchAdminOrganizationsIdSettings403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchAdminOrganizationsIdSettings>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainAdminUpdateOrgSettingsDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof patchAdminOrganizationsIdSettings>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainAdminUpdateOrgSettingsDTO},
+        TContext
+      > => {
+      return useMutation(getPatchAdminOrganizationsIdSettingsMutationOptions(options), queryClient);
     }
     export type getAdminPlansResponse200 = {
   data: GetAdminPlans200

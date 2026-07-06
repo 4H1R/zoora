@@ -23,7 +23,11 @@ func NewFCM(ctx context.Context, credentialsFile string, logger *slog.Logger) (*
 	if logger == nil {
 		logger = slog.Default()
 	}
-	app, err := firebase.NewApp(ctx, nil, option.WithCredentialsFile(credentialsFile))
+	// WithCredentialsFile is marked deprecated by google.golang.org/api in favor
+	// of the newer cloud.google.com/go/auth flow, but remains the supported way
+	// to load a service-account file for firebase-admin-go v4. Safe here: the
+	// path comes from trusted server config, not user input.
+	app, err := firebase.NewApp(ctx, nil, option.WithCredentialsFile(credentialsFile)) //nolint:staticcheck // SA1019: file-based service-account creds are intentional
 	if err != nil {
 		return nil, fmt.Errorf("push.fcm: initializing app: %w", err)
 	}

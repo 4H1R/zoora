@@ -27,6 +27,9 @@ import type {
 import type {
   GetNotifications200,
   GetNotifications401,
+  GetNotificationsIdReport200,
+  GetNotificationsIdReport403,
+  GetNotificationsIdReport404,
   GetNotificationsParams,
   GetNotificationsSent200,
   GetNotificationsSent403,
@@ -703,3 +706,127 @@ export const usePostNotificationsIdRead = <TError = ErrorType<PostNotificationsI
       > => {
       return useMutation(getPostNotificationsIdReadMutationOptions(options), queryClient);
     }
+    export type getNotificationsIdReportResponse200 = {
+  data: GetNotificationsIdReport200
+  status: 200
+}
+
+export type getNotificationsIdReportResponse403 = {
+  data: GetNotificationsIdReport403
+  status: 403
+}
+
+export type getNotificationsIdReportResponse404 = {
+  data: GetNotificationsIdReport404
+  status: 404
+}
+
+export type getNotificationsIdReportResponseSuccess = (getNotificationsIdReportResponse200) & {
+  headers: Headers;
+};
+export type getNotificationsIdReportResponseError = (getNotificationsIdReportResponse403 | getNotificationsIdReportResponse404) & {
+  headers: Headers;
+};
+
+export type getNotificationsIdReportResponse = (getNotificationsIdReportResponseSuccess | getNotificationsIdReportResponseError)
+
+export const getGetNotificationsIdReportUrl = (id: string,) => {
+
+
+
+
+  return `/notifications/${id}/report`
+}
+
+/**
+ * @summary Notification delivery report
+ */
+export const getNotificationsIdReport = async (id: string, options?: RequestInit): Promise<getNotificationsIdReportResponse> => {
+
+  return customInstance<getNotificationsIdReportResponse>(getGetNotificationsIdReportUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetNotificationsIdReportQueryKey = (id: string,) => {
+    return [
+    `/notifications/${id}/report`
+    ] as const;
+    }
+
+
+export const getGetNotificationsIdReportQueryOptions = <TData = Awaited<ReturnType<typeof getNotificationsIdReport>>, TError = ErrorType<GetNotificationsIdReport403 | GetNotificationsIdReport404>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getNotificationsIdReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetNotificationsIdReportQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getNotificationsIdReport>>> = ({ signal }) => getNotificationsIdReport(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getNotificationsIdReport>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetNotificationsIdReportQueryResult = NonNullable<Awaited<ReturnType<typeof getNotificationsIdReport>>>
+export type GetNotificationsIdReportQueryError = ErrorType<GetNotificationsIdReport403 | GetNotificationsIdReport404>
+
+
+export function useGetNotificationsIdReport<TData = Awaited<ReturnType<typeof getNotificationsIdReport>>, TError = ErrorType<GetNotificationsIdReport403 | GetNotificationsIdReport404>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getNotificationsIdReport>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getNotificationsIdReport>>,
+          TError,
+          Awaited<ReturnType<typeof getNotificationsIdReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetNotificationsIdReport<TData = Awaited<ReturnType<typeof getNotificationsIdReport>>, TError = ErrorType<GetNotificationsIdReport403 | GetNotificationsIdReport404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getNotificationsIdReport>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getNotificationsIdReport>>,
+          TError,
+          Awaited<ReturnType<typeof getNotificationsIdReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetNotificationsIdReport<TData = Awaited<ReturnType<typeof getNotificationsIdReport>>, TError = ErrorType<GetNotificationsIdReport403 | GetNotificationsIdReport404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getNotificationsIdReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Notification delivery report
+ */
+
+export function useGetNotificationsIdReport<TData = Awaited<ReturnType<typeof getNotificationsIdReport>>, TError = ErrorType<GetNotificationsIdReport403 | GetNotificationsIdReport404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getNotificationsIdReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetNotificationsIdReportQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+

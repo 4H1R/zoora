@@ -48,6 +48,18 @@ type Config struct {
 	// NotificationSendRatePerHour caps how many notifications one non-admin
 	// sender may create per hour. 0 disables the limit.
 	NotificationSendRatePerHour int `env:"NOTIFICATION_SEND_RATE_PER_HOUR" envDefault:"10"`
+
+	// --- notification connectors (all optional; empty disables the channel) ---
+	TelegramBotToken     string `env:"TELEGRAM_BOT_TOKEN"`
+	TelegramBotUsername  string `env:"TELEGRAM_BOT_USERNAME"`
+	TelegramProxyURL     string `env:"TELEGRAM_PROXY_URL"`
+	BaleBotToken         string `env:"BALE_BOT_TOKEN"`
+	BaleBotUsername      string `env:"BALE_BOT_USERNAME"`
+	BaleProxyURL         string `env:"BALE_PROXY_URL"`
+	KavenegarAPIKey      string `env:"KAVENEGAR_API_KEY"`
+	KavenegarSender      string `env:"KAVENEGAR_SENDER"`
+	KavenegarOTPTemplate string `env:"KAVENEGAR_OTP_TEMPLATE"`
+	FCMCredentialsFile   string `env:"FCM_CREDENTIALS_FILE"`
 }
 
 func Load() (*Config, error) {
