@@ -43,8 +43,8 @@ type QAQuestion struct {
 // user_id) index makes double-voting impossible at the database level.
 type QAVote struct {
 	ID         uuid.UUID `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	QuestionID uuid.UUID `gorm:"type:uuid;not null;index" json:"question_id"`
-	UserID     uuid.UUID `gorm:"type:uuid;not null;index" json:"user_id"`
+	QuestionID uuid.UUID `gorm:"type:uuid;not null;index;uniqueIndex:uq_qa_votes_question_user" json:"question_id"`
+	UserID     uuid.UUID `gorm:"type:uuid;not null;index;uniqueIndex:uq_qa_votes_question_user" json:"user_id"`
 	CreatedAt  time.Time `json:"created_at"`
 }
 

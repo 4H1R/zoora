@@ -44,6 +44,7 @@ import (
 	"github.com/4H1R/zoora/internal/platform/storage"
 	"github.com/4H1R/zoora/internal/polls"
 	"github.com/4H1R/zoora/internal/practices"
+	"github.com/4H1R/zoora/internal/qa"
 	"github.com/4H1R/zoora/internal/questionbanks"
 	"github.com/4H1R/zoora/internal/quizzes"
 	"github.com/4H1R/zoora/internal/roles"
@@ -134,6 +135,8 @@ func main() {
 	practiceSubRepo := practices.NewSubmissionRepository(db)
 	pollRepo := polls.NewRepository(db)
 	pollAnswerRepo := polls.NewAnswerRepository(db)
+	qaRepo := qa.NewRepository(db)
+	qaVoteRepo := qa.NewVoteRepository(db)
 	chatRepo := chat.NewChatRepository(db)
 	chatMemberRepo := chat.NewMemberRepository(db)
 	chatMessageRepo := chat.NewMessageRepository(db)
@@ -171,6 +174,9 @@ func main() {
 	livekitClient := lk.NewClient(cfg, log)
 	chatService := chat.NewService(chatRepo, chatMemberRepo, chatMessageRepo, chatReactionRepo, transactor, log, livekitClient, liveRoomRepo)
 	pollService := polls.NewService(pollRepo, pollAnswerRepo, log)
+	qaAuthorizer := livesessions.NewModelAuthorizer(liveRoomRepo, classSessionRepo, classRepo, classMemberRepo)
+	qaBroadcaster := qa.NewBroadcaster(livekitClient, liveRoomRepo, log)
+	qaService := qa.NewService(qaRepo, qaVoteRepo, qaAuthorizer, log, qaBroadcaster)
 	liveSessionService := livesessions.NewService(
 		liveRoomRepo, liveParticipantRepo, liveRecordingRepo, liveWhiteboardRepo,
 		classSessionRepo, classRepo, classMemberRepo,
@@ -302,6 +308,9 @@ func main() {
 	pollHandler := polls.NewHandler(pollService)
 	pollHandler.RegisterRoutes(v1, authMiddleware, perm)
 
+	qaHandler := qa.NewHandler(qaService)
+	qaHandler.RegisterRoutes(v1, authMiddleware, perm)
+
 	chatHandler := chat.NewHandler(chatService)
 	chatHandler.RegisterRoutes(v1, authMiddleware, perm)
 
@@ -329,13 +338,14 @@ func main() {
 	adminOfflineHandler := offlines.NewAdminHandler(offlineService)
 	adminPracticeHandler := practices.NewAdminHandler(practiceService)
 	adminPollHandler := polls.NewAdminHandler(pollService)
+	adminQAHandler := qa.NewAdminHandler(qaService)
 	adminRoleHandler := roles.NewAdminHandler(roleService)
 	adminAttendanceHandler := attendance.NewAdminHandler(attendanceService)
 	adminChangelogHandler := changelog.NewAdminHandler(changelogService)
 	adminOrgSettingsHandler := orgsettings.NewAdminHandler(orgSettingsService)
 
 	adminGroup := v1.Group("/admin", authMiddleware, auth.RequireAdmin())
-	admin.RegisterRoutes(adminGroup, adminUserHandler, adminOrgHandler, adminClassHandler, adminQuestionBankHandler, adminQuizHandler, adminLiveSessionHandler, adminOfflineHandler, adminPracticeHandler, adminPollHandler, adminRoleHandler, adminAttendanceHandler, adminChangelogHandler, adminOrgSettingsHandler)
+	admin.RegisterRoutes(adminGroup, adminUserHandler, adminOrgHandler, adminClassHandler, adminQuestionBankHandler, adminQuizHandler, adminLiveSessionHandler, adminOfflineHandler, adminPracticeHandler, adminPollHandler, adminQAHandler, adminRoleHandler, adminAttendanceHandler, adminChangelogHandler, adminOrgSettingsHandler)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
