@@ -11,6 +11,7 @@ import (
 	"github.com/4H1R/zoora/internal/chat"
 	"github.com/4H1R/zoora/internal/classes"
 	"github.com/4H1R/zoora/internal/config"
+	"github.com/4H1R/zoora/internal/connectors"
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/livesessions"
 	"github.com/4H1R/zoora/internal/media"
@@ -91,9 +92,16 @@ func main() {
 	)
 	queueServer.HandleFunc(domain.TypeAttendanceAutoMark, attendance.NewAutoMarkHandler(attendanceService))
 
+	connectorRepo := connectors.NewRepository(db)
 	notificationRepo := notifications.NewRepository(db)
-	notificationService := notifications.NewService(notificationRepo, classRepo, nil, 0, log)
+	notificationService := notifications.NewService(
+		notificationRepo, classRepo, connectorRepo, orgSettingsService,
+		nil, notifications.Senders{}, 0, log,
+	)
 	queueServer.HandleFunc(domain.TypeNotificationFanout, notifications.NewFanoutHandler(notificationService))
+	queueServer.HandleFunc(domain.TypeNotificationDeliverBot, notifications.NewDeliverBotHandler(notificationService))
+	queueServer.HandleFunc(domain.TypeNotificationDeliverSMS, notifications.NewDeliverSMSHandler(notificationService))
+	queueServer.HandleFunc(domain.TypeNotificationDeliverPush, notifications.NewDeliverPushHandler(notificationService))
 
 	storageClient, err := storage.NewClient(cfg, log)
 	if err != nil {

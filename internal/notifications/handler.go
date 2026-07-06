@@ -38,6 +38,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		{
 			sender.POST("/notifications", h.Send)
 			sender.GET("/notifications/sent", h.ListSent)
+			sender.GET("/notifications/:id/report", h.Report)
 		}
 	}
 }
@@ -140,6 +141,30 @@ func (h *Handler) MarkAllRead(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, nil)
+}
+
+// Report returns the per-channel delivery report for a sent notification.
+// @Summary Notification delivery report
+// @Tags Notifications
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Notification ID"
+// @Success 200 {object} domain.Response{data=domain.NotificationDeliveryReport}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /notifications/{id}/report [get]
+func (h *Handler) Report(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		_ = c.Error(domain.NewValidationError(map[string]string{"id": "must be a valid UUID"}))
+		return
+	}
+	report, err := h.svc.Report(c.Request.Context(), id)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, report)
 }
 
 // ListSent returns notifications the caller has sent, newest first.

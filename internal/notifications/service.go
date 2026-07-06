@@ -20,25 +20,51 @@ const QueueName = "notifications"
 // Authorization always happens in the service layer so handlers stay thin.
 // Send matrix: superAdmin → any audience; notifications:send_any → own-org
 // audiences; notifications:send → owned classes and their members.
+// Senders holds the external delivery ports. A nil field means that channel is
+// disabled: fan-out still snapshots delivery rows for enabled channels only via
+// the connector repo, and channel task handlers mark rows failed when their
+// sender is nil.
+type Senders struct {
+	Telegram domain.BotSender // nil = channel disabled
+	Bale     domain.BotSender
+	SMS      domain.SMSSender
+	Push     domain.PushSender
+}
+
 type service struct {
-	repo        domain.NotificationRepository
-	classRepo   domain.ClassRepository
-	queue       *queue.Client
-	ratePerHour int
-	logger      *slog.Logger
+	repo          domain.NotificationRepository
+	classRepo     domain.ClassRepository
+	connectorRepo domain.UserConnectorRepository
+	orgSettings   domain.OrganizationSettingsProvider
+	queue         *queue.Client
+	senders       Senders
+	ratePerHour   int
+	logger        *slog.Logger
 }
 
 func NewService(
 	repo domain.NotificationRepository,
 	classRepo domain.ClassRepository,
+	connectorRepo domain.UserConnectorRepository, // nil ok: fan-out skips external channels
+	orgSettings domain.OrganizationSettingsProvider, // nil ok: SMS gate treated as disabled
 	queueClient *queue.Client,
+	senders Senders,
 	ratePerHour int,
 	logger *slog.Logger,
 ) domain.NotificationService {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &service{repo: repo, classRepo: classRepo, queue: queueClient, ratePerHour: ratePerHour, logger: logger}
+	return &service{
+		repo:          repo,
+		classRepo:     classRepo,
+		connectorRepo: connectorRepo,
+		orgSettings:   orgSettings,
+		queue:         queueClient,
+		senders:       senders,
+		ratePerHour:   ratePerHour,
+		logger:        logger,
+	}
 }
 
 func (s *service) Send(ctx context.Context, dto domain.SendNotificationDTO) (*domain.Notification, error) {
@@ -279,6 +305,7 @@ func (s *service) Fanout(ctx context.Context, notificationID uuid.UUID) error {
 		return err
 	}
 	recipients := make([]domain.NotificationRecipient, 0, len(ids))
+	recipientIDs := make([]uuid.UUID, 0, len(ids))
 	for _, id := range ids {
 		if n.SenderID != nil && id == *n.SenderID {
 			continue // senders don't notify themselves
@@ -287,12 +314,110 @@ func (s *service) Fanout(ctx context.Context, notificationID uuid.UUID) error {
 			NotificationID: n.ID,
 			UserID:         id,
 		})
+		recipientIDs = append(recipientIDs, id)
 	}
 	if err := s.repo.CreateRecipients(ctx, recipients); err != nil {
 		return err
 	}
 	s.logger.Info("notification fan-out complete",
 		"notification_id", n.ID, "recipients", len(recipients))
+
+	return s.fanoutDeliveries(ctx, n, recipientIDs)
+}
+
+// fanoutDeliveries snapshots per-channel delivery rows for the recipients'
+// verified, enabled connectors and enqueues channel-send tasks. No-op when the
+// connector repo isn't wired (unit tests / API-side construction).
+func (s *service) fanoutDeliveries(ctx context.Context, n *domain.Notification, recipientIDs []uuid.UUID) error {
+	if s.connectorRepo == nil {
+		return nil
+	}
+	conns, err := s.connectorRepo.ListVerifiedEnabledByUsers(ctx, recipientIDs)
+	if err != nil {
+		return err
+	}
+	smsAllowed := n.OrganizationID == nil // system notifications: platform pays
+	if !smsAllowed && s.orgSettings != nil {
+		settings, err := s.orgSettings.GetByOrgID(ctx, *n.OrganizationID)
+		if err == nil && settings != nil {
+			smsAllowed = settings.SMSEnabled
+		}
+	}
+	deliveries := make([]domain.NotificationDelivery, 0, len(conns))
+	for _, c := range conns {
+		if c.Type == domain.ConnectorSMS && !smsAllowed {
+			continue
+		}
+		deliveries = append(deliveries, domain.NotificationDelivery{
+			NotificationID: n.ID,
+			UserID:         c.UserID,
+			Channel:        c.Type,
+			Target:         c.Target,
+		})
+	}
+	if err := s.repo.CreateDeliveries(ctx, deliveries); err != nil {
+		return err
+	}
+	return s.enqueueDeliveries(ctx, n.ID)
+}
+
+const (
+	smsBatchSize  = 100
+	pushBatchSize = 500
+)
+
+// enqueueDeliveries reads back pending rows (IDs are needed post-upsert) and
+// enqueues channel tasks: one per row for bots, batched for SMS and push.
+func (s *service) enqueueDeliveries(ctx context.Context, notificationID uuid.UUID) error {
+	if s.queue == nil {
+		return nil
+	}
+	for _, ch := range []domain.ConnectorType{domain.ConnectorTelegram, domain.ConnectorBale} {
+		rows, err := s.repo.ListPendingDeliveries(ctx, notificationID, ch)
+		if err != nil {
+			return err
+		}
+		for _, row := range rows {
+			payload, err := json.Marshal(domain.NotificationDeliverBotPayload{DeliveryID: row.ID})
+			if err != nil {
+				return fmt.Errorf("notifications.service.enqueueDeliveries bot payload: %w", err)
+			}
+			task := asynq.NewTask(domain.TypeNotificationDeliverBot, payload)
+			if _, err := s.queue.Enqueue(task, asynq.Queue(QueueName), asynq.MaxRetry(5)); err != nil {
+				return fmt.Errorf("notifications.service.enqueueDeliveries bot: %w", err)
+			}
+		}
+	}
+
+	if err := s.enqueueBatched(ctx, notificationID, domain.ConnectorSMS, domain.TypeNotificationDeliverSMS, smsBatchSize); err != nil {
+		return err
+	}
+	return s.enqueueBatched(ctx, notificationID, domain.ConnectorPush, domain.TypeNotificationDeliverPush, pushBatchSize)
+}
+
+func (s *service) enqueueBatched(ctx context.Context, notificationID uuid.UUID, ch domain.ConnectorType, taskType string, batchSize int) error {
+	rows, err := s.repo.ListPendingDeliveries(ctx, notificationID, ch)
+	if err != nil {
+		return err
+	}
+	for start := 0; start < len(rows); start += batchSize {
+		end := min(start+batchSize, len(rows))
+		ids := make([]uuid.UUID, 0, end-start)
+		for _, row := range rows[start:end] {
+			ids = append(ids, row.ID)
+		}
+		payload, err := json.Marshal(domain.NotificationDeliverBatchPayload{
+			NotificationID: notificationID,
+			DeliveryIDs:    ids,
+		})
+		if err != nil {
+			return fmt.Errorf("notifications.service.enqueueBatched payload: %w", err)
+		}
+		task := asynq.NewTask(taskType, payload)
+		if _, err := s.queue.Enqueue(task, asynq.Queue(QueueName), asynq.MaxRetry(5)); err != nil {
+			return fmt.Errorf("notifications.service.enqueueBatched: %w", err)
+		}
+	}
 	return nil
 }
 
@@ -314,22 +439,177 @@ func (s *service) resolveAudience(ctx context.Context, n *domain.Notification) (
 	}
 }
 
-// Report / DeliverBot / DeliverSMS / DeliverPush are the channel-delivery
-// entries. Full behavior is added by the delivery pipeline (Task 6); these
-// placeholders satisfy the interface until then.
+// smsMaxLen caps SMS body at ~2 segments to bound provider cost.
+const smsMaxLen = 320
 
+// Report returns the delivery report. Only the notification's sender or a
+// superAdmin may view it.
 func (s *service) Report(ctx context.Context, notificationID uuid.UUID) (*domain.NotificationDeliveryReport, error) {
-	return nil, fmt.Errorf("notifications.service.Report: not implemented")
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	n, err := s.repo.FindByID(ctx, notificationID)
+	if err != nil {
+		return nil, err
+	}
+	if !caller.IsAdmin && (n.SenderID == nil || *n.SenderID != caller.UserID) {
+		return nil, domain.ErrForbidden
+	}
+	recipients, err := s.repo.CountRecipients(ctx, notificationID)
+	if err != nil {
+		return nil, err
+	}
+	channels, err := s.repo.DeliveryReport(ctx, notificationID)
+	if err != nil {
+		return nil, err
+	}
+	return &domain.NotificationDeliveryReport{Recipients: recipients, Channels: channels}, nil
 }
 
+func botSender(senders Senders, ch domain.ConnectorType) domain.BotSender {
+	switch ch {
+	case domain.ConnectorTelegram:
+		return senders.Telegram
+	case domain.ConnectorBale:
+		return senders.Bale
+	default:
+		return nil
+	}
+}
+
+// DeliverBot sends one telegram/bale message for a single delivery row.
 func (s *service) DeliverBot(ctx context.Context, deliveryID uuid.UUID) error {
-	return fmt.Errorf("notifications.service.DeliverBot: not implemented")
+	deliveries, err := s.repo.ListDeliveriesByIDs(ctx, []uuid.UUID{deliveryID})
+	if err != nil {
+		return err
+	}
+	if len(deliveries) == 0 {
+		return nil // row gone (notification deleted) — nothing to do
+	}
+	d := deliveries[0]
+	n, err := s.repo.FindByID(ctx, d.NotificationID)
+	if err != nil {
+		return err
+	}
+	sender := botSender(s.senders, d.Channel)
+	if sender == nil {
+		return s.markFailed(ctx, []uuid.UUID{d.ID}, "channel disabled")
+	}
+	if err := sender.SendMessage(ctx, d.Target, botMessage(n)); err != nil {
+		// Return the error so Asynq retries; row stays pending until success or
+		// retry exhaustion (visible in the report).
+		return fmt.Errorf("notifications.service.DeliverBot: %w", err)
+	}
+	return s.repo.MarkDeliveries(ctx, []uuid.UUID{d.ID}, domain.DeliverySent, nil, time.Now())
 }
 
+// DeliverSMS sends one bulk SMS to a batch of delivery rows.
 func (s *service) DeliverSMS(ctx context.Context, notificationID uuid.UUID, deliveryIDs []uuid.UUID) error {
-	return fmt.Errorf("notifications.service.DeliverSMS: not implemented")
+	deliveries, err := s.repo.ListDeliveriesByIDs(ctx, deliveryIDs)
+	if err != nil {
+		return err
+	}
+	if len(deliveries) == 0 {
+		return nil
+	}
+	n, err := s.repo.FindByID(ctx, notificationID)
+	if err != nil {
+		return err
+	}
+	ids := make([]uuid.UUID, 0, len(deliveries))
+	phones := make([]string, 0, len(deliveries))
+	for _, d := range deliveries {
+		ids = append(ids, d.ID)
+		phones = append(phones, d.Target)
+	}
+	if s.senders.SMS == nil {
+		return s.markFailed(ctx, ids, "channel disabled")
+	}
+	if err := s.senders.SMS.SendBulk(ctx, phones, smsMessage(n)); err != nil {
+		return fmt.Errorf("notifications.service.DeliverSMS: %w", err)
+	}
+	return s.repo.MarkDeliveries(ctx, ids, domain.DeliverySent, nil, time.Now())
 }
 
+// DeliverPush sends one FCM multicast to a batch of delivery rows, pruning
+// tokens FCM reports as permanently invalid.
 func (s *service) DeliverPush(ctx context.Context, notificationID uuid.UUID, deliveryIDs []uuid.UUID) error {
-	return fmt.Errorf("notifications.service.DeliverPush: not implemented")
+	deliveries, err := s.repo.ListDeliveriesByIDs(ctx, deliveryIDs)
+	if err != nil {
+		return err
+	}
+	if len(deliveries) == 0 {
+		return nil
+	}
+	n, err := s.repo.FindByID(ctx, notificationID)
+	if err != nil {
+		return err
+	}
+	byToken := make(map[string]uuid.UUID, len(deliveries))
+	allIDs := make([]uuid.UUID, 0, len(deliveries))
+	tokens := make([]string, 0, len(deliveries))
+	for _, d := range deliveries {
+		byToken[d.Target] = d.ID
+		allIDs = append(allIDs, d.ID)
+		tokens = append(tokens, d.Target)
+	}
+	if s.senders.Push == nil {
+		return s.markFailed(ctx, allIDs, "channel disabled")
+	}
+	link := "/"
+	if n.ActionURL != nil && *n.ActionURL != "" {
+		link = *n.ActionURL
+	}
+	invalidTokens, err := s.senders.Push.SendMulticast(ctx, tokens, n.Title, n.Body, link)
+	if err != nil {
+		return fmt.Errorf("notifications.service.DeliverPush: %w", err)
+	}
+	invalidIDs := make([]uuid.UUID, 0, len(invalidTokens))
+	invalidSet := make(map[uuid.UUID]struct{}, len(invalidTokens))
+	for _, tok := range invalidTokens {
+		if id, ok := byToken[tok]; ok {
+			invalidIDs = append(invalidIDs, id)
+			invalidSet[id] = struct{}{}
+		}
+		if err := s.connectorRepo.DeleteByTypeTarget(ctx, domain.ConnectorPush, tok); err != nil {
+			return err
+		}
+	}
+	if err := s.markFailed(ctx, invalidIDs, "token unregistered"); err != nil {
+		return err
+	}
+	sentIDs := make([]uuid.UUID, 0, len(allIDs)-len(invalidIDs))
+	for _, id := range allIDs {
+		if _, bad := invalidSet[id]; !bad {
+			sentIDs = append(sentIDs, id)
+		}
+	}
+	return s.repo.MarkDeliveries(ctx, sentIDs, domain.DeliverySent, nil, time.Now())
+}
+
+func (s *service) markFailed(ctx context.Context, ids []uuid.UUID, reason string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	msg := reason
+	return s.repo.MarkDeliveries(ctx, ids, domain.DeliveryFailed, &msg, time.Time{})
+}
+
+func botMessage(n *domain.Notification) string {
+	msg := n.Title + "\n\n" + n.Body
+	if n.ActionURL != nil && *n.ActionURL != "" {
+		msg += "\n" + *n.ActionURL
+	}
+	return msg
+}
+
+func smsMessage(n *domain.Notification) string {
+	msg := n.Title + "\n" + n.Body
+	// Rune-aware truncation: SMS bodies are often Persian (multibyte), so
+	// slicing by byte could split a character.
+	if r := []rune(msg); len(r) > smsMaxLen {
+		msg = string(r[:smsMaxLen])
+	}
+	return msg
 }
