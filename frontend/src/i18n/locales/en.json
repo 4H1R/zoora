@@ -2779,6 +2779,10 @@
       "class": "Class",
       "reminder": "Reminder"
     },
+    "smsGate": {
+      "label": "SMS notifications",
+      "description": "Allow this organization to deliver notifications over SMS. The platform is billed per message."
+    },
     "connectors": {
       "title": "Notification channels",
       "description": "Choose where Zoora reaches you besides this inbox.",

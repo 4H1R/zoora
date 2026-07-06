@@ -27,11 +27,13 @@ import { cn } from "@/lib/utils"
 interface NotificationBellProps {
   /** Destination for the "view all" footer link — org or admin inbox. */
   to: string
+  /** Optional search params for the destination (e.g. admin inbox tab). */
+  search?: Record<string, unknown>
 }
 
 /** Header bell shared by the org and admin panels. Polls the unread count every
  * 30s for the badge and reveals the ten most recent notifications on open. */
-export function NotificationBell({ to }: NotificationBellProps) {
+export function NotificationBell({ to, search }: NotificationBellProps) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
@@ -143,7 +145,7 @@ export function NotificationBell({ to }: NotificationBellProps) {
             variant="ghost"
             size="sm"
             className="w-full justify-center"
-            render={<Link to={to} onClick={() => setOpen(false)} />}
+            render={<Link to={to} search={search} onClick={() => setOpen(false)} />}
           >
             {t("notifications.viewAll")}
           </Button>

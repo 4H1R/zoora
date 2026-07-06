@@ -22,6 +22,7 @@ import { Route as AuthOrgWhatsNewRouteImport } from './routes/_auth/org/whats-ne
 import { Route as AuthOrgDashboardRouteImport } from './routes/_auth/org/dashboard'
 import { Route as AuthOrgCalendarRouteImport } from './routes/_auth/org/calendar'
 import { Route as AuthLiveLiveIdRouteImport } from './routes/_auth/live/$liveId'
+import { Route as AdminAdminNotificationsRouteImport } from './routes/_admin/admin/notifications'
 import { Route as AdminAdminDashboardRouteImport } from './routes/_admin/admin/dashboard'
 import { Route as AuthOrgUsersIndexRouteImport } from './routes/_auth/org/users/index'
 import { Route as AuthOrgSettingsIndexRouteImport } from './routes/_auth/org/settings/index'
@@ -128,6 +129,11 @@ const AuthLiveLiveIdRoute = AuthLiveLiveIdRouteImport.update({
   id: '/live/$liveId',
   path: '/live/$liveId',
   getParentRoute: () => AuthRoute,
+} as any)
+const AdminAdminNotificationsRoute = AdminAdminNotificationsRouteImport.update({
+  id: '/admin/notifications',
+  path: '/admin/notifications',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminAdminDashboardRoute = AdminAdminDashboardRouteImport.update({
   id: '/admin/dashboard',
@@ -379,6 +385,7 @@ export interface FileRoutesByFullPath {
   '/org': typeof AuthOrgRouteWithChildren
   '/login': typeof GuestLoginRoute
   '/admin/dashboard': typeof AdminAdminDashboardRoute
+  '/admin/notifications': typeof AdminAdminNotificationsRoute
   '/live/$liveId': typeof AuthLiveLiveIdRoute
   '/org/calendar': typeof AuthOrgCalendarRoute
   '/org/dashboard': typeof AuthOrgDashboardRoute
@@ -434,6 +441,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof GuestLoginRoute
   '/admin/dashboard': typeof AdminAdminDashboardRoute
+  '/admin/notifications': typeof AdminAdminNotificationsRoute
   '/live/$liveId': typeof AuthLiveLiveIdRoute
   '/org/calendar': typeof AuthOrgCalendarRoute
   '/org/dashboard': typeof AuthOrgDashboardRoute
@@ -494,6 +502,7 @@ export interface FileRoutesById {
   '/_auth/org': typeof AuthOrgRouteWithChildren
   '/_guest/login': typeof GuestLoginRoute
   '/_admin/admin/dashboard': typeof AdminAdminDashboardRoute
+  '/_admin/admin/notifications': typeof AdminAdminNotificationsRoute
   '/_auth/live/$liveId': typeof AuthLiveLiveIdRoute
   '/_auth/org/calendar': typeof AuthOrgCalendarRoute
   '/_auth/org/dashboard': typeof AuthOrgDashboardRoute
@@ -552,6 +561,7 @@ export interface FileRouteTypes {
     | '/org'
     | '/login'
     | '/admin/dashboard'
+    | '/admin/notifications'
     | '/live/$liveId'
     | '/org/calendar'
     | '/org/dashboard'
@@ -607,6 +617,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/admin/dashboard'
+    | '/admin/notifications'
     | '/live/$liveId'
     | '/org/calendar'
     | '/org/dashboard'
@@ -666,6 +677,7 @@ export interface FileRouteTypes {
     | '/_auth/org'
     | '/_guest/login'
     | '/_admin/admin/dashboard'
+    | '/_admin/admin/notifications'
     | '/_auth/live/$liveId'
     | '/_auth/org/calendar'
     | '/_auth/org/dashboard'
@@ -817,6 +829,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/live/$liveId'
       preLoaderRoute: typeof AuthLiveLiveIdRouteImport
       parentRoute: typeof AuthRoute
+    }
+    '/_admin/admin/notifications': {
+      id: '/_admin/admin/notifications'
+      path: '/admin/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AdminAdminNotificationsRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/_admin/admin/dashboard': {
       id: '/_admin/admin/dashboard'
@@ -1131,6 +1150,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAdminDashboardRoute: typeof AdminAdminDashboardRoute
+  AdminAdminNotificationsRoute: typeof AdminAdminNotificationsRoute
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
   AdminAdminChangelogIdRoute: typeof AdminAdminChangelogIdRoute
   AdminAdminAttendanceIndexRoute: typeof AdminAdminAttendanceIndexRoute
@@ -1160,6 +1180,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAdminDashboardRoute: AdminAdminDashboardRoute,
+  AdminAdminNotificationsRoute: AdminAdminNotificationsRoute,
   AdminAdminIndexRoute: AdminAdminIndexRoute,
   AdminAdminChangelogIdRoute: AdminAdminChangelogIdRoute,
   AdminAdminAttendanceIndexRoute: AdminAdminAttendanceIndexRoute,

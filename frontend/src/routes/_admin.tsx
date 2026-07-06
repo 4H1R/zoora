@@ -6,6 +6,7 @@ import { AdminBreadcrumb } from "@/components/admin/layout/admin-breadcrumb"
 import { SplashScreen } from "@/components/splash-screen"
 import { AppSidebar } from "@/components/admin/layout/app-sidebar"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { NotificationBell } from "@/components/notifications/notification-bell"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useDirection } from "@/components/ui/direction"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
@@ -38,6 +39,7 @@ function RouteComponent() {
           <SidebarTrigger className="md:hidden" />
           <AdminBreadcrumb className="hidden md:flex" />
           <div className="ms-auto flex items-center gap-2">
+            <NotificationBell to="/admin/notifications" search={{ tab: "inbox" }} />
             <LanguageSwitcher />
             <ThemeToggle />
           </div>
