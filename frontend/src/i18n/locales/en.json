@@ -35,6 +35,169 @@
     "toggleTheme": "Toggle theme",
     "toggleLang": "Switch language"
   },
+  "landing": {
+    "nav": {
+      "features": "Features",
+      "how": "How it works",
+      "pricing": "Pricing",
+      "faq": "FAQ",
+      "signIn": "Sign in",
+      "getStarted": "Get started"
+    },
+    "hero": {
+      "badge": "Live classes, exams & messaging — one platform",
+      "titleLine1": "Where great teaching",
+      "titleLine2": "goes live",
+      "subtitle": "Zoora brings low-latency live classrooms, airtight online exams, homework and grading, plus messaging that actually reaches students — all in one place.",
+      "ctaPrimary": "Start for free",
+      "ctaSecondary": "Explore features",
+      "note": "Free plan included — up and running in minutes.",
+      "room": {
+        "title": "Advanced Physics",
+        "participants": "24 in room",
+        "live": "LIVE",
+        "rec": "REC",
+        "hand": "Sara raised a hand",
+        "pollQuestion": "Ready for a quick quiz?",
+        "pollYes": "Ready",
+        "pollNo": "One more example",
+        "chatName": "Amir",
+        "chatMsg": "Will this session be recorded?",
+        "whiteboard": "Whiteboard"
+      }
+    },
+    "stats": {
+      "s1v": "300",
+      "s1l": "participants in a single room",
+      "s2v": "4",
+      "s2l": "message delivery channels",
+      "s3v": "2",
+      "s3l": "languages, RTL-native",
+      "s4v": "365",
+      "s4l": "days of recording retention"
+    },
+    "features": {
+      "eyebrow": "Everything included",
+      "title": "One platform.",
+      "titleAccent": "The whole classroom.",
+      "subtitle": "Stop stitching together video calls, exam tools, and messaging apps. Zoora ships the entire teaching stack.",
+      "live": {
+        "title": "Live classrooms that feel alive",
+        "desc": "Low-latency video rooms with raise-hand, live polls, participant moderation, and in-room chat — teaching stays interactive at any scale.",
+        "tag1": "Raise hand",
+        "tag2": "Live polls",
+        "tag3": "Moderation",
+        "tag4": "In-room chat"
+      },
+      "whiteboard": {
+        "title": "A whiteboard that keeps up",
+        "desc": "Sketch, annotate, and explain on a collaborative whiteboard that saves with the room."
+      },
+      "exams": {
+        "title": "Exams you can trust",
+        "desc": "Timed exams with shuffled questions and options, configurable negative marking, and a reusable question bank — cheating gets expensive."
+      },
+      "homework": {
+        "title": "Homework to gradebook, closed loop",
+        "desc": "Assignments with submission windows, grading, attendance tracking, and a gradebook that fills itself."
+      },
+      "recordings": {
+        "title": "Never lose a lesson",
+        "desc": "Cloud recordings and offline rooms let students rewatch on their own schedule."
+      },
+      "notifications": {
+        "title": "Messages that actually arrive",
+        "desc": "Announcements delivered over Telegram, Bale, SMS, and web push — each with a delivery report.",
+        "ch1": "Telegram",
+        "ch2": "Bale",
+        "ch3": "SMS",
+        "ch4": "Web push"
+      }
+    },
+    "how": {
+      "eyebrow": "How it works",
+      "title": "From zero to live in three steps",
+      "step1": {
+        "n": "01",
+        "title": "Create your space",
+        "desc": "Set up your organization with ready-made Manager, Teacher, and Student roles."
+      },
+      "step2": {
+        "n": "02",
+        "title": "Set up classes",
+        "desc": "Prepare sessions, question banks, and assignments — then invite your people."
+      },
+      "step3": {
+        "n": "03",
+        "title": "Go live and track",
+        "desc": "Teach and record; attendance and grades take care of themselves."
+      }
+    },
+    "pricing": {
+      "eyebrow": "Pricing",
+      "title": "Plans that grow with your classroom",
+      "subtitle": "Start free. Upgrade when your classes do.",
+      "note": "Plans are activated by our team — start free and upgrade when you're ready.",
+      "free": {
+        "name": "Free",
+        "tagline": "Try Zoora with a small group",
+        "cta": "Start free",
+        "f1": "Up to 10 users",
+        "f2": "25 participants per room",
+        "f3": "1 concurrent live room",
+        "f4": "2 GB storage",
+        "f5": "Exams, homework & gradebook"
+      },
+      "pro": {
+        "name": "Pro",
+        "badge": "Most popular",
+        "tagline": "For schools and academies in full swing",
+        "cta": "Get started",
+        "f1": "Up to 150 users",
+        "f2": "100 participants per room",
+        "f3": "10 concurrent live rooms",
+        "f4": "100 GB storage",
+        "f5": "Cloud recordings — 30-day retention",
+        "f6": "Offline rooms",
+        "f7": "Advanced anti-cheat",
+        "f8": "Custom roles"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "tagline": "For institutions that need it all",
+        "cta": "Contact us",
+        "f1": "Unlimited users & storage",
+        "f2": "300 participants per room",
+        "f3": "Unlimited concurrent rooms",
+        "f4": "365-day recording retention",
+        "f5": "Single sign-on (SSO)",
+        "f6": "Everything in Pro"
+      }
+    },
+    "faq": {
+      "eyebrow": "FAQ",
+      "title": "What you want to know",
+      "q1": "Is Zoora only for schools?",
+      "a1": "Zoora is built for education — schools, academies, and private tutors — but any team that runs live sessions can use it.",
+      "q2": "Do students need to install anything?",
+      "a2": "No. Zoora runs in the browser, works on mobile, and can be installed as a PWA for a native-like experience.",
+      "q3": "How does anti-cheat work?",
+      "a3": "Questions and options are shuffled per student, negative marking is configurable, and exams run in timed rooms. Advanced anti-cheat is available on Pro and above.",
+      "q4": "Which languages are supported?",
+      "a4": "English and Persian with full right-to-left support. Switch anytime.",
+      "q5": "How do announcements reach students?",
+      "a5": "Through Telegram and Bale bots, SMS, and web push — each message with a delivery report."
+    },
+    "cta": {
+      "title": "Your next class deserves better",
+      "subtitle": "Join Zoora and give your students a classroom that actually feels alive.",
+      "button": "Get started now"
+    },
+    "footer": {
+      "note": "Crafted for teachers and their students.",
+      "rights": "All rights reserved."
+    }
+  },
   "errorPages": {
     "notFound": {
       "eyebrow": "Error 404 — page not found",
