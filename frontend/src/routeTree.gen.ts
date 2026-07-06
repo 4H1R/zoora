@@ -19,12 +19,12 @@ import { Route as AuthOrgIndexRouteImport } from './routes/_auth/org/index'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin/index'
 import { Route as AuthQuizQuizIdRouteImport } from './routes/_auth/quiz/$quizId'
 import { Route as AuthOrgWhatsNewRouteImport } from './routes/_auth/org/whats-new'
-import { Route as AuthOrgSettingsRouteImport } from './routes/_auth/org/settings'
 import { Route as AuthOrgDashboardRouteImport } from './routes/_auth/org/dashboard'
 import { Route as AuthOrgCalendarRouteImport } from './routes/_auth/org/calendar'
 import { Route as AuthLiveLiveIdRouteImport } from './routes/_auth/live/$liveId'
 import { Route as AdminAdminDashboardRouteImport } from './routes/_admin/admin/dashboard'
 import { Route as AuthOrgUsersIndexRouteImport } from './routes/_auth/org/users/index'
+import { Route as AuthOrgSettingsIndexRouteImport } from './routes/_auth/org/settings/index'
 import { Route as AuthOrgRolesIndexRouteImport } from './routes/_auth/org/roles/index'
 import { Route as AuthOrgPracticesIndexRouteImport } from './routes/_auth/org/practices/index'
 import { Route as AuthOrgOnlineClassesIndexRouteImport } from './routes/_auth/org/online-classes/index'
@@ -50,6 +50,7 @@ import { Route as AdminAdminCorrectionsIndexRouteImport } from './routes/_admin/
 import { Route as AdminAdminClassesIndexRouteImport } from './routes/_admin/admin/classes/index'
 import { Route as AdminAdminChangelogIndexRouteImport } from './routes/_admin/admin/changelog/index'
 import { Route as AdminAdminAttendanceIndexRouteImport } from './routes/_admin/admin/attendance/index'
+import { Route as AuthOrgSettingsNotificationsRouteImport } from './routes/_auth/org/settings/notifications'
 import { Route as AuthOrgOfflinesOfflineIdRouteImport } from './routes/_auth/org/offlines/$offlineId'
 import { Route as AuthOrgNotificationsSendRouteImport } from './routes/_auth/org/notifications/send'
 import { Route as AuthOrgFilesFolderRouteImport } from './routes/_auth/org/files/$folder'
@@ -113,11 +114,6 @@ const AuthOrgWhatsNewRoute = AuthOrgWhatsNewRouteImport.update({
   path: '/whats-new',
   getParentRoute: () => AuthOrgRoute,
 } as any)
-const AuthOrgSettingsRoute = AuthOrgSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthOrgRoute,
-} as any)
 const AuthOrgDashboardRoute = AuthOrgDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -141,6 +137,11 @@ const AdminAdminDashboardRoute = AdminAdminDashboardRouteImport.update({
 const AuthOrgUsersIndexRoute = AuthOrgUsersIndexRouteImport.update({
   id: '/users/',
   path: '/users/',
+  getParentRoute: () => AuthOrgRoute,
+} as any)
+const AuthOrgSettingsIndexRoute = AuthOrgSettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
   getParentRoute: () => AuthOrgRoute,
 } as any)
 const AuthOrgRolesIndexRoute = AuthOrgRolesIndexRouteImport.update({
@@ -279,6 +280,12 @@ const AdminAdminAttendanceIndexRoute =
     path: '/admin/attendance/',
     getParentRoute: () => AdminRoute,
   } as any)
+const AuthOrgSettingsNotificationsRoute =
+  AuthOrgSettingsNotificationsRouteImport.update({
+    id: '/settings/notifications',
+    path: '/settings/notifications',
+    getParentRoute: () => AuthOrgRoute,
+  } as any)
 const AuthOrgOfflinesOfflineIdRoute =
   AuthOrgOfflinesOfflineIdRouteImport.update({
     id: '/offlines/$offlineId',
@@ -375,7 +382,6 @@ export interface FileRoutesByFullPath {
   '/live/$liveId': typeof AuthLiveLiveIdRoute
   '/org/calendar': typeof AuthOrgCalendarRoute
   '/org/dashboard': typeof AuthOrgDashboardRoute
-  '/org/settings': typeof AuthOrgSettingsRoute
   '/org/whats-new': typeof AuthOrgWhatsNewRoute
   '/quiz/$quizId': typeof AuthQuizQuizIdRoute
   '/admin/': typeof AdminAdminIndexRoute
@@ -385,6 +391,7 @@ export interface FileRoutesByFullPath {
   '/org/files/$folder': typeof AuthOrgFilesFolderRoute
   '/org/notifications/send': typeof AuthOrgNotificationsSendRoute
   '/org/offlines/$offlineId': typeof AuthOrgOfflinesOfflineIdRoute
+  '/org/settings/notifications': typeof AuthOrgSettingsNotificationsRoute
   '/admin/attendance/': typeof AdminAdminAttendanceIndexRoute
   '/admin/changelog/': typeof AdminAdminChangelogIndexRoute
   '/admin/classes/': typeof AdminAdminClassesIndexRoute
@@ -410,6 +417,7 @@ export interface FileRoutesByFullPath {
   '/org/online-classes/': typeof AuthOrgOnlineClassesIndexRoute
   '/org/practices/': typeof AuthOrgPracticesIndexRoute
   '/org/roles/': typeof AuthOrgRolesIndexRoute
+  '/org/settings/': typeof AuthOrgSettingsIndexRoute
   '/org/users/': typeof AuthOrgUsersIndexRoute
   '/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
   '/admin/classes/$classId/live-rooms': typeof AdminAdminClassesClassIdLiveRoomsRoute
@@ -429,7 +437,6 @@ export interface FileRoutesByTo {
   '/live/$liveId': typeof AuthLiveLiveIdRoute
   '/org/calendar': typeof AuthOrgCalendarRoute
   '/org/dashboard': typeof AuthOrgDashboardRoute
-  '/org/settings': typeof AuthOrgSettingsRoute
   '/org/whats-new': typeof AuthOrgWhatsNewRoute
   '/quiz/$quizId': typeof AuthQuizQuizIdRoute
   '/admin': typeof AdminAdminIndexRoute
@@ -439,6 +446,7 @@ export interface FileRoutesByTo {
   '/org/files/$folder': typeof AuthOrgFilesFolderRoute
   '/org/notifications/send': typeof AuthOrgNotificationsSendRoute
   '/org/offlines/$offlineId': typeof AuthOrgOfflinesOfflineIdRoute
+  '/org/settings/notifications': typeof AuthOrgSettingsNotificationsRoute
   '/admin/attendance': typeof AdminAdminAttendanceIndexRoute
   '/admin/changelog': typeof AdminAdminChangelogIndexRoute
   '/admin/classes': typeof AdminAdminClassesIndexRoute
@@ -464,6 +472,7 @@ export interface FileRoutesByTo {
   '/org/online-classes': typeof AuthOrgOnlineClassesIndexRoute
   '/org/practices': typeof AuthOrgPracticesIndexRoute
   '/org/roles': typeof AuthOrgRolesIndexRoute
+  '/org/settings': typeof AuthOrgSettingsIndexRoute
   '/org/users': typeof AuthOrgUsersIndexRoute
   '/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
   '/admin/classes/$classId/live-rooms': typeof AdminAdminClassesClassIdLiveRoomsRoute
@@ -488,7 +497,6 @@ export interface FileRoutesById {
   '/_auth/live/$liveId': typeof AuthLiveLiveIdRoute
   '/_auth/org/calendar': typeof AuthOrgCalendarRoute
   '/_auth/org/dashboard': typeof AuthOrgDashboardRoute
-  '/_auth/org/settings': typeof AuthOrgSettingsRoute
   '/_auth/org/whats-new': typeof AuthOrgWhatsNewRoute
   '/_auth/quiz/$quizId': typeof AuthQuizQuizIdRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
@@ -498,6 +506,7 @@ export interface FileRoutesById {
   '/_auth/org/files/$folder': typeof AuthOrgFilesFolderRoute
   '/_auth/org/notifications/send': typeof AuthOrgNotificationsSendRoute
   '/_auth/org/offlines/$offlineId': typeof AuthOrgOfflinesOfflineIdRoute
+  '/_auth/org/settings/notifications': typeof AuthOrgSettingsNotificationsRoute
   '/_admin/admin/attendance/': typeof AdminAdminAttendanceIndexRoute
   '/_admin/admin/changelog/': typeof AdminAdminChangelogIndexRoute
   '/_admin/admin/classes/': typeof AdminAdminClassesIndexRoute
@@ -523,6 +532,7 @@ export interface FileRoutesById {
   '/_auth/org/online-classes/': typeof AuthOrgOnlineClassesIndexRoute
   '/_auth/org/practices/': typeof AuthOrgPracticesIndexRoute
   '/_auth/org/roles/': typeof AuthOrgRolesIndexRoute
+  '/_auth/org/settings/': typeof AuthOrgSettingsIndexRoute
   '/_auth/org/users/': typeof AuthOrgUsersIndexRoute
   '/_admin/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
   '/_admin/admin/classes/$classId/live-rooms': typeof AdminAdminClassesClassIdLiveRoomsRoute
@@ -545,7 +555,6 @@ export interface FileRouteTypes {
     | '/live/$liveId'
     | '/org/calendar'
     | '/org/dashboard'
-    | '/org/settings'
     | '/org/whats-new'
     | '/quiz/$quizId'
     | '/admin/'
@@ -555,6 +564,7 @@ export interface FileRouteTypes {
     | '/org/files/$folder'
     | '/org/notifications/send'
     | '/org/offlines/$offlineId'
+    | '/org/settings/notifications'
     | '/admin/attendance/'
     | '/admin/changelog/'
     | '/admin/classes/'
@@ -580,6 +590,7 @@ export interface FileRouteTypes {
     | '/org/online-classes/'
     | '/org/practices/'
     | '/org/roles/'
+    | '/org/settings/'
     | '/org/users/'
     | '/admin/classes/$classId/gradebook'
     | '/admin/classes/$classId/live-rooms'
@@ -599,7 +610,6 @@ export interface FileRouteTypes {
     | '/live/$liveId'
     | '/org/calendar'
     | '/org/dashboard'
-    | '/org/settings'
     | '/org/whats-new'
     | '/quiz/$quizId'
     | '/admin'
@@ -609,6 +619,7 @@ export interface FileRouteTypes {
     | '/org/files/$folder'
     | '/org/notifications/send'
     | '/org/offlines/$offlineId'
+    | '/org/settings/notifications'
     | '/admin/attendance'
     | '/admin/changelog'
     | '/admin/classes'
@@ -634,6 +645,7 @@ export interface FileRouteTypes {
     | '/org/online-classes'
     | '/org/practices'
     | '/org/roles'
+    | '/org/settings'
     | '/org/users'
     | '/admin/classes/$classId/gradebook'
     | '/admin/classes/$classId/live-rooms'
@@ -657,7 +669,6 @@ export interface FileRouteTypes {
     | '/_auth/live/$liveId'
     | '/_auth/org/calendar'
     | '/_auth/org/dashboard'
-    | '/_auth/org/settings'
     | '/_auth/org/whats-new'
     | '/_auth/quiz/$quizId'
     | '/_admin/admin/'
@@ -667,6 +678,7 @@ export interface FileRouteTypes {
     | '/_auth/org/files/$folder'
     | '/_auth/org/notifications/send'
     | '/_auth/org/offlines/$offlineId'
+    | '/_auth/org/settings/notifications'
     | '/_admin/admin/attendance/'
     | '/_admin/admin/changelog/'
     | '/_admin/admin/classes/'
@@ -692,6 +704,7 @@ export interface FileRouteTypes {
     | '/_auth/org/online-classes/'
     | '/_auth/org/practices/'
     | '/_auth/org/roles/'
+    | '/_auth/org/settings/'
     | '/_auth/org/users/'
     | '/_admin/admin/classes/$classId/gradebook'
     | '/_admin/admin/classes/$classId/live-rooms'
@@ -784,13 +797,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthOrgWhatsNewRouteImport
       parentRoute: typeof AuthOrgRoute
     }
-    '/_auth/org/settings': {
-      id: '/_auth/org/settings'
-      path: '/settings'
-      fullPath: '/org/settings'
-      preLoaderRoute: typeof AuthOrgSettingsRouteImport
-      parentRoute: typeof AuthOrgRoute
-    }
     '/_auth/org/dashboard': {
       id: '/_auth/org/dashboard'
       path: '/dashboard'
@@ -824,6 +830,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/org/users/'
       preLoaderRoute: typeof AuthOrgUsersIndexRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
+    '/_auth/org/settings/': {
+      id: '/_auth/org/settings/'
+      path: '/settings'
+      fullPath: '/org/settings/'
+      preLoaderRoute: typeof AuthOrgSettingsIndexRouteImport
       parentRoute: typeof AuthOrgRoute
     }
     '/_auth/org/roles/': {
@@ -1001,6 +1014,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminAttendanceIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_auth/org/settings/notifications': {
+      id: '/_auth/org/settings/notifications'
+      path: '/settings/notifications'
+      fullPath: '/org/settings/notifications'
+      preLoaderRoute: typeof AuthOrgSettingsNotificationsRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
     '/_auth/org/offlines/$offlineId': {
       id: '/_auth/org/offlines/$offlineId'
       path: '/offlines/$offlineId'
@@ -1176,13 +1196,13 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 interface AuthOrgRouteChildren {
   AuthOrgCalendarRoute: typeof AuthOrgCalendarRoute
   AuthOrgDashboardRoute: typeof AuthOrgDashboardRoute
-  AuthOrgSettingsRoute: typeof AuthOrgSettingsRoute
   AuthOrgWhatsNewRoute: typeof AuthOrgWhatsNewRoute
   AuthOrgIndexRoute: typeof AuthOrgIndexRoute
   AuthOrgClassesClassIdRoute: typeof AuthOrgClassesClassIdRoute
   AuthOrgFilesFolderRoute: typeof AuthOrgFilesFolderRoute
   AuthOrgNotificationsSendRoute: typeof AuthOrgNotificationsSendRoute
   AuthOrgOfflinesOfflineIdRoute: typeof AuthOrgOfflinesOfflineIdRoute
+  AuthOrgSettingsNotificationsRoute: typeof AuthOrgSettingsNotificationsRoute
   AuthOrgAttendanceIndexRoute: typeof AuthOrgAttendanceIndexRoute
   AuthOrgClassesIndexRoute: typeof AuthOrgClassesIndexRoute
   AuthOrgExamsIndexRoute: typeof AuthOrgExamsIndexRoute
@@ -1193,6 +1213,7 @@ interface AuthOrgRouteChildren {
   AuthOrgOnlineClassesIndexRoute: typeof AuthOrgOnlineClassesIndexRoute
   AuthOrgPracticesIndexRoute: typeof AuthOrgPracticesIndexRoute
   AuthOrgRolesIndexRoute: typeof AuthOrgRolesIndexRoute
+  AuthOrgSettingsIndexRoute: typeof AuthOrgSettingsIndexRoute
   AuthOrgUsersIndexRoute: typeof AuthOrgUsersIndexRoute
   AuthOrgClassesClassIdGradebookRoute: typeof AuthOrgClassesClassIdGradebookRoute
   AuthOrgClassesClassSessionsClassSessionIdRoute: typeof AuthOrgClassesClassSessionsClassSessionIdRoute
@@ -1201,13 +1222,13 @@ interface AuthOrgRouteChildren {
 const AuthOrgRouteChildren: AuthOrgRouteChildren = {
   AuthOrgCalendarRoute: AuthOrgCalendarRoute,
   AuthOrgDashboardRoute: AuthOrgDashboardRoute,
-  AuthOrgSettingsRoute: AuthOrgSettingsRoute,
   AuthOrgWhatsNewRoute: AuthOrgWhatsNewRoute,
   AuthOrgIndexRoute: AuthOrgIndexRoute,
   AuthOrgClassesClassIdRoute: AuthOrgClassesClassIdRoute,
   AuthOrgFilesFolderRoute: AuthOrgFilesFolderRoute,
   AuthOrgNotificationsSendRoute: AuthOrgNotificationsSendRoute,
   AuthOrgOfflinesOfflineIdRoute: AuthOrgOfflinesOfflineIdRoute,
+  AuthOrgSettingsNotificationsRoute: AuthOrgSettingsNotificationsRoute,
   AuthOrgAttendanceIndexRoute: AuthOrgAttendanceIndexRoute,
   AuthOrgClassesIndexRoute: AuthOrgClassesIndexRoute,
   AuthOrgExamsIndexRoute: AuthOrgExamsIndexRoute,
@@ -1218,6 +1239,7 @@ const AuthOrgRouteChildren: AuthOrgRouteChildren = {
   AuthOrgOnlineClassesIndexRoute: AuthOrgOnlineClassesIndexRoute,
   AuthOrgPracticesIndexRoute: AuthOrgPracticesIndexRoute,
   AuthOrgRolesIndexRoute: AuthOrgRolesIndexRoute,
+  AuthOrgSettingsIndexRoute: AuthOrgSettingsIndexRoute,
   AuthOrgUsersIndexRoute: AuthOrgUsersIndexRoute,
   AuthOrgClassesClassIdGradebookRoute: AuthOrgClassesClassIdGradebookRoute,
   AuthOrgClassesClassSessionsClassSessionIdRoute:
