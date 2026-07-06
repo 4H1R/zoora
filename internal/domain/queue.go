@@ -8,7 +8,14 @@ const (
 	TypeAttendanceAutoMark       = "attendance:auto-mark"
 	TypeMediaCleanup             = "media:cleanup"
 	TypeRecordingRetentionSweep  = "recording:retention-sweep"
+	TypeNotificationFanout       = "notification:fanout"
 )
+
+// NotificationFanoutPayload resolves a notification's audience to user IDs
+// and inserts inbox rows. Retry-safe: recipient insert ignores conflicts.
+type NotificationFanoutPayload struct {
+	NotificationID uuid.UUID `json:"notification_id"`
+}
 
 // LiveSessionCloseIfNoHostPayload is the Asynq payload for the delayed,
 // webhook-triggered auto-close. Enqueued (with a room-scoped TaskID so it is

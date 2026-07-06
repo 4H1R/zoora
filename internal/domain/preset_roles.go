@@ -35,6 +35,7 @@ var ManagerPermissions = []PermissionName{
 	PermAttendanceUpdate, PermAttendanceUpdateAny, PermAttendanceDelete,
 	PermGradebookView, PermGradebookViewAny, PermGradebookCreate,
 	PermGradebookUpdate, PermGradebookUpdateAny, PermGradebookDelete, PermGradebookDeleteAny,
+	PermNotificationsSend, PermNotificationsSendAny,
 }
 
 var TeacherPermissions = []PermissionName{
@@ -51,6 +52,7 @@ var TeacherPermissions = []PermissionName{
 	PermPracticesView, PermPracticesCreate, PermPracticesUpdate, PermPracticesDelete, PermPracticesGrade,
 	PermAttendanceView, PermAttendanceCreate, PermAttendanceUpdate, PermAttendanceDelete,
 	PermGradebookView, PermGradebookCreate, PermGradebookUpdate, PermGradebookDelete,
+	PermNotificationsSend,
 }
 
 // StudentPermissions is the default permission set for learners. It grants the
