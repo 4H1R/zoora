@@ -3,8 +3,10 @@
 minimumReleaseAge: 4320
 
 allowBuilds:
+  '@firebase/util': false
   esbuild: true
   msw: true
+  protobufjs: false
 
 patchedDependencies:
   '@tldraw/editor@5.1.1': patches/@tldraw__editor@5.1.1.patch

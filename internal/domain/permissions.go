@@ -100,6 +100,8 @@ const (
 	PermAttendanceUpdate       PermissionName = "attendance:update"
 	PermAttendanceUpdateAny    PermissionName = "attendance:update_any"
 	PermAttendanceDelete       PermissionName = "attendance:delete"
+	PermNotificationsSend      PermissionName = "notifications:send"
+	PermNotificationsSendAny   PermissionName = "notifications:send_any"
 )
 
 // AllPermissions is the authoritative list of every permission in the system.
@@ -133,4 +135,5 @@ var AllPermissions = []PermissionName{
 	PermOfflinesUpdate, PermOfflinesUpdateAny, PermOfflinesDelete, PermOfflinesDeleteAny,
 	PermAttendanceView, PermAttendanceViewAny, PermAttendanceCreate, PermAttendanceCreateAny,
 	PermAttendanceUpdate, PermAttendanceUpdateAny, PermAttendanceDelete,
+	PermNotificationsSend, PermNotificationsSendAny,
 }

@@ -16,6 +16,7 @@ var (
 	ErrInternal      = errors.New("internal server error")
 	ErrUserDisabled  = errors.New("account is disabled")
 	ErrAccountLocked = errors.New("account is locked")
+	ErrRateLimited   = errors.New("rate limit exceeded")
 
 	ErrInvalidParticipantRole = errors.New("invalid participant role")
 	ErrParticipantNotFound    = errors.New("participant not found")
@@ -120,6 +121,8 @@ func MapError(err error) (int, string) {
 		return http.StatusPaymentRequired, "FEATURE_NOT_IN_PLAN"
 	case errors.Is(err, ErrPlanLimitReached):
 		return http.StatusPaymentRequired, "PLAN_LIMIT_REACHED"
+	case errors.Is(err, ErrRateLimited):
+		return http.StatusTooManyRequests, "RATE_LIMITED"
 	case errors.Is(err, ErrValidation):
 		return http.StatusBadRequest, "VALIDATION_ERROR"
 	default:

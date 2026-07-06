@@ -21,11 +21,14 @@ import (
 	"github.com/4H1R/zoora/internal/chat"
 	"github.com/4H1R/zoora/internal/classes"
 	"github.com/4H1R/zoora/internal/config"
+	"github.com/4H1R/zoora/internal/connectors"
+	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/entitlements"
 	"github.com/4H1R/zoora/internal/gradebook"
 	"github.com/4H1R/zoora/internal/livesessions"
 	"github.com/4H1R/zoora/internal/media"
 	"github.com/4H1R/zoora/internal/middleware"
+	"github.com/4H1R/zoora/internal/notifications"
 	"github.com/4H1R/zoora/internal/offlines"
 	"github.com/4H1R/zoora/internal/organizations"
 	"github.com/4H1R/zoora/internal/orgsettings"
@@ -37,6 +40,7 @@ import (
 	lk "github.com/4H1R/zoora/internal/platform/livekit"
 	"github.com/4H1R/zoora/internal/platform/logger"
 	"github.com/4H1R/zoora/internal/platform/queue"
+	"github.com/4H1R/zoora/internal/platform/sms"
 	"github.com/4H1R/zoora/internal/platform/storage"
 	"github.com/4H1R/zoora/internal/polls"
 	"github.com/4H1R/zoora/internal/practices"
@@ -251,6 +255,36 @@ func main() {
 	changelogHandler := changelog.NewHandler(changelogService)
 	changelogHandler.RegisterRoutes(v1, authMiddleware)
 
+	// SMS channel is optional. When unconfigured, OTP linking and SMS delivery
+	// are disabled (nil sender surfaces a validation error / skips the channel).
+	var smsSender domain.SMSSender
+	if cfg.KavenegarAPIKey != "" {
+		smsSender = sms.NewKavenegar(sms.Config{
+			APIKey:      cfg.KavenegarAPIKey,
+			Sender:      cfg.KavenegarSender,
+			OTPTemplate: cfg.KavenegarOTPTemplate,
+		}, log)
+	}
+
+	connectorRepo := connectors.NewRepository(db)
+	connectorService := connectors.NewService(connectorRepo, redisClient, smsSender, connectors.BotLinkConfig{
+		TelegramBotUsername: cfg.TelegramBotUsername,
+		BaleBotUsername:     cfg.BaleBotUsername,
+	}, log)
+	connectorHandler := connectors.NewHandler(connectorService)
+	connectorHandler.RegisterRoutes(v1, authMiddleware)
+
+	notificationRepo := notifications.NewRepository(db)
+	// API only enqueues; the worker owns bot/push sends. SMS sender is wired
+	// here too so a manual re-enqueue path could use it, but delivery runs
+	// worker-side.
+	notificationService := notifications.NewService(
+		notificationRepo, classRepo, connectorRepo, orgSettingsService,
+		queueClient, notifications.Senders{SMS: smsSender}, cfg.NotificationSendRatePerHour, log,
+	)
+	notificationHandler := notifications.NewHandler(notificationService)
+	notificationHandler.RegisterRoutes(v1, authMiddleware)
+
 	liveSessionHandler := livesessions.NewHandler(liveSessionService)
 	liveSessionHandler.RegisterRoutes(v1, authMiddleware, perm)
 
@@ -298,9 +332,10 @@ func main() {
 	adminRoleHandler := roles.NewAdminHandler(roleService)
 	adminAttendanceHandler := attendance.NewAdminHandler(attendanceService)
 	adminChangelogHandler := changelog.NewAdminHandler(changelogService)
+	adminOrgSettingsHandler := orgsettings.NewAdminHandler(orgSettingsService)
 
 	adminGroup := v1.Group("/admin", authMiddleware, auth.RequireAdmin())
-	admin.RegisterRoutes(adminGroup, adminUserHandler, adminOrgHandler, adminClassHandler, adminQuestionBankHandler, adminQuizHandler, adminLiveSessionHandler, adminOfflineHandler, adminPracticeHandler, adminPollHandler, adminRoleHandler, adminAttendanceHandler, adminChangelogHandler)
+	admin.RegisterRoutes(adminGroup, adminUserHandler, adminOrgHandler, adminClassHandler, adminQuestionBankHandler, adminQuizHandler, adminLiveSessionHandler, adminOfflineHandler, adminPracticeHandler, adminPollHandler, adminRoleHandler, adminAttendanceHandler, adminChangelogHandler, adminOrgSettingsHandler)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,

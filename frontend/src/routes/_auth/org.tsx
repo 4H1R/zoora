@@ -7,11 +7,12 @@ import { useGetUsersMe } from "@/api/users/users"
 import { MajorModal } from "@/components/changelog/major-modal"
 import { NavZoora } from "@/components/changelog/nav-zoora"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { AppSidebar } from "@/components/layout/app-sidebar"
 // import { LiveClock } from "@/components/live-clock"
 import { BreadcrumbProvider } from "@/components/layout/breadcrumb-context"
-import { AppSidebar } from "@/components/layout/app-sidebar"
 import { MobileBreadcrumb } from "@/components/layout/mobile-breadcrumb"
 import { SidebarBreadcrumb } from "@/components/layout/sidebar-breadcrumb"
+import { NotificationBell } from "@/components/notifications/notification-bell"
 import { SplashScreen } from "@/components/splash-screen"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useDirection } from "@/components/ui/direction"
@@ -28,11 +29,10 @@ export const Route = createFileRoute("/_auth/org")({
 // from ORG_ROUTES (the single source of truth shared with the sidebar nav) so it
 // can never drift out of sync — adding a route there auto-labels its breadcrumb.
 const SEGMENT_KEYS: Record<string, string> = {
-  ...Object.fromEntries(
-    Object.values(ORG_ROUTES).map((spec) => [spec.segment, spec.i18nKey])
-  ),
+  ...Object.fromEntries(Object.values(ORG_ROUTES).map((spec) => [spec.segment, spec.i18nKey])),
   members: "org.nav.members",
   "whats-new": "whatsNew.title",
+  notifications: "notifications.title",
 }
 
 function RouteComponent() {
@@ -64,12 +64,7 @@ function RouteComponent() {
     <AccessProvider config={access.config} user={access.user}>
       <BreadcrumbProvider>
         <SidebarProvider>
-          <AppSidebar
-            user={user}
-            navGroups={navGroups}
-            side={sidebarSide}
-            contentExtra={<NavZoora />}
-          />
+          <AppSidebar user={user} navGroups={navGroups} side={sidebarSide} contentExtra={<NavZoora />} />
           <SidebarInset>
             <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
               <SidebarTrigger className="md:hidden" />
@@ -81,12 +76,13 @@ function RouteComponent() {
               />
               <div className="ms-auto flex items-center gap-2">
                 {/* <LiveClock className="me-1 hidden sm:flex" /> */}
+                <NotificationBell to="/org/notifications" />
                 <LanguageSwitcher />
                 <ThemeToggle />
               </div>
             </header>
             <MajorModal />
-            <MobileBreadcrumb className="px-4 pb-2 pt-4 md:hidden" />
+            <MobileBreadcrumb className="px-4 pt-4 pb-2 md:hidden" />
             <div className="container flex flex-1 flex-col gap-4 py-4">
               <Outlet />
             </div>

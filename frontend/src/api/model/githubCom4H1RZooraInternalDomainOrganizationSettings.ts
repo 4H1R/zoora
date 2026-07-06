@@ -11,5 +11,10 @@ export interface GithubCom4H1RZooraInternalDomainOrganizationSettings {
   created_at?: string;
   id?: string;
   organization_id?: string;
+  /**
+     * SMSEnabled gates the SMS delivery channel per org (platform pays per
+     * message). SuperAdmin-controlled — not part of the org-facing update DTO.
+     */
+  sms_enabled?: boolean;
   updated_at?: string;
 }

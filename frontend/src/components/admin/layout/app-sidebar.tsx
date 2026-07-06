@@ -2,6 +2,7 @@ import type { GithubCom4H1RZooraInternalDomainUser } from "@/api/model"
 import type { NavGroup } from "@/components/layout/nav-main"
 
 import {
+  BellIcon,
   Building2Icon,
   CalendarIcon,
   CheckSquareIcon,
@@ -43,6 +44,7 @@ export function AppSidebar({
         { title: t("admin.dashboard.title"), url: "/admin/dashboard", icon: <LayoutDashboardIcon /> },
         { title: t("admin.organizations"), url: "/admin/organizations", icon: <Building2Icon /> },
         { title: t("admin.changelog.title"), url: "/admin/changelog", icon: <SparklesIcon /> },
+        { title: t("notifications.title"), url: "/admin/notifications", icon: <BellIcon /> },
       ],
     },
     {

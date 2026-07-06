@@ -35,7 +35,7 @@ import { useOrgGuard } from "@/lib/access"
 import { orgHead } from "@/lib/org-head"
 import { cn } from "@/lib/utils"
 
-export const Route = createFileRoute("/_auth/org/settings")({
+export const Route = createFileRoute("/_auth/org/settings/")({
   head: () => orgHead("org.nav.settings"),
   component: RouteComponent,
 })

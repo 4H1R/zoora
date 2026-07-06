@@ -37,7 +37,9 @@ export default defineConfig({
         // SPA fallback: unmatched navigations serve index.html so deep links
         // work offline. Never intercept the API or LiveKit signalling paths.
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api/, /^\/rtc/],
+        // Also exclude the dedicated FCM background worker so it is served
+        // as-is on its own scope instead of falling back to index.html.
+        navigateFallbackDenylist: [/^\/api/, /^\/rtc/, /^\/firebase-messaging-sw\.js$/],
         // Never cache auth'd API responses. Hashed JS/CSS chunks are
         // immutable, so cache them stale-while-revalidate as they're requested
         // — covers the excluded live-room chunk and any future big splits.

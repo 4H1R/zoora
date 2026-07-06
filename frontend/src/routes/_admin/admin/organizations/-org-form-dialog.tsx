@@ -2,7 +2,7 @@ import type { GithubCom4H1RZooraInternalDomainOrganization as Organization } fro
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -11,14 +11,16 @@ import { z } from "zod"
 import {
   getGetAdminOrganizationsQueryKey,
   getGetAdminOrganizationsStatsQueryKey,
+  usePatchAdminOrganizationsIdSettings,
   usePostAdminOrganizations,
   usePutAdminOrganizationsId,
 } from "@/api/admin-organizations/admin-organizations"
 import { GithubCom4H1RZooraInternalDomainOrganizationStatus as OrgStatus } from "@/api/model"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 
 const orgSchema = z.object({
@@ -162,7 +164,47 @@ export function OrgFormDialog({ open, onOpenChange, organization }: OrgFormDialo
           </Select>
           <FieldError errors={[errors.status]} />
         </Field>
+        {isEdit && organization?.id && <OrgSmsGate orgId={organization.id} organization={organization} />}
       </FieldGroup>
     </ResourceFormDialog>
+  )
+}
+
+// OrgSmsGate is the super-admin toggle for the per-org SMS delivery channel.
+// The org list/detail responses don't carry settings, so we seed from any
+// runtime-embedded value and keep in sync with the patch response.
+function OrgSmsGate({ orgId, organization }: { orgId: string; organization: Organization }) {
+  const { t } = useTranslation()
+  const initial = (organization as { settings?: { sms_enabled?: boolean } }).settings?.sms_enabled ?? false
+  const [enabled, setEnabled] = useState(initial)
+
+  const mutation = usePatchAdminOrganizationsIdSettings({
+    mutation: {
+      onSuccess: (res) => {
+        if (res.status === 200 && typeof res.data.data?.sms_enabled === "boolean") {
+          setEnabled(res.data.data.sms_enabled)
+        }
+        toast.success(t("common.save"))
+      },
+      onError: () => setEnabled((prev) => !prev),
+    },
+  })
+
+  return (
+    <Field orientation="horizontal">
+      <FieldLabel htmlFor="org-sms-gate">
+        {t("notifications.smsGate.label")}
+        <FieldDescription>{t("notifications.smsGate.description")}</FieldDescription>
+      </FieldLabel>
+      <Switch
+        id="org-sms-gate"
+        checked={enabled}
+        disabled={mutation.isPending}
+        onCheckedChange={(next) => {
+          setEnabled(next)
+          mutation.mutate({ id: orgId, data: { sms_enabled: next } })
+        }}
+      />
+    </Field>
   )
 }
