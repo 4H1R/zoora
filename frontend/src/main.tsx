@@ -4,6 +4,9 @@ import ReactDOM from "react-dom/client"
 
 import { routeTree } from "./routeTree.gen"
 
+// Import first: attaches the beforeinstallprompt listener at module load, before
+// any route mounts, so the once-only event is never missed (see the store).
+import "./components/pwa/install-prompt-store"
 import "./i18n"
 import "./styles.css"
 
