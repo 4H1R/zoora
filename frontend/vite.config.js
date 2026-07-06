@@ -21,11 +21,9 @@ export default defineConfig({
       },
     }),
     VitePWA({
-      // 'autoUpdate' — a new build activates its service worker immediately
-      // (skipWaiting) and reloads clients automatically, so browsers and mobile
-      // pick up deploys without a hard refresh or an update tap. Trade-off: a
-      // reload can land during a live meeting.
-      registerType: 'autoUpdate',
+      // 'prompt' — we surface an in-app toast (see src/pwa.ts) instead of
+      // silently reloading, so a live meeting/recording is never interrupted.
+      registerType: 'prompt',
       // Registration is wired manually via virtual:pwa-register in src/pwa.ts.
       injectRegister: null,
       // Cache the app shell + hashed static assets. Fonts (woff2) included so

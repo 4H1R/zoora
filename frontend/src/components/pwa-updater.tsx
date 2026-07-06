@@ -4,10 +4,10 @@ import { registerSW } from "virtual:pwa-register"
 import { toast } from "sonner"
 
 /**
- * Registers the service worker and surfaces offline-ready state as a sonner
- * toast. registerType is 'autoUpdate' (see vite.config.js): a new build
- * activates and reloads automatically, so onNeedRefresh below is a no-op safety
- * net rather than the primary update path.
+ * Registers the service worker and surfaces update / offline-ready state as
+ * sonner toasts. We use registerType 'prompt' (see vite.config.js) so a new
+ * build never hard-reloads the page underneath a live meeting — the user opts
+ * in via the toast action instead.
  */
 export function PWAUpdater() {
   const { t } = useTranslation()
