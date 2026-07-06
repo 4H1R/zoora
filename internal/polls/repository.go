@@ -139,6 +139,18 @@ func (r *pollRepository) AdminList(ctx context.Context, q domain.AdminListPollsQ
 	return polls, total, nil
 }
 
+func (r *pollRepository) CloseByModel(ctx context.Context, modelType string, modelID uuid.UUID) error {
+	// DB clock (NOW()) is the time source, matching created_at/updated_at
+	// defaults. Only open polls are touched, so the call is idempotent.
+	result := database.DB(ctx, r.db).Model(&domain.Poll{}).
+		Where("model_type = ? AND model_id = ? AND closed_at IS NULL", modelType, modelID).
+		Update("closed_at", gorm.Expr("NOW()"))
+	if result.Error != nil {
+		return fmt.Errorf("polls.repository.CloseByModel: %w", result.Error)
+	}
+	return nil
+}
+
 // answerRepository handles poll_answers persistence.
 type answerRepository struct {
 	db *gorm.DB

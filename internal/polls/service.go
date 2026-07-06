@@ -149,6 +149,9 @@ func (s *service) Answer(ctx context.Context, pollID uuid.UUID, dto domain.Answe
 	if err != nil {
 		return nil, err
 	}
+	if poll.IsClosed() {
+		return nil, domain.ErrPollClosed
+	}
 	if len(dto.Options) > poll.AllowedAnswersCount {
 		return nil, domain.NewValidationError(map[string]string{
 			"options": "exceeds allowed answers count",
@@ -181,6 +184,10 @@ func (s *service) Answer(ctx context.Context, pollID uuid.UUID, dto domain.Answe
 		created = append(created, *answer)
 	}
 	return created, nil
+}
+
+func (s *service) CloseByModel(ctx context.Context, modelType string, modelID uuid.UUID) error {
+	return s.repo.CloseByModel(ctx, modelType, modelID)
 }
 
 func (s *service) ListAnswers(ctx context.Context, pollID uuid.UUID, q domain.ListPollAnswersQuery) ([]domain.PollAnswer, int64, error) {

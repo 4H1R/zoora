@@ -45,6 +45,7 @@ type service struct {
 	classes      domain.ClassRepository
 	members      domain.ClassMemberRepository
 	chatSvc      domain.ChatService
+	pollSvc      domain.PollService
 	tx           domain.Transactor
 	livekit      LiveKitClient
 	queue        *queue.Client
@@ -64,6 +65,7 @@ func NewService(
 	classes domain.ClassRepository,
 	members domain.ClassMemberRepository,
 	chatSvc domain.ChatService,
+	pollSvc domain.PollService,
 	tx domain.Transactor,
 	livekit LiveKitClient,
 	queueClient *queue.Client,
@@ -88,6 +90,7 @@ func NewService(
 		classes:         classes,
 		members:         members,
 		chatSvc:         chatSvc,
+		pollSvc:         pollSvc,
 		tx:              tx,
 		livekit:         livekit,
 		queue:           queueClient,
@@ -484,6 +487,11 @@ func (s *service) endRoomInternal(ctx context.Context, room *domain.LiveRoom) (*
 
 	if err := s.chatSvc.ArchiveByModel(ctx, domain.ChatModelLiveSession, room.ID); err != nil {
 		s.logger.Error("failed to archive chat for room", "room_id", room.ID.String(), "error", err)
+	}
+
+	// Close any open polls so late clicks can't mutate results after the room ends.
+	if err := s.pollSvc.CloseByModel(ctx, domain.ChatModelLiveSession, room.ID); err != nil {
+		s.logger.Error("failed to close polls for room", "room_id", room.ID.String(), "error", err)
 	}
 
 	// The whiteboard snapshot is only readable during an active session

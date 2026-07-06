@@ -24,6 +24,7 @@ var (
 	ErrCannotRemoveHost       = errors.New("cannot remove a host from the room")
 	ErrCannotRemoveSelf       = errors.New("cannot remove yourself from the room")
 	ErrWhiteboardNotFound     = errors.New("whiteboard not found")
+	ErrPollClosed             = errors.New("poll is closed")
 
 	// Plan / entitlement gates (mapped to HTTP 402 Payment Required).
 	ErrFeatureNotInPlan = errors.New("feature not available on current plan")
@@ -117,6 +118,8 @@ func MapError(err error) (int, string) {
 		return http.StatusConflict, "CANNOT_REMOVE_SELF"
 	case errors.Is(err, ErrWhiteboardNotFound):
 		return http.StatusNotFound, "WHITEBOARD_NOT_FOUND"
+	case errors.Is(err, ErrPollClosed):
+		return http.StatusConflict, "POLL_CLOSED"
 	case errors.Is(err, ErrFeatureNotInPlan):
 		return http.StatusPaymentRequired, "FEATURE_NOT_IN_PLAN"
 	case errors.Is(err, ErrPlanLimitReached):

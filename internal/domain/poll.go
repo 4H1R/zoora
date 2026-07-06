@@ -22,9 +22,15 @@ type Poll struct {
 	Name                string         `gorm:"not null" json:"name"`
 	AllowedAnswersCount int            `gorm:"not null;default:1" json:"allowed_answers_count"`
 	Options             []PollOption   `gorm:"type:jsonb;serializer:json" json:"options"`
+	ClosedAt            *time.Time     `json:"closed_at,omitempty"`
 	CreatedAt           time.Time      `json:"created_at"`
 	UpdatedAt           time.Time      `json:"updated_at"`
 	DeletedAt           gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+// IsClosed reports whether the poll has been closed and no longer accepts answers.
+func (p *Poll) IsClosed() bool {
+	return p.ClosedAt != nil
 }
 
 type PollAnswer struct {
@@ -99,6 +105,10 @@ type PollRepository interface {
 	HardDelete(ctx context.Context, id uuid.UUID) error
 	FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*Poll, error)
 	AdminList(ctx context.Context, q AdminListPollsQuery) ([]Poll, int64, error)
+
+	// CloseByModel marks every open poll owned by the given polymorphic model as
+	// closed (closed_at = now). Idempotent: already-closed polls are untouched.
+	CloseByModel(ctx context.Context, modelType string, modelID uuid.UUID) error
 }
 
 type PollAnswerRepository interface {
@@ -122,4 +132,8 @@ type PollService interface {
 
 	AdminList(ctx context.Context, q AdminListPollsQuery) ([]Poll, int64, error)
 	AdminHardDelete(ctx context.Context, id uuid.UUID) error
+
+	// CloseByModel closes all open polls for a polymorphic owner (e.g. a live
+	// room on finish). A system operation — no caller authz required.
+	CloseByModel(ctx context.Context, modelType string, modelID uuid.UUID) error
 }

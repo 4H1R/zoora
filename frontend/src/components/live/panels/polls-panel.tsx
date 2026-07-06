@@ -3,7 +3,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { useGetPolls, useGetPollsIdResults, usePostPolls } from "@/api/polls/polls"
+import { useGetPolls, useGetPollsId, useGetPollsIdResults, usePostPolls } from "@/api/polls/polls"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
@@ -304,6 +304,45 @@ function PollHistory({ liveId, activePollId }: PollHistoryProps) {
 }
 
 // ---------------------------------------------------------------------------
+// Viewer: Active poll vote
+// ---------------------------------------------------------------------------
+interface ViewerVoteProps {
+  activePoll: LivePoll
+  onVote: (value: string) => void
+  answerPending: boolean
+}
+
+function ViewerVote({ activePoll, onVote, answerPending }: ViewerVoteProps) {
+  const { t } = useTranslation()
+
+  // The room can finish server-side (e.g. no-host auto-close) while this vote
+  // view is still open, which closes the poll and makes any answer 409. Poll the
+  // poll's lifecycle state so we gate the buttons before the request is rejected.
+  const pollQuery = useGetPollsId(activePoll.pollId, { query: { refetchInterval: 5000 } })
+  const isClosed = pollQuery.data?.status === 200 && pollQuery.data.data.data?.closed_at != null
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
+      <p className="text-sm font-semibold text-foreground">{activePoll.name}</p>
+      {isClosed && <p className="text-xs text-muted-foreground">{t("liveRoom.polls.closed")}</p>}
+      <div className="flex flex-col gap-2">
+        {activePoll.options.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            disabled={answerPending || isClosed}
+            onClick={() => onVote(opt.value)}
+            className="w-full rounded-md border border-border bg-muted px-4 py-2.5 text-start text-sm text-foreground transition-colors hover:border-primary hover:bg-primary/10 disabled:opacity-50 disabled:hover:border-border disabled:hover:bg-muted"
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main PollsPanel
 // ---------------------------------------------------------------------------
 interface PollsPanelProps {
@@ -373,22 +412,5 @@ export function PollsPanel({ liveId, isHost, polls, onVote, answerPending }: Pol
   }
 
   // Active poll: vote (also surfaced as a modal popup)
-  return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
-      <p className="text-sm font-semibold text-foreground">{activePoll.name}</p>
-      <div className="flex flex-col gap-2">
-        {activePoll.options.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            disabled={answerPending}
-            onClick={() => onVote(opt.value)}
-            className="w-full rounded-md border border-border bg-muted px-4 py-2.5 text-start text-sm text-foreground transition-colors hover:border-primary hover:bg-primary/10 disabled:opacity-50"
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
+  return <ViewerVote activePoll={activePoll} onVote={onVote} answerPending={answerPending} />
 }

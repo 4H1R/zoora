@@ -170,15 +170,15 @@ func main() {
 	changelogService := changelog.NewServiceWithMedia(changelogRepo, mediaRepo, storageClient, log)
 	livekitClient := lk.NewClient(cfg, log)
 	chatService := chat.NewService(chatRepo, chatMemberRepo, chatMessageRepo, chatReactionRepo, transactor, log, livekitClient, liveRoomRepo)
+	pollService := polls.NewService(pollRepo, pollAnswerRepo, log)
 	liveSessionService := livesessions.NewService(
 		liveRoomRepo, liveParticipantRepo, liveRecordingRepo, liveWhiteboardRepo,
 		classSessionRepo, classRepo, classMemberRepo,
-		chatService, transactor,
+		chatService, pollService, transactor,
 		livekitClient, queueClient, entitlementService, cfg.LiveRoomHostGracePeriod, log,
 	)
 	offlineService := offlines.NewService(offlineRoomRepo, offlineViewRepo, classSessionRepo, classRepo, classMemberRepo, log)
 	practiceService := practices.NewService(practiceRoomRepo, practiceSubRepo, classSessionRepo, classRepo, classMemberRepo, log)
-	pollService := polls.NewService(pollRepo, pollAnswerRepo, log)
 
 	attendanceRepo := attendance.NewRepository(db)
 	attendanceService := attendance.NewService(

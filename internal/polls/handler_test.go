@@ -79,6 +79,10 @@ func (m *mockPollSvc) AdminHardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
 
+func (m *mockPollSvc) CloseByModel(ctx context.Context, modelType string, modelID uuid.UUID) error {
+	return m.Called(ctx, modelType, modelID).Error(0)
+}
+
 func newPollRouter(t *testing.T) (*gin.Engine, *mockPollSvc) {
 	t.Helper()
 	gin.SetMode(gin.TestMode)

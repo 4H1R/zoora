@@ -10,6 +10,7 @@ import type { GithubCom4H1RZooraInternalDomainUser } from './githubCom4H1RZooraI
 
 export interface GithubCom4H1RZooraInternalDomainPoll {
   allowed_answers_count?: number;
+  closed_at?: string;
   created_at?: string;
   id?: string;
   model_id?: string;

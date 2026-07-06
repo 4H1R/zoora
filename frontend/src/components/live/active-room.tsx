@@ -179,7 +179,12 @@ function RoomShell({
       { id: polls.activePoll.pollId, data: { options: [value] } },
       {
         onSuccess: () => polls.markAnswered(),
-        onError: () => toast.error(t("liveRoom.polls.voteError")),
+        onError: (err) => {
+          // The only 409 on this endpoint is POLL_CLOSED — the room finished (or
+          // the host closed the poll) between render and click.
+          const status = (err as { status?: number; response?: { status?: number } })?.status ?? (err as { response?: { status?: number } })?.response?.status
+          toast.error(status === 409 ? t("liveRoom.polls.closed") : t("liveRoom.polls.voteError"))
+        },
       }
     )
   }

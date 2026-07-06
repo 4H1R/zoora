@@ -29,6 +29,7 @@ import (
 	"github.com/4H1R/zoora/internal/platform/queue"
 	"github.com/4H1R/zoora/internal/platform/sms"
 	"github.com/4H1R/zoora/internal/platform/storage"
+	"github.com/4H1R/zoora/internal/polls"
 )
 
 func main() {
@@ -76,10 +77,13 @@ func main() {
 	classRepo := classes.NewRepository(db)
 	classMemberRepo := classes.NewMemberRepository(db)
 	livekitClient := lk.NewClient(cfg, log)
+	pollRepo := polls.NewRepository(db)
+	pollAnswerRepo := polls.NewAnswerRepository(db)
+	pollSvc := polls.NewService(pollRepo, pollAnswerRepo, log)
 	liveSessionService := livesessions.NewService(
 		liveRoomRepo, liveParticipantRepo, liveRecordingRepo, liveWhiteboardRepo,
 		classSessionRepo, classRepo, classMemberRepo,
-		chatSvc, transactor,
+		chatSvc, pollSvc, transactor,
 		livekitClient, queueClient, nil, cfg.LiveRoomHostGracePeriod, log,
 	)
 	queueServer.HandleFunc(domain.TypeLiveSessionAutoClose, livesessions.NewAutoCloseHandler(liveSessionService))

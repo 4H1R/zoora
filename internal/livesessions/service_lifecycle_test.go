@@ -171,6 +171,9 @@ func TestAutoClose_LiveKitRoomGone_StillClosesRoom(t *testing.T) {
 	err := svc.AutoCloseStaleRooms(context.Background())
 	assert.NoError(t, err)
 	f.rooms.AssertExpectations(t)
+	// Room-finish teardown must close the room's polls (default Maybe stub in the
+	// fixture handles the return; assert it actually fired).
+	f.poll.AssertCalled(t, "CloseByModel", mock.Anything, domain.ChatModelLiveSession, testRoomID)
 }
 
 func TestAutoClose_HostStillConnected_RefreshesLastSeen(t *testing.T) {

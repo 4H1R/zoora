@@ -6,6 +6,7 @@ CREATE TABLE polls (
     name                 VARCHAR(255) NOT NULL,
     allowed_answers_count INTEGER NOT NULL DEFAULT 1,
     options              JSONB NOT NULL DEFAULT '[]',
+    closed_at            TIMESTAMPTZ,
     created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at           TIMESTAMPTZ,

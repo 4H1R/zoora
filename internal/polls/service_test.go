@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -57,6 +58,10 @@ func (m *pollRepoMock) AdminList(ctx context.Context, q domain.AdminListPollsQue
 	args := m.Called(ctx, q)
 	items, _ := args.Get(0).([]domain.Poll)
 	return items, args.Get(1).(int64), args.Error(2)
+}
+
+func (m *pollRepoMock) CloseByModel(ctx context.Context, modelType string, modelID uuid.UUID) error {
+	return m.Called(ctx, modelType, modelID).Error(0)
 }
 
 type pollAnswerRepoMock struct{ mock.Mock }
@@ -278,6 +283,42 @@ func TestPollAnswerReplacesPreviousAnswersAndCreatesOnePerOption(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, created, 2)
 	answers.AssertExpectations(t)
+}
+
+func TestPollAnswerRejectedWhenPollClosed(t *testing.T) {
+	userID := uuid.New()
+	pollID := uuid.New()
+	ctx := pollCaller(context.Background(), userID)
+	repo := &pollRepoMock{}
+	answers := &pollAnswerRepoMock{}
+	svc := newPollService(repo, answers)
+
+	closedAt := time.Unix(1700000000, 0)
+	repo.On("FindByID", ctx, pollID).Return(&domain.Poll{
+		ID:                  pollID,
+		AllowedAnswersCount: 1,
+		Options:             []domain.PollOption{{Label: "A", Value: "a"}},
+		ClosedAt:            &closedAt,
+	}, nil)
+
+	created, err := svc.Answer(ctx, pollID, domain.AnswerPollDTO{Options: []string{"a"}})
+
+	assert.Nil(t, created)
+	assert.ErrorIs(t, err, domain.ErrPollClosed)
+	// No answer mutation should occur once the poll is closed.
+	answers.AssertNotCalled(t, "DeleteByPollAndUser", mock.Anything, mock.Anything, mock.Anything)
+	answers.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+}
+
+func TestPollCloseByModelDelegatesToRepo(t *testing.T) {
+	repo := &pollRepoMock{}
+	svc := newPollService(repo, &pollAnswerRepoMock{})
+	modelID := uuid.New()
+
+	repo.On("CloseByModel", mock.Anything, "live_session", modelID).Return(nil).Once()
+
+	assert.NoError(t, svc.CloseByModel(context.Background(), "live_session", modelID))
+	repo.AssertExpectations(t)
 }
 
 func TestPollAdminMethodsRequireAdminAndDefaultPagination(t *testing.T) {

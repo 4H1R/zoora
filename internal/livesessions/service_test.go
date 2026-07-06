@@ -374,6 +374,40 @@ func (m *mockChatService) ArchiveByModel(ctx context.Context, modelType string, 
 	return m.Called(ctx, modelType, modelID).Error(0)
 }
 
+// mockPollService satisfies domain.PollService; only CloseByModel is exercised
+// from livesessions (room-finish teardown), the rest are unused stubs.
+type mockPollService struct{ mock.Mock }
+
+func (m *mockPollService) CloseByModel(ctx context.Context, modelType string, modelID uuid.UUID) error {
+	return m.Called(ctx, modelType, modelID).Error(0)
+}
+func (m *mockPollService) Create(context.Context, domain.CreatePollDTO) (*domain.Poll, error) {
+	panic("unused")
+}
+func (m *mockPollService) GetByID(context.Context, uuid.UUID) (*domain.Poll, error) {
+	panic("unused")
+}
+func (m *mockPollService) Update(context.Context, uuid.UUID, domain.UpdatePollDTO) (*domain.Poll, error) {
+	panic("unused")
+}
+func (m *mockPollService) Delete(context.Context, uuid.UUID) error { panic("unused") }
+func (m *mockPollService) List(context.Context, domain.ListPollsQuery) ([]domain.Poll, int64, error) {
+	panic("unused")
+}
+func (m *mockPollService) Answer(context.Context, uuid.UUID, domain.AnswerPollDTO) ([]domain.PollAnswer, error) {
+	panic("unused")
+}
+func (m *mockPollService) ListAnswers(context.Context, uuid.UUID, domain.ListPollAnswersQuery) ([]domain.PollAnswer, int64, error) {
+	panic("unused")
+}
+func (m *mockPollService) Results(context.Context, uuid.UUID) (*domain.PollResults, error) {
+	panic("unused")
+}
+func (m *mockPollService) AdminList(context.Context, domain.AdminListPollsQuery) ([]domain.Poll, int64, error) {
+	panic("unused")
+}
+func (m *mockPollService) AdminHardDelete(context.Context, uuid.UUID) error { panic("unused") }
+
 type noopTx struct{}
 
 func (noopTx) RunInTx(ctx context.Context, fn func(context.Context) error) error {
@@ -448,6 +482,7 @@ type lkFixture struct {
 	classes *mockClassRepo
 	members *mockMemberRepo
 	chat    *mockChatService
+	poll    *mockPollService
 	lk      *fakeLiveKit
 }
 
@@ -477,12 +512,16 @@ func newTestServiceLKEnt(t *testing.T, ent entitlements.Service) (domain.LiveSes
 		classes: &mockClassRepo{},
 		members: &mockMemberRepo{},
 		chat:    &mockChatService{},
+		poll:    &mockPollService{},
 		lk:      &fakeLiveKit{},
 	}
+	// Room-finish teardown closes polls; allow it without forcing every test to
+	// register the expectation explicitly.
+	f.poll.On("CloseByModel", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 	svc := livesessions.NewService(
 		f.rooms, f.parts, f.recs, f.wb,
 		f.sess, f.classes, f.members,
-		f.chat, noopTx{},
+		f.chat, f.poll, noopTx{},
 		f.lk,
 		nil, // queue client
 		ent,

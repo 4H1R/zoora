@@ -2743,7 +2743,8 @@
       "removeOption": "Remove option",
       "history": "Past polls",
       "launchError": "Couldn't start the poll",
-      "voteError": "Couldn't submit your vote"
+      "voteError": "Couldn't submit your vote",
+      "closed": "This poll is closed"
     },
     "panel": {
       "title": "Room"
