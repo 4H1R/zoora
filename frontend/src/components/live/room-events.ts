@@ -8,6 +8,20 @@ export type RoomEvent =
   | { type: "poll_launched"; data: { pollId: string; name: string; options: { label: string; value: string }[]; allowedAnswersCount: number } }
   | { type: "poll_results"; data: { pollId: string; counts: Record<string, number>; total: number } }
   | { type: "poll_closed"; data: { pollId: string } }
+  | {
+      type: "chat_message"
+      data: {
+        id: string
+        chat_id: string
+        sender_id: string
+        sender: { id: string; name: string }
+        message_type: string
+        content: string
+        created_at: string
+        parent_message_id: string | null
+      }
+    }
+  | { type: "chat_message_deleted"; data: { id: string } }
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()

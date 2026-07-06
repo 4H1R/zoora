@@ -13,6 +13,13 @@ import (
 	"github.com/4H1R/zoora/internal/domain"
 )
 
+// roomDataSender delivers realtime data packets to a LiveKit room. Satisfied by
+// *livekit.Client. Kept as a narrow local interface so chat depends only on the
+// one method it needs and stays trivially mockable in tests.
+type roomDataSender interface {
+	SendData(ctx context.Context, roomName string, payload []byte, destinationIdentities []string) error
+}
+
 type service struct {
 	chatRepo     domain.ChatRepository
 	memberRepo   domain.ChatMemberRepository
@@ -20,6 +27,10 @@ type service struct {
 	reactionRepo domain.MessageReactionRepository
 	transactor   domain.Transactor
 	logger       *slog.Logger
+	// livekit and liveRooms power realtime delivery for live_session chats. Both
+	// may be nil (worker, unit tests) — broadcasts become no-ops in that case.
+	livekit   roomDataSender
+	liveRooms domain.LiveRoomRepository
 }
 
 func NewService(
@@ -29,6 +40,8 @@ func NewService(
 	reactionRepo domain.MessageReactionRepository,
 	transactor domain.Transactor,
 	logger *slog.Logger,
+	livekit roomDataSender,
+	liveRooms domain.LiveRoomRepository,
 ) domain.ChatService {
 	return &service{
 		chatRepo:     chatRepo,
@@ -37,6 +50,54 @@ func NewService(
 		reactionRepo: reactionRepo,
 		transactor:   transactor,
 		logger:       logger,
+		livekit:      livekit,
+		liveRooms:    liveRooms,
+	}
+}
+
+const (
+	chatEventMessage        = "chat_message"
+	chatEventMessageDeleted = "chat_message_deleted"
+)
+
+// broadcastToLiveRoom pushes a realtime chat event over the LiveKit data channel
+// of the room backing a live_session chat, so participants receive messages
+// instantly instead of waiting for the next poll. Server-side fanout means every
+// participant (any role) receives — no per-client publish grant required.
+//
+// Best-effort: the message is already persisted, so failures are logged and
+// never surfaced. No-op for non-live chats or when LiveKit wiring is absent.
+func (s *service) broadcastToLiveRoom(ctx context.Context, chat *domain.Chat, eventType string, data any) {
+	if s.livekit == nil || s.liveRooms == nil || chat.ModelType != domain.ChatModelLiveSession {
+		return
+	}
+	room, err := s.liveRooms.FindByID(ctx, chat.ModelID)
+	if err != nil {
+		s.logger.Error("chat.broadcastToLiveRoom: resolve room", "chat_id", chat.ID.String(), "error", err)
+		return
+	}
+	payload, err := json.Marshal(map[string]any{"type": eventType, "data": data})
+	if err != nil {
+		s.logger.Error("chat.broadcastToLiveRoom: marshal", "event", eventType, "error", err)
+		return
+	}
+	if err := s.livekit.SendData(ctx, room.LiveKitRoomName, payload, nil); err != nil {
+		s.logger.Error("chat.broadcastToLiveRoom: send", "room", room.LiveKitRoomName, "event", eventType, "error", err)
+	}
+}
+
+// chatMessagePayload mirrors the message shape the frontend renders. Sender name
+// comes from the caller, since the freshly-created row has no preloaded user.
+func chatMessagePayload(msg *domain.Message, caller domain.Caller) map[string]any {
+	return map[string]any{
+		"id":                msg.ID.String(),
+		"chat_id":           msg.ChatID.String(),
+		"sender_id":         caller.UserID.String(),
+		"sender":            map[string]any{"id": caller.UserID.String(), "name": caller.Name},
+		"message_type":      string(msg.MessageType),
+		"content":           msg.Content,
+		"created_at":        msg.CreatedAt,
+		"parent_message_id": msg.ParentMessageID,
 	}
 }
 
@@ -274,6 +335,8 @@ func (s *service) SendMessage(ctx context.Context, chatID uuid.UUID, dto domain.
 		"chat_id", chatID.String(),
 		"sender_id", caller.UserID.String(),
 	)
+
+	s.broadcastToLiveRoom(ctx, chat, chatEventMessage, chatMessagePayload(msg, caller))
 	return msg, nil
 }
 
@@ -349,7 +412,18 @@ func (s *service) DeleteMessage(ctx context.Context, id uuid.UUID) error {
 		}
 	}
 
-	return s.messageRepo.Delete(ctx, id)
+	if err := s.messageRepo.Delete(ctx, id); err != nil {
+		return err
+	}
+
+	// Only reload the chat when realtime broadcast is actually wired, to avoid an
+	// extra query on the delete path when it would be a no-op anyway.
+	if s.livekit != nil && s.liveRooms != nil {
+		if chat, cErr := s.chatRepo.FindByID(ctx, msg.ChatID); cErr == nil {
+			s.broadcastToLiveRoom(ctx, chat, chatEventMessageDeleted, map[string]any{"id": id.String()})
+		}
+	}
+	return nil
 }
 
 func (s *service) ListMessages(ctx context.Context, chatID uuid.UUID, q domain.ListMessagesQuery) ([]domain.Message, int64, error) {

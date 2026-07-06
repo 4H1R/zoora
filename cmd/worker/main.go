@@ -65,7 +65,8 @@ func main() {
 	chatMemberRepo := chat.NewMemberRepository(db)
 	chatMessageRepo := chat.NewMessageRepository(db)
 	chatReactionRepo := chat.NewReactionRepository(db)
-	chatSvc := chat.NewService(chatRepo, chatMemberRepo, chatMessageRepo, chatReactionRepo, transactor, log)
+	// Worker has no LiveKit client; realtime chat broadcast is API-only (nil deps = no-op).
+	chatSvc := chat.NewService(chatRepo, chatMemberRepo, chatMessageRepo, chatReactionRepo, transactor, log, nil, nil)
 
 	liveRoomRepo := livesessions.NewRoomRepository(db)
 	liveParticipantRepo := livesessions.NewParticipantRepository(db)

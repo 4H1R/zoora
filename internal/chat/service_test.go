@@ -129,7 +129,7 @@ func newService(
 	msgRepo *mockMessageRepo,
 	reactionRepo *mockReactionRepo,
 ) domain.ChatService {
-	return chat.NewService(chatRepo, memberRepo, msgRepo, reactionRepo, noopTx{}, slog.Default())
+	return chat.NewService(chatRepo, memberRepo, msgRepo, reactionRepo, noopTx{}, slog.Default(), nil, nil)
 }
 
 func TestCreateChat_AdminSuccess(t *testing.T) {
@@ -415,7 +415,7 @@ func TestToggleReaction_AddReaction(t *testing.T) {
 	reactionRepo.On("CountByMessage", mock.Anything, msgID).Return(map[string]int{"👍": 1}, nil)
 	msgRepo.On("Update", mock.Anything, mock.AnythingOfType("*domain.Message")).Return(nil)
 
-	svc := chat.NewService(chatRepo, nil, msgRepo, reactionRepo, noopTx{}, slog.Default())
+	svc := chat.NewService(chatRepo, nil, msgRepo, reactionRepo, noopTx{}, slog.Default(), nil, nil)
 
 	msg, err := svc.ToggleReaction(ctx, msgID, domain.ToggleReactionDTO{Emoji: "👍"})
 	assert.NoError(t, err)
@@ -457,7 +457,7 @@ func TestToggleReaction_RemoveExistingReaction(t *testing.T) {
 	reactionRepo.On("CountByMessage", mock.Anything, msgID).Return(map[string]int{}, nil)
 	msgRepo.On("Update", mock.Anything, mock.AnythingOfType("*domain.Message")).Return(nil)
 
-	svc := chat.NewService(chatRepo, nil, msgRepo, reactionRepo, noopTx{}, slog.Default())
+	svc := chat.NewService(chatRepo, nil, msgRepo, reactionRepo, noopTx{}, slog.Default(), nil, nil)
 
 	msg, err := svc.ToggleReaction(ctx, msgID, domain.ToggleReactionDTO{Emoji: "👍"})
 	assert.NoError(t, err)
@@ -580,4 +580,97 @@ func TestSendMessage_WithThread(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, &parentMsgID, msg.ParentMessageID)
+}
+
+// spySender records SendData calls to assert realtime broadcast happened.
+type spySender struct {
+	rooms    []string
+	payloads [][]byte
+}
+
+func (s *spySender) SendData(_ context.Context, room string, payload []byte, _ []string) error {
+	s.rooms = append(s.rooms, room)
+	s.payloads = append(s.payloads, payload)
+	return nil
+}
+
+// stubLiveRooms resolves a live room by ID. Embeds the interface so only the one
+// method under test needs implementing; any other call would panic (and none do).
+type stubLiveRooms struct {
+	domain.LiveRoomRepository
+	room *domain.LiveRoom
+}
+
+func (s stubLiveRooms) FindByID(_ context.Context, _ uuid.UUID) (*domain.LiveRoom, error) {
+	return s.room, nil
+}
+
+func TestSendMessage_LiveSession_BroadcastsOverDataChannel(t *testing.T) {
+	userID := uuid.New()
+	ctx := memberCtx(userID)
+	chatID := uuid.New()
+	roomID := uuid.New()
+
+	chatRepo := &mockChatRepo{}
+	msgRepo := &mockMessageRepo{}
+	chatRepo.On("FindByID", ctx, chatID).Return(&domain.Chat{
+		ID:        chatID,
+		ModelType: domain.ChatModelLiveSession,
+		ModelID:   roomID,
+		Status:    domain.ChatStatusActive,
+	}, nil)
+	msgRepo.On("Create", ctx, mock.AnythingOfType("*domain.Message")).Return(nil)
+
+	sender := &spySender{}
+	rooms := stubLiveRooms{room: &domain.LiveRoom{ID: roomID, LiveKitRoomName: "session-abc"}}
+	svc := chat.NewService(chatRepo, nil, msgRepo, nil, noopTx{}, slog.Default(), sender, rooms)
+
+	_, err := svc.SendMessage(ctx, chatID, domain.SendMessageDTO{
+		MessageType: domain.MessageTypeText,
+		Content:     "Hi room!",
+	})
+	assert.NoError(t, err)
+
+	if assert.Len(t, sender.rooms, 1) {
+		assert.Equal(t, "session-abc", sender.rooms[0])
+		var env struct {
+			Type string `json:"type"`
+			Data struct {
+				Content string `json:"content"`
+			} `json:"data"`
+		}
+		assert.NoError(t, json.Unmarshal(sender.payloads[0], &env))
+		assert.Equal(t, "chat_message", env.Type)
+		assert.Equal(t, "Hi room!", env.Data.Content)
+	}
+}
+
+func TestSendMessage_NonLiveChat_NoBroadcast(t *testing.T) {
+	userID := uuid.New()
+	ctx := memberCtx(userID)
+	chatID := uuid.New()
+
+	chatRepo := &mockChatRepo{}
+	memberRepo := &mockMemberRepo{}
+	msgRepo := &mockMessageRepo{}
+	chatRepo.On("FindByID", ctx, chatID).Return(&domain.Chat{
+		ID:        chatID,
+		ModelType: "support_ticket",
+		Status:    domain.ChatStatusActive,
+	}, nil)
+	memberRepo.On("FindByChatAndUser", ctx, chatID, userID).Return(&domain.ChatMember{
+		ChatID: chatID, UserID: userID, Role: domain.ChatMemberRoleMember,
+	}, nil)
+	msgRepo.On("Create", ctx, mock.AnythingOfType("*domain.Message")).Return(nil)
+
+	sender := &spySender{}
+	rooms := stubLiveRooms{room: &domain.LiveRoom{}}
+	svc := chat.NewService(chatRepo, memberRepo, msgRepo, nil, noopTx{}, slog.Default(), sender, rooms)
+
+	_, err := svc.SendMessage(ctx, chatID, domain.SendMessageDTO{
+		MessageType: domain.MessageTypeText,
+		Content:     "private",
+	})
+	assert.NoError(t, err)
+	assert.Empty(t, sender.rooms, "non-live chat must not broadcast to a room")
 }
