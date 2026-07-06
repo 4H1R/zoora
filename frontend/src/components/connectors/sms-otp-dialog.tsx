@@ -77,9 +77,7 @@ export function SmsOtpDialog({ open, onOpenChange }: SmsOtpDialogProps) {
         <DialogHeader>
           <DialogTitle>{t("notifications.connectors.sms")}</DialogTitle>
           <DialogDescription>
-            {step === "phone"
-              ? t("notifications.connectors.phone")
-              : t("notifications.connectors.codeSent")}
+            {step === "phone" ? t("notifications.connectors.phone") : t("notifications.connectors.codeSent")}
           </DialogDescription>
         </DialogHeader>
 

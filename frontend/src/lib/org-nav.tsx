@@ -1,6 +1,6 @@
+import type { NavGroup } from "@/components/layout/nav-main"
 import type { AppPermission } from "@/lib/access"
 import type { OrgRouteKey } from "@/lib/org-routes"
-import type { NavGroup } from "@/components/layout/nav-main"
 import type { TFunction } from "i18next"
 
 import { ORG_ROUTES } from "@/lib/org-routes"
@@ -13,10 +13,7 @@ type NavGroupSpec = {
   keys: OrgRouteKey[]
 }
 
-export function buildOrgNavGroups(
-  t: TFunction,
-  has: (perm: AppPermission) => boolean
-): NavGroup[] {
+export function buildOrgNavGroups(t: TFunction, has: (perm: AppPermission) => boolean): NavGroup[] {
   const groups: NavGroupSpec[] = [
     { label: t("org.panel"), keys: ["dashboard", "calendar", "classes"] },
     {

@@ -1,5 +1,5 @@
-import type { AudienceMode } from "@/components/notifications/audience-picker"
 import type { GithubCom4H1RZooraInternalDomainNotificationAudienceDTO as AudienceDTO } from "@/api/model"
+import type { AudienceMode } from "@/components/notifications/audience-picker"
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
@@ -11,10 +11,7 @@ import { toast } from "sonner"
 import { z } from "zod"
 
 import { GithubCom4H1RZooraInternalDomainNotificationAudienceDTOType as AudienceType } from "@/api/model"
-import {
-  getGetNotificationsSentQueryKey,
-  usePostNotifications,
-} from "@/api/notifications/notifications"
+import { getGetNotificationsSentQueryKey, usePostNotifications } from "@/api/notifications/notifications"
 import { AudiencePicker } from "@/components/notifications/audience-picker"
 import { Button } from "@/components/ui/button"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
@@ -136,9 +133,7 @@ export function NotificationComposer({ mode }: NotificationComposerProps) {
               setAudienceError(false)
             }}
           />
-          {audienceError && (
-            <p className="text-destructive text-sm">{t("notifications.send.audience")}</p>
-          )}
+          {audienceError && <p className="text-destructive text-sm">{t("notifications.send.audience")}</p>}
         </div>
 
         <div className="flex justify-end">

@@ -12,13 +12,7 @@ import {
   usePostConnectorsTelegramLink,
 } from "@/api/connectors/connectors"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
 
 interface BotLinkDialogProps {
@@ -85,9 +79,7 @@ export function BotLinkDialog({ channel, open, onOpenChange }: BotLinkDialogProp
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>
-            {t(`notifications.connectors.${channel}`)}
-          </DialogTitle>
+          <DialogTitle>{t(`notifications.connectors.${channel}`)}</DialogTitle>
           <DialogDescription>{t("notifications.connectors.linkHint")}</DialogDescription>
         </DialogHeader>
 
@@ -115,9 +107,7 @@ export function BotLinkDialog({ channel, open, onOpenChange }: BotLinkDialogProp
               <Loader2Icon className="size-3.5 animate-spin" />
               <span>{t("notifications.connectors.waiting")}</span>
             </div>
-            <p className="text-muted-foreground text-center text-xs">
-              {t("notifications.connectors.linkExpires")}
-            </p>
+            <p className="text-muted-foreground text-center text-xs">{t("notifications.connectors.linkExpires")}</p>
           </div>
         )}
       </DialogContent>

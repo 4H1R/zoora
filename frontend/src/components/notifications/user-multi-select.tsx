@@ -8,14 +8,7 @@ import { useGetClassesIdMembers } from "@/api/classes/classes"
 import { useGetUsers } from "@/api/users/users"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
@@ -60,10 +53,7 @@ export function UserMultiSelect({
     { search: debouncedSearch || undefined, organization_id: organizationId || undefined },
     { query: { enabled: isAdmin } }
   )
-  const orgQuery = useGetUsers(
-    { search: debouncedSearch || undefined },
-    { query: { enabled: !byClass && !isAdmin } }
-  )
+  const orgQuery = useGetUsers({ search: debouncedSearch || undefined }, { query: { enabled: !byClass && !isAdmin } })
 
   let options: Option[] = []
   if (byClass) {
@@ -93,9 +83,7 @@ export function UserMultiSelect({
     <div className={cn("flex flex-col gap-2", className)}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger
-          render={
-            <Button variant="outline" role="combobox" className="w-full justify-between font-normal" />
-          }
+          render={<Button variant="outline" role="combobox" className="w-full justify-between font-normal" />}
         >
           <span className={cn(value.length === 0 && "text-muted-foreground")}>
             {value.length > 0
@@ -106,11 +94,7 @@ export function UserMultiSelect({
         </PopoverTrigger>
         <PopoverContent className="w-72 p-0" align="start">
           <Command shouldFilter={false}>
-            <CommandInput
-              value={search}
-              onValueChange={setSearch}
-              placeholder={t("common.search")}
-            />
+            <CommandInput value={search} onValueChange={setSearch} placeholder={t("common.search")} />
             <CommandList>
               <CommandEmpty>{t("common.noResults")}</CommandEmpty>
               <CommandGroup>
@@ -118,15 +102,11 @@ export function UserMultiSelect({
                   const checked = value.includes(user.id)
                   return (
                     <CommandItem key={user.id} value={user.id} onSelect={() => toggle(user.id)}>
-                      <CheckIcon
-                        className={cn("me-2 size-4 shrink-0", checked ? "opacity-100" : "opacity-0")}
-                      />
+                      <CheckIcon className={cn("me-2 size-4 shrink-0", checked ? "opacity-100" : "opacity-0")} />
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-sm">{user.name}</div>
                         {user.username && (
-                          <div className="text-muted-foreground truncate font-mono text-xs">
-                            {user.username}
-                          </div>
+                          <div className="text-muted-foreground truncate font-mono text-xs">{user.username}</div>
                         )}
                       </div>
                     </CommandItem>

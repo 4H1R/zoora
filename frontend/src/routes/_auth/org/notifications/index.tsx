@@ -68,12 +68,7 @@ function NotificationsInboxPage() {
         title={t("notifications.title")}
         actions={
           <>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={markAllRead.isPending}
-              onClick={() => markAllRead.mutate()}
-            >
+            <Button variant="outline" size="sm" disabled={markAllRead.isPending} onClick={() => markAllRead.mutate()}>
               <CheckCheckIcon />
               {t("notifications.markAllRead")}
             </Button>
@@ -93,11 +88,7 @@ function NotificationsInboxPage() {
             <Spinner />
           </div>
         ) : items.length === 0 ? (
-          <EmptyState
-            icon={BellIcon}
-            title={t("notifications.empty")}
-            description={t("notifications.emptyHint")}
-          />
+          <EmptyState icon={BellIcon} title={t("notifications.empty")} description={t("notifications.emptyHint")} />
         ) : (
           <div className="bg-card ring-foreground/10 divide-border/60 divide-y rounded-2xl p-1.5 ring-1">
             <NotificationList items={items} onItemClick={handleItemClick} />

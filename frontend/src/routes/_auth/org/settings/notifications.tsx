@@ -28,19 +28,13 @@ function ConnectorSettingsPage() {
   return (
     <div className="mx-auto w-full max-w-2xl">
       <PageHeader title={t("notifications.connectors.title")} />
-      <p className="text-muted-foreground mt-1.5 text-sm">
-        {t("notifications.connectors.description")}
-      </p>
+      <p className="text-muted-foreground mt-1.5 text-sm">{t("notifications.connectors.description")}</p>
 
       <div className="mt-6 flex flex-col gap-3">
         {isLoading
           ? CHANNELS.map((c) => <Skeleton key={c} className="h-[75px] w-full rounded-xl" />)
           : CHANNELS.map((channel) => (
-              <ConnectorCard
-                key={channel}
-                type={channel}
-                connector={connectors.find((c) => c.type === channel)}
-              />
+              <ConnectorCard key={channel} type={channel} connector={connectors.find((c) => c.type === channel)} />
             ))}
       </div>
     </div>

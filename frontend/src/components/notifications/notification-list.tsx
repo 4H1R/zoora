@@ -4,8 +4,8 @@ import { useTranslation } from "react-i18next"
 
 import { GithubCom4H1RZooraInternalDomainNotificationCategory as Category } from "@/api/model"
 import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
 import { formatRelativeTime } from "@/lib/relative-time"
+import { cn } from "@/lib/utils"
 
 // Category → i18n label key. Keeps the badge copy in one place so the dropdown
 // and the full inbox never diverge.
@@ -72,11 +72,7 @@ export function NotificationList({ items, limit, onItemClick, className }: Notif
                   </time>
                 </div>
 
-                {item.body && (
-                  <p className="text-muted-foreground line-clamp-2 text-xs leading-relaxed">
-                    {item.body}
-                  </p>
-                )}
+                {item.body && <p className="text-muted-foreground line-clamp-2 text-xs leading-relaxed">{item.body}</p>}
 
                 {categoryKey && (
                   <div className="mt-0.5">

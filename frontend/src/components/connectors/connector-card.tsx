@@ -1,13 +1,7 @@
 import type { GithubCom4H1RZooraInternalDomainUserConnector as UserConnector } from "@/api/model"
 
 import { useQueryClient } from "@tanstack/react-query"
-import {
-  BellRingIcon,
-  MessageCircleIcon,
-  SendIcon,
-  SmartphoneIcon,
-  Trash2Icon,
-} from "lucide-react"
+import { BellRingIcon, MessageCircleIcon, SendIcon, SmartphoneIcon, Trash2Icon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -39,10 +33,7 @@ import { isPushConfigured } from "@/config/env"
 import { enablePush } from "@/lib/push"
 import { cn } from "@/lib/utils"
 
-const META: Record<
-  string,
-  { icon: typeof SendIcon; labelKey: string; tint: string }
-> = {
+const META: Record<string, { icon: typeof SendIcon; labelKey: string; tint: string }> = {
   [ConnectorType.ConnectorTelegram]: {
     icon: SendIcon,
     labelKey: "notifications.connectors.telegram",
@@ -84,8 +75,7 @@ export function ConnectorCard({ type, connector }: ConnectorCardProps) {
   const connected = !!connector
   const verified = !!connector?.verified_at
 
-  const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: getGetConnectorsQueryKey() })
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: getGetConnectorsQueryKey() })
 
   const patchMutation = usePatchConnectorsId({ mutation: { onSuccess: invalidate } })
   const deleteMutation = useDeleteConnectorsId({
@@ -139,14 +129,10 @@ export function ConnectorCard({ type, connector }: ConnectorCardProps) {
             <span
               className={cn(
                 "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-                verified
-                  ? "bg-primary/10 text-primary"
-                  : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                verified ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
               )}
             >
-              {verified
-                ? t("notifications.connectors.connected")
-                : t("notifications.connectors.notVerified")}
+              {verified ? t("notifications.connectors.connected") : t("notifications.connectors.notVerified")}
             </span>
           )}
         </div>
@@ -189,18 +175,14 @@ export function ConnectorCard({ type, connector }: ConnectorCardProps) {
           )
         )}
         {pushUnavailable && (
-          <span className="text-muted-foreground text-xs">
-            {t("notifications.connectors.pushUnavailable")}
-          </span>
+          <span className="text-muted-foreground text-xs">{t("notifications.connectors.pushUnavailable")}</span>
         )}
       </div>
 
       {(type === ConnectorType.ConnectorTelegram || type === ConnectorType.ConnectorBale) && (
         <BotLinkDialog channel={type} open={dialogOpen} onOpenChange={setDialogOpen} />
       )}
-      {type === ConnectorType.ConnectorSMS && (
-        <SmsOtpDialog open={dialogOpen} onOpenChange={setDialogOpen} />
-      )}
+      {type === ConnectorType.ConnectorSMS && <SmsOtpDialog open={dialogOpen} onOpenChange={setDialogOpen} />}
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent onOutsideClick={() => !deleteMutation.isPending && setConfirmOpen(false)}>
@@ -209,14 +191,10 @@ export function ConnectorCard({ type, connector }: ConnectorCardProps) {
               <Trash2Icon />
             </AlertDialogMedia>
             <AlertDialogTitle>{t("notifications.connectors.disconnectConfirm")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("notifications.connectors.disconnectConfirmBody")}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{t("notifications.connectors.disconnectConfirmBody")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMutation.isPending}>
-              {t("common.cancel")}
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               disabled={deleteMutation.isPending}

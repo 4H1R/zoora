@@ -10,14 +10,7 @@ import { SectionPagination } from "@/components/org/session/section-pagination"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Spinner } from "@/components/ui/spinner"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 const PAGE_SIZE = 10
 
@@ -34,9 +27,7 @@ export function SentHistory() {
   const total = pageData?.total ?? 0
 
   const fmtDate = (iso?: string) =>
-    iso
-      ? new Date(iso).toLocaleDateString(i18n.language, { day: "numeric", month: "short", year: "numeric" })
-      : ""
+    iso ? new Date(iso).toLocaleDateString(i18n.language, { day: "numeric", month: "short", year: "numeric" }) : ""
 
   return (
     <div className="flex flex-col gap-4">
@@ -63,13 +54,9 @@ export function SentHistory() {
                 <TableRow key={n.id}>
                   <TableCell className="max-w-0">
                     <div className="truncate font-medium">{n.title}</div>
-                    {n.body && (
-                      <div className="text-muted-foreground truncate text-xs">{n.body}</div>
-                    )}
+                    {n.body && <div className="text-muted-foreground truncate text-xs">{n.body}</div>}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-xs tabular-nums">
-                    {fmtDate(n.created_at)}
-                  </TableCell>
+                  <TableCell className="text-muted-foreground text-xs tabular-nums">{fmtDate(n.created_at)}</TableCell>
                   <TableCell className="text-end">
                     <Button variant="ghost" size="xs" onClick={() => setReportFor(n)}>
                       {t("notifications.sentHistory.report")}
@@ -82,9 +69,7 @@ export function SentHistory() {
         </div>
       )}
 
-      {items.length > 0 && (
-        <SectionPagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
-      )}
+      {items.length > 0 && <SectionPagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />}
 
       <DeliveryReportDialog
         notificationId={reportFor?.id}

@@ -51,9 +51,7 @@ export function DeliveryReportDialog({ notificationId, title, onOpenChange }: De
               </div>
               <div>
                 <div className="text-2xl font-semibold tabular-nums">{report?.recipients ?? 0}</div>
-                <div className="text-muted-foreground text-xs">
-                  {t("notifications.sentHistory.recipients")}
-                </div>
+                <div className="text-muted-foreground text-xs">{t("notifications.sentHistory.recipients")}</div>
               </div>
             </div>
 
@@ -62,18 +60,10 @@ export function DeliveryReportDialog({ notificationId, title, onOpenChange }: De
                 <table className="w-full text-sm">
                   <thead className="bg-muted/40 text-muted-foreground text-xs">
                     <tr>
-                      <th className="px-3 py-2 text-start font-medium">
-                        {t("notifications.sentHistory.channel")}
-                      </th>
-                      <th className="px-3 py-2 text-end font-medium">
-                        {t("notifications.sentHistory.delivered")}
-                      </th>
-                      <th className="px-3 py-2 text-end font-medium">
-                        {t("notifications.sentHistory.pending")}
-                      </th>
-                      <th className="px-3 py-2 text-end font-medium">
-                        {t("notifications.sentHistory.failed")}
-                      </th>
+                      <th className="px-3 py-2 text-start font-medium">{t("notifications.sentHistory.channel")}</th>
+                      <th className="px-3 py-2 text-end font-medium">{t("notifications.sentHistory.delivered")}</th>
+                      <th className="px-3 py-2 text-end font-medium">{t("notifications.sentHistory.pending")}</th>
+                      <th className="px-3 py-2 text-end font-medium">{t("notifications.sentHistory.failed")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-border/60 divide-y">
@@ -84,7 +74,10 @@ export function DeliveryReportDialog({ notificationId, title, onOpenChange }: De
                         </td>
                         <Cell value={ch.sent} className="text-foreground" />
                         <Cell value={ch.pending} className="text-muted-foreground" />
-                        <Cell value={ch.failed} className={cn(ch.failed ? "text-destructive" : "text-muted-foreground")} />
+                        <Cell
+                          value={ch.failed}
+                          className={cn(ch.failed ? "text-destructive" : "text-muted-foreground")}
+                        />
                       </tr>
                     ))}
                   </tbody>

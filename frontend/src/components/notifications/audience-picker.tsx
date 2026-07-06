@@ -13,14 +13,7 @@ import { useGetRoles } from "@/api/roles/roles"
 import { OrganizationSelect } from "@/components/form/organization-select"
 import { UserMultiSelect } from "@/components/notifications/user-multi-select"
 import { Button } from "@/components/ui/button"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
@@ -74,11 +67,7 @@ export function AudiencePicker({ mode, value, onChange }: AudiencePickerProps) {
         className="flex flex-wrap"
       >
         {types.map((type) => (
-          <ToggleGroupItem
-            key={type}
-            value={type}
-            className="rounded-full border px-3 text-xs"
-          >
+          <ToggleGroupItem key={type} value={type} className="rounded-full border px-3 text-xs">
             {t(TYPE_LABEL[type])}
           </ToggleGroupItem>
         ))}
@@ -187,14 +176,8 @@ function ClassSelect({ scope, organizationId, value, onChange }: EntitySelectPro
   const [debouncedSearch] = useDebounce(search, 300)
   const isAdmin = scope === "admin"
 
-  const adminQuery = useGetAdminClasses(
-    { search: debouncedSearch || undefined },
-    { query: { enabled: isAdmin } }
-  )
-  const orgQuery = useGetClasses(
-    { search: debouncedSearch || undefined },
-    { query: { enabled: !isAdmin } }
-  )
+  const adminQuery = useGetAdminClasses({ search: debouncedSearch || undefined }, { query: { enabled: isAdmin } })
+  const orgQuery = useGetClasses({ search: debouncedSearch || undefined }, { query: { enabled: !isAdmin } })
   const data = isAdmin ? adminQuery.data : orgQuery.data
   const pageData = (data?.status === 200 && data.data.data) || undefined
   let items = pageData?.items ?? []
@@ -246,8 +229,8 @@ function RoleSelect({ scope, organizationId, value, onChange }: EntitySelectProp
   const orgQuery = useGetRoles({ query: { enabled: !isAdmin } })
 
   let items = isAdmin
-    ? ((adminQuery.data?.status === 200 && adminQuery.data.data.data?.items) || [])
-    : ((orgQuery.data?.status === 200 && orgQuery.data.data.data) || [])
+    ? (adminQuery.data?.status === 200 && adminQuery.data.data.data?.items) || []
+    : (orgQuery.data?.status === 200 && orgQuery.data.data.data) || []
   if (!isAdmin && debouncedSearch) {
     const q = debouncedSearch.toLowerCase()
     items = items.filter((r) => (r.name ?? "").toLowerCase().includes(q))

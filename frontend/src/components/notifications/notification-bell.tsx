@@ -16,11 +16,7 @@ import {
 } from "@/api/notifications/notifications"
 import { NotificationList } from "@/components/notifications/notification-list"
 import { Button } from "@/components/ui/button"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Spinner } from "@/components/ui/spinner"
 import { cn } from "@/lib/utils"
 
@@ -47,10 +43,7 @@ export function NotificationBell({ to, search }: NotificationBellProps) {
 
   // Only fetch the list while the popover is open — the badge count above is
   // what polls in the background.
-  const { data: listData, isLoading } = useGetNotifications(
-    { page: 1, page_size: 10 },
-    { query: { enabled: open } }
-  )
+  const { data: listData, isLoading } = useGetNotifications({ page: 1, page_size: 10 }, { query: { enabled: open } })
   const items = ((listData?.status === 200 && listData.data.data?.items) || []) as InboxItem[]
 
   const invalidate = () => {
@@ -82,17 +75,12 @@ export function NotificationBell({ to, search }: NotificationBellProps) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={t("notifications.title")}
-            className="relative"
-          >
+          <Button variant="ghost" size="icon-sm" aria-label={t("notifications.title")} className="relative">
             <BellIcon />
             {unread > 0 && (
               <span
                 className={cn(
-                  "bg-primary text-primary-foreground absolute end-0 top-0 flex h-4 min-w-4 -translate-y-1/4 translate-x-1/4 items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums shadow-sm ring-2 ring-background",
+                  "bg-primary text-primary-foreground ring-background absolute end-0 top-0 flex h-4 min-w-4 translate-x-1/4 -translate-y-1/4 items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums shadow-sm ring-2",
                   "rtl:translate-x-[-25%]"
                 )}
               >
@@ -105,9 +93,7 @@ export function NotificationBell({ to, search }: NotificationBellProps) {
       <PopoverContent align="end" className="w-80 gap-0 p-0" sideOffset={8}>
         <header className="flex items-center justify-between gap-2 border-b px-3 py-2.5">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold tracking-tight">
-              {t("notifications.title")}
-            </span>
+            <span className="text-sm font-semibold tracking-tight">{t("notifications.title")}</span>
             {unread > 0 && (
               <span className="bg-primary/10 text-primary rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums">
                 {unread}

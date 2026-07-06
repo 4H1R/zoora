@@ -17,8 +17,8 @@ import {
 import { NotificationComposer } from "@/components/notifications/notification-composer"
 import { NotificationList } from "@/components/notifications/notification-list"
 import { SentHistory } from "@/components/notifications/sent-history"
-import { PageHeader } from "@/components/page-header"
 import { SectionPagination } from "@/components/org/session/section-pagination"
+import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
@@ -106,12 +106,7 @@ function AdminInbox() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex justify-end">
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={markAllRead.isPending}
-          onClick={() => markAllRead.mutate()}
-        >
+        <Button variant="outline" size="sm" disabled={markAllRead.isPending} onClick={() => markAllRead.mutate()}>
           <CheckCheckIcon />
           {t("notifications.markAllRead")}
         </Button>
@@ -122,20 +117,14 @@ function AdminInbox() {
           <Spinner />
         </div>
       ) : items.length === 0 ? (
-        <EmptyState
-          icon={BellIcon}
-          title={t("notifications.empty")}
-          description={t("notifications.emptyHint")}
-        />
+        <EmptyState icon={BellIcon} title={t("notifications.empty")} description={t("notifications.emptyHint")} />
       ) : (
         <div className="bg-card ring-foreground/10 rounded-2xl p-1.5 ring-1">
           <NotificationList items={items} onItemClick={handleItemClick} />
         </div>
       )}
 
-      {items.length > 0 && (
-        <SectionPagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
-      )}
+      {items.length > 0 && <SectionPagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />}
     </div>
   )
 }

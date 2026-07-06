@@ -164,9 +164,7 @@ export function OrgFormDialog({ open, onOpenChange, organization }: OrgFormDialo
           </Select>
           <FieldError errors={[errors.status]} />
         </Field>
-        {isEdit && organization?.id && (
-          <OrgSmsGate orgId={organization.id} organization={organization} />
-        )}
+        {isEdit && organization?.id && <OrgSmsGate orgId={organization.id} organization={organization} />}
       </FieldGroup>
     </ResourceFormDialog>
   )
@@ -177,8 +175,7 @@ export function OrgFormDialog({ open, onOpenChange, organization }: OrgFormDialo
 // runtime-embedded value and keep in sync with the patch response.
 function OrgSmsGate({ orgId, organization }: { orgId: string; organization: Organization }) {
   const { t } = useTranslation()
-  const initial =
-    (organization as { settings?: { sms_enabled?: boolean } }).settings?.sms_enabled ?? false
+  const initial = (organization as { settings?: { sms_enabled?: boolean } }).settings?.sms_enabled ?? false
   const [enabled, setEnabled] = useState(initial)
 
   const mutation = usePatchAdminOrganizationsIdSettings({
