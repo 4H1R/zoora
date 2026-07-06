@@ -112,7 +112,7 @@ export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, is
       <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
         <SheetContent
           side="bottom"
-          className="flex h-[70dvh] flex-col gap-0 bg-card p-0 text-foreground"
+          className="flex h-[70dvh] flex-col gap-0 bg-card p-0 text-foreground data-[side=bottom]:h-[70dvh]"
         >
           <SheetTitle className="sr-only">{t("liveRoom.panel.title")}</SheetTitle>
           <TabsInner
