@@ -26,6 +26,7 @@ import (
 	"github.com/4H1R/zoora/internal/livesessions"
 	"github.com/4H1R/zoora/internal/media"
 	"github.com/4H1R/zoora/internal/middleware"
+	"github.com/4H1R/zoora/internal/notifications"
 	"github.com/4H1R/zoora/internal/offlines"
 	"github.com/4H1R/zoora/internal/organizations"
 	"github.com/4H1R/zoora/internal/orgsettings"
@@ -250,6 +251,11 @@ func main() {
 
 	changelogHandler := changelog.NewHandler(changelogService)
 	changelogHandler.RegisterRoutes(v1, authMiddleware)
+
+	notificationRepo := notifications.NewRepository(db)
+	notificationService := notifications.NewService(notificationRepo, classRepo, queueClient, cfg.NotificationSendRatePerHour, log)
+	notificationHandler := notifications.NewHandler(notificationService)
+	notificationHandler.RegisterRoutes(v1, authMiddleware)
 
 	liveSessionHandler := livesessions.NewHandler(liveSessionService)
 	liveSessionHandler.RegisterRoutes(v1, authMiddleware, perm)

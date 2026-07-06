@@ -14,6 +14,7 @@ import (
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/livesessions"
 	"github.com/4H1R/zoora/internal/media"
+	"github.com/4H1R/zoora/internal/notifications"
 	"github.com/4H1R/zoora/internal/offlines"
 	"github.com/4H1R/zoora/internal/orgsettings"
 	"github.com/4H1R/zoora/internal/platform/authz"
@@ -89,6 +90,10 @@ func main() {
 		orgSettingsService, authzResolver, log,
 	)
 	queueServer.HandleFunc(domain.TypeAttendanceAutoMark, attendance.NewAutoMarkHandler(attendanceService))
+
+	notificationRepo := notifications.NewRepository(db)
+	notificationService := notifications.NewService(notificationRepo, classRepo, nil, 0, log)
+	queueServer.HandleFunc(domain.TypeNotificationFanout, notifications.NewFanoutHandler(notificationService))
 
 	storageClient, err := storage.NewClient(cfg, log)
 	if err != nil {

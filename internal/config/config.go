@@ -45,6 +45,9 @@ type Config struct {
 	BaseDomain string `env:"BASE_DOMAIN" envDefault:"localhost"`
 	// AdminSubdomain is the reserved label that routes to the platform-admin scope.
 	AdminSubdomain string `env:"ADMIN_SUBDOMAIN" envDefault:"admin"`
+	// NotificationSendRatePerHour caps how many notifications one non-admin
+	// sender may create per hour. 0 disables the limit.
+	NotificationSendRatePerHour int `env:"NOTIFICATION_SEND_RATE_PER_HOUR" envDefault:"10"`
 }
 
 func Load() (*Config, error) {
