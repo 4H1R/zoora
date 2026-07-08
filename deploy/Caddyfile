@@ -2,18 +2,27 @@
 	tls /etc/caddy/certs/zoora/fullchain.pem /etc/caddy/certs/zoora/privatekey.pem
 }
 
+(strip_headers) {
+	header -Server
+	header -Via
+	header -X-Powered-By
+}
+
 dev.m65tech.com {
+	import strip_headers
 	encode zstd gzip
 	reverse_proxy localhost:8000
 }
 
 zoora.ir {
 	import zoora_tls
+	import strip_headers
 	redir https://www.zoora.ir{uri} permanent
 }
 
 www.zoora.ir {
 	import zoora_tls
+	import strip_headers
 	encode zstd gzip
 
 	@api path /api/*
@@ -28,6 +37,7 @@ www.zoora.ir {
 
 s3.zoora.ir {
 	import zoora_tls
+	import strip_headers
 
 	@cors header_regexp origin Origin ^https://([a-z0-9-]+\.)?zoora\.ir$
 
@@ -53,16 +63,19 @@ s3.zoora.ir {
 
 console.zoora.ir {
 	import zoora_tls
+	import strip_headers
 	reverse_proxy 127.0.0.1:9001
 }
 
 livekit.zoora.ir {
 	import zoora_tls
+	import strip_headers
 	reverse_proxy 127.0.0.1:7880
 }
 
 *.zoora.ir {
 	import zoora_tls
+	import strip_headers
 
 	@api path /api/*
 	handle @api {
