@@ -183,3 +183,47 @@ type BillingReminderSent struct {
 }
 
 func (BillingReminderSent) TableName() string { return "billing_reminders_sent" }
+
+// ---- plan activation logic ----
+
+// planRank orders tiers for upgrade/downgrade comparison.
+func planRank(p Plan) int {
+	switch p {
+	case PlanEnterprise:
+		return 3
+	case PlanPro:
+		return 2
+	default: // free / unknown
+		return 1
+	}
+}
+
+// NextPlanState computes the (plan, expiry) an org should have after a
+// successful purchase of `buy` for one `interval`, given its current plan and
+// expiry. Pure — the caller supplies now.
+//
+//   - same tier & still active  -> extend from current expiry
+//   - higher tier               -> upgrade, expiry from now
+//   - free/expired              -> set tier, expiry from now
+//   - lower tier while active   -> ErrDowngradeNotAllowed
+func NextPlanState(curPlan Plan, curExpiry *time.Time, buy Plan, interval BillingInterval, now time.Time) (Plan, time.Time, error) {
+	if !buy.Valid() {
+		return "", time.Time{}, ErrInvalidPlan
+	}
+	if !interval.Valid() {
+		return "", time.Time{}, ErrInvalidInterval
+	}
+	// Effective current tier: expired plans behave as free.
+	effective := EffectiveEntitlements(curPlan, curExpiry, now).Plan
+	active := planRank(effective) > planRank(PlanFree)
+
+	if planRank(buy) < planRank(effective) && active {
+		return "", time.Time{}, ErrDowngradeNotAllowed
+	}
+
+	base := now
+	if buy == effective && active && curExpiry != nil && curExpiry.After(now) {
+		base = *curExpiry // same tier, still active: don't burn remaining days
+	}
+	return buy, interval.Extend(base), nil
+}
