@@ -22,7 +22,7 @@ export function buildOrgNavGroups(t: TFunction, has: (perm: AppPermission) => bo
     },
     {
       label: t("org.nav.management"),
-      keys: ["users", "roles", "settings", "files", "notifications"],
+      keys: ["users", "roles", "settings", "billing", "files", "notifications"],
     },
   ]
 
