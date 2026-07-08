@@ -111,6 +111,7 @@ export const GithubCom4H1RZooraInternalDomainPermissionName = {
   PermAttendanceUpdate: 'attendance:update',
   PermAttendanceUpdateAny: 'attendance:update_any',
   PermAttendanceDelete: 'attendance:delete',
+  PermBillingManage: 'billing:manage',
   PermNotificationsSend: 'notifications:send',
   PermNotificationsSendAny: 'notifications:send_any',
 } as const;
