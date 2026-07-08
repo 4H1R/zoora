@@ -55,7 +55,7 @@ func Middleware(jwt *JWTService, rdb *redis.Client, roleRepo domain.RoleReposito
 		caller := domain.Caller{UserID: claims.UserID}
 
 		if userRepo != nil {
-			user, err := userRepo.FindByID(c.Request.Context(), claims.UserID)
+			user, err := loadUser(c, rdb, userRepo, claims.UserID)
 			if err != nil {
 				domain.ErrorResponse(c, domain.ErrUnauthorized)
 				c.Abort()
@@ -114,6 +114,40 @@ func Middleware(jwt *JWTService, rdb *redis.Client, roleRepo domain.RoleReposito
 		c.Request = c.Request.WithContext(domain.WithCaller(c.Request.Context(), caller))
 		c.Next()
 	}
+}
+
+// loadUser resolves the caller's auth snapshot, mirroring loadPermissions:
+// cache -> repo -> cache. The users+roles lookup would otherwise run on every
+// authenticated request; writes to the user row bust this via
+// cache.InvalidateUser, and the Redis revocation check handles session kill
+// independently, so a short TTL stays consistent.
+func loadUser(c *gin.Context, rdb *redis.Client, userRepo domain.UserRepository, userID uuid.UUID) (cache.CachedUser, error) {
+	ctx := c.Request.Context()
+
+	if rdb != nil {
+		if cu, err := cache.GetUser(ctx, rdb, userID); err == nil {
+			return cu, nil
+		}
+	}
+
+	user, err := userRepo.FindByID(ctx, userID)
+	if err != nil {
+		return cache.CachedUser{}, err
+	}
+
+	cu := cache.CachedUser{
+		OrganizationID: user.OrganizationID,
+		RoleID:         user.RoleID,
+		IsAdmin:        user.IsAdmin,
+		Username:       user.Username,
+		Name:           user.Name,
+		DisabledAt:     user.DisabledAt,
+	}
+
+	if rdb != nil {
+		_ = cache.SetUser(ctx, rdb, userID, cu)
+	}
+	return cu, nil
 }
 
 func loadPermissions(c *gin.Context, rdb *redis.Client, roleRepo domain.RoleRepository, roleID uuid.UUID) []string {

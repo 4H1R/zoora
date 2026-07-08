@@ -104,6 +104,7 @@ func (s *service) AdminUpdate(ctx context.Context, id uuid.UUID, dto domain.Admi
 		return nil, err
 	}
 
+	s.bustUser(ctx, id)
 	s.logger.Info("admin updated user",
 		"user_id", id.String(),
 		"updated_by", caller.UserID.String(),
@@ -131,6 +132,7 @@ func (s *service) AdminForceResetPassword(ctx context.Context, id uuid.UUID, dto
 		return err
 	}
 
+	s.bustUser(ctx, id)
 	s.logger.Info("admin force-reset password",
 		"user_id", id.String(),
 		"reset_by", caller.UserID.String(),
@@ -149,6 +151,7 @@ func (s *service) AdminHardDelete(ctx context.Context, id uuid.UUID) error {
 	if err := s.repo.HardDelete(ctx, id); err != nil {
 		return err
 	}
+	s.bustUser(ctx, id)
 	s.logger.Warn("admin hard-deleted user",
 		"user_id", id.String(),
 		"deleted_by", caller.UserID.String(),

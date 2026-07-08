@@ -152,7 +152,7 @@ func main() {
 	orgSettingsRepo := orgsettings.NewRepository(db)
 	orgSettingsService := orgsettings.NewService(orgSettingsRepo, log)
 
-	userService := users.NewService(userRepo, roleRepo, entitlementService, log)
+	userService := users.NewService(userRepo, roleRepo, entitlementService, redisClient, log)
 	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, log)
 	classService := classes.NewService(classRepo, classSessionRepo, classMemberRepo, log)
 	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, log)

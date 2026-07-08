@@ -7,21 +7,37 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/entitlements"
+	"github.com/4H1R/zoora/internal/platform/cache"
 )
 
 type service struct {
 	repo     domain.UserRepository
 	roleRepo domain.RoleRepository
 	ent      entitlements.Service
+	redis    *redis.Client
 	logger   *slog.Logger
 }
 
-func NewService(repo domain.UserRepository, roleRepo domain.RoleRepository, ent entitlements.Service, logger *slog.Logger) domain.UserService {
-	return &service{repo: repo, roleRepo: roleRepo, ent: ent, logger: logger}
+func NewService(repo domain.UserRepository, roleRepo domain.RoleRepository, ent entitlements.Service, rdb *redis.Client, logger *slog.Logger) domain.UserService {
+	return &service{repo: repo, roleRepo: roleRepo, ent: ent, redis: rdb, logger: logger}
+}
+
+// bustUser drops the auth-middleware cache for a user after any change to their
+// row (profile, role, admin flag, disable/enable, delete) so the next request
+// reloads fresh state instead of waiting out the TTL. Best-effort: a cache
+// error is logged, not propagated.
+func (s *service) bustUser(ctx context.Context, id uuid.UUID) {
+	if s.redis == nil {
+		return
+	}
+	if err := cache.InvalidateUser(ctx, s.redis, id); err != nil {
+		s.logger.Warn("invalidating user cache", "user_id", id.String(), "error", err)
+	}
 }
 
 func (s *service) isManagerRole(ctx context.Context, roleID uuid.UUID) bool {
@@ -121,6 +137,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateUse
 	if err := s.repo.Update(ctx, user); err != nil {
 		return nil, err
 	}
+	s.bustUser(ctx, id)
 	return user, nil
 }
 
@@ -144,6 +161,7 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	if err := s.repo.Delete(ctx, id); err != nil {
 		return err
 	}
+	s.bustUser(ctx, id)
 	s.logger.Info("user deleted", "user_id", id.String(), "deleted_by", caller.UserID.String())
 	return nil
 }
@@ -203,6 +221,7 @@ func (s *service) ChangePassword(ctx context.Context, id uuid.UUID, dto domain.C
 	if err := s.repo.Update(ctx, user); err != nil {
 		return err
 	}
+	s.bustUser(ctx, id)
 	s.logger.Info("password changed", "user_id", id.String())
 	return nil
 }
@@ -218,6 +237,7 @@ func (s *service) UpdateProfile(ctx context.Context, id uuid.UUID, dto domain.Up
 	if err := s.repo.Update(ctx, user); err != nil {
 		return nil, err
 	}
+	s.bustUser(ctx, id)
 	return user, nil
 }
 
@@ -240,6 +260,7 @@ func (s *service) AssignRole(ctx context.Context, userID uuid.UUID, dto domain.A
 		return nil, err
 	}
 
+	s.bustUser(ctx, userID)
 	s.logger.Info("role assigned", "user_id", userID.String(), "role_id", dto.RoleID.String())
 	return user, nil
 }
@@ -263,6 +284,7 @@ func (s *service) RemoveRole(ctx context.Context, userID uuid.UUID) (*domain.Use
 		return nil, err
 	}
 
+	s.bustUser(ctx, userID)
 	s.logger.Info("role removed", "user_id", userID.String())
 	return user, nil
 }
@@ -312,6 +334,7 @@ func (s *service) Disable(ctx context.Context, id uuid.UUID, dto domain.DisableU
 	if err := s.repo.Update(ctx, user); err != nil {
 		return nil, err
 	}
+	s.bustUser(ctx, id)
 	s.logger.Info("user disabled", "user_id", id.String(), "disabled_by", caller.UserID.String())
 	return user, nil
 }
@@ -327,6 +350,7 @@ func (s *service) Enable(ctx context.Context, id uuid.UUID) (*domain.User, error
 	if err := s.repo.Update(ctx, user); err != nil {
 		return nil, err
 	}
+	s.bustUser(ctx, id)
 	s.logger.Info("user enabled", "user_id", id.String(), "enabled_by", caller.UserID.String())
 	return user, nil
 }
