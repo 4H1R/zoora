@@ -13,9 +13,11 @@ import {
   HelpCircleIcon,
   KeyIcon,
   LayoutDashboardIcon,
+  ReceiptTextIcon,
   SchoolIcon,
   ShieldIcon,
   SparklesIcon,
+  TagIcon,
   TrophyIcon,
   UsersIcon,
   VideoIcon,
@@ -78,6 +80,13 @@ export function AppSidebar({
         { title: t("admin.nav.users"), url: "/admin/users", icon: <UsersIcon /> },
         { title: t("admin.nav.roles"), url: "/admin/roles", icon: <ShieldIcon /> },
         { title: t("admin.permissions.title"), url: "/admin/permissions", icon: <KeyIcon /> },
+      ],
+    },
+    {
+      label: t("billing.title"),
+      items: [
+        { title: t("billing.admin.prices"), url: "/admin/billing/prices", icon: <TagIcon /> },
+        { title: t("billing.admin.invoicesTitle"), url: "/admin/billing/invoices", icon: <ReceiptTextIcon /> },
       ],
     },
   ]
