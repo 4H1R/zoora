@@ -29,22 +29,25 @@ www.zoora.ir {
 s3.zoora.ir {
 	import zoora_tls
 
+	@cors header_regexp origin Origin ^https://([a-z0-9-]+\.)?zoora\.ir$
+
 	@preflight method OPTIONS
 	handle @preflight {
-		header Access-Control-Allow-Origin "https://app.zoora.ir"
+		header @cors Access-Control-Allow-Origin "{re.origin.0}"
 		header Access-Control-Allow-Methods "GET, PUT, POST, DELETE, HEAD"
 		header Access-Control-Allow-Headers "*"
 		header Access-Control-Max-Age "3600"
+		header Vary "Origin"
 		respond 204
 	}
 
 	handle {
 		reverse_proxy 127.0.0.1:9000 {
-			# Replace (no +/-) so any Access-Control-Allow-Origin RustFS emits is
-			# overwritten, never duplicated — Firefox rejects two ACAO values.
-			header_down Access-Control-Allow-Origin "https://app.zoora.ir"
+			header_down -Access-Control-Allow-Origin
 			header_down Access-Control-Expose-Headers "ETag"
 		}
+		header @cors Access-Control-Allow-Origin "{re.origin.0}"
+		header @cors +Vary "Origin"
 	}
 }
 
