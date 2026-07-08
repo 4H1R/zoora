@@ -63,6 +63,9 @@ shell:
 prod: prod-up
 
 prod-up:
+	$(PROD) up -d
+
+prod-up-build:
 	$(PROD) up -d --build
 
 prod-down:

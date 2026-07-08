@@ -123,7 +123,6 @@ type seedCounts struct {
 	ChatMembers         int
 	Messages            int
 	MessageReactions    int
-	Media               int
 	LiveRooms           int
 	LiveParticipants    int
 	LiveRecordings      int
@@ -382,37 +381,6 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 		usersByOrg[org.ID] = ou
 	}
 
-	// 6. Media — avatars for each user. Media objects are tenant-namespaced by
-	// organization_id (S3 key prefix orgs/{org_id}/…), so carry each user's org
-	// through to the media row. The platform admin belongs to no org (nil).
-	type avatarOwner struct {
-		user  *domain.User
-		orgID *uuid.UUID
-	}
-	avatarOwners := []avatarOwner{{user: admin, orgID: nil}}
-	for _, org := range orgs {
-		orgID := org.ID
-		ou := usersByOrg[org.ID]
-		for _, t := range ou.teachers {
-			avatarOwners = append(avatarOwners, avatarOwner{user: t, orgID: &orgID})
-		}
-		for _, st := range ou.students {
-			avatarOwners = append(avatarOwners, avatarOwner{user: st, orgID: &orgID})
-		}
-	}
-	for _, ao := range avatarOwners {
-		m := factory.NewMedia(func(m *domain.Media) {
-			m.OrganizationID = ao.orgID
-			m.ModelType = "user"
-			m.ModelID = ao.user.ID
-			m.CollectionName = "avatar"
-		})
-		if err := db.WithContext(ctx).Create(m).Error; err != nil {
-			return nil, fmt.Errorf("creating media: %w", err)
-		}
-		counts.Media++
-	}
-
 	// 7. QuestionBanks + Questions
 	type orgBankData struct {
 		banks     []*domain.QuestionBank
@@ -445,45 +413,14 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 					return nil, fmt.Errorf("creating question: %w", err)
 				}
 				if i == 0 {
-					orgID := org.ID
-					photo := factory.NewMedia(func(m *domain.Media) {
-						m.OrganizationID = &orgID
-						m.ModelType = domain.QuestionMediaModelType
-						m.ModelID = q.ID
-						m.CollectionName = domain.QuestionPhotosCollection
-						m.MimeType = "image/png"
-						m.FileName = "diagram.png"
-					})
-					if err := db.WithContext(ctx).Create(photo).Error; err != nil {
-						return nil, fmt.Errorf("creating question photo: %w", err)
-					}
-					counts.Media++
-					q.Metadata = []domain.QuestionMetadata{{Type: domain.QuestionMetadataPhoto, MediaID: photo.ID}}
-
-					// Demo per-option image on the first choice option, backed by a
-					// real option-photos media row.
+					// Demo negative marking for the first choice question.
 					if q.Type == domain.QuestionTypeChoice && len(q.Options) > 0 {
-						optPhoto := factory.NewMedia(func(m *domain.Media) {
-							m.OrganizationID = &orgID
-							m.ModelType = domain.QuestionMediaModelType
-							m.ModelID = q.ID
-							m.CollectionName = domain.QuestionOptionPhotosCollection
-							m.MimeType = "image/png"
-							m.FileName = "option.png"
-						})
-						if err := db.WithContext(ctx).Create(optPhoto).Error; err != nil {
-							return nil, fmt.Errorf("creating option photo: %w", err)
-						}
-						counts.Media++
-						q.Options[0].ImageMediaID = &optPhoto.ID
-						// Demo negative marking for this choice question.
 						q.NegativeMarkMode = domain.NegativeMarkPerWrong
 						q.NegativeValue = domain.FractionFor(len(q.Options))
 						q.WrongsPerPoint = 0
-					}
-
-					if err := db.WithContext(ctx).Save(q).Error; err != nil {
-						return nil, fmt.Errorf("updating question metadata: %w", err)
+						if err := db.WithContext(ctx).Save(q).Error; err != nil {
+							return nil, fmt.Errorf("updating question negative marking: %w", err)
+						}
 					}
 				}
 				bankQuestions = append(bankQuestions, q)
@@ -867,7 +804,6 @@ func printSummary(c *seedCounts) {
 	fmt.Printf("  Organizations:        %d\n", c.Organizations)
 	fmt.Printf("  Users:                %d\n", c.Users)
 	fmt.Printf("  Roles:                %d\n", c.Roles)
-	fmt.Printf("  Media:                %d\n", c.Media)
 	fmt.Printf("  QuestionBanks:        %d\n", c.QuestionBanks)
 	fmt.Printf("  Questions:            %d\n", c.Questions)
 	fmt.Printf("  Classes:              %d\n", c.Classes)
