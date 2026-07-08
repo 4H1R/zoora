@@ -124,6 +124,29 @@ func (s *service) Send(ctx context.Context, dto domain.SendNotificationDTO) (*do
 	return notification, nil
 }
 
+// SendSystem creates a system/reminder notification without a human caller.
+// It skips CallerFromCtx, authorizeAudience, and rate-limiting — the caller is
+// trusted server-side code (schedulers).
+func (s *service) SendSystem(ctx context.Context, in domain.SystemNotificationInput) error {
+	category := in.Category
+	if category == "" {
+		category = domain.NotificationCategoryReminder
+	}
+	n := &domain.Notification{
+		SenderID:       nil, // system
+		OrganizationID: in.OrganizationID,
+		Category:       category,
+		Title:          in.Title,
+		Body:           in.Body,
+		ActionURL:      in.ActionURL,
+		Audience:       in.Audience,
+	}
+	if err := s.repo.Create(ctx, n); err != nil {
+		return err
+	}
+	return s.enqueueFanout(ctx, n.ID)
+}
+
 // authorizeAudience mutates the audience where scope is forced (manager org).
 func (s *service) authorizeAudience(ctx context.Context, caller domain.Caller, a *domain.NotificationAudience) error {
 	if caller.IsAdmin {
