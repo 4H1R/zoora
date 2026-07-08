@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log/slog"
@@ -126,6 +127,22 @@ func (c *Client) GeneratePresignedDownloadURL(ctx context.Context, key string, e
 		return "", fmt.Errorf("generating presigned download URL: %w", err)
 	}
 	return req.URL, nil
+}
+
+// PutObject uploads bytes to the bucket under key with the given content type.
+// Used for server-side writes (e.g. generated invoice-receipt PDFs) that never
+// pass through a browser presign.
+func (c *Client) PutObject(ctx context.Context, key string, body []byte, contentType string) error {
+	_, err := c.s3.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:      aws.String(c.bucket),
+		Key:         aws.String(key),
+		Body:        bytes.NewReader(body),
+		ContentType: aws.String(contentType),
+	})
+	if err != nil {
+		return fmt.Errorf("putting object %s: %w", key, err)
+	}
+	return nil
 }
 
 // DeleteObject removes an object from the bucket. S3 delete is idempotent —
