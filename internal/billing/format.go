@@ -63,3 +63,7 @@ func pad2(n int) string {
 	}
 	return strconv.Itoa(n)
 }
+
+// toASCIIInt renders an int in base 10 (ASCII digits) for later Persian-digit
+// conversion by callers.
+func toASCIIInt(n int) string { return strconv.Itoa(n) }
