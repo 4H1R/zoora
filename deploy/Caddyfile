@@ -8,9 +8,37 @@
 	header -X-Powered-By
 }
 
+(sec_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Frame-Options "SAMEORIGIN"
+	}
+}
+
+(compress) {
+	encode zstd gzip {
+		minimum_length 1024
+		match {
+			header Content-Type text/*
+			header Content-Type application/json*
+			header Content-Type application/javascript*
+			header Content-Type application/xml*
+			header Content-Type image/svg+xml*
+		}
+	}
+}
+
+(static_cache) {
+	@static path /assets/* *.js *.css *.woff2 *.woff *.ttf
+	header @static Cache-Control "public, max-age=31536000, immutable"
+}
+
 dev.m65tech.com {
 	import strip_headers
-	encode zstd gzip
+	import sec_headers
+	import compress
 	reverse_proxy localhost:8000
 }
 
@@ -23,7 +51,9 @@ zoora.ir {
 www.zoora.ir {
 	import zoora_tls
 	import strip_headers
-	encode zstd gzip
+	import sec_headers
+	import compress
+	import static_cache
 
 	@api path /api/*
 	handle @api {
@@ -64,6 +94,8 @@ s3.zoora.ir {
 console.zoora.ir {
 	import zoora_tls
 	import strip_headers
+	import sec_headers
+	import compress
 	reverse_proxy 127.0.0.1:9001
 }
 
@@ -76,6 +108,9 @@ livekit.zoora.ir {
 *.zoora.ir {
 	import zoora_tls
 	import strip_headers
+	import sec_headers
+	import compress
+	import static_cache
 
 	@api path /api/*
 	handle @api {
