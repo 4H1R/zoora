@@ -523,6 +523,7 @@ func newTestServiceLKEnt(t *testing.T, ent entitlements.Service) (domain.LiveSes
 		f.sess, f.classes, f.members,
 		f.chat, f.poll, noopTx{},
 		f.lk,
+		nil, // whiteboard storage
 		nil, // queue client
 		ent,
 		15*time.Minute,

@@ -68,6 +68,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		authed.GET("/live-rooms/:id/recordings", perm(domain.PermLiveSessionsView), idParam, h.ListRecordings)
 		authed.GET("/live-rooms/:id/whiteboard", perm(domain.PermLiveSessionsJoin), idParam, h.GetWhiteboard)
 		authed.PUT("/live-rooms/:id/whiteboard", perm(domain.PermLiveSessionsJoin), idParam, h.SaveWhiteboard)
+		authed.POST("/live-rooms/:id/whiteboard/media/presign", perm(domain.PermLiveSessionsJoin), idParam, h.PresignWhiteboardMedia)
 	}
 }
 
@@ -579,4 +580,33 @@ func (h *Handler) SaveWhiteboard(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, wb)
+}
+
+// PresignWhiteboardMedia presigns an S3 upload for a whiteboard image.
+// @Summary Presign whiteboard image upload
+// @Description Returns a presigned PUT URL and a permanent public URL for an image inserted on the whiteboard. Only hosts and presenters may upload.
+// @Tags LiveSessions
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "LiveRoom UUID"
+// @Param body body domain.WhiteboardMediaPresignDTO true "Image metadata"
+// @Success 200 {object} domain.Response{data=domain.WhiteboardMediaPresignResponse}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /live-rooms/{id}/whiteboard/media/presign [post]
+func (h *Handler) PresignWhiteboardMedia(c *gin.Context) {
+	var dto domain.WhiteboardMediaPresignDTO
+	if err := httpx.Bind(c, &dto); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	res, err := h.svc.PresignWhiteboardMedia(c.Request.Context(), httpx.UUIDParam(c, "id"), dto)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, res)
 }

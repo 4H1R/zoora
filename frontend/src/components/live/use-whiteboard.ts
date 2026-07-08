@@ -8,6 +8,7 @@ import {
 } from "@/api/live-sessions/live-sessions"
 import type { GithubCom4H1RZooraInternalDomainSaveWhiteboardDTOSnapshot } from "@/api/model"
 
+import { createWhiteboardAssetStore } from "./whiteboard-assets"
 import { useRoomChannel } from "./use-room-channel"
 
 // ---- diff wire format -------------------------------------------------------
@@ -56,8 +57,12 @@ export interface UseWhiteboardResult {
 }
 
 export function useWhiteboard(liveId: string, canDraw: boolean): UseWhiteboardResult {
-  // useState with an initializer function creates the store exactly once
-  const [store] = useState<TLStore>(() => createTLStore())
+  // useState with an initializer function creates the store exactly once.
+  // The asset store uploads inserted images to S3 and stores only their URL,
+  // so images sync to peers instead of being dropped as oversized inline blobs.
+  const [store] = useState<TLStore>(() =>
+    createTLStore({ assets: createWhiteboardAssetStore(liveId) }),
+  )
 
   // Incoming diffs on the "tldraw" topic. useRoomChannel keeps the channel and
   // send stable (see its docs for the lazy-observer crash it avoids).

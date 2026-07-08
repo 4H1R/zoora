@@ -9,6 +9,8 @@ import "react-pdf/dist/Page/TextLayer.css"
 
 import { cn } from "@/lib/utils"
 
+import { clampZoom, ZoomControls } from "./zoom-controls"
+
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
 
 interface SlidesStageProps {
@@ -29,6 +31,11 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
   const [draft, setDraft] = useState("")
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const wheelLock = useRef(false)
+  // Local per-viewer zoom. Multiplies the rendered page width so the page truly
+  // overflows the scroll container — the existing overflow-auto then pans it, no
+  // CSS transform needed. Wheel stays reserved for host page-nav; zoom is +/- only.
+  const [zoom, setZoom] = useState(1)
+  const applyZoom = (z: number) => setZoom(clampZoom(z))
 
   // Measure the scroll viewport width so the page renders at full width. Attach
   // the observer ONCE (an inline ref-callback gets a new identity every render,
@@ -51,7 +58,7 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
   // vertically, giving a real scrollbar + wheel scroll. Landscape slides fit
   // without overflow. INSET leaves breathing room beside the scrollbar.
   const INSET = 16
-  const fitWidth = containerWidth ? Math.max(1, containerWidth - INSET) : undefined
+  const fitWidth = containerWidth ? Math.max(1, (containerWidth - INSET) * zoom) : undefined
 
   const clamp = (n: number) => Math.max(1, Math.min(n, numPages || 1))
 
@@ -145,7 +152,11 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
         onWheel={onWheel}
         className="min-h-0 w-full flex-1 overflow-auto [scrollbar-gutter:stable]"
       >
-        <div className="flex min-h-full w-full items-center justify-center py-2">
+        {/* w-max + min-w-full mirrors the min-h-full trick for the horizontal
+            axis: when a zoomed page is wider than the viewport the wrapper grows
+            to the page width so justify-center can't clip the left edge out of
+            scroll reach; when it fits, min-w-full keeps it centered. */}
+        <div className="flex min-h-full w-max min-w-full items-center justify-center py-2">
           {error ? (
             <p className="text-sm text-zinc-400">{t("liveRoom.stage.slidesError")}</p>
           ) : (
@@ -256,6 +267,10 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
             )}
           </div>
         </div>
+      )}
+
+      {!error && !loading && (
+        <ZoomControls zoom={zoom} onZoom={applyZoom} onReset={() => setZoom(1)} />
       )}
     </div>
   )

@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next"
 import type { StageContent } from "./use-stage"
 import { SlidesStage } from "./slides-stage"
 import { WhiteboardStage } from "./whiteboard-stage"
+import { ZoomableStage } from "./zoomable-stage"
 
 interface StageProps {
   stage: StageContent
@@ -69,7 +70,7 @@ export function Stage({ stage, isHost, liveId, canDraw, onPageChange, onLoadNumP
   const participantName = active.participant.name || active.participant.identity
 
   return (
-    <div className="relative h-full w-full">
+    <ZoomableStage>
       {isScreenShare ? (
         <ParticipantTile trackRef={active} className="size-full">
           <VideoTrack trackRef={active} />
@@ -83,6 +84,6 @@ export function Stage({ stage, isHost, liveId, canDraw, onPageChange, onLoadNumP
       ) : (
         <ParticipantTile trackRef={active} className="size-full" />
       )}
-    </div>
+    </ZoomableStage>
   )
 }

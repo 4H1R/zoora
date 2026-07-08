@@ -87,7 +87,7 @@ func main() {
 		liveRoomRepo, liveParticipantRepo, liveRecordingRepo, liveWhiteboardRepo,
 		classSessionRepo, classRepo, classMemberRepo,
 		chatSvc, pollSvc, transactor,
-		livekitClient, queueClient, nil, cfg.LiveRoomHostGracePeriod, log,
+		livekitClient, nil, queueClient, nil, cfg.LiveRoomHostGracePeriod, log,
 	)
 	queueServer.HandleFunc(domain.TypeLiveSessionAutoClose, livesessions.NewAutoCloseHandler(liveSessionService))
 	queueServer.HandleFunc(domain.TypeLiveSessionCloseIfNoHost, livesessions.NewCloseIfNoHostHandler(liveSessionService))

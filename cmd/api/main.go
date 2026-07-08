@@ -183,7 +183,7 @@ func main() {
 		liveRoomRepo, liveParticipantRepo, liveRecordingRepo, liveWhiteboardRepo,
 		classSessionRepo, classRepo, classMemberRepo,
 		chatService, pollService, transactor,
-		livekitClient, queueClient, entitlementService, cfg.LiveRoomHostGracePeriod, log,
+		livekitClient, storageClient, queueClient, entitlementService, cfg.LiveRoomHostGracePeriod, log,
 	)
 	offlineService := offlines.NewService(offlineRoomRepo, offlineViewRepo, classSessionRepo, classRepo, classMemberRepo, log)
 	practiceService := practices.NewService(practiceRoomRepo, practiceSubRepo, classSessionRepo, classRepo, classMemberRepo, log)

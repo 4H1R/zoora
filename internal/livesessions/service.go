@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -36,11 +37,19 @@ type LiveKitClient interface {
 	PublicURL() string
 }
 
+// WhiteboardStorage is the object-storage surface for whiteboard image uploads.
+// *storage.Client satisfies it. Nil on the worker (no HTTP presign there).
+type WhiteboardStorage interface {
+	PublicPresignUpload(ctx context.Context, key string, expiry time.Duration) (string, error)
+	PublicURL(key string) string
+}
+
 type service struct {
 	rooms        domain.LiveRoomRepository
 	participants domain.LiveParticipantRepository
 	recordings   domain.LiveRecordingRepository
 	whiteboards  domain.LiveWhiteboardRepository
+	storage      WhiteboardStorage
 	sessions     domain.ClassSessionRepository
 	classes      domain.ClassRepository
 	members      domain.ClassMemberRepository
@@ -68,6 +77,7 @@ func NewService(
 	pollSvc domain.PollService,
 	tx domain.Transactor,
 	livekit LiveKitClient,
+	whiteboardStorage WhiteboardStorage,
 	queueClient *queue.Client,
 	ent entitlements.Service,
 	hostGracePeriod time.Duration,
@@ -93,6 +103,7 @@ func NewService(
 		pollSvc:         pollSvc,
 		tx:              tx,
 		livekit:         livekit,
+		storage:         whiteboardStorage,
 		queue:           queueClient,
 		ent:             ent,
 		hostGracePeriod: hostGracePeriod,
@@ -1304,17 +1315,8 @@ func (s *service) SaveWhiteboard(ctx context.Context, roomID uuid.UUID, dto doma
 		return nil, err
 	}
 
-	// Hosts (canManageRoom) may always draw. Presenters may also draw.
-	// Pure viewers are forbidden.
-	if !s.canManageRoom(caller, class) {
-		participant, err := s.participants.GetActiveParticipant(ctx, roomID, caller.UserID.String())
-		if err != nil {
-			// Not an active participant → forbidden.
-			return nil, domain.ErrForbidden
-		}
-		if participant.Role != domain.ParticipantRolePresenter {
-			return nil, domain.ErrForbidden
-		}
+	if err := s.requireCanDraw(ctx, caller, roomID, class); err != nil {
+		return nil, err
 	}
 
 	wb, err := s.whiteboards.Upsert(ctx, roomID, dto.Snapshot)
@@ -1322,4 +1324,61 @@ func (s *service) SaveWhiteboard(ctx context.Context, roomID uuid.UUID, dto doma
 		return nil, fmt.Errorf("livesessions.service.SaveWhiteboard: %w", err)
 	}
 	return wb, nil
+}
+
+// requireCanDraw enforces write access to a room's whiteboard: hosts
+// (canManageRoom) may always draw, active presenters may draw, everyone else is
+// forbidden. Shared by SaveWhiteboard and PresignWhiteboardMedia.
+func (s *service) requireCanDraw(ctx context.Context, caller domain.Caller, roomID uuid.UUID, class *domain.Class) error {
+	if s.canManageRoom(caller, class) {
+		return nil
+	}
+	participant, err := s.participants.GetActiveParticipant(ctx, roomID, caller.UserID.String())
+	if err != nil {
+		// Not an active participant → forbidden.
+		return domain.ErrForbidden
+	}
+	if participant.Role != domain.ParticipantRolePresenter {
+		return domain.ErrForbidden
+	}
+	return nil
+}
+
+// whiteboardMediaPresignExpiry bounds how long the presigned PUT URL is valid.
+const whiteboardMediaPresignExpiry = 15 * time.Minute
+
+// PresignWhiteboardMedia presigns an S3 upload for an image inserted on the
+// whiteboard and returns a permanent public URL to embed in the tldraw snapshot.
+// Objects land under whiteboards/<room_id>/ in the public bucket. Uploading the
+// image to S3 (instead of tldraw's default inline base64) keeps synced diffs
+// small enough to fit the LiveKit data channel, so peers actually see the image.
+func (s *service) PresignWhiteboardMedia(ctx context.Context, roomID uuid.UUID, dto domain.WhiteboardMediaPresignDTO) (*domain.WhiteboardMediaPresignResponse, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	if s.storage == nil {
+		return nil, fmt.Errorf("livesessions.service.PresignWhiteboardMedia: storage not configured")
+	}
+	_, _, class, err := s.loadRoomWithClass(ctx, roomID)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.requireCanDraw(ctx, caller, roomID, class); err != nil {
+		return nil, err
+	}
+
+	// Key off a fresh UUID; keep only the original extension (discard the rest of
+	// the client filename to avoid path traversal / collisions).
+	ext := strings.ToLower(filepath.Ext(dto.FileName))
+	key := fmt.Sprintf("whiteboards/%s/%s%s", roomID.String(), uuid.New().String(), ext)
+
+	uploadURL, err := s.storage.PublicPresignUpload(ctx, key, whiteboardMediaPresignExpiry)
+	if err != nil {
+		return nil, fmt.Errorf("livesessions.service.PresignWhiteboardMedia: %w", err)
+	}
+	return &domain.WhiteboardMediaPresignResponse{
+		UploadURL: uploadURL,
+		PublicURL: s.storage.PublicURL(key),
+	}, nil
 }

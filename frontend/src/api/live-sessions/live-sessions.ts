@@ -58,6 +58,7 @@ import type {
   GithubCom4H1RZooraInternalDomainSetHandDTO,
   GithubCom4H1RZooraInternalDomainSetParticipantRoleDTO,
   GithubCom4H1RZooraInternalDomainUpdateLiveRoomConfigDTO,
+  GithubCom4H1RZooraInternalDomainWhiteboardMediaPresignDTO,
   PostLiveRooms201,
   PostLiveRooms400,
   PostLiveRooms401,
@@ -101,6 +102,11 @@ import type {
   PostLiveRoomsIdStart401,
   PostLiveRoomsIdStart403,
   PostLiveRoomsIdStart404,
+  PostLiveRoomsIdWhiteboardMediaPresign200,
+  PostLiveRoomsIdWhiteboardMediaPresign400,
+  PostLiveRoomsIdWhiteboardMediaPresign401,
+  PostLiveRoomsIdWhiteboardMediaPresign403,
+  PostLiveRoomsIdWhiteboardMediaPresign404,
   PutLiveRoomsIdConfig200,
   PutLiveRoomsIdConfig400,
   PutLiveRoomsIdConfig401,
@@ -2369,4 +2375,109 @@ export const usePutLiveRoomsIdWhiteboard = <TError = ErrorType<PutLiveRoomsIdWhi
         TContext
       > => {
       return useMutation(getPutLiveRoomsIdWhiteboardMutationOptions(options), queryClient);
+    }
+    export type postLiveRoomsIdWhiteboardMediaPresignResponse200 = {
+  data: PostLiveRoomsIdWhiteboardMediaPresign200
+  status: 200
+}
+
+export type postLiveRoomsIdWhiteboardMediaPresignResponse400 = {
+  data: PostLiveRoomsIdWhiteboardMediaPresign400
+  status: 400
+}
+
+export type postLiveRoomsIdWhiteboardMediaPresignResponse401 = {
+  data: PostLiveRoomsIdWhiteboardMediaPresign401
+  status: 401
+}
+
+export type postLiveRoomsIdWhiteboardMediaPresignResponse403 = {
+  data: PostLiveRoomsIdWhiteboardMediaPresign403
+  status: 403
+}
+
+export type postLiveRoomsIdWhiteboardMediaPresignResponse404 = {
+  data: PostLiveRoomsIdWhiteboardMediaPresign404
+  status: 404
+}
+
+export type postLiveRoomsIdWhiteboardMediaPresignResponseSuccess = (postLiveRoomsIdWhiteboardMediaPresignResponse200) & {
+  headers: Headers;
+};
+export type postLiveRoomsIdWhiteboardMediaPresignResponseError = (postLiveRoomsIdWhiteboardMediaPresignResponse400 | postLiveRoomsIdWhiteboardMediaPresignResponse401 | postLiveRoomsIdWhiteboardMediaPresignResponse403 | postLiveRoomsIdWhiteboardMediaPresignResponse404) & {
+  headers: Headers;
+};
+
+export type postLiveRoomsIdWhiteboardMediaPresignResponse = (postLiveRoomsIdWhiteboardMediaPresignResponseSuccess | postLiveRoomsIdWhiteboardMediaPresignResponseError)
+
+export const getPostLiveRoomsIdWhiteboardMediaPresignUrl = (id: string,) => {
+
+
+
+
+  return `/live-rooms/${id}/whiteboard/media/presign`
+}
+
+/**
+ * Returns a presigned PUT URL and a permanent public URL for an image inserted on the whiteboard. Only hosts and presenters may upload.
+ * @summary Presign whiteboard image upload
+ */
+export const postLiveRoomsIdWhiteboardMediaPresign = async (id: string,
+    githubCom4H1RZooraInternalDomainWhiteboardMediaPresignDTO: GithubCom4H1RZooraInternalDomainWhiteboardMediaPresignDTO, options?: RequestInit): Promise<postLiveRoomsIdWhiteboardMediaPresignResponse> => {
+
+  return customInstance<postLiveRoomsIdWhiteboardMediaPresignResponse>(getPostLiveRoomsIdWhiteboardMediaPresignUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(githubCom4H1RZooraInternalDomainWhiteboardMediaPresignDTO)
+  }
+);}
+
+
+
+
+export const getPostLiveRoomsIdWhiteboardMediaPresignMutationOptions = <TError = ErrorType<PostLiveRoomsIdWhiteboardMediaPresign400 | PostLiveRoomsIdWhiteboardMediaPresign401 | PostLiveRoomsIdWhiteboardMediaPresign403 | PostLiveRoomsIdWhiteboardMediaPresign404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdWhiteboardMediaPresign>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainWhiteboardMediaPresignDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdWhiteboardMediaPresign>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainWhiteboardMediaPresignDTO}, TContext> => {
+
+const mutationKey = ['postLiveRoomsIdWhiteboardMediaPresign'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postLiveRoomsIdWhiteboardMediaPresign>>, {id: string;data: GithubCom4H1RZooraInternalDomainWhiteboardMediaPresignDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postLiveRoomsIdWhiteboardMediaPresign(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostLiveRoomsIdWhiteboardMediaPresignMutationResult = NonNullable<Awaited<ReturnType<typeof postLiveRoomsIdWhiteboardMediaPresign>>>
+    export type PostLiveRoomsIdWhiteboardMediaPresignMutationBody = GithubCom4H1RZooraInternalDomainWhiteboardMediaPresignDTO
+    export type PostLiveRoomsIdWhiteboardMediaPresignMutationError = ErrorType<PostLiveRoomsIdWhiteboardMediaPresign400 | PostLiveRoomsIdWhiteboardMediaPresign401 | PostLiveRoomsIdWhiteboardMediaPresign403 | PostLiveRoomsIdWhiteboardMediaPresign404>
+
+    /**
+ * @summary Presign whiteboard image upload
+ */
+export const usePostLiveRoomsIdWhiteboardMediaPresign = <TError = ErrorType<PostLiveRoomsIdWhiteboardMediaPresign400 | PostLiveRoomsIdWhiteboardMediaPresign401 | PostLiveRoomsIdWhiteboardMediaPresign403 | PostLiveRoomsIdWhiteboardMediaPresign404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdWhiteboardMediaPresign>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainWhiteboardMediaPresignDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postLiveRoomsIdWhiteboardMediaPresign>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainWhiteboardMediaPresignDTO},
+        TContext
+      > => {
+      return useMutation(getPostLiveRoomsIdWhiteboardMediaPresignMutationOptions(options), queryClient);
     }

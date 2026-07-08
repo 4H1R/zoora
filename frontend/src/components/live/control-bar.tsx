@@ -2,7 +2,6 @@ import { useLocalParticipant } from "@livekit/components-react"
 import { useRef, useState } from "react"
 import {
   BarChart3,
-  Circle,
   Hand,
   LogOut,
   type LucideIcon,
@@ -13,7 +12,6 @@ import {
   MoreHorizontal,
   PenLine,
   Presentation,
-  Square,
   Users,
   Video,
   VideoOff,
@@ -200,8 +198,8 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
           />
         )}
 
-        {/* Record — host only, desktop only */}
-        {isHost && (
+        {/* Record — host only, desktop only — DISABLED (kept for later re-enable) */}
+        {/* {isHost && (
           <RecordButton
             recording={isRecording}
             pending={recordingPending}
@@ -209,7 +207,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
             className="hidden sm:flex"
             onClick={() => setRecordOpen(true)}
           />
-        )}
+        )} */}
 
         {/* Divider — only when publisher-side controls precede it, else it
             orphans at the bar edge next to the hand icon for viewers */}
@@ -309,7 +307,8 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
                   <span>{stageKind === "whiteboard" ? t("liveRoom.controls.stopWhiteboard") : t("liveRoom.controls.whiteboard")}</span>
                 </button>
               )}
-              {isHost && (
+              {/* Record — DISABLED (kept for later re-enable) */}
+              {/* {isHost && (
                 <button
                   type="button"
                   onClick={() => setRecordOpen(true)}
@@ -323,7 +322,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
                   )}
                   <span>{isRecording ? t("liveRoom.controls.stopRecording") : t("liveRoom.controls.startRecording")}</span>
                 </button>
-              )}
+              )} */}
               <button
                 type="button"
                 onClick={() => togglePanel("people")}
@@ -482,43 +481,44 @@ function CtrlButton({
 // Recording toggle. Idle: a solid red dot that grows on hover ("arm to record").
 // Live: a red-filled tile with a stop glyph under a slow pulsing halo, so the
 // recording state reads at a glance across the bar.
-function RecordButton({
-  recording,
-  pending,
-  label,
-  className,
-  onClick,
-}: {
-  recording: boolean
-  pending: boolean
-  label: string
-  className?: string
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={pending}
-      aria-label={label}
-      aria-pressed={recording}
-      title={label}
-      className={cn(
-        "group relative flex size-11 items-center justify-center rounded-xl transition-colors disabled:opacity-60",
-        recording ? "bg-red-600 text-white hover:bg-red-600/90" : "text-foreground hover:bg-accent",
-        className,
-      )}
-    >
-      {pending ? (
-        <Spinner className="size-5" />
-      ) : recording ? (
-        <span className="relative flex size-5 items-center justify-center">
-          <span className="absolute inline-flex size-5 animate-ping rounded-full bg-white/40" />
-          <Square className="relative size-2.5 fill-current" />
-        </span>
-      ) : (
-        <Circle className="size-5 fill-red-600 text-red-600 transition-transform group-hover:scale-110" />
-      )}
-    </button>
-  )
-}
+// DISABLED (kept for later re-enable) — no call sites while record button is off.
+// function RecordButton({
+//   recording,
+//   pending,
+//   label,
+//   className,
+//   onClick,
+// }: {
+//   recording: boolean
+//   pending: boolean
+//   label: string
+//   className?: string
+//   onClick: () => void
+// }) {
+//   return (
+//     <button
+//       type="button"
+//       onClick={onClick}
+//       disabled={pending}
+//       aria-label={label}
+//       aria-pressed={recording}
+//       title={label}
+//       className={cn(
+//         "group relative flex size-11 items-center justify-center rounded-xl transition-colors disabled:opacity-60",
+//         recording ? "bg-red-600 text-white hover:bg-red-600/90" : "text-foreground hover:bg-accent",
+//         className,
+//       )}
+//     >
+//       {pending ? (
+//         <Spinner className="size-5" />
+//       ) : recording ? (
+//         <span className="relative flex size-5 items-center justify-center">
+//           <span className="absolute inline-flex size-5 animate-ping rounded-full bg-white/40" />
+//           <Square className="relative size-2.5 fill-current" />
+//         </span>
+//       ) : (
+//         <Circle className="size-5 fill-red-600 text-red-600 transition-transform group-hover:scale-110" />
+//       )}
+//     </button>
+//   )
+// }

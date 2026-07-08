@@ -140,6 +140,11 @@ func (m *mockLiveSessionSvc) SaveWhiteboard(ctx context.Context, roomID uuid.UUI
 	wb, _ := a.Get(0).(*domain.LiveWhiteboard)
 	return wb, a.Error(1)
 }
+func (m *mockLiveSessionSvc) PresignWhiteboardMedia(ctx context.Context, roomID uuid.UUID, dto domain.WhiteboardMediaPresignDTO) (*domain.WhiteboardMediaPresignResponse, error) {
+	a := m.Called(ctx, roomID, dto)
+	res, _ := a.Get(0).(*domain.WhiteboardMediaPresignResponse)
+	return res, a.Error(1)
+}
 
 func newLiveRouter(t *testing.T) (*gin.Engine, *mockLiveSessionSvc) {
 	t.Helper()

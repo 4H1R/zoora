@@ -2687,6 +2687,11 @@
       "title": "Room"
     },
     "toggleRail": "Toggle camera rail",
+    "zoom": {
+      "in": "Zoom in",
+      "out": "Zoom out",
+      "reset": "Reset zoom"
+    },
     "screenShareLabel": "{{name}}'s screen",
     "device": {
       "camera": "Camera",

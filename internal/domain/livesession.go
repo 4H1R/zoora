@@ -248,6 +248,22 @@ type SaveWhiteboardDTO struct {
 	Snapshot json.RawMessage `json:"snapshot" binding:"required" swaggertype:"object"`
 }
 
+// WhiteboardMediaPresignDTO is the request body for presigning a whiteboard
+// image upload. tldraw calls this before PUTting an inserted image to S3 so the
+// board only syncs a small public URL instead of an inline base64 data URL.
+type WhiteboardMediaPresignDTO struct {
+	FileName string `json:"file_name" binding:"required,max=255"`
+	MimeType string `json:"mime_type" binding:"required,max=100"`
+	Size     int64  `json:"size" binding:"required,gt=0"`
+}
+
+// WhiteboardMediaPresignResponse carries the presigned PUT URL (short-lived) and
+// the permanent public URL to embed in the tldraw snapshot / broadcast to peers.
+type WhiteboardMediaPresignResponse struct {
+	UploadURL string `json:"upload_url"`
+	PublicURL string `json:"public_url"`
+}
+
 // LiveWhiteboardRepository persists whiteboard snapshots keyed by live_room_id.
 type LiveWhiteboardRepository interface {
 	Get(ctx context.Context, roomID uuid.UUID) (*LiveWhiteboard, error)
@@ -299,6 +315,9 @@ type LiveSessionService interface {
 	GetWhiteboard(ctx context.Context, roomID uuid.UUID) (*LiveWhiteboard, error)
 	// SaveWhiteboard persists a snapshot. Only hosts and presenters may write.
 	SaveWhiteboard(ctx context.Context, roomID uuid.UUID, dto SaveWhiteboardDTO) (*LiveWhiteboard, error)
+	// PresignWhiteboardMedia returns a presigned upload URL + permanent public URL
+	// for a whiteboard image. Same authz as SaveWhiteboard: hosts + presenters only.
+	PresignWhiteboardMedia(ctx context.Context, roomID uuid.UUID, dto WhiteboardMediaPresignDTO) (*WhiteboardMediaPresignResponse, error)
 
 	AdminList(ctx context.Context, q AdminListLiveRoomsQuery) ([]LiveRoom, int64, error)
 	AdminEndRoom(ctx context.Context, roomID uuid.UUID) (*LiveRoom, error)
