@@ -71,6 +71,9 @@ type Config struct {
 	InvoiceIssuerAddress    string `env:"INVOICE_ISSUER_ADDRESS"`
 	InvoiceIssuerPhone      string `env:"INVOICE_ISSUER_PHONE"`
 	AppBaseURL              string `env:"APP_BASE_URL" envDefault:"http://localhost:5173"`
+	// Remote Chromium CDP URL (e.g. http://chrome:9222) for headless PDF receipt
+	// rendering. Empty launches a local headless Chromium via the exec allocator.
+	ChromeRemoteURL string `env:"CHROME_REMOTE_URL"`
 }
 
 func Load() (*Config, error) {

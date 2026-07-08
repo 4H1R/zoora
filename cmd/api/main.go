@@ -311,7 +311,7 @@ func main() {
 		Phone:      cfg.InvoiceIssuerPhone,
 	}
 	billingRepo := billing.NewRepository(db)
-	billingPDF := billing.NewPDFRenderer(storageClient, orgRepo, billingIssuer, "" /* launch local chromium */)
+	billingPDF := billing.NewPDFRenderer(storageClient, orgRepo, billingIssuer, cfg.ChromeRemoteURL)
 	billingSvc := billing.NewService(
 		billingRepo,
 		orgRepo, // domain.OrganizationRepository

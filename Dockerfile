@@ -18,9 +18,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /out/seed ./cmd/seed
 
 FROM alpine:3.20
 RUN apk add --no-cache ca-certificates tzdata wget && adduser -D -u 10001 app
-# Chromium + Vazirmatn font for headless PDF receipt rendering (runs in the worker).
-RUN apk add --no-cache chromium font-vazirmatn ca-certificates
-ENV CHROME_BIN=/usr/bin/chromium-browser
 COPY --from=builder /out/api /usr/local/bin/api
 COPY --from=builder /out/worker /usr/local/bin/worker
 COPY --from=builder /out/seed /usr/local/bin/seed

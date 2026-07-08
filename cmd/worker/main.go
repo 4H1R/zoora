@@ -197,7 +197,7 @@ func main() {
 		Address:    cfg.InvoiceIssuerAddress,
 		Phone:      cfg.InvoiceIssuerPhone,
 	}
-	billingPDF := billing.NewPDFRenderer(storageClient, orgRepo, billingIssuer, "")
+	billingPDF := billing.NewPDFRenderer(storageClient, orgRepo, billingIssuer, cfg.ChromeRemoteURL)
 	billingSvc := billing.NewService(
 		billingRepo,
 		orgRepo,

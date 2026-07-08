@@ -1,0 +1,15 @@
+# syntax=docker/dockerfile:1
+
+# Fetch the Vazirmatn TTFs in a throwaway Alpine stage — the font isn't packaged
+# in any distro repo, so pull it straight from the upstream release.
+FROM alpine:3.20 AS fonts
+RUN apk add --no-cache wget unzip \
+    && mkdir -p /fonts \
+    && wget -qO /tmp/vazirmatn.zip https://github.com/rastikerdar/vazirmatn/releases/download/v33.003/vazirmatn-v33.003.zip \
+    && unzip -j /tmp/vazirmatn.zip 'fonts/ttf/*.ttf' -d /fonts
+
+# chromedp/headless-shell is a minimal Chromium that already exposes the CDP
+# endpoint on 0.0.0.0:9222. Only the Vazirmatn fonts need adding for Persian
+# receipts to render (no tofu). fontconfig scans /usr/share/fonts at runtime.
+FROM chromedp/headless-shell:latest
+COPY --from=fonts /fonts/ /usr/share/fonts/vazirmatn/
