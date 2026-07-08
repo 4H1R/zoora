@@ -16,6 +16,7 @@ import (
 	"github.com/4H1R/zoora/internal/admin"
 	"github.com/4H1R/zoora/internal/attendance"
 	"github.com/4H1R/zoora/internal/auth"
+	"github.com/4H1R/zoora/internal/billing"
 	"github.com/4H1R/zoora/internal/calendar"
 	"github.com/4H1R/zoora/internal/changelog"
 	"github.com/4H1R/zoora/internal/chat"
@@ -39,6 +40,7 @@ import (
 	"github.com/4H1R/zoora/internal/platform/httpx"
 	lk "github.com/4H1R/zoora/internal/platform/livekit"
 	"github.com/4H1R/zoora/internal/platform/logger"
+	"github.com/4H1R/zoora/internal/platform/payment"
 	"github.com/4H1R/zoora/internal/platform/queue"
 	"github.com/4H1R/zoora/internal/platform/sms"
 	"github.com/4H1R/zoora/internal/platform/storage"
@@ -291,6 +293,47 @@ func main() {
 	notificationHandler := notifications.NewHandler(notificationService)
 	notificationHandler.RegisterRoutes(v1, authMiddleware)
 
+	// --- billing ---
+	zpBase := "https://payment.zarinpal.com"
+	if cfg.ZarinpalSandbox {
+		zpBase = "https://sandbox.zarinpal.com"
+	}
+	gatewayRegistry := payment.NewRegistry(
+		payment.NewZarinpal(payment.ZarinpalConfig{
+			MerchantID: cfg.ZarinpalMerchantID,
+			BaseURL:    zpBase,
+		}),
+	)
+	billingIssuer := billing.IssuerConfig{
+		Name:       cfg.InvoiceIssuerName,
+		EconomicID: cfg.InvoiceIssuerEconomicID,
+		Address:    cfg.InvoiceIssuerAddress,
+		Phone:      cfg.InvoiceIssuerPhone,
+	}
+	billingRepo := billing.NewRepository(db)
+	billingPDF := billing.NewPDFRenderer(storageClient, orgRepo, billingIssuer, "" /* launch local chromium */)
+	billingSvc := billing.NewService(
+		billingRepo,
+		orgRepo, // domain.OrganizationRepository
+		orgRepo, // planActivator (UpdatePlan)
+		billing.NewEntitlementsCacheBuster(redisClient), // entitlementsCacheBuster
+		gatewayRegistry,
+		storageClient,                         // objectStorage (presign)
+		billing.NewQueueEnqueuer(queueClient), // enqueuer
+		notificationService,                   // systemNotifier (SendSystem)
+		billingPDF,
+		billing.BillingConfig{
+			CallbackBaseURL: cfg.ZarinpalCallbackBaseURL,
+			AppBaseURL:      cfg.AppBaseURL,
+			Issuer:          billingIssuer,
+		},
+		log,
+	)
+	billingAdminSvc := billing.NewAdminService(billingSvc)
+	billingHandler := billing.NewHandler(billingSvc, cfg.AppBaseURL)
+	billingHandler.RegisterRoutes(v1, authMiddleware, perm)
+	billingAdminHandler := billing.NewAdminHandler(billingAdminSvc)
+
 	liveSessionHandler := livesessions.NewHandler(liveSessionService)
 	liveSessionHandler.RegisterRoutes(v1, authMiddleware, perm)
 
@@ -345,7 +388,7 @@ func main() {
 	adminOrgSettingsHandler := orgsettings.NewAdminHandler(orgSettingsService)
 
 	adminGroup := v1.Group("/admin", authMiddleware, auth.RequireAdmin())
-	admin.RegisterRoutes(adminGroup, adminUserHandler, adminOrgHandler, adminClassHandler, adminQuestionBankHandler, adminQuizHandler, adminLiveSessionHandler, adminOfflineHandler, adminPracticeHandler, adminPollHandler, adminQAHandler, adminRoleHandler, adminAttendanceHandler, adminChangelogHandler, adminOrgSettingsHandler)
+	admin.RegisterRoutes(adminGroup, adminUserHandler, adminOrgHandler, adminClassHandler, adminQuestionBankHandler, adminQuizHandler, adminLiveSessionHandler, adminOfflineHandler, adminPracticeHandler, adminPollHandler, adminQAHandler, adminRoleHandler, adminAttendanceHandler, adminChangelogHandler, adminOrgSettingsHandler, billingAdminHandler)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
