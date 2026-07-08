@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -226,4 +227,121 @@ func NextPlanState(curPlan Plan, curExpiry *time.Time, buy Plan, interval Billin
 		base = *curExpiry // same tier, still active: don't burn remaining days
 	}
 	return buy, interval.Extend(base), nil
+}
+
+// ---- DTOs / queries ----
+
+type CheckoutDTO struct {
+	Plan     Plan            `json:"plan" binding:"required"`
+	Interval BillingInterval `json:"interval" binding:"required"`
+	Gateway  GatewayName     `json:"gateway" binding:"required"`
+}
+
+type CheckoutResult struct {
+	Invoice     *Invoice `json:"invoice"`
+	RedirectURL string   `json:"redirect_url"`
+}
+
+type ListInvoicesQuery struct {
+	Status     *InvoiceStatus `form:"status"`
+	ListParams ListParams     `form:"-"`
+}
+
+type AdminListInvoicesQuery struct {
+	OrganizationID *uuid.UUID     `form:"-"`
+	Status         *InvoiceStatus `form:"status"`
+	ListParams     ListParams     `form:"-"`
+}
+
+type UpsertPlanPriceDTO struct {
+	Plan     Plan            `json:"plan" binding:"required"`
+	Interval BillingInterval `json:"interval" binding:"required"`
+	Currency string          `json:"currency" binding:"omitempty,len=3"`
+	Amount   int64           `json:"amount" binding:"required,gt=0"` // Rial
+}
+
+type AdminCreateInvoiceItemDTO struct {
+	Kind        InvoiceItemKind `json:"kind" binding:"required,oneof=plan_subscription custom addon"`
+	Description string          `json:"description" binding:"required,min=2"`
+	Quantity    int             `json:"quantity" binding:"required,gt=0"`
+	UnitAmount  int64           `json:"unit_amount" binding:"required,gt=0"` // Rial
+}
+
+type AdminCreateInvoiceDTO struct {
+	OrganizationID uuid.UUID                   `json:"organization_id" binding:"required"`
+	Description    string                      `json:"description"`
+	TaxPercent     int                         `json:"tax_percent" binding:"omitempty,gte=0,lte=100"`
+	Items          []AdminCreateInvoiceItemDTO `json:"items" binding:"required,min=1,dive"`
+}
+
+type AdminMarkPaidDTO struct {
+	Note  string `json:"note"`
+	RefID string `json:"ref_id"`
+}
+
+type AdminRefundDTO struct {
+	Reason string `json:"reason" binding:"required,min=2"`
+}
+
+// ---- repository ----
+
+type BillingRepository interface {
+	// prices
+	ListActivePrices(ctx context.Context) ([]PlanPrice, error)
+	FindActivePrice(ctx context.Context, plan Plan, interval BillingInterval, currency string) (*PlanPrice, error)
+	UpsertPrice(ctx context.Context, p *PlanPrice) error
+	DeactivatePrice(ctx context.Context, id uuid.UUID) error
+
+	// invoices
+	CreateInvoice(ctx context.Context, inv *Invoice) error
+	FindInvoiceByID(ctx context.Context, id uuid.UUID) (*Invoice, error)
+	UpdateInvoice(ctx context.Context, inv *Invoice) error
+	ListInvoices(ctx context.Context, orgID uuid.UUID, q ListInvoicesQuery) ([]Invoice, int64, error)
+	AdminListInvoices(ctx context.Context, q AdminListInvoicesQuery) ([]Invoice, int64, error)
+	NextInvoiceSequence(ctx context.Context, yearPrefix string) (int64, error)
+
+	// payments
+	CreatePayment(ctx context.Context, p *Payment) error
+	FindPaymentByAuthority(ctx context.Context, gateway GatewayName, authority string) (*Payment, error)
+	UpdatePayment(ctx context.Context, p *Payment) error
+
+	// reminders (dedup + sweep source data)
+	ReminderAlreadySent(ctx context.Context, kind BillingReminderKind, subjectID uuid.UUID, periodKey string) (bool, error)
+	MarkReminderSent(ctx context.Context, r *BillingReminderSent) error
+
+	// tx boundary (activation happens inside one transaction)
+	WithTx(ctx context.Context, fn func(ctx context.Context) error) error
+}
+
+// ---- services ----
+
+type BillingService interface {
+	// self-serve (org, billing:manage)
+	ListPlanPrices(ctx context.Context) ([]PlanPrice, error)
+	Checkout(ctx context.Context, dto CheckoutDTO) (*CheckoutResult, error)
+	ListInvoices(ctx context.Context, q ListInvoicesQuery) ([]Invoice, int64, error)
+	GetInvoice(ctx context.Context, id uuid.UUID) (*Invoice, error)
+	InvoicePDFURL(ctx context.Context, id uuid.UUID) (string, error)
+
+	// gateway callback (no caller in ctx — invoked from a public redirect route)
+	HandleCallback(ctx context.Context, gateway GatewayName, authority string, gatewayOK bool) (*Invoice, error)
+
+	// worker
+	GeneratePDF(ctx context.Context, invoiceID uuid.UUID) error
+	RunReminderSweep(ctx context.Context, now time.Time) error
+	ExpireStaleInvoices(ctx context.Context, now time.Time) error
+}
+
+type BillingAdminService interface {
+	ListPrices(ctx context.Context) ([]PlanPrice, error)
+	UpsertPrice(ctx context.Context, dto UpsertPlanPriceDTO) (*PlanPrice, error)
+	DeactivatePrice(ctx context.Context, id uuid.UUID) error
+
+	CreateInvoice(ctx context.Context, dto AdminCreateInvoiceDTO) (*Invoice, error)
+	IssueInvoice(ctx context.Context, id uuid.UUID) (*Invoice, error)
+	MarkPaid(ctx context.Context, id uuid.UUID, dto AdminMarkPaidDTO) (*Invoice, error)
+	CancelInvoice(ctx context.Context, id uuid.UUID) (*Invoice, error)
+	RefundInvoice(ctx context.Context, id uuid.UUID, dto AdminRefundDTO) (*Invoice, error)
+	ListInvoices(ctx context.Context, q AdminListInvoicesQuery) ([]Invoice, int64, error)
+	GetInvoice(ctx context.Context, id uuid.UUID) (*Invoice, error)
 }
