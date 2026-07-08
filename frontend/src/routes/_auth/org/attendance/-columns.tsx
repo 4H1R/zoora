@@ -59,7 +59,7 @@ export function useAttendanceColumns(): ColumnDef<Attendance>[] {
       accessorFn: (a) => a.status ?? "",
       header: t("org.attendance.table.status"),
       cell: ({ row }) => (
-        <Badge variant={statusBadgeVariant(row.original.status)}>{t(`org.attendance.status.${row.original.status}`)}</Badge>
+        <Badge variant={statusBadgeVariant(row.original.status)}>{t(`common.statuses.attendance.${row.original.status}`)}</Badge>
       ),
     },
   ]

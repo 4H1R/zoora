@@ -132,9 +132,9 @@ function RouteComponent() {
           <TableFilter
             table={table}
             searchPlaceholder={t("classesPage.searchPlaceholder")}
-            sortLabel={t("classesPage.toolbar.sort")}
-            columnsLabel={t("classesPage.toolbar.columns")}
-            toggleColumnsLabel={t("classesPage.toolbar.toggleColumns")}
+            sortLabel={t("common.toolbar.sort")}
+            columnsLabel={t("common.toolbar.columns")}
+            toggleColumnsLabel={t("common.toolbar.toggleColumns")}
             showColumnsToggle={isTable}
           />
         </div>

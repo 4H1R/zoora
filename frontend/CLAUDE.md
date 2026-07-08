@@ -33,6 +33,8 @@ pnpm typecheck  # Type check only (no build)
 - Use `cn()` from `src/lib/utils.ts` for all className merging — never raw string concatenation or `clsx` directly
 - shadcn components live in `src/components/ui/`; app-level components in `src/components/`
 - Never use arbitrary px values (`w-[32px]`, `mt-[12px]`) — always use Tailwind spacing/sizing scale (`w-8`, `mt-3`). Use arbitrary values only for non-standard design tokens with no Tailwind equivalent
+- **Skeletons must match their UI.** Every UI that has a loading skeleton — when you change the real UI (layout, count, sizes, spacing, added/removed elements), update the matching skeleton in the same change so the two stay visually identical. Loaded state and skeleton must have the same structure/dimensions.
+- **`Select` is base-ui, not Radix.** `SelectValue` renders the RAW selected value in the trigger by default — it does NOT pick up the `SelectItem`'s label. Whenever the item label differs from its value (translated labels, ids→names), the trigger will show the raw value unless you either (a) pass `items={[{ value, label }]}` to the `<Select>` Root, or (b) give `SelectValue` a function child: `<SelectValue>{(v) => t(\`x.\${v}\`)}</SelectValue>`. Bare `<SelectValue placeholder=... />` is only correct when the item's visible text equals its value.
 
 ### Internationalization (i18n)
 

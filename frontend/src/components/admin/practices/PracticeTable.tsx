@@ -20,7 +20,7 @@ function usePracticeColumns({ onEdit }: { onEdit: (p: PracticeRoom) => void }): 
   return [
     {
       accessorKey: "title",
-      header: t("admin.practices.title_col"),
+      header: t("admin.practices.titleColumn"),
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <div
@@ -153,9 +153,9 @@ export function PracticeTable({ practices, total, isLoading, sorting, onEdit }: 
       <TableFilter
         table={table}
         searchPlaceholder={t("admin.practices.searchPlaceholder")}
-        sortLabel={t("admin.practices.toolbar.sort")}
-        columnsLabel={t("admin.practices.toolbar.columns")}
-        toggleColumnsLabel={t("admin.practices.toolbar.toggleColumns")}
+        sortLabel={t("common.toolbar.sort")}
+        columnsLabel={t("common.toolbar.columns")}
+        toggleColumnsLabel={t("common.toolbar.toggleColumns")}
       />
       <Card className="gap-0 overflow-hidden p-0">
         <div className="overflow-x-auto">

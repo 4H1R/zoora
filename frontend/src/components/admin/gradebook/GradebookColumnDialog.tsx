@@ -236,7 +236,7 @@ export function GradebookColumnDialog({
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue>{(v: (typeof TYPES)[number]) => t(`admin.gradebook.types.${v}`)}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {TYPES.map((tp) => (

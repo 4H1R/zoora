@@ -139,9 +139,9 @@ function RolesPage() {
       <TableFilter
         table={table}
         searchPlaceholder={t("org.roles.searchPlaceholder")}
-        sortLabel={t("org.roles.toolbar.sort")}
-        columnsLabel={t("org.roles.toolbar.columns")}
-        toggleColumnsLabel={t("org.roles.toolbar.toggleColumns")}
+        sortLabel={t("common.toolbar.sort")}
+        columnsLabel={t("common.toolbar.columns")}
+        toggleColumnsLabel={t("common.toolbar.toggleColumns")}
       />
       <Card className="gap-0 overflow-hidden p-0">
         <div className="overflow-x-auto">

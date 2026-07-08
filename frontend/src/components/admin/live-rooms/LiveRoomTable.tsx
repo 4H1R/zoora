@@ -150,9 +150,9 @@ export function LiveRoomTable({ rooms, total, isLoading, sorting }: LiveRoomTabl
       <TableFilter
         table={table}
         searchPlaceholder={t("admin.liveRooms.searchPlaceholder")}
-        sortLabel={t("admin.liveRooms.toolbar.sort")}
-        columnsLabel={t("admin.liveRooms.toolbar.columns")}
-        toggleColumnsLabel={t("admin.liveRooms.toolbar.toggleColumns")}
+        sortLabel={t("common.toolbar.sort")}
+        columnsLabel={t("common.toolbar.columns")}
+        toggleColumnsLabel={t("common.toolbar.toggleColumns")}
       />
       <Card className="gap-0 overflow-hidden p-0">
         <div className="overflow-x-auto">

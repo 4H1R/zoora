@@ -74,7 +74,7 @@ export function AttendanceCellPopover({
               disabled={isPending}
               onClick={() => setStatus(s)}
             >
-              {t(`org.class.attendance.status.${s}`)}
+              {t(`common.statuses.attendance.${s}`)}
             </Button>
           ))}
         </div>

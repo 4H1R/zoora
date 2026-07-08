@@ -99,9 +99,9 @@ function RouteComponent() {
           <TableFilter
             table={table}
             searchPlaceholder={t("org.exams.searchPlaceholder")}
-            sortLabel={t("org.exams.toolbar.sort")}
-            columnsLabel={t("org.exams.toolbar.columns")}
-            toggleColumnsLabel={t("org.exams.toolbar.toggleColumns")}
+            sortLabel={t("common.toolbar.sort")}
+            columnsLabel={t("common.toolbar.columns")}
+            toggleColumnsLabel={t("common.toolbar.toggleColumns")}
             showColumnsToggle={isTable}
           />
         </div>

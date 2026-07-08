@@ -277,6 +277,19 @@
     "pagination": {
       "previous": "صفحه قبل",
       "next": "صفحه بعد"
+    },
+    "toolbar": {
+      "sort": "مرتب‌سازی",
+      "columns": "ستون‌ها",
+      "toggleColumns": "نمایش/پنهان ستون‌ها"
+    },
+    "statuses": {
+      "attendance": {
+        "present": "حاضر",
+        "absent": "غایب",
+        "late": "تأخیر",
+        "excused": "موجه"
+      }
     }
   },
   "nav": {
@@ -419,11 +432,6 @@
         "disableSuccess": "کاربر غیرفعال شد",
         "enableSuccess": "کاربر فعال شد"
       },
-      "toolbar": {
-        "sort": "مرتب‌سازی",
-        "columns": "ستون‌ها",
-        "toggleColumns": "نمایش/پنهان ستون‌ها"
-      },
       "organization": "سازمان",
       "disabled": "غیرفعال"
     },
@@ -481,12 +489,6 @@
         "allStatuses": "همه وضعیت‌ها",
         "clear": "پاک‌سازی فیلترها"
       },
-      "statuses": {
-        "present": "حاضر",
-        "absent": "غایب",
-        "late": "تأخیر",
-        "excused": "موجه"
-      },
       "sources": {
         "auto": "خودکار",
         "manual": "دستی"
@@ -504,11 +506,6 @@
         "remarksPlaceholder": "توضیحات اختیاری",
         "updateSuccess": "حضور و غیاب به‌روز شد",
         "deleteSuccess": "حضور و غیاب حذف شد"
-      },
-      "toolbar": {
-        "sort": "مرتب‌سازی",
-        "columns": "ستون‌ها",
-        "toggleColumns": "تغییر ستون‌ها"
       }
     },
     "classes": {
@@ -550,11 +547,6 @@
         "createSuccess": "کلاس ایجاد شد",
         "updateSuccess": "کلاس به‌روز شد",
         "deleteSuccess": "کلاس حذف شد"
-      },
-      "toolbar": {
-        "sort": "مرتب‌سازی",
-        "columns": "ستون‌ها",
-        "toggleColumns": "نمایش/پنهان ستون‌ها"
       }
     },
     "classMembers": {
@@ -623,11 +615,6 @@
         "name": "نام اتاق",
         "namePlaceholder": "عنوان جلسه",
         "createSuccess": "اتاق زنده ایجاد شد"
-      },
-      "toolbar": {
-        "sort": "مرتب‌سازی",
-        "columns": "ستون‌ها",
-        "toggleColumns": "نمایش/پنهان ستون‌ها"
       }
     },
     "sessions": {
@@ -697,11 +684,6 @@
         "createSuccess": "جلسه ایجاد شد",
         "updateSuccess": "جلسه به‌روز شد",
         "deleteSuccess": "جلسه حذف شد"
-      },
-      "toolbar": {
-        "sort": "مرتب‌سازی",
-        "columns": "ستون‌ها",
-        "toggleColumns": "نمایش/پنهان ستون‌ها"
       }
     },
     "offlines": {
@@ -709,7 +691,6 @@
       "subtitle": "مدیریت اتاق‌های ضبط‌شده آفلاین در همه کلاس‌ها.",
       "searchPlaceholder": "جستجوی اتاق‌های آفلاین…",
       "newRoom": "اتاق آفلاین جدید",
-      "title_column": "عنوان",
       "class": "کلاس",
       "session": "جلسه",
       "creator": "سازنده",
@@ -750,18 +731,13 @@
         "updateSuccess": "اتاق آفلاین بروزرسانی شد",
         "deleteSuccess": "اتاق آفلاین حذف شد"
       },
-      "toolbar": {
-        "sort": "مرتب‌سازی",
-        "columns": "ستون‌ها",
-        "toggleColumns": "نمایش/پنهان ستون‌ها"
-      }
+      "titleColumn": "عنوان"
     },
     "practices": {
       "title": "اتاق‌های تمرین",
       "subtitle": "مدیریت اتاق‌های تمرین در همه کلاس‌ها.",
       "searchPlaceholder": "جستجوی تمرین‌ها…",
       "newPractice": "تمرین جدید",
-      "title_col": "عنوان",
       "class": "کلاس",
       "session": "جلسه",
       "teacher": "مالک",
@@ -806,18 +782,13 @@
         "updateSuccess": "تمرین به‌روز شد",
         "deleteSuccess": "تمرین حذف شد"
       },
-      "toolbar": {
-        "sort": "مرتب‌سازی",
-        "columns": "ستون‌ها",
-        "toggleColumns": "نمایش/پنهان ستون‌ها"
-      }
+      "titleColumn": "عنوان"
     },
     "quizzes": {
       "title": "آزمون‌ها",
       "subtitle": "مدیریت آزمون‌های این کلاس.",
       "searchPlaceholder": "جستجوی آزمون‌ها…",
       "newQuiz": "آزمون جدید",
-      "title_col": "عنوان",
       "class": "کلاس",
       "session": "جلسه",
       "teacher": "مالک",
@@ -914,11 +885,7 @@
           }
         }
       },
-      "toolbar": {
-        "sort": "مرتب‌سازی",
-        "columns": "ستون‌ها",
-        "toggleColumns": "نمایش/پنهان ستون‌ها"
-      }
+      "titleColumn": "عنوان"
     },
     "corrections": {
       "title": "تصحیح آزمون",
@@ -1142,11 +1109,6 @@
         "synonymsPlaceholder": "مترادف‌ها (با ویرگول جدا کنید)",
         "modelAnswer": "پاسخ نمونه",
         "modelAnswerPlaceholder": "پاسخ مرجع برای محاسبهٔ میزان شباهت…"
-      },
-      "toolbar": {
-        "sort": "مرتب‌سازی",
-        "columns": "ستون‌ها",
-        "toggleColumns": "نمایش/پنهان ستون‌ها"
       }
     },
     "roles": {
@@ -1186,15 +1148,12 @@
         "deleteSuccess": "نقش حذف شد"
       },
       "toolbar": {
-        "sort": "مرتب‌سازی",
         "sortBy": "مرتب‌سازی بر اساس",
         "sortOptions": {
           "name": "نام",
           "created_at": "تاریخ ایجاد",
           "updated_at": "تاریخ بروزرسانی"
-        },
-        "columns": "ستون‌ها",
-        "toggleColumns": "نمایش/پنهان ستون‌ها"
+        }
       }
     },
     "permissions": {
@@ -1206,12 +1165,7 @@
       "createdAt": "ایجاد شده",
       "updatedAt": "به‌روزشده",
       "noResults": "دسترسی‌ای یافت نشد",
-      "noResultsHint": "جستجوی خود را تغییر دهید",
-      "toolbar": {
-        "sort": "مرتب‌سازی",
-        "columns": "ستون‌ها",
-        "toggleColumns": "نمایش/پنهان ستون"
-      }
+      "noResultsHint": "جستجوی خود را تغییر دهید"
     },
     "organizations": "سازمان‌ها",
     "projects": "پروژه‌ها",
@@ -1263,7 +1217,8 @@
         "edit": "ویرایش سازمان",
         "delete": "حذف",
         "restore": "بازیابی",
-        "goToOrg": "رفتن به سازمان"
+        "goToOrg": "رفتن به سازمان",
+        "changePlan": "تغییر پلن"
       },
       "form": {
         "createTitle": "سازمان جدید",
@@ -1314,15 +1269,26 @@
         },
         "moreFilters": "فیلترهای بیشتر",
         "filters": "فیلترها",
-        "sort": "مرتب‌سازی",
         "sortBy": "مرتب‌سازی بر اساس",
         "sortOptions": {
           "name": "نام",
           "created_at": "تاریخ ایجاد",
           "updated_at": "تاریخ بروزرسانی"
-        },
-        "columns": "ستون‌ها",
-        "toggleColumns": "نمایش/پنهان ستون‌ها"
+        }
+      },
+      "planLabels": {
+        "free": "رایگان",
+        "pro": "حرفه‌ای",
+        "enterprise": "سازمانی"
+      },
+      "plan": {
+        "title": "تغییر پلن",
+        "description": "پلن اشتراک و تاریخ انقضای {{name}} را به‌روزرسانی کنید.",
+        "plan": "پلن",
+        "planPlaceholder": "یک پلن انتخاب کنید",
+        "expiresAt": "تاریخ انقضا",
+        "expiresAtHint": "برای پلن دائمی خالی بگذارید. پلن منقضی‌شده مانند رایگان در نظر گرفته می‌شود.",
+        "updateSuccess": "پلن به‌روزرسانی شد"
       }
     },
     "roleAdmin": "مدیر پلتفرم",
@@ -1407,11 +1373,6 @@
       "live": "زنده",
       "notStarted": "شروع‌نشده",
       "finished": "پایان‌یافته"
-    },
-    "toolbar": {
-      "sort": "مرتب‌سازی",
-      "columns": "ستون‌ها",
-      "toggleColumns": "نمایش ستون‌ها"
     }
   },
   "classesPage": {
@@ -1444,11 +1405,6 @@
       "teacher": "مدرس",
       "teacherPlaceholder": "انتخاب مدرس…",
       "createSuccess": "کلاس ایجاد شد"
-    },
-    "toolbar": {
-      "sort": "مرتب‌سازی",
-      "columns": "ستون‌ها",
-      "toggleColumns": "نمایش ستون‌ها"
     }
   },
   "login": {
@@ -1557,11 +1513,6 @@
         "view": "مشاهده",
         "viewSubmissions": "مشاهده ارسال‌ها"
       },
-      "toolbar": {
-        "sort": "مرتب‌سازی",
-        "columns": "ستون‌ها",
-        "toggleColumns": "نمایش ستون‌ها"
-      },
       "table": {
         "class": "درس",
         "due": "مهلت",
@@ -1600,11 +1551,6 @@
       "score": "نمره: {{score}} از {{total}}",
       "opensAt": "شروع {{date}}",
       "searchPlaceholder": "جستجوی آزمون‌ها…",
-      "toolbar": {
-        "sort": "مرتب‌سازی",
-        "columns": "ستون‌ها",
-        "toggleColumns": "نمایش ستون‌ها"
-      },
       "table": {
         "title": "آزمون",
         "class": "درس",
@@ -1637,11 +1583,6 @@
       "empty": "هنوز نمره‌ای ثبت نشده است.",
       "noColumns": "هنوز موردی برای این درس ثبت نشده.",
       "searchPlaceholder": "جستجوی نمرات…",
-      "toolbar": {
-        "sort": "مرتب‌سازی",
-        "columns": "ستون‌ها",
-        "toggleColumns": "نمایش ستون‌ها"
-      },
       "table": {
         "class": "درس",
         "item": "مورد",
@@ -1651,24 +1592,7 @@
     "attendance": {
       "title": "حضور و غیاب من",
       "empty": "هنوز سابقه حضوری ثبت نشده.",
-      "summary": {
-        "present": "حاضر",
-        "absent": "غایب",
-        "late": "تأخیر",
-        "excused": "موجه"
-      },
-      "status": {
-        "present": "حاضر",
-        "absent": "غایب",
-        "late": "تأخیر",
-        "excused": "موجه"
-      },
       "searchPlaceholder": "جستجوی حضور و غیاب…",
-      "toolbar": {
-        "sort": "مرتب‌سازی",
-        "columns": "ستون‌ها",
-        "toggleColumns": "نمایش ستون‌ها"
-      },
       "table": {
         "class": "درس",
         "session": "جلسه",
@@ -1768,11 +1692,6 @@
         "disableSuccess": "کاربر غیرفعال شد",
         "enableSuccess": "کاربر فعال شد"
       },
-      "toolbar": {
-        "sort": "مرتب‌سازی",
-        "columns": "ستون‌ها",
-        "toggleColumns": "تغییر ستون‌ها"
-      },
       "disabled": "غیرفعال"
     },
     "settings": {
@@ -1794,6 +1713,45 @@
         "thresholdHint": "دانش‌آموزانی که حداقل این درصد از جلسه را حاضر بوده‌اند، به‌صورت خودکار حاضر ثبت می‌شوند.",
         "save": "ذخیره",
         "updateSuccess": "تنظیمات حضور و غیاب به‌روزرسانی شد"
+      },
+      "plan": {
+        "current": "پلن فعلی",
+        "perpetual": "بدون انقضا",
+        "expiresOn": "تمدید {{date}}",
+        "managedNote": "پلن شما توسط زورا مدیریت می‌شود. برای ارتقا یا تغییر اشتراک با ما تماس بگیرید.",
+        "tiers": {
+          "free": {
+            "name": "رایگان",
+            "tagline": "با امکانات پایه شروع کنید."
+          },
+          "pro": {
+            "name": "حرفه‌ای",
+            "tagline": "برای تیم‌های در حال رشد که هر روز کلاس زنده برگزار می‌کنند."
+          },
+          "enterprise": {
+            "name": "سازمانی",
+            "tagline": "مقیاس، کنترل و پشتیبانی اختصاصی."
+          }
+        },
+        "features": {
+          "free": [
+            "کلاس‌های مجازی پایه",
+            "پیگیری حضور و غیاب",
+            "پشتیبانی انجمنی"
+          ],
+          "pro": [
+            "همه امکانات پلن رایگان",
+            "جلسات زنده نامحدود",
+            "ضبط و فضای ابری",
+            "پشتیبانی اولویت‌دار"
+          ],
+          "enterprise": [
+            "همه امکانات پلن حرفه‌ای",
+            "نقش‌ها و دسترسی‌های پیشرفته",
+            "پشتیبانی اختصاصی و SLA",
+            "یکپارچه‌سازی سفارشی"
+          ]
+        }
       },
       "members": "اعضا",
       "member": "عضو",
@@ -1894,11 +1852,6 @@
           "manual_text": "دستی · متن"
         }
       },
-      "toolbar": {
-        "sort": "مرتب‌سازی",
-        "columns": "ستون‌ها",
-        "toggleColumns": "نمایش ستون‌ها"
-      },
       "tabs": {
         "sessions": "جلسات",
         "students": "دانش‌آموزان",
@@ -1926,12 +1879,6 @@
           "late": "با تأخیر",
           "excused": "موجه",
           "none": "بدون رکورد"
-        },
-        "status": {
-          "present": "حاضر",
-          "absent": "غایب",
-          "late": "با تأخیر",
-          "excused": "موجه"
         }
       }
     },
@@ -2460,12 +2407,6 @@
         "emptyTitle": "هنوز رکوردی نیست",
         "emptyHint": "از یک اتاق زنده به‌صورت خودکار حضور و غیاب بزنید.",
         "emptyHintMember": "هنوز حضور و غیابی ثبت نشده است.",
-        "status": {
-          "present": "حاضر",
-          "absent": "غایب",
-          "late": "با تاخیر",
-          "excused": "موجه"
-        },
         "autoMark": {
           "eyebrow": "ثبت خودکار",
           "hint": "بر اساس حضور در اتاق زنده، حضور و غیاب را خودکار ثبت کنید.",
@@ -2542,11 +2483,6 @@
         "createSuccess": "نقش ایجاد شد",
         "updateSuccess": "نقش به‌روزرسانی شد",
         "deleteSuccess": "نقش حذف شد"
-      },
-      "toolbar": {
-        "sort": "مرتب‌سازی",
-        "columns": "ستون‌ها",
-        "toggleColumns": "تغییر ستون‌ها"
       }
     }
   },
@@ -2665,6 +2601,7 @@
       "started": "ضبط شروع شد",
       "stopped": "ضبط متوقف شد",
       "startError": "شروع ضبط ناموفق بود",
+      "upgradeRequired": "ضبط در پلن فعلی شما در دسترس نیست. برای ضبط اتاق‌های زنده، پلن خود را ارتقا دهید.",
       "stopError": "توقف ضبط ناموفق بود",
       "startDialog": {
         "title": "شروع ضبط؟",

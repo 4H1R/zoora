@@ -48,7 +48,7 @@ export function ResourceFormDialog({
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
         <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col gap-4">
-          <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-1">
+          <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-x-clip overflow-y-auto px-1">
             {children}
           </div>
           <DialogFooter>

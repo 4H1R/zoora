@@ -266,9 +266,9 @@ function FolderPage() {
       <TableFilter
         table={table}
         searchPlaceholder={t("filesPage.searchPlaceholder")}
-        sortLabel={t("org.users.toolbar.sort")}
-        columnsLabel={t("org.users.toolbar.columns")}
-        toggleColumnsLabel={t("org.users.toolbar.toggleColumns")}
+        sortLabel={t("common.toolbar.sort")}
+        columnsLabel={t("common.toolbar.columns")}
+        toggleColumnsLabel={t("common.toolbar.toggleColumns")}
       />
       <Card className="gap-0 overflow-hidden p-0">
         <div className="overflow-x-auto">

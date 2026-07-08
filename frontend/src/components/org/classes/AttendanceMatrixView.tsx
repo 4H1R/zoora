@@ -155,7 +155,7 @@ export function AttendanceMatrixView({
                       <StatusBadge
                         status={status}
                         className={cn("size-7 text-xs", cell?.is_auto_marked && "ring-1 ring-dashed ring-current/40")}
-                        title={`${t(`org.class.attendance.status.${status}`)}${
+                        title={`${t(`common.statuses.attendance.${status}`)}${
                           cell?.is_auto_marked ? ` · ${t("org.class.attendance.autoMarked")}` : ""
                         }`}
                       />

@@ -20,6 +20,7 @@ import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { getEntityColor, getInitials, useFormatDate } from "@/lib/data-table"
 import { cn } from "@/lib/utils"
@@ -85,10 +86,11 @@ function ClassMembersPage() {
   const renderMembers = () => {
     if (isLoading)
       return (
-        <Card className="text-muted-foreground flex items-center justify-center gap-2 p-10 text-sm">
-          <Spinner />
-          {t("common.loading")}
-        </Card>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }, (_, i) => (
+            <MemberCardSkeleton key={i} />
+          ))}
+        </div>
       )
     if (members.length === 0)
       return (
@@ -218,6 +220,21 @@ function MemberCard({ member, joined, onRemove }: MemberCardProps) {
       >
         <UserXIcon />
       </Button>
+    </Card>
+  )
+}
+
+/** Loading placeholder mirroring {@link MemberCard}: avatar tile, name/username
+ * lines and the joined caption. */
+function MemberCardSkeleton() {
+  return (
+    <Card className="flex flex-row items-center gap-3 overflow-hidden p-3">
+      <Skeleton className="size-11 shrink-0 rounded-xl" />
+      <div className="min-w-0 flex-1">
+        <Skeleton className="h-3.5 w-28" />
+        <Skeleton className="mt-1.5 h-3 w-20" />
+        <Skeleton className="mt-1.5 h-2.5 w-24" />
+      </div>
     </Card>
   )
 }

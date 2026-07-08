@@ -157,7 +157,7 @@ function AttendanceRow({ attendance, canEdit, canDelete, onEdit, onDelete }: Att
         )}
       >
         <StatusIcon className="size-3" />
-        {t(`org.session.attendance.status.${status}`)}
+        {t(`common.statuses.attendance.${status}`)}
       </span>
 
       <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover/row:opacity-100">
@@ -254,10 +254,10 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
 
   const statusItems = [
     { value: "all", label: t("org.session.controls.status.all") },
-    { value: "present", label: t("org.session.attendance.status.present") },
-    { value: "absent", label: t("org.session.attendance.status.absent") },
-    { value: "late", label: t("org.session.attendance.status.late") },
-    { value: "excused", label: t("org.session.attendance.status.excused") },
+    { value: "present", label: t("common.statuses.attendance.present") },
+    { value: "absent", label: t("common.statuses.attendance.absent") },
+    { value: "late", label: t("common.statuses.attendance.late") },
+    { value: "excused", label: t("common.statuses.attendance.excused") },
   ]
 
   return (

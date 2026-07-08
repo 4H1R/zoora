@@ -46,10 +46,10 @@ function RouteComponent() {
   if (!allowed) return null
 
   const stats: StatItem[] = [
-    { icon: <CalendarCheckIcon />, label: t("org.attendance.summary.present"), value: summary?.present, loading },
-    { icon: <CalendarXIcon />, label: t("org.attendance.summary.absent"), value: summary?.absent, loading },
-    { icon: <ClockIcon />, label: t("org.attendance.summary.late"), value: summary?.late, loading },
-    { icon: <ShieldCheckIcon />, label: t("org.attendance.summary.excused"), value: summary?.excused, loading },
+    { icon: <CalendarCheckIcon />, label: t("common.statuses.attendance.present"), value: summary?.present, loading },
+    { icon: <CalendarXIcon />, label: t("common.statuses.attendance.absent"), value: summary?.absent, loading },
+    { icon: <ClockIcon />, label: t("common.statuses.attendance.late"), value: summary?.late, loading },
+    { icon: <ShieldCheckIcon />, label: t("common.statuses.attendance.excused"), value: summary?.excused, loading },
   ]
 
   return (
@@ -61,9 +61,9 @@ function RouteComponent() {
       <TableFilter
         table={table}
         searchPlaceholder={t("org.attendance.searchPlaceholder")}
-        sortLabel={t("org.attendance.toolbar.sort")}
-        columnsLabel={t("org.attendance.toolbar.columns")}
-        toggleColumnsLabel={t("org.attendance.toolbar.toggleColumns")}
+        sortLabel={t("common.toolbar.sort")}
+        columnsLabel={t("common.toolbar.columns")}
+        toggleColumnsLabel={t("common.toolbar.toggleColumns")}
       />
 
       <Card className="gap-0 overflow-hidden p-0">

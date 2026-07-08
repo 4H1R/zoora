@@ -1,10 +1,13 @@
 import type { GithubCom4H1RZooraInternalDomainOrganization as Organization } from "@/api/model"
 import type { ColumnDef } from "@tanstack/react-table"
 
-import { EllipsisVerticalIcon, ExternalLinkIcon, PencilIcon, Trash2Icon, UsersIcon } from "lucide-react"
+import { CreditCardIcon, EllipsisVerticalIcon, ExternalLinkIcon, PencilIcon, Trash2Icon, UsersIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import { GithubCom4H1RZooraInternalDomainOrganizationStatus as OrgStatus } from "@/api/model"
+import {
+  GithubCom4H1RZooraInternalDomainOrganizationStatus as OrgStatus,
+  GithubCom4H1RZooraInternalDomainPlan as Plan,
+} from "@/api/model"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -35,13 +38,30 @@ function OrgStatusBadge({ status }: { status?: string }) {
   )
 }
 
+const PLAN_VARIANT: Record<string, "default" | "secondary" | "outline"> = {
+  [Plan.PlanFree]: "outline",
+  [Plan.PlanPro]: "default",
+  [Plan.PlanEnterprise]: "secondary",
+}
+
+function OrgPlanBadge({ plan }: { plan?: string }) {
+  const { t } = useTranslation()
+  if (!plan) return <span className="text-muted-foreground">—</span>
+  return (
+    <Badge variant={PLAN_VARIANT[plan] ?? "outline"} className="text-[11px] capitalize">
+      {t(`admin.orgs.planLabels.${plan}`, { defaultValue: plan })}
+    </Badge>
+  )
+}
+
 interface OrgRowActionsProps {
   organization: Organization
   onEdit: (org: Organization) => void
+  onChangePlan: (org: Organization) => void
   onDelete: (org: Organization) => void
 }
 
-function OrgRowActions({ organization, onEdit, onDelete }: OrgRowActionsProps) {
+function OrgRowActions({ organization, onEdit, onChangePlan, onDelete }: OrgRowActionsProps) {
   const { t } = useTranslation()
 
   // Org dashboards are host-scoped (one subdomain per tenant), so open the org's
@@ -85,6 +105,10 @@ function OrgRowActions({ organization, onEdit, onDelete }: OrgRowActionsProps) {
               <PencilIcon data-icon="inline-start" />
               {t("admin.orgs.actions.edit")}
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onChangePlan(organization)}>
+              <CreditCardIcon data-icon="inline-start" />
+              {t("admin.orgs.actions.changePlan")}
+            </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
@@ -101,10 +125,11 @@ function OrgRowActions({ organization, onEdit, onDelete }: OrgRowActionsProps) {
 
 interface UseOrgColumnsOptions {
   onEdit: (org: Organization) => void
+  onChangePlan: (org: Organization) => void
   onDelete: (org: Organization) => void
 }
 
-export function useOrgColumns({ onEdit, onDelete }: UseOrgColumnsOptions): ColumnDef<Organization>[] {
+export function useOrgColumns({ onEdit, onChangePlan, onDelete }: UseOrgColumnsOptions): ColumnDef<Organization>[] {
   const { t } = useTranslation()
   const formatDate = useFormatDate()
 
@@ -137,6 +162,12 @@ export function useOrgColumns({ onEdit, onDelete }: UseOrgColumnsOptions): Colum
       enableSorting: false,
     },
     {
+      accessorKey: "plan",
+      header: t("admin.orgs.plan.plan"),
+      cell: ({ row }) => <OrgPlanBadge plan={row.original.plan} />,
+      enableSorting: false,
+    },
+    {
       accessorKey: "total_users",
       header: t("admin.orgs.totalUsers"),
       cell: ({ row }) => (
@@ -162,7 +193,9 @@ export function useOrgColumns({ onEdit, onDelete }: UseOrgColumnsOptions): Colum
     {
       id: "actions",
       header: "",
-      cell: ({ row }) => <OrgRowActions organization={row.original} onEdit={onEdit} onDelete={onDelete} />,
+      cell: ({ row }) => (
+        <OrgRowActions organization={row.original} onEdit={onEdit} onChangePlan={onChangePlan} onDelete={onDelete} />
+      ),
       enableSorting: false,
       enableHiding: false,
     },

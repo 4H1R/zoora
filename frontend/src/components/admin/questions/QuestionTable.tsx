@@ -142,9 +142,9 @@ export function QuestionTable({
       <TableFilter
         table={table}
         searchPlaceholder={t("admin.questions.searchPlaceholder")}
-        sortLabel={t("admin.questions.toolbar.sort")}
-        columnsLabel={t("admin.questions.toolbar.columns")}
-        toggleColumnsLabel={t("admin.questions.toolbar.toggleColumns")}
+        sortLabel={t("common.toolbar.sort")}
+        columnsLabel={t("common.toolbar.columns")}
+        toggleColumnsLabel={t("common.toolbar.toggleColumns")}
       />
       <Card className="gap-0 overflow-hidden p-0">
         <div className="overflow-x-auto">

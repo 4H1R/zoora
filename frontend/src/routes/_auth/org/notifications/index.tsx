@@ -13,12 +13,11 @@ import {
   usePostNotificationsIdRead,
   usePostNotificationsMarkAllRead,
 } from "@/api/notifications/notifications"
-import { NotificationList } from "@/components/notifications/notification-list"
+import { NotificationList, NotificationListSkeleton } from "@/components/notifications/notification-list"
 import { SectionPagination } from "@/components/org/session/section-pagination"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
-import { Spinner } from "@/components/ui/spinner"
 import { useCanAny } from "@/lib/access"
 import { orgHead } from "@/lib/org-head"
 
@@ -84,8 +83,8 @@ function NotificationsInboxPage() {
 
       <div className="mt-6">
         {isLoading ? (
-          <div className="flex justify-center py-20">
-            <Spinner />
+          <div className="bg-card ring-foreground/10 divide-border/60 divide-y rounded-2xl p-1.5 ring-1">
+            <NotificationListSkeleton />
           </div>
         ) : items.length === 0 ? (
           <EmptyState icon={BellIcon} title={t("notifications.empty")} description={t("notifications.emptyHint")} />

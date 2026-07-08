@@ -17,7 +17,7 @@ import {
 } from "@/api/admin-organizations/admin-organizations"
 import { GithubCom4H1RZooraInternalDomainOrganizationStatus as OrgStatus } from "@/api/model"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { Field, FieldContent, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
@@ -152,7 +152,9 @@ export function OrgFormDialog({ open, onOpenChange, organization }: OrgFormDialo
             }}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder={t("admin.orgs.form.statusPlaceholder")} />
+              <SelectValue placeholder={t("admin.orgs.form.statusPlaceholder")}>
+                {(v: OrgStatus) => statusOptions.find((o) => o.value === v)?.label}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {statusOptions.map((opt) => (
@@ -192,10 +194,10 @@ function OrgSmsGate({ orgId, organization }: { orgId: string; organization: Orga
 
   return (
     <Field orientation="horizontal">
-      <FieldLabel htmlFor="org-sms-gate">
-        {t("notifications.smsGate.label")}
+      <FieldContent>
+        <FieldLabel htmlFor="org-sms-gate">{t("notifications.smsGate.label")}</FieldLabel>
         <FieldDescription>{t("notifications.smsGate.description")}</FieldDescription>
-      </FieldLabel>
+      </FieldContent>
       <Switch
         id="org-sms-gate"
         checked={enabled}

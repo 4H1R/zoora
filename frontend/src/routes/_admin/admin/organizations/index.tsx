@@ -28,6 +28,7 @@ import { adminSearchSchema, useAdminTable } from "@/lib/data-table"
 
 import { useOrgColumns } from "./-columns"
 import { OrgFormDialog } from "./-org-form-dialog"
+import { PlanFormDialog } from "./-plan-form-dialog"
 
 export const Route = createFileRoute("/_admin/admin/organizations/")({
   head: () => adminHead("admin.orgs.title"),
@@ -45,11 +46,18 @@ function OrganizationsPage() {
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null)
+  const [planOpen, setPlanOpen] = useState(false)
+  const [planOrg, setPlanOrg] = useState<Organization | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Organization | null>(null)
 
   const handleEdit = (org: Organization) => {
     setEditingOrg(org)
     setFormOpen(true)
+  }
+
+  const handleChangePlan = (org: Organization) => {
+    setPlanOrg(org)
+    setPlanOpen(true)
   }
 
   const handleDelete = (org: Organization) => {
@@ -88,7 +96,7 @@ function OrganizationsPage() {
   const stats = (statsData?.status === 200 && statsData.data.data) || undefined
 
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
-  const columns = useOrgColumns({ onEdit: handleEdit, onDelete: handleDelete })
+  const columns = useOrgColumns({ onEdit: handleEdit, onChangePlan: handleChangePlan, onDelete: handleDelete })
 
   const table = useAdminTable({
     data: organizations,
@@ -142,9 +150,9 @@ function OrganizationsPage() {
       <TableFilter
         table={table}
         searchPlaceholder={t("admin.orgs.searchPlaceholder")}
-        sortLabel={t("admin.orgs.toolbar.sort")}
-        columnsLabel={t("admin.orgs.toolbar.columns")}
-        toggleColumnsLabel={t("admin.orgs.toolbar.toggleColumns")}
+        sortLabel={t("common.toolbar.sort")}
+        columnsLabel={t("common.toolbar.columns")}
+        toggleColumnsLabel={t("common.toolbar.toggleColumns")}
       />
       <Card className="gap-0 overflow-hidden p-0">
         <div className="overflow-x-auto">
@@ -160,6 +168,8 @@ function OrganizationsPage() {
       </Card>
 
       <OrgFormDialog open={formOpen} onOpenChange={setFormOpen} organization={editingOrg} />
+
+      <PlanFormDialog open={planOpen} onOpenChange={setPlanOpen} organization={planOrg} />
 
       <DeleteConfirmDialog
         open={!!deleteTarget}

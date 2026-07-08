@@ -150,7 +150,9 @@ function CorrectionsPage() {
                     ? t("admin.corrections.filter.quizPlaceholder")
                     : t("admin.corrections.filter.selectClassFirst")
                 }
-              />
+              >
+                {(v: string) => quizzes.find((q) => q.id === v)?.title ?? v}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {quizzes.map((q) => (
@@ -167,7 +169,11 @@ function CorrectionsPage() {
           </label>
           <Select value={status ?? "all"} onValueChange={handleStatusChange}>
             <SelectTrigger className="w-full">
-              <SelectValue placeholder={t("admin.corrections.filter.allStatuses")} />
+              <SelectValue placeholder={t("admin.corrections.filter.allStatuses")}>
+                {(v: string) =>
+                  v === "all" ? t("admin.corrections.filter.allStatuses") : t(`admin.corrections.statuses.${v}`)
+                }
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("admin.corrections.filter.allStatuses")}</SelectItem>

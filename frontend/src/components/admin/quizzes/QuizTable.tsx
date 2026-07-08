@@ -34,7 +34,7 @@ function useQuizColumns({
   return [
     {
       accessorKey: "title",
-      header: t("admin.quizzes.title_col"),
+      header: t("admin.quizzes.titleColumn"),
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <div
@@ -187,9 +187,9 @@ export function QuizTable({
       <TableFilter
         table={table}
         searchPlaceholder={t("admin.quizzes.searchPlaceholder")}
-        sortLabel={t("admin.quizzes.toolbar.sort")}
-        columnsLabel={t("admin.quizzes.toolbar.columns")}
-        toggleColumnsLabel={t("admin.quizzes.toolbar.toggleColumns")}
+        sortLabel={t("common.toolbar.sort")}
+        columnsLabel={t("common.toolbar.columns")}
+        toggleColumnsLabel={t("common.toolbar.toggleColumns")}
       />
       <Card className="gap-0 overflow-hidden p-0">
         <div className="overflow-x-auto">

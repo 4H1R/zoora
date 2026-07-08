@@ -77,12 +77,12 @@ export function AttendanceEditDialog({
           <FieldLabel>{t("org.session.attendance.form.status")}</FieldLabel>
           <Select value={status} onValueChange={(v) => setStatus(v as Status)}>
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue>{(v: Status) => t(`common.statuses.attendance.${v}`)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {STATUSES.map((s) => (
                 <SelectItem key={s} value={s}>
-                  {t(`org.session.attendance.status.${s}`)}
+                  {t(`common.statuses.attendance.${s}`)}
                 </SelectItem>
               ))}
             </SelectContent>

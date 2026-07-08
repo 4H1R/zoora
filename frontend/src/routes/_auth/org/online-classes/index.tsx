@@ -154,8 +154,8 @@ function RouteComponent() {
           {isTable && (
             <ColumnsToggle
               table={table}
-              columnsLabel={t("onlineClassesPage.toolbar.columns")}
-              toggleColumnsLabel={t("onlineClassesPage.toolbar.toggleColumns")}
+              columnsLabel={t("common.toolbar.columns")}
+              toggleColumnsLabel={t("common.toolbar.toggleColumns")}
             />
           )}
           <ViewModeToggle value={viewMode} onChange={setViewMode} />

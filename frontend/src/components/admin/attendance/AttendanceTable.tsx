@@ -84,7 +84,7 @@ function useAttendanceColumns(onEdit: (a: Attendance) => void): ColumnDef<Attend
         const status = (row.original.status ?? "absent") as AttendanceStatus
         return (
           <Badge variant={STATUS_BADGE_VARIANT[status] ?? "outline"}>
-            {t(`admin.attendance.statuses.${status}`, { defaultValue: status })}
+            {t(`common.statuses.attendance.${status}`, { defaultValue: status })}
           </Badge>
         )
       },
@@ -159,9 +159,9 @@ export function AttendanceTable({ items, total, isLoading, sorting, onEdit }: At
       <TableFilter
         table={table}
         searchPlaceholder={t("admin.attendance.searchPlaceholder")}
-        sortLabel={t("admin.attendance.toolbar.sort")}
-        columnsLabel={t("admin.attendance.toolbar.columns")}
-        toggleColumnsLabel={t("admin.attendance.toolbar.toggleColumns")}
+        sortLabel={t("common.toolbar.sort")}
+        columnsLabel={t("common.toolbar.columns")}
+        toggleColumnsLabel={t("common.toolbar.toggleColumns")}
       />
       <Card className="gap-0 overflow-hidden p-0">
         <div className="overflow-x-auto">

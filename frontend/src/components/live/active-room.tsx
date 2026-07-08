@@ -288,7 +288,13 @@ function RoomShell({
             toast.success(t("liveRoom.recording.started"))
             invalidateRecordings()
           },
-          onError: () => toast.error(t("liveRoom.recording.startError")),
+          onError: (error) => {
+            if (error.response?.data?.error?.code === "FEATURE_NOT_IN_PLAN") {
+              toast.error(t("liveRoom.recording.upgradeRequired"))
+              return
+            }
+            toast.error(t("liveRoom.recording.startError"))
+          },
         }
       )
     }

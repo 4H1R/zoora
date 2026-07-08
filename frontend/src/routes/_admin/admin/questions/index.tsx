@@ -119,7 +119,9 @@ function QuestionsPage() {
           </label>
           <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v ?? "all")}>
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue>
+                {(v: string) => (v === "all" ? t("admin.questions.filter.allTypes") : t(`admin.questions.types.${v}`))}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("admin.questions.filter.allTypes")}</SelectItem>

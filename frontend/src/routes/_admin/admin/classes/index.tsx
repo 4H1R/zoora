@@ -112,9 +112,9 @@ function ClassesPage() {
       <TableFilter
         table={table}
         searchPlaceholder={t("admin.classes.searchPlaceholder")}
-        sortLabel={t("admin.classes.toolbar.sort")}
-        columnsLabel={t("admin.classes.toolbar.columns")}
-        toggleColumnsLabel={t("admin.classes.toolbar.toggleColumns")}
+        sortLabel={t("common.toolbar.sort")}
+        columnsLabel={t("common.toolbar.columns")}
+        toggleColumnsLabel={t("common.toolbar.toggleColumns")}
       />
       <Card className="gap-0 overflow-hidden p-0">
         <div className="overflow-x-auto">

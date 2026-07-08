@@ -82,9 +82,9 @@ export function ManagerPracticesView() {
       <TableFilter
         table={table}
         searchPlaceholder={t("org.practices.searchPlaceholder")}
-        sortLabel={t("org.practices.toolbar.sort")}
-        columnsLabel={t("org.practices.toolbar.columns")}
-        toggleColumnsLabel={t("org.practices.toolbar.toggleColumns")}
+        sortLabel={t("common.toolbar.sort")}
+        columnsLabel={t("common.toolbar.columns")}
+        toggleColumnsLabel={t("common.toolbar.toggleColumns")}
       >
         <Button
           size="sm"

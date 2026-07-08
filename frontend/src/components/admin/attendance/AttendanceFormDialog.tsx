@@ -92,12 +92,14 @@ export function AttendanceFormDialog({ open, onOpenChange, attendance }: Attenda
             }}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder={t("admin.attendance.form.statusPlaceholder")} />
+              <SelectValue placeholder={t("admin.attendance.form.statusPlaceholder")}>
+                {(v: AttendanceStatus) => t(`common.statuses.attendance.${v}`)}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {ATTENDANCE_STATUSES.map((s) => (
                 <SelectItem key={s} value={s}>
-                  {t(`admin.attendance.statuses.${s}`)}
+                  {t(`common.statuses.attendance.${s}`)}
                 </SelectItem>
               ))}
             </SelectContent>

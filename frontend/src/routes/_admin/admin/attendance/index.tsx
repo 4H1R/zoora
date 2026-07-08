@@ -105,12 +105,14 @@ function AttendancePage() {
             onValueChange={(val) => setStatus((val as AttendanceStatus) || undefined)}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder={t("admin.attendance.filter.allStatuses")} />
+              <SelectValue placeholder={t("admin.attendance.filter.allStatuses")}>
+                {(v: AttendanceStatus) => t(`common.statuses.attendance.${v}`)}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {ATTENDANCE_STATUSES.map((s) => (
                 <SelectItem key={s} value={s}>
-                  {t(`admin.attendance.statuses.${s}`)}
+                  {t(`common.statuses.attendance.${s}`)}
                 </SelectItem>
               ))}
             </SelectContent>

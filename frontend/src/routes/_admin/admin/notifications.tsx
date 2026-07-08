@@ -15,14 +15,13 @@ import {
   usePostNotificationsMarkAllRead,
 } from "@/api/notifications/notifications"
 import { NotificationComposer } from "@/components/notifications/notification-composer"
-import { NotificationList } from "@/components/notifications/notification-list"
+import { NotificationList, NotificationListSkeleton } from "@/components/notifications/notification-list"
 import { SentHistory } from "@/components/notifications/sent-history"
 import { SectionPagination } from "@/components/org/session/section-pagination"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
-import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const TABS = ["compose", "history", "inbox"] as const
@@ -113,8 +112,8 @@ function AdminInbox() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-20">
-          <Spinner />
+        <div className="bg-card ring-foreground/10 rounded-2xl p-1.5 ring-1">
+          <NotificationListSkeleton />
         </div>
       ) : items.length === 0 ? (
         <EmptyState icon={BellIcon} title={t("notifications.empty")} description={t("notifications.emptyHint")} />

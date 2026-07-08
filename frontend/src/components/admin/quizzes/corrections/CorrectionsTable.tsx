@@ -138,9 +138,9 @@ export function CorrectionsTable({
     <>
       <TableFilter
         table={table}
-        sortLabel={t("admin.quizzes.toolbar.sort")}
-        columnsLabel={t("admin.quizzes.toolbar.columns")}
-        toggleColumnsLabel={t("admin.quizzes.toolbar.toggleColumns")}
+        sortLabel={t("common.toolbar.sort")}
+        columnsLabel={t("common.toolbar.columns")}
+        toggleColumnsLabel={t("common.toolbar.toggleColumns")}
       />
       <Card className="gap-0 overflow-hidden p-0">
         <div className="overflow-x-auto">

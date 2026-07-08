@@ -277,6 +277,19 @@
     "pagination": {
       "previous": "Previous page",
       "next": "Next page"
+    },
+    "toolbar": {
+      "sort": "Sort",
+      "columns": "Columns",
+      "toggleColumns": "Toggle columns"
+    },
+    "statuses": {
+      "attendance": {
+        "present": "Present",
+        "absent": "Absent",
+        "late": "Late",
+        "excused": "Excused"
+      }
     }
   },
   "nav": {
@@ -419,11 +432,6 @@
         "disableSuccess": "User disabled",
         "enableSuccess": "User enabled"
       },
-      "toolbar": {
-        "sort": "Sort",
-        "columns": "Columns",
-        "toggleColumns": "Toggle columns"
-      },
       "organization": "Organization",
       "disabled": "Disabled"
     },
@@ -481,12 +489,6 @@
         "allStatuses": "All statuses",
         "clear": "Clear filters"
       },
-      "statuses": {
-        "present": "Present",
-        "absent": "Absent",
-        "late": "Late",
-        "excused": "Excused"
-      },
       "sources": {
         "auto": "Auto",
         "manual": "Manual"
@@ -504,11 +506,6 @@
         "remarksPlaceholder": "Optional remarks",
         "updateSuccess": "Attendance updated",
         "deleteSuccess": "Attendance deleted"
-      },
-      "toolbar": {
-        "sort": "Sort",
-        "columns": "Columns",
-        "toggleColumns": "Toggle columns"
       }
     },
     "classes": {
@@ -550,11 +547,6 @@
         "createSuccess": "Class created",
         "updateSuccess": "Class updated",
         "deleteSuccess": "Class deleted"
-      },
-      "toolbar": {
-        "sort": "Sort",
-        "columns": "Columns",
-        "toggleColumns": "Toggle columns"
       }
     },
     "classMembers": {
@@ -623,11 +615,6 @@
         "name": "Room name",
         "namePlaceholder": "Session title",
         "createSuccess": "Live room created"
-      },
-      "toolbar": {
-        "sort": "Sort",
-        "columns": "Columns",
-        "toggleColumns": "Toggle columns"
       }
     },
     "sessions": {
@@ -697,11 +684,6 @@
         "createSuccess": "Session created",
         "updateSuccess": "Session updated",
         "deleteSuccess": "Session deleted"
-      },
-      "toolbar": {
-        "sort": "Sort",
-        "columns": "Columns",
-        "toggleColumns": "Toggle columns"
       }
     },
     "offlines": {
@@ -709,7 +691,6 @@
       "subtitle": "Manage recorded offline rooms across all classes.",
       "searchPlaceholder": "Search offline rooms…",
       "newRoom": "New offline room",
-      "title_column": "Title",
       "class": "Class",
       "session": "Session",
       "creator": "Creator",
@@ -750,18 +731,13 @@
         "updateSuccess": "Offline room updated",
         "deleteSuccess": "Offline room deleted"
       },
-      "toolbar": {
-        "sort": "Sort",
-        "columns": "Columns",
-        "toggleColumns": "Toggle columns"
-      }
+      "titleColumn": "Title"
     },
     "practices": {
       "title": "Practice Rooms",
       "subtitle": "Manage practice rooms across all classes.",
       "searchPlaceholder": "Search practices…",
       "newPractice": "New practice",
-      "title_col": "Title",
       "class": "Class",
       "session": "Session",
       "teacher": "Owner",
@@ -806,18 +782,13 @@
         "updateSuccess": "Practice updated",
         "deleteSuccess": "Practice deleted"
       },
-      "toolbar": {
-        "sort": "Sort",
-        "columns": "Columns",
-        "toggleColumns": "Toggle columns"
-      }
+      "titleColumn": "Title"
     },
     "quizzes": {
       "title": "Quizzes",
       "subtitle": "Manage quizzes for this class.",
       "searchPlaceholder": "Search quizzes…",
       "newQuiz": "New quiz",
-      "title_col": "Title",
       "class": "Class",
       "session": "Session",
       "teacher": "Owner",
@@ -914,11 +885,7 @@
           }
         }
       },
-      "toolbar": {
-        "sort": "Sort",
-        "columns": "Columns",
-        "toggleColumns": "Toggle columns"
-      }
+      "titleColumn": "Title"
     },
     "corrections": {
       "title": "Quiz Corrections",
@@ -1142,11 +1109,6 @@
         "synonymsPlaceholder": "Synonyms (comma-separated)",
         "modelAnswer": "Model answer",
         "modelAnswerPlaceholder": "Reference answer used to compute the similarity signal…"
-      },
-      "toolbar": {
-        "sort": "Sort",
-        "columns": "Columns",
-        "toggleColumns": "Toggle columns"
       }
     },
     "roles": {
@@ -1186,15 +1148,12 @@
         "deleteSuccess": "Role deleted"
       },
       "toolbar": {
-        "sort": "Sort",
         "sortBy": "Sort by",
         "sortOptions": {
           "name": "Name",
           "created_at": "Created",
           "updated_at": "Updated"
-        },
-        "columns": "Columns",
-        "toggleColumns": "Toggle columns"
+        }
       }
     },
     "permissions": {
@@ -1206,12 +1165,7 @@
       "createdAt": "Created",
       "updatedAt": "Updated",
       "noResults": "No permissions found",
-      "noResultsHint": "Try adjusting your search",
-      "toolbar": {
-        "sort": "Sort",
-        "columns": "Columns",
-        "toggleColumns": "Toggle columns"
-      }
+      "noResultsHint": "Try adjusting your search"
     },
     "organizations": "Organizations",
     "projects": "Projects",
@@ -1263,7 +1217,8 @@
         "edit": "Edit organization",
         "delete": "Delete",
         "restore": "Restore",
-        "goToOrg": "Go to organization"
+        "goToOrg": "Go to organization",
+        "changePlan": "Change plan"
       },
       "form": {
         "createTitle": "New organization",
@@ -1314,15 +1269,26 @@
         },
         "moreFilters": "More filters",
         "filters": "Filters",
-        "sort": "Sort",
         "sortBy": "Sort by",
         "sortOptions": {
           "name": "Name",
           "created_at": "Created",
           "updated_at": "Updated"
-        },
-        "columns": "Columns",
-        "toggleColumns": "Toggle columns"
+        }
+      },
+      "planLabels": {
+        "free": "Free",
+        "pro": "Pro",
+        "enterprise": "Enterprise"
+      },
+      "plan": {
+        "title": "Change plan",
+        "description": "Update the subscription plan and expiry for {{name}}.",
+        "plan": "Plan",
+        "planPlaceholder": "Select a plan",
+        "expiresAt": "Expiry date",
+        "expiresAtHint": "Leave empty for a perpetual plan. An expired plan is treated as Free.",
+        "updateSuccess": "Plan updated"
       }
     },
     "roleAdmin": "Platform admin",
@@ -1485,11 +1451,6 @@
         "view": "View",
         "viewSubmissions": "View submissions"
       },
-      "toolbar": {
-        "sort": "Sort",
-        "columns": "Columns",
-        "toggleColumns": "Toggle columns"
-      },
       "table": {
         "class": "Class",
         "due": "Due",
@@ -1528,11 +1489,6 @@
       "score": "Score: {{score}} / {{total}}",
       "opensAt": "Opens {{date}}",
       "searchPlaceholder": "Search exams…",
-      "toolbar": {
-        "sort": "Sort",
-        "columns": "Columns",
-        "toggleColumns": "Toggle columns"
-      },
       "table": {
         "title": "Exam",
         "class": "Class",
@@ -1565,11 +1521,6 @@
       "empty": "No grades recorded yet.",
       "noColumns": "No graded items in this class yet.",
       "searchPlaceholder": "Search grades…",
-      "toolbar": {
-        "sort": "Sort",
-        "columns": "Columns",
-        "toggleColumns": "Toggle columns"
-      },
       "table": {
         "class": "Class",
         "item": "Item",
@@ -1579,24 +1530,7 @@
     "attendance": {
       "title": "My Attendance",
       "empty": "No attendance records yet.",
-      "summary": {
-        "present": "Present",
-        "absent": "Absent",
-        "late": "Late",
-        "excused": "Excused"
-      },
-      "status": {
-        "present": "Present",
-        "absent": "Absent",
-        "late": "Late",
-        "excused": "Excused"
-      },
       "searchPlaceholder": "Search attendance…",
-      "toolbar": {
-        "sort": "Sort",
-        "columns": "Columns",
-        "toggleColumns": "Toggle columns"
-      },
       "table": {
         "class": "Class",
         "session": "Session",
@@ -1696,11 +1630,6 @@
         "disableSuccess": "User disabled",
         "enableSuccess": "User enabled"
       },
-      "toolbar": {
-        "sort": "Sort",
-        "columns": "Columns",
-        "toggleColumns": "Toggle columns"
-      },
       "disabled": "Disabled"
     },
     "settings": {
@@ -1722,6 +1651,45 @@
         "thresholdHint": "Students present for at least this percentage of the session are marked present automatically.",
         "save": "Save",
         "updateSuccess": "Attendance settings updated"
+      },
+      "plan": {
+        "current": "Current plan",
+        "perpetual": "No expiry",
+        "expiresOn": "Renews {{date}}",
+        "managedNote": "Your plan is managed by Zoora. Contact us to upgrade or change your subscription.",
+        "tiers": {
+          "free": {
+            "name": "Free",
+            "tagline": "Get started with the essentials."
+          },
+          "pro": {
+            "name": "Pro",
+            "tagline": "For growing teams running live classes every day."
+          },
+          "enterprise": {
+            "name": "Enterprise",
+            "tagline": "Scale, control, and dedicated support."
+          }
+        },
+        "features": {
+          "free": [
+            "Core virtual classrooms",
+            "Attendance tracking",
+            "Community support"
+          ],
+          "pro": [
+            "Everything in Free",
+            "Unlimited live sessions",
+            "Recordings & cloud storage",
+            "Priority support"
+          ],
+          "enterprise": [
+            "Everything in Pro",
+            "Advanced roles & permissions",
+            "Dedicated support & SLA",
+            "Custom integrations"
+          ]
+        }
       },
       "members": "Members",
       "member": "member",
@@ -1822,11 +1790,6 @@
           "manual_text": "Manual · Text"
         }
       },
-      "toolbar": {
-        "sort": "Sort",
-        "columns": "Columns",
-        "toggleColumns": "Toggle columns"
-      },
       "tabs": {
         "sessions": "Sessions",
         "students": "Students",
@@ -1854,12 +1817,6 @@
           "late": "Late",
           "excused": "Excused",
           "none": "No record"
-        },
-        "status": {
-          "present": "Present",
-          "absent": "Absent",
-          "late": "Late",
-          "excused": "Excused"
         }
       }
     },
@@ -2388,12 +2345,6 @@
         "emptyTitle": "No attendance yet",
         "emptyHint": "Auto-mark attendance from a live room.",
         "emptyHintMember": "No attendance has been recorded yet.",
-        "status": {
-          "present": "Present",
-          "absent": "Absent",
-          "late": "Late",
-          "excused": "Excused"
-        },
         "autoMark": {
           "eyebrow": "Auto-mark",
           "hint": "Mark attendance automatically from who attended a live room.",
@@ -2470,11 +2421,6 @@
         "createSuccess": "Role created",
         "updateSuccess": "Role updated",
         "deleteSuccess": "Role deleted"
-      },
-      "toolbar": {
-        "sort": "Sort",
-        "columns": "Columns",
-        "toggleColumns": "Toggle columns"
       }
     }
   },
@@ -2506,11 +2452,6 @@
       "live": "LIVE",
       "notStarted": "Not started",
       "finished": "Finished"
-    },
-    "toolbar": {
-      "sort": "Sort",
-      "columns": "Columns",
-      "toggleColumns": "Toggle columns"
     }
   },
   "classesPage": {
@@ -2543,11 +2484,6 @@
       "teacher": "Teacher",
       "teacherPlaceholder": "Select teacher…",
       "createSuccess": "Class created"
-    },
-    "toolbar": {
-      "sort": "Sort",
-      "columns": "Columns",
-      "toggleColumns": "Toggle columns"
     }
   },
   "roles": {
@@ -2665,6 +2601,7 @@
       "started": "Recording started",
       "stopped": "Recording stopped",
       "startError": "Couldn't start recording",
+      "upgradeRequired": "Recording isn't available on your current plan. Upgrade to record live rooms.",
       "stopError": "Couldn't stop recording",
       "startDialog": {
         "title": "Start recording?",

@@ -410,9 +410,9 @@ function RouteComponent() {
           <TableFilter
             table={sessionsTable}
             searchPlaceholder={t("org.class.sessions.searchPlaceholder")}
-            sortLabel={t("org.class.toolbar.sort")}
-            columnsLabel={t("org.class.toolbar.columns")}
-            toggleColumnsLabel={t("org.class.toolbar.toggleColumns")}
+            sortLabel={t("common.toolbar.sort")}
+            columnsLabel={t("common.toolbar.columns")}
+            toggleColumnsLabel={t("common.toolbar.toggleColumns")}
             showColumnsToggle={sessionsIsTable}
           />
 
@@ -479,9 +479,9 @@ function RouteComponent() {
             <TableFilter
               table={studentsTable}
               searchPlaceholder={t("org.class.students.searchPlaceholder")}
-              sortLabel={t("org.class.toolbar.sort")}
-              columnsLabel={t("org.class.toolbar.columns")}
-              toggleColumnsLabel={t("org.class.toolbar.toggleColumns")}
+              sortLabel={t("common.toolbar.sort")}
+              columnsLabel={t("common.toolbar.columns")}
+              toggleColumnsLabel={t("common.toolbar.toggleColumns")}
               showColumnsToggle
             />
 

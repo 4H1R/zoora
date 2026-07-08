@@ -173,7 +173,7 @@ export function AttendanceRoster({ classId, classSessionId, members, records, ca
                     key={seg.value}
                     type="button"
                     disabled={!canMark}
-                    title={t(`org.session.attendance.status.${seg.value}`)}
+                    title={t(`common.statuses.attendance.${seg.value}`)}
                     onClick={() => setOne(userId, seg.value)}
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition-colors",
@@ -182,7 +182,7 @@ export function AttendanceRoster({ classId, classSessionId, members, records, ca
                     )}
                   >
                     <Icon className="size-3.5" />
-                    <span className="hidden sm:inline">{t(`org.session.attendance.status.${seg.value}`)}</span>
+                    <span className="hidden sm:inline">{t(`common.statuses.attendance.${seg.value}`)}</span>
                   </button>
                 )
               })}
