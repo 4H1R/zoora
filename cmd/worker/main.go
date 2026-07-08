@@ -9,6 +9,7 @@ import (
 	"github.com/hibiken/asynq"
 
 	"github.com/4H1R/zoora/internal/attendance"
+	"github.com/4H1R/zoora/internal/billing"
 	"github.com/4H1R/zoora/internal/chat"
 	"github.com/4H1R/zoora/internal/classes"
 	"github.com/4H1R/zoora/internal/config"
@@ -18,6 +19,7 @@ import (
 	"github.com/4H1R/zoora/internal/media"
 	"github.com/4H1R/zoora/internal/notifications"
 	"github.com/4H1R/zoora/internal/offlines"
+	"github.com/4H1R/zoora/internal/organizations"
 	"github.com/4H1R/zoora/internal/orgsettings"
 	"github.com/4H1R/zoora/internal/platform/authz"
 	"github.com/4H1R/zoora/internal/platform/bots"
@@ -25,6 +27,7 @@ import (
 	"github.com/4H1R/zoora/internal/platform/database"
 	lk "github.com/4H1R/zoora/internal/platform/livekit"
 	"github.com/4H1R/zoora/internal/platform/logger"
+	"github.com/4H1R/zoora/internal/platform/payment"
 	"github.com/4H1R/zoora/internal/platform/push"
 	"github.com/4H1R/zoora/internal/platform/queue"
 	"github.com/4H1R/zoora/internal/platform/sms"
@@ -184,6 +187,37 @@ func main() {
 	retentionSweeper := livesessions.NewRetentionSweeper(livesessions.NewRetentionRepository(db), storageClient, log)
 	queueServer.HandleFunc(domain.TypeRecordingRetentionSweep, livesessions.NewRetentionSweepHandler(retentionSweeper))
 
+	// --- billing (worker: PDF generation + reminder/expire sweeps only; no
+	// gateway calls, so the payment registry is empty). ---
+	orgRepo := organizations.NewRepository(db)
+	billingRepo := billing.NewRepository(db)
+	billingIssuer := billing.IssuerConfig{
+		Name:       cfg.InvoiceIssuerName,
+		EconomicID: cfg.InvoiceIssuerEconomicID,
+		Address:    cfg.InvoiceIssuerAddress,
+		Phone:      cfg.InvoiceIssuerPhone,
+	}
+	billingPDF := billing.NewPDFRenderer(storageClient, orgRepo, billingIssuer, "")
+	billingSvc := billing.NewService(
+		billingRepo,
+		orgRepo,
+		orgRepo,
+		billing.NewEntitlementsCacheBuster(redisClient),
+		payment.NewRegistry(),
+		storageClient,
+		billing.NewQueueEnqueuer(queueClient),
+		notificationService,
+		billingPDF,
+		billing.BillingConfig{
+			AppBaseURL: cfg.AppBaseURL,
+			Issuer:     billingIssuer,
+		},
+		log,
+	)
+	queueServer.HandleFunc(domain.TypeInvoiceGeneratePDF, billing.NewGeneratePDFHandler(billingSvc))
+	queueServer.HandleFunc(domain.TypeBillingReminderSweep, billing.NewReminderSweepHandler(billingSvc))
+	queueServer.HandleFunc(domain.TypeBillingExpireSweep, billing.NewExpireSweepHandler(billingSvc))
+
 	// Periodic safety net for missed LiveKit webhooks: re-scan for active rooms
 	// whose host went stale and close the ones LiveKit confirms are host-less.
 	// The event-driven webhook path is primary; this catches dropped events.
@@ -199,6 +233,14 @@ func main() {
 	}
 	if _, err := scheduler.Register("@every 24h", asynq.NewTask(domain.TypeRecordingRetentionSweep, nil)); err != nil {
 		log.Error("failed to register recording-retention schedule", "error", err)
+		os.Exit(1)
+	}
+	if _, err := scheduler.Register("@every 24h", asynq.NewTask(domain.TypeBillingReminderSweep, nil)); err != nil {
+		log.Error("failed to register billing reminder schedule", "error", err)
+		os.Exit(1)
+	}
+	if _, err := scheduler.Register("@every 1h", asynq.NewTask(domain.TypeBillingExpireSweep, nil)); err != nil {
+		log.Error("failed to register billing expire schedule", "error", err)
 		os.Exit(1)
 	}
 	go func() {

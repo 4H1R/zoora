@@ -218,6 +218,17 @@ type NotificationRepository interface {
 	DeliveryReport(ctx context.Context, notificationID uuid.UUID) ([]NotificationChannelReport, error)
 }
 
+// SystemNotificationInput creates a notification with NO human sender (SenderID
+// nil) — used by schedulers/reminders. Bypasses caller auth + rate limiting.
+type SystemNotificationInput struct {
+	OrganizationID *uuid.UUID
+	Category       NotificationCategory
+	Title          string
+	Body           string
+	ActionURL      *string
+	Audience       NotificationAudience
+}
+
 type NotificationService interface {
 	Send(ctx context.Context, dto SendNotificationDTO) (*Notification, error)
 	ListInbox(ctx context.Context, p ListParams) ([]NotificationInboxItem, int64, error)
@@ -233,4 +244,5 @@ type NotificationService interface {
 	DeliverBot(ctx context.Context, deliveryID uuid.UUID) error
 	DeliverSMS(ctx context.Context, notificationID uuid.UUID, deliveryIDs []uuid.UUID) error
 	DeliverPush(ctx context.Context, notificationID uuid.UUID, deliveryIDs []uuid.UUID) error
+	SendSystem(ctx context.Context, in SystemNotificationInput) error
 }

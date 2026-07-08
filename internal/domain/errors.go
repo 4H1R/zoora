@@ -29,6 +29,16 @@ var (
 	// Plan / entitlement gates (mapped to HTTP 402 Payment Required).
 	ErrFeatureNotInPlan = errors.New("feature not available on current plan")
 	ErrPlanLimitReached = errors.New("plan limit reached")
+
+	// Billing.
+	ErrInvalidPlan         = errors.New("invalid plan")
+	ErrInvalidInterval     = errors.New("invalid billing interval")
+	ErrDowngradeNotAllowed = errors.New("cannot downgrade while a higher plan is active")
+	ErrPriceNotFound       = errors.New("no active price for that plan and interval")
+	ErrInvoiceNotPayable   = errors.New("invoice is not in a payable state")
+	ErrAmountMismatch      = errors.New("payment amount does not match invoice")
+	ErrInvoiceNotDraft     = errors.New("invoice is not a draft")
+	ErrGatewayNotFound     = errors.New("payment gateway not supported")
 )
 
 // PlanError carries machine-readable context for a plan/entitlement gate so the
@@ -124,6 +134,18 @@ func MapError(err error) (int, string) {
 		return http.StatusPaymentRequired, "FEATURE_NOT_IN_PLAN"
 	case errors.Is(err, ErrPlanLimitReached):
 		return http.StatusPaymentRequired, "PLAN_LIMIT_REACHED"
+	case errors.Is(err, ErrInvalidPlan), errors.Is(err, ErrInvalidInterval):
+		return http.StatusBadRequest, "INVALID_BILLING_INPUT"
+	case errors.Is(err, ErrDowngradeNotAllowed):
+		return http.StatusConflict, "DOWNGRADE_NOT_ALLOWED"
+	case errors.Is(err, ErrPriceNotFound):
+		return http.StatusNotFound, "PRICE_NOT_FOUND"
+	case errors.Is(err, ErrInvoiceNotPayable), errors.Is(err, ErrInvoiceNotDraft):
+		return http.StatusConflict, "INVOICE_STATE_INVALID"
+	case errors.Is(err, ErrAmountMismatch):
+		return http.StatusBadRequest, "AMOUNT_MISMATCH"
+	case errors.Is(err, ErrGatewayNotFound):
+		return http.StatusBadRequest, "GATEWAY_NOT_SUPPORTED"
 	case errors.Is(err, ErrRateLimited):
 		return http.StatusTooManyRequests, "RATE_LIMITED"
 	case errors.Is(err, ErrValidation):

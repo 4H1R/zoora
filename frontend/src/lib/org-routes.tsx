@@ -5,6 +5,7 @@ import {
   CalendarCheckIcon,
   CalendarIcon,
   ClipboardListIcon,
+  CreditCardIcon,
   FileIcon,
   GraduationCapIcon,
   LayoutDashboardIcon,
@@ -30,6 +31,7 @@ export type OrgRouteKey =
   | "users"
   | "roles"
   | "settings"
+  | "billing"
   | "files"
   | "notifications"
 
@@ -112,6 +114,12 @@ export const ORG_ROUTES: Record<OrgRouteKey, OrgRouteSpec> = {
     icon: <SettingsIcon />,
     segment: "settings",
     perms: ["organizations:update"],
+  },
+  billing: {
+    i18nKey: "billing.title",
+    icon: <CreditCardIcon />,
+    segment: "billing",
+    perms: ["billing:manage"],
   },
   files: {
     i18nKey: "org.nav.files",

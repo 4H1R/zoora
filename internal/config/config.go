@@ -60,6 +60,17 @@ type Config struct {
 	KavenegarSender      string `env:"KAVENEGAR_SENDER"`
 	KavenegarOTPTemplate string `env:"KAVENEGAR_OTP_TEMPLATE"`
 	FCMCredentialsFile   string `env:"FCM_CREDENTIALS_FILE"`
+
+	// --- billing / zarinpal ---
+	ZarinpalMerchantID      string `env:"ZARINPAL_MERCHANT_ID"`
+	ZarinpalSandbox         bool   `env:"ZARINPAL_SANDBOX" envDefault:"true"`
+	ZarinpalCallbackBaseURL string `env:"ZARINPAL_CALLBACK_BASE_URL"`
+	// --- invoice issuer (seller block on the PDF) ---
+	InvoiceIssuerName       string `env:"INVOICE_ISSUER_NAME" envDefault:"Zoora"`
+	InvoiceIssuerEconomicID string `env:"INVOICE_ISSUER_ECONOMIC_ID"`
+	InvoiceIssuerAddress    string `env:"INVOICE_ISSUER_ADDRESS"`
+	InvoiceIssuerPhone      string `env:"INVOICE_ISSUER_PHONE"`
+	AppBaseURL              string `env:"APP_BASE_URL" envDefault:"http://localhost:5173"`
 }
 
 func Load() (*Config, error) {

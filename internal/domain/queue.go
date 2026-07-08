@@ -12,6 +12,10 @@ const (
 	TypeNotificationDeliverBot   = "notification:deliver-bot"
 	TypeNotificationDeliverSMS   = "notification:deliver-sms"
 	TypeNotificationDeliverPush  = "notification:deliver-push"
+
+	TypeInvoiceGeneratePDF   = "invoice:generate-pdf"
+	TypeBillingReminderSweep = "billing:reminder-sweep"
+	TypeBillingExpireSweep   = "billing:expire-sweep"
 )
 
 // NotificationFanoutPayload resolves a notification's audience to user IDs
@@ -55,4 +59,9 @@ type MediaCleanupPayload struct {
 	ModelType      string    `json:"model_type"`
 	ModelID        uuid.UUID `json:"model_id"`
 	CollectionName string    `json:"collection_name"`
+}
+
+// InvoiceGeneratePDFPayload renders and stores an invoice receipt PDF.
+type InvoiceGeneratePDFPayload struct {
+	InvoiceID uuid.UUID `json:"invoice_id"`
 }

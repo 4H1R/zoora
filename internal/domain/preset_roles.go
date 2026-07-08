@@ -33,6 +33,7 @@ var ManagerPermissions = []PermissionName{
 	PermOfflinesUpdate, PermOfflinesUpdateAny, PermOfflinesDelete, PermOfflinesDeleteAny,
 	PermAttendanceView, PermAttendanceViewAny, PermAttendanceCreate, PermAttendanceCreateAny,
 	PermAttendanceUpdate, PermAttendanceUpdateAny, PermAttendanceDelete,
+	PermBillingManage,
 	PermGradebookView, PermGradebookViewAny, PermGradebookCreate,
 	PermGradebookUpdate, PermGradebookUpdateAny, PermGradebookDelete, PermGradebookDeleteAny,
 	PermNotificationsSend, PermNotificationsSendAny,

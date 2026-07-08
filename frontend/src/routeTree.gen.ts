@@ -35,6 +35,7 @@ import { Route as AuthOrgGradesIndexRouteImport } from './routes/_auth/org/grade
 import { Route as AuthOrgFilesIndexRouteImport } from './routes/_auth/org/files/index'
 import { Route as AuthOrgExamsIndexRouteImport } from './routes/_auth/org/exams/index'
 import { Route as AuthOrgClassesIndexRouteImport } from './routes/_auth/org/classes/index'
+import { Route as AuthOrgBillingIndexRouteImport } from './routes/_auth/org/billing/index'
 import { Route as AuthOrgAttendanceIndexRouteImport } from './routes/_auth/org/attendance/index'
 import { Route as AdminAdminUsersIndexRouteImport } from './routes/_admin/admin/users/index'
 import { Route as AdminAdminSessionsIndexRouteImport } from './routes/_admin/admin/sessions/index'
@@ -56,7 +57,11 @@ import { Route as AuthOrgOfflinesOfflineIdRouteImport } from './routes/_auth/org
 import { Route as AuthOrgNotificationsSendRouteImport } from './routes/_auth/org/notifications/send'
 import { Route as AuthOrgFilesFolderRouteImport } from './routes/_auth/org/files/$folder'
 import { Route as AuthOrgClassesClassIdRouteImport } from './routes/_auth/org/classes/$classId'
+import { Route as AuthOrgBillingResultRouteImport } from './routes/_auth/org/billing/result'
+import { Route as AuthOrgBillingInvoicesRouteImport } from './routes/_auth/org/billing/invoices'
 import { Route as AdminAdminChangelogIdRouteImport } from './routes/_admin/admin/changelog/$id'
+import { Route as AdminAdminBillingPricesRouteImport } from './routes/_admin/admin/billing/prices'
+import { Route as AdminAdminBillingInvoicesIndexRouteImport } from './routes/_admin/admin/billing/invoices/index'
 import { Route as AuthOrgClassesClassSessionsClassSessionIdRouteImport } from './routes/_auth/org/classes/class-sessions/$classSessionId'
 import { Route as AuthOrgClassesClassIdGradebookRouteImport } from './routes/_auth/org/classes/$classId_.gradebook'
 import { Route as AdminAdminClassesClassIdSessionsRouteImport } from './routes/_admin/admin/classes/$classId/sessions'
@@ -197,6 +202,11 @@ const AuthOrgClassesIndexRoute = AuthOrgClassesIndexRouteImport.update({
   path: '/classes/',
   getParentRoute: () => AuthOrgRoute,
 } as any)
+const AuthOrgBillingIndexRoute = AuthOrgBillingIndexRouteImport.update({
+  id: '/billing/',
+  path: '/billing/',
+  getParentRoute: () => AuthOrgRoute,
+} as any)
 const AuthOrgAttendanceIndexRoute = AuthOrgAttendanceIndexRouteImport.update({
   id: '/attendance/',
   path: '/attendance/',
@@ -314,11 +324,32 @@ const AuthOrgClassesClassIdRoute = AuthOrgClassesClassIdRouteImport.update({
   path: '/classes/$classId',
   getParentRoute: () => AuthOrgRoute,
 } as any)
+const AuthOrgBillingResultRoute = AuthOrgBillingResultRouteImport.update({
+  id: '/billing/result',
+  path: '/billing/result',
+  getParentRoute: () => AuthOrgRoute,
+} as any)
+const AuthOrgBillingInvoicesRoute = AuthOrgBillingInvoicesRouteImport.update({
+  id: '/billing/invoices',
+  path: '/billing/invoices',
+  getParentRoute: () => AuthOrgRoute,
+} as any)
 const AdminAdminChangelogIdRoute = AdminAdminChangelogIdRouteImport.update({
   id: '/admin/changelog/$id',
   path: '/admin/changelog/$id',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAdminBillingPricesRoute = AdminAdminBillingPricesRouteImport.update({
+  id: '/admin/billing/prices',
+  path: '/admin/billing/prices',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAdminBillingInvoicesIndexRoute =
+  AdminAdminBillingInvoicesIndexRouteImport.update({
+    id: '/admin/billing/invoices/',
+    path: '/admin/billing/invoices/',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AuthOrgClassesClassSessionsClassSessionIdRoute =
   AuthOrgClassesClassSessionsClassSessionIdRouteImport.update({
     id: '/classes/class-sessions/$classSessionId',
@@ -393,7 +424,10 @@ export interface FileRoutesByFullPath {
   '/quiz/$quizId': typeof AuthQuizQuizIdRoute
   '/admin/': typeof AdminAdminIndexRoute
   '/org/': typeof AuthOrgIndexRoute
+  '/admin/billing/prices': typeof AdminAdminBillingPricesRoute
   '/admin/changelog/$id': typeof AdminAdminChangelogIdRoute
+  '/org/billing/invoices': typeof AuthOrgBillingInvoicesRoute
+  '/org/billing/result': typeof AuthOrgBillingResultRoute
   '/org/classes/$classId': typeof AuthOrgClassesClassIdRoute
   '/org/files/$folder': typeof AuthOrgFilesFolderRoute
   '/org/notifications/send': typeof AuthOrgNotificationsSendRoute
@@ -415,6 +449,7 @@ export interface FileRoutesByFullPath {
   '/admin/sessions/': typeof AdminAdminSessionsIndexRoute
   '/admin/users/': typeof AdminAdminUsersIndexRoute
   '/org/attendance/': typeof AuthOrgAttendanceIndexRoute
+  '/org/billing/': typeof AuthOrgBillingIndexRoute
   '/org/classes/': typeof AuthOrgClassesIndexRoute
   '/org/exams/': typeof AuthOrgExamsIndexRoute
   '/org/files/': typeof AuthOrgFilesIndexRoute
@@ -436,6 +471,7 @@ export interface FileRoutesByFullPath {
   '/admin/classes/$classId/sessions': typeof AdminAdminClassesClassIdSessionsRoute
   '/org/classes/$classId/gradebook': typeof AuthOrgClassesClassIdGradebookRoute
   '/org/classes/class-sessions/$classSessionId': typeof AuthOrgClassesClassSessionsClassSessionIdRoute
+  '/admin/billing/invoices/': typeof AdminAdminBillingInvoicesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -449,7 +485,10 @@ export interface FileRoutesByTo {
   '/quiz/$quizId': typeof AuthQuizQuizIdRoute
   '/admin': typeof AdminAdminIndexRoute
   '/org': typeof AuthOrgIndexRoute
+  '/admin/billing/prices': typeof AdminAdminBillingPricesRoute
   '/admin/changelog/$id': typeof AdminAdminChangelogIdRoute
+  '/org/billing/invoices': typeof AuthOrgBillingInvoicesRoute
+  '/org/billing/result': typeof AuthOrgBillingResultRoute
   '/org/classes/$classId': typeof AuthOrgClassesClassIdRoute
   '/org/files/$folder': typeof AuthOrgFilesFolderRoute
   '/org/notifications/send': typeof AuthOrgNotificationsSendRoute
@@ -471,6 +510,7 @@ export interface FileRoutesByTo {
   '/admin/sessions': typeof AdminAdminSessionsIndexRoute
   '/admin/users': typeof AdminAdminUsersIndexRoute
   '/org/attendance': typeof AuthOrgAttendanceIndexRoute
+  '/org/billing': typeof AuthOrgBillingIndexRoute
   '/org/classes': typeof AuthOrgClassesIndexRoute
   '/org/exams': typeof AuthOrgExamsIndexRoute
   '/org/files': typeof AuthOrgFilesIndexRoute
@@ -492,6 +532,7 @@ export interface FileRoutesByTo {
   '/admin/classes/$classId/sessions': typeof AdminAdminClassesClassIdSessionsRoute
   '/org/classes/$classId/gradebook': typeof AuthOrgClassesClassIdGradebookRoute
   '/org/classes/class-sessions/$classSessionId': typeof AuthOrgClassesClassSessionsClassSessionIdRoute
+  '/admin/billing/invoices': typeof AdminAdminBillingInvoicesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -510,7 +551,10 @@ export interface FileRoutesById {
   '/_auth/quiz/$quizId': typeof AuthQuizQuizIdRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
   '/_auth/org/': typeof AuthOrgIndexRoute
+  '/_admin/admin/billing/prices': typeof AdminAdminBillingPricesRoute
   '/_admin/admin/changelog/$id': typeof AdminAdminChangelogIdRoute
+  '/_auth/org/billing/invoices': typeof AuthOrgBillingInvoicesRoute
+  '/_auth/org/billing/result': typeof AuthOrgBillingResultRoute
   '/_auth/org/classes/$classId': typeof AuthOrgClassesClassIdRoute
   '/_auth/org/files/$folder': typeof AuthOrgFilesFolderRoute
   '/_auth/org/notifications/send': typeof AuthOrgNotificationsSendRoute
@@ -532,6 +576,7 @@ export interface FileRoutesById {
   '/_admin/admin/sessions/': typeof AdminAdminSessionsIndexRoute
   '/_admin/admin/users/': typeof AdminAdminUsersIndexRoute
   '/_auth/org/attendance/': typeof AuthOrgAttendanceIndexRoute
+  '/_auth/org/billing/': typeof AuthOrgBillingIndexRoute
   '/_auth/org/classes/': typeof AuthOrgClassesIndexRoute
   '/_auth/org/exams/': typeof AuthOrgExamsIndexRoute
   '/_auth/org/files/': typeof AuthOrgFilesIndexRoute
@@ -553,6 +598,7 @@ export interface FileRoutesById {
   '/_admin/admin/classes/$classId/sessions': typeof AdminAdminClassesClassIdSessionsRoute
   '/_auth/org/classes/$classId_/gradebook': typeof AuthOrgClassesClassIdGradebookRoute
   '/_auth/org/classes/class-sessions/$classSessionId': typeof AuthOrgClassesClassSessionsClassSessionIdRoute
+  '/_admin/admin/billing/invoices/': typeof AdminAdminBillingInvoicesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -569,7 +615,10 @@ export interface FileRouteTypes {
     | '/quiz/$quizId'
     | '/admin/'
     | '/org/'
+    | '/admin/billing/prices'
     | '/admin/changelog/$id'
+    | '/org/billing/invoices'
+    | '/org/billing/result'
     | '/org/classes/$classId'
     | '/org/files/$folder'
     | '/org/notifications/send'
@@ -591,6 +640,7 @@ export interface FileRouteTypes {
     | '/admin/sessions/'
     | '/admin/users/'
     | '/org/attendance/'
+    | '/org/billing/'
     | '/org/classes/'
     | '/org/exams/'
     | '/org/files/'
@@ -612,6 +662,7 @@ export interface FileRouteTypes {
     | '/admin/classes/$classId/sessions'
     | '/org/classes/$classId/gradebook'
     | '/org/classes/class-sessions/$classSessionId'
+    | '/admin/billing/invoices/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -625,7 +676,10 @@ export interface FileRouteTypes {
     | '/quiz/$quizId'
     | '/admin'
     | '/org'
+    | '/admin/billing/prices'
     | '/admin/changelog/$id'
+    | '/org/billing/invoices'
+    | '/org/billing/result'
     | '/org/classes/$classId'
     | '/org/files/$folder'
     | '/org/notifications/send'
@@ -647,6 +701,7 @@ export interface FileRouteTypes {
     | '/admin/sessions'
     | '/admin/users'
     | '/org/attendance'
+    | '/org/billing'
     | '/org/classes'
     | '/org/exams'
     | '/org/files'
@@ -668,6 +723,7 @@ export interface FileRouteTypes {
     | '/admin/classes/$classId/sessions'
     | '/org/classes/$classId/gradebook'
     | '/org/classes/class-sessions/$classSessionId'
+    | '/admin/billing/invoices'
   id:
     | '__root__'
     | '/'
@@ -685,7 +741,10 @@ export interface FileRouteTypes {
     | '/_auth/quiz/$quizId'
     | '/_admin/admin/'
     | '/_auth/org/'
+    | '/_admin/admin/billing/prices'
     | '/_admin/admin/changelog/$id'
+    | '/_auth/org/billing/invoices'
+    | '/_auth/org/billing/result'
     | '/_auth/org/classes/$classId'
     | '/_auth/org/files/$folder'
     | '/_auth/org/notifications/send'
@@ -707,6 +766,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/sessions/'
     | '/_admin/admin/users/'
     | '/_auth/org/attendance/'
+    | '/_auth/org/billing/'
     | '/_auth/org/classes/'
     | '/_auth/org/exams/'
     | '/_auth/org/files/'
@@ -728,6 +788,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/classes/$classId/sessions'
     | '/_auth/org/classes/$classId_/gradebook'
     | '/_auth/org/classes/class-sessions/$classSessionId'
+    | '/_admin/admin/billing/invoices/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -921,6 +982,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthOrgClassesIndexRouteImport
       parentRoute: typeof AuthOrgRoute
     }
+    '/_auth/org/billing/': {
+      id: '/_auth/org/billing/'
+      path: '/billing'
+      fullPath: '/org/billing/'
+      preLoaderRoute: typeof AuthOrgBillingIndexRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
     '/_auth/org/attendance/': {
       id: '/_auth/org/attendance/'
       path: '/attendance'
@@ -1068,11 +1136,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthOrgClassesClassIdRouteImport
       parentRoute: typeof AuthOrgRoute
     }
+    '/_auth/org/billing/result': {
+      id: '/_auth/org/billing/result'
+      path: '/billing/result'
+      fullPath: '/org/billing/result'
+      preLoaderRoute: typeof AuthOrgBillingResultRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
+    '/_auth/org/billing/invoices': {
+      id: '/_auth/org/billing/invoices'
+      path: '/billing/invoices'
+      fullPath: '/org/billing/invoices'
+      preLoaderRoute: typeof AuthOrgBillingInvoicesRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
     '/_admin/admin/changelog/$id': {
       id: '/_admin/admin/changelog/$id'
       path: '/admin/changelog/$id'
       fullPath: '/admin/changelog/$id'
       preLoaderRoute: typeof AdminAdminChangelogIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/billing/prices': {
+      id: '/_admin/admin/billing/prices'
+      path: '/admin/billing/prices'
+      fullPath: '/admin/billing/prices'
+      preLoaderRoute: typeof AdminAdminBillingPricesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/billing/invoices/': {
+      id: '/_admin/admin/billing/invoices/'
+      path: '/admin/billing/invoices'
+      fullPath: '/admin/billing/invoices/'
+      preLoaderRoute: typeof AdminAdminBillingInvoicesIndexRouteImport
       parentRoute: typeof AdminRoute
     }
     '/_auth/org/classes/class-sessions/$classSessionId': {
@@ -1152,6 +1248,7 @@ interface AdminRouteChildren {
   AdminAdminDashboardRoute: typeof AdminAdminDashboardRoute
   AdminAdminNotificationsRoute: typeof AdminAdminNotificationsRoute
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
+  AdminAdminBillingPricesRoute: typeof AdminAdminBillingPricesRoute
   AdminAdminChangelogIdRoute: typeof AdminAdminChangelogIdRoute
   AdminAdminAttendanceIndexRoute: typeof AdminAdminAttendanceIndexRoute
   AdminAdminChangelogIndexRoute: typeof AdminAdminChangelogIndexRoute
@@ -1176,12 +1273,14 @@ interface AdminRouteChildren {
   AdminAdminClassesClassIdQuestionsRoute: typeof AdminAdminClassesClassIdQuestionsRoute
   AdminAdminClassesClassIdQuizzesRoute: typeof AdminAdminClassesClassIdQuizzesRoute
   AdminAdminClassesClassIdSessionsRoute: typeof AdminAdminClassesClassIdSessionsRoute
+  AdminAdminBillingInvoicesIndexRoute: typeof AdminAdminBillingInvoicesIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAdminDashboardRoute: AdminAdminDashboardRoute,
   AdminAdminNotificationsRoute: AdminAdminNotificationsRoute,
   AdminAdminIndexRoute: AdminAdminIndexRoute,
+  AdminAdminBillingPricesRoute: AdminAdminBillingPricesRoute,
   AdminAdminChangelogIdRoute: AdminAdminChangelogIdRoute,
   AdminAdminAttendanceIndexRoute: AdminAdminAttendanceIndexRoute,
   AdminAdminChangelogIndexRoute: AdminAdminChangelogIndexRoute,
@@ -1210,6 +1309,7 @@ const AdminRouteChildren: AdminRouteChildren = {
     AdminAdminClassesClassIdQuestionsRoute,
   AdminAdminClassesClassIdQuizzesRoute: AdminAdminClassesClassIdQuizzesRoute,
   AdminAdminClassesClassIdSessionsRoute: AdminAdminClassesClassIdSessionsRoute,
+  AdminAdminBillingInvoicesIndexRoute: AdminAdminBillingInvoicesIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -1219,12 +1319,15 @@ interface AuthOrgRouteChildren {
   AuthOrgDashboardRoute: typeof AuthOrgDashboardRoute
   AuthOrgWhatsNewRoute: typeof AuthOrgWhatsNewRoute
   AuthOrgIndexRoute: typeof AuthOrgIndexRoute
+  AuthOrgBillingInvoicesRoute: typeof AuthOrgBillingInvoicesRoute
+  AuthOrgBillingResultRoute: typeof AuthOrgBillingResultRoute
   AuthOrgClassesClassIdRoute: typeof AuthOrgClassesClassIdRoute
   AuthOrgFilesFolderRoute: typeof AuthOrgFilesFolderRoute
   AuthOrgNotificationsSendRoute: typeof AuthOrgNotificationsSendRoute
   AuthOrgOfflinesOfflineIdRoute: typeof AuthOrgOfflinesOfflineIdRoute
   AuthOrgSettingsNotificationsRoute: typeof AuthOrgSettingsNotificationsRoute
   AuthOrgAttendanceIndexRoute: typeof AuthOrgAttendanceIndexRoute
+  AuthOrgBillingIndexRoute: typeof AuthOrgBillingIndexRoute
   AuthOrgClassesIndexRoute: typeof AuthOrgClassesIndexRoute
   AuthOrgExamsIndexRoute: typeof AuthOrgExamsIndexRoute
   AuthOrgFilesIndexRoute: typeof AuthOrgFilesIndexRoute
@@ -1245,12 +1348,15 @@ const AuthOrgRouteChildren: AuthOrgRouteChildren = {
   AuthOrgDashboardRoute: AuthOrgDashboardRoute,
   AuthOrgWhatsNewRoute: AuthOrgWhatsNewRoute,
   AuthOrgIndexRoute: AuthOrgIndexRoute,
+  AuthOrgBillingInvoicesRoute: AuthOrgBillingInvoicesRoute,
+  AuthOrgBillingResultRoute: AuthOrgBillingResultRoute,
   AuthOrgClassesClassIdRoute: AuthOrgClassesClassIdRoute,
   AuthOrgFilesFolderRoute: AuthOrgFilesFolderRoute,
   AuthOrgNotificationsSendRoute: AuthOrgNotificationsSendRoute,
   AuthOrgOfflinesOfflineIdRoute: AuthOrgOfflinesOfflineIdRoute,
   AuthOrgSettingsNotificationsRoute: AuthOrgSettingsNotificationsRoute,
   AuthOrgAttendanceIndexRoute: AuthOrgAttendanceIndexRoute,
+  AuthOrgBillingIndexRoute: AuthOrgBillingIndexRoute,
   AuthOrgClassesIndexRoute: AuthOrgClassesIndexRoute,
   AuthOrgExamsIndexRoute: AuthOrgExamsIndexRoute,
   AuthOrgFilesIndexRoute: AuthOrgFilesIndexRoute,
