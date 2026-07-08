@@ -193,6 +193,7 @@ func (s *service) List(ctx context.Context, f domain.RoleFilter) ([]domain.Role,
 }
 
 func (s *service) AdminList(ctx context.Context, f domain.AdminRoleFilter) ([]domain.Role, int64, error) {
+	f.IncludePreset = true
 	return s.roleRepo.AdminList(ctx, f)
 }
 

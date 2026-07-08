@@ -144,3 +144,20 @@ func TestCreateRole_AdminBypassesFeatureGateForPresets(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "Manager", role.Name)
 }
+
+func TestAdminList_ForcesIncludePreset(t *testing.T) {
+	roleRepo := &mockRoleRepo{}
+	svc := roles.NewService(roleRepo, &mockPermRepo{}, noopTx{}, nil, slog.Default())
+
+	orgID := uuid.New()
+	ctx := context.Background()
+	roleRepo.On("AdminList", ctx, mock.MatchedBy(func(f domain.AdminRoleFilter) bool {
+		return f.IncludePreset && f.OrganizationID != nil && *f.OrganizationID == orgID
+	})).Return([]domain.Role{{Name: domain.PresetRoleManager, IsPreset: true}}, int64(1), nil)
+
+	list, total, err := svc.AdminList(ctx, domain.AdminRoleFilter{OrganizationID: &orgID})
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), total)
+	assert.Len(t, list, 1)
+	roleRepo.AssertExpectations(t)
+}
