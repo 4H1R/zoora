@@ -309,6 +309,11 @@ type BillingRepository interface {
 	ReminderAlreadySent(ctx context.Context, kind BillingReminderKind, subjectID uuid.UUID, periodKey string) (bool, error)
 	MarkReminderSent(ctx context.Context, r *BillingReminderSent) error
 
+	// sweeps
+	OrgsWithExpiryBetween(ctx context.Context, from, to time.Time) ([]Organization, error)
+	PendingInvoicesIssuedBetween(ctx context.Context, from, to time.Time) ([]Invoice, error)
+	ExpirePendingInvoices(ctx context.Context, before time.Time) ([]Invoice, error)
+
 	// tx boundary (activation happens inside one transaction)
 	WithTx(ctx context.Context, fn func(ctx context.Context) error) error
 }

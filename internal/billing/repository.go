@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -228,6 +229,52 @@ func (r *repository) MarkReminderSent(ctx context.Context, rec *domain.BillingRe
 		return fmt.Errorf("billing.repository.MarkReminderSent: %w", err)
 	}
 	return nil
+}
+
+// OrgsWithExpiryBetween returns non-free orgs whose plan_expires_at falls in
+// [from,to). Used by the renewal sweep to find reminder candidates.
+func (r *repository) OrgsWithExpiryBetween(ctx context.Context, from, to time.Time) ([]domain.Organization, error) {
+	var orgs []domain.Organization
+	if err := database.DB(ctx, r.db).
+		Where("plan <> ? AND plan_expires_at >= ? AND plan_expires_at < ?", domain.PlanFree, from, to).
+		Find(&orgs).Error; err != nil {
+		return nil, fmt.Errorf("billing.repository.OrgsWithExpiryBetween: %w", err)
+	}
+	return orgs, nil
+}
+
+func (r *repository) PendingInvoicesIssuedBetween(ctx context.Context, from, to time.Time) ([]domain.Invoice, error) {
+	var invs []domain.Invoice
+	if err := database.DB(ctx, r.db).
+		Where("status = ? AND issued_at >= ? AND issued_at < ?", domain.InvoiceStatusPending, from, to).
+		Find(&invs).Error; err != nil {
+		return nil, fmt.Errorf("billing.repository.PendingInvoicesIssuedBetween: %w", err)
+	}
+	return invs, nil
+}
+
+// ExpirePendingInvoices flips pending invoices past their deadline to expired,
+// returning the affected rows.
+func (r *repository) ExpirePendingInvoices(ctx context.Context, before time.Time) ([]domain.Invoice, error) {
+	var invs []domain.Invoice
+	if err := database.DB(ctx, r.db).
+		Where("status = ? AND expires_at IS NOT NULL AND expires_at < ?", domain.InvoiceStatusPending, before).
+		Find(&invs).Error; err != nil {
+		return nil, fmt.Errorf("billing.repository.ExpirePendingInvoices.find: %w", err)
+	}
+	if len(invs) == 0 {
+		return nil, nil
+	}
+	ids := make([]uuid.UUID, len(invs))
+	for i := range invs {
+		ids[i] = invs[i].ID
+	}
+	if err := database.DB(ctx, r.db).Model(&domain.Invoice{}).
+		Where("id IN ?", ids).
+		Update("status", domain.InvoiceStatusExpired).Error; err != nil {
+		return nil, fmt.Errorf("billing.repository.ExpirePendingInvoices.update: %w", err)
+	}
+	return invs, nil
 }
 
 // WithTx runs fn inside a DB transaction. It delegates to the shared
