@@ -134,6 +134,7 @@ type seedCounts struct {
 	Attendances         int
 	GradebookColumns    int
 	GradebookCells      int
+	PlanPrices          int
 }
 
 func truncateAll(db *gorm.DB, ctx context.Context) error {
@@ -166,6 +167,11 @@ func truncateAll(db *gorm.DB, ctx context.Context) error {
 		"live_participants",
 		"live_rooms",
 		"media",
+		"payments",
+		"invoice_items",
+		"invoices",
+		"billing_reminders_sent",
+		"plan_prices",
 		"users",
 		"organizations",
 		"permissions",
@@ -839,6 +845,20 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 		}
 	}
 
+	// 22. PlanPrices — default catalog prices (Rial). Org-independent globals.
+	prices := []*domain.PlanPrice{
+		factory.NewPlanPrice(domain.PlanPro, domain.BillingIntervalMonthly, func(p *domain.PlanPrice) { p.Amount = 1_500_000 }),
+		factory.NewPlanPrice(domain.PlanPro, domain.BillingIntervalYearly, func(p *domain.PlanPrice) { p.Amount = 15_000_000 }),
+		factory.NewPlanPrice(domain.PlanEnterprise, domain.BillingIntervalMonthly, func(p *domain.PlanPrice) { p.Amount = 5_000_000 }),
+		factory.NewPlanPrice(domain.PlanEnterprise, domain.BillingIntervalYearly, func(p *domain.PlanPrice) { p.Amount = 50_000_000 }),
+	}
+	for _, p := range prices {
+		if err := db.WithContext(ctx).Create(p).Error; err != nil {
+			return nil, fmt.Errorf("seeding plan price: %w", err)
+		}
+		counts.PlanPrices++
+	}
+
 	return counts, nil
 }
 
@@ -873,6 +893,7 @@ func printSummary(c *seedCounts) {
 	fmt.Printf("  Attendances:          %d\n", c.Attendances)
 	fmt.Printf("  GradebookColumns:     %d\n", c.GradebookColumns)
 	fmt.Printf("  GradebookCells:       %d\n", c.GradebookCells)
+	fmt.Printf("  PlanPrices:           %d\n", c.PlanPrices)
 	fmt.Println("\nLogins:")
 	fmt.Println("  admin1 / password   (super admin)")
 	fmt.Println("  manager1 / password (Manager preset in Zoora Demo org)")
