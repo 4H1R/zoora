@@ -34,8 +34,8 @@ func (m *mockRepo) CountActiveLiveRooms(context.Context, uuid.UUID) (int64, erro
 var orgID = uuid.New()
 
 func TestCheckUserLimitRejectsAtCeiling(t *testing.T) {
-	svc := NewService(&mockRepo{users: 10})
-	ent := domain.PlanCatalog[domain.PlanFree] // max users 10
+	svc := NewService(&mockRepo{users: 50})
+	ent := domain.PlanCatalog[domain.PlanFree] // max users 50
 	err := svc.CheckUserLimit(context.Background(), orgID, ent)
 	if !errors.Is(err, domain.ErrPlanLimitReached) {
 		t.Fatalf("expected limit reached, got %v", err)
@@ -43,18 +43,10 @@ func TestCheckUserLimitRejectsAtCeiling(t *testing.T) {
 }
 
 func TestCheckUserLimitAllowsBelowCeiling(t *testing.T) {
-	svc := NewService(&mockRepo{users: 9})
+	svc := NewService(&mockRepo{users: 49})
 	ent := domain.PlanCatalog[domain.PlanFree]
 	if err := svc.CheckUserLimit(context.Background(), orgID, ent); err != nil {
 		t.Fatalf("expected allow, got %v", err)
-	}
-}
-
-func TestCheckUserLimitUnlimitedAlwaysAllows(t *testing.T) {
-	svc := NewService(&mockRepo{users: 1_000_000})
-	ent := domain.PlanCatalog[domain.PlanEnterprise] // 0 = unlimited
-	if err := svc.CheckUserLimit(context.Background(), orgID, ent); err != nil {
-		t.Fatal("unlimited must always allow")
 	}
 }
 

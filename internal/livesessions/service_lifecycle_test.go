@@ -231,13 +231,13 @@ func TestUpdateRoomConfig_FreePlanClampsMaxParticipants(t *testing.T) {
 	svc, f := newTestServiceLK(t)
 	stubRoomLookups(f, activeTestRoom())
 	f.rooms.On("UpdateConfig", mock.Anything, testRoomID, mock.MatchedBy(func(cfg domain.LiveRoomConfig) bool {
-		return cfg.MaxParticipants == 25 // Free ceiling
+		return cfg.MaxParticipants == 5 // free_50 ceiling
 	})).Return(nil)
 
-	cfg := domain.LiveRoomConfig{MaxParticipants: 50} // above the Free ceiling
+	cfg := domain.LiveRoomConfig{MaxParticipants: 50} // above the free_50 ceiling
 	room, err := svc.UpdateRoomConfig(freeTeacherCtx(), testRoomID, domain.UpdateLiveRoomConfigDTO{Config: &cfg})
 	assert.NoError(t, err)
-	assert.Equal(t, 25, room.Config.MaxParticipants)
+	assert.Equal(t, 5, room.Config.MaxParticipants)
 	f.rooms.AssertExpectations(t)
 }
 

@@ -267,7 +267,7 @@ func teacherCtx(userID uuid.UUID) context.Context {
 	return domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      userID,
 		Permissions: []string{"quizzes:update_any", "quizzes:create", "quizzes:view", "quizzes:delete"},
-		Ent:         domain.PlanCatalog[domain.PlanPro],
+		Ent:         domain.PlanCatalog[domain.PlanKey(domain.TierPro, 50)],
 	})
 }
 

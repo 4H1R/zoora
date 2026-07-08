@@ -9,8 +9,9 @@ import { Reveal, SectionHeading } from "./shared"
 
 const PLANS = [
   { key: "free", features: ["f1", "f2", "f3", "f4", "f5"], highlighted: false },
+  { key: "plus", features: ["f1", "f2", "f3", "f4", "f5"], highlighted: false },
   { key: "pro", features: ["f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8"], highlighted: true },
-  { key: "enterprise", features: ["f1", "f2", "f3", "f4", "f5", "f6"], highlighted: false },
+  { key: "max", features: ["f1", "f2", "f3", "f4", "f5", "f6"], highlighted: false },
 ] as const
 
 export function Pricing() {
@@ -25,7 +26,7 @@ export function Pricing() {
           subtitle={t("landing.pricing.subtitle")}
         />
 
-        <div className="mx-auto mt-14 grid max-w-5xl items-stretch gap-5 sm:mt-16 md:grid-cols-3">
+        <div className="mx-auto mt-14 grid max-w-6xl items-stretch gap-5 sm:mt-16 md:grid-cols-2 lg:grid-cols-4">
           {PLANS.map((plan, i) => (
             <Reveal key={plan.key} delay={i * 0.1} className="h-full">
               <div

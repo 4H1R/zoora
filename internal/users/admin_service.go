@@ -44,6 +44,13 @@ func (s *service) AdminCreate(ctx context.Context, dto domain.AdminCreateUserDTO
 		return nil, err
 	}
 
+	// is_admin marks a platform admin, which never belongs to an org — an
+	// org-scoped admin would be rejected by the tenant-host boundary check
+	// on every request.
+	if dto.IsAdmin && dto.OrganizationID != nil {
+		return nil, fmt.Errorf("%w: organization users cannot be platform admins", domain.ErrValidation)
+	}
+
 	hashed, err := bcrypt.GenerateFromPassword([]byte(dto.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, fmt.Errorf("users.service.AdminCreate hash: %w", err)
@@ -55,6 +62,7 @@ func (s *service) AdminCreate(ctx context.Context, dto domain.AdminCreateUserDTO
 		Name:           dto.Name,
 		Password:       string(hashed),
 		IsAdmin:        dto.IsAdmin,
+		RoleID:         dto.RoleID,
 	}
 
 	if err := s.repo.Create(ctx, user); err != nil {
@@ -94,6 +102,9 @@ func (s *service) AdminUpdate(ctx context.Context, id uuid.UUID, dto domain.Admi
 		user.Password = string(hashed)
 	}
 	if dto.IsAdmin != nil {
+		if *dto.IsAdmin && user.OrganizationID != nil {
+			return nil, fmt.Errorf("%w: organization users cannot be platform admins", domain.ErrValidation)
+		}
 		user.IsAdmin = *dto.IsAdmin
 	}
 	if dto.RoleID != nil {

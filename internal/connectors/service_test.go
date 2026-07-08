@@ -46,7 +46,10 @@ func testService(t *testing.T, repo domain.UserConnectorRepository, sms domain.S
 }
 
 func callerCtx(userID uuid.UUID) context.Context {
-	return domain.WithCaller(context.Background(), domain.Caller{UserID: userID})
+	return domain.WithCaller(context.Background(), domain.Caller{
+		UserID: userID,
+		Ent:    domain.PlanCatalog[domain.PlanKey(domain.TierPro, 50)],
+	})
 }
 
 func TestCreateLinkTokenAndCompleteLink(t *testing.T) {

@@ -4,10 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { CreditCardIcon, EllipsisVerticalIcon, ExternalLinkIcon, PencilIcon, Trash2Icon, UsersIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import {
-  GithubCom4H1RZooraInternalDomainOrganizationStatus as OrgStatus,
-  GithubCom4H1RZooraInternalDomainPlan as Plan,
-} from "@/api/model"
+import { GithubCom4H1RZooraInternalDomainOrganizationStatus as OrgStatus } from "@/api/model"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -19,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { getEntityColor, getInitials, useFormatDate } from "@/lib/data-table"
+import { planSize, planTier, type PlanTier } from "@/lib/plan"
 import { cn } from "@/lib/utils"
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -38,18 +36,21 @@ function OrgStatusBadge({ status }: { status?: string }) {
   )
 }
 
-const PLAN_VARIANT: Record<string, "default" | "secondary" | "outline"> = {
-  [Plan.PlanFree]: "outline",
-  [Plan.PlanPro]: "default",
-  [Plan.PlanEnterprise]: "secondary",
+const PLAN_VARIANT: Record<PlanTier, "default" | "secondary" | "outline"> = {
+  free: "outline",
+  plus: "secondary",
+  pro: "default",
+  max: "secondary",
 }
 
 function OrgPlanBadge({ plan }: { plan?: string }) {
   const { t } = useTranslation()
   if (!plan) return <span className="text-muted-foreground">—</span>
+  const tier = planTier(plan)
   return (
-    <Badge variant={PLAN_VARIANT[plan] ?? "outline"} className="text-[11px] capitalize">
-      {t(`admin.orgs.planLabels.${plan}`, { defaultValue: plan })}
+    <Badge variant={PLAN_VARIANT[tier] ?? "outline"} className="text-[11px]">
+      {t(`plans.tiers.${tier}`, { defaultValue: tier })}
+      <span className="tabular-nums">{planSize(plan)}</span>
     </Badge>
   )
 }

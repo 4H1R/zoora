@@ -114,7 +114,7 @@ func (s *service) Checkout(ctx context.Context, dto domain.CheckoutDTO) (*domain
 	if !ok || caller.OrgID == nil {
 		return nil, domain.ErrForbidden
 	}
-	if !dto.Plan.Valid() || dto.Plan == domain.PlanFree {
+	if !dto.Plan.Valid() || dto.Plan.Tier() == domain.TierFree {
 		return nil, domain.ErrInvalidPlan
 	}
 	if !dto.Interval.Valid() {

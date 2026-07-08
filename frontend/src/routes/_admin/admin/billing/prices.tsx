@@ -22,6 +22,7 @@ import { Card } from "@/components/ui/card"
 import { adminHead } from "@/lib/admin-head"
 import { useFormatToman } from "@/lib/billing"
 import { useAdminTable } from "@/lib/data-table"
+import { planSize, planTier } from "@/lib/plan"
 
 import { PriceFormDialog } from "./-price-form-dialog"
 
@@ -42,8 +43,9 @@ function usePriceColumns(opts: {
       accessorKey: "plan",
       header: t("billing.admin.plan"),
       cell: ({ row }) => (
-        <Badge variant="default" className="text-[11px] capitalize">
-          {t(`admin.orgs.planLabels.${row.original.plan}`, { defaultValue: row.original.plan })}
+        <Badge variant="default" className="text-[11px]">
+          {t(`plans.tiers.${planTier(row.original.plan)}`, { defaultValue: row.original.plan })}
+          <span className="tabular-nums">{planSize(row.original.plan)}</span>
         </Badge>
       ),
       enableSorting: false,

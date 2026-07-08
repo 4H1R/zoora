@@ -783,11 +783,27 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 	}
 
 	// 22. PlanPrices — default catalog prices (Rial). Org-independent globals.
-	prices := []*domain.PlanPrice{
-		factory.NewPlanPrice(domain.PlanPro, domain.BillingIntervalMonthly, func(p *domain.PlanPrice) { p.Amount = 1_500_000 }),
-		factory.NewPlanPrice(domain.PlanPro, domain.BillingIntervalYearly, func(p *domain.PlanPrice) { p.Amount = 15_000_000 }),
-		factory.NewPlanPrice(domain.PlanEnterprise, domain.BillingIntervalMonthly, func(p *domain.PlanPrice) { p.Amount = 5_000_000 }),
-		factory.NewPlanPrice(domain.PlanEnterprise, domain.BillingIntervalYearly, func(p *domain.PlanPrice) { p.Amount = 50_000_000 }),
+	// Monthly base is per 50 members and scales linearly with plan size;
+	// yearly = 10 × monthly (two months free).
+	tierBaseMonthly := map[domain.PlanTier]int64{
+		domain.TierPlus: 1_000_000,
+		domain.TierPro:  2_000_000,
+		domain.TierMax:  4_000_000,
+	}
+	var prices []*domain.PlanPrice
+	for _, tier := range domain.PlanTiers {
+		base, ok := tierBaseMonthly[tier]
+		if !ok {
+			continue // free tier has no price
+		}
+		for _, size := range domain.PlanSizes {
+			monthly := base * (size / 50)
+			plan := domain.PlanKey(tier, size)
+			prices = append(prices,
+				factory.NewPlanPrice(plan, domain.BillingIntervalMonthly, func(p *domain.PlanPrice) { p.Amount = monthly }),
+				factory.NewPlanPrice(plan, domain.BillingIntervalYearly, func(p *domain.PlanPrice) { p.Amount = monthly * 10 }),
+			)
+		}
 	}
 	for _, p := range prices {
 		if err := db.WithContext(ctx).Create(p).Error; err != nil {

@@ -142,36 +142,46 @@
         "name": "Free",
         "tagline": "Try Zoora with a small group",
         "cta": "Start free",
-        "f1": "Up to 10 users",
-        "f2": "25 participants per room",
-        "f3": "1 concurrent live room",
-        "f4": "2 GB storage",
-        "f5": "Exams, homework & gradebook"
+        "f1": "Spaces from 50 to 1000 members",
+        "f2": "2 GB storage",
+        "f3": "5 live participants, 1 concurrent room",
+        "f4": "Exams, homework & gradebook",
+        "f5": "Offline rooms & notifications"
+      },
+      "plus": {
+        "name": "Plus",
+        "tagline": "For small classes getting serious",
+        "cta": "Get started",
+        "f1": "Everything in Free",
+        "f2": "10 GB storage",
+        "f3": "10 live participants, 2 concurrent rooms",
+        "f4": "Ticketing & file sharing",
+        "f5": "Auto attendance"
       },
       "pro": {
         "name": "Pro",
         "badge": "Most popular",
         "tagline": "For schools and academies in full swing",
         "cta": "Get started",
-        "f1": "Up to 150 users",
-        "f2": "100 participants per room",
-        "f3": "10 concurrent live rooms",
-        "f4": "100 GB storage",
-        "f5": "Cloud recordings — 30-day retention",
-        "f6": "Offline rooms",
-        "f7": "Advanced anti-cheat",
+        "f1": "Everything in Plus",
+        "f2": "25 GB storage",
+        "f3": "20 live participants, 5 concurrent rooms",
+        "f4": "Whiteboard & chat",
+        "f5": "Advanced anti-cheat",
+        "f6": "Telegram, Bale & email connectors",
+        "f7": "AI assistance",
         "f8": "Custom roles"
       },
-      "enterprise": {
-        "name": "Enterprise",
-        "tagline": "For institutions that need it all",
-        "cta": "Contact us",
-        "f1": "Unlimited users & storage",
-        "f2": "300 participants per room",
-        "f3": "Unlimited concurrent rooms",
-        "f4": "365-day recording retention",
-        "f5": "Single sign-on (SSO)",
-        "f6": "Everything in Pro"
+      "max": {
+        "name": "Max",
+        "tagline": "Everything Zoora has to offer",
+        "cta": "Get started",
+        "f1": "Everything in Pro",
+        "f2": "50 GB storage",
+        "f3": "50 live participants, 5 concurrent rooms",
+        "f4": "Cloud recordings — 365-day retention",
+        "f5": "Auto grading",
+        "f6": "Single sign-on (SSO)"
       }
     },
     "faq": {
@@ -1278,8 +1288,9 @@
       },
       "planLabels": {
         "free": "Free",
+        "plus": "Plus",
         "pro": "Pro",
-        "enterprise": "Enterprise"
+        "max": "Max"
       },
       "plan": {
         "title": "Change plan",
@@ -1662,32 +1673,42 @@
             "name": "Free",
             "tagline": "Get started with the essentials."
           },
+          "plus": {
+            "name": "Plus",
+            "tagline": "More room to run your classes."
+          },
           "pro": {
             "name": "Pro",
             "tagline": "For growing teams running live classes every day."
           },
-          "enterprise": {
-            "name": "Enterprise",
-            "tagline": "Scale, control, and dedicated support."
+          "max": {
+            "name": "Max",
+            "tagline": "Everything Zoora has to offer."
           }
         },
         "features": {
           "free": [
             "Core virtual classrooms",
-            "Attendance tracking",
-            "Community support"
+            "Exams, homework & gradebook",
+            "Offline rooms & notifications"
+          ],
+          "plus": [
+            "Everything in Free",
+            "More storage & live capacity",
+            "Ticketing & file sharing"
           ],
           "pro": [
-            "Everything in Free",
-            "Unlimited live sessions",
-            "Recordings & cloud storage",
-            "Priority support"
+            "Everything in Plus",
+            "Whiteboard & chat",
+            "Advanced anti-cheat",
+            "Messenger & email connectors",
+            "AI assistance"
           ],
-          "enterprise": [
+          "max": [
             "Everything in Pro",
-            "Advanced roles & permissions",
-            "Dedicated support & SLA",
-            "Custom integrations"
+            "Cloud recordings",
+            "Auto grading",
+            "Single sign-on (SSO)"
           ]
         }
       },
@@ -2919,6 +2940,15 @@
       "notVerified": "Not verified"
     }
   },
+  "plans": {
+    "tiers": {
+      "free": "Free",
+      "plus": "Plus",
+      "pro": "Pro",
+      "max": "Max"
+    },
+    "sizeSuffix": "{{size}} members"
+  },
   "billing": {
     "title": "Billing",
     "subtitle": "Manage your subscription and payments",
@@ -2926,6 +2956,7 @@
     "expiresAt": "Expires",
     "perpetual": "No expiry",
     "choosePlan": "Choose a plan",
+    "sizeOption": "{{size}}",
     "monthly": "Monthly",
     "yearly": "Yearly",
     "perMonth": "/mo",

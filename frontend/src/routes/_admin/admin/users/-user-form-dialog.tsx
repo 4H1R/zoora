@@ -105,6 +105,10 @@ export function UserFormDialog({ open, onOpenChange, user }: UserFormDialogProps
   const isLoading = createMutation.isPending || updateMutation.isPending
 
   const onSubmit = handleSubmit((values) => {
+    // Org-scoped users can never be platform admins; drop a stale checkbox
+    // value left over from before an organization was picked.
+    const orgId = isEdit ? user?.organization_id : values.organization_id
+    const isAdminValue = orgId ? false : values.is_admin
     if (isEdit && user?.id) {
       updateMutation.mutate({
         id: user.id,
@@ -113,7 +117,7 @@ export function UserFormDialog({ open, onOpenChange, user }: UserFormDialogProps
           username: values.username,
           password: values.password || undefined,
           role_id: values.role_id || undefined,
-          is_admin: values.is_admin,
+          is_admin: isAdminValue,
         },
       })
     } else {
@@ -123,7 +127,8 @@ export function UserFormDialog({ open, onOpenChange, user }: UserFormDialogProps
           name: values.name,
           username: values.username,
           password: values.password!,
-          is_admin: values.is_admin,
+          role_id: values.role_id || undefined,
+          is_admin: isAdminValue,
         },
       })
     }
@@ -132,6 +137,9 @@ export function UserFormDialog({ open, onOpenChange, user }: UserFormDialogProps
   const isAdmin = watch("is_admin")
   const selectedOrgId = watch("organization_id")
   const selectedRoleId = watch("role_id")
+  // Platform admins never belong to an organization — the backend rejects
+  // is_admin on org-scoped users.
+  const hasOrg = isEdit ? !!user?.organization_id : !!selectedOrgId
 
   const orgIdForRoles = isEdit ? user?.organization_id : selectedOrgId
   const { data: rolesData } = useGetAdminRoles(orgIdForRoles ? { organization_id: orgIdForRoles } : undefined)
@@ -202,15 +210,17 @@ export function UserFormDialog({ open, onOpenChange, user }: UserFormDialogProps
           />
         </Field>
 
-        <Field orientation="horizontal">
-          <Checkbox
-            checked={isAdmin}
-            onCheckedChange={(checked) => setValue("is_admin", !!checked, { shouldValidate: true })}
-          />
-          <FieldContent>
-            <FieldLabel>{t("admin.users.form.isAdmin")}</FieldLabel>
-          </FieldContent>
-        </Field>
+        {!hasOrg && (
+          <Field orientation="horizontal">
+            <Checkbox
+              checked={isAdmin}
+              onCheckedChange={(checked) => setValue("is_admin", !!checked, { shouldValidate: true })}
+            />
+            <FieldContent>
+              <FieldLabel>{t("admin.users.form.isAdmin")}</FieldLabel>
+            </FieldContent>
+          </Field>
+        )}
       </FieldGroup>
     </ResourceFormDialog>
   )

@@ -57,7 +57,7 @@ func TestIntegration_Entitlements_SumStorageBytes(t *testing.T) {
 	db, repo := setupEntitlementsRepoDB(t)
 	ctx := context.Background()
 
-	org := &domain.Organization{Name: "o", Slug: "sum-store", Plan: domain.PlanPro}
+	org := &domain.Organization{Name: "o", Slug: "sum-store", Plan: domain.PlanKey(domain.TierPro, 50)}
 	require.NoError(t, db.Create(org).Error)
 
 	// Two media rows for this org.
@@ -107,12 +107,12 @@ func TestIntegration_Entitlements_GetOrgPlan(t *testing.T) {
 	ctx := context.Background()
 
 	exp := time.Unix(1_800_000_000, 0)
-	org := &domain.Organization{Name: "o", Slug: "get-plan", Plan: domain.PlanPro, PlanExpiresAt: &exp}
+	org := &domain.Organization{Name: "o", Slug: "get-plan", Plan: domain.PlanKey(domain.TierPro, 50), PlanExpiresAt: &exp}
 	require.NoError(t, db.Create(org).Error)
 
 	plan, gotExp, err := repo.GetOrgPlan(ctx, org.ID)
 	require.NoError(t, err)
-	assert.Equal(t, domain.PlanPro, plan)
+	assert.Equal(t, domain.PlanKey(domain.TierPro, 50), plan)
 	require.NotNil(t, gotExp)
 	assert.WithinDuration(t, exp, *gotExp, time.Second)
 }

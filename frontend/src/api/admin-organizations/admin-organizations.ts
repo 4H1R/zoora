@@ -864,7 +864,7 @@ export const getPutAdminOrganizationsIdPlanUrl = (id: string,) => {
 }
 
 /**
- * Assign a subscription plan (free/pro/enterprise) and optional expiry. Omit expires_at for a perpetual plan; an expired plan downgrades to free.
+ * Assign a subscription plan ("<tier>_<size>", e.g. pro_200; tiers free/plus/pro/max × sizes 50/100/200/500/1000) and optional expiry. Omit expires_at for a perpetual plan; an expired plan downgrades to free_50.
  * @summary [Admin] Set organization plan
  */
 export const putAdminOrganizationsIdPlan = async (id: string,

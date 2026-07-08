@@ -1326,10 +1326,14 @@ func (s *service) SaveWhiteboard(ctx context.Context, roomID uuid.UUID, dto doma
 	return wb, nil
 }
 
-// requireCanDraw enforces write access to a room's whiteboard: hosts
-// (canManageRoom) may always draw, active presenters may draw, everyone else is
-// forbidden. Shared by SaveWhiteboard and PresignWhiteboardMedia.
+// requireCanDraw enforces write access to a room's whiteboard: the plan must
+// include the whiteboard feature, then hosts (canManageRoom) may always draw,
+// active presenters may draw, everyone else is forbidden. Shared by
+// SaveWhiteboard and PresignWhiteboardMedia.
 func (s *service) requireCanDraw(ctx context.Context, caller domain.Caller, roomID uuid.UUID, class *domain.Class) error {
+	if !caller.IsAdmin && !caller.HasFeature(domain.FeatureWhiteboard) {
+		return domain.NewFeatureError(caller.Ent.Plan, domain.FeatureWhiteboard)
+	}
 	if s.canManageRoom(caller, class) {
 		return nil
 	}

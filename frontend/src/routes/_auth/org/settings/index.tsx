@@ -1,5 +1,5 @@
 import type { GithubCom4H1RZooraInternalDomainOrganizationStatus as OrgStatus } from "@/api/model/githubCom4H1RZooraInternalDomainOrganizationStatus"
-import type { GithubCom4H1RZooraInternalDomainPlan as Plan } from "@/api/model/githubCom4H1RZooraInternalDomainPlan"
+import type { PlanTier } from "@/lib/plan"
 import type { LucideIcon } from "lucide-react"
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -14,6 +14,7 @@ import {
   HistoryIcon,
   InfinityIcon,
   InfoIcon,
+  RocketIcon,
   SparklesIcon,
   UsersIcon,
   ZapIcon,
@@ -42,6 +43,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useOrgGuard } from "@/lib/access"
 import { useFormatDate } from "@/lib/data-table"
 import { orgHead } from "@/lib/org-head"
+import { planSize, planTier } from "@/lib/plan"
 import { cn } from "@/lib/utils"
 
 export const Route = createFileRoute("/_auth/org/settings/")({
@@ -107,9 +109,9 @@ type PlanStyle = {
 }
 
 // Each tier gets its own accent, echoing the STATUS_STYLES pattern: free = neutral,
-// pro = brand/primary, enterprise = warning/gold. Feature bullets are qualitative
-// (no hard numbers) since orgs can't read the admin plan catalog.
-const PLAN_STYLES: Record<Plan, PlanStyle> = {
+// plus = success/green, pro = brand/primary, max = warning/gold. Feature bullets
+// are qualitative (no hard numbers) since orgs can't read the admin plan catalog.
+const PLAN_STYLES: Record<PlanTier, PlanStyle> = {
   free: {
     icon: SparklesIcon,
     chip: "border-border bg-muted text-muted-foreground",
@@ -118,15 +120,23 @@ const PLAN_STYLES: Record<Plan, PlanStyle> = {
     iconWrap: "bg-muted text-muted-foreground ring-border",
     check: "text-muted-foreground",
   },
-  pro: {
+  plus: {
     icon: ZapIcon,
+    chip: "border-success/25 bg-success/10 text-success",
+    wash: "from-success/8 via-card to-card",
+    glow: "bg-success/15",
+    iconWrap: "from-success to-success/70 text-success-foreground bg-gradient-to-br ring-foreground/10",
+    check: "text-success",
+  },
+  pro: {
+    icon: RocketIcon,
     chip: "border-primary/25 bg-primary/10 text-primary",
     wash: "from-primary/8 via-card to-card",
     glow: "bg-primary/15",
     iconWrap: "from-primary to-primary/70 text-primary-foreground bg-gradient-to-br ring-foreground/10",
     check: "text-primary",
   },
-  enterprise: {
+  max: {
     icon: CrownIcon,
     chip: "border-warning/25 bg-warning/10 text-warning",
     wash: "from-warning/8 via-card to-card",
@@ -244,7 +254,7 @@ function RouteComponent() {
   const status = (org?.status ?? "active") as OrgStatus
   const statusStyle = STATUS_STYLES[status] ?? STATUS_STYLES.active
   const memberCount = org?.total_users ?? 0
-  const plan = (org?.plan ?? "free") as Plan
+  const plan = org?.plan ?? "free_50"
 
   if (!allowed) return null
 
@@ -411,14 +421,15 @@ function PlanCard({
   expiresAt,
   formatDate,
 }: {
-  plan: Plan
+  plan: string
   expiresAt?: string
   formatDate: (value?: string) => string
 }) {
   const { t } = useTranslation()
-  const style = PLAN_STYLES[plan] ?? PLAN_STYLES.free
+  const tier = planTier(plan)
+  const style = PLAN_STYLES[tier] ?? PLAN_STYLES.free
   const Icon = style.icon
-  const features = t(`org.settings.plan.features.${plan}`, {
+  const features = t(`org.settings.plan.features.${tier}`, {
     returnObjects: true,
   }) as string[]
   const hasExpiry = Boolean(expiresAt)
@@ -457,10 +468,13 @@ function PlanCard({
                 {t("org.settings.plan.current")}
               </p>
               <h2 className="font-heading text-foreground text-2xl font-semibold tracking-tight">
-                {t(`org.settings.plan.tiers.${plan}.name`)}
+                {t(`org.settings.plan.tiers.${tier}.name`)}
+                <span className="text-muted-foreground ms-2 text-sm font-medium tabular-nums">
+                  {t("plans.sizeSuffix", { size: planSize(plan) })}
+                </span>
               </h2>
               <p className="text-muted-foreground mt-0.5 text-sm leading-relaxed">
-                {t(`org.settings.plan.tiers.${plan}.tagline`)}
+                {t(`org.settings.plan.tiers.${tier}.tagline`)}
               </p>
             </div>
           </div>

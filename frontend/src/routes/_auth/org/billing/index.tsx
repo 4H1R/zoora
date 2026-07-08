@@ -2,7 +2,7 @@ import type { GithubCom4H1RZooraInternalDomainPlanPrice as PlanPrice } from "@/a
 import type { ErrorType } from "@/api/mutator/custom-instance"
 
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { CheckIcon, CrownIcon, HistoryIcon, SparklesIcon, ZapIcon } from "lucide-react"
+import { CheckIcon, HistoryIcon, SparklesIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -23,26 +23,13 @@ import { useOrgGuard } from "@/lib/access"
 import { useFormatToman } from "@/lib/billing"
 import { useFormatDate } from "@/lib/data-table"
 import { orgHead } from "@/lib/org-head"
+import { PLAN_SIZES, planRank, planSize, planTier, TIER_ICON } from "@/lib/plan"
 import { cn } from "@/lib/utils"
 
 export const Route = createFileRoute("/_auth/org/billing/")({
   head: () => orgHead("billing.title"),
   component: BillingPage,
 })
-
-// Higher rank = higher tier. Used to guard downgrades client-side (the API also
-// returns 409 DOWNGRADE_NOT_ALLOWED, handled on the mutation).
-const PLAN_RANK: Record<string, number> = {
-  [Plan.PlanFree]: 0,
-  [Plan.PlanPro]: 1,
-  [Plan.PlanEnterprise]: 2,
-}
-
-const PLAN_ICON: Record<string, typeof SparklesIcon> = {
-  [Plan.PlanFree]: SparklesIcon,
-  [Plan.PlanPro]: ZapIcon,
-  [Plan.PlanEnterprise]: CrownIcon,
-}
 
 function BillingPage() {
   const { t } = useTranslation()
@@ -51,6 +38,7 @@ function BillingPage() {
   const formatToman = useFormatToman()
 
   const [interval, setInterval] = useState<BillingInterval>(BillingInterval.BillingIntervalMonthly)
+  const [size, setSize] = useState<number | null>(null)
 
   const { data: meResponse } = useGetUsersMe()
   const orgId = (meResponse?.status === 200 && meResponse.data.data?.organization_id) || ""
@@ -58,6 +46,8 @@ function BillingPage() {
   const { data: orgResponse } = useGetOrganizationsId(orgId)
   const org = orgResponse?.status === 200 ? orgResponse.data.data : undefined
   const currentPlan = (org?.plan ?? Plan.PlanFree) as string
+  // Default the size picker to the org's current capacity once it loads.
+  const selectedSize = size ?? planSize(currentPlan)
 
   const { data: plansResponse, isLoading } = useGetBillingPlans()
   const prices = (plansResponse?.status === 200 && plansResponse.data.data) || []
@@ -77,8 +67,8 @@ function BillingPage() {
   })
 
   const visiblePrices = prices
-    .filter((p) => p.interval === interval && p.plan)
-    .sort((a, b) => (PLAN_RANK[a.plan!] ?? 0) - (PLAN_RANK[b.plan!] ?? 0))
+    .filter((p) => p.interval === interval && p.plan && planSize(p.plan) === selectedSize)
+    .sort((a, b) => planRank(a.plan) - planRank(b.plan))
 
   const handleCheckout = (plan: string) => {
     checkout.mutate({
@@ -102,9 +92,12 @@ function BillingPage() {
 
       <CurrentPlanCard plan={currentPlan} expiresAt={org?.plan_expires_at} formatDate={formatDate} />
 
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <h2 className="font-heading text-lg font-semibold tracking-tight">{t("billing.choosePlan")}</h2>
-        <IntervalToggle value={interval} onChange={setInterval} />
+        <div className="flex flex-wrap items-center gap-3">
+          <SizeToggle value={selectedSize} onChange={setSize} />
+          <IntervalToggle value={interval} onChange={setInterval} />
+        </div>
       </div>
 
       {isLoading ? (
@@ -124,6 +117,29 @@ function BillingPage() {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+function SizeToggle({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const { t } = useTranslation()
+  return (
+    <div className="bg-muted inline-flex rounded-lg p-1">
+      {PLAN_SIZES.map((size) => (
+        <button
+          key={size}
+          type="button"
+          onClick={() => onChange(size)}
+          className={cn(
+            "rounded-md px-3 py-1.5 text-sm font-medium transition-colors tabular-nums",
+            value === size
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {t("billing.sizeOption", { size })}
+        </button>
+      ))}
     </div>
   )
 }
@@ -165,7 +181,7 @@ function CurrentPlanCard({
   formatDate: (value?: string) => string
 }) {
   const { t } = useTranslation()
-  const Icon = PLAN_ICON[plan] ?? SparklesIcon
+  const Icon = TIER_ICON[planTier(plan)] ?? SparklesIcon
   return (
     <section className="bg-card ring-foreground/10 flex items-center gap-4 rounded-2xl border p-5 ring-1">
       <div className="bg-primary/10 text-primary grid size-12 shrink-0 place-items-center rounded-xl">
@@ -173,7 +189,12 @@ function CurrentPlanCard({
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">{t("billing.currentPlan")}</p>
-        <h2 className="font-heading text-xl font-semibold tracking-tight capitalize">{plan}</h2>
+        <h2 className="font-heading text-xl font-semibold tracking-tight">
+          {t(`plans.tiers.${planTier(plan)}`)}
+          <span className="text-muted-foreground ms-2 text-sm font-medium tabular-nums">
+            {t("plans.sizeSuffix", { size: planSize(plan) })}
+          </span>
+        </h2>
       </div>
       <div className="text-end text-sm">
         <p className="text-muted-foreground text-xs">{t("billing.expiresAt")}</p>
@@ -202,12 +223,10 @@ function PlanCard({
 }) {
   const { t } = useTranslation()
   const plan = price.plan!
-  const Icon = PLAN_ICON[plan] ?? SparklesIcon
-  const rank = PLAN_RANK[plan] ?? 0
-  const currentRank = PLAN_RANK[currentPlan] ?? 0
+  const Icon = TIER_ICON[planTier(plan)] ?? SparklesIcon
 
   const isCurrent = plan === currentPlan
-  const isDowngrade = rank < currentRank
+  const isDowngrade = planRank(plan) < planRank(currentPlan)
   const perLabel = interval === BillingInterval.BillingIntervalYearly ? t("billing.perYear") : t("billing.perMonth")
 
   return (
@@ -221,7 +240,12 @@ function PlanCard({
         <div className="bg-muted grid size-10 place-items-center rounded-xl">
           <Icon className="size-5" />
         </div>
-        <h3 className="font-heading text-lg font-semibold tracking-tight capitalize">{plan}</h3>
+        <h3 className="font-heading text-lg font-semibold tracking-tight">
+          {t(`plans.tiers.${planTier(plan)}`)}
+          <span className="text-muted-foreground ms-2 text-sm font-medium tabular-nums">
+            {t("plans.sizeSuffix", { size: planSize(plan) })}
+          </span>
+        </h3>
       </div>
 
       <div className="flex items-baseline gap-1.5">

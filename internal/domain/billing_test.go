@@ -18,6 +18,11 @@ func TestNextPlanState(t *testing.T) {
 	future := mustTime("2026-08-01T00:00:00Z") // active expiry ahead of now
 	past := mustTime("2026-06-01T00:00:00Z")   // already expired
 
+	pro50 := PlanKey(TierPro, 50)
+	pro200 := PlanKey(TierPro, 200)
+	max50 := PlanKey(TierMax, 50)
+	plus1000 := PlanKey(TierPlus, 1000)
+
 	tests := []struct {
 		name       string
 		curPlan    Plan
@@ -30,33 +35,48 @@ func TestNextPlanState(t *testing.T) {
 	}{
 		{
 			name: "free to pro monthly", curPlan: PlanFree, curExpiry: nil,
-			buy: PlanPro, interval: BillingIntervalMonthly,
-			wantPlan: PlanPro, wantExpiry: now.AddDate(0, 1, 0),
+			buy: pro50, interval: BillingIntervalMonthly,
+			wantPlan: pro50, wantExpiry: now.AddDate(0, 1, 0),
 		},
 		{
-			name: "same tier active extends from expiry", curPlan: PlanPro, curExpiry: &future,
-			buy: PlanPro, interval: BillingIntervalMonthly,
-			wantPlan: PlanPro, wantExpiry: future.AddDate(0, 1, 0),
+			name: "same plan active extends from expiry", curPlan: pro50, curExpiry: &future,
+			buy: pro50, interval: BillingIntervalMonthly,
+			wantPlan: pro50, wantExpiry: future.AddDate(0, 1, 0),
 		},
 		{
-			name: "same tier expired extends from now", curPlan: PlanPro, curExpiry: &past,
-			buy: PlanPro, interval: BillingIntervalYearly,
-			wantPlan: PlanPro, wantExpiry: now.AddDate(1, 0, 0),
+			name: "same plan expired extends from now", curPlan: pro50, curExpiry: &past,
+			buy: pro50, interval: BillingIntervalYearly,
+			wantPlan: pro50, wantExpiry: now.AddDate(1, 0, 0),
 		},
 		{
-			name: "upgrade active resets from now", curPlan: PlanPro, curExpiry: &future,
-			buy: PlanEnterprise, interval: BillingIntervalMonthly,
-			wantPlan: PlanEnterprise, wantExpiry: now.AddDate(0, 1, 0),
+			name: "tier upgrade active resets from now", curPlan: pro50, curExpiry: &future,
+			buy: max50, interval: BillingIntervalMonthly,
+			wantPlan: max50, wantExpiry: now.AddDate(0, 1, 0),
 		},
 		{
-			name: "downgrade while active is blocked", curPlan: PlanEnterprise, curExpiry: &future,
-			buy: PlanPro, interval: BillingIntervalMonthly,
+			name: "size upgrade within tier resets from now", curPlan: pro50, curExpiry: &future,
+			buy: pro200, interval: BillingIntervalMonthly,
+			wantPlan: pro200, wantExpiry: now.AddDate(0, 1, 0),
+		},
+		{
+			name: "higher tier outranks bigger size of lower tier", curPlan: plus1000, curExpiry: &future,
+			buy: pro50, interval: BillingIntervalMonthly,
+			wantPlan: pro50, wantExpiry: now.AddDate(0, 1, 0),
+		},
+		{
+			name: "tier downgrade while active is blocked", curPlan: max50, curExpiry: &future,
+			buy: pro50, interval: BillingIntervalMonthly,
 			wantErr: true,
 		},
 		{
-			name: "downgrade allowed once expired", curPlan: PlanEnterprise, curExpiry: &past,
-			buy: PlanPro, interval: BillingIntervalMonthly,
-			wantPlan: PlanPro, wantExpiry: now.AddDate(0, 1, 0),
+			name: "size downgrade while active is blocked", curPlan: pro200, curExpiry: &future,
+			buy: pro50, interval: BillingIntervalMonthly,
+			wantErr: true,
+		},
+		{
+			name: "downgrade allowed once expired", curPlan: max50, curExpiry: &past,
+			buy: pro50, interval: BillingIntervalMonthly,
+			wantPlan: pro50, wantExpiry: now.AddDate(0, 1, 0),
 		},
 	}
 

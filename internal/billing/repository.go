@@ -253,7 +253,7 @@ func (r *repository) MarkReminderSent(ctx context.Context, rec *domain.BillingRe
 func (r *repository) OrgsWithExpiryBetween(ctx context.Context, from, to time.Time) ([]domain.Organization, error) {
 	var orgs []domain.Organization
 	if err := database.DB(ctx, r.db).
-		Where("plan <> ? AND plan_expires_at >= ? AND plan_expires_at < ?", domain.PlanFree, from, to).
+		Where(`plan NOT LIKE 'free\_%' AND plan_expires_at >= ? AND plan_expires_at < ?`, from, to).
 		Find(&orgs).Error; err != nil {
 		return nil, fmt.Errorf("billing.repository.OrgsWithExpiryBetween: %w", err)
 	}

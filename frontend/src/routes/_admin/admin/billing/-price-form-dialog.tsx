@@ -18,9 +18,10 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { rialToToman, tomanToRial } from "@/lib/billing"
+import { PAID_TIERS, PLAN_SIZES, planKey } from "@/lib/plan"
 
 const priceSchema = z.object({
-  plan: z.nativeEnum(Plan),
+  plan: z.string().min(1),
   interval: z.nativeEnum(BillingInterval),
   amount: z.number().int().positive(),
 })
@@ -49,7 +50,7 @@ export function PriceFormDialog({ open, onOpenChange, price }: PriceFormDialogPr
   } = useForm<PriceFormValues>({
     resolver: zodResolver(priceSchema),
     defaultValues: {
-      plan: Plan.PlanPro,
+      plan: planKey("pro", 50),
       interval: BillingInterval.BillingIntervalMonthly,
       amount: undefined as unknown as number,
     },
@@ -58,7 +59,7 @@ export function PriceFormDialog({ open, onOpenChange, price }: PriceFormDialogPr
   useEffect(() => {
     if (open) {
       reset({
-        plan: (price?.plan as Plan) ?? Plan.PlanPro,
+        plan: price?.plan ?? planKey("pro", 50),
         interval: (price?.interval as BillingInterval) ?? BillingInterval.BillingIntervalMonthly,
         amount: price?.amount ? rialToToman(price.amount) : (undefined as unknown as number),
       })
@@ -78,7 +79,7 @@ export function PriceFormDialog({ open, onOpenChange, price }: PriceFormDialogPr
   const onSubmit = handleSubmit((values) => {
     mutation.mutate({
       data: {
-        plan: values.plan,
+        plan: values.plan as Plan,
         interval: values.interval,
         amount: tomanToRial(values.amount),
         currency: "IRR",
@@ -89,10 +90,13 @@ export function PriceFormDialog({ open, onOpenChange, price }: PriceFormDialogPr
   const planValue = watch("plan")
   const intervalValue = watch("interval")
 
-  const planOptions = [
-    { value: Plan.PlanPro, label: t("admin.orgs.planLabels.pro") },
-    { value: Plan.PlanEnterprise, label: t("admin.orgs.planLabels.enterprise") },
-  ]
+  // Free tiers have no price row — only paid tier × size combos are sellable.
+  const planOptions = PAID_TIERS.flatMap((tier) =>
+    PLAN_SIZES.map((size) => ({
+      value: planKey(tier, size),
+      label: `${t(`plans.tiers.${tier}`)} — ${t("plans.sizeSuffix", { size })}`,
+    }))
+  )
   const intervalOptions = [
     { value: BillingInterval.BillingIntervalMonthly, label: t("billing.intervals.monthly") },
     { value: BillingInterval.BillingIntervalYearly, label: t("billing.intervals.yearly") },

@@ -86,7 +86,7 @@ func TestCreateRole(t *testing.T) {
 
 	permID := uuid.New()
 
-	caller := domain.Caller{UserID: uuid.New(), Ent: domain.PlanCatalog[domain.PlanPro]}
+	caller := domain.Caller{UserID: uuid.New(), Ent: domain.PlanCatalog[domain.PlanKey(domain.TierPro, 50)]}
 	ctx := domain.WithCaller(context.Background(), caller)
 
 	perms := []domain.Permission{{ID: permID, Name: "users:view"}}

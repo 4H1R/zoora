@@ -67,6 +67,57 @@ func TestAdminCreate_HashesPasswordAndHonorsFlags(t *testing.T) {
 	repo.AssertExpectations(t)
 }
 
+func TestAdminCreate_SetsRoleID(t *testing.T) {
+	ctx, _ := adminUserCtx()
+	orgID := uuid.New()
+	roleID := uuid.New()
+	repo := &mockUserRepo{}
+	repo.On("Create", ctx, mock.MatchedBy(func(u *domain.User) bool {
+		return u.RoleID != nil && *u.RoleID == roleID
+	})).Return(nil)
+
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, slog.Default())
+	user, err := svc.AdminCreate(ctx, domain.AdminCreateUserDTO{
+		OrganizationID: &orgID,
+		Username:       "u", Name: "X", Password: "Secret1A",
+		RoleID: &roleID,
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, roleID, *user.RoleID)
+	repo.AssertExpectations(t)
+}
+
+func TestAdminCreate_RejectsOrgScopedAdmin(t *testing.T) {
+	ctx, _ := adminUserCtx()
+	orgID := uuid.New()
+	repo := &mockUserRepo{}
+
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, slog.Default())
+	_, err := svc.AdminCreate(ctx, domain.AdminCreateUserDTO{
+		OrganizationID: &orgID,
+		Username:       "u", Name: "X", Password: "Secret1A",
+		IsAdmin:        true,
+	})
+	assert.ErrorIs(t, err, domain.ErrValidation)
+	repo.AssertNotCalled(t, "Create")
+}
+
+func TestAdminUpdate_RejectsOrgScopedAdmin(t *testing.T) {
+	ctx, _ := adminUserCtx()
+	orgID := uuid.New()
+	userID := uuid.New()
+	repo := &mockUserRepo{}
+	repo.On("FindByID", ctx, userID).Return(&domain.User{
+		ID: userID, OrganizationID: &orgID, Name: "Old",
+	}, nil)
+
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, slog.Default())
+	isAdmin := true
+	_, err := svc.AdminUpdate(ctx, userID, domain.AdminUpdateUserDTO{IsAdmin: &isAdmin})
+	assert.ErrorIs(t, err, domain.ErrValidation)
+	repo.AssertNotCalled(t, "Update")
+}
+
 func TestAdminCreate_Forbidden_WhenNotAdmin(t *testing.T) {
 	svc := users.NewService(&mockUserRepo{}, &mockRoleRepo{}, nil, nil, slog.Default())
 	_, err := svc.AdminCreate(nonAdminCtx(), domain.AdminCreateUserDTO{

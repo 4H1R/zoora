@@ -255,7 +255,7 @@ func TestSetPlanRequiresAdmin(t *testing.T) {
 
 	orgID := uuid.New()
 	nonAdmin := orgCaller(uuid.New(), &orgID, false)
-	_, err := svc.SetPlan(nonAdmin, orgID, domain.SetPlanDTO{Plan: domain.PlanPro})
+	_, err := svc.SetPlan(nonAdmin, orgID, domain.SetPlanDTO{Plan: domain.PlanKey(domain.TierPro, 50)})
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 	repo.AssertNotCalled(t, "UpdatePlan", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
@@ -277,14 +277,14 @@ func TestSetPlanPersistsAndReturnsOrg(t *testing.T) {
 	id := uuid.New()
 	exp := time.Unix(1_800_000_000, 0)
 	existing := &domain.Organization{ID: id, Name: "o", Slug: "s", Plan: domain.PlanFree}
-	updated := &domain.Organization{ID: id, Name: "o", Slug: "s", Plan: domain.PlanPro, PlanExpiresAt: &exp}
+	updated := &domain.Organization{ID: id, Name: "o", Slug: "s", Plan: domain.PlanKey(domain.TierPro, 50), PlanExpiresAt: &exp}
 
 	repo.On("FindByID", mock.Anything, id).Return(existing, nil).Once()
-	repo.On("UpdatePlan", mock.Anything, id, domain.PlanPro, &exp).Return(nil).Once()
+	repo.On("UpdatePlan", mock.Anything, id, domain.PlanKey(domain.TierPro, 50), &exp).Return(nil).Once()
 	repo.On("FindByID", mock.Anything, id).Return(updated, nil).Once()
 
-	got, err := svc.SetPlan(orgAdminCtx(), id, domain.SetPlanDTO{Plan: domain.PlanPro, ExpiresAt: &exp})
+	got, err := svc.SetPlan(orgAdminCtx(), id, domain.SetPlanDTO{Plan: domain.PlanKey(domain.TierPro, 50), ExpiresAt: &exp})
 	assert.NoError(t, err)
-	assert.Equal(t, domain.PlanPro, got.Plan)
+	assert.Equal(t, domain.PlanKey(domain.TierPro, 50), got.Plan)
 	repo.AssertExpectations(t)
 }

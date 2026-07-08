@@ -754,6 +754,7 @@ export * from './githubCom4H1RZooraInternalDomainPlanInfo';
 export * from './githubCom4H1RZooraInternalDomainPlanInfoFeatures';
 export * from './githubCom4H1RZooraInternalDomainPlanInfoLimits';
 export * from './githubCom4H1RZooraInternalDomainPlanPrice';
+export * from './githubCom4H1RZooraInternalDomainPlanTier';
 export * from './githubCom4H1RZooraInternalDomainPoll';
 export * from './githubCom4H1RZooraInternalDomainPollAnswer';
 export * from './githubCom4H1RZooraInternalDomainPollOption';

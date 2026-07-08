@@ -7,7 +7,7 @@ func TestCallerEntitlementHelpers(t *testing.T) {
 	if c.HasFeature(FeatureRecording) {
 		t.Fatal("free caller cannot record")
 	}
-	if c.Limit(LimitMaxUsers) != 10 {
-		t.Fatal("free caller max users = 10")
+	if c.Limit(LimitMaxUsers) != 50 {
+		t.Fatal("free caller max users = 50")
 	}
 }

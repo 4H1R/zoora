@@ -61,6 +61,7 @@ type AdminCreateUserDTO struct {
 	Name           string     `json:"name" binding:"required,min=2"`
 	Password       string     `json:"password" binding:"required,strongpassword"`
 	IsAdmin        bool       `json:"is_admin"`
+	RoleID         *uuid.UUID `json:"role_id"`
 }
 
 type AdminUpdateUserDTO struct {

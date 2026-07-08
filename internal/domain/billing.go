@@ -187,16 +187,34 @@ func (BillingReminderSent) TableName() string { return "billing_reminders_sent" 
 
 // ---- plan activation logic ----
 
-// planRank orders tiers for upgrade/downgrade comparison.
-func planRank(p Plan) int {
-	switch p {
-	case PlanEnterprise:
+// tierRank orders tiers for upgrade/downgrade comparison.
+func tierRank(t PlanTier) int {
+	switch t {
+	case TierMax:
+		return 4
+	case TierPro:
 		return 3
-	case PlanPro:
+	case TierPlus:
 		return 2
 	default: // free / unknown
 		return 1
 	}
+}
+
+// sizeRank orders member capacities (0 for unknown sizes).
+func sizeRank(size int64) int {
+	for i, s := range PlanSizes {
+		if s == size {
+			return i + 1
+		}
+	}
+	return 0
+}
+
+// planRank orders plans tier-first, size-second: any higher tier outranks any
+// size of a lower tier; within a tier, bigger capacity ranks higher.
+func planRank(p Plan) int {
+	return tierRank(p.Tier())*100 + sizeRank(p.Size())
 }
 
 // NextPlanState computes the (plan, expiry) an org should have after a
@@ -214,9 +232,9 @@ func NextPlanState(curPlan Plan, curExpiry *time.Time, buy Plan, interval Billin
 	if !interval.Valid() {
 		return "", time.Time{}, ErrInvalidInterval
 	}
-	// Effective current tier: expired plans behave as free.
+	// Effective current plan: expired plans behave as free.
 	effective := EffectiveEntitlements(curPlan, curExpiry, now).Plan
-	active := planRank(effective) > planRank(PlanFree)
+	active := effective.Tier() != TierFree
 
 	if planRank(buy) < planRank(effective) && active {
 		return "", time.Time{}, ErrDowngradeNotAllowed

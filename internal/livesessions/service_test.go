@@ -548,7 +548,7 @@ func teacherCtx() context.Context {
 	return domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      testTeacherID,
 		Permissions: []string{"live_sessions:manage", "live_sessions:create", "live_sessions:view", "live_sessions:update", "live_sessions:join"},
-		Ent:         domain.PlanCatalog[domain.PlanPro],
+		Ent:         domain.PlanCatalog[domain.PlanKey(domain.TierMax, 100)],
 	})
 }
 
@@ -564,6 +564,7 @@ func freeTeacherCtx() context.Context {
 func studentCtx() context.Context {
 	return domain.WithCaller(context.Background(), domain.Caller{
 		UserID: testStudentID,
+		Ent:    domain.PlanCatalog[domain.PlanKey(domain.TierPro, 50)],
 	})
 }
 

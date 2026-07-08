@@ -192,16 +192,7 @@ func callerCtx(userID uuid.UUID, isAdmin bool, perms ...string) context.Context 
 		UserID:      userID,
 		IsAdmin:     isAdmin,
 		Permissions: perms,
-		Ent:         domain.PlanCatalog[domain.PlanPro],
-	})
-}
-
-// freeCallerCtx builds a non-admin caller on the Free plan (no gated features).
-func freeCallerCtx(userID uuid.UUID, perms ...string) context.Context {
-	return domain.WithCaller(context.Background(), domain.Caller{
-		UserID:      userID,
-		Permissions: perms,
-		Ent:         domain.PlanCatalog[domain.PlanFree],
+		Ent:         domain.PlanCatalog[domain.PlanKey(domain.TierPro, 50)],
 	})
 }
 
@@ -231,28 +222,6 @@ func TestCreateRoom_Success(t *testing.T) {
 	assert.Equal(t, orgID, room.OrganizationID)
 	assert.Equal(t, userID, room.CreatorID)
 	roomRepo.AssertExpectations(t)
-}
-
-func TestCreateRoom_FreePlanRejected(t *testing.T) {
-	svc, roomRepo, _, sessionRepo, classRepo, _ := newTestService(t)
-
-	userID := uuid.New()
-	classID := uuid.New()
-	sessionID := uuid.New()
-	orgID := uuid.New()
-	ctx := freeCallerCtx(userID, "offlines:create")
-
-	sessionRepo.On("FindByID", ctx, sessionID).
-		Return(&domain.ClassSession{ID: sessionID, ClassID: classID}, nil)
-	classRepo.On("FindByID", ctx, classID).
-		Return(&domain.Class{ID: classID, OrganizationID: orgID, UserID: userID}, nil)
-
-	_, err := svc.CreateRoom(ctx, domain.CreateOfflineRoomDTO{
-		ClassSessionID: sessionID,
-		Title:          "Lecture 1 Recording",
-	})
-	assert.ErrorIs(t, err, domain.ErrFeatureNotInPlan)
-	roomRepo.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
 }
 
 func TestCreateRoom_NoCaller_Forbidden(t *testing.T) {

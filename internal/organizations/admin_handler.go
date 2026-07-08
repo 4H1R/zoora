@@ -181,7 +181,7 @@ func (h *AdminHandler) Plans(c *gin.Context) {
 
 // SetPlan assigns a subscription plan and optional expiry to an organization.
 // @Summary [Admin] Set organization plan
-// @Description Assign a subscription plan (free/pro/enterprise) and optional expiry. Omit expires_at for a perpetual plan; an expired plan downgrades to free.
+// @Description Assign a subscription plan ("<tier>_<size>", e.g. pro_200; tiers free/plus/pro/max × sizes 50/100/200/500/1000) and optional expiry. Omit expires_at for a perpetual plan; an expired plan downgrades to free_50.
 // @Tags Admin/Organizations
 // @Accept json
 // @Produce json

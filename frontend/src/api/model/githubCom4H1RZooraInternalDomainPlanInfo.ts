@@ -8,9 +8,12 @@
 import type { GithubCom4H1RZooraInternalDomainPlan } from './githubCom4H1RZooraInternalDomainPlan';
 import type { GithubCom4H1RZooraInternalDomainPlanInfoFeatures } from './githubCom4H1RZooraInternalDomainPlanInfoFeatures';
 import type { GithubCom4H1RZooraInternalDomainPlanInfoLimits } from './githubCom4H1RZooraInternalDomainPlanInfoLimits';
+import type { GithubCom4H1RZooraInternalDomainPlanTier } from './githubCom4H1RZooraInternalDomainPlanTier';
 
 export interface GithubCom4H1RZooraInternalDomainPlanInfo {
   features?: GithubCom4H1RZooraInternalDomainPlanInfoFeatures;
   limits?: GithubCom4H1RZooraInternalDomainPlanInfoLimits;
   plan?: GithubCom4H1RZooraInternalDomainPlan;
+  size?: number;
+  tier?: GithubCom4H1RZooraInternalDomainPlanTier;
 }

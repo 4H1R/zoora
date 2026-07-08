@@ -54,6 +54,9 @@ func (s *service) CreateLinkToken(ctx context.Context, t domain.ConnectorType) (
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
+	if !caller.IsAdmin && !caller.HasFeature(domain.FeatureConnectors) {
+		return nil, domain.NewFeatureError(caller.Ent.Plan, domain.FeatureConnectors)
+	}
 	var botUsername, deepLinkBase string
 	switch t {
 	case domain.ConnectorTelegram:
@@ -116,6 +119,9 @@ func (s *service) RequestSMSOTP(ctx context.Context, dto domain.RequestSMSOTPDTO
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return domain.ErrForbidden
+	}
+	if !caller.IsAdmin && !caller.HasFeature(domain.FeatureConnectors) {
+		return domain.NewFeatureError(caller.Ent.Plan, domain.FeatureConnectors)
 	}
 	if s.sms == nil {
 		return domain.NewValidationError(map[string]string{"phone": "SMS channel is not configured"})

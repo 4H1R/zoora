@@ -114,7 +114,10 @@ func adminCtx() context.Context {
 
 func memberCtx(userID uuid.UUID) context.Context {
 	orgID := uuid.New()
-	return domain.WithCaller(context.Background(), domain.Caller{UserID: userID, OrgID: &orgID})
+	return domain.WithCaller(context.Background(), domain.Caller{
+		UserID: userID, OrgID: &orgID,
+		Ent: domain.PlanCatalog[domain.PlanKey(domain.TierPro, 50)],
+	})
 }
 
 type noopTx struct{}

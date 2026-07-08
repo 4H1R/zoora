@@ -36,7 +36,7 @@ func NewInvoice(orgID uuid.UUID, opts ...func(*domain.Invoice)) *domain.Invoice 
 }
 
 func NewInvoiceItem(invoiceID uuid.UUID, opts ...func(*domain.InvoiceItem)) *domain.InvoiceItem {
-	plan := domain.PlanPro
+	plan := domain.PlanKey(domain.TierPro, 50)
 	interval := domain.BillingIntervalMonthly
 	item := &domain.InvoiceItem{
 		InvoiceID:   invoiceID,

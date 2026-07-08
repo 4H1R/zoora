@@ -36,13 +36,14 @@ func (f *fakeStore) DeleteObject(_ context.Context, key string) error {
 
 func TestRetentionSweep_DeletesExpiredKeepsFresh(t *testing.T) {
 	now := time.Date(2026, 7, 6, 0, 0, 0, 0, time.UTC)
-	proOld := uuid.New()   // Pro (30d retention), 31 days old -> delete
-	proFresh := uuid.New() // Pro, 29 days old -> keep
+	maxPlan := domain.PlanKey(domain.TierMax, 50)
+	maxOld := uuid.New()   // Max (365d retention), 366 days old -> delete
+	maxFresh := uuid.New() // Max, 364 days old -> keep
 	freeOld := uuid.New()  // Free (0 = keep forever), very old -> keep
 
 	repo := &fakeRetentionRepo{rows: []livesessions.RecordingWithPlan{
-		{ID: proOld, FileURL: "orgs/a/rec/old.mp4", StartedAt: now.AddDate(0, 0, -31), Plan: domain.PlanPro},
-		{ID: proFresh, FileURL: "orgs/a/rec/fresh.mp4", StartedAt: now.AddDate(0, 0, -29), Plan: domain.PlanPro},
+		{ID: maxOld, FileURL: "orgs/a/rec/old.mp4", StartedAt: now.AddDate(0, 0, -366), Plan: maxPlan},
+		{ID: maxFresh, FileURL: "orgs/a/rec/fresh.mp4", StartedAt: now.AddDate(0, 0, -364), Plan: maxPlan},
 		{ID: freeOld, FileURL: "orgs/b/rec/free.mp4", StartedAt: now.AddDate(-2, 0, 0), Plan: domain.PlanFree},
 	}}
 	store := &fakeStore{}
@@ -50,7 +51,7 @@ func TestRetentionSweep_DeletesExpiredKeepsFresh(t *testing.T) {
 
 	require.NoError(t, sweeper.Sweep(context.Background(), now))
 
-	assert.Equal(t, []uuid.UUID{proOld}, repo.deleted)
+	assert.Equal(t, []uuid.UUID{maxOld}, repo.deleted)
 	assert.Equal(t, []string{"orgs/a/rec/old.mp4"}, store.deletedKeys)
 }
 
@@ -60,9 +61,9 @@ func TestRetentionSweep_ExpiredPlanUsesFreeRetention(t *testing.T) {
 	rec := uuid.New()
 
 	repo := &fakeRetentionRepo{rows: []livesessions.RecordingWithPlan{
-		// Pro plan but expired -> effective Free (keep forever), so a 400-day-old
+		// Max plan but expired -> effective Free (keep forever), so a 400-day-old
 		// recording must NOT be deleted (grandfather).
-		{ID: rec, FileURL: "orgs/a/rec/x.mp4", StartedAt: now.AddDate(0, 0, -400), Plan: domain.PlanPro, PlanExpiresAt: &past},
+		{ID: rec, FileURL: "orgs/a/rec/x.mp4", StartedAt: now.AddDate(0, 0, -400), Plan: domain.PlanKey(domain.TierMax, 50), PlanExpiresAt: &past},
 	}}
 	store := &fakeStore{}
 	sweeper := livesessions.NewRetentionSweeper(repo, store, slog.Default())

@@ -10,7 +10,5 @@ export type GithubCom4H1RZooraInternalDomainPlan = typeof GithubCom4H1RZooraInte
 
 
 export const GithubCom4H1RZooraInternalDomainPlan = {
-  PlanFree: 'free',
-  PlanPro: 'pro',
-  PlanEnterprise: 'enterprise',
+  PlanFree: 'free_50',
 } as const;

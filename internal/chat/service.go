@@ -109,6 +109,9 @@ func (s *service) CreateChat(ctx context.Context, dto domain.CreateChatDTO) (*do
 	if !caller.IsAdmin && !caller.HasPermission(domain.PermChatsManage) {
 		return nil, domain.ErrForbidden
 	}
+	if !caller.IsAdmin && !caller.HasFeature(domain.FeatureChat) {
+		return nil, domain.NewFeatureError(caller.Ent.Plan, domain.FeatureChat)
+	}
 
 	modelID, _ := uuid.Parse(dto.ModelID)
 
@@ -283,6 +286,9 @@ func (s *service) SendMessage(ctx context.Context, chatID uuid.UUID, dto domain.
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
+	}
+	if !caller.IsAdmin && !caller.HasFeature(domain.FeatureChat) {
+		return nil, domain.NewFeatureError(caller.Ent.Plan, domain.FeatureChat)
 	}
 
 	chat, err := s.chatRepo.FindByID(ctx, chatID)

@@ -155,14 +155,14 @@ func TestBilling_Checkout_Activate_Idempotent_PDF(t *testing.T) {
 	// Seed a free-plan org and a Pro monthly price.
 	org := factory.NewOrganization(func(o *domain.Organization) { o.Plan = domain.PlanFree })
 	require.NoError(t, h.orgs.Create(base, org))
-	require.NoError(t, h.repo.UpsertPrice(base, factory.NewPlanPrice(domain.PlanPro, domain.BillingIntervalMonthly)))
+	require.NoError(t, h.repo.UpsertPrice(base, factory.NewPlanPrice(domain.PlanKey(domain.TierPro, 50), domain.BillingIntervalMonthly)))
 
 	// Caller: a manager of the org (Checkout only requires caller.OrgID != nil).
 	ctx := domain.WithCaller(base, domain.Caller{UserID: uuid.New(), OrgID: &org.ID})
 
 	// 1. Checkout -> pending invoice + gateway attempt.
 	res, err := h.svc.Checkout(ctx, domain.CheckoutDTO{
-		Plan:     domain.PlanPro,
+		Plan:     domain.PlanKey(domain.TierPro, 50),
 		Interval: domain.BillingIntervalMonthly,
 		Gateway:  domain.GatewayZarinpal,
 	})
@@ -185,7 +185,7 @@ func TestBilling_Checkout_Activate_Idempotent_PDF(t *testing.T) {
 	// 3. Org activated to Pro, expiry ~ now + 1 month.
 	gotOrg, err := h.orgs.FindByID(base, org.ID)
 	require.NoError(t, err)
-	assert.Equal(t, domain.PlanPro, gotOrg.Plan)
+	assert.Equal(t, domain.PlanKey(domain.TierPro, 50), gotOrg.Plan)
 	require.NotNil(t, gotOrg.PlanExpiresAt)
 	wantExpiry := time.Now().AddDate(0, 1, 0)
 	assert.WithinDuration(t, wantExpiry, *gotOrg.PlanExpiresAt, 24*time.Hour)
@@ -226,7 +226,7 @@ func TestBilling_ReminderDedup(t *testing.T) {
 	expiry := now.AddDate(0, 0, 7) // exactly 7 days ahead -> renewal_7d stage
 
 	org := factory.NewOrganization(func(o *domain.Organization) {
-		o.Plan = domain.PlanPro
+		o.Plan = domain.PlanKey(domain.TierPro, 50)
 		o.PlanExpiresAt = &expiry
 	})
 	require.NoError(t, h.orgs.Create(base, org))

@@ -18,9 +18,10 @@ import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
 import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { PLAN_SIZES, PLAN_TIERS, planKey, planSize, planTier } from "@/lib/plan"
 
 const planSchema = z.object({
-  plan: z.nativeEnum(Plan),
+  plan: z.string().min(1),
   expires_at: z.string().optional(),
 })
 
@@ -48,13 +49,13 @@ export function PlanFormDialog({ open, onOpenChange, organization }: PlanFormDia
     formState: { errors },
   } = useForm<PlanFormValues>({
     resolver: zodResolver(planSchema),
-    defaultValues: { plan: Plan.PlanFree, expires_at: "" },
+    defaultValues: { plan: Plan.PlanFree as string, expires_at: "" },
   })
 
   useEffect(() => {
     if (open) {
       reset({
-        plan: (organization?.plan as Plan) ?? Plan.PlanFree,
+        plan: organization?.plan ?? Plan.PlanFree,
         expires_at: organization?.plan_expires_at ?? "",
       })
     }
@@ -75,16 +76,17 @@ export function PlanFormDialog({ open, onOpenChange, organization }: PlanFormDia
     if (!organization?.id) return
     mutation.mutate({
       id: organization.id,
-      data: { plan: values.plan, expires_at: values.expires_at || undefined },
+      data: { plan: values.plan as Plan, expires_at: values.expires_at || undefined },
     })
   })
 
   const planValue = watch("plan")
-  const planOptions = [
-    { value: Plan.PlanFree, label: t("admin.orgs.planLabels.free") },
-    { value: Plan.PlanPro, label: t("admin.orgs.planLabels.pro") },
-    { value: Plan.PlanEnterprise, label: t("admin.orgs.planLabels.enterprise") },
-  ]
+  const planOptions = PLAN_TIERS.flatMap((tier) =>
+    PLAN_SIZES.map((size) => ({
+      value: planKey(tier, size),
+      label: `${t(`plans.tiers.${tier}`)} — ${t("plans.sizeSuffix", { size })}`,
+    }))
+  )
 
   return (
     <ResourceFormDialog
@@ -102,12 +104,14 @@ export function PlanFormDialog({ open, onOpenChange, organization }: PlanFormDia
           <Select
             value={planValue ?? null}
             onValueChange={(val) => {
-              if (val) setValue("plan", val as Plan)
+              if (val) setValue("plan", val)
             }}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder={t("admin.orgs.plan.planPlaceholder")}>
-                {(value: Plan) => t(`admin.orgs.planLabels.${value}`, { defaultValue: value })}
+                {(value: string) =>
+                  `${t(`plans.tiers.${planTier(value)}`)} — ${t("plans.sizeSuffix", { size: planSize(value) })}`
+                }
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
