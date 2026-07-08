@@ -295,6 +295,7 @@ type BillingRepository interface {
 	// invoices
 	CreateInvoice(ctx context.Context, inv *Invoice) error
 	FindInvoiceByID(ctx context.Context, id uuid.UUID) (*Invoice, error)
+	FindInvoiceByIDForUpdate(ctx context.Context, id uuid.UUID) (*Invoice, error)
 	UpdateInvoice(ctx context.Context, inv *Invoice) error
 	ListInvoices(ctx context.Context, orgID uuid.UUID, q ListInvoicesQuery) ([]Invoice, int64, error)
 	AdminListInvoices(ctx context.Context, q AdminListInvoicesQuery) ([]Invoice, int64, error)

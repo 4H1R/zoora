@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/platform/database"
@@ -101,6 +102,22 @@ func (r *repository) FindInvoiceByID(ctx context.Context, id uuid.UUID) (*domain
 			return nil, domain.ErrNotFound
 		}
 		return nil, fmt.Errorf("billing.repository.FindInvoiceByID: %w", err)
+	}
+	return &inv, nil
+}
+
+func (r *repository) FindInvoiceByIDForUpdate(ctx context.Context, id uuid.UUID) (*domain.Invoice, error) {
+	var inv domain.Invoice
+	err := database.DB(ctx, r.db).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Preload("Items").
+		Preload("Payments").
+		First(&inv, "id = ?", id).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("billing.repository.FindInvoiceByIDForUpdate: %w", err)
 	}
 	return &inv, nil
 }

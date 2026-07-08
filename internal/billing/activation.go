@@ -14,12 +14,13 @@ import (
 // in one transaction. Idempotent: if inv is already paid it is a no-op (returns
 // the invoice unchanged).
 //
-// Callers MUST pass a freshly-loaded invoice; the function re-checks status
-// under the row lock to close the double-callback race.
+// The function re-checks the invoice status under a row lock to close the
+// double-callback race: two concurrent gateway callbacks cannot both read
+// status 'pending' and both call UpdatePlan.
 func (s *service) markPaidAndActivate(ctx context.Context, invoiceID uuid.UUID, now time.Time) (*domain.Invoice, error) {
 	var result *domain.Invoice
 	err := s.repo.WithTx(ctx, func(ctx context.Context) error {
-		inv, err := s.repo.FindInvoiceByID(ctx, invoiceID)
+		inv, err := s.repo.FindInvoiceByIDForUpdate(ctx, invoiceID)
 		if err != nil {
 			return err
 		}
