@@ -38,6 +38,7 @@ var (
 	ErrInvoiceNotPayable   = errors.New("invoice is not in a payable state")
 	ErrAmountMismatch      = errors.New("payment amount does not match invoice")
 	ErrInvoiceNotDraft     = errors.New("invoice is not a draft")
+	ErrGatewayNotFound     = errors.New("payment gateway not supported")
 )
 
 // PlanError carries machine-readable context for a plan/entitlement gate so the
@@ -143,6 +144,8 @@ func MapError(err error) (int, string) {
 		return http.StatusConflict, "INVOICE_STATE_INVALID"
 	case errors.Is(err, ErrAmountMismatch):
 		return http.StatusBadRequest, "AMOUNT_MISMATCH"
+	case errors.Is(err, ErrGatewayNotFound):
+		return http.StatusBadRequest, "GATEWAY_NOT_SUPPORTED"
 	case errors.Is(err, ErrRateLimited):
 		return http.StatusTooManyRequests, "RATE_LIMITED"
 	case errors.Is(err, ErrValidation):
