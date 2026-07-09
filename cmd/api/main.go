@@ -186,12 +186,6 @@ func main() {
 	chatBridge := chathub.NewBridge(chatHub, redisClient, log)
 	go chatBridge.Run(context.Background())
 
-	conversationService := conversations.NewService(
-		convRepo, convMemberRepo, convMessageRepo, convReactionRepo, convMentionRepo,
-		transactor, log,
-		chatBridge, // broadcaster (implements ToConversation/ToUser)
-		nil,        // notifier — Phase 3
-	)
 	pollService := polls.NewService(pollRepo, pollAnswerRepo, log)
 	qaAuthorizer := livesessions.NewModelAuthorizer(liveRoomRepo, classSessionRepo, classRepo, classMemberRepo)
 	qaBroadcaster := qa.NewBroadcaster(livekitClient, liveRoomRepo, log)
@@ -309,6 +303,17 @@ func main() {
 	)
 	notificationHandler := notifications.NewHandler(notificationService)
 	notificationHandler.RegisterRoutes(v1, authMiddleware)
+
+	convNotifier := conversations.NewNotifier(notificationService, convMemberRepo)
+	convUserLookup := conversations.NewUserOrgLookup(userRepo)
+	conversationService := conversations.NewService(
+		convRepo, convMemberRepo, convMessageRepo, convReactionRepo, convMentionRepo,
+		transactor, log,
+		chatBridge,     // broadcaster (implements ToConversation/ToUser)
+		convNotifier,   // notifier (SendSystem fan-out)
+		convUserLookup, // userLookup (cross-org DM/member guard)
+		mediaRepo,      // mediaLookup (attachment validation on send)
+	)
 
 	// --- billing ---
 	zpBase := "https://payment.zarinpal.com"

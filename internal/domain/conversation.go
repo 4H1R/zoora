@@ -92,6 +92,13 @@ type ConversationMessageReaction struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type ConversationMention struct {
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	MessageID uuid.UUID `gorm:"type:uuid;not null;index" json:"message_id"`
+	UserID    uuid.UUID `gorm:"type:uuid;not null;index" json:"user_id"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 // ---- DTOs ----
 
 type CreateConversationDTO struct {
@@ -190,6 +197,9 @@ type ConversationMessageRepository interface {
 	SetPinned(ctx context.Context, id uuid.UUID, pinned bool, by *uuid.UUID, at *time.Time) error
 	// SearchInConversation: ILIKE nav search (Phase 3 adds full-text global).
 	SearchInConversation(ctx context.Context, convID uuid.UUID, q string, limit int) ([]ConversationMessage, error)
+	// SearchGlobal: ranked full-text search across all conversations the user
+	// is a member of, org-scoped.
+	SearchGlobal(ctx context.Context, orgID, userID uuid.UUID, q string, limit int) ([]ConversationMessage, error)
 }
 
 type ConversationReactionRepository interface {
@@ -228,4 +238,10 @@ type ConversationService interface {
 	PinMessage(ctx context.Context, msgID uuid.UUID) error
 	UnpinMessage(ctx context.Context, msgID uuid.UUID) error
 	ListPinned(ctx context.Context, convID uuid.UUID) ([]ConversationMessage, error)
+
+	// Search performs a global ranked full-text search across all
+	// conversations the caller is a member of.
+	Search(ctx context.Context, q string, limit int) ([]ConversationMessage, error)
+	// SearchInConversation performs an in-conversation ILIKE nav search.
+	SearchInConversation(ctx context.Context, convID uuid.UUID, q string, limit int) ([]ConversationMessage, error)
 }

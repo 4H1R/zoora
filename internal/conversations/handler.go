@@ -39,6 +39,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		authed.GET("/conversations", perm(domain.PermConversationsView), h.List)
 		authed.POST("/conversations", perm(domain.PermConversationsView), h.Create) // group/channel (service enforces manage)
 		authed.POST("/conversations/direct", perm(domain.PermConversationsView), h.CreateDirect)
+		authed.GET("/conversations/search", perm(domain.PermConversationsView), h.Search) // global ?q= (registered before /:id so gin's tree matches the static segment first)
 		authed.GET("/conversations/:id", perm(domain.PermConversationsView), id, h.Get)
 		authed.PATCH("/conversations/:id", perm(domain.PermConversationsView), id, h.Update)
 		authed.DELETE("/conversations/:id", perm(domain.PermConversationsView), id, h.Delete)
@@ -53,6 +54,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		authed.GET("/conversations/:id/messages", perm(domain.PermConversationsView), id, h.ListMessages)
 		authed.POST("/conversations/:id/messages", perm(domain.PermConversationsView), id, h.SendMessage)
 		authed.GET("/conversations/:id/pins", perm(domain.PermConversationsView), id, h.ListPinned)
+		authed.GET("/conversations/:id/search", perm(domain.PermConversationsView), id, h.SearchInConv) // nav ?q=
 
 		authed.PATCH("/conversations/messages/:messageId", perm(domain.PermConversationsView), msgID, h.EditMessage)
 		authed.DELETE("/conversations/messages/:messageId", perm(domain.PermConversationsView), msgID, h.DeleteMessage)
@@ -104,6 +106,21 @@ func parseCursor(c *gin.Context) domain.MessageCursor {
 }
 
 // List returns conversations the caller is a member of.
+// @Summary List conversations
+// @Description Returns conversations the caller is a member of, newest-activity first. Search matches substrings of: name. Orderable fields: updated_at, created_at, name.
+// @Tags Conversations
+// @Produce json
+// @Security BearerAuth
+// @Param type query string false "Filter by type: direct, group, channel"
+// @Param search query string false "Substring match on name"
+// @Param order_by query string false "One of: updated_at, created_at, name"
+// @Param order_dir query string false "asc or desc"
+// @Param page query int false "1-based page number"
+// @Param page_size query int false "Items per page"
+// @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.Conversation}}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations [get]
 func (h *Handler) List(c *gin.Context) {
 	p := listparams.Bind(c, conversationsListConfig)
 	q := domain.ListConversationsQuery{ListParams: p}
@@ -120,6 +137,18 @@ func (h *Handler) List(c *gin.Context) {
 
 // Create creates a group or channel conversation. The service enforces that
 // only org admins / PermConversationsManage holders may do so.
+// @Summary Create group or channel conversation
+// @Description Only org admins or PermConversationsManage holders may create a group/channel; the service enforces this beyond the route's PermConversationsView gate.
+// @Tags Conversations
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body domain.CreateConversationDTO true "Conversation data"
+// @Success 201 {object} domain.Response{data=domain.Conversation}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations [post]
 func (h *Handler) Create(c *gin.Context) {
 	var dto domain.CreateConversationDTO
 	if err := httpx.Bind(c, &dto); err != nil {
@@ -136,6 +165,18 @@ func (h *Handler) Create(c *gin.Context) {
 
 // CreateDirect creates (or returns the existing) direct conversation between
 // the caller and another user.
+// @Summary Create or get direct conversation
+// @Description Idempotent: repeated calls with the same user_id return the same DM. Rejects self-DMs and, when the other user resolves to a different org, cross-org DMs.
+// @Tags Conversations
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body domain.CreateDirectDTO true "Other user"
+// @Success 201 {object} domain.Response{data=domain.Conversation}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/direct [post]
 func (h *Handler) CreateDirect(c *gin.Context) {
 	var dto domain.CreateDirectDTO
 	if err := httpx.Bind(c, &dto); err != nil {
@@ -151,6 +192,16 @@ func (h *Handler) CreateDirect(c *gin.Context) {
 }
 
 // Get returns a single conversation the caller is a member of.
+// @Summary Get conversation
+// @Tags Conversations
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Conversation UUID"
+// @Success 200 {object} domain.Response{data=domain.Conversation}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/{id} [get]
 func (h *Handler) Get(c *gin.Context) {
 	conv, err := h.svc.Get(c.Request.Context(), httpx.UUIDParam(c, "id"))
 	if err != nil {
@@ -161,6 +212,20 @@ func (h *Handler) Get(c *gin.Context) {
 }
 
 // Update updates a conversation's metadata.
+// @Summary Update conversation
+// @Description Platform admins, same-org PermConversationsManage holders, and conversation-admin members may update; plain members may not.
+// @Tags Conversations
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Conversation UUID"
+// @Param body body domain.UpdateConversationDTO true "Update data"
+// @Success 200 {object} domain.Response{data=domain.Conversation}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/{id} [patch]
 func (h *Handler) Update(c *gin.Context) {
 	var dto domain.UpdateConversationDTO
 	if err := httpx.Bind(c, &dto); err != nil {
@@ -176,6 +241,16 @@ func (h *Handler) Update(c *gin.Context) {
 }
 
 // Delete hard-deletes a conversation and cascades its members/messages.
+// @Summary Delete conversation
+// @Tags Conversations
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Conversation UUID"
+// @Success 200 {object} domain.Response
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/{id} [delete]
 func (h *Handler) Delete(c *gin.Context) {
 	if err := h.svc.Delete(c.Request.Context(), httpx.UUIDParam(c, "id")); err != nil {
 		_ = c.Error(err)
@@ -185,6 +260,16 @@ func (h *Handler) Delete(c *gin.Context) {
 }
 
 // ListMembers lists a conversation's roster.
+// @Summary List conversation members
+// @Tags Conversations
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Conversation UUID"
+// @Success 200 {object} domain.Response{data=[]domain.ConversationMember}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/{id}/members [get]
 func (h *Handler) ListMembers(c *gin.Context) {
 	members, err := h.svc.ListMembers(c.Request.Context(), httpx.UUIDParam(c, "id"))
 	if err != nil {
@@ -195,6 +280,20 @@ func (h *Handler) ListMembers(c *gin.Context) {
 }
 
 // AddMember adds a user to a group/channel conversation.
+// @Summary Add conversation member
+// @Description Platform admins, same-org PermConversationsManage holders, and conversation-admin members may add; the user must resolve to the caller's org.
+// @Tags Conversations
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Conversation UUID"
+// @Param body body domain.AddConversationMemberDTO true "User to add"
+// @Success 201 {object} domain.Response{data=domain.ConversationMember}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/{id}/members [post]
 func (h *Handler) AddMember(c *gin.Context) {
 	var dto domain.AddConversationMemberDTO
 	if err := httpx.Bind(c, &dto); err != nil {
@@ -210,6 +309,17 @@ func (h *Handler) AddMember(c *gin.Context) {
 }
 
 // RemoveMember removes a user from a conversation.
+// @Summary Remove conversation member
+// @Tags Conversations
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Conversation UUID"
+// @Param userId path string true "User UUID"
+// @Success 200 {object} domain.Response
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/{id}/members/{userId} [delete]
 func (h *Handler) RemoveMember(c *gin.Context) {
 	if err := h.svc.RemoveMember(c.Request.Context(), httpx.UUIDParam(c, "id"), httpx.UUIDParam(c, "userId")); err != nil {
 		_ = c.Error(err)
@@ -219,6 +329,16 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 }
 
 // Leave removes the caller from a conversation.
+// @Summary Leave conversation
+// @Tags Conversations
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Conversation UUID"
+// @Success 200 {object} domain.Response
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/{id}/leave [post]
 func (h *Handler) Leave(c *gin.Context) {
 	if err := h.svc.Leave(c.Request.Context(), httpx.UUIDParam(c, "id")); err != nil {
 		_ = c.Error(err)
@@ -228,6 +348,19 @@ func (h *Handler) Leave(c *gin.Context) {
 }
 
 // MarkRead advances the caller's read cursor for a conversation.
+// @Summary Mark conversation read
+// @Tags Conversations
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Conversation UUID"
+// @Param body body domain.MarkReadDTO true "Last-read message"
+// @Success 200 {object} domain.Response
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/{id}/read [post]
 func (h *Handler) MarkRead(c *gin.Context) {
 	var dto domain.MarkReadDTO
 	if err := httpx.Bind(c, &dto); err != nil {
@@ -248,6 +381,20 @@ type setMutedDTO struct {
 
 // SetMuted mutes/unmutes the caller's notifications for a conversation until
 // the given time (nil clears the mute).
+// @Summary Mute/unmute conversation
+// @Description Sets the caller's muted_until for this conversation; omit or set null muted_until to unmute. Muted members are skipped by notification fan-out.
+// @Tags Conversations
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Conversation UUID"
+// @Param body body setMutedDTO true "Mute settings"
+// @Success 200 {object} domain.Response
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/{id}/mute [post]
 func (h *Handler) SetMuted(c *gin.Context) {
 	var dto setMutedDTO
 	if err := httpx.Bind(c, &dto); err != nil {
@@ -262,6 +409,21 @@ func (h *Handler) SetMuted(c *gin.Context) {
 }
 
 // ListMessages returns a keyset window of messages in a conversation.
+// @Summary List conversation messages
+// @Description Keyset-paginated message window. Exactly one of before/after/around may be set; none returns the latest page. Each message's reactions map is populated (Step 11 serialization); media_ids are returned raw for the client to resolve.
+// @Tags Conversations
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Conversation UUID"
+// @Param limit query int false "Page size (default 50, max 100)"
+// @Param before query string false "Message UUID: return messages before this one"
+// @Param after query string false "Message UUID: return messages after this one"
+// @Param around query string false "Message UUID: return messages around this one"
+// @Success 200 {object} domain.Response{data=[]domain.ConversationMessage}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/{id}/messages [get]
 func (h *Handler) ListMessages(c *gin.Context) {
 	cur := parseCursor(c)
 	msgs, err := h.svc.ListMessages(c.Request.Context(), httpx.UUIDParam(c, "id"), cur)
@@ -273,6 +435,20 @@ func (h *Handler) ListMessages(c *gin.Context) {
 }
 
 // SendMessage posts a new message to a conversation.
+// @Summary Send conversation message
+// @Description Channels require the sender to be a conversation admin (or platform admin / PermConversationsManage). media_ids must reference media rows already presigned via POST /media/presign with model_type=conversation, model_id=<this conversation>; otherwise the send is rejected. mentions must reference conversation members (non-members and self are silently dropped).
+// @Tags Conversations
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Conversation UUID"
+// @Param body body domain.SendConversationMessageDTO true "Message data"
+// @Success 201 {object} domain.Response{data=domain.ConversationMessage}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/{id}/messages [post]
 func (h *Handler) SendMessage(c *gin.Context) {
 	var dto domain.SendConversationMessageDTO
 	if err := httpx.Bind(c, &dto); err != nil {
@@ -288,6 +464,16 @@ func (h *Handler) SendMessage(c *gin.Context) {
 }
 
 // ListPinned returns the pinned messages of a conversation.
+// @Summary List pinned messages
+// @Tags Conversations
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Conversation UUID"
+// @Success 200 {object} domain.Response{data=[]domain.ConversationMessage}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/{id}/pins [get]
 func (h *Handler) ListPinned(c *gin.Context) {
 	msgs, err := h.svc.ListPinned(c.Request.Context(), httpx.UUIDParam(c, "id"))
 	if err != nil {
@@ -298,6 +484,19 @@ func (h *Handler) ListPinned(c *gin.Context) {
 }
 
 // EditMessage updates a message's content. Sender or a conversation admin.
+// @Summary Edit message
+// @Tags Conversations
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param messageId path string true "Message UUID"
+// @Param body body domain.UpdateConversationMessageDTO true "Update data"
+// @Success 200 {object} domain.Response{data=domain.ConversationMessage}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/messages/{messageId} [patch]
 func (h *Handler) EditMessage(c *gin.Context) {
 	var dto domain.UpdateConversationMessageDTO
 	if err := httpx.Bind(c, &dto); err != nil {
@@ -313,6 +512,16 @@ func (h *Handler) EditMessage(c *gin.Context) {
 }
 
 // DeleteMessage hard-deletes a message. Sender or a conversation admin.
+// @Summary Delete message
+// @Tags Conversations
+// @Produce json
+// @Security BearerAuth
+// @Param messageId path string true "Message UUID"
+// @Success 200 {object} domain.Response
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/messages/{messageId} [delete]
 func (h *Handler) DeleteMessage(c *gin.Context) {
 	if err := h.svc.DeleteMessage(c.Request.Context(), httpx.UUIDParam(c, "messageId")); err != nil {
 		_ = c.Error(err)
@@ -322,6 +531,20 @@ func (h *Handler) DeleteMessage(c *gin.Context) {
 }
 
 // ToggleReaction adds/removes the caller's reaction emoji on a message.
+// @Summary Toggle message reaction
+// @Description Adds the caller's emoji reaction if not present, removes it if already present. Returns the message with a fresh reaction count map.
+// @Tags Conversations
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param messageId path string true "Message UUID"
+// @Param body body domain.ToggleConversationReactionDTO true "Emoji"
+// @Success 200 {object} domain.Response{data=domain.ConversationMessage}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/messages/{messageId}/reactions [post]
 func (h *Handler) ToggleReaction(c *gin.Context) {
 	var dto domain.ToggleConversationReactionDTO
 	if err := httpx.Bind(c, &dto); err != nil {
@@ -337,6 +560,16 @@ func (h *Handler) ToggleReaction(c *gin.Context) {
 }
 
 // Pin pins a message. Conversation-manage authz.
+// @Summary Pin message
+// @Tags Conversations
+// @Produce json
+// @Security BearerAuth
+// @Param messageId path string true "Message UUID"
+// @Success 200 {object} domain.Response
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/messages/{messageId}/pin [post]
 func (h *Handler) Pin(c *gin.Context) {
 	if err := h.svc.PinMessage(c.Request.Context(), httpx.UUIDParam(c, "messageId")); err != nil {
 		_ = c.Error(err)
@@ -346,10 +579,79 @@ func (h *Handler) Pin(c *gin.Context) {
 }
 
 // Unpin unpins a message. Conversation-manage authz.
+// @Summary Unpin message
+// @Tags Conversations
+// @Produce json
+// @Security BearerAuth
+// @Param messageId path string true "Message UUID"
+// @Success 200 {object} domain.Response
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/messages/{messageId}/unpin [post]
 func (h *Handler) Unpin(c *gin.Context) {
 	if err := h.svc.UnpinMessage(c.Request.Context(), httpx.UUIDParam(c, "messageId")); err != nil {
 		_ = c.Error(err)
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, nil)
+}
+
+// searchLimit parses the optional ?limit= query param, returning 0 (service
+// default) if absent/invalid.
+func searchLimit(c *gin.Context) int {
+	if v := c.Query("limit"); v != "" {
+		if n, err := parsePositiveInt(v); err == nil {
+			return n
+		}
+	}
+	return 0
+}
+
+// Search performs a global ranked full-text search across every conversation
+// the caller is a member of.
+// @Summary Search messages (global)
+// @Description Postgres full-text search, ranked, across every conversation the caller is a member of (org-scoped). Requires q of at least 3 characters.
+// @Tags Conversations
+// @Produce json
+// @Security BearerAuth
+// @Param q query string true "Search query (min 3 characters)"
+// @Param limit query int false "Max results (service default applies if omitted)"
+// @Success 200 {object} domain.Response{data=[]domain.ConversationMessage}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/search [get]
+func (h *Handler) Search(c *gin.Context) {
+	q := c.Query("q")
+	msgs, err := h.svc.Search(c.Request.Context(), q, searchLimit(c))
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, msgs)
+}
+
+// SearchInConv performs an in-conversation nav search.
+// @Summary Search messages (in conversation)
+// @Description ILIKE substring nav search within a single conversation, gated on membership.
+// @Tags Conversations
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Conversation UUID"
+// @Param q query string true "Search query"
+// @Param limit query int false "Max results (service default applies if omitted)"
+// @Success 200 {object} domain.Response{data=[]domain.ConversationMessage}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/{id}/search [get]
+func (h *Handler) SearchInConv(c *gin.Context) {
+	q := c.Query("q")
+	msgs, err := h.svc.SearchInConversation(c.Request.Context(), httpx.UUIDParam(c, "id"), q, searchLimit(c))
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, msgs)
 }

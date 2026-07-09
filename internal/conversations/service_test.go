@@ -3,7 +3,9 @@ package conversations_test
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"sort"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -443,6 +445,47 @@ func (r fakeMessageRepo) SearchInConversation(_ context.Context, convID uuid.UUI
 	return out, nil
 }
 
+// SearchGlobal is a minimal fake: it ignores ranking (no FTS engine in the
+// in-memory store) and just filters org-scoped, member-visible messages
+// whose content contains q, newest-first, capped at limit. Good enough for
+// the existing unit test suite, which does not exercise Search directly.
+func (r fakeMessageRepo) SearchGlobal(_ context.Context, orgID, userID uuid.UUID, q string, limit int) ([]domain.ConversationMessage, error) {
+	r.s.mu.Lock()
+	defer r.s.mu.Unlock()
+	if limit <= 0 || limit > 100 {
+		limit = 30
+	}
+	var out []domain.ConversationMessage
+	for _, convID := range r.s.convOrder {
+		conv := r.s.convs[convID]
+		if conv.OrganizationID != orgID {
+			continue
+		}
+		isMember := false
+		for _, m := range r.s.members[convID] {
+			if m.UserID == userID {
+				isMember = true
+				break
+			}
+		}
+		if !isMember {
+			continue
+		}
+		order := r.s.msgOrder[convID]
+		for i := len(order) - 1; i >= 0; i-- {
+			m := r.s.msgs[order[i]]
+			if q != "" && !strings.Contains(m.Content, q) {
+				continue
+			}
+			out = append(out, m)
+			if len(out) >= limit {
+				return out, nil
+			}
+		}
+	}
+	return out, nil
+}
+
 // ---- reaction repo ----
 
 type fakeReactionRepo struct{ s *fakeStore }
@@ -519,8 +562,176 @@ func newTestService(_ *testing.T) (domain.ConversationService, *fakeStore) {
 		nil, // logger left nil to catch accidental use in Phase 1 methods; wire slog.Default() if a method needs logging
 		nil, // broadcaster: wired in Phase 2
 		nil, // notifier: wired in Phase 3
+		nil, // userLookup: wired in Phase 3 — nil skips cross-org checks in unit tests
+		nil, // mediaLookup: wired in Phase 3 — nil skips attachment validation in unit tests
 	)
 	return svc, s
+}
+
+// ---- Step 12: fakes for the mention/notify/userLookup/media ports ----
+//
+// These back the Phase 3 coverage below (mention persistence, notification
+// fan-out incl. mute-gating, media validation). Kept separate from the four
+// repo fakes above since only a handful of tests need them.
+
+// mentionCall records one ConversationMentionRepository.CreateMany invocation.
+type mentionCall struct {
+	messageID uuid.UUID
+	userIDs   []uuid.UUID
+}
+
+type fakeMentionRepo struct {
+	mu    sync.Mutex
+	calls []mentionCall
+}
+
+func (f *fakeMentionRepo) CreateMany(_ context.Context, messageID uuid.UUID, userIDs []uuid.UUID) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	ids := append([]uuid.UUID(nil), userIDs...)
+	f.calls = append(f.calls, mentionCall{messageID: messageID, userIDs: ids})
+	return nil
+}
+
+// notifyCall records one notifier.NotifyMessage invocation (the service's
+// port, not the concrete conversations.Notifier).
+type notifyCall struct {
+	convID     uuid.UUID
+	recipients []uuid.UUID
+}
+
+// fakeNotifier stands in for the service's notifier port directly — it
+// records recipients as resolved by the SERVICE (DM/channel = all-but-sender,
+// group = mentioned-only) without exercising the real Notifier's mute
+// filtering. Use conversations.NewNotifier + fakeNotificationService (below)
+// for tests that need mute-gating.
+type fakeNotifier struct {
+	mu    sync.Mutex
+	calls []notifyCall
+}
+
+func (f *fakeNotifier) NotifyMessage(_ context.Context, conv *domain.Conversation, _ *domain.ConversationMessage, recipientIDs []uuid.UUID) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	ids := append([]uuid.UUID(nil), recipientIDs...)
+	f.calls = append(f.calls, notifyCall{convID: conv.ID, recipients: ids})
+	return nil
+}
+
+// fakeUserLookup backs the service's userLookup port for tests that need
+// cross-org resolution to succeed for specific users (nil map entries look
+// up as domain.ErrNotFound, mirroring "user does not exist").
+type fakeUserLookup struct {
+	orgs map[uuid.UUID]uuid.UUID // userID -> orgID
+}
+
+func (f *fakeUserLookup) OrgID(_ context.Context, userID uuid.UUID) (*uuid.UUID, error) {
+	if org, ok := f.orgs[userID]; ok {
+		o := org
+		return &o, nil
+	}
+	return nil, domain.ErrNotFound
+}
+
+// fakeMediaLookup backs the service's mediaLookup port for the attachment
+// validation tests.
+type fakeMediaLookup struct {
+	items map[uuid.UUID]domain.Media
+}
+
+func (f *fakeMediaLookup) FindByID(_ context.Context, id uuid.UUID) (*domain.Media, error) {
+	if m, ok := f.items[id]; ok {
+		cp := m
+		return &cp, nil
+	}
+	return nil, domain.ErrNotFound
+}
+
+// fakeNotificationService implements domain.NotificationService by embedding
+// a nil interface and overriding only SendSystem — the single method the
+// real conversations.Notifier calls. Any other method would panic on the nil
+// embed, but none is exercised by these tests. Used with the REAL
+// conversations.Notifier (not fakeNotifier) so its mute-gating logic runs.
+type fakeNotificationService struct {
+	domain.NotificationService
+	mu    sync.Mutex
+	calls []domain.SystemNotificationInput
+}
+
+func (f *fakeNotificationService) SendSystem(_ context.Context, in domain.SystemNotificationInput) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.calls = append(f.calls, in)
+	return nil
+}
+
+// newServiceWithMentionAndNotify wires a fake mentionRepo + fake notifier
+// (the service port, mute-gating NOT exercised) for the mention-persistence
+// and recipient-resolution tests.
+func newServiceWithMentionAndNotify(_ *testing.T) (domain.ConversationService, *fakeStore, *fakeMentionRepo, *fakeNotifier) {
+	s := newFakeStore()
+	mentionRepo := &fakeMentionRepo{}
+	notif := &fakeNotifier{}
+	svc := conversations.NewService(
+		fakeConvRepo{s: s},
+		fakeMemberRepo{s: s},
+		fakeMessageRepo{s: s},
+		fakeReactionRepo{s: s},
+		mentionRepo,
+		noopTx{},
+		slog.Default(),
+		nil, // broadcaster
+		notif,
+		nil, // userLookup: nil skips cross-org checks
+		nil, // mediaLookup
+	)
+	return svc, s, mentionRepo, notif
+}
+
+// newServiceWithRealNotifier wires the REAL conversations.Notifier (backed
+// by a fake domain.NotificationService) so its muted-member filtering runs
+// end-to-end through SendMessage's recipient resolution.
+func newServiceWithRealNotifier(_ *testing.T) (domain.ConversationService, *fakeStore, *fakeNotificationService) {
+	s := newFakeStore()
+	notifSvc := &fakeNotificationService{}
+	realNotifier := conversations.NewNotifier(notifSvc, fakeMemberRepo{s: s})
+	svc := conversations.NewService(
+		fakeConvRepo{s: s},
+		fakeMemberRepo{s: s},
+		fakeMessageRepo{s: s},
+		fakeReactionRepo{s: s},
+		nil, // mentionRepo: not needed for mute-gating coverage
+		noopTx{},
+		slog.Default(),
+		nil, // broadcaster
+		realNotifier,
+		nil, // userLookup
+		nil, // mediaLookup
+	)
+	return svc, s, notifSvc
+}
+
+// newServiceWithMedia wires a fake mediaLookup for the attachment-validation
+// tests. The returned *fakeMediaLookup starts empty — tests populate it
+// (typically after creating a conversation, so ModelID can reference the
+// real conv.ID) before calling SendMessage.
+func newServiceWithMedia(_ *testing.T) (domain.ConversationService, *fakeStore, *fakeMediaLookup) {
+	s := newFakeStore()
+	media := &fakeMediaLookup{items: map[uuid.UUID]domain.Media{}}
+	svc := conversations.NewService(
+		fakeConvRepo{s: s},
+		fakeMemberRepo{s: s},
+		fakeMessageRepo{s: s},
+		fakeReactionRepo{s: s},
+		nil, // mentionRepo
+		noopTx{},
+		slog.Default(),
+		nil, // broadcaster
+		nil, // notifier
+		nil, // userLookup
+		media,
+	)
+	return svc, s, media
 }
 
 func callerCtx(orgID, userID uuid.UUID, isAdmin bool, perms ...string) context.Context {
@@ -937,4 +1148,239 @@ func TestRemoveMember_ConvAdmin_Works(t *testing.T) {
 	for _, m := range members {
 		assert.NotEqual(t, victim, m.UserID)
 	}
+}
+
+// ---- Step 12: mention persistence, notify fan-out, mute-gating, search, media ----
+
+func TestSendMessage_MentionPersistence_FiltersNonMembers(t *testing.T) {
+	orgA, userA, memberB, outsiderC := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	svc, _, mentionRepo, _ := newServiceWithMentionAndNotify(t)
+	adminCtx := callerCtx(orgA, userA, true)
+
+	conv, err := svc.CreateGroupOrChannel(adminCtx, domain.CreateConversationDTO{
+		Type:      domain.ConversationTypeGroup,
+		Name:      "Engineering",
+		MemberIDs: []string{memberB.String()},
+	})
+	require.NoError(t, err)
+
+	msg, err := svc.SendMessage(adminCtx, conv.ID, domain.SendConversationMessageDTO{
+		Content:        "hey @b @outsider @me",
+		MentionUserIDs: []string{memberB.String(), outsiderC.String(), userA.String()},
+	})
+	require.NoError(t, err)
+
+	mentionRepo.mu.Lock()
+	defer mentionRepo.mu.Unlock()
+	require.Len(t, mentionRepo.calls, 1, "only one CreateMany call, for the member-only mention set")
+	assert.Equal(t, msg.ID, mentionRepo.calls[0].messageID)
+	assert.Equal(t, []uuid.UUID{memberB}, mentionRepo.calls[0].userIDs,
+		"outsiderC (non-member) and userA (self) must be filtered out")
+}
+
+func TestSendMessage_GroupNotify_OnlyMentioned(t *testing.T) {
+	orgA, userA, memberB, memberC := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	svc, _, _, notif := newServiceWithMentionAndNotify(t)
+	adminCtx := callerCtx(orgA, userA, true)
+
+	conv, err := svc.CreateGroupOrChannel(adminCtx, domain.CreateConversationDTO{
+		Type:      domain.ConversationTypeGroup,
+		Name:      "Engineering",
+		MemberIDs: []string{memberB.String(), memberC.String()},
+	})
+	require.NoError(t, err)
+
+	_, err = svc.SendMessage(adminCtx, conv.ID, domain.SendConversationMessageDTO{
+		Content:        "hey @b",
+		MentionUserIDs: []string{memberB.String()},
+	})
+	require.NoError(t, err)
+
+	notif.mu.Lock()
+	defer notif.mu.Unlock()
+	require.Len(t, notif.calls, 1)
+	assert.Equal(t, []uuid.UUID{memberB}, notif.calls[0].recipients,
+		"group conversations notify only @mentioned members, not the whole roster")
+}
+
+func TestSendMessage_DirectNotify_TargetsOtherMember(t *testing.T) {
+	orgA, userA, userB := uuid.New(), uuid.New(), uuid.New()
+	svc, _, _, notif := newServiceWithMentionAndNotify(t)
+	ctx := callerCtx(orgA, userA, false)
+
+	conv, err := svc.CreateOrGetDirect(ctx, domain.CreateDirectDTO{UserID: userB.String()})
+	require.NoError(t, err)
+
+	_, err = svc.SendMessage(ctx, conv.ID, domain.SendConversationMessageDTO{Content: "hi B"})
+	require.NoError(t, err)
+
+	notif.mu.Lock()
+	defer notif.mu.Unlock()
+	require.Len(t, notif.calls, 1)
+	assert.Equal(t, []uuid.UUID{userB}, notif.calls[0].recipients,
+		"DMs notify the other member unconditionally, no mention required")
+}
+
+// TestSendMessage_MutedMember_SkippedByNotifier wires the REAL
+// conversations.Notifier (not the fake service port) so its muted_until
+// filtering actually runs, backed by a fake domain.NotificationService that
+// records the resolved audience.
+func TestSendMessage_MutedMember_SkippedByNotifier(t *testing.T) {
+	orgA, userA, memberB, memberC := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	svc, _, notifSvc := newServiceWithRealNotifier(t)
+	adminCtx := callerCtx(orgA, userA, true)
+
+	conv, err := svc.CreateGroupOrChannel(adminCtx, domain.CreateConversationDTO{
+		Type:      domain.ConversationTypeChannel,
+		Name:      "Announcements",
+		MemberIDs: []string{memberB.String(), memberC.String()},
+	})
+	require.NoError(t, err)
+
+	// memberB mutes the channel for the next 24h.
+	mutedCtx := callerCtx(orgA, memberB, false)
+	future := time.Now().Add(24 * time.Hour)
+	require.NoError(t, svc.SetMuted(mutedCtx, conv.ID, &future))
+
+	_, err = svc.SendMessage(adminCtx, conv.ID, domain.SendConversationMessageDTO{Content: "hi all"})
+	require.NoError(t, err)
+
+	notifSvc.mu.Lock()
+	defer notifSvc.mu.Unlock()
+	require.Len(t, notifSvc.calls, 1)
+	assert.ElementsMatch(t, []uuid.UUID{memberC}, notifSvc.calls[0].Audience.UserIDs,
+		"muted memberB is excluded by the Notifier; sender userA is excluded by recipient resolution")
+}
+
+// TestCreateGroupOrChannel_UserLookup_SkipsCrossOrgMember exercises the
+// fakeUserLookup port directly (wired non-nil, unlike the other harnesses
+// above which skip the cross-org check via nil): a requested member that
+// resolves to a different org must be silently skipped, while a same-org
+// member is added normally.
+func TestCreateGroupOrChannel_UserLookup_SkipsCrossOrgMember(t *testing.T) {
+	s := newFakeStore()
+	orgA, orgB := uuid.New(), uuid.New()
+	userA, crossOrgUser, sameOrgUser := uuid.New(), uuid.New(), uuid.New()
+	users := &fakeUserLookup{orgs: map[uuid.UUID]uuid.UUID{
+		crossOrgUser: orgB,
+		sameOrgUser:  orgA,
+	}}
+	svc := conversations.NewService(
+		fakeConvRepo{s: s},
+		fakeMemberRepo{s: s},
+		fakeMessageRepo{s: s},
+		fakeReactionRepo{s: s},
+		nil, // mentionRepo
+		noopTx{},
+		slog.Default(),
+		nil, // broadcaster
+		nil, // notifier
+		users,
+		nil, // mediaLookup
+	)
+	ctx := callerCtx(orgA, userA, true)
+
+	conv, err := svc.CreateGroupOrChannel(ctx, domain.CreateConversationDTO{
+		Type:      domain.ConversationTypeGroup,
+		Name:      "Engineering",
+		MemberIDs: []string{crossOrgUser.String(), sameOrgUser.String()},
+	})
+	require.NoError(t, err)
+
+	members, err := svc.ListMembers(ctx, conv.ID)
+	require.NoError(t, err)
+	var ids []uuid.UUID
+	for _, m := range members {
+		ids = append(ids, m.UserID)
+	}
+	assert.Contains(t, ids, sameOrgUser)
+	assert.NotContains(t, ids, crossOrgUser, "a member id resolving to a different org must be silently skipped")
+}
+
+func TestSearch_RequiresMinLength(t *testing.T) {
+	orgA, userA := uuid.New(), uuid.New()
+	svc, _ := newTestService(t)
+	ctx := callerCtx(orgA, userA, false)
+
+	_, err := svc.Search(ctx, "ab", 10)
+	assert.ErrorIs(t, err, domain.ErrValidation, "queries under 3 chars must be rejected")
+
+	_, err = svc.Search(ctx, "abc", 10)
+	assert.NoError(t, err, "a 3-char query is the minimum accepted length")
+}
+
+// TestSendMessage_MediaValidation_RejectsForeignAttachment covers Step 10:
+// a media row that exists and belongs to the caller's org but is bound
+// (model_id) to a DIFFERENT conversation must be rejected.
+func TestSendMessage_MediaValidation_RejectsForeignAttachment(t *testing.T) {
+	orgA, userA, userB := uuid.New(), uuid.New(), uuid.New()
+	svc, _, media := newServiceWithMedia(t)
+	ctx := callerCtx(orgA, userA, false)
+
+	conv, err := svc.CreateOrGetDirect(ctx, domain.CreateDirectDTO{UserID: userB.String()})
+	require.NoError(t, err)
+
+	mediaID := uuid.New()
+	media.items[mediaID] = domain.Media{
+		ID:             mediaID,
+		OrganizationID: &orgA,
+		ModelType:      domain.MediaModelConversation,
+		ModelID:        uuid.New(), // bound to a DIFFERENT conversation
+	}
+
+	_, err = svc.SendMessage(ctx, conv.ID, domain.SendConversationMessageDTO{
+		Content:  "photo",
+		MediaIDs: []string{mediaID.String()},
+	})
+	assert.ErrorIs(t, err, domain.ErrValidation)
+}
+
+// TestSendMessage_MediaValidation_AllowsBoundAttachment covers the happy
+// path: a media row in the caller's org, bound to this conversation, is
+// accepted and its id round-trips into the created message.
+func TestSendMessage_MediaValidation_AllowsBoundAttachment(t *testing.T) {
+	orgA, userA, userB := uuid.New(), uuid.New(), uuid.New()
+	svc, _, media := newServiceWithMedia(t)
+	ctx := callerCtx(orgA, userA, false)
+
+	conv, err := svc.CreateOrGetDirect(ctx, domain.CreateDirectDTO{UserID: userB.String()})
+	require.NoError(t, err)
+
+	mediaID := uuid.New()
+	media.items[mediaID] = domain.Media{
+		ID:             mediaID,
+		OrganizationID: &orgA,
+		ModelType:      domain.MediaModelConversation,
+		ModelID:        conv.ID,
+	}
+
+	msg, err := svc.SendMessage(ctx, conv.ID, domain.SendConversationMessageDTO{
+		Content:  "photo",
+		MediaIDs: []string{mediaID.String()},
+	})
+	require.NoError(t, err)
+	assert.JSONEq(t, `["`+mediaID.String()+`"]`, string(msg.MediaIDs))
+}
+
+// TestListMessages_SerializesReactions covers Step 11: a page of messages
+// returned by ListMessages must have Reactions populated per message, not
+// just ToggleReaction's single-message return path (already covered above).
+func TestListMessages_SerializesReactions(t *testing.T) {
+	orgA, userA, userB := uuid.New(), uuid.New(), uuid.New()
+	svc, _ := newTestService(t)
+	ctxA := callerCtx(orgA, userA, false)
+	ctxB := callerCtx(orgA, userB, false)
+
+	conv, err := svc.CreateOrGetDirect(ctxA, domain.CreateDirectDTO{UserID: userB.String()})
+	require.NoError(t, err)
+	msg, err := svc.SendMessage(ctxA, conv.ID, domain.SendConversationMessageDTO{Content: "hi B"})
+	require.NoError(t, err)
+
+	_, err = svc.ToggleReaction(ctxB, msg.ID, domain.ToggleConversationReactionDTO{Emoji: "🔥"})
+	require.NoError(t, err)
+
+	msgs, err := svc.ListMessages(ctxA, conv.ID, domain.MessageCursor{})
+	require.NoError(t, err)
+	require.Len(t, msgs, 1)
+	assert.Equal(t, 1, msgs[0].Reactions["🔥"], "ListMessages must serialize reaction counts, not leave Reactions nil")
 }

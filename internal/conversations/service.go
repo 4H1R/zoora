@@ -23,6 +23,19 @@ type notifier interface {
 	NotifyMessage(ctx context.Context, conv *domain.Conversation, msg *domain.ConversationMessage, recipientIDs []uuid.UUID) error
 }
 
+// userLookup is the cross-org guard port (Phase 3 supplies impl; nil = skip
+// the check, which is what the unit tests do).
+type userLookup interface {
+	OrgID(ctx context.Context, userID uuid.UUID) (*uuid.UUID, error)
+}
+
+// mediaLookup is the attachment-validation read port (Phase 3 supplies
+// domain.MediaRepository, whose FindByID satisfies this narrow interface;
+// nil = skip validation, which is what the unit tests do unless they opt in).
+type mediaLookup interface {
+	FindByID(ctx context.Context, id uuid.UUID) (*domain.Media, error)
+}
+
 type service struct {
 	convRepo     domain.ConversationRepository
 	memberRepo   domain.ConversationMemberRepository
@@ -33,6 +46,8 @@ type service struct {
 	logger       *slog.Logger
 	rt           broadcaster // may be nil
 	notif        notifier    // may be nil
+	users        userLookup  // may be nil
+	media        mediaLookup // may be nil
 }
 
 func NewService(
@@ -45,8 +60,10 @@ func NewService(
 	logger *slog.Logger,
 	rt broadcaster,
 	notif notifier,
+	users userLookup,
+	media mediaLookup,
 ) domain.ConversationService {
-	return &service{convRepo, memberRepo, messageRepo, reactionRepo, mentionRepo, transactor, logger, rt, notif}
+	return &service{convRepo, memberRepo, messageRepo, reactionRepo, mentionRepo, transactor, logger, rt, notif, users, media}
 }
 
 // caller resolves the authenticated caller and enforces the org + feature
@@ -138,7 +155,15 @@ func (s *service) CreateOrGetDirect(ctx context.Context, dto domain.CreateDirect
 	if other == caller.UserID {
 		return nil, domain.NewValidationError(map[string]string{"user_id": "cannot DM yourself"})
 	}
-	// TODO(phase3): reject cross-org DM via userLookup port
+	if s.users != nil {
+		otherOrgID, lerr := s.users.OrgID(ctx, other)
+		if lerr != nil {
+			return nil, lerr
+		}
+		if otherOrgID == nil || *otherOrgID != *caller.OrgID {
+			return nil, domain.ErrForbidden
+		}
+	}
 
 	dk := directKey(caller.UserID, other)
 	if existing, err := s.convRepo.FindDirect(ctx, *caller.OrgID, dk); err == nil {
@@ -212,11 +237,16 @@ func (s *service) CreateGroupOrChannel(ctx context.Context, dto domain.CreateCon
 			{ConversationID: conv.ID, UserID: caller.UserID, Role: domain.ConversationMemberRoleAdmin, JoinedAt: now},
 		}
 		seen := map[uuid.UUID]bool{caller.UserID: true}
-		// TODO(phase3): validate member user_ids belong to caller's org via userLookup port
 		for _, idStr := range dto.MemberIDs {
 			uid, perr := uuid.Parse(idStr)
 			if perr != nil || seen[uid] {
 				continue
+			}
+			if s.users != nil {
+				orgID, lerr := s.users.OrgID(txCtx, uid)
+				if lerr != nil || orgID == nil || *orgID != *caller.OrgID {
+					continue // silently skip cross-org / unresolvable ids
+				}
 			}
 			seen[uid] = true
 			members = append(members, domain.ConversationMember{
@@ -352,7 +382,15 @@ func (s *service) AddMember(ctx context.Context, convID uuid.UUID, dto domain.Ad
 	if perr != nil {
 		return nil, domain.NewValidationError(map[string]string{"user_id": "invalid uuid"})
 	}
-	// TODO(phase3): validate member user_ids belong to caller's org via userLookup port
+	if s.users != nil {
+		orgID, lerr := s.users.OrgID(ctx, uid)
+		if lerr != nil {
+			return nil, lerr
+		}
+		if orgID == nil || *orgID != *caller.OrgID {
+			return nil, domain.ErrForbidden
+		}
+	}
 	role := dto.Role
 	if role == "" {
 		role = domain.ConversationMemberRoleMember
@@ -461,6 +499,30 @@ func (s *service) SendMessage(ctx context.Context, convID uuid.UUID, dto domain.
 		}
 	}
 
+	// Validate attachments: each media row must exist, belong to the
+	// caller's org, and already be bound to this conversation (model_id).
+	// The client presigns via the existing media endpoint with
+	// model_type=conversation, model_id=<convID> BEFORE sending the message
+	// (see plan Step 9) — this is the actual authz gate, since PresignUpload
+	// does not verify write access to arbitrary model_ids. Nil-safe: unit
+	// tests that don't wire a media port skip this check.
+	if len(dto.MediaIDs) > 0 && s.media != nil {
+		for _, idStr := range dto.MediaIDs {
+			mid, perr := uuid.Parse(idStr)
+			if perr != nil {
+				return nil, domain.NewValidationError(map[string]string{"media_ids": "invalid uuid"})
+			}
+			med, merr := s.media.FindByID(ctx, mid)
+			if merr != nil {
+				return nil, domain.NewValidationError(map[string]string{"media_ids": "attachment not found"})
+			}
+			if med.OrganizationID == nil || *med.OrganizationID != *caller.OrgID ||
+				med.ModelType != domain.MediaModelConversation || med.ModelID != convID {
+				return nil, domain.NewValidationError(map[string]string{"media_ids": "attachment does not belong to this conversation"})
+			}
+		}
+	}
+
 	msg := &domain.ConversationMessage{
 		ConversationID: convID,
 		SenderID:       &caller.UserID,
@@ -506,16 +568,59 @@ func (s *service) SendMessage(ctx context.Context, convID uuid.UUID, dto domain.
 	}
 	_ = s.convRepo.Touch(ctx, convID)
 
-	// Phase 3 wires mentions + notifications; Phase 2 wires rt broadcast.
-	s.afterSend(ctx, conv, msg, dto, caller)
+	// Parse + persist mentions: only conversation members may be mentioned,
+	// and the sender is never mentioned (self-mentions are dropped).
+	var mentioned []uuid.UUID
+	if len(dto.MentionUserIDs) > 0 {
+		memberIDs, _ := s.memberRepo.ListUserIDs(ctx, convID)
+		memberSet := map[uuid.UUID]bool{}
+		for _, id := range memberIDs {
+			memberSet[id] = true
+		}
+		for _, idStr := range dto.MentionUserIDs {
+			if uid, perr := uuid.Parse(idStr); perr == nil && memberSet[uid] && uid != caller.UserID {
+				mentioned = append(mentioned, uid)
+			}
+		}
+		if len(mentioned) > 0 {
+			if err := s.mentionRepo.CreateMany(ctx, msg.ID, mentioned); err != nil {
+				s.logger.Error("conversations.SendMessage mentions", "message_id", msg.ID, "error", err)
+			}
+		}
+	}
+
+	// Phase 3 Step 5 wires notifications via `mentioned`; Phase 2 wires rt broadcast.
+	s.afterSend(ctx, conv, msg, dto, caller, mentioned)
 	return msg, nil
 }
 
 // afterSend is a seam filled by Phase 2 (broadcast) + Phase 3 (mentions/notify).
-// In Phase 1 it only fires the (nil-guarded) broadcast — no notify logic yet.
-func (s *service) afterSend(ctx context.Context, conv *domain.Conversation, msg *domain.ConversationMessage, dto domain.SendConversationMessageDTO, caller domain.Caller) {
+// mentioned holds the validated (member, non-self) mention user ids persisted
+// by SendMessage, consumed here to resolve group-conversation notification
+// recipients.
+func (s *service) afterSend(ctx context.Context, conv *domain.Conversation, msg *domain.ConversationMessage, dto domain.SendConversationMessageDTO, caller domain.Caller, mentioned []uuid.UUID) {
 	if s.rt != nil {
 		s.rt.ToConversation(ctx, conv.ID, "new_message", messagePayload(msg, caller))
+	}
+	if s.notif == nil {
+		return
+	}
+	var recipients []uuid.UUID
+	switch conv.Type {
+	case domain.ConversationTypeDirect, domain.ConversationTypeChannel:
+		ids, _ := s.memberRepo.ListUserIDs(ctx, conv.ID)
+		for _, id := range ids {
+			if id != caller.UserID {
+				recipients = append(recipients, id)
+			}
+		}
+	case domain.ConversationTypeGroup:
+		recipients = mentioned // groups notify only @mentioned
+	}
+	if len(recipients) > 0 {
+		if err := s.notif.NotifyMessage(ctx, conv, msg, recipients); err != nil {
+			s.logger.Error("conversations.afterSend notify", "conversation_id", conv.ID, "error", err)
+		}
 	}
 }
 
@@ -535,6 +640,23 @@ func messagePayload(msg *domain.ConversationMessage, caller domain.Caller) map[s
 	}
 }
 
+// serializeMessages populates each message's computed Reactions field via
+// one reactionRepo.CountByMessage query per message — an N+1 acceptable for
+// a single page (~50 rows) per plan Step 11; optimize later with a single
+// GROUP BY message_id IN (...) if it shows up in profiling. media_ids are
+// returned as-is (raw, unsigned) — the client resolves URLs on demand via
+// GET /media/:id/download-url, so no media-signing port is needed here.
+func (s *service) serializeMessages(ctx context.Context, msgs []domain.ConversationMessage) []domain.ConversationMessage {
+	for i := range msgs {
+		counts, err := s.reactionRepo.CountByMessage(ctx, msgs[i].ID)
+		if err != nil {
+			continue
+		}
+		msgs[i].Reactions = counts
+	}
+	return msgs
+}
+
 func (s *service) ListMessages(ctx context.Context, convID uuid.UUID, cur domain.MessageCursor) ([]domain.ConversationMessage, error) {
 	caller, err := s.caller(ctx)
 	if err != nil {
@@ -543,7 +665,11 @@ func (s *service) ListMessages(ctx context.Context, convID uuid.UUID, cur domain
 	if _, err := s.requireMember(ctx, convID, caller.UserID); err != nil {
 		return nil, err
 	}
-	return s.messageRepo.ListWindow(ctx, convID, cur)
+	msgs, err := s.messageRepo.ListWindow(ctx, convID, cur)
+	if err != nil {
+		return nil, err
+	}
+	return s.serializeMessages(ctx, msgs), nil
 }
 
 func (s *service) EditMessage(ctx context.Context, msgID uuid.UUID, dto domain.UpdateConversationMessageDTO) (*domain.ConversationMessage, error) {
@@ -752,5 +878,43 @@ func (s *service) ListPinned(ctx context.Context, convID uuid.UUID) ([]domain.Co
 	if _, err := s.requireMember(ctx, convID, caller.UserID); err != nil {
 		return nil, err
 	}
-	return s.messageRepo.ListPinned(ctx, convID)
+	msgs, err := s.messageRepo.ListPinned(ctx, convID)
+	if err != nil {
+		return nil, err
+	}
+	return s.serializeMessages(ctx, msgs), nil
+}
+
+// Search performs a global ranked full-text search across every conversation
+// the caller is a member of, org-scoped.
+func (s *service) Search(ctx context.Context, q string, limit int) ([]domain.ConversationMessage, error) {
+	caller, err := s.caller(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(q) < 3 {
+		return nil, domain.NewValidationError(map[string]string{"q": "must be at least 3 characters"})
+	}
+	msgs, err := s.messageRepo.SearchGlobal(ctx, *caller.OrgID, caller.UserID, q, limit)
+	if err != nil {
+		return nil, err
+	}
+	return s.serializeMessages(ctx, msgs), nil
+}
+
+// SearchInConversation performs an in-conversation ILIKE nav search, gated on
+// hard membership (same tier as ListMessages).
+func (s *service) SearchInConversation(ctx context.Context, convID uuid.UUID, q string, limit int) ([]domain.ConversationMessage, error) {
+	caller, err := s.caller(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := s.requireMember(ctx, convID, caller.UserID); err != nil {
+		return nil, err
+	}
+	msgs, err := s.messageRepo.SearchInConversation(ctx, convID, q, limit)
+	if err != nil {
+		return nil, err
+	}
+	return s.serializeMessages(ctx, msgs), nil
 }
