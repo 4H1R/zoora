@@ -1,7 +1,8 @@
+import type { MentionCandidate } from "./mentions"
+
 import { describe, expect, it } from "vitest"
 
-import type { MentionCandidate } from "./mentions"
-import { detectMention, insertMention, resolveMentions } from "./mentions"
+import { detectMention, highlightMentions, insertMention, resolveMentions } from "./mentions"
 
 const members: MentionCandidate[] = [
   { id: "u-ali", name: "Ali" },
@@ -89,5 +90,63 @@ describe("resolveMentions", () => {
   it("returns each id at most once", () => {
     const ids = resolveMentions("@Sara @Sara", members)
     expect(ids).toEqual(["u-sara"])
+  })
+})
+
+describe("highlightMentions", () => {
+  it("returns a single plain segment when there are no mentions", () => {
+    expect(highlightMentions("just plain text", members)).toEqual([{ text: "just plain text", isMention: false }])
+  })
+
+  it("returns an empty array for empty content", () => {
+    expect(highlightMentions("", members)).toEqual([])
+  })
+
+  it("wraps an inserted name and preserves the plain text around it", () => {
+    expect(highlightMentions("hey @Sara!", members)).toEqual([
+      { text: "hey ", isMention: false },
+      { text: "@Sara", isMention: true, userId: "u-sara" },
+      { text: "!", isMention: false },
+    ])
+  })
+
+  it("preserves leading/trailing whitespace between segments", () => {
+    expect(highlightMentions("  @Sara  ", members)).toEqual([
+      { text: "  ", isMention: false },
+      { text: "@Sara", isMention: true, userId: "u-sara" },
+      { text: "  ", isMention: false },
+    ])
+  })
+
+  it("claims the longest name first so a prefix name does not steal the span", () => {
+    // "@Ali Alizadeh" must highlight as the full name, NOT the shorter "@Ali".
+    expect(highlightMentions("ping @Ali Alizadeh", members)).toEqual([
+      { text: "ping ", isMention: false },
+      { text: "@Ali Alizadeh", isMention: true, userId: "u-ali-a" },
+    ])
+  })
+
+  it("still highlights the short prefix name on its own", () => {
+    expect(highlightMentions("ping @Ali here", members)).toEqual([
+      { text: "ping ", isMention: false },
+      { text: "@Ali", isMention: true, userId: "u-ali" },
+      { text: " here", isMention: false },
+    ])
+  })
+
+  it("highlights both the long and the short name when both appear", () => {
+    expect(highlightMentions("@Ali Alizadeh & @Ali", members)).toEqual([
+      { text: "@Ali Alizadeh", isMention: true, userId: "u-ali-a" },
+      { text: " & ", isMention: false },
+      { text: "@Ali", isMention: true, userId: "u-ali" },
+    ])
+  })
+
+  it("highlights every occurrence of the same name", () => {
+    expect(highlightMentions("@Sara @Sara", members)).toEqual([
+      { text: "@Sara", isMention: true, userId: "u-sara" },
+      { text: " ", isMention: false },
+      { text: "@Sara", isMention: true, userId: "u-sara" },
+    ])
   })
 })

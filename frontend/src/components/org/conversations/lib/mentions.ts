@@ -10,6 +10,16 @@ export interface MentionCandidate {
   name: string
 }
 
+/**
+ * A rendered slice of message content: either plain text or a resolved
+ * `@<DisplayName>` mention (carrying the matched member's `userId`).
+ */
+export interface MentionSegment {
+  text: string
+  isMention: boolean
+  userId?: string
+}
+
 /** An active @mention query detected just before the caret. */
 export interface MentionQuery {
   /** Word chars typed after the `@` (possibly empty right after typing `@`). */
@@ -71,9 +81,7 @@ export function insertAtCaret(value: string, caret: number, text: string): { val
  * order.
  */
 export function resolveMentions(content: string, members: MentionCandidate[]): string[] {
-  const sorted = members
-    .filter((m) => m.id && m.name)
-    .sort((a, b) => b.name.length - a.name.length)
+  const sorted = members.filter((m) => m.id && m.name).sort((a, b) => b.name.length - a.name.length)
 
   let remaining = content
   const ids: string[] = []
@@ -86,4 +94,50 @@ export function resolveMentions(content: string, members: MentionCandidate[]): s
     remaining = remaining.slice(0, idx) + " ".repeat(needle.length) + remaining.slice(idx + needle.length)
   }
   return ids
+}
+
+/**
+ * Split rendered `content` into plain + mention segments for display. Best-effort
+ * companion to `resolveMentions`: every `@<DisplayName>` occurrence is claimed
+ * LONGEST-NAME-FIRST so a prefix name (`@Ali`) never steals a span that belongs
+ * to a longer one (`@Ali Alizadeh`); a claimed range blocks any overlapping
+ * shorter match. ALL non-overlapping occurrences of a name are highlighted (not
+ * just the first), and plain text between claims is preserved verbatim so the
+ * caller can render it with `whitespace-pre-wrap`. Returns a single plain
+ * segment when nothing matches; an empty array only for empty content.
+ */
+export function highlightMentions(content: string, members: MentionCandidate[]): MentionSegment[] {
+  const sorted = members.filter((m) => m.id && m.name).sort((a, b) => b.name.length - a.name.length)
+
+  // Claimed [start, end) ranges, each owned by the member that matched it.
+  const claims: Array<{ start: number; end: number; userId: string }> = []
+  const overlaps = (start: number, end: number) => claims.some((c) => start < c.end && c.start < end)
+
+  for (const member of sorted) {
+    const needle = `@${member.name}`
+    let from = 0
+    for (;;) {
+      const idx = content.indexOf(needle, from)
+      if (idx === -1) break
+      const end = idx + needle.length
+      if (!overlaps(idx, end)) claims.push({ start: idx, end, userId: member.id })
+      from = idx + 1
+    }
+  }
+
+  claims.sort((a, b) => a.start - b.start)
+
+  const segments: MentionSegment[] = []
+  let cursor = 0
+  for (const claim of claims) {
+    if (claim.start > cursor) {
+      segments.push({ text: content.slice(cursor, claim.start), isMention: false })
+    }
+    segments.push({ text: content.slice(claim.start, claim.end), isMention: true, userId: claim.userId })
+    cursor = claim.end
+  }
+  if (cursor < content.length) {
+    segments.push({ text: content.slice(cursor), isMention: false })
+  }
+  return segments
 }

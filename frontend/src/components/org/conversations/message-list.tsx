@@ -1,15 +1,22 @@
-import { Virtuoso, type VirtuosoHandle } from "react-virtuoso"
+import type { MentionCandidate } from "./lib/mentions"
+import type { ChatMessage, Group } from "./lib/messages"
+import type { VirtuosoHandle } from "react-virtuoso"
+
+import { Virtuoso } from "react-virtuoso"
 
 import { Spinner } from "@/components/ui/spinner"
 
 import { DayDivider } from "./day-divider"
-import type { ChatMessage, Group } from "./lib/messages"
 import { groupMessages } from "./lib/messages"
 import { MessageBubble } from "./message-bubble"
 import { MessageGroup } from "./message-group"
 
 interface MessageListProps {
   messages: ChatMessage[]
+  /** Conversation id — threaded to each bubble for cache/actions lookups. */
+  convId: string
+  /** Conversation members, for @mention highlighting inside bubbles. */
+  members: MentionCandidate[]
   /** Signed-in user id — decides own vs. other alignment. */
   currentUserId: string
   /** Direct DMs hide sender names; groups/channels show them. */
@@ -59,6 +66,8 @@ function ListHeader({ context }: { context?: ListContext }) {
  */
 export function MessageList({
   messages,
+  convId,
+  members,
   currentUserId,
   conversationType,
   hasPreviousPage,
@@ -110,6 +119,8 @@ export function MessageList({
             renderBubble={(message) => (
               <MessageBubble
                 message={message}
+                convId={convId}
+                members={members}
                 isOwn={isOwn}
                 isHighlighted={message.id === highlightId}
               />

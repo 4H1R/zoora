@@ -1,8 +1,9 @@
+import type { ChatMessage } from "./messages"
 import type { InfiniteData } from "@tanstack/react-query"
+
 import { describe, expect, it } from "vitest"
 
-import type { ChatMessage } from "./messages"
-import { insertOptimistic, markStatus, replaceMessage } from "./optimistic"
+import { insertOptimistic, markStatus, removeMessage, replaceMessage } from "./optimistic"
 
 type Cache = InfiniteData<ChatMessage[]>
 
@@ -66,6 +67,37 @@ describe("replaceMessage", () => {
 
   it("no-ops safely on undefined", () => {
     expect(replaceMessage(undefined, m("a"))).toBeUndefined()
+  })
+})
+
+describe("removeMessage", () => {
+  it("drops the matching message and keeps the rest", () => {
+    const old = cache([[m("a"), m("b")], [m("c")]])
+    const out = removeMessage(old, "b")!
+    expect(out.pages[0].map((x) => x.id)).toEqual(["a"])
+    expect(out.pages[1].map((x) => x.id)).toEqual(["c"])
+  })
+
+  it("removes from whichever page holds the id", () => {
+    const old = cache([[m("a")], [m("b"), m("c")]])
+    const out = removeMessage(old, "c")!
+    expect(out.pages[1].map((x) => x.id)).toEqual(["b"])
+  })
+
+  it("no-ops when the id is absent", () => {
+    const old = cache([[m("a")]])
+    expect(removeMessage(old, "zzz")).toBe(old)
+  })
+
+  it("no-ops safely on undefined", () => {
+    expect(removeMessage(undefined, "a")).toBeUndefined()
+  })
+
+  it("returns a NEW object and does not mutate the source", () => {
+    const old = cache([[m("a"), m("b")]])
+    const out = removeMessage(old, "a")!
+    expect(out).not.toBe(old)
+    expect(old.pages[0].map((x) => x.id)).toEqual(["a", "b"])
   })
 })
 

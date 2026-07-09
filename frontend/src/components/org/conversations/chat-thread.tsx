@@ -1,15 +1,18 @@
+import type { MentionCandidate } from "./lib/mentions"
+import type { VirtuosoHandle } from "react-virtuoso"
+
 import { Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeftIcon, MessagesSquareIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useAccess } from "react-access-engine"
 import { useTranslation } from "react-i18next"
-import type { VirtuosoHandle } from "react-virtuoso"
 
+import { useGetConversationsIdMembers } from "@/api/conversations/conversations"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
-import { useChatUi } from "@/stores/chat-ui"
 import { cn } from "@/lib/utils"
+import { useChatUi } from "@/stores/chat-ui"
 
 import { ChatThreadSkeleton } from "./chat-thread.skeleton"
 import { JumpToMessageProvider } from "./jump-context"
@@ -42,6 +45,13 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
   const navigate = useNavigate()
   const { data: conversations } = useConversations()
   const conversation = conversations?.find((c) => c.id === convId)
+
+  // Members drive @mention highlighting in every bubble; fetched once here and
+  // threaded down so bubbles don't each subscribe. Same mapping as the composer.
+  const { data: membersData } = useGetConversationsIdMembers(convId)
+  const members: MentionCandidate[] = (membersData?.status === 200 ? (membersData.data.data ?? []) : [])
+    .map((m) => ({ id: m.user_id ?? m.user?.id ?? "", name: m.user?.name ?? "" }))
+    .filter((m) => m.id && m.name)
 
   const virtuosoRef = useRef<VirtuosoHandle>(null)
   const scrollToMessageId = useChatUi((s) => s.scrollToMessageId)
@@ -125,69 +135,71 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
 
   return (
     <JumpToMessageProvider value={jumpToMessage}>
-    <div className="flex min-h-0 flex-1 flex-col">
-      {/* Header: identity + subtitle. Presence + actions land in the end slot. */}
-      <header className="flex items-center gap-3 border-b px-4 py-3">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="md:hidden"
-          aria-label={t("common.back")}
-          render={<Link to="/org/conversations" />}
-        >
-          <ArrowLeftIcon className="rtl:rotate-180" />
-        </Button>
+      <div className="flex min-h-0 flex-1 flex-col">
+        {/* Header: identity + subtitle. Presence + actions land in the end slot. */}
+        <header className="flex items-center gap-3 border-b px-4 py-3">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="md:hidden"
+            aria-label={t("common.back")}
+            render={<Link to="/org/conversations" />}
+          >
+            <ArrowLeftIcon className="rtl:rotate-180" />
+          </Button>
 
-        <Avatar className="size-9">
-          {conversation?.avatar_url && <AvatarImage src={conversation.avatar_url} alt={name} />}
-          <AvatarFallback className={cn("text-xs font-semibold", conversationTint(conversation?.color_index))}>
-            {initials(name)}
-          </AvatarFallback>
-        </Avatar>
+          <Avatar className="size-9">
+            {conversation?.avatar_url && <AvatarImage src={conversation.avatar_url} alt={name} />}
+            <AvatarFallback className={cn("text-xs font-semibold", conversationTint(conversation?.color_index))}>
+              {initials(name)}
+            </AvatarFallback>
+          </Avatar>
 
-        <div className="flex min-w-0 flex-col">
-          <p className="truncate text-sm font-semibold leading-tight">{name}</p>
-          <p className="text-muted-foreground truncate text-xs leading-tight">{subtitle}</p>
+          <div className="flex min-w-0 flex-col">
+            <p className="truncate text-sm leading-tight font-semibold">{name}</p>
+            <p className="text-muted-foreground truncate text-xs leading-tight">{subtitle}</p>
+          </div>
+
+          {/* Phase later: presence indicator + thread actions mount at the end. */}
+          <div className="ms-auto flex items-center gap-1" />
+        </header>
+
+        {/* Message region fills the remaining height. */}
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          {isLoading ? (
+            <ChatThreadSkeleton />
+          ) : messages.length === 0 ? (
+            <div className="flex flex-1 items-center justify-center p-6">
+              <EmptyState
+                icon={MessagesSquareIcon}
+                title={t("conversations.thread.empty.title")}
+                description={t("conversations.thread.empty.description")}
+                className="border-none bg-transparent shadow-none ring-0"
+              />
+            </div>
+          ) : (
+            <MessageList
+              messages={messages}
+              convId={convId}
+              members={members}
+              currentUserId={user.id}
+              conversationType={conversation?.type}
+              hasPreviousPage={hasPreviousPage}
+              fetchPreviousPage={fetchPreviousPage}
+              isFetchingPreviousPage={isFetchingPreviousPage}
+              hasNextPage={hasNextPage}
+              fetchNextPage={fetchNextPage}
+              virtuosoRef={virtuosoRef}
+              atBottom={atBottom}
+              onAtBottomChange={setAtBottom}
+              highlightId={highlightId}
+            />
+          )}
         </div>
 
-        {/* Phase later: presence indicator + thread actions mount at the end. */}
-        <div className="ms-auto flex items-center gap-1" />
-      </header>
-
-      {/* Message region fills the remaining height. */}
-      <div className="relative flex min-h-0 flex-1 flex-col">
-        {isLoading ? (
-          <ChatThreadSkeleton />
-        ) : messages.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center p-6">
-            <EmptyState
-              icon={MessagesSquareIcon}
-              title={t("conversations.thread.empty.title")}
-              description={t("conversations.thread.empty.description")}
-              className="border-none bg-transparent ring-0 shadow-none"
-            />
-          </div>
-        ) : (
-          <MessageList
-            messages={messages}
-            currentUserId={user.id}
-            conversationType={conversation?.type}
-            hasPreviousPage={hasPreviousPage}
-            fetchPreviousPage={fetchPreviousPage}
-            isFetchingPreviousPage={isFetchingPreviousPage}
-            hasNextPage={hasNextPage}
-            fetchNextPage={fetchNextPage}
-            virtuosoRef={virtuosoRef}
-            atBottom={atBottom}
-            onAtBottomChange={setAtBottom}
-            highlightId={highlightId}
-          />
-        )}
+        {/* Bottom composer: auto-grow textarea, @mentions, emoji, reply strip. */}
+        <MessageInput convId={convId} />
       </div>
-
-      {/* Bottom composer: auto-grow textarea, @mentions, emoji, reply strip. */}
-      <MessageInput convId={convId} />
-    </div>
     </JumpToMessageProvider>
   )
 }

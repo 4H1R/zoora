@@ -1,6 +1,7 @@
+import type { ChatMessage } from "./messages"
 import type { InfiniteData } from "@tanstack/react-query"
 
-import { type ChatMessage, reconcileOptimistic } from "./messages"
+import { reconcileOptimistic } from "./messages"
 
 /**
  * The message-thread cache is a TanStack infinite query whose pages are
@@ -21,10 +22,7 @@ type MessagesCache = InfiniteData<ChatMessage[]>
  * SEND owns the message, so when the thread cache is missing we seed a single
  * page (`pageParams: [{}]` matches `useMessages`' latest-seed initial param).
  */
-export function insertOptimistic(
-  old: MessagesCache | undefined,
-  msg: ChatMessage
-): MessagesCache {
+export function insertOptimistic(old: MessagesCache | undefined, msg: ChatMessage): MessagesCache {
   if (!old || old.pages.length === 0) {
     return { pages: [[msg]], pageParams: [{}] }
   }
@@ -41,10 +39,7 @@ export function insertOptimistic(
  * loaded — the WS `new_message` echo appends it in that case. Mirrors the
  * reducer's `replaceMessageInInfinite`.
  */
-export function replaceMessage(
-  old: MessagesCache | undefined,
-  msg: ChatMessage
-): MessagesCache | undefined {
+export function replaceMessage(old: MessagesCache | undefined, msg: ChatMessage): MessagesCache | undefined {
   if (!old) return old
   let changed = false
   const pages = old.pages.map((page) => {
@@ -54,6 +49,23 @@ export function replaceMessage(
     const next = page.slice()
     next[idx] = { ...msg, _status: undefined }
     return next
+  })
+  return changed ? { ...old, pages } : old
+}
+
+/**
+ * Remove the message with `id` from wherever it lives across the loaded pages.
+ * No-op (returns `old` unchanged) when the cache is absent or the id is not
+ * loaded. Used for optimistic deletes (server-confirmed) and to drop a failed
+ * optimistic bubble that never reached the server.
+ */
+export function removeMessage(old: MessagesCache | undefined, id: string): MessagesCache | undefined {
+  if (!old) return old
+  let changed = false
+  const pages = old.pages.map((page) => {
+    if (!page.some((m) => m.id === id)) return page
+    changed = true
+    return page.filter((m) => m.id !== id)
   })
   return changed ? { ...old, pages } : old
 }

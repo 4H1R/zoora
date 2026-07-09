@@ -1,26 +1,21 @@
+import type { MentionCandidate, MentionQuery } from "./lib/mentions"
+import type { ChatMessage } from "./lib/messages"
 import type { InfiniteData } from "@tanstack/react-query"
 
 import { useQueryClient } from "@tanstack/react-query"
 import { EmojiPicker } from "frimousse"
-import { SendHorizontalIcon, SmileIcon, XIcon } from "lucide-react"
+import { CheckIcon, PencilIcon, SendHorizontalIcon, SmileIcon, XIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 
-import { useGetConversationsIdMembers } from "@/api/conversations/conversations"
+import { useGetConversationsIdMembers, usePatchConversationsMessagesMessageId } from "@/api/conversations/conversations"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { useChatUi } from "@/stores/chat-ui"
 import { cn } from "@/lib/utils"
+import { useChatUi } from "@/stores/chat-ui"
 
-import type { ChatMessage } from "./lib/messages"
-import {
-  type MentionCandidate,
-  type MentionQuery,
-  detectMention,
-  insertAtCaret,
-  insertMention,
-  resolveMentions,
-} from "./lib/mentions"
+import { detectMention, insertAtCaret, insertMention, resolveMentions } from "./lib/mentions"
+import { replaceMessage } from "./lib/optimistic"
 import { chatKeys } from "./lib/query-keys"
 import { MentionPopover } from "./mention-popover"
 import { useSendMessage } from "./use-send-message"
@@ -46,9 +41,14 @@ export function MessageInput({ convId }: MessageInputProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { send } = useSendMessage(convId)
+  const editMutation = usePatchConversationsMessagesMessageId()
 
   const replyTo = useChatUi((s) => s.replyTo)
   const setReplyTo = useChatUi((s) => s.setReplyTo)
+  const editingMessageId = useChatUi((s) => s.editingMessageId)
+  const setEditing = useChatUi((s) => s.setEditing)
+
+  const key = chatKeys.messages(convId)
 
   const { data: membersData } = useGetConversationsIdMembers(convId)
   // Map API members → mention candidates (id + display name), dropping anyone
@@ -73,18 +73,25 @@ export function MessageInput({ convId }: MessageInputProps) {
   // Members matching the in-progress token, longest list capped. Case-insensitive
   // prefix-or-substring match keeps it forgiving.
   const mentionMatches: MentionCandidate[] = mentionQuery
-    ? members
-        .filter((m) => m.name.toLowerCase().includes(mentionQuery.token.toLowerCase()))
-        .slice(0, MAX_MENTION_ROWS)
+    ? members.filter((m) => m.name.toLowerCase().includes(mentionQuery.token.toLowerCase())).slice(0, MAX_MENTION_ROWS)
     : []
   const mentionOpen = mentionMatches.length > 0
 
   // The referenced message for the reply strip, read live from the message cache.
   const replyMessage = replyTo
     ? queryClient
-        .getQueryData<MessagesCache>(chatKeys.messages(convId))
+        .getQueryData<MessagesCache>(key)
         ?.pages.flat()
         .find((m) => m.id === replyTo)
+    : undefined
+
+  // The message currently being edited, read live from the cache — drives the
+  // "Editing" strip and (via the effect below) prefills the textarea.
+  const editingMessage = editingMessageId
+    ? queryClient
+        .getQueryData<MessagesCache>(key)
+        ?.pages.flat()
+        .find((m) => m.id === editingMessageId)
     : undefined
 
   // Auto-grow: reset then match content height; CSS `max-h-40` caps it and lets
@@ -112,6 +119,26 @@ export function MessageInput({ convId }: MessageInputProps) {
   useEffect(() => {
     textareaRef.current?.focus()
   }, [replyTo])
+
+  // Enter/exit edit mode. Entering: prefill the textarea with the target's
+  // current content, park the caret at the end, and drop any pending reply.
+  // Exiting (cancel or success): clear the draft back to empty.
+  useEffect(() => {
+    if (editingMessageId) {
+      const content =
+        queryClient
+          .getQueryData<MessagesCache>(key)
+          ?.pages.flat()
+          .find((m) => m.id === editingMessageId)?.content ?? ""
+      setValue(content)
+      pendingCaretRef.current = content.length
+      setReplyTo(null)
+    } else {
+      setValue("")
+      caretPosRef.current = 0
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingMessageId])
 
   // Recompute the active `@token` from the text up to the caret.
   function refreshMention(nextValue: string, caret: number) {
@@ -151,16 +178,51 @@ export function MessageInput({ convId }: MessageInputProps) {
     setEmojiOpen(false)
   }
 
+  // Optimistically apply an edit to the cached bubble, then PATCH. On success
+  // reconcile with the server copy; on error refetch to restore the truth.
+  function submitEdit(messageId: string, content: string) {
+    const existing = queryClient
+      .getQueryData<MessagesCache>(key)
+      ?.pages.flat()
+      .find((m) => m.id === messageId)
+    if (existing) {
+      queryClient.setQueryData<MessagesCache>(key, (old) =>
+        replaceMessage(old, { ...existing, content, is_edited: true })
+      )
+    }
+    editMutation.mutate(
+      { messageId, data: { content } },
+      {
+        onSuccess: (res) => {
+          const server = res.status === 200 ? (res.data.data as ChatMessage | undefined) : undefined
+          if (server) queryClient.setQueryData<MessagesCache>(key, (old) => replaceMessage(old, server))
+        },
+        onError: () => {
+          queryClient.invalidateQueries({ queryKey: key })
+        },
+      }
+    )
+    setEditing(null)
+  }
+
+  function cancelEdit() {
+    setEditing(null)
+  }
+
   function submit() {
     const content = value.trim()
     if (!content) return
-    send({
-      content,
-      replyToMessageId: replyTo ?? undefined,
-      mentions: resolveMentions(content, members),
-    })
+    if (editingMessageId) {
+      submitEdit(editingMessageId, content)
+    } else {
+      send({
+        content,
+        replyToMessageId: replyTo ?? undefined,
+        mentions: resolveMentions(content, members),
+      })
+      setReplyTo(null)
+    }
     setValue("")
-    setReplyTo(null)
     setMentionQuery(null)
     caretPosRef.current = 0
     pendingCaretRef.current = 0
@@ -191,6 +253,13 @@ export function MessageInput({ convId }: MessageInputProps) {
       }
     }
 
+    // Escape cancels an in-progress edit (when no popover claimed it first).
+    if (e.key === "Escape" && editingMessageId && !mentionOpen && !emojiOpen) {
+      e.preventDefault()
+      cancelEdit()
+      return
+    }
+
     // Enter-guard: never send while a popover (mention OR emoji) is open.
     if (e.key === "Enter" && !e.shiftKey && !mentionOpen && !emojiOpen) {
       e.preventDefault()
@@ -203,8 +272,29 @@ export function MessageInput({ convId }: MessageInputProps) {
   return (
     <div className="border-t px-3 py-3">
       <div className="bg-card focus-within:ring-ring/40 relative flex flex-col gap-1.5 rounded-2xl border p-1.5 shadow-sm transition focus-within:ring-2">
+        {/* Editing strip — supersedes the reply strip; X (or Esc) cancels. */}
+        {editingMessage && (
+          <div className="border-primary bg-muted/50 flex items-center gap-2 rounded-lg border-s-2 px-2.5 py-1.5">
+            <PencilIcon className="text-primary size-3.5 shrink-0" />
+            <div className="flex min-w-0 flex-col">
+              <span className="text-primary text-xs font-semibold">{t("conversations.composer.editing")}</span>
+              <span className="text-muted-foreground truncate text-xs">{editingMessage.content}</span>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="ms-auto shrink-0"
+              aria-label={t("conversations.composer.cancelEdit")}
+              onClick={cancelEdit}
+            >
+              <XIcon />
+            </Button>
+          </div>
+        )}
+
         {/* Reply strip — accent start-border, sender + snippet, X to clear. */}
-        {replyMessage && (
+        {!editingMessage && replyMessage && (
           <div className="border-primary bg-muted/50 flex items-center gap-2 rounded-lg border-s-2 px-2.5 py-1.5">
             <div className="flex min-w-0 flex-col">
               <span className="text-primary text-xs font-semibold">
@@ -279,13 +369,10 @@ export function MessageInput({ convId }: MessageInputProps) {
                     {t("conversations.composer.emojiEmpty")}
                   </EmojiPicker.Empty>
                   <EmojiPicker.List
-                    className="select-none pb-2"
+                    className="pb-2 select-none"
                     components={{
                       CategoryHeader: ({ category, ...props }) => (
-                        <div
-                          className="bg-popover text-muted-foreground px-2 pt-2 pb-1 text-xs font-medium"
-                          {...props}
-                        >
+                        <div className="bg-popover text-muted-foreground px-2 pt-2 pb-1 text-xs font-medium" {...props}>
                           {category.label}
                         </div>
                       ),
@@ -317,10 +404,10 @@ export function MessageInput({ convId }: MessageInputProps) {
             size="icon-sm"
             className="shrink-0"
             disabled={!canSend}
-            aria-label={t("conversations.composer.send")}
+            aria-label={editingMessageId ? t("conversations.composer.saveEdit") : t("conversations.composer.send")}
             onClick={submit}
           >
-            <SendHorizontalIcon className="rtl:rotate-180" />
+            {editingMessageId ? <CheckIcon /> : <SendHorizontalIcon className="rtl:rotate-180" />}
           </Button>
         </div>
       </div>

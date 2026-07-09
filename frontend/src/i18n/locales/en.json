@@ -3098,9 +3098,21 @@
       "yesterday": "Yesterday",
       "edited": "edited",
       "failed": "Not delivered",
+      "replyTo": "Message",
+      "replyUnavailable": "Original message unavailable",
       "empty": {
         "title": "No messages yet",
         "description": "Send the first message to start the conversation."
+      }
+    },
+    "actions": {
+      "reply": "Reply",
+      "edit": "Edit",
+      "delete": "Delete",
+      "retry": "Retry",
+      "deleteConfirm": {
+        "title": "Delete message?",
+        "description": "This message will be permanently deleted. This action cannot be undone."
       }
     },
     "composer": {
@@ -3111,7 +3123,10 @@
       "emojiEmpty": "No emoji found",
       "emojiLoading": "Loading…",
       "replyingTo": "Replying to {{name}}",
-      "cancelReply": "Cancel reply"
+      "cancelReply": "Cancel reply",
+      "editing": "Editing message",
+      "cancelEdit": "Cancel edit",
+      "saveEdit": "Save changes"
     }
   }
 }

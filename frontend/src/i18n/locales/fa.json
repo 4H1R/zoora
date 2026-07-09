@@ -3098,9 +3098,21 @@
       "yesterday": "دیروز",
       "edited": "ویرایش‌شده",
       "failed": "ارسال نشد",
+      "replyTo": "پیام",
+      "replyUnavailable": "پیام اصلی در دسترس نیست",
       "empty": {
         "title": "هنوز پیامی نیست",
         "description": "برای شروع گفتگو، اولین پیام را بفرستید."
+      }
+    },
+    "actions": {
+      "reply": "پاسخ",
+      "edit": "ویرایش",
+      "delete": "حذف",
+      "retry": "تلاش دوباره",
+      "deleteConfirm": {
+        "title": "پیام حذف شود؟",
+        "description": "این پیام برای همیشه حذف می‌شود. این عمل قابل بازگشت نیست."
       }
     },
     "composer": {
@@ -3111,7 +3123,10 @@
       "emojiEmpty": "ایموجی‌ای یافت نشد",
       "emojiLoading": "در حال بارگذاری…",
       "replyingTo": "در پاسخ به {{name}}",
-      "cancelReply": "لغو پاسخ"
+      "cancelReply": "لغو پاسخ",
+      "editing": "ویرایش پیام",
+      "cancelEdit": "لغو ویرایش",
+      "saveEdit": "ذخیره تغییرات"
     }
   }
 }
