@@ -1414,7 +1414,8 @@
       "grades": "Grades",
       "attendance": "Attendance",
       "recordings": "Recordings",
-      "zoora": "Zoora"
+      "zoora": "Zoora",
+      "conversations": "Chat"
     },
     "practices": {
       "title": "Practices",
@@ -1687,16 +1688,8 @@
           }
         },
         "features": {
-          "free": [
-            "Core virtual classrooms",
-            "Exams, homework & gradebook",
-            "Offline rooms & notifications"
-          ],
-          "plus": [
-            "Everything in Free",
-            "More storage & live capacity",
-            "Ticketing & file sharing"
-          ],
+          "free": ["Core virtual classrooms", "Exams, homework & gradebook", "Offline rooms & notifications"],
+          "plus": ["Everything in Free", "More storage & live capacity", "Ticketing & file sharing"],
           "pro": [
             "Everything in Plus",
             "Whiteboard & chat",
@@ -1704,12 +1697,7 @@
             "Messenger & email connectors",
             "AI assistance"
           ],
-          "max": [
-            "Everything in Pro",
-            "Cloud recordings",
-            "Auto grading",
-            "Single sign-on (SSO)"
-          ]
+          "max": ["Everything in Pro", "Cloud recordings", "Auto grading", "Single sign-on (SSO)"]
         }
       },
       "members": "Members",
@@ -2983,7 +2971,10 @@
     "noInvoicesHint": "Your payments will appear here.",
     "viewHistory": "Payment history",
     "backToPlans": "Back to plans",
-    "intervals": { "monthly": "Monthly", "yearly": "Yearly" },
+    "intervals": {
+      "monthly": "Monthly",
+      "yearly": "Yearly"
+    },
     "statuses": {
       "draft": "Draft",
       "pending": "Pending",
@@ -3055,6 +3046,25 @@
       "noPricesHint": "Add a plan price to get started.",
       "noInvoices": "No invoices",
       "noInvoicesHint": "Create an invoice to get started."
+    }
+  },
+  "conversations": {
+    "upgrade": {
+      "availableOn": "Pro & Max plans",
+      "title": "Unlock team chat",
+      "description": "Direct messages, group conversations, and announcement channels for your whole organization — available on the Pro and Max plans.",
+      "features": {
+        "groups": "Direct messages & group chats",
+        "channels": "Announcement channels",
+        "reactions": "Mentions, replies & reactions",
+        "search": "Full-text message search"
+      },
+      "cta": "Upgrade your plan",
+      "askAdmin": "Ask your organization admin to upgrade the plan."
+    },
+    "placeholder": {
+      "title": "Conversations",
+      "description": "Chat is enabled for your plan. The messaging experience will live here."
     }
   }
 }

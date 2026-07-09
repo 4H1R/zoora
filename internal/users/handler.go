@@ -33,6 +33,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 	{
 		// Self-access (no permission needed, just authenticated).
 		authed.GET("/users/me", h.GetProfile)
+		authed.GET("/users/me/entitlements", h.GetEntitlements)
 		authed.PUT("/users/me", h.UpdateProfile)
 		authed.POST("/users/me/password", h.ChangePassword)
 
@@ -259,6 +260,27 @@ func (h *Handler) GetProfile(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, user)
+}
+
+// GetEntitlements returns the caller org's resolved plan entitlements (feature
+// flags + numeric limits). The SPA reads this to gate plan-locked UI — nav
+// visibility and paywalls — without duplicating the backend tier→feature rule.
+// The snapshot is already resolved onto the Caller by the auth middleware.
+// @Summary Get my org entitlements
+// @Tags Users
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} domain.Response{data=domain.PlanInfo}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 500 {object} domain.Response{error=domain.ErrorBody}
+// @Router /users/me/entitlements [get]
+func (h *Handler) GetEntitlements(c *gin.Context) {
+	caller, ok := domain.CallerFromCtx(c.Request.Context())
+	if !ok {
+		_ = c.Error(domain.ErrForbidden)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, caller.Ent.Public())
 }
 
 // @Summary Update my profile

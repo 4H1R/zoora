@@ -1,6 +1,7 @@
 import type { NavGroup } from "@/components/layout/nav-main"
 import type { AppPermission } from "@/lib/access"
-import type { OrgRouteKey } from "@/lib/org-routes"
+import type { FeatureKey } from "@/lib/entitlements"
+import type { OrgRouteKey, OrgRouteSpec } from "@/lib/org-routes"
 import type { TFunction } from "i18next"
 
 import { ORG_ROUTES } from "@/lib/org-routes"
@@ -13,9 +14,32 @@ type NavGroupSpec = {
   keys: OrgRouteKey[]
 }
 
-export function buildOrgNavGroups(t: TFunction, has: (perm: AppPermission) => boolean): NavGroup[] {
+// navVisible decides whether a route appears in the sidebar. Two gates:
+//  1. perms — the caller must hold at least one (undefined = always allowed).
+//  2. feature — the org plan must include it. When it doesn't, the item is
+//     hidden, EXCEPT for holders of featureExemptPerms, who see it and land on
+//     an upgrade page (drives conversion for the people who can pay).
+function navVisible(
+  spec: OrgRouteSpec,
+  has: (perm: AppPermission) => boolean,
+  hasFeature: (feature: FeatureKey) => boolean
+): boolean {
+  if (spec.perms && !spec.perms.some(has)) return false
+  if (spec.feature && !hasFeature(spec.feature)) {
+    return !!spec.featureExemptPerms?.some(has)
+  }
+  return true
+}
+
+export function buildOrgNavGroups(
+  t: TFunction,
+  has: (perm: AppPermission) => boolean,
+  // hasFeature defaults to always-true so callers without entitlement data
+  // (or during load) fall back to permission-only gating.
+  hasFeature: (feature: FeatureKey) => boolean = () => true
+): NavGroup[] {
   const groups: NavGroupSpec[] = [
-    { label: t("org.panel"), keys: ["dashboard", "calendar", "classes"] },
+    { label: t("org.panel"), keys: ["dashboard", "calendar", "classes", "conversations"] },
     {
       label: t("org.nav.learning"),
       keys: ["online-classes", "exams", "practices", "grades", "attendance"],
@@ -31,7 +55,7 @@ export function buildOrgNavGroups(t: TFunction, has: (perm: AppPermission) => bo
       label: g.label,
       items: g.keys
         .map((key) => ORG_ROUTES[key])
-        .filter((spec) => !spec.perms || spec.perms.some(has))
+        .filter((spec) => navVisible(spec, has, hasFeature))
         .map((spec) => ({
           title: t(spec.i18nKey),
           url: `/org/${spec.segment}`,

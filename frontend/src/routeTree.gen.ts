@@ -34,6 +34,7 @@ import { Route as AuthOrgMediasIndexRouteImport } from './routes/_auth/org/media
 import { Route as AuthOrgGradesIndexRouteImport } from './routes/_auth/org/grades/index'
 import { Route as AuthOrgFilesIndexRouteImport } from './routes/_auth/org/files/index'
 import { Route as AuthOrgExamsIndexRouteImport } from './routes/_auth/org/exams/index'
+import { Route as AuthOrgConversationsIndexRouteImport } from './routes/_auth/org/conversations/index'
 import { Route as AuthOrgClassesIndexRouteImport } from './routes/_auth/org/classes/index'
 import { Route as AuthOrgBillingIndexRouteImport } from './routes/_auth/org/billing/index'
 import { Route as AuthOrgAttendanceIndexRouteImport } from './routes/_auth/org/attendance/index'
@@ -197,6 +198,12 @@ const AuthOrgExamsIndexRoute = AuthOrgExamsIndexRouteImport.update({
   path: '/exams/',
   getParentRoute: () => AuthOrgRoute,
 } as any)
+const AuthOrgConversationsIndexRoute =
+  AuthOrgConversationsIndexRouteImport.update({
+    id: '/conversations/',
+    path: '/conversations/',
+    getParentRoute: () => AuthOrgRoute,
+  } as any)
 const AuthOrgClassesIndexRoute = AuthOrgClassesIndexRouteImport.update({
   id: '/classes/',
   path: '/classes/',
@@ -451,6 +458,7 @@ export interface FileRoutesByFullPath {
   '/org/attendance/': typeof AuthOrgAttendanceIndexRoute
   '/org/billing/': typeof AuthOrgBillingIndexRoute
   '/org/classes/': typeof AuthOrgClassesIndexRoute
+  '/org/conversations/': typeof AuthOrgConversationsIndexRoute
   '/org/exams/': typeof AuthOrgExamsIndexRoute
   '/org/files/': typeof AuthOrgFilesIndexRoute
   '/org/grades/': typeof AuthOrgGradesIndexRoute
@@ -512,6 +520,7 @@ export interface FileRoutesByTo {
   '/org/attendance': typeof AuthOrgAttendanceIndexRoute
   '/org/billing': typeof AuthOrgBillingIndexRoute
   '/org/classes': typeof AuthOrgClassesIndexRoute
+  '/org/conversations': typeof AuthOrgConversationsIndexRoute
   '/org/exams': typeof AuthOrgExamsIndexRoute
   '/org/files': typeof AuthOrgFilesIndexRoute
   '/org/grades': typeof AuthOrgGradesIndexRoute
@@ -578,6 +587,7 @@ export interface FileRoutesById {
   '/_auth/org/attendance/': typeof AuthOrgAttendanceIndexRoute
   '/_auth/org/billing/': typeof AuthOrgBillingIndexRoute
   '/_auth/org/classes/': typeof AuthOrgClassesIndexRoute
+  '/_auth/org/conversations/': typeof AuthOrgConversationsIndexRoute
   '/_auth/org/exams/': typeof AuthOrgExamsIndexRoute
   '/_auth/org/files/': typeof AuthOrgFilesIndexRoute
   '/_auth/org/grades/': typeof AuthOrgGradesIndexRoute
@@ -642,6 +652,7 @@ export interface FileRouteTypes {
     | '/org/attendance/'
     | '/org/billing/'
     | '/org/classes/'
+    | '/org/conversations/'
     | '/org/exams/'
     | '/org/files/'
     | '/org/grades/'
@@ -703,6 +714,7 @@ export interface FileRouteTypes {
     | '/org/attendance'
     | '/org/billing'
     | '/org/classes'
+    | '/org/conversations'
     | '/org/exams'
     | '/org/files'
     | '/org/grades'
@@ -768,6 +780,7 @@ export interface FileRouteTypes {
     | '/_auth/org/attendance/'
     | '/_auth/org/billing/'
     | '/_auth/org/classes/'
+    | '/_auth/org/conversations/'
     | '/_auth/org/exams/'
     | '/_auth/org/files/'
     | '/_auth/org/grades/'
@@ -973,6 +986,13 @@ declare module '@tanstack/react-router' {
       path: '/exams'
       fullPath: '/org/exams/'
       preLoaderRoute: typeof AuthOrgExamsIndexRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
+    '/_auth/org/conversations/': {
+      id: '/_auth/org/conversations/'
+      path: '/conversations'
+      fullPath: '/org/conversations/'
+      preLoaderRoute: typeof AuthOrgConversationsIndexRouteImport
       parentRoute: typeof AuthOrgRoute
     }
     '/_auth/org/classes/': {
@@ -1329,6 +1349,7 @@ interface AuthOrgRouteChildren {
   AuthOrgAttendanceIndexRoute: typeof AuthOrgAttendanceIndexRoute
   AuthOrgBillingIndexRoute: typeof AuthOrgBillingIndexRoute
   AuthOrgClassesIndexRoute: typeof AuthOrgClassesIndexRoute
+  AuthOrgConversationsIndexRoute: typeof AuthOrgConversationsIndexRoute
   AuthOrgExamsIndexRoute: typeof AuthOrgExamsIndexRoute
   AuthOrgFilesIndexRoute: typeof AuthOrgFilesIndexRoute
   AuthOrgGradesIndexRoute: typeof AuthOrgGradesIndexRoute
@@ -1358,6 +1379,7 @@ const AuthOrgRouteChildren: AuthOrgRouteChildren = {
   AuthOrgAttendanceIndexRoute: AuthOrgAttendanceIndexRoute,
   AuthOrgBillingIndexRoute: AuthOrgBillingIndexRoute,
   AuthOrgClassesIndexRoute: AuthOrgClassesIndexRoute,
+  AuthOrgConversationsIndexRoute: AuthOrgConversationsIndexRoute,
   AuthOrgExamsIndexRoute: AuthOrgExamsIndexRoute,
   AuthOrgFilesIndexRoute: AuthOrgFilesIndexRoute,
   AuthOrgGradesIndexRoute: AuthOrgGradesIndexRoute,

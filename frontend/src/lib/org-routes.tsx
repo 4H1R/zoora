@@ -1,4 +1,5 @@
 import type { AppPermission } from "@/lib/access"
+import type { FeatureKey } from "@/lib/entitlements"
 
 import {
   BellIcon,
@@ -9,6 +10,7 @@ import {
   FileIcon,
   GraduationCapIcon,
   LayoutDashboardIcon,
+  MessageCircleIcon,
   NotebookPenIcon,
   SchoolIcon,
   SettingsIcon,
@@ -34,6 +36,7 @@ export type OrgRouteKey =
   | "billing"
   | "files"
   | "notifications"
+  | "conversations"
 
 // OrgRouteSpec is the single source of truth for the per-route metadata shared
 // between the sidebar nav (org-nav.tsx) and the dashboard tiles
@@ -48,6 +51,13 @@ export type OrgRouteSpec = {
   segment: string
   // perms gate visibility; undefined means always visible to org members.
   perms?: AppPermission[]
+  // feature gates visibility on the org's plan, in ADDITION to perms. When the
+  // plan lacks it, the item is hidden — except for holders of featureExemptPerms.
+  feature?: FeatureKey
+  // featureExemptPerms still see the item when the plan lacks `feature`; they
+  // land on an upgrade page. Surfaces plan-locked features to the people who can
+  // actually upgrade (e.g. conversations:manage → org admins).
+  featureExemptPerms?: AppPermission[]
 }
 
 export const ORG_ROUTES: Record<OrgRouteKey, OrgRouteSpec> = {
@@ -131,5 +141,15 @@ export const ORG_ROUTES: Record<OrgRouteKey, OrgRouteSpec> = {
     i18nKey: "notifications.title",
     icon: <BellIcon />,
     segment: "notifications",
+  },
+  conversations: {
+    i18nKey: "org.nav.conversations",
+    icon: <MessageCircleIcon />,
+    segment: "conversations",
+    // Any participant (view) or org chat admin (manage) may reach it; the plan
+    // gate + the manage-only exemption below decide what they actually see.
+    perms: ["conversations:view", "conversations:manage"],
+    feature: "chat",
+    featureExemptPerms: ["conversations:manage"],
   },
 }

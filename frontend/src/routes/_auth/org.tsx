@@ -18,6 +18,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { useDirection } from "@/components/ui/direction"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { buildAccess } from "@/lib/access"
+import { useEntitlements } from "@/lib/entitlements"
 import { buildOrgNavGroups } from "@/lib/org-nav"
 import { ORG_ROUTES } from "@/lib/org-routes"
 
@@ -38,6 +39,7 @@ const SEGMENT_KEYS: Record<string, string> = {
 function RouteComponent() {
   const { t } = useTranslation()
   const { data, isLoading: userLoading } = useGetUsersMe()
+  const { entitlements } = useEntitlements()
   const direction = useDirection()
   const sidebarSide = direction === "rtl" ? "right" : "left"
   const navigate = useNavigate()
@@ -58,7 +60,8 @@ function RouteComponent() {
   if (userLoading || !access) return <SplashScreen />
   if (!user || !user.organization_id) return null
 
-  const navGroups = buildOrgNavGroups(t, access.has)
+  const hasFeature = (feature: string) => !!entitlements?.features?.[feature]
+  const navGroups = buildOrgNavGroups(t, access.has, hasFeature)
 
   return (
     <AccessProvider config={access.config} user={access.user}>

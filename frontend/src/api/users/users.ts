@@ -50,6 +50,9 @@ import type {
   GetUsersMe200,
   GetUsersMe401,
   GetUsersMe500,
+  GetUsersMeEntitlements200,
+  GetUsersMeEntitlements401,
+  GetUsersMeEntitlements500,
   GetUsersParams,
   GithubCom4H1RZooraInternalDomainAssignRoleDTO,
   GithubCom4H1RZooraInternalDomainChangePasswordDTO,
@@ -710,7 +713,131 @@ export const usePutUsersMe = <TError = ErrorType<PutUsersMe400 | PutUsersMe401 |
       > => {
       return useMutation(getPutUsersMeMutationOptions(options), queryClient);
     }
-    export type postUsersMePasswordResponse200 = {
+    export type getUsersMeEntitlementsResponse200 = {
+  data: GetUsersMeEntitlements200
+  status: 200
+}
+
+export type getUsersMeEntitlementsResponse401 = {
+  data: GetUsersMeEntitlements401
+  status: 401
+}
+
+export type getUsersMeEntitlementsResponse500 = {
+  data: GetUsersMeEntitlements500
+  status: 500
+}
+
+export type getUsersMeEntitlementsResponseSuccess = (getUsersMeEntitlementsResponse200) & {
+  headers: Headers;
+};
+export type getUsersMeEntitlementsResponseError = (getUsersMeEntitlementsResponse401 | getUsersMeEntitlementsResponse500) & {
+  headers: Headers;
+};
+
+export type getUsersMeEntitlementsResponse = (getUsersMeEntitlementsResponseSuccess | getUsersMeEntitlementsResponseError)
+
+export const getGetUsersMeEntitlementsUrl = () => {
+
+
+
+
+  return `/users/me/entitlements`
+}
+
+/**
+ * @summary Get my org entitlements
+ */
+export const getUsersMeEntitlements = async ( options?: RequestInit): Promise<getUsersMeEntitlementsResponse> => {
+
+  return customInstance<getUsersMeEntitlementsResponse>(getGetUsersMeEntitlementsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetUsersMeEntitlementsQueryKey = () => {
+    return [
+    `/users/me/entitlements`
+    ] as const;
+    }
+
+
+export const getGetUsersMeEntitlementsQueryOptions = <TData = Awaited<ReturnType<typeof getUsersMeEntitlements>>, TError = ErrorType<GetUsersMeEntitlements401 | GetUsersMeEntitlements500>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersMeEntitlements>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUsersMeEntitlementsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUsersMeEntitlements>>> = ({ signal }) => getUsersMeEntitlements({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUsersMeEntitlements>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetUsersMeEntitlementsQueryResult = NonNullable<Awaited<ReturnType<typeof getUsersMeEntitlements>>>
+export type GetUsersMeEntitlementsQueryError = ErrorType<GetUsersMeEntitlements401 | GetUsersMeEntitlements500>
+
+
+export function useGetUsersMeEntitlements<TData = Awaited<ReturnType<typeof getUsersMeEntitlements>>, TError = ErrorType<GetUsersMeEntitlements401 | GetUsersMeEntitlements500>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersMeEntitlements>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUsersMeEntitlements>>,
+          TError,
+          Awaited<ReturnType<typeof getUsersMeEntitlements>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUsersMeEntitlements<TData = Awaited<ReturnType<typeof getUsersMeEntitlements>>, TError = ErrorType<GetUsersMeEntitlements401 | GetUsersMeEntitlements500>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersMeEntitlements>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUsersMeEntitlements>>,
+          TError,
+          Awaited<ReturnType<typeof getUsersMeEntitlements>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUsersMeEntitlements<TData = Awaited<ReturnType<typeof getUsersMeEntitlements>>, TError = ErrorType<GetUsersMeEntitlements401 | GetUsersMeEntitlements500>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersMeEntitlements>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get my org entitlements
+ */
+
+export function useGetUsersMeEntitlements<TData = Awaited<ReturnType<typeof getUsersMeEntitlements>>, TError = ErrorType<GetUsersMeEntitlements401 | GetUsersMeEntitlements500>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsersMeEntitlements>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetUsersMeEntitlementsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type postUsersMePasswordResponse200 = {
   data: GithubCom4H1RZooraInternalDomainResponse
   status: 200
 }

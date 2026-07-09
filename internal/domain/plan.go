@@ -225,6 +225,21 @@ type PlanInfo struct {
 	Limits   map[Limit]int64  `json:"limits"`
 }
 
+// Public projects a resolved Entitlements snapshot into the serializable
+// PlanInfo contract (same shape as the catalog), for the
+// /users/me/entitlements endpoint the SPA reads to gate plan-locked UI
+// (nav visibility, paywalls) without duplicating the tier→feature rule.
+func (e Entitlements) Public() PlanInfo {
+	r := e.resolved()
+	return PlanInfo{
+		Plan:     r.Plan,
+		Tier:     r.Plan.Tier(),
+		Size:     r.Plan.Size(),
+		Features: r.features,
+		Limits:   r.limits,
+	}
+}
+
 // PublicCatalog returns the plan catalog for API responses, grouped by size
 // (ascending), tiers low to high within each size.
 func PublicCatalog() []PlanInfo {
