@@ -1,4 +1,5 @@
 import { AtSignIcon } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
@@ -25,10 +26,12 @@ interface MentionPopoverProps {
  * keyboard-driven — the highlighted row is owned by the parent via `activeIndex`.
  */
 export function MentionPopover({ members, activeIndex, onSelect, onHover }: MentionPopoverProps) {
+  const { t } = useTranslation()
+
   return (
     <div
       role="listbox"
-      aria-label="Mentions"
+      aria-label={t("conversations.composer.mentions")}
       className="bg-popover text-popover-foreground ring-foreground/10 absolute bottom-full start-0 z-50 mb-2 max-h-56 w-64 overflow-y-auto rounded-lg p-1 shadow-md ring-1"
     >
       {members.map((member, index) => (

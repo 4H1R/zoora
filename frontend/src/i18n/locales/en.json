@@ -3179,7 +3179,8 @@
       "editing": "Editing message",
       "cancelEdit": "Cancel edit",
       "saveEdit": "Save changes",
-      "attach": "Attach files"
+      "attach": "Attach files",
+      "mentions": "Mentions"
     },
     "attachments": {
       "tray": "Selected attachments",

@@ -8,7 +8,7 @@ import { useChatWs } from "@/components/org/conversations/chat-provider"
 // `?msg=<uuid>` deep-links/jumps to a specific message. Validate it here (drop
 // anything malformed) so the search param is trustworthy for the thread.
 const searchSchema = z.object({
-  msg: z.string().uuid().optional().catch(undefined),
+  msg: z.uuid().optional().catch(undefined),
 })
 
 export const Route = createFileRoute("/_auth/org/conversations/$conversationId")({
