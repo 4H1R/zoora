@@ -22,6 +22,24 @@ func NewNotifier(n domain.NotificationService, members domain.ConversationMember
 	return &Notifier{notifications: n, members: members}
 }
 
+// unmutedRecipients returns member UserIDs excluding the sender and any
+// member whose MutedUntil is still in the future. Pure/no I/O so it can back
+// both the notifier's mute-gating and the realtime per-user fanout without
+// duplicating the filter logic.
+func unmutedRecipients(members []domain.ConversationMember, sender uuid.UUID, now time.Time) []uuid.UUID {
+	var out []uuid.UUID
+	for _, m := range members {
+		if m.UserID == sender {
+			continue
+		}
+		if m.MutedUntil != nil && m.MutedUntil.After(now) {
+			continue
+		}
+		out = append(out, m.UserID)
+	}
+	return out
+}
+
 // NotifyMessage sends in-app + push to the resolved recipients, skipping
 // muted members. Errors are the caller's to log-and-continue on.
 func (nx *Notifier) NotifyMessage(ctx context.Context, conv *domain.Conversation, msg *domain.ConversationMessage, recipientIDs []uuid.UUID) error {
