@@ -3051,6 +3051,7 @@
   },
   "tickets": {
     "title": "Tickets",
+    "error": "Something went wrong. Try again.",
     "subtitle": "Questions and grade objections across your classes",
     "empty": { "title": "No tickets yet", "description": "Open a ticket to ask a question or dispute a grade." },
     "new": "New ticket",
@@ -3073,7 +3074,8 @@
       "targetColumnPlaceholder": "Select a column",
       "submit": "Open ticket",
       "attachments": "Attachments",
-      "attach": "Attach file"
+      "attach": "Attach file",
+      "remove": "Remove"
     },
     "thread": {
       "reply": "Reply",

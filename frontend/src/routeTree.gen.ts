@@ -25,6 +25,7 @@ import { Route as AuthLiveLiveIdRouteImport } from './routes/_auth/live/$liveId'
 import { Route as AdminAdminNotificationsRouteImport } from './routes/_admin/admin/notifications'
 import { Route as AdminAdminDashboardRouteImport } from './routes/_admin/admin/dashboard'
 import { Route as AuthOrgUsersIndexRouteImport } from './routes/_auth/org/users/index'
+import { Route as AuthOrgTicketsIndexRouteImport } from './routes/_auth/org/tickets/index'
 import { Route as AuthOrgSettingsIndexRouteImport } from './routes/_auth/org/settings/index'
 import { Route as AuthOrgRolesIndexRouteImport } from './routes/_auth/org/roles/index'
 import { Route as AuthOrgPracticesIndexRouteImport } from './routes/_auth/org/practices/index'
@@ -149,6 +150,11 @@ const AdminAdminDashboardRoute = AdminAdminDashboardRouteImport.update({
 const AuthOrgUsersIndexRoute = AuthOrgUsersIndexRouteImport.update({
   id: '/users/',
   path: '/users/',
+  getParentRoute: () => AuthOrgRoute,
+} as any)
+const AuthOrgTicketsIndexRoute = AuthOrgTicketsIndexRouteImport.update({
+  id: '/tickets/',
+  path: '/tickets/',
   getParentRoute: () => AuthOrgRoute,
 } as any)
 const AuthOrgSettingsIndexRoute = AuthOrgSettingsIndexRouteImport.update({
@@ -468,6 +474,7 @@ export interface FileRoutesByFullPath {
   '/org/practices/': typeof AuthOrgPracticesIndexRoute
   '/org/roles/': typeof AuthOrgRolesIndexRoute
   '/org/settings/': typeof AuthOrgSettingsIndexRoute
+  '/org/tickets/': typeof AuthOrgTicketsIndexRoute
   '/org/users/': typeof AuthOrgUsersIndexRoute
   '/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
   '/admin/classes/$classId/live-rooms': typeof AdminAdminClassesClassIdLiveRoomsRoute
@@ -530,6 +537,7 @@ export interface FileRoutesByTo {
   '/org/practices': typeof AuthOrgPracticesIndexRoute
   '/org/roles': typeof AuthOrgRolesIndexRoute
   '/org/settings': typeof AuthOrgSettingsIndexRoute
+  '/org/tickets': typeof AuthOrgTicketsIndexRoute
   '/org/users': typeof AuthOrgUsersIndexRoute
   '/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
   '/admin/classes/$classId/live-rooms': typeof AdminAdminClassesClassIdLiveRoomsRoute
@@ -597,6 +605,7 @@ export interface FileRoutesById {
   '/_auth/org/practices/': typeof AuthOrgPracticesIndexRoute
   '/_auth/org/roles/': typeof AuthOrgRolesIndexRoute
   '/_auth/org/settings/': typeof AuthOrgSettingsIndexRoute
+  '/_auth/org/tickets/': typeof AuthOrgTicketsIndexRoute
   '/_auth/org/users/': typeof AuthOrgUsersIndexRoute
   '/_admin/admin/classes/$classId/gradebook': typeof AdminAdminClassesClassIdGradebookRoute
   '/_admin/admin/classes/$classId/live-rooms': typeof AdminAdminClassesClassIdLiveRoomsRoute
@@ -662,6 +671,7 @@ export interface FileRouteTypes {
     | '/org/practices/'
     | '/org/roles/'
     | '/org/settings/'
+    | '/org/tickets/'
     | '/org/users/'
     | '/admin/classes/$classId/gradebook'
     | '/admin/classes/$classId/live-rooms'
@@ -724,6 +734,7 @@ export interface FileRouteTypes {
     | '/org/practices'
     | '/org/roles'
     | '/org/settings'
+    | '/org/tickets'
     | '/org/users'
     | '/admin/classes/$classId/gradebook'
     | '/admin/classes/$classId/live-rooms'
@@ -790,6 +801,7 @@ export interface FileRouteTypes {
     | '/_auth/org/practices/'
     | '/_auth/org/roles/'
     | '/_auth/org/settings/'
+    | '/_auth/org/tickets/'
     | '/_auth/org/users/'
     | '/_admin/admin/classes/$classId/gradebook'
     | '/_admin/admin/classes/$classId/live-rooms'
@@ -923,6 +935,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/org/users/'
       preLoaderRoute: typeof AuthOrgUsersIndexRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
+    '/_auth/org/tickets/': {
+      id: '/_auth/org/tickets/'
+      path: '/tickets'
+      fullPath: '/org/tickets/'
+      preLoaderRoute: typeof AuthOrgTicketsIndexRouteImport
       parentRoute: typeof AuthOrgRoute
     }
     '/_auth/org/settings/': {
@@ -1359,6 +1378,7 @@ interface AuthOrgRouteChildren {
   AuthOrgPracticesIndexRoute: typeof AuthOrgPracticesIndexRoute
   AuthOrgRolesIndexRoute: typeof AuthOrgRolesIndexRoute
   AuthOrgSettingsIndexRoute: typeof AuthOrgSettingsIndexRoute
+  AuthOrgTicketsIndexRoute: typeof AuthOrgTicketsIndexRoute
   AuthOrgUsersIndexRoute: typeof AuthOrgUsersIndexRoute
   AuthOrgClassesClassIdGradebookRoute: typeof AuthOrgClassesClassIdGradebookRoute
   AuthOrgClassesClassSessionsClassSessionIdRoute: typeof AuthOrgClassesClassSessionsClassSessionIdRoute
@@ -1389,6 +1409,7 @@ const AuthOrgRouteChildren: AuthOrgRouteChildren = {
   AuthOrgPracticesIndexRoute: AuthOrgPracticesIndexRoute,
   AuthOrgRolesIndexRoute: AuthOrgRolesIndexRoute,
   AuthOrgSettingsIndexRoute: AuthOrgSettingsIndexRoute,
+  AuthOrgTicketsIndexRoute: AuthOrgTicketsIndexRoute,
   AuthOrgUsersIndexRoute: AuthOrgUsersIndexRoute,
   AuthOrgClassesClassIdGradebookRoute: AuthOrgClassesClassIdGradebookRoute,
   AuthOrgClassesClassSessionsClassSessionIdRoute:
