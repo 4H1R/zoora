@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import { useGetConversationsPresence } from "@/api/conversations/conversations"
 
 import { useChatWs } from "./chat-provider"
-import type { Presence } from "./lib/presence"
+import { pickFreshestStatus, type Presence } from "./lib/presence"
 import type { WsEvent } from "./lib/ws-client"
 
 // Presence is cheap to refetch but changes constantly via WS; a moderate
@@ -13,8 +13,14 @@ const PRESENCE_STALE_MS = 30_000
 /**
  * Batch-fetch presence for `userIds` and keep it live. The REST snapshot
  * (`GET /conversations/presence?user_ids=a,b,c`) seeds each id; `presence_update`
- * WS frames for any requested id then override the snapshot in a local map (the
+ * WS frames for any requested id are accumulated into a local "live" map (the
  * central cache reducer intentionally ignores presence — it's owned here).
+ *
+ * Resolution between the live map and the REST snapshot is by RECENCY, not
+ * "live always wins": see `pickFreshestStatus`. This self-heals after a
+ * refetch — if a `presence_update` was missed during a WS gap, the next fresh
+ * snapshot (newer `last_seen`) supersedes the stale live entry instead of
+ * being shadowed forever.
  *
  * The query is skipped while `userIds` is empty. Ids are de-duped and sorted so
  * the query key is stable regardless of caller ordering. Returns a resolver:
@@ -53,10 +59,11 @@ export function usePresence(userIds: string[]): (userId: string) => Presence | u
   const snapshot = data?.status === 200 ? (data.data.data ?? {}) : {}
 
   return (userId: string): Presence | undefined => {
-    const merged = live[userId]
-    if (merged) return merged
+    const liveStatus = live[userId]
     const snap = snapshot[userId]
-    if (!snap) return undefined
-    return { online: !!snap.online, lastSeen: snap.last_seen }
+    const snapStatus: Presence | undefined = snap
+      ? { online: !!snap.online, lastSeen: snap.last_seen }
+      : undefined
+    return pickFreshestStatus(liveStatus, snapStatus)
   }
 }
