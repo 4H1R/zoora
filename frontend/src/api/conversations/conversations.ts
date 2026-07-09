@@ -60,6 +60,10 @@ import type {
   GetConversationsIdSearch404,
   GetConversationsIdSearchParams,
   GetConversationsParams,
+  GetConversationsPresence200,
+  GetConversationsPresence401,
+  GetConversationsPresence403,
+  GetConversationsPresenceParams,
   GetConversationsSearch200,
   GetConversationsSearch400,
   GetConversationsSearch401,
@@ -990,7 +994,139 @@ export const usePostConversationsMessagesMessageIdUnpin = <TError = ErrorType<Po
       > => {
       return useMutation(getPostConversationsMessagesMessageIdUnpinMutationOptions(options), queryClient);
     }
-    export type getConversationsSearchResponse200 = {
+    export type getConversationsPresenceResponse200 = {
+  data: GetConversationsPresence200
+  status: 200
+}
+
+export type getConversationsPresenceResponse401 = {
+  data: GetConversationsPresence401
+  status: 401
+}
+
+export type getConversationsPresenceResponse403 = {
+  data: GetConversationsPresence403
+  status: 403
+}
+
+export type getConversationsPresenceResponseSuccess = (getConversationsPresenceResponse200) & {
+  headers: Headers;
+};
+export type getConversationsPresenceResponseError = (getConversationsPresenceResponse401 | getConversationsPresenceResponse403) & {
+  headers: Headers;
+};
+
+export type getConversationsPresenceResponse = (getConversationsPresenceResponseSuccess | getConversationsPresenceResponseError)
+
+export const getGetConversationsPresenceUrl = (params: GetConversationsPresenceParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/conversations/presence?${stringifiedParams}` : `/conversations/presence`
+}
+
+/**
+ * Returns online/last-seen status for the requested users, filtered to the caller's organization. Pass a comma-separated ?user_ids= list (capped at 100; unknown or cross-org ids are omitted from the response).
+ * @summary Batch user presence
+ */
+export const getConversationsPresence = async (params: GetConversationsPresenceParams, options?: RequestInit): Promise<getConversationsPresenceResponse> => {
+
+  return customInstance<getConversationsPresenceResponse>(getGetConversationsPresenceUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetConversationsPresenceQueryKey = (params?: GetConversationsPresenceParams,) => {
+    return [
+    `/conversations/presence`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetConversationsPresenceQueryOptions = <TData = Awaited<ReturnType<typeof getConversationsPresence>>, TError = ErrorType<GetConversationsPresence401 | GetConversationsPresence403>>(params: GetConversationsPresenceParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversationsPresence>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetConversationsPresenceQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getConversationsPresence>>> = ({ signal }) => getConversationsPresence(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getConversationsPresence>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetConversationsPresenceQueryResult = NonNullable<Awaited<ReturnType<typeof getConversationsPresence>>>
+export type GetConversationsPresenceQueryError = ErrorType<GetConversationsPresence401 | GetConversationsPresence403>
+
+
+export function useGetConversationsPresence<TData = Awaited<ReturnType<typeof getConversationsPresence>>, TError = ErrorType<GetConversationsPresence401 | GetConversationsPresence403>>(
+ params: GetConversationsPresenceParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversationsPresence>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConversationsPresence>>,
+          TError,
+          Awaited<ReturnType<typeof getConversationsPresence>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConversationsPresence<TData = Awaited<ReturnType<typeof getConversationsPresence>>, TError = ErrorType<GetConversationsPresence401 | GetConversationsPresence403>>(
+ params: GetConversationsPresenceParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversationsPresence>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConversationsPresence>>,
+          TError,
+          Awaited<ReturnType<typeof getConversationsPresence>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConversationsPresence<TData = Awaited<ReturnType<typeof getConversationsPresence>>, TError = ErrorType<GetConversationsPresence401 | GetConversationsPresence403>>(
+ params: GetConversationsPresenceParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversationsPresence>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Batch user presence
+ */
+
+export function useGetConversationsPresence<TData = Awaited<ReturnType<typeof getConversationsPresence>>, TError = ErrorType<GetConversationsPresence401 | GetConversationsPresence403>>(
+ params: GetConversationsPresenceParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversationsPresence>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetConversationsPresenceQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type getConversationsSearchResponse200 = {
   data: GetConversationsSearch200
   status: 200
 }

@@ -48,3 +48,44 @@ func TestDeliverToRoom_SkipsNonJoiner(t *testing.T) {
 	default:
 	}
 }
+
+// TestRemoveSocket_ReportsRoomsAndLastSocket covers the presence lifecycle
+// signal: removeSocket returns the rooms the socket had joined and whether it
+// was the user's last socket (so the caller marks offline exactly once).
+func TestRemoveSocket_ReportsRoomsAndLastSocket(t *testing.T) {
+	h := NewHub(fakeMembers{ok: true}, testLogger())
+	userID := uuid.New()
+	convA, convB := uuid.New(), uuid.New()
+
+	c1 := &conn{userID: userID, send: make(chan outbound, 4), rooms: map[uuid.UUID]bool{}}
+	c2 := &conn{userID: userID, send: make(chan outbound, 4), rooms: map[uuid.UUID]bool{}}
+	h.addSocket(c1)
+	h.addSocket(c2)
+	h.joinRoom(c1, convA)
+	h.joinRoom(c1, convB)
+
+	// First socket leaves: reports its rooms but is NOT the last socket.
+	rooms, last := h.removeSocket(c1)
+	if last {
+		t.Fatal("removing c1 while c2 remains must not report lastSocket")
+	}
+	if len(rooms) != 2 {
+		t.Fatalf("expected 2 rooms reported, got %d", len(rooms))
+	}
+	got := map[uuid.UUID]bool{}
+	for _, r := range rooms {
+		got[r] = true
+	}
+	if !got[convA] || !got[convB] {
+		t.Fatalf("expected rooms convA and convB, got %v", rooms)
+	}
+
+	// Second socket leaves: it joined no rooms, and IS the last socket.
+	rooms, last = h.removeSocket(c2)
+	if !last {
+		t.Fatal("removing the final socket must report lastSocket=true")
+	}
+	if len(rooms) != 0 {
+		t.Fatalf("c2 joined no rooms, expected 0 reported, got %d", len(rooms))
+	}
+}

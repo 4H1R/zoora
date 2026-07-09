@@ -64,10 +64,17 @@ func (h *Hub) addSocket(c *conn) {
 	h.userSockets[c.userID][c] = true
 }
 
-func (h *Hub) removeSocket(c *conn) {
+// removeSocket detaches c from every room it joined and from its user's socket
+// set, returning the conversations it had joined (for presence fan-out) and
+// whether this was the user's LAST socket on this instance (so the caller can
+// mark the user offline only once, supporting multi-device). Both are computed
+// under a single lock so they cannot race a concurrent join/leave on c.
+func (h *Hub) removeSocket(c *conn) (rooms []uuid.UUID, lastSocket bool) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
+	rooms = make([]uuid.UUID, 0, len(c.rooms))
 	for convID := range c.rooms {
+		rooms = append(rooms, convID)
 		if set := h.rooms[convID]; set != nil {
 			delete(set, c)
 			if len(set) == 0 {
@@ -82,9 +89,11 @@ func (h *Hub) removeSocket(c *conn) {
 		delete(set, c)
 		if len(set) == 0 {
 			delete(h.userSockets, c.userID)
+			lastSocket = true
 		}
 	}
 	close(c.send)
+	return rooms, lastSocket
 }
 
 func (h *Hub) joinRoom(c *conn, convID uuid.UUID) {
