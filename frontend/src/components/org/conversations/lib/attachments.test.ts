@@ -9,6 +9,7 @@ import {
   attachmentsOf,
   markAttachmentDone,
   markAttachmentError,
+  planAttachmentRetry,
   removeAttachment,
   resetAttachmentUploading,
   resolvedMediaIds,
@@ -136,6 +137,33 @@ describe("resolvedMediaIds", () => {
       att("d", { status: "uploading" }),
     ])
     expect(ids).toEqual(["x", "z"])
+  })
+})
+
+describe("planAttachmentRetry", () => {
+  it("re-sends (no re-upload) when every upload is done but the POST failed", () => {
+    // All attachments succeeded — the bubble only flipped to "failed" because
+    // the message POST errored. Retry must re-fire the POST with the resolved
+    // media ids, NOT dead-end on an empty failed set.
+    const plan = planAttachmentRetry([
+      att("a", { status: "done", mediaId: "x" }),
+      att("b", { status: "done", mediaId: "y" }),
+    ])
+    expect(plan).toEqual({ resend: true, failedIds: [], mediaIds: ["x", "y"] })
+  })
+
+  it("re-uploads only the failed attachments when some uploads failed", () => {
+    const plan = planAttachmentRetry([
+      att("a", { status: "done", mediaId: "x" }),
+      att("b", { status: "error" }),
+      att("c", { status: "uploading" }),
+    ])
+    expect(plan.resend).toBe(false)
+    expect(plan.failedIds).toEqual(["b", "c"])
+  })
+
+  it("does not re-send when there are no attachments at all", () => {
+    expect(planAttachmentRetry([])).toEqual({ resend: false, failedIds: [], mediaIds: [] })
   })
 })
 

@@ -18,6 +18,7 @@ import {
   attachmentsOf,
   markAttachmentDone,
   markAttachmentError,
+  planAttachmentRetry,
   removeAttachment,
   resetAttachmentUploading,
   resolvedMediaIds,
@@ -90,13 +91,17 @@ export function useSendAttachments(convId: string) {
   // server copy (dropping the local previews) and schedule the blob revoke; on
   // error flip the bubble to "failed" so Retry can re-run.
   function post(msgId: string, input: PendingSendInput, mediaIds: string[]) {
+    // Capture the blob previews NOW, before the POST resolves. The WS
+    // `new_message` echo can reconcile the bubble (dropping `_attachments`)
+    // before `onSuccess` runs, so re-reading the cache there would miss the
+    // previews and leak their object URLs.
+    const previews = attachmentsOf(getCache(), msgId)
     mutation.mutate(
       { id: convId, data: buildDto(msgId, input, mediaIds) },
       {
         onSuccess: (res) => {
           const server = serverMessage(res)
           if (!server) return
-          const previews = attachmentsOf(getCache(), msgId)
           setCache((old) => replaceMessage(old, server))
           clearPending(msgId)
           // Seamless swap: let the confirmed images load, then release blobs.
@@ -207,18 +212,29 @@ export function useSendAttachments(convId: string) {
     cancelPending(msgId, localId)
   }
 
-  // Retry a failed attachment bubble: re-upload only the errored attachments
-  // (keeping the ones that already succeeded) with fresh controllers, then
-  // re-run the settle → POST pipeline.
+  // Retry a failed attachment bubble. Two distinct failure modes:
+  //  1. some uploads failed → re-upload only those (keeping the succeeded ones)
+  //     with fresh controllers, then re-run the settle → POST pipeline.
+  //  2. every upload succeeded but the message POST failed → skip re-uploading
+  //     and re-fire the POST directly with the already-resolved media_ids +
+  //     original input (same idempotent id). Previously this path dead-ended
+  //     because the failed set was empty, leaving the message unsendable.
   function retry(msgId: string) {
     const entry = getPending(msgId)
     if (!entry) return
     const atts = attachmentsOf(getCache(), msgId)
-    const failedIds = new Set(atts.filter((a) => a.status !== "done").map((a) => a.localId))
-    if (failedIds.size === 0) return
+    const plan = planAttachmentRetry(atts)
 
+    // Either path puts the bubble back into "sending" while it re-runs.
     setCache((old) => markStatus(old, msgId, "sending"))
 
+    // Uploads all done — only the message POST needs re-firing.
+    if (plan.resend) {
+      post(msgId, entry.input, plan.mediaIds)
+      return
+    }
+
+    const failedIds = new Set(plan.failedIds)
     const retried: PendingFile[] = entry.files
       .filter((f) => failedIds.has(f.localId))
       .map((f) => {

@@ -133,3 +133,26 @@ export function attachmentsOf(old: MessagesCache | undefined, msgId: string): Lo
   const msg = old?.pages.flat().find((m) => m.id === msgId)
   return msg?._attachments ?? []
 }
+
+/**
+ * How to retry a failed attachment bubble.
+ * - `resend: true`  → every upload already succeeded, so the message POST itself
+ *   is what failed; re-fire the POST with the already-resolved `mediaIds` (no
+ *   re-upload). This is the path that was previously a dead-end.
+ * - `resend: false` → at least one upload failed/errored; re-upload just the
+ *   `failedIds`, then run the settle → POST pipeline again.
+ */
+export interface AttachmentRetryPlan {
+  resend: boolean
+  failedIds: string[]
+  mediaIds: string[]
+}
+
+export function planAttachmentRetry(attachments: LocalAttachment[]): AttachmentRetryPlan {
+  const failedIds = attachments.filter((a) => a.status !== "done").map((a) => a.localId)
+  // Only re-send directly when there is something to send AND nothing to retry.
+  if (failedIds.length === 0 && attachments.length > 0) {
+    return { resend: true, failedIds: [], mediaIds: resolvedMediaIds(attachments) }
+  }
+  return { resend: false, failedIds, mediaIds: [] }
+}
