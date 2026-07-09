@@ -24,6 +24,7 @@ import { Route as AuthOrgCalendarRouteImport } from './routes/_auth/org/calendar
 import { Route as AuthLiveLiveIdRouteImport } from './routes/_auth/live/$liveId'
 import { Route as AdminAdminNotificationsRouteImport } from './routes/_admin/admin/notifications'
 import { Route as AdminAdminDashboardRouteImport } from './routes/_admin/admin/dashboard'
+import { Route as AuthOrgConversationsRouteRouteImport } from './routes/_auth/org/conversations/route'
 import { Route as AuthOrgUsersIndexRouteImport } from './routes/_auth/org/users/index'
 import { Route as AuthOrgSettingsIndexRouteImport } from './routes/_auth/org/settings/index'
 import { Route as AuthOrgRolesIndexRouteImport } from './routes/_auth/org/roles/index'
@@ -57,6 +58,7 @@ import { Route as AuthOrgSettingsNotificationsRouteImport } from './routes/_auth
 import { Route as AuthOrgOfflinesOfflineIdRouteImport } from './routes/_auth/org/offlines/$offlineId'
 import { Route as AuthOrgNotificationsSendRouteImport } from './routes/_auth/org/notifications/send'
 import { Route as AuthOrgFilesFolderRouteImport } from './routes/_auth/org/files/$folder'
+import { Route as AuthOrgConversationsConversationIdRouteImport } from './routes/_auth/org/conversations/$conversationId'
 import { Route as AuthOrgClassesClassIdRouteImport } from './routes/_auth/org/classes/$classId'
 import { Route as AuthOrgBillingResultRouteImport } from './routes/_auth/org/billing/result'
 import { Route as AuthOrgBillingInvoicesRouteImport } from './routes/_auth/org/billing/invoices'
@@ -146,6 +148,12 @@ const AdminAdminDashboardRoute = AdminAdminDashboardRouteImport.update({
   path: '/admin/dashboard',
   getParentRoute: () => AdminRoute,
 } as any)
+const AuthOrgConversationsRouteRoute =
+  AuthOrgConversationsRouteRouteImport.update({
+    id: '/conversations',
+    path: '/conversations',
+    getParentRoute: () => AuthOrgRoute,
+  } as any)
 const AuthOrgUsersIndexRoute = AuthOrgUsersIndexRouteImport.update({
   id: '/users/',
   path: '/users/',
@@ -200,9 +208,9 @@ const AuthOrgExamsIndexRoute = AuthOrgExamsIndexRouteImport.update({
 } as any)
 const AuthOrgConversationsIndexRoute =
   AuthOrgConversationsIndexRouteImport.update({
-    id: '/conversations/',
-    path: '/conversations/',
-    getParentRoute: () => AuthOrgRoute,
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthOrgConversationsRouteRoute,
   } as any)
 const AuthOrgClassesIndexRoute = AuthOrgClassesIndexRouteImport.update({
   id: '/classes/',
@@ -326,6 +334,12 @@ const AuthOrgFilesFolderRoute = AuthOrgFilesFolderRouteImport.update({
   path: '/files/$folder',
   getParentRoute: () => AuthOrgRoute,
 } as any)
+const AuthOrgConversationsConversationIdRoute =
+  AuthOrgConversationsConversationIdRouteImport.update({
+    id: '/$conversationId',
+    path: '/$conversationId',
+    getParentRoute: () => AuthOrgConversationsRouteRoute,
+  } as any)
 const AuthOrgClassesClassIdRoute = AuthOrgClassesClassIdRouteImport.update({
   id: '/classes/$classId',
   path: '/classes/$classId',
@@ -422,6 +436,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/org': typeof AuthOrgRouteWithChildren
   '/login': typeof GuestLoginRoute
+  '/org/conversations': typeof AuthOrgConversationsRouteRouteWithChildren
   '/admin/dashboard': typeof AdminAdminDashboardRoute
   '/admin/notifications': typeof AdminAdminNotificationsRoute
   '/live/$liveId': typeof AuthLiveLiveIdRoute
@@ -436,6 +451,7 @@ export interface FileRoutesByFullPath {
   '/org/billing/invoices': typeof AuthOrgBillingInvoicesRoute
   '/org/billing/result': typeof AuthOrgBillingResultRoute
   '/org/classes/$classId': typeof AuthOrgClassesClassIdRoute
+  '/org/conversations/$conversationId': typeof AuthOrgConversationsConversationIdRoute
   '/org/files/$folder': typeof AuthOrgFilesFolderRoute
   '/org/notifications/send': typeof AuthOrgNotificationsSendRoute
   '/org/offlines/$offlineId': typeof AuthOrgOfflinesOfflineIdRoute
@@ -498,6 +514,7 @@ export interface FileRoutesByTo {
   '/org/billing/invoices': typeof AuthOrgBillingInvoicesRoute
   '/org/billing/result': typeof AuthOrgBillingResultRoute
   '/org/classes/$classId': typeof AuthOrgClassesClassIdRoute
+  '/org/conversations/$conversationId': typeof AuthOrgConversationsConversationIdRoute
   '/org/files/$folder': typeof AuthOrgFilesFolderRoute
   '/org/notifications/send': typeof AuthOrgNotificationsSendRoute
   '/org/offlines/$offlineId': typeof AuthOrgOfflinesOfflineIdRoute
@@ -551,6 +568,7 @@ export interface FileRoutesById {
   '/_guest': typeof GuestRouteWithChildren
   '/_auth/org': typeof AuthOrgRouteWithChildren
   '/_guest/login': typeof GuestLoginRoute
+  '/_auth/org/conversations': typeof AuthOrgConversationsRouteRouteWithChildren
   '/_admin/admin/dashboard': typeof AdminAdminDashboardRoute
   '/_admin/admin/notifications': typeof AdminAdminNotificationsRoute
   '/_auth/live/$liveId': typeof AuthLiveLiveIdRoute
@@ -565,6 +583,7 @@ export interface FileRoutesById {
   '/_auth/org/billing/invoices': typeof AuthOrgBillingInvoicesRoute
   '/_auth/org/billing/result': typeof AuthOrgBillingResultRoute
   '/_auth/org/classes/$classId': typeof AuthOrgClassesClassIdRoute
+  '/_auth/org/conversations/$conversationId': typeof AuthOrgConversationsConversationIdRoute
   '/_auth/org/files/$folder': typeof AuthOrgFilesFolderRoute
   '/_auth/org/notifications/send': typeof AuthOrgNotificationsSendRoute
   '/_auth/org/offlines/$offlineId': typeof AuthOrgOfflinesOfflineIdRoute
@@ -616,6 +635,7 @@ export interface FileRouteTypes {
     | '/'
     | '/org'
     | '/login'
+    | '/org/conversations'
     | '/admin/dashboard'
     | '/admin/notifications'
     | '/live/$liveId'
@@ -630,6 +650,7 @@ export interface FileRouteTypes {
     | '/org/billing/invoices'
     | '/org/billing/result'
     | '/org/classes/$classId'
+    | '/org/conversations/$conversationId'
     | '/org/files/$folder'
     | '/org/notifications/send'
     | '/org/offlines/$offlineId'
@@ -692,6 +713,7 @@ export interface FileRouteTypes {
     | '/org/billing/invoices'
     | '/org/billing/result'
     | '/org/classes/$classId'
+    | '/org/conversations/$conversationId'
     | '/org/files/$folder'
     | '/org/notifications/send'
     | '/org/offlines/$offlineId'
@@ -744,6 +766,7 @@ export interface FileRouteTypes {
     | '/_guest'
     | '/_auth/org'
     | '/_guest/login'
+    | '/_auth/org/conversations'
     | '/_admin/admin/dashboard'
     | '/_admin/admin/notifications'
     | '/_auth/live/$liveId'
@@ -758,6 +781,7 @@ export interface FileRouteTypes {
     | '/_auth/org/billing/invoices'
     | '/_auth/org/billing/result'
     | '/_auth/org/classes/$classId'
+    | '/_auth/org/conversations/$conversationId'
     | '/_auth/org/files/$folder'
     | '/_auth/org/notifications/send'
     | '/_auth/org/offlines/$offlineId'
@@ -918,6 +942,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminDashboardRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_auth/org/conversations': {
+      id: '/_auth/org/conversations'
+      path: '/conversations'
+      fullPath: '/org/conversations'
+      preLoaderRoute: typeof AuthOrgConversationsRouteRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
     '/_auth/org/users/': {
       id: '/_auth/org/users/'
       path: '/users'
@@ -990,10 +1021,10 @@ declare module '@tanstack/react-router' {
     }
     '/_auth/org/conversations/': {
       id: '/_auth/org/conversations/'
-      path: '/conversations'
+      path: '/'
       fullPath: '/org/conversations/'
       preLoaderRoute: typeof AuthOrgConversationsIndexRouteImport
-      parentRoute: typeof AuthOrgRoute
+      parentRoute: typeof AuthOrgConversationsRouteRoute
     }
     '/_auth/org/classes/': {
       id: '/_auth/org/classes/'
@@ -1148,6 +1179,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/org/files/$folder'
       preLoaderRoute: typeof AuthOrgFilesFolderRouteImport
       parentRoute: typeof AuthOrgRoute
+    }
+    '/_auth/org/conversations/$conversationId': {
+      id: '/_auth/org/conversations/$conversationId'
+      path: '/$conversationId'
+      fullPath: '/org/conversations/$conversationId'
+      preLoaderRoute: typeof AuthOrgConversationsConversationIdRouteImport
+      parentRoute: typeof AuthOrgConversationsRouteRoute
     }
     '/_auth/org/classes/$classId': {
       id: '/_auth/org/classes/$classId'
@@ -1334,7 +1372,25 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface AuthOrgConversationsRouteRouteChildren {
+  AuthOrgConversationsConversationIdRoute: typeof AuthOrgConversationsConversationIdRoute
+  AuthOrgConversationsIndexRoute: typeof AuthOrgConversationsIndexRoute
+}
+
+const AuthOrgConversationsRouteRouteChildren: AuthOrgConversationsRouteRouteChildren =
+  {
+    AuthOrgConversationsConversationIdRoute:
+      AuthOrgConversationsConversationIdRoute,
+    AuthOrgConversationsIndexRoute: AuthOrgConversationsIndexRoute,
+  }
+
+const AuthOrgConversationsRouteRouteWithChildren =
+  AuthOrgConversationsRouteRoute._addFileChildren(
+    AuthOrgConversationsRouteRouteChildren,
+  )
+
 interface AuthOrgRouteChildren {
+  AuthOrgConversationsRouteRoute: typeof AuthOrgConversationsRouteRouteWithChildren
   AuthOrgCalendarRoute: typeof AuthOrgCalendarRoute
   AuthOrgDashboardRoute: typeof AuthOrgDashboardRoute
   AuthOrgWhatsNewRoute: typeof AuthOrgWhatsNewRoute
@@ -1349,7 +1405,6 @@ interface AuthOrgRouteChildren {
   AuthOrgAttendanceIndexRoute: typeof AuthOrgAttendanceIndexRoute
   AuthOrgBillingIndexRoute: typeof AuthOrgBillingIndexRoute
   AuthOrgClassesIndexRoute: typeof AuthOrgClassesIndexRoute
-  AuthOrgConversationsIndexRoute: typeof AuthOrgConversationsIndexRoute
   AuthOrgExamsIndexRoute: typeof AuthOrgExamsIndexRoute
   AuthOrgFilesIndexRoute: typeof AuthOrgFilesIndexRoute
   AuthOrgGradesIndexRoute: typeof AuthOrgGradesIndexRoute
@@ -1365,6 +1420,7 @@ interface AuthOrgRouteChildren {
 }
 
 const AuthOrgRouteChildren: AuthOrgRouteChildren = {
+  AuthOrgConversationsRouteRoute: AuthOrgConversationsRouteRouteWithChildren,
   AuthOrgCalendarRoute: AuthOrgCalendarRoute,
   AuthOrgDashboardRoute: AuthOrgDashboardRoute,
   AuthOrgWhatsNewRoute: AuthOrgWhatsNewRoute,
@@ -1379,7 +1435,6 @@ const AuthOrgRouteChildren: AuthOrgRouteChildren = {
   AuthOrgAttendanceIndexRoute: AuthOrgAttendanceIndexRoute,
   AuthOrgBillingIndexRoute: AuthOrgBillingIndexRoute,
   AuthOrgClassesIndexRoute: AuthOrgClassesIndexRoute,
-  AuthOrgConversationsIndexRoute: AuthOrgConversationsIndexRoute,
   AuthOrgExamsIndexRoute: AuthOrgExamsIndexRoute,
   AuthOrgFilesIndexRoute: AuthOrgFilesIndexRoute,
   AuthOrgGradesIndexRoute: AuthOrgGradesIndexRoute,

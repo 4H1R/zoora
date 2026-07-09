@@ -3065,6 +3065,29 @@
     "placeholder": {
       "title": "Conversations",
       "description": "Chat is enabled for your plan. The messaging experience will live here."
+    },
+    "sidebar": {
+      "title": "Chat",
+      "newConversation": "New conversation",
+      "searchPlaceholder": "Search conversations",
+      "empty": {
+        "title": "No conversations yet",
+        "description": "Your conversations will appear here once you start chatting."
+      },
+      "searchEmpty": {
+        "title": "No matches",
+        "description": "No conversations match “{{query}}”."
+      }
+    },
+    "list": {
+      "noMessages": "No messages yet"
+    },
+    "detail": {
+      "empty": {
+        "title": "Select a conversation",
+        "description": "Choose a conversation from the list to start messaging."
+      },
+      "comingSoon": "Message thread coming soon."
     }
   }
 }
