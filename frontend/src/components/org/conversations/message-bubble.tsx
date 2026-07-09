@@ -13,6 +13,7 @@ import { removeMessage } from "./lib/optimistic"
 import { chatKeys } from "./lib/query-keys"
 import { MessageActions } from "./message-actions"
 import { MessageContent } from "./message-content"
+import { ReactionBar } from "./reaction-bar"
 import { useSendMessage } from "./use-send-message"
 
 type MessagesCache = InfiniteData<ChatMessage[]>
@@ -133,7 +134,8 @@ export function MessageBubble({ message, convId, members, isOwn, isHighlighted =
         </div>
       )}
 
-      {/* Phase 7: reactions row renders here (below the bubble). */}
+      {/* Reactions row: pills aligned to the bubble side, non-empty only. */}
+      {!status && <ReactionBar message={message} convId={convId} />}
     </div>
   )
 }

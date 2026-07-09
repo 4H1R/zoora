@@ -3,7 +3,7 @@ import type { InfiniteData } from "@tanstack/react-query"
 
 import { describe, expect, it } from "vitest"
 
-import { insertOptimistic, markStatus, removeMessage, replaceMessage } from "./optimistic"
+import { applyReactionCounts, insertOptimistic, markStatus, removeMessage, replaceMessage } from "./optimistic"
 
 type Cache = InfiniteData<ChatMessage[]>
 
@@ -98,6 +98,45 @@ describe("removeMessage", () => {
     const out = removeMessage(old, "a")!
     expect(out).not.toBe(old)
     expect(old.pages[0].map((x) => x.id)).toEqual(["a", "b"])
+  })
+})
+
+describe("applyReactionCounts", () => {
+  it("overwrites the matching message's reactions map", () => {
+    const old = cache([[m("a", { reactions: { "👍": 1 } })], [m("b")]])
+    const out = applyReactionCounts(old, "b", { "❤️": 2 })!
+    expect(out.pages[1][0].reactions).toEqual({ "❤️": 2 })
+    // Untouched message keeps its own map.
+    expect(out.pages[0][0].reactions).toEqual({ "👍": 1 })
+  })
+
+  it("replaces (does not merge) the existing map", () => {
+    const old = cache([[m("a", { reactions: { "👍": 3, "🎉": 1 } })]])
+    const out = applyReactionCounts(old, "a", { "👍": 4 })!
+    expect(out.pages[0][0].reactions).toEqual({ "👍": 4 })
+  })
+
+  it("finds the message on whichever page holds it", () => {
+    const old = cache([[m("a")], [m("b"), m("c")]])
+    const out = applyReactionCounts(old, "c", { "😂": 5 })!
+    expect(out.pages[1][1].reactions).toEqual({ "😂": 5 })
+  })
+
+  it("no-ops when the id is absent", () => {
+    const old = cache([[m("a")]])
+    expect(applyReactionCounts(old, "zzz", { "👍": 1 })).toBe(old)
+  })
+
+  it("no-ops safely on undefined", () => {
+    expect(applyReactionCounts(undefined, "a", { "👍": 1 })).toBeUndefined()
+  })
+
+  it("returns a NEW object and does not mutate the source", () => {
+    const old = cache([[m("a", { reactions: { "👍": 1 } })]])
+    const out = applyReactionCounts(old, "a", { "👍": 2 })!
+    expect(out).not.toBe(old)
+    expect(out.pages).not.toBe(old.pages)
+    expect(old.pages[0][0].reactions).toEqual({ "👍": 1 })
   })
 })
 

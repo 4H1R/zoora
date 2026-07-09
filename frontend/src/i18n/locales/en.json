@@ -3115,6 +3115,10 @@
         "description": "This message will be permanently deleted. This action cannot be undone."
       }
     },
+    "reactions": {
+      "add": "Add reaction",
+      "toggle": "Toggle {{emoji}} reaction"
+    },
     "composer": {
       "placeholder": "Write a message…",
       "send": "Send",

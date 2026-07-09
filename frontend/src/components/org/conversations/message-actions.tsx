@@ -23,6 +23,8 @@ import { useChatUi } from "@/stores/chat-ui"
 
 import { removeMessage } from "./lib/optimistic"
 import { chatKeys } from "./lib/query-keys"
+import { ReactionPicker } from "./reaction-picker"
+import { useToggleReaction } from "./use-toggle-reaction"
 
 type MessagesCache = InfiniteData<ChatMessage[]>
 
@@ -47,6 +49,7 @@ export function MessageActions({ message, isOwn, convId, className }: MessageAct
   const setReplyTo = useChatUi((s) => s.setReplyTo)
   const setEditing = useChatUi((s) => s.setEditing)
   const deleteMutation = useDeleteConversationsMessagesMessageId()
+  const { toggle } = useToggleReaction(convId)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   const messageId = message.id ?? ""
@@ -71,6 +74,9 @@ export function MessageActions({ message, isOwn, convId, className }: MessageAct
 
   return (
     <div className={cn("flex items-center gap-0.5", className)}>
+      {/* React: quick-row + full picker; opens toward the message. */}
+      <ReactionPicker align={isOwn ? "end" : "start"} onSelect={(emoji) => toggle(messageId, emoji)} />
+
       <Button
         type="button"
         variant="ghost"
@@ -108,7 +114,7 @@ export function MessageActions({ message, isOwn, convId, className }: MessageAct
         </>
       )}
 
-      {/* Phase 7 slot: React / Pin actions mount here (a small "more" menu). */}
+      {/* Pin action mounts here in a later phase (a small "more" menu). */}
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>

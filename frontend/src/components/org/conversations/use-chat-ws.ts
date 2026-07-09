@@ -1,10 +1,11 @@
+import type { ChatMessage } from "./lib/messages"
+import type { WsEvent } from "./lib/ws-client"
+import type { GithubCom4H1RZooraInternalDomainConversation as Conversation } from "@/api/model"
 import type { QueryClient } from "@tanstack/react-query"
 
-import type { GithubCom4H1RZooraInternalDomainConversation as Conversation } from "@/api/model"
-
-import { type ChatMessage, reconcileOptimistic } from "./lib/messages"
+import { reconcileOptimistic } from "./lib/messages"
+import { applyReactionCounts } from "./lib/optimistic"
 import { chatKeys } from "./lib/query-keys"
-import type { WsEvent } from "./lib/ws-client"
 
 /**
  * Cache shape of the message THREAD query (built in Phase 5). It is a TanStack
@@ -59,10 +60,7 @@ export function replaceMessageInInfinite(
 /**
  * Remove a deleted message from the loaded pages. No-op if the cache is absent.
  */
-export function removeMessageFromInfinite(
-  old: MessagesInfinite | undefined,
-  id: string
-): MessagesInfinite | undefined {
+export function removeMessageFromInfinite(old: MessagesInfinite | undefined, id: string): MessagesInfinite | undefined {
   if (!old) return old
   let changed = false
   const pages = old.pages.map((page) => {
@@ -179,11 +177,23 @@ export function createChatEventHandler(opts: {
 
       case "reaction_added":
       case "reaction_removed": {
-        // TODO(reactions): the backend payload is `{message_id, emoji, user_id,
-        // counts}` WITHOUT a conversation_id, so we cannot target a single
-        // conv's message cache. Invalidate every loaded thread as the v1
-        // fallback; tighten once the payload carries conversation_id.
-        queryClient.invalidateQueries({ queryKey: ["chat", "messages"] })
+        // The payload is `{message_id, emoji, user_id, counts}` WITHOUT a
+        // conversation_id, so we cannot key straight into one thread cache.
+        // Instead of a broad invalidate, walk every loaded thread cache and
+        // overwrite the matching message's reactions with the authoritative
+        // `counts` map — `applyReactionCounts` no-ops on the caches that don't
+        // hold the message, so only the right one changes.
+        const { message_id: messageId, counts } = e.data as {
+          message_id?: string
+          counts?: Record<string, number>
+        }
+        if (!messageId || !counts) return
+        for (const [qKey, data] of queryClient.getQueriesData<MessagesInfinite>({
+          queryKey: ["chat", "messages"],
+        })) {
+          const next = applyReactionCounts(data, messageId, counts)
+          if (next !== data) queryClient.setQueryData(qKey, next)
+        }
         return
       }
 
