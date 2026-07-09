@@ -1,8 +1,9 @@
 import type { ChevronProps } from "react-day-picker"
 
+import * as jalali from "date-fns-jalali"
 import { faIR } from "date-fns-jalali/locale"
 import * as React from "react"
-import { DayPicker } from "react-day-picker/jalali"
+import { DayPicker } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 
@@ -22,6 +23,7 @@ function CalendarJalali({
     <DayPicker
       dir="rtl"
       className={cn("p-3", className)}
+      dateLib={jalali}
       noonSafe
       components={{
         Chevron,
