@@ -1,0 +1,110 @@
+import type { GithubCom4H1RZooraInternalDomainConversationMessage } from "@/api/model"
+
+/**
+ * A conversation message enriched with a client-only optimistic status. The
+ * `_status` field only exists for locally-created bubbles that have not yet
+ * been confirmed by the server; server-reconciled messages clear it.
+ */
+export type ChatMessage = GithubCom4H1RZooraInternalDomainConversationMessage & {
+  _status?: "sending" | "failed"
+}
+
+export type Group = {
+  id: string
+  type: "day" | "messages"
+  senderId?: string
+  messages: ChatMessage[]
+}
+
+// Messages within this window from the previous message (same sender) stay in
+// the same visual group; a larger gap starts a fresh group.
+const GROUP_GAP_MS = 5 * 60 * 1000
+
+/**
+ * Dedup messages by `id` (last occurrence wins) and return them sorted
+ * ascending by `id`. Ids are uuidv7 which sort lexicographically by time.
+ */
+export function dedupSortMessages(msgs: ChatMessage[]): ChatMessage[] {
+  const byId = new Map<string, ChatMessage>()
+  for (const m of msgs) {
+    byId.set(m.id ?? "", m)
+  }
+  return Array.from(byId.values()).sort((a, b) => (a.id ?? "").localeCompare(b.id ?? ""))
+}
+
+/**
+ * Derive pagination cursors from an ASCENDING list: `before` is the oldest
+ * (first) id, `after` is the newest (last) id. Both null when empty.
+ */
+export function deriveCursors(msgs: ChatMessage[]): { before: string | null; after: string | null } {
+  if (msgs.length === 0) return { before: null, after: null }
+  return {
+    before: msgs[0].id ?? null,
+    after: msgs[msgs.length - 1].id ?? null,
+  }
+}
+
+function isoDate(created?: string): string {
+  if (!created) return "unknown"
+  // Local calendar day, YYYY-MM-DD.
+  const d = new Date(created)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${y}-${m}-${day}`
+}
+
+function timeMs(created?: string): number {
+  return created ? new Date(created).getTime() : 0
+}
+
+/**
+ * Walk an ASCENDING message list, producing render groups. A `day` divider is
+ * emitted whenever the calendar day changes; consecutive same-sender messages
+ * within GROUP_GAP_MS collapse into a single `messages` group.
+ */
+export function groupMessages(msgs: ChatMessage[]): Group[] {
+  const groups: Group[] = []
+  let current: Group | null = null
+  let currentDay: string | null = null
+  let lastTime = 0
+
+  for (const m of msgs) {
+    const day = isoDate(m.created_at)
+    const t = timeMs(m.created_at)
+
+    if (day !== currentDay) {
+      groups.push({ id: `day-${day}`, type: "day", messages: [] })
+      currentDay = day
+      current = null
+    }
+
+    const sameSender = current && current.senderId === m.sender_id
+    const withinGap = current && t - lastTime <= GROUP_GAP_MS
+    if (!current || !sameSender || !withinGap) {
+      current = { id: m.id ?? "", type: "messages", senderId: m.sender_id, messages: [] }
+      groups.push(current)
+    }
+
+    current.messages.push(m)
+    lastTime = t
+  }
+
+  return groups
+}
+
+/**
+ * Merge an incoming (server-confirmed) message into an existing ASCENDING list.
+ * If the id already exists, replace it in place and clear `_status`; otherwise
+ * append. Always returns a new array.
+ */
+export function reconcileOptimistic(existing: ChatMessage[], incoming: ChatMessage): ChatMessage[] {
+  const idx = existing.findIndex((m) => m.id === incoming.id)
+  const merged: ChatMessage = { ...incoming, _status: undefined }
+  if (idx === -1) {
+    return [...existing, merged]
+  }
+  const out = existing.slice()
+  out[idx] = merged
+  return out
+}
