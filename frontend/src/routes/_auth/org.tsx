@@ -7,6 +7,7 @@ import { useGetUsersMe } from "@/api/users/users"
 import { MajorModal } from "@/components/changelog/major-modal"
 import { NavZoora } from "@/components/changelog/nav-zoora"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { ChatProvider } from "@/components/org/conversations/chat-provider"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 // import { LiveClock } from "@/components/live-clock"
 import { BreadcrumbProvider } from "@/components/layout/breadcrumb-context"
@@ -63,7 +64,7 @@ function RouteComponent() {
   const hasFeature = (feature: string) => !!entitlements?.features?.[feature]
   const navGroups = buildOrgNavGroups(t, access.has, hasFeature)
 
-  return (
+  const layout = (
     <AccessProvider config={access.config} user={access.user}>
       <BreadcrumbProvider>
         <SidebarProvider>
@@ -94,4 +95,8 @@ function RouteComponent() {
       </BreadcrumbProvider>
     </AccessProvider>
   )
+
+  // Only orgs on the chat plan open a realtime WS connection; others render the
+  // layout unchanged with no ChatProvider (and thus no socket).
+  return hasFeature("chat") ? <ChatProvider>{layout}</ChatProvider> : layout
 }
