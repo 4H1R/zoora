@@ -29,4 +29,4 @@ CREATE TABLE notification_deliveries (
 -- Delivery report aggregation per notification.
 CREATE INDEX idx_notification_deliveries_notification ON notification_deliveries (notification_id, channel, status);
 
-ALTER TABLE organization_settings ADD COLUMN sms_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+-- NOTE: organization_settings.sms_enabled lives in 000016_create_organization_settings.

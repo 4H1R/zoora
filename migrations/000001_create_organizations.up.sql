@@ -4,10 +4,7 @@ CREATE TABLE organizations (
     slug VARCHAR(63) NOT NULL,
     description TEXT NOT NULL DEFAULT '',
     status      VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'trial', 'suspended', 'archived')),
-    -- No CHECK constraint on plan: the catalog is code-defined (Plan.Valid()
-    -- validates at the admin endpoint) and adding a tier later must not require a
-    -- migration. An unknown stored value resolves to Free via EffectiveEntitlements.
-    plan            VARCHAR(20) NOT NULL DEFAULT 'free',
+    plan            VARCHAR(20) NOT NULL DEFAULT 'free_50',
     plan_expires_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

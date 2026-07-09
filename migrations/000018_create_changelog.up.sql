@@ -14,9 +14,4 @@ CREATE TABLE changelog_entries (
 -- Feed ordering + "latest" lookups: newest published first.
 CREATE INDEX idx_changelog_published ON changelog_entries (published_at DESC, id);
 
--- Per-user "seen" marker. New rows default to their creation time (a fresh
--- signup is considered caught-up on everything before they joined).
-ALTER TABLE users ADD COLUMN changelog_last_seen_at TIMESTAMPTZ DEFAULT NOW();
-
--- Backfill existing users so nobody gets a wall of historical entries on launch.
-UPDATE users SET changelog_last_seen_at = NOW() WHERE changelog_last_seen_at IS NULL;
+-- NOTE: users.changelog_last_seen_at lives in 000004_create_users.
