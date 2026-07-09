@@ -52,6 +52,7 @@ import (
 	"github.com/4H1R/zoora/internal/questionbanks"
 	"github.com/4H1R/zoora/internal/quizzes"
 	"github.com/4H1R/zoora/internal/roles"
+	"github.com/4H1R/zoora/internal/tickets"
 	"github.com/4H1R/zoora/internal/users"
 )
 
@@ -396,6 +397,22 @@ func main() {
 	)
 	gradebookHandler := gradebook.NewHandler(gradebookService)
 	gradebookHandler.RegisterRoutes(v1, authMiddleware, perm)
+
+	ticketRepo := tickets.NewRepository(db)
+	ticketMessageRepo := tickets.NewMessageRepository(db)
+	ticketNotifier := tickets.NewNotifier(notificationService)
+	ticketService := tickets.NewService(
+		ticketRepo, ticketMessageRepo,
+		classRepo,        // classLookup
+		classMemberRepo,  // memberLookup
+		classSessionRepo, // sessionLookup (quiz-room -> class validation)
+		quizRoomRepo,     // quizRoomLookup
+		gradebookColRepo, // columnLookup
+		mediaRepo,        // mediaLookup (attachment validation)
+		transactor, ticketNotifier, log,
+	)
+	ticketHandler := tickets.NewHandler(ticketService)
+	ticketHandler.RegisterRoutes(v1, authMiddleware, perm)
 
 	adminUserHandler := users.NewAdminHandler(userService, authBusinessService)
 	adminOrgHandler := organizations.NewAdminHandler(orgService)
