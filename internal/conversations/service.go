@@ -277,6 +277,9 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateCon
 	if err := s.convRepo.Update(ctx, conv); err != nil {
 		return nil, err
 	}
+	if s.rt != nil {
+		s.rt.ToConversation(ctx, conv.ID, "conversation_updated", conv)
+	}
 	return conv, nil
 }
 
@@ -361,6 +364,15 @@ func (s *service) AddMember(ctx context.Context, convID uuid.UUID, dto domain.Ad
 	if err := s.memberRepo.Create(ctx, m); err != nil {
 		return nil, err
 	}
+	if s.rt != nil {
+		s.rt.ToConversation(ctx, convID, "member_added", map[string]any{
+			"conversation_id": convID.String(),
+			"user_id":         uid.String(),
+		})
+		// The added user hasn't joined the WS room yet, so nudge their sidebar
+		// directly via their user channel.
+		s.rt.ToUser(ctx, uid, "conversation_updated", conv)
+	}
 	return m, nil
 }
 
@@ -380,7 +392,16 @@ func (s *service) RemoveMember(ctx context.Context, convID, userID uuid.UUID) er
 	if !s.canManageConversation(caller, conv, member) {
 		return domain.ErrForbidden
 	}
-	return s.memberRepo.Delete(ctx, convID, userID)
+	if err := s.memberRepo.Delete(ctx, convID, userID); err != nil {
+		return err
+	}
+	if s.rt != nil {
+		s.rt.ToConversation(ctx, convID, "member_removed", map[string]any{
+			"conversation_id": convID.String(),
+			"user_id":         userID.String(),
+		})
+	}
+	return nil
 }
 
 func (s *service) ListMembers(ctx context.Context, convID uuid.UUID) ([]domain.ConversationMember, error) {
@@ -546,6 +567,9 @@ func (s *service) EditMessage(ctx context.Context, msgID uuid.UUID, dto domain.U
 	if err := s.messageRepo.Update(ctx, msg); err != nil {
 		return nil, err
 	}
+	if s.rt != nil {
+		s.rt.ToConversation(ctx, conv.ID, "message_updated", messagePayload(msg, caller))
+	}
 	return msg, nil
 }
 
@@ -565,7 +589,16 @@ func (s *service) DeleteMessage(ctx context.Context, msgID uuid.UUID) error {
 	if !s.canManageMessage(caller, conv, msg) {
 		return domain.ErrForbidden
 	}
-	return s.messageRepo.Delete(ctx, msgID)
+	if err := s.messageRepo.Delete(ctx, msgID); err != nil {
+		return err
+	}
+	if s.rt != nil {
+		s.rt.ToConversation(ctx, conv.ID, "message_deleted", map[string]any{
+			"id":              msgID.String(),
+			"conversation_id": conv.ID.String(),
+		})
+	}
+	return nil
 }
 
 // ToggleReaction mirrors the legacy chat ToggleReaction tx-based toggle,
@@ -587,6 +620,7 @@ func (s *service) ToggleReaction(ctx context.Context, msgID uuid.UUID, dto domai
 		return nil, err
 	}
 
+	added := false
 	err = s.transactor.RunInTx(ctx, func(txCtx context.Context) error {
 		existing, ferr := s.reactionRepo.FindByMessageAndUser(txCtx, msgID, caller.UserID, dto.Emoji)
 		if ferr != nil && !errors.Is(ferr, domain.ErrNotFound) {
@@ -595,6 +629,7 @@ func (s *service) ToggleReaction(ctx context.Context, msgID uuid.UUID, dto domai
 		if existing != nil {
 			return s.reactionRepo.Delete(txCtx, msgID, caller.UserID, dto.Emoji)
 		}
+		added = true
 		return s.reactionRepo.Create(txCtx, &domain.ConversationMessageReaction{
 			MessageID: msgID,
 			UserID:    caller.UserID,
@@ -611,6 +646,18 @@ func (s *service) ToggleReaction(ctx context.Context, msgID uuid.UUID, dto domai
 		return nil, err
 	}
 	msg.Reactions = counts
+	if s.rt != nil {
+		event := "reaction_removed"
+		if added {
+			event = "reaction_added"
+		}
+		s.rt.ToConversation(ctx, msg.ConversationID, event, map[string]any{
+			"message_id": msgID.String(),
+			"emoji":      dto.Emoji,
+			"user_id":    caller.UserID.String(),
+			"counts":     counts,
+		})
+	}
 	return msg, nil
 }
 
@@ -631,8 +678,9 @@ func (s *service) MarkRead(ctx context.Context, convID uuid.UUID, dto domain.Mar
 	}
 	if s.rt != nil {
 		s.rt.ToConversation(ctx, convID, "message_read", map[string]any{
-			"user_id":    caller.UserID.String(),
-			"message_id": msgID.String(),
+			"conversation_id": convID.String(),
+			"user_id":         caller.UserID.String(),
+			"message_id":      msgID.String(),
 		})
 	}
 	return nil

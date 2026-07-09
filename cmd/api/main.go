@@ -20,6 +20,7 @@ import (
 	"github.com/4H1R/zoora/internal/calendar"
 	"github.com/4H1R/zoora/internal/changelog"
 	"github.com/4H1R/zoora/internal/chat"
+	"github.com/4H1R/zoora/internal/chathub"
 	"github.com/4H1R/zoora/internal/classes"
 	"github.com/4H1R/zoora/internal/config"
 	"github.com/4H1R/zoora/internal/connectors"
@@ -179,11 +180,17 @@ func main() {
 	changelogService := changelog.NewServiceWithMedia(changelogRepo, mediaRepo, storageClient, log)
 	livekitClient := lk.NewClient(cfg, log)
 	chatService := chat.NewService(chatRepo, chatMessageRepo, transactor, log, livekitClient, liveRoomRepo)
+
+	convHubMembership := conversations.NewHubMembership(convMemberRepo)
+	chatHub := chathub.NewHub(convHubMembership, log)
+	chatBridge := chathub.NewBridge(chatHub, redisClient, log)
+	go chatBridge.Run(context.Background())
+
 	conversationService := conversations.NewService(
 		convRepo, convMemberRepo, convMessageRepo, convReactionRepo, convMentionRepo,
 		transactor, log,
-		nil, // broadcaster — wired in Phase 2
-		nil, // notifier    — wired in Phase 3
+		chatBridge, // broadcaster (implements ToConversation/ToUser)
+		nil,        // notifier — Phase 3
 	)
 	pollService := polls.NewService(pollRepo, pollAnswerRepo, log)
 	qaAuthorizer := livesessions.NewModelAuthorizer(liveRoomRepo, classSessionRepo, classRepo, classMemberRepo)
@@ -369,6 +376,7 @@ func main() {
 
 	conversationHandler := conversations.NewHandler(conversationService)
 	conversationHandler.RegisterRoutes(v1, authMiddleware, perm)
+	v1.GET("/ws", chathub.HandleWS(chatHub, chatBridge, jwtService, log))
 
 	attendanceHandler := attendance.NewHandler(attendanceService)
 	attendanceHandler.RegisterRoutes(v1, authMiddleware, perm)
