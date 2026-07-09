@@ -5,7 +5,7 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainMessageType } from './githubCom4H1RZooraInternalDomainMessageType';
+import type { GithubCom4H1RZooraInternalDomainLiveRoomMessageType } from './githubCom4H1RZooraInternalDomainLiveRoomMessageType';
 
 export interface GithubCom4H1RZooraInternalDomainSendMessageDTO {
   attachments?: number[];
@@ -14,6 +14,6 @@ export interface GithubCom4H1RZooraInternalDomainSendMessageDTO {
      * @maxLength 10000
      */
   content: string;
-  message_type: GithubCom4H1RZooraInternalDomainMessageType;
+  message_type: GithubCom4H1RZooraInternalDomainLiveRoomMessageType;
   parent_message_id?: string;
 }

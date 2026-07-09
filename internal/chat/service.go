@@ -4,9 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -21,37 +19,31 @@ type roomDataSender interface {
 }
 
 type service struct {
-	chatRepo     domain.ChatRepository
-	memberRepo   domain.ChatMemberRepository
-	messageRepo  domain.MessageRepository
-	reactionRepo domain.MessageReactionRepository
-	transactor   domain.Transactor
-	logger       *slog.Logger
-	// livekit and liveRooms power realtime delivery for live_session chats. Both
-	// may be nil (worker, unit tests) — broadcasts become no-ops in that case.
+	chatRepo    domain.LiveRoomChatRepository
+	messageRepo domain.LiveRoomMessageRepository
+	transactor  domain.Transactor
+	logger      *slog.Logger
+	// livekit and liveRooms power realtime delivery for chat messages. Both may
+	// be nil (worker, unit tests) — broadcasts become no-ops in that case.
 	livekit   roomDataSender
 	liveRooms domain.LiveRoomRepository
 }
 
 func NewService(
-	chatRepo domain.ChatRepository,
-	memberRepo domain.ChatMemberRepository,
-	messageRepo domain.MessageRepository,
-	reactionRepo domain.MessageReactionRepository,
+	chatRepo domain.LiveRoomChatRepository,
+	messageRepo domain.LiveRoomMessageRepository,
 	transactor domain.Transactor,
 	logger *slog.Logger,
 	livekit roomDataSender,
 	liveRooms domain.LiveRoomRepository,
-) domain.ChatService {
+) domain.LiveRoomChatService {
 	return &service{
-		chatRepo:     chatRepo,
-		memberRepo:   memberRepo,
-		messageRepo:  messageRepo,
-		reactionRepo: reactionRepo,
-		transactor:   transactor,
-		logger:       logger,
-		livekit:      livekit,
-		liveRooms:    liveRooms,
+		chatRepo:    chatRepo,
+		messageRepo: messageRepo,
+		transactor:  transactor,
+		logger:      logger,
+		livekit:     livekit,
+		liveRooms:   liveRooms,
 	}
 }
 
@@ -61,17 +53,17 @@ const (
 )
 
 // broadcastToLiveRoom pushes a realtime chat event over the LiveKit data channel
-// of the room backing a live_session chat, so participants receive messages
-// instantly instead of waiting for the next poll. Server-side fanout means every
+// of the room backing the chat, so participants receive messages instantly
+// instead of waiting for the next poll. Server-side fanout means every
 // participant (any role) receives — no per-client publish grant required.
 //
 // Best-effort: the message is already persisted, so failures are logged and
-// never surfaced. No-op for non-live chats or when LiveKit wiring is absent.
-func (s *service) broadcastToLiveRoom(ctx context.Context, chat *domain.Chat, eventType string, data any) {
-	if s.livekit == nil || s.liveRooms == nil || chat.ModelType != domain.ChatModelLiveSession {
+// never surfaced. No-op when LiveKit wiring is absent (e.g. the worker).
+func (s *service) broadcastToLiveRoom(ctx context.Context, chat *domain.LiveRoomChat, eventType string, data any) {
+	if s.livekit == nil || s.liveRooms == nil {
 		return
 	}
-	room, err := s.liveRooms.FindByID(ctx, chat.ModelID)
+	room, err := s.liveRooms.FindByID(ctx, chat.LiveRoomID)
 	if err != nil {
 		s.logger.Error("chat.broadcastToLiveRoom: resolve room", "chat_id", chat.ID.String(), "error", err)
 		return
@@ -88,7 +80,7 @@ func (s *service) broadcastToLiveRoom(ctx context.Context, chat *domain.Chat, ev
 
 // chatMessagePayload mirrors the message shape the frontend renders. Sender name
 // comes from the caller, since the freshly-created row has no preloaded user.
-func chatMessagePayload(msg *domain.Message, caller domain.Caller) map[string]any {
+func chatMessagePayload(msg *domain.LiveRoomMessage, caller domain.Caller) map[string]any {
 	return map[string]any{
 		"id":                msg.ID.String(),
 		"chat_id":           msg.ChatID.String(),
@@ -101,7 +93,7 @@ func chatMessagePayload(msg *domain.Message, caller domain.Caller) map[string]an
 	}
 }
 
-func (s *service) CreateChat(ctx context.Context, dto domain.CreateChatDTO) (*domain.Chat, error) {
+func (s *service) CreateChat(ctx context.Context, dto domain.CreateChatDTO) (*domain.LiveRoomChat, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
@@ -113,14 +105,13 @@ func (s *service) CreateChat(ctx context.Context, dto domain.CreateChatDTO) (*do
 		return nil, domain.NewFeatureError(caller.Ent.Plan, domain.FeatureChat)
 	}
 
-	modelID, _ := uuid.Parse(dto.ModelID)
+	liveRoomID, _ := uuid.Parse(dto.LiveRoomID)
 
-	chat := &domain.Chat{
+	chat := &domain.LiveRoomChat{
 		Name:        dto.Name,
 		Description: dto.Description,
-		ModelType:   dto.ModelType,
-		ModelID:     modelID,
-		Status:      domain.ChatStatusActive,
+		LiveRoomID:  liveRoomID,
+		Status:      domain.LiveRoomChatStatusActive,
 	}
 
 	if err := s.chatRepo.Create(ctx, chat); err != nil {
@@ -129,16 +120,14 @@ func (s *service) CreateChat(ctx context.Context, dto domain.CreateChatDTO) (*do
 
 	s.logger.Info("chat created",
 		"chat_id", chat.ID.String(),
-		"model_type", chat.ModelType,
-		"model_id", chat.ModelID.String(),
+		"live_room_id", chat.LiveRoomID.String(),
 		"created_by", caller.UserID.String(),
 	)
 	return chat, nil
 }
 
-func (s *service) GetChat(ctx context.Context, id uuid.UUID) (*domain.Chat, error) {
-	caller, ok := domain.CallerFromCtx(ctx)
-	if !ok {
+func (s *service) GetChat(ctx context.Context, id uuid.UUID) (*domain.LiveRoomChat, error) {
+	if _, ok := domain.CallerFromCtx(ctx); !ok {
 		return nil, domain.ErrForbidden
 	}
 
@@ -146,14 +135,10 @@ func (s *service) GetChat(ctx context.Context, id uuid.UUID) (*domain.Chat, erro
 	if err != nil {
 		return nil, err
 	}
-
-	if err := s.checkAccess(ctx, chat, caller); err != nil {
-		return nil, err
-	}
 	return chat, nil
 }
 
-func (s *service) UpdateChat(ctx context.Context, id uuid.UUID, dto domain.UpdateChatDTO) (*domain.Chat, error) {
+func (s *service) UpdateChat(ctx context.Context, id uuid.UUID, dto domain.UpdateChatDTO) (*domain.LiveRoomChat, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
@@ -165,10 +150,7 @@ func (s *service) UpdateChat(ctx context.Context, id uuid.UUID, dto domain.Updat
 	}
 
 	if !caller.IsAdmin && !caller.HasPermission(domain.PermChatsManage) {
-		member, mErr := s.memberRepo.FindByChatAndUser(ctx, id, caller.UserID)
-		if mErr != nil || member.Role != domain.ChatMemberRoleAdmin {
-			return nil, domain.ErrForbidden
-		}
+		return nil, domain.ErrForbidden
 	}
 
 	if dto.Name != nil {
@@ -206,83 +188,14 @@ func (s *service) DeleteChat(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (s *service) ListChats(ctx context.Context, q domain.ListChatsQuery) ([]domain.Chat, int64, error) {
-	_, ok := domain.CallerFromCtx(ctx)
-	if !ok {
+func (s *service) ListChats(ctx context.Context, q domain.ListChatsQuery) ([]domain.LiveRoomChat, int64, error) {
+	if _, ok := domain.CallerFromCtx(ctx); !ok {
 		return nil, 0, domain.ErrForbidden
 	}
 	return s.chatRepo.List(ctx, q)
 }
 
-func (s *service) AddMember(ctx context.Context, chatID uuid.UUID, dto domain.AddChatMemberDTO) (*domain.ChatMember, error) {
-	caller, ok := domain.CallerFromCtx(ctx)
-	if !ok {
-		return nil, domain.ErrForbidden
-	}
-
-	if _, err := s.chatRepo.FindByID(ctx, chatID); err != nil {
-		return nil, err
-	}
-
-	if !caller.IsAdmin && !caller.HasPermission(domain.PermChatsManage) {
-		member, mErr := s.memberRepo.FindByChatAndUser(ctx, chatID, caller.UserID)
-		if mErr != nil || member.Role != domain.ChatMemberRoleAdmin {
-			return nil, domain.ErrForbidden
-		}
-	}
-
-	if !dto.Role.Valid() {
-		return nil, domain.NewValidationError(map[string]string{"role": "invalid role"})
-	}
-
-	userID, _ := uuid.Parse(dto.UserID)
-	m := &domain.ChatMember{
-		ChatID:   chatID,
-		UserID:   userID,
-		Role:     dto.Role,
-		JoinedAt: time.Now(),
-	}
-
-	if err := s.memberRepo.Create(ctx, m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (s *service) RemoveMember(ctx context.Context, chatID, userID uuid.UUID) error {
-	caller, ok := domain.CallerFromCtx(ctx)
-	if !ok {
-		return domain.ErrForbidden
-	}
-
-	if !caller.IsAdmin && !caller.HasPermission(domain.PermChatsManage) && caller.UserID != userID {
-		member, mErr := s.memberRepo.FindByChatAndUser(ctx, chatID, caller.UserID)
-		if mErr != nil || member.Role != domain.ChatMemberRoleAdmin {
-			return domain.ErrForbidden
-		}
-	}
-
-	return s.memberRepo.Delete(ctx, chatID, userID)
-}
-
-func (s *service) ListMembers(ctx context.Context, chatID uuid.UUID) ([]domain.ChatMember, error) {
-	caller, ok := domain.CallerFromCtx(ctx)
-	if !ok {
-		return nil, domain.ErrForbidden
-	}
-
-	chat, err := s.chatRepo.FindByID(ctx, chatID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := s.checkAccess(ctx, chat, caller); err != nil {
-		return nil, err
-	}
-	return s.memberRepo.ListByChat(ctx, chatID)
-}
-
-func (s *service) SendMessage(ctx context.Context, chatID uuid.UUID, dto domain.SendMessageDTO) (*domain.Message, error) {
+func (s *service) SendMessage(ctx context.Context, chatID uuid.UUID, dto domain.SendMessageDTO) (*domain.LiveRoomMessage, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
@@ -295,25 +208,20 @@ func (s *service) SendMessage(ctx context.Context, chatID uuid.UUID, dto domain.
 	if err != nil {
 		return nil, err
 	}
-	if chat.Status != domain.ChatStatusActive {
+	if chat.Status != domain.LiveRoomChatStatusActive {
 		return nil, domain.NewValidationError(map[string]string{"chat": "chat is archived"})
-	}
-
-	if err := s.checkWriteAccess(ctx, chat, caller); err != nil {
-		return nil, err
 	}
 
 	if !dto.MessageType.Valid() {
 		return nil, domain.NewValidationError(map[string]string{"message_type": "invalid message type"})
 	}
 
-	msg := &domain.Message{
+	msg := &domain.LiveRoomMessage{
 		ChatID:      chatID,
 		SenderID:    &caller.UserID,
 		MessageType: dto.MessageType,
 		Content:     dto.Content,
 		Attachments: json.RawMessage(`[]`),
-		EmojiCounts: json.RawMessage(`{}`),
 	}
 
 	if dto.Attachments != nil {
@@ -346,9 +254,8 @@ func (s *service) SendMessage(ctx context.Context, chatID uuid.UUID, dto domain.
 	return msg, nil
 }
 
-func (s *service) GetMessage(ctx context.Context, id uuid.UUID) (*domain.Message, error) {
-	caller, ok := domain.CallerFromCtx(ctx)
-	if !ok {
+func (s *service) GetMessage(ctx context.Context, id uuid.UUID) (*domain.LiveRoomMessage, error) {
+	if _, ok := domain.CallerFromCtx(ctx); !ok {
 		return nil, domain.ErrForbidden
 	}
 
@@ -356,19 +263,10 @@ func (s *service) GetMessage(ctx context.Context, id uuid.UUID) (*domain.Message
 	if err != nil {
 		return nil, err
 	}
-
-	chat, err := s.chatRepo.FindByID(ctx, msg.ChatID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := s.checkAccess(ctx, chat, caller); err != nil {
-		return nil, err
-	}
 	return msg, nil
 }
 
-func (s *service) UpdateMessage(ctx context.Context, id uuid.UUID, dto domain.UpdateMessageDTO) (*domain.Message, error) {
+func (s *service) UpdateMessage(ctx context.Context, id uuid.UUID, dto domain.UpdateMessageDTO) (*domain.LiveRoomMessage, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
@@ -407,14 +305,7 @@ func (s *service) DeleteMessage(ctx context.Context, id uuid.UUID) error {
 
 	if msg.SenderID == nil || *msg.SenderID != caller.UserID {
 		if !caller.IsAdmin && !caller.HasPermission(domain.PermChatsManage) {
-			chat, cErr := s.chatRepo.FindByID(ctx, msg.ChatID)
-			if cErr != nil {
-				return cErr
-			}
-			member, mErr := s.memberRepo.FindByChatAndUser(ctx, chat.ID, caller.UserID)
-			if mErr != nil || member.Role != domain.ChatMemberRoleAdmin {
-				return domain.ErrForbidden
-			}
+			return domain.ErrForbidden
 		}
 	}
 
@@ -432,134 +323,32 @@ func (s *service) DeleteMessage(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (s *service) ListMessages(ctx context.Context, chatID uuid.UUID, q domain.ListMessagesQuery) ([]domain.Message, int64, error) {
-	caller, ok := domain.CallerFromCtx(ctx)
-	if !ok {
+func (s *service) ListMessages(ctx context.Context, chatID uuid.UUID, q domain.ListMessagesQuery) ([]domain.LiveRoomMessage, int64, error) {
+	if _, ok := domain.CallerFromCtx(ctx); !ok {
 		return nil, 0, domain.ErrForbidden
 	}
 
-	chat, err := s.chatRepo.FindByID(ctx, chatID)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	if err := s.checkAccess(ctx, chat, caller); err != nil {
+	if _, err := s.chatRepo.FindByID(ctx, chatID); err != nil {
 		return nil, 0, err
 	}
 	return s.messageRepo.List(ctx, chatID, q)
 }
 
-func (s *service) ToggleReaction(ctx context.Context, messageID uuid.UUID, dto domain.ToggleReactionDTO) (*domain.Message, error) {
-	caller, ok := domain.CallerFromCtx(ctx)
-	if !ok {
-		return nil, domain.ErrForbidden
-	}
-
-	msg, err := s.messageRepo.FindByID(ctx, messageID)
-	if err != nil {
-		return nil, err
-	}
-
-	chat, err := s.chatRepo.FindByID(ctx, msg.ChatID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := s.checkAccess(ctx, chat, caller); err != nil {
-		return nil, err
-	}
-
-	err = s.transactor.RunInTx(ctx, func(txCtx context.Context) error {
-		existing, findErr := s.reactionRepo.FindByMessageAndUser(txCtx, messageID, caller.UserID, dto.Emoji)
-		if findErr != nil && !errors.Is(findErr, domain.ErrNotFound) {
-			return findErr
-		}
-
-		if existing != nil {
-			if err := s.reactionRepo.Delete(txCtx, messageID, caller.UserID, dto.Emoji); err != nil {
-				return err
-			}
-		} else {
-			reaction := &domain.MessageReaction{
-				MessageID: messageID,
-				UserID:    caller.UserID,
-				Emoji:     dto.Emoji,
-				CreatedAt: time.Now(),
-			}
-			if err := s.reactionRepo.Create(txCtx, reaction); err != nil {
-				return err
-			}
-		}
-
-		counts, err := s.reactionRepo.CountByMessage(txCtx, messageID)
-		if err != nil {
-			return err
-		}
-
-		countsJSON, err := json.Marshal(counts)
-		if err != nil {
-			return fmt.Errorf("chat.service.ToggleReaction marshal: %w", err)
-		}
-
-		msg.EmojiCounts = countsJSON
-		return s.messageRepo.Update(txCtx, msg)
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return msg, nil
+// FindChatByRoom and ArchiveByRoom back the live-room lifecycle in
+// livesessions (join/end room); the caller has already been authorized to
+// act on the room itself, so no additional authz happens here.
+func (s *service) FindChatByRoom(ctx context.Context, liveRoomID uuid.UUID) (*domain.LiveRoomChat, error) {
+	return s.chatRepo.FindByRoom(ctx, liveRoomID)
 }
 
-func (s *service) FindChatByModel(ctx context.Context, modelType string, modelID uuid.UUID) (*domain.Chat, error) {
-	return s.chatRepo.FindByModel(ctx, modelType, modelID)
-}
-
-func (s *service) ArchiveByModel(ctx context.Context, modelType string, modelID uuid.UUID) error {
-	chat, err := s.chatRepo.FindByModel(ctx, modelType, modelID)
+func (s *service) ArchiveByRoom(ctx context.Context, liveRoomID uuid.UUID) error {
+	chat, err := s.chatRepo.FindByRoom(ctx, liveRoomID)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
 			return nil
 		}
 		return err
 	}
-	chat.Status = domain.ChatStatusArchived
+	chat.Status = domain.LiveRoomChatStatusArchived
 	return s.chatRepo.Update(ctx, chat)
-}
-
-func (s *service) checkAccess(ctx context.Context, chat *domain.Chat, caller domain.Caller) error {
-	if caller.IsAdmin || caller.HasPermission(domain.PermChatsManage) {
-		return nil
-	}
-	if chat.ModelType == "live_session" {
-		return nil
-	}
-	_, err := s.memberRepo.FindByChatAndUser(ctx, chat.ID, caller.UserID)
-	if err != nil {
-		if errors.Is(err, domain.ErrNotFound) {
-			return domain.ErrForbidden
-		}
-		return err
-	}
-	return nil
-}
-
-func (s *service) checkWriteAccess(ctx context.Context, chat *domain.Chat, caller domain.Caller) error {
-	if caller.IsAdmin || caller.HasPermission(domain.PermChatsManage) {
-		return nil
-	}
-	if chat.ModelType == "live_session" {
-		return nil
-	}
-	member, err := s.memberRepo.FindByChatAndUser(ctx, chat.ID, caller.UserID)
-	if err != nil {
-		if errors.Is(err, domain.ErrNotFound) {
-			return domain.ErrForbidden
-		}
-		return err
-	}
-	if member.Role == domain.ChatMemberRoleReadOnly {
-		return domain.ErrForbidden
-	}
-	return nil
 }

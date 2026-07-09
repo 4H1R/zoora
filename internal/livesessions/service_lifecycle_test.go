@@ -43,7 +43,7 @@ func TestJoinRoom_FirstJoin_CreatesViewerParticipant(t *testing.T) {
 	f.parts.On("Create", mock.Anything, mock.MatchedBy(func(p *domain.LiveParticipant) bool {
 		return p.Role == domain.ParticipantRoleViewer && p.UserID == testStudentID
 	})).Return(nil)
-	f.chat.On("FindChatByModel", mock.Anything, domain.ChatModelLiveSession, testRoomID).
+	f.chat.On("FindChatByRoom", mock.Anything, testRoomID).
 		Return(nil, domain.ErrNotFound)
 
 	resp, err := svc.JoinRoom(studentCtx(), testRoomID)
@@ -66,7 +66,7 @@ func TestJoinRoom_Rejoin_ReusesActiveParticipantRow(t *testing.T) {
 	}
 	f.parts.On("FindActiveByRoomAndUser", mock.Anything, testRoomID, testStudentID).
 		Return(existing, nil)
-	f.chat.On("FindChatByModel", mock.Anything, domain.ChatModelLiveSession, testRoomID).
+	f.chat.On("FindChatByRoom", mock.Anything, testRoomID).
 		Return(nil, domain.ErrNotFound)
 
 	_, err := svc.JoinRoom(studentCtx(), testRoomID)
@@ -88,7 +88,7 @@ func TestJoinRoom_Rejoin_PreservesPresenterRole(t *testing.T) {
 	}
 	f.parts.On("FindActiveByRoomAndUser", mock.Anything, testRoomID, testStudentID).
 		Return(existing, nil)
-	f.chat.On("FindChatByModel", mock.Anything, domain.ChatModelLiveSession, testRoomID).
+	f.chat.On("FindChatByRoom", mock.Anything, testRoomID).
 		Return(nil, domain.ErrNotFound)
 
 	_, err := svc.JoinRoom(studentCtx(), testRoomID)
@@ -126,7 +126,7 @@ func TestJoinRoom_HostAutoStart_LostRace_ContinuesWhenActive(t *testing.T) {
 	f.parts.On("FindActiveByRoomAndUser", mock.Anything, testRoomID, testTeacherID).
 		Return(nil, domain.ErrNotFound)
 	f.parts.On("Create", mock.Anything, mock.AnythingOfType("*domain.LiveParticipant")).Return(nil)
-	f.chat.On("FindChatByModel", mock.Anything, domain.ChatModelLiveSession, testRoomID).
+	f.chat.On("FindChatByRoom", mock.Anything, testRoomID).
 		Return(nil, domain.ErrNotFound)
 
 	resp, err := svc.JoinRoom(teacherCtx(), testRoomID)
@@ -146,7 +146,7 @@ func TestEndRoom_LostCloseRace_Conflict(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrConflict)
 	// Losing the race must not run teardown side effects again.
 	f.parts.AssertNotCalled(t, "MarkAllLeft")
-	f.chat.AssertNotCalled(t, "ArchiveByModel")
+	f.chat.AssertNotCalled(t, "ArchiveByRoom")
 }
 
 // --- Sweep / no-host close -------------------------------------------------
@@ -166,7 +166,7 @@ func TestAutoClose_LiveKitRoomGone_StillClosesRoom(t *testing.T) {
 		Return(nil)
 	f.parts.On("MarkAllLeft", mock.Anything, testRoomID, mock.AnythingOfType("time.Time")).Return(nil)
 	f.wb.On("Delete", mock.Anything, testRoomID).Return(nil)
-	f.chat.On("ArchiveByModel", mock.Anything, domain.ChatModelLiveSession, testRoomID).Return(nil)
+	f.chat.On("ArchiveByRoom", mock.Anything, testRoomID).Return(nil)
 
 	err := svc.AutoCloseStaleRooms(context.Background())
 	assert.NoError(t, err)

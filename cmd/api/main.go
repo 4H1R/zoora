@@ -140,9 +140,7 @@ func main() {
 	qaRepo := qa.NewRepository(db)
 	qaVoteRepo := qa.NewVoteRepository(db)
 	chatRepo := chat.NewChatRepository(db)
-	chatMemberRepo := chat.NewMemberRepository(db)
 	chatMessageRepo := chat.NewMessageRepository(db)
-	chatReactionRepo := chat.NewReactionRepository(db)
 	entitlementRepo := entitlements.NewRepository(db)
 	entitlementService := entitlements.NewService(entitlementRepo)
 
@@ -174,7 +172,7 @@ func main() {
 	mediaService := media.NewService(mediaRepo, storageClient, entitlementService, log)
 	changelogService := changelog.NewServiceWithMedia(changelogRepo, mediaRepo, storageClient, log)
 	livekitClient := lk.NewClient(cfg, log)
-	chatService := chat.NewService(chatRepo, chatMemberRepo, chatMessageRepo, chatReactionRepo, transactor, log, livekitClient, liveRoomRepo)
+	chatService := chat.NewService(chatRepo, chatMessageRepo, transactor, log, livekitClient, liveRoomRepo)
 	pollService := polls.NewService(pollRepo, pollAnswerRepo, log)
 	qaAuthorizer := livesessions.NewModelAuthorizer(liveRoomRepo, classSessionRepo, classRepo, classMemberRepo)
 	qaBroadcaster := qa.NewBroadcaster(livekitClient, liveRoomRepo, log)

@@ -36,7 +36,6 @@ CREATE TABLE messages (
     message_type      VARCHAR(20) NOT NULL DEFAULT 'text',
     content           TEXT        NOT NULL DEFAULT '',
     attachments       JSONB       NOT NULL DEFAULT '[]',
-    emoji_counts      JSONB       NOT NULL DEFAULT '{}',
     is_edited         BOOLEAN     NOT NULL DEFAULT false,
     created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at        TIMESTAMPTZ NOT NULL DEFAULT now(),

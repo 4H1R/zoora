@@ -25,17 +25,16 @@ var messagesListConfig = domain.ListConfig{
 }
 
 type Handler struct {
-	svc domain.ChatService
+	svc domain.LiveRoomChatService
 }
 
-func NewHandler(svc domain.ChatService) *Handler {
+func NewHandler(svc domain.LiveRoomChatService) *Handler {
 	return &Handler{svc: svc}
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.HandlerFunc, perm func(domain.PermissionName) gin.HandlerFunc) {
 	chatIDParam := httpx.RequireUUIDParam("chatId")
 	msgIDParam := httpx.RequireUUIDParam("messageId")
-	userIDParam := httpx.RequireUUIDParam("userId")
 
 	authed := rg.Group("", authMiddleware)
 	{
@@ -45,28 +44,22 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		authed.PUT("/chats/:chatId", perm(domain.PermChatsUpdate), chatIDParam, h.UpdateChat)
 		authed.DELETE("/chats/:chatId", perm(domain.PermChatsDelete), chatIDParam, h.DeleteChat)
 
-		authed.POST("/chats/:chatId/members", perm(domain.PermChatsManage), chatIDParam, h.AddMember)
-		authed.DELETE("/chats/:chatId/members/:userId", perm(domain.PermChatsManage), chatIDParam, userIDParam, h.RemoveMember)
-		authed.GET("/chats/:chatId/members", perm(domain.PermChatsView), chatIDParam, h.ListMembers)
-
 		authed.POST("/chats/:chatId/messages", perm(domain.PermChatsWrite), chatIDParam, h.SendMessage)
 		authed.GET("/chats/:chatId/messages", perm(domain.PermChatsView), chatIDParam, h.ListMessages)
 		authed.GET("/chats/:chatId/messages/:messageId", perm(domain.PermChatsView), chatIDParam, msgIDParam, h.GetMessage)
 		authed.PUT("/chats/:chatId/messages/:messageId", perm(domain.PermChatsWrite), chatIDParam, msgIDParam, h.UpdateMessage)
 		authed.DELETE("/chats/:chatId/messages/:messageId", perm(domain.PermChatsWrite), chatIDParam, msgIDParam, h.DeleteMessage)
-
-		authed.POST("/chats/:chatId/messages/:messageId/reactions", perm(domain.PermChatsWrite), chatIDParam, msgIDParam, h.ToggleReaction)
 	}
 }
 
-// CreateChat creates a new chat attached to a polymorphic entity.
+// CreateChat creates a new chat backing a live room.
 // @Summary Create chat
 // @Tags Chat
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param body body domain.CreateChatDTO true "Chat data"
-// @Success 201 {object} domain.Response{data=domain.Chat}
+// @Success 201 {object} domain.Response{data=domain.LiveRoomChat}
 // @Failure 400 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 403 {object} domain.Response{error=domain.ErrorBody}
@@ -91,7 +84,7 @@ func (h *Handler) CreateChat(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param chatId path string true "Chat UUID"
-// @Success 200 {object} domain.Response{data=domain.Chat}
+// @Success 200 {object} domain.Response{data=domain.LiveRoomChat}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 403 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 404 {object} domain.Response{error=domain.ErrorBody}
@@ -113,7 +106,7 @@ func (h *Handler) GetChat(c *gin.Context) {
 // @Security BearerAuth
 // @Param chatId path string true "Chat UUID"
 // @Param body body domain.UpdateChatDTO true "Update data"
-// @Success 200 {object} domain.Response{data=domain.Chat}
+// @Success 200 {object} domain.Response{data=domain.LiveRoomChat}
 // @Failure 400 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 403 {object} domain.Response{error=domain.ErrorBody}
@@ -152,13 +145,12 @@ func (h *Handler) DeleteChat(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, nil)
 }
 
-// ListChats returns paginated chats filtered by model_type and model_id.
+// ListChats returns paginated chats, optionally filtered by live room.
 // @Summary List chats
 // @Tags Chat
 // @Produce json
 // @Security BearerAuth
-// @Param model_type query string false "Model type filter"
-// @Param model_id query string false "Model UUID filter"
+// @Param live_room_id query string false "Live room UUID filter"
 // @Param status query string false "Status filter"
 // @Param page query int false "Page number"
 // @Param search query string false "Search term"
@@ -169,17 +161,16 @@ func (h *Handler) DeleteChat(c *gin.Context) {
 // @Router /chats [get]
 func (h *Handler) ListChats(c *gin.Context) {
 	var q domain.ListChatsQuery
-	q.ModelType = c.Query("model_type")
-	if idStr := c.Query("model_id"); idStr != "" {
+	if idStr := c.Query("live_room_id"); idStr != "" {
 		id, err := uuid.Parse(idStr)
 		if err != nil {
-			_ = c.Error(domain.NewValidationError(map[string]string{"model_id": "must be a valid UUID"}))
+			_ = c.Error(domain.NewValidationError(map[string]string{"live_room_id": "must be a valid UUID"}))
 			return
 		}
-		q.ModelID = &id
+		q.LiveRoomID = &id
 	}
 	if status := c.Query("status"); status != "" {
-		s := domain.ChatStatus(status)
+		s := domain.LiveRoomChatStatus(status)
 		q.Status = &s
 	}
 	q.ListParams = listparams.Bind(c, chatsListConfig)
@@ -192,78 +183,6 @@ func (h *Handler) ListChats(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(chats, total, q.ListParams))
 }
 
-// AddMember adds a user to a chat.
-// @Summary Add chat member
-// @Tags Chat
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param chatId path string true "Chat UUID"
-// @Param body body domain.AddChatMemberDTO true "Member data"
-// @Success 201 {object} domain.Response{data=domain.ChatMember}
-// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
-// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
-// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
-// @Failure 409 {object} domain.Response{error=domain.ErrorBody}
-// @Router /chats/{chatId}/members [post]
-func (h *Handler) AddMember(c *gin.Context) {
-	var dto domain.AddChatMemberDTO
-	if err := httpx.Bind(c, &dto); err != nil {
-		_ = c.Error(err)
-		return
-	}
-	member, err := h.svc.AddMember(c.Request.Context(), httpx.UUIDParam(c, "chatId"), dto)
-	if err != nil {
-		_ = c.Error(err)
-		return
-	}
-	domain.SuccessResponse(c, http.StatusCreated, member)
-}
-
-// RemoveMember removes a user from a chat.
-// @Summary Remove chat member
-// @Tags Chat
-// @Produce json
-// @Security BearerAuth
-// @Param chatId path string true "Chat UUID"
-// @Param userId path string true "User UUID"
-// @Success 200 {object} domain.Response
-// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
-// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
-// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
-// @Router /chats/{chatId}/members/{userId} [delete]
-func (h *Handler) RemoveMember(c *gin.Context) {
-	if err := h.svc.RemoveMember(
-		c.Request.Context(),
-		httpx.UUIDParam(c, "chatId"),
-		httpx.UUIDParam(c, "userId"),
-	); err != nil {
-		_ = c.Error(err)
-		return
-	}
-	domain.SuccessResponse(c, http.StatusOK, nil)
-}
-
-// ListMembers returns all members of a chat.
-// @Summary List chat members
-// @Tags Chat
-// @Produce json
-// @Security BearerAuth
-// @Param chatId path string true "Chat UUID"
-// @Success 200 {object} domain.Response{data=[]domain.ChatMember}
-// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
-// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
-// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
-// @Router /chats/{chatId}/members [get]
-func (h *Handler) ListMembers(c *gin.Context) {
-	members, err := h.svc.ListMembers(c.Request.Context(), httpx.UUIDParam(c, "chatId"))
-	if err != nil {
-		_ = c.Error(err)
-		return
-	}
-	domain.SuccessResponse(c, http.StatusOK, members)
-}
-
 // SendMessage sends a message to a chat.
 // @Summary Send message
 // @Tags Chat
@@ -272,7 +191,7 @@ func (h *Handler) ListMembers(c *gin.Context) {
 // @Security BearerAuth
 // @Param chatId path string true "Chat UUID"
 // @Param body body domain.SendMessageDTO true "Message data"
-// @Success 201 {object} domain.Response{data=domain.Message}
+// @Success 201 {object} domain.Response{data=domain.LiveRoomMessage}
 // @Failure 400 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 403 {object} domain.Response{error=domain.ErrorBody}
@@ -332,7 +251,7 @@ func (h *Handler) ListMessages(c *gin.Context) {
 // @Security BearerAuth
 // @Param chatId path string true "Chat UUID"
 // @Param messageId path string true "Message UUID"
-// @Success 200 {object} domain.Response{data=domain.Message}
+// @Success 200 {object} domain.Response{data=domain.LiveRoomMessage}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 403 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 404 {object} domain.Response{error=domain.ErrorBody}
@@ -355,7 +274,7 @@ func (h *Handler) GetMessage(c *gin.Context) {
 // @Param chatId path string true "Chat UUID"
 // @Param messageId path string true "Message UUID"
 // @Param body body domain.UpdateMessageDTO true "Update data"
-// @Success 200 {object} domain.Response{data=domain.Message}
+// @Success 200 {object} domain.Response{data=domain.LiveRoomMessage}
 // @Failure 400 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 403 {object} domain.Response{error=domain.ErrorBody}
@@ -393,33 +312,4 @@ func (h *Handler) DeleteMessage(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, nil)
-}
-
-// ToggleReaction adds or removes a reaction on a message.
-// @Summary Toggle reaction
-// @Tags Chat
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param chatId path string true "Chat UUID"
-// @Param messageId path string true "Message UUID"
-// @Param body body domain.ToggleReactionDTO true "Reaction data"
-// @Success 200 {object} domain.Response{data=domain.Message}
-// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
-// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
-// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
-// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
-// @Router /chats/{chatId}/messages/{messageId}/reactions [post]
-func (h *Handler) ToggleReaction(c *gin.Context) {
-	var dto domain.ToggleReactionDTO
-	if err := httpx.Bind(c, &dto); err != nil {
-		_ = c.Error(err)
-		return
-	}
-	msg, err := h.svc.ToggleReaction(c.Request.Context(), httpx.UUIDParam(c, "messageId"), dto)
-	if err != nil {
-		_ = c.Error(err)
-		return
-	}
-	domain.SuccessResponse(c, http.StatusOK, msg)
 }

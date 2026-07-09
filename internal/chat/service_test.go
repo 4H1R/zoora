@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log/slog"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -17,95 +16,55 @@ import (
 
 type mockChatRepo struct{ mock.Mock }
 
-func (m *mockChatRepo) Create(ctx context.Context, c *domain.Chat) error {
+func (m *mockChatRepo) Create(ctx context.Context, c *domain.LiveRoomChat) error {
 	return m.Called(ctx, c).Error(0)
 }
-func (m *mockChatRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Chat, error) {
+func (m *mockChatRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.LiveRoomChat, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domain.Chat), args.Error(1)
+	return args.Get(0).(*domain.LiveRoomChat), args.Error(1)
 }
-func (m *mockChatRepo) Update(ctx context.Context, c *domain.Chat) error {
+func (m *mockChatRepo) Update(ctx context.Context, c *domain.LiveRoomChat) error {
 	return m.Called(ctx, c).Error(0)
 }
 func (m *mockChatRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
-func (m *mockChatRepo) List(ctx context.Context, q domain.ListChatsQuery) ([]domain.Chat, int64, error) {
+func (m *mockChatRepo) List(ctx context.Context, q domain.ListChatsQuery) ([]domain.LiveRoomChat, int64, error) {
 	args := m.Called(ctx, q)
-	return args.Get(0).([]domain.Chat), args.Get(1).(int64), args.Error(2)
+	return args.Get(0).([]domain.LiveRoomChat), args.Get(1).(int64), args.Error(2)
 }
-func (m *mockChatRepo) FindByModel(ctx context.Context, modelType string, modelID uuid.UUID) (*domain.Chat, error) {
-	args := m.Called(ctx, modelType, modelID)
+func (m *mockChatRepo) FindByRoom(ctx context.Context, liveRoomID uuid.UUID) (*domain.LiveRoomChat, error) {
+	args := m.Called(ctx, liveRoomID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domain.Chat), args.Error(1)
-}
-
-type mockMemberRepo struct{ mock.Mock }
-
-func (m *mockMemberRepo) Create(ctx context.Context, member *domain.ChatMember) error {
-	return m.Called(ctx, member).Error(0)
-}
-func (m *mockMemberRepo) FindByChatAndUser(ctx context.Context, chatID, userID uuid.UUID) (*domain.ChatMember, error) {
-	args := m.Called(ctx, chatID, userID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*domain.ChatMember), args.Error(1)
-}
-func (m *mockMemberRepo) Delete(ctx context.Context, chatID, userID uuid.UUID) error {
-	return m.Called(ctx, chatID, userID).Error(0)
-}
-func (m *mockMemberRepo) ListByChat(ctx context.Context, chatID uuid.UUID) ([]domain.ChatMember, error) {
-	args := m.Called(ctx, chatID)
-	return args.Get(0).([]domain.ChatMember), args.Error(1)
+	return args.Get(0).(*domain.LiveRoomChat), args.Error(1)
 }
 
 type mockMessageRepo struct{ mock.Mock }
 
-func (m *mockMessageRepo) Create(ctx context.Context, msg *domain.Message) error {
+func (m *mockMessageRepo) Create(ctx context.Context, msg *domain.LiveRoomMessage) error {
 	return m.Called(ctx, msg).Error(0)
 }
-func (m *mockMessageRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Message, error) {
+func (m *mockMessageRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.LiveRoomMessage, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domain.Message), args.Error(1)
+	return args.Get(0).(*domain.LiveRoomMessage), args.Error(1)
 }
-func (m *mockMessageRepo) Update(ctx context.Context, msg *domain.Message) error {
+func (m *mockMessageRepo) Update(ctx context.Context, msg *domain.LiveRoomMessage) error {
 	return m.Called(ctx, msg).Error(0)
 }
 func (m *mockMessageRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
-func (m *mockMessageRepo) List(ctx context.Context, chatID uuid.UUID, q domain.ListMessagesQuery) ([]domain.Message, int64, error) {
+func (m *mockMessageRepo) List(ctx context.Context, chatID uuid.UUID, q domain.ListMessagesQuery) ([]domain.LiveRoomMessage, int64, error) {
 	args := m.Called(ctx, chatID, q)
-	return args.Get(0).([]domain.Message), args.Get(1).(int64), args.Error(2)
-}
-
-type mockReactionRepo struct{ mock.Mock }
-
-func (m *mockReactionRepo) Create(ctx context.Context, r *domain.MessageReaction) error {
-	return m.Called(ctx, r).Error(0)
-}
-func (m *mockReactionRepo) Delete(ctx context.Context, messageID, userID uuid.UUID, emoji string) error {
-	return m.Called(ctx, messageID, userID, emoji).Error(0)
-}
-func (m *mockReactionRepo) FindByMessageAndUser(ctx context.Context, messageID, userID uuid.UUID, emoji string) (*domain.MessageReaction, error) {
-	args := m.Called(ctx, messageID, userID, emoji)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*domain.MessageReaction), args.Error(1)
-}
-func (m *mockReactionRepo) CountByMessage(ctx context.Context, messageID uuid.UUID) (map[string]int, error) {
-	args := m.Called(ctx, messageID)
-	return args.Get(0).(map[string]int), args.Error(1)
+	return args.Get(0).([]domain.LiveRoomMessage), args.Get(1).(int64), args.Error(2)
 }
 
 func adminCtx() context.Context {
@@ -128,38 +87,35 @@ func (noopTx) RunInTx(ctx context.Context, fn func(context.Context) error) error
 
 func newService(
 	chatRepo *mockChatRepo,
-	memberRepo *mockMemberRepo,
 	msgRepo *mockMessageRepo,
-	reactionRepo *mockReactionRepo,
-) domain.ChatService {
-	return chat.NewService(chatRepo, memberRepo, msgRepo, reactionRepo, noopTx{}, slog.Default(), nil, nil)
+) domain.LiveRoomChatService {
+	return chat.NewService(chatRepo, msgRepo, noopTx{}, slog.Default(), nil, nil)
 }
 
 func TestCreateChat_AdminSuccess(t *testing.T) {
 	ctx := adminCtx()
 	chatRepo := &mockChatRepo{}
-	chatRepo.On("Create", ctx, mock.AnythingOfType("*domain.Chat")).Return(nil)
+	chatRepo.On("Create", ctx, mock.AnythingOfType("*domain.LiveRoomChat")).Return(nil)
 
-	svc := newService(chatRepo, nil, nil, nil)
-	modelID := uuid.New()
+	svc := newService(chatRepo, nil)
+	liveRoomID := uuid.New()
 
 	c, err := svc.CreateChat(ctx, domain.CreateChatDTO{
-		Name:      "Test Chat",
-		ModelType: "live_session",
-		ModelID:   modelID.String(),
+		Name:       "Test Chat",
+		LiveRoomID: liveRoomID.String(),
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, "Test Chat", c.Name)
-	assert.Equal(t, domain.ChatStatusActive, c.Status)
+	assert.Equal(t, liveRoomID, c.LiveRoomID)
+	assert.Equal(t, domain.LiveRoomChatStatusActive, c.Status)
 	chatRepo.AssertExpectations(t)
 }
 
 func TestCreateChat_NoCaller_Forbidden(t *testing.T) {
-	svc := newService(&mockChatRepo{}, nil, nil, nil)
+	svc := newService(&mockChatRepo{}, nil)
 	_, err := svc.CreateChat(context.Background(), domain.CreateChatDTO{
-		Name:      "Test",
-		ModelType: "live_session",
-		ModelID:   uuid.New().String(),
+		Name:       "Test",
+		LiveRoomID: uuid.New().String(),
 	})
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
@@ -168,75 +124,26 @@ func TestCreateChat_NonAdmin_Forbidden(t *testing.T) {
 	userID := uuid.New()
 	ctx := memberCtx(userID)
 
-	svc := newService(&mockChatRepo{}, nil, nil, nil)
+	svc := newService(&mockChatRepo{}, nil)
 	_, err := svc.CreateChat(ctx, domain.CreateChatDTO{
-		Name:      "Test",
-		ModelType: "live_session",
-		ModelID:   uuid.New().String(),
+		Name:       "Test",
+		LiveRoomID: uuid.New().String(),
 	})
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 
-func TestGetChat_LiveSession_NoMembershipRequired(t *testing.T) {
+func TestGetChat_AnyCaller_Success(t *testing.T) {
 	userID := uuid.New()
 	ctx := memberCtx(userID)
 	chatID := uuid.New()
 
 	chatRepo := &mockChatRepo{}
-	chatRepo.On("FindByID", ctx, chatID).Return(&domain.Chat{
-		ID:        chatID,
-		ModelType: "live_session",
-		Status:    domain.ChatStatusActive,
+	chatRepo.On("FindByID", ctx, chatID).Return(&domain.LiveRoomChat{
+		ID:     chatID,
+		Status: domain.LiveRoomChatStatusActive,
 	}, nil)
 
-	svc := newService(chatRepo, nil, nil, nil)
-
-	c, err := svc.GetChat(ctx, chatID)
-	assert.NoError(t, err)
-	assert.Equal(t, chatID, c.ID)
-}
-
-func TestGetChat_SupportTicket_RequiresMembership(t *testing.T) {
-	userID := uuid.New()
-	ctx := memberCtx(userID)
-	chatID := uuid.New()
-
-	chatRepo := &mockChatRepo{}
-	memberRepo := &mockMemberRepo{}
-
-	chatRepo.On("FindByID", ctx, chatID).Return(&domain.Chat{
-		ID:        chatID,
-		ModelType: "support_ticket",
-		Status:    domain.ChatStatusActive,
-	}, nil)
-	memberRepo.On("FindByChatAndUser", ctx, chatID, userID).Return(nil, domain.ErrNotFound)
-
-	svc := newService(chatRepo, memberRepo, nil, nil)
-
-	_, err := svc.GetChat(ctx, chatID)
-	assert.ErrorIs(t, err, domain.ErrForbidden)
-}
-
-func TestGetChat_SupportTicket_MemberAllowed(t *testing.T) {
-	userID := uuid.New()
-	ctx := memberCtx(userID)
-	chatID := uuid.New()
-
-	chatRepo := &mockChatRepo{}
-	memberRepo := &mockMemberRepo{}
-
-	chatRepo.On("FindByID", ctx, chatID).Return(&domain.Chat{
-		ID:        chatID,
-		ModelType: "support_ticket",
-		Status:    domain.ChatStatusActive,
-	}, nil)
-	memberRepo.On("FindByChatAndUser", ctx, chatID, userID).Return(&domain.ChatMember{
-		ChatID: chatID,
-		UserID: userID,
-		Role:   domain.ChatMemberRoleMember,
-	}, nil)
-
-	svc := newService(chatRepo, memberRepo, nil, nil)
+	svc := newService(chatRepo, nil)
 
 	c, err := svc.GetChat(ctx, chatID)
 	assert.NoError(t, err)
@@ -249,25 +156,18 @@ func TestSendMessage_Success(t *testing.T) {
 	chatID := uuid.New()
 
 	chatRepo := &mockChatRepo{}
-	memberRepo := &mockMemberRepo{}
 	msgRepo := &mockMessageRepo{}
 
-	chatRepo.On("FindByID", ctx, chatID).Return(&domain.Chat{
-		ID:        chatID,
-		ModelType: "support_ticket",
-		Status:    domain.ChatStatusActive,
+	chatRepo.On("FindByID", ctx, chatID).Return(&domain.LiveRoomChat{
+		ID:     chatID,
+		Status: domain.LiveRoomChatStatusActive,
 	}, nil)
-	memberRepo.On("FindByChatAndUser", ctx, chatID, userID).Return(&domain.ChatMember{
-		ChatID: chatID,
-		UserID: userID,
-		Role:   domain.ChatMemberRoleMember,
-	}, nil)
-	msgRepo.On("Create", ctx, mock.AnythingOfType("*domain.Message")).Return(nil)
+	msgRepo.On("Create", ctx, mock.AnythingOfType("*domain.LiveRoomMessage")).Return(nil)
 
-	svc := newService(chatRepo, memberRepo, msgRepo, nil)
+	svc := newService(chatRepo, msgRepo)
 
 	msg, err := svc.SendMessage(ctx, chatID, domain.SendMessageDTO{
-		MessageType: domain.MessageTypeText,
+		MessageType: domain.LiveRoomMessageTypeText,
 		Content:     "Hello!",
 	})
 	assert.NoError(t, err)
@@ -280,71 +180,18 @@ func TestSendMessage_ArchivedChat_Rejected(t *testing.T) {
 	chatID := uuid.New()
 
 	chatRepo := &mockChatRepo{}
-	chatRepo.On("FindByID", ctx, chatID).Return(&domain.Chat{
+	chatRepo.On("FindByID", ctx, chatID).Return(&domain.LiveRoomChat{
 		ID:     chatID,
-		Status: domain.ChatStatusArchived,
+		Status: domain.LiveRoomChatStatusArchived,
 	}, nil)
 
-	svc := newService(chatRepo, nil, nil, nil)
+	svc := newService(chatRepo, nil)
 
 	_, err := svc.SendMessage(ctx, chatID, domain.SendMessageDTO{
-		MessageType: domain.MessageTypeText,
+		MessageType: domain.LiveRoomMessageTypeText,
 		Content:     "Hello!",
 	})
 	assert.ErrorIs(t, err, domain.ErrValidation)
-}
-
-func TestSendMessage_ReadOnlyMember_Forbidden(t *testing.T) {
-	userID := uuid.New()
-	ctx := memberCtx(userID)
-	chatID := uuid.New()
-
-	chatRepo := &mockChatRepo{}
-	memberRepo := &mockMemberRepo{}
-
-	chatRepo.On("FindByID", ctx, chatID).Return(&domain.Chat{
-		ID:        chatID,
-		ModelType: "support_ticket",
-		Status:    domain.ChatStatusActive,
-	}, nil)
-	memberRepo.On("FindByChatAndUser", ctx, chatID, userID).Return(&domain.ChatMember{
-		ChatID: chatID,
-		UserID: userID,
-		Role:   domain.ChatMemberRoleReadOnly,
-	}, nil)
-
-	svc := newService(chatRepo, memberRepo, nil, nil)
-
-	_, err := svc.SendMessage(ctx, chatID, domain.SendMessageDTO{
-		MessageType: domain.MessageTypeText,
-		Content:     "Hello!",
-	})
-	assert.ErrorIs(t, err, domain.ErrForbidden)
-}
-
-func TestSendMessage_LiveSession_NoMembershipRequired(t *testing.T) {
-	userID := uuid.New()
-	ctx := memberCtx(userID)
-	chatID := uuid.New()
-
-	chatRepo := &mockChatRepo{}
-	msgRepo := &mockMessageRepo{}
-
-	chatRepo.On("FindByID", ctx, chatID).Return(&domain.Chat{
-		ID:        chatID,
-		ModelType: "live_session",
-		Status:    domain.ChatStatusActive,
-	}, nil)
-	msgRepo.On("Create", ctx, mock.AnythingOfType("*domain.Message")).Return(nil)
-
-	svc := newService(chatRepo, nil, msgRepo, nil)
-
-	msg, err := svc.SendMessage(ctx, chatID, domain.SendMessageDTO{
-		MessageType: domain.MessageTypeText,
-		Content:     "Hello from live session!",
-	})
-	assert.NoError(t, err)
-	assert.Equal(t, "Hello from live session!", msg.Content)
 }
 
 func TestUpdateMessage_OwnerAllowed(t *testing.T) {
@@ -353,16 +200,16 @@ func TestUpdateMessage_OwnerAllowed(t *testing.T) {
 	msgID := uuid.New()
 
 	msgRepo := &mockMessageRepo{}
-	msgRepo.On("FindByID", ctx, msgID).Return(&domain.Message{
+	msgRepo.On("FindByID", ctx, msgID).Return(&domain.LiveRoomMessage{
 		ID:       msgID,
 		SenderID: &userID,
 		Content:  "old",
 	}, nil)
-	msgRepo.On("Update", ctx, mock.MatchedBy(func(m *domain.Message) bool {
+	msgRepo.On("Update", ctx, mock.MatchedBy(func(m *domain.LiveRoomMessage) bool {
 		return m.Content == "new" && m.IsEdited
 	})).Return(nil)
 
-	svc := newService(nil, nil, msgRepo, nil)
+	svc := newService(nil, msgRepo)
 
 	msg, err := svc.UpdateMessage(ctx, msgID, domain.UpdateMessageDTO{Content: "new"})
 	assert.NoError(t, err)
@@ -377,98 +224,15 @@ func TestUpdateMessage_OtherUser_Forbidden(t *testing.T) {
 	msgID := uuid.New()
 
 	msgRepo := &mockMessageRepo{}
-	msgRepo.On("FindByID", ctx, msgID).Return(&domain.Message{
+	msgRepo.On("FindByID", ctx, msgID).Return(&domain.LiveRoomMessage{
 		ID:       msgID,
 		SenderID: &otherUserID,
 	}, nil)
 
-	svc := newService(nil, nil, msgRepo, nil)
+	svc := newService(nil, msgRepo)
 
 	_, err := svc.UpdateMessage(ctx, msgID, domain.UpdateMessageDTO{Content: "hack"})
 	assert.ErrorIs(t, err, domain.ErrForbidden)
-}
-
-func TestToggleReaction_AddReaction(t *testing.T) {
-	userID := uuid.New()
-	ctx := adminCtx()
-	// Override with known userID
-	caller, _ := domain.CallerFromCtx(ctx)
-	caller.UserID = userID
-	ctx = domain.WithCaller(context.Background(), caller)
-
-	msgID := uuid.New()
-	chatID := uuid.New()
-
-	chatRepo := &mockChatRepo{}
-	msgRepo := &mockMessageRepo{}
-	reactionRepo := &mockReactionRepo{}
-
-	msgRepo.On("FindByID", mock.Anything, msgID).Return(&domain.Message{
-		ID:          msgID,
-		ChatID:      chatID,
-		EmojiCounts: json.RawMessage(`{}`),
-	}, nil)
-	chatRepo.On("FindByID", mock.Anything, chatID).Return(&domain.Chat{
-		ID:        chatID,
-		ModelType: "live_session",
-	}, nil)
-	reactionRepo.On("FindByMessageAndUser", mock.Anything, msgID, userID, "👍").
-		Return(nil, domain.ErrNotFound)
-	reactionRepo.On("Create", mock.Anything, mock.AnythingOfType("*domain.MessageReaction")).Return(nil)
-	reactionRepo.On("CountByMessage", mock.Anything, msgID).Return(map[string]int{"👍": 1}, nil)
-	msgRepo.On("Update", mock.Anything, mock.AnythingOfType("*domain.Message")).Return(nil)
-
-	svc := chat.NewService(chatRepo, nil, msgRepo, reactionRepo, noopTx{}, slog.Default(), nil, nil)
-
-	msg, err := svc.ToggleReaction(ctx, msgID, domain.ToggleReactionDTO{Emoji: "👍"})
-	assert.NoError(t, err)
-
-	var counts map[string]int
-	_ = json.Unmarshal(msg.EmojiCounts, &counts)
-	assert.Equal(t, 1, counts["👍"])
-}
-
-func TestToggleReaction_RemoveExistingReaction(t *testing.T) {
-	userID := uuid.New()
-	caller := domain.Caller{UserID: userID, IsAdmin: true}
-	ctx := domain.WithCaller(context.Background(), caller)
-
-	msgID := uuid.New()
-	chatID := uuid.New()
-
-	chatRepo := &mockChatRepo{}
-	msgRepo := &mockMessageRepo{}
-	reactionRepo := &mockReactionRepo{}
-
-	msgRepo.On("FindByID", mock.Anything, msgID).Return(&domain.Message{
-		ID:          msgID,
-		ChatID:      chatID,
-		EmojiCounts: json.RawMessage(`{"👍":1}`),
-	}, nil)
-	chatRepo.On("FindByID", mock.Anything, chatID).Return(&domain.Chat{
-		ID:        chatID,
-		ModelType: "live_session",
-	}, nil)
-	reactionRepo.On("FindByMessageAndUser", mock.Anything, msgID, userID, "👍").
-		Return(&domain.MessageReaction{
-			MessageID: msgID,
-			UserID:    userID,
-			Emoji:     "👍",
-			CreatedAt: time.Now(),
-		}, nil)
-	reactionRepo.On("Delete", mock.Anything, msgID, userID, "👍").Return(nil)
-	reactionRepo.On("CountByMessage", mock.Anything, msgID).Return(map[string]int{}, nil)
-	msgRepo.On("Update", mock.Anything, mock.AnythingOfType("*domain.Message")).Return(nil)
-
-	svc := chat.NewService(chatRepo, nil, msgRepo, reactionRepo, noopTx{}, slog.Default(), nil, nil)
-
-	msg, err := svc.ToggleReaction(ctx, msgID, domain.ToggleReactionDTO{Emoji: "👍"})
-	assert.NoError(t, err)
-
-	var counts map[string]int
-	_ = json.Unmarshal(msg.EmojiCounts, &counts)
-	assert.Empty(t, counts)
-	reactionRepo.AssertExpectations(t)
 }
 
 func TestDeleteMessage_SenderAllowed(t *testing.T) {
@@ -477,72 +241,59 @@ func TestDeleteMessage_SenderAllowed(t *testing.T) {
 	msgID := uuid.New()
 
 	msgRepo := &mockMessageRepo{}
-	msgRepo.On("FindByID", ctx, msgID).Return(&domain.Message{
+	msgRepo.On("FindByID", ctx, msgID).Return(&domain.LiveRoomMessage{
 		ID:       msgID,
 		SenderID: &userID,
 	}, nil)
 	msgRepo.On("Delete", ctx, msgID).Return(nil)
 
-	svc := newService(nil, nil, msgRepo, nil)
+	svc := newService(nil, msgRepo)
 
 	err := svc.DeleteMessage(ctx, msgID)
 	assert.NoError(t, err)
 }
 
-func TestDeleteMessage_OtherUser_ChatAdmin_Allowed(t *testing.T) {
+func TestDeleteMessage_OtherUser_ChatManagePermission_Allowed(t *testing.T) {
+	userID := uuid.New()
+	otherUserID := uuid.New()
+	orgID := uuid.New()
+	ctx := domain.WithCaller(context.Background(), domain.Caller{
+		UserID:      userID,
+		OrgID:       &orgID,
+		Ent:         domain.PlanCatalog[domain.PlanKey(domain.TierPro, 50)],
+		Permissions: []string{string(domain.PermChatsManage)},
+	})
+	msgID := uuid.New()
+
+	msgRepo := &mockMessageRepo{}
+	msgRepo.On("FindByID", ctx, msgID).Return(&domain.LiveRoomMessage{
+		ID:       msgID,
+		SenderID: &otherUserID,
+	}, nil)
+	msgRepo.On("Delete", ctx, msgID).Return(nil)
+
+	svc := newService(nil, msgRepo)
+
+	err := svc.DeleteMessage(ctx, msgID)
+	assert.NoError(t, err)
+}
+
+func TestDeleteMessage_OtherUser_NoPermission_Forbidden(t *testing.T) {
 	userID := uuid.New()
 	otherUserID := uuid.New()
 	ctx := memberCtx(userID)
 	msgID := uuid.New()
-	chatID := uuid.New()
 
-	chatRepo := &mockChatRepo{}
-	memberRepo := &mockMemberRepo{}
 	msgRepo := &mockMessageRepo{}
-
-	msgRepo.On("FindByID", ctx, msgID).Return(&domain.Message{
+	msgRepo.On("FindByID", ctx, msgID).Return(&domain.LiveRoomMessage{
 		ID:       msgID,
-		ChatID:   chatID,
 		SenderID: &otherUserID,
 	}, nil)
-	chatRepo.On("FindByID", ctx, chatID).Return(&domain.Chat{
-		ID:        chatID,
-		ModelType: "support_ticket",
-	}, nil)
-	memberRepo.On("FindByChatAndUser", ctx, chatID, userID).Return(&domain.ChatMember{
-		ChatID: chatID,
-		UserID: userID,
-		Role:   domain.ChatMemberRoleAdmin,
-	}, nil)
-	msgRepo.On("Delete", ctx, msgID).Return(nil)
 
-	svc := newService(chatRepo, memberRepo, msgRepo, nil)
+	svc := newService(nil, msgRepo)
 
 	err := svc.DeleteMessage(ctx, msgID)
-	assert.NoError(t, err)
-}
-
-func TestAddMember_Success(t *testing.T) {
-	ctx := adminCtx()
-	chatID := uuid.New()
-	newUserID := uuid.New()
-
-	chatRepo := &mockChatRepo{}
-	memberRepo := &mockMemberRepo{}
-
-	chatRepo.On("FindByID", ctx, chatID).Return(&domain.Chat{ID: chatID}, nil)
-	memberRepo.On("Create", ctx, mock.AnythingOfType("*domain.ChatMember")).Return(nil)
-
-	svc := newService(chatRepo, memberRepo, nil, nil)
-
-	member, err := svc.AddMember(ctx, chatID, domain.AddChatMemberDTO{
-		UserID: newUserID.String(),
-		Role:   domain.ChatMemberRoleMember,
-	})
-	assert.NoError(t, err)
-	assert.Equal(t, chatID, member.ChatID)
-	assert.Equal(t, newUserID, member.UserID)
-	assert.Equal(t, domain.ChatMemberRoleMember, member.Role)
+	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 
 func TestSendMessage_WithThread(t *testing.T) {
@@ -552,32 +303,25 @@ func TestSendMessage_WithThread(t *testing.T) {
 	parentMsgID := uuid.New()
 
 	chatRepo := &mockChatRepo{}
-	memberRepo := &mockMemberRepo{}
 	msgRepo := &mockMessageRepo{}
 
-	chatRepo.On("FindByID", ctx, chatID).Return(&domain.Chat{
-		ID:        chatID,
-		ModelType: "support_ticket",
-		Status:    domain.ChatStatusActive,
+	chatRepo.On("FindByID", ctx, chatID).Return(&domain.LiveRoomChat{
+		ID:     chatID,
+		Status: domain.LiveRoomChatStatusActive,
 	}, nil)
-	memberRepo.On("FindByChatAndUser", ctx, chatID, userID).Return(&domain.ChatMember{
-		ChatID: chatID,
-		UserID: userID,
-		Role:   domain.ChatMemberRoleMember,
-	}, nil)
-	msgRepo.On("FindByID", ctx, parentMsgID).Return(&domain.Message{
+	msgRepo.On("FindByID", ctx, parentMsgID).Return(&domain.LiveRoomMessage{
 		ID:     parentMsgID,
 		ChatID: chatID,
 	}, nil)
-	msgRepo.On("Create", ctx, mock.MatchedBy(func(m *domain.Message) bool {
+	msgRepo.On("Create", ctx, mock.MatchedBy(func(m *domain.LiveRoomMessage) bool {
 		return m.ParentMessageID != nil && *m.ParentMessageID == parentMsgID
 	})).Return(nil)
 
-	svc := newService(chatRepo, memberRepo, msgRepo, nil)
+	svc := newService(chatRepo, msgRepo)
 
 	parentIDStr := parentMsgID.String()
 	msg, err := svc.SendMessage(ctx, chatID, domain.SendMessageDTO{
-		MessageType:     domain.MessageTypeText,
+		MessageType:     domain.LiveRoomMessageTypeText,
 		Content:         "Reply",
 		ParentMessageID: &parentIDStr,
 	})
@@ -608,7 +352,7 @@ func (s stubLiveRooms) FindByID(_ context.Context, _ uuid.UUID) (*domain.LiveRoo
 	return s.room, nil
 }
 
-func TestSendMessage_LiveSession_BroadcastsOverDataChannel(t *testing.T) {
+func TestSendMessage_BroadcastsOverDataChannel(t *testing.T) {
 	userID := uuid.New()
 	ctx := memberCtx(userID)
 	chatID := uuid.New()
@@ -616,20 +360,19 @@ func TestSendMessage_LiveSession_BroadcastsOverDataChannel(t *testing.T) {
 
 	chatRepo := &mockChatRepo{}
 	msgRepo := &mockMessageRepo{}
-	chatRepo.On("FindByID", ctx, chatID).Return(&domain.Chat{
-		ID:        chatID,
-		ModelType: domain.ChatModelLiveSession,
-		ModelID:   roomID,
-		Status:    domain.ChatStatusActive,
+	chatRepo.On("FindByID", ctx, chatID).Return(&domain.LiveRoomChat{
+		ID:         chatID,
+		LiveRoomID: roomID,
+		Status:     domain.LiveRoomChatStatusActive,
 	}, nil)
-	msgRepo.On("Create", ctx, mock.AnythingOfType("*domain.Message")).Return(nil)
+	msgRepo.On("Create", ctx, mock.AnythingOfType("*domain.LiveRoomMessage")).Return(nil)
 
 	sender := &spySender{}
 	rooms := stubLiveRooms{room: &domain.LiveRoom{ID: roomID, LiveKitRoomName: "session-abc"}}
-	svc := chat.NewService(chatRepo, nil, msgRepo, nil, noopTx{}, slog.Default(), sender, rooms)
+	svc := chat.NewService(chatRepo, msgRepo, noopTx{}, slog.Default(), sender, rooms)
 
 	_, err := svc.SendMessage(ctx, chatID, domain.SendMessageDTO{
-		MessageType: domain.MessageTypeText,
+		MessageType: domain.LiveRoomMessageTypeText,
 		Content:     "Hi room!",
 	})
 	assert.NoError(t, err)
@@ -648,32 +391,24 @@ func TestSendMessage_LiveSession_BroadcastsOverDataChannel(t *testing.T) {
 	}
 }
 
-func TestSendMessage_NonLiveChat_NoBroadcast(t *testing.T) {
+func TestSendMessage_NoLiveKitWiring_NoBroadcast(t *testing.T) {
 	userID := uuid.New()
 	ctx := memberCtx(userID)
 	chatID := uuid.New()
 
 	chatRepo := &mockChatRepo{}
-	memberRepo := &mockMemberRepo{}
 	msgRepo := &mockMessageRepo{}
-	chatRepo.On("FindByID", ctx, chatID).Return(&domain.Chat{
-		ID:        chatID,
-		ModelType: "support_ticket",
-		Status:    domain.ChatStatusActive,
+	chatRepo.On("FindByID", ctx, chatID).Return(&domain.LiveRoomChat{
+		ID:     chatID,
+		Status: domain.LiveRoomChatStatusActive,
 	}, nil)
-	memberRepo.On("FindByChatAndUser", ctx, chatID, userID).Return(&domain.ChatMember{
-		ChatID: chatID, UserID: userID, Role: domain.ChatMemberRoleMember,
-	}, nil)
-	msgRepo.On("Create", ctx, mock.AnythingOfType("*domain.Message")).Return(nil)
+	msgRepo.On("Create", ctx, mock.AnythingOfType("*domain.LiveRoomMessage")).Return(nil)
 
-	sender := &spySender{}
-	rooms := stubLiveRooms{room: &domain.LiveRoom{}}
-	svc := chat.NewService(chatRepo, memberRepo, msgRepo, nil, noopTx{}, slog.Default(), sender, rooms)
+	svc := newService(chatRepo, msgRepo)
 
 	_, err := svc.SendMessage(ctx, chatID, domain.SendMessageDTO{
-		MessageType: domain.MessageTypeText,
-		Content:     "private",
+		MessageType: domain.LiveRoomMessageTypeText,
+		Content:     "no broadcast wiring",
 	})
 	assert.NoError(t, err)
-	assert.Empty(t, sender.rooms, "non-live chat must not broadcast to a room")
 }

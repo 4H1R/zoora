@@ -7,13 +7,12 @@
  */
 import type { GithubCom4H1RZooraInternalDomainLiveRoomChatStatus } from './githubCom4H1RZooraInternalDomainLiveRoomChatStatus';
 
-export interface GithubCom4H1RZooraInternalDomainUpdateChatDTO {
-  /** @maxLength 1000 */
+export interface GithubCom4H1RZooraInternalDomainLiveRoomChat {
+  created_at?: string;
   description?: string;
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
+  id?: string;
+  live_room_id?: string;
   name?: string;
   status?: GithubCom4H1RZooraInternalDomainLiveRoomChatStatus;
+  updated_at?: string;
 }

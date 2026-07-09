@@ -120,9 +120,6 @@ type seedCounts struct {
 	Polls               int
 	PollAnswers         int
 	Chats               int
-	ChatMembers         int
-	Messages            int
-	MessageReactions    int
 	LiveRooms           int
 	LiveParticipants    int
 	LiveRecordings      int
@@ -145,10 +142,8 @@ func truncateAll(db *gorm.DB, ctx context.Context) error {
 		"offline_rooms",
 		"practice_submissions",
 		"practice_rooms",
-		"message_reactions",
-		"messages",
-		"chat_members",
-		"chats",
+		"liveroom_messages",
+		"liveroom_chats",
 		"poll_answers",
 		"polls",
 		"quiz_submissions",
@@ -596,50 +591,6 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 				counts.PollAnswers++
 			}
 
-			// 16. Chat for class + members + messages + reactions
-			chat := factory.NewChat("class", class.ID, func(c *domain.Chat) {
-				c.Name = class.Name + factory.T(" Chat", " گفتگو")
-			})
-			if err := db.WithContext(ctx).Create(chat).Error; err != nil {
-				return nil, fmt.Errorf("creating chat: %w", err)
-			}
-			counts.Chats++
-			teacherMember := factory.NewChatMember(chat.ID, teacher.ID, domain.ChatMemberRoleAdmin)
-			if err := db.WithContext(ctx).Create(teacherMember).Error; err != nil {
-				return nil, fmt.Errorf("creating chat member: %w", err)
-			}
-			counts.ChatMembers++
-			for _, student := range ou.students {
-				cm := factory.NewChatMember(chat.ID, student.ID, domain.ChatMemberRoleMember)
-				if err := db.WithContext(ctx).Create(cm).Error; err != nil {
-					return nil, fmt.Errorf("creating chat member: %w", err)
-				}
-				counts.ChatMembers++
-			}
-			tid := teacher.ID
-			welcome := factory.NewMessage(chat.ID, &tid, func(m *domain.Message) {
-				m.Content = factory.T("Welcome to the class!", "به کلاس خوش آمدید!")
-			})
-			if err := db.WithContext(ctx).Create(welcome).Error; err != nil {
-				return nil, fmt.Errorf("creating message: %w", err)
-			}
-			counts.Messages++
-			for _, student := range ou.students {
-				sid := student.ID
-				reply := factory.NewMessage(chat.ID, &sid)
-				if err := db.WithContext(ctx).Create(reply).Error; err != nil {
-					return nil, fmt.Errorf("creating message: %w", err)
-				}
-				counts.Messages++
-			}
-			for _, student := range ou.students {
-				r := factory.NewMessageReaction(welcome.ID, student.ID, "👍")
-				if err := db.WithContext(ctx).Create(r).Error; err != nil {
-					return nil, fmt.Errorf("creating reaction: %w", err)
-				}
-				counts.MessageReactions++
-			}
-
 			// 17. LiveRoom on liveSession + participants + recording
 			liveRoom := factory.NewLiveRoom(liveSession.ID, func(lr *domain.LiveRoom) {
 				lr.Name = factory.T("Past session", "جلسه گذشته")
@@ -655,7 +606,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 			counts.LiveRooms++
 			// Mirror CreateRoom: every live room owns a live_session chat so the
 			// in-room chat panel has a backing chat to post to.
-			liveRoomChat := factory.NewChat("live_session", liveRoom.ID, func(c *domain.Chat) {
+			liveRoomChat := factory.NewLiveRoomChat(liveRoom.ID, func(c *domain.LiveRoomChat) {
 				c.Name = factory.T("Chat – Past session", "گفتگو – جلسه گذشته")
 			})
 			if err := db.WithContext(ctx).Create(liveRoomChat).Error; err != nil {
@@ -688,7 +639,7 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 				return nil, fmt.Errorf("creating scheduled live room: %w", err)
 			}
 			counts.LiveRooms++
-			scheduledRoomChat := factory.NewChat("live_session", scheduledRoom.ID, func(c *domain.Chat) {
+			scheduledRoomChat := factory.NewLiveRoomChat(scheduledRoom.ID, func(c *domain.LiveRoomChat) {
 				c.Name = factory.T("Chat – Scheduled session", "گفتگو – جلسه زمان‌بندی‌شده")
 			})
 			if err := db.WithContext(ctx).Create(scheduledRoomChat).Error; err != nil {
@@ -832,9 +783,6 @@ func printSummary(c *seedCounts) {
 	fmt.Printf("  Polls:                %d\n", c.Polls)
 	fmt.Printf("  PollAnswers:          %d\n", c.PollAnswers)
 	fmt.Printf("  Chats:                %d\n", c.Chats)
-	fmt.Printf("  ChatMembers:          %d\n", c.ChatMembers)
-	fmt.Printf("  Messages:             %d\n", c.Messages)
-	fmt.Printf("  MessageReactions:     %d\n", c.MessageReactions)
 	fmt.Printf("  LiveRooms:            %d\n", c.LiveRooms)
 	fmt.Printf("  LiveParticipants:     %d\n", c.LiveParticipants)
 	fmt.Printf("  LiveRecordings:       %d\n", c.LiveRecordings)
