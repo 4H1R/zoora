@@ -13,6 +13,9 @@ export interface NavItem {
   title: string
   url: string
   icon?: React.ReactNode
+  // Optional trailing content (e.g. an unread-count pill). Rendered at the
+  // logical end of the row; existing items without it are unaffected.
+  badge?: React.ReactNode
 }
 
 export interface NavGroup {
@@ -42,7 +45,8 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
                   )}
                 >
                   {item.icon}
-                  <span>{item.title}</span>
+                  <span className="flex-1 truncate">{item.title}</span>
+                  {item.badge}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}

@@ -4,6 +4,7 @@ import type { FeatureKey } from "@/lib/entitlements"
 import type { OrgRouteKey, OrgRouteSpec } from "@/lib/org-routes"
 import type { TFunction } from "i18next"
 
+import { ConversationsNavBadge } from "@/components/org/conversations/conversations-nav-badge"
 import { ORG_ROUTES } from "@/lib/org-routes"
 
 // Each group lists the org routes it contains, in display order. The per-route
@@ -54,12 +55,15 @@ export function buildOrgNavGroups(
     .map((g) => ({
       label: g.label,
       items: g.keys
-        .map((key) => ORG_ROUTES[key])
-        .filter((spec) => navVisible(spec, has, hasFeature))
-        .map((spec) => ({
+        .map((key) => ({ key, spec: ORG_ROUTES[key] }))
+        .filter(({ spec }) => navVisible(spec, has, hasFeature))
+        .map(({ key, spec }) => ({
           title: t(spec.i18nKey),
           url: `/org/${spec.segment}`,
           icon: spec.icon,
+          // Live unread count, gated inside the component on the chat
+          // entitlement — see conversations-nav-badge.tsx / use-total-unread.ts.
+          badge: key === "conversations" ? <ConversationsNavBadge /> : undefined,
         })),
     }))
     .filter((g) => g.items.length > 0)

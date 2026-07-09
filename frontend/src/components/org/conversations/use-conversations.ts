@@ -37,11 +37,16 @@ async function fetchConversations(): Promise<Conversation[]> {
  * Conversation list query. MUST key on `chatKeys.conversations()` and resolve to a
  * flat `Conversation[]` — that exact key + shape is the cache the realtime reducer
  * (`use-chat-ws.ts`) writes into on every incoming event.
+ *
+ * `enabled` (default `true`) lets app-wide consumers — e.g. the nav unread badge
+ * via `useTotalUnread` — gate the request on entitlement instead of always
+ * firing it for orgs without the chat feature.
  */
-export function useConversations() {
+export function useConversations(enabled = true) {
   return useQuery({
     queryKey: chatKeys.conversations(),
     queryFn: fetchConversations,
     staleTime: STALE_MS,
+    enabled,
   })
 }
