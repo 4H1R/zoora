@@ -94,36 +94,23 @@ export function bumpConversationInList(
   return [updated, ...rest]
 }
 
-// ---------------------------------------------------------------------------
-// Cross-source dedup: `new_message` arrives BOTH from the joined room (full
-// payload) and the per-user firehose (compact payload). A bounded, insertion-
-// ordered Set of seen ids drops the second sighting. Module-level so the guard
-// spans every ChatProvider/event-handler instance in the tab.
-// ---------------------------------------------------------------------------
-const SEEN_CAP = 500
-const seenMessageIds = new Set<string>()
-
-/** Returns true the FIRST time an id is seen, false on every repeat. */
-export function markMessageSeen(id: string): boolean {
-  if (seenMessageIds.has(id)) return false
-  seenMessageIds.add(id)
-  if (seenMessageIds.size > SEEN_CAP) {
-    // Set preserves insertion order; evict the oldest id.
-    const oldest = seenMessageIds.values().next().value
-    if (oldest !== undefined) seenMessageIds.delete(oldest)
-  }
-  return true
-}
-
-/** Test-only: reset the dedup Set between cases. */
-export function __clearSeenMessageIds(): void {
-  seenMessageIds.clear()
+/**
+ * Compact per-user firehose payload for the sidebar (`conversation_bump`). It
+ * carries just enough to render the list row's last-message preview — NOT the
+ * full thread message (that arrives on the joined room as `new_message`).
+ */
+type ConversationBump = {
+  conversation_id?: string
+  id?: string
+  sender_id?: string
+  content?: string
+  created_at?: string
 }
 
 /**
  * Build the WS-event → React Query cache reducer. The returned handler is the
  * only thing that mutates chat caches from realtime events; it is otherwise
- * pure (touches nothing but `queryClient` and the module dedup Set).
+ * pure (touches nothing but `queryClient`).
  *
  * `getFocusedConvId`/`selfUserId` are read lazily so a single long-lived handler
  * always sees the current focused thread and signed-in user.
@@ -138,20 +125,49 @@ export function createChatEventHandler(opts: {
   return (e: WsEvent) => {
     switch (e.type) {
       case "new_message": {
+        // Full-payload thread message. This event ONLY arrives for the room the
+        // client joined (the focused/open conversation), so it drives the thread
+        // cache. Appending is idempotent by id (`reconcileOptimistic`), so a
+        // repeated sighting replaces in place rather than duplicating.
         const msg = e.data as ChatMessage
         const convId = msg.conversation_id
         const id = msg.id
         if (!convId || !id) return
-        // Drop the duplicate firehose/room sighting.
-        if (!markMessageSeen(id)) return
 
         queryClient.setQueryData<MessagesInfinite>(chatKeys.messages(convId), (old) =>
           appendMessageToInfinite(old, msg)
         )
 
+        // Bump the list too. Because this is the joined/focused conv (or our own
+        // send), unread is suppressed here; the NON-focused unread path is owned
+        // exclusively by `conversation_bump`, so no double-count occurs.
         const incrementUnread = convId !== getFocusedConvId() && msg.sender_id !== selfUserId()
         queryClient.setQueryData<Conversation[]>(chatKeys.conversations(), (old) =>
           bumpConversationInList(old, { convId, message: msg, incrementUnread })
+        )
+        return
+      }
+
+      case "conversation_bump": {
+        // Per-user sidebar firehose: a compact payload for EVERY conversation the
+        // user belongs to (focused or not). Bump the LIST only — never the thread
+        // cache (the joined room delivers the full message via `new_message`).
+        const bump = e.data as ConversationBump
+        const convId = bump.conversation_id
+        if (!convId) return
+
+        const incrementUnread = convId !== getFocusedConvId() && bump.sender_id !== selfUserId()
+        const preview: ChatMessage | undefined = bump.id
+          ? ({
+              id: bump.id,
+              conversation_id: convId,
+              sender_id: bump.sender_id,
+              content: bump.content,
+              created_at: bump.created_at,
+            } as ChatMessage)
+          : undefined
+        queryClient.setQueryData<Conversation[]>(chatKeys.conversations(), (old) =>
+          bumpConversationInList(old, { convId, message: preview, incrementUnread })
         )
         return
       }

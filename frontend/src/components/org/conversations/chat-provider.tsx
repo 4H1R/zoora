@@ -1,4 +1,4 @@
-import { onlineManager, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react"
 
 import { AUTH_TOKEN_KEY } from "@/api/mutator/custom-instance"
@@ -65,9 +65,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       },
       (s) => {
         setStatus(s)
-        // Bridge socket connectivity into React Query's online manager so
-        // queries pause/resume with the chat link.
-        onlineManager.setOnline(s === "online")
+        // NB: the chat socket's liveness must NOT drive React Query's global
+        // `onlineManager` — a chat drop would otherwise pause every query and
+        // mutation app-wide. We keep `status` purely for chat UI.
         if (s === "online") {
           // Reconnected (or first connect): the list may have drifted while
           // offline — refetch it, and ensure the focused thread is (re)joined.

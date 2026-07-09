@@ -1,16 +1,14 @@
 import { QueryClient } from "@tanstack/react-query"
-import { beforeEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import type { GithubCom4H1RZooraInternalDomainConversation as Conversation } from "@/api/model"
 
 import type { ChatMessage } from "./lib/messages"
 import { chatKeys } from "./lib/query-keys"
 import {
-  __clearSeenMessageIds,
   appendMessageToInfinite,
   bumpConversationInList,
   createChatEventHandler,
-  markMessageSeen,
   type MessagesInfinite,
 } from "./use-chat-ws"
 
@@ -21,10 +19,6 @@ function msg(id: string, extra: Partial<ChatMessage> = {}): ChatMessage {
 function infinite(...pages: ChatMessage[][]): MessagesInfinite {
   return { pages, pageParams: pages.map(() => null) }
 }
-
-beforeEach(() => {
-  __clearSeenMessageIds()
-})
 
 describe("appendMessageToInfinite", () => {
   it("no-ops when the cache is absent", () => {
@@ -78,23 +72,10 @@ describe("bumpConversationInList", () => {
   })
 })
 
-describe("markMessageSeen (cross-source dedup)", () => {
-  it("returns true only on first sight of an id", () => {
-    expect(markMessageSeen("x")).toBe(true)
-    expect(markMessageSeen("x")).toBe(false)
-    expect(markMessageSeen("y")).toBe(true)
-  })
-
-  it("evicts the oldest id past the cap so it can be seen again", () => {
-    // Fill the cap (500) then one more evicts the very first ("k0").
-    for (let i = 0; i < 500; i++) markMessageSeen(`k${i}`)
-    expect(markMessageSeen("k0")).toBe(false) // still within the window
-    markMessageSeen("overflow") // now size exceeds cap -> oldest ("k0") evicted
-    expect(markMessageSeen("k0")).toBe(true) // seen again after eviction
-  })
-})
-
 describe("createChatEventHandler new_message", () => {
+  // `new_message` arrives ONLY for the joined (focused/open) room: it appends the
+  // full message to the thread cache AND bumps the list (unread suppressed, since
+  // it's the focused conv or our own send).
   function setup() {
     const qc = new QueryClient()
     qc.setQueryData<MessagesInfinite>(chatKeys.messages("c1"), infinite([msg("m0")]))
@@ -102,23 +83,7 @@ describe("createChatEventHandler new_message", () => {
     return qc
   }
 
-  it("appends to the thread and bumps unread for an unfocused conv from another sender", () => {
-    const qc = setup()
-    const handle = createChatEventHandler({
-      queryClient: qc,
-      getFocusedConvId: () => null,
-      selfUserId: () => "me",
-    })
-    handle({ type: "new_message", data: msg("m1", { sender_id: "u2" }) })
-
-    const thread = qc.getQueryData<MessagesInfinite>(chatKeys.messages("c1"))
-    expect(thread?.pages[0].map((m) => m.id)).toEqual(["m0", "m1"])
-    const conv = qc.getQueryData<Conversation[]>(chatKeys.conversations())
-    expect(conv?.[0].unread_count).toBe(1)
-    expect(conv?.[0].last_message?.id).toBe("m1")
-  })
-
-  it("suppresses the unread bump for the focused conversation", () => {
+  it("appends the full message to the thread and bumps the list for the focused conv (unread suppressed)", () => {
     const qc = setup()
     const handle = createChatEventHandler({
       queryClient: qc,
@@ -126,7 +91,12 @@ describe("createChatEventHandler new_message", () => {
       selfUserId: () => "me",
     })
     handle({ type: "new_message", data: msg("m1", { sender_id: "u2" }) })
-    expect(qc.getQueryData<Conversation[]>(chatKeys.conversations())?.[0].unread_count).toBe(0)
+
+    const thread = qc.getQueryData<MessagesInfinite>(chatKeys.messages("c1"))
+    expect(thread?.pages[0].map((m) => m.id)).toEqual(["m0", "m1"])
+    const conv = qc.getQueryData<Conversation[]>(chatKeys.conversations())
+    expect(conv?.[0].unread_count).toBe(0)
+    expect(conv?.[0].last_message?.id).toBe("m1")
   })
 
   it("suppresses the unread bump for the caller's own message", () => {
@@ -137,20 +107,84 @@ describe("createChatEventHandler new_message", () => {
       selfUserId: () => "me",
     })
     handle({ type: "new_message", data: msg("m1", { sender_id: "me" }) })
+    const thread = qc.getQueryData<MessagesInfinite>(chatKeys.messages("c1"))
+    expect(thread?.pages[0].map((m) => m.id)).toEqual(["m0", "m1"])
     expect(qc.getQueryData<Conversation[]>(chatKeys.conversations())?.[0].unread_count).toBe(0)
   })
 
-  it("dedups the duplicate room/firehose sighting (unread bumped once)", () => {
+  it("is idempotent by id on a repeated sighting (no duplicate thread append)", () => {
     const qc = setup()
     const handle = createChatEventHandler({
       queryClient: qc,
-      getFocusedConvId: () => null,
+      getFocusedConvId: () => "c1",
       selfUserId: () => "me",
     })
     handle({ type: "new_message", data: msg("m1", { sender_id: "u2" }) })
     handle({ type: "new_message", data: msg("m1", { sender_id: "u2" }) })
     const thread = qc.getQueryData<MessagesInfinite>(chatKeys.messages("c1"))
     expect(thread?.pages[0].map((m) => m.id)).toEqual(["m0", "m1"])
-    expect(qc.getQueryData<Conversation[]>(chatKeys.conversations())?.[0].unread_count).toBe(1)
+  })
+})
+
+describe("createChatEventHandler conversation_bump", () => {
+  // `conversation_bump` is the per-user sidebar firehose (compact payload). It
+  // bumps the LIST only — never the thread cache.
+  function setup() {
+    const qc = new QueryClient()
+    qc.setQueryData<MessagesInfinite>(chatKeys.messages("c2"), infinite([msg("m0", { conversation_id: "c2" })]))
+    qc.setQueryData<Conversation[]>(chatKeys.conversations(), [
+      { id: "c1", unread_count: 0 },
+      { id: "c2", unread_count: 0 },
+    ])
+    return qc
+  }
+
+  const bump = (extra: Record<string, unknown> = {}) => ({
+    type: "conversation_bump",
+    data: { conversation_id: "c2", id: "m9", sender_id: "u2", content: "hi", created_at: "2026-07-09T10:00:00Z", ...extra },
+  })
+
+  it("bumps an unfocused conv from another sender (move-to-top, preview, unread) without touching the thread", () => {
+    const qc = setup()
+    const handle = createChatEventHandler({
+      queryClient: qc,
+      getFocusedConvId: () => null,
+      selfUserId: () => "me",
+    })
+    handle(bump())
+
+    const conv = qc.getQueryData<Conversation[]>(chatKeys.conversations())
+    expect(conv?.map((c) => c.id)).toEqual(["c2", "c1"])
+    expect(conv?.[0].unread_count).toBe(1)
+    expect(conv?.[0].last_message?.id).toBe("m9")
+    expect(conv?.[0].last_message?.content).toBe("hi")
+    // Thread cache is untouched — only the full-payload `new_message` appends.
+    const thread = qc.getQueryData<MessagesInfinite>(chatKeys.messages("c2"))
+    expect(thread?.pages[0].map((m) => m.id)).toEqual(["m0"])
+  })
+
+  it("suppresses the unread bump for the focused conversation", () => {
+    const qc = setup()
+    const handle = createChatEventHandler({
+      queryClient: qc,
+      getFocusedConvId: () => "c2",
+      selfUserId: () => "me",
+    })
+    handle(bump())
+    const conv = qc.getQueryData<Conversation[]>(chatKeys.conversations())
+    expect(conv?.[0].id).toBe("c2")
+    expect(conv?.[0].unread_count).toBe(0)
+    expect(conv?.[0].last_message?.id).toBe("m9")
+  })
+
+  it("suppresses the unread bump for the caller's own message", () => {
+    const qc = setup()
+    const handle = createChatEventHandler({
+      queryClient: qc,
+      getFocusedConvId: () => null,
+      selfUserId: () => "me",
+    })
+    handle(bump({ sender_id: "me" }))
+    expect(qc.getQueryData<Conversation[]>(chatKeys.conversations())?.find((c) => c.id === "c2")?.unread_count).toBe(0)
   })
 })
