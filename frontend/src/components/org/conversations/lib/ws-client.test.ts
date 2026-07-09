@@ -202,4 +202,61 @@ describe("ChatWsClient", () => {
     ws.simulateError()
     expect(ws.close).toHaveBeenCalled()
   })
+
+  it("reschedules the reconnect when the token is transiently null, then connects once it returns", () => {
+    let token: string | null = null
+    const client = new ChatWsClient(
+      "wss://example.test/ws",
+      () => token,
+      () => {},
+      () => {}
+    )
+    client.connect()
+    // No token yet -> no socket, but a reconnect must be scheduled (chain alive).
+    expect(FakeWebSocket.instances).toHaveLength(0)
+    // Token appears before the backoff fires; the scheduled attempt connects.
+    token = "tok"
+    vi.advanceTimersByTime(1000)
+    expect(FakeWebSocket.instances).toHaveLength(1)
+    expect(FakeWebSocket.last().url).toBe("wss://example.test/ws?token=tok")
+  })
+
+  it("keeps retrying with backoff while the token stays null (no loop-storm)", () => {
+    let token: string | null = null
+    const client = new ChatWsClient(
+      "wss://example.test/ws",
+      () => token,
+      () => {},
+      () => {}
+    )
+    client.connect()
+    // Retry #1 at 1000ms: still null -> no socket, but reschedules (backoff 2000).
+    vi.advanceTimersByTime(1000)
+    expect(FakeWebSocket.instances).toHaveLength(0)
+    // Retry #2 at 2000ms: still null -> reschedules (backoff 4000).
+    vi.advanceTimersByTime(2000)
+    expect(FakeWebSocket.instances).toHaveLength(0)
+    // Token returns; retry #3 at 4000ms finally connects.
+    token = "tok"
+    vi.advanceTimersByTime(4000)
+    expect(FakeWebSocket.instances).toHaveLength(1)
+  })
+
+  it("does NOT reschedule after a user-initiated close with a null token", () => {
+    let token: string | null = "tok"
+    const client = new ChatWsClient(
+      "wss://example.test/ws",
+      () => token,
+      () => {},
+      () => {}
+    )
+    client.connect()
+    FakeWebSocket.last().simulateOpen()
+    client.close()
+    token = null
+    // A close() sets closedByUser; any later null-token connect must not revive.
+    client.connect()
+    vi.advanceTimersByTime(60000)
+    expect(FakeWebSocket.instances).toHaveLength(1)
+  })
 })

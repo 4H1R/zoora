@@ -26,7 +26,14 @@ export class ChatWsClient {
 
   connect(): void {
     const token = this.getToken()
-    if (!token) return
+    if (!token) {
+      // The token can be transiently null during a refresh window. If this isn't
+      // a user-initiated close, keep the reconnect chain alive (with backoff, so
+      // it can't loop-storm) so we retry once a token is available again. Without
+      // this, a single null read would kill the chain permanently.
+      if (!this.closedByUser) this.scheduleReconnect()
+      return
+    }
 
     this.closedByUser = false
     const ws = new WebSocket(`${this.url}?token=${encodeURIComponent(token)}`)
