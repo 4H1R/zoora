@@ -20,12 +20,6 @@ const (
 	// PubSub channel closes unexpectedly (e.g. connection drop that go-redis
 	// gave up reconnecting), so a persistently-down Redis doesn't spin.
 	pubsubRestartDelay = 1 * time.Second
-
-	// cmdBuffer sizes the (un)subscribe command queue. Enqueue happens under the
-	// hub lock, so a full buffer briefly blocks join/leave; sized generously so
-	// only a sustained Redis stall (during which chat is degraded anyway) can
-	// reach it.
-	cmdBuffer = 1024
 )
 
 type envelope struct {
@@ -55,16 +49,26 @@ type Bridge struct {
 	rdb    *redis.Client
 	logger *slog.Logger
 
-	// cmds carries (un)subscribe requests from the hub hooks (which fire under
-	// the hub lock and so must not perform Redis I/O) to the Run loop.
-	cmds chan subCmd
+	// pending carries (un)subscribe requests from the hub hooks (which fire
+	// under the hub lock and so must not perform Redis I/O) to the Run loop. It
+	// is an UNBOUNDED, order-preserving handoff guarded by cmdMu, with wake as a
+	// coalesced wakeup signal. Unbounded + non-blocking is what breaks the
+	// hub-lock/Run-loop deadlock: a hook firing under the hub write lock appends
+	// and returns without ever parking, so the write lock is never held while
+	// blocked, so Run's deliverToRoom/deliverToUser (which take the hub RLock)
+	// can always proceed and keep draining. Ordering is preserved because the
+	// hub write lock serializes the enqueue callers, so appends land in
+	// transition order and are never dropped or reordered.
+	cmdMu   sync.Mutex
+	pending []subCmd
+	wake    chan struct{} // buffered(1); a non-blocking nudge to drain pending
 
 	mu     sync.Mutex
 	pubsub *redis.PubSub // guarded for the ctx-cancel watcher; nil until Run starts
 }
 
 func NewBridge(hub *Hub, rdb *redis.Client, logger *slog.Logger) *Bridge {
-	b := &Bridge{hub: hub, rdb: rdb, logger: logger, cmds: make(chan subCmd, cmdBuffer)}
+	b := &Bridge{hub: hub, rdb: rdb, logger: logger, wake: make(chan struct{}, 1)}
 	// Dynamic (un)subscribe hooks fired by the hub on the local membership
 	// transitions that change what this instance needs to receive.
 	hub.onFirstJoin = func(convID uuid.UUID) { b.enqueue(convChannelPrefix+convID.String(), true) }
@@ -74,12 +78,32 @@ func NewBridge(hub *Hub, rdb *redis.Client, logger *slog.Logger) *Bridge {
 	return b
 }
 
-// enqueue hands a (un)subscribe request to the Run loop. Called under the hub
-// lock, so it must not block on Redis; the buffered channel decouples them. On
-// a full buffer it blocks (rather than dropping) to preserve ordering — a
-// dropped subscribe would silently lose realtime delivery for a conversation.
+// enqueue hands a (un)subscribe request to the Run loop. It is called under the
+// hub write lock, so it MUST NOT block: it appends to the unbounded pending
+// slice and fires a coalesced wakeup, then returns immediately. Never blocking
+// under the hub lock is precisely what prevents the deadlock where a full
+// buffer would park the lock holder while Run — blocked on the hub RLock in
+// deliverTo* — can no longer drain. Appends happen in transition order (the hub
+// lock serializes callers) so subscribe/unsubscribe commands are neither
+// dropped nor reordered, keeping the refcount correct.
 func (b *Bridge) enqueue(channel string, subscribe bool) {
-	b.cmds <- subCmd{channel: channel, subscribe: subscribe}
+	b.cmdMu.Lock()
+	b.pending = append(b.pending, subCmd{channel: channel, subscribe: subscribe})
+	b.cmdMu.Unlock()
+	select {
+	case b.wake <- struct{}{}:
+	default: // a wakeup is already pending; Run will drain all of pending
+	}
+}
+
+// takePending atomically swaps out the queued commands for the Run loop to
+// apply. Returns them in enqueue (transition) order.
+func (b *Bridge) takePending() []subCmd {
+	b.cmdMu.Lock()
+	cmds := b.pending
+	b.pending = nil
+	b.cmdMu.Unlock()
+	return cmds
 }
 
 // Run owns the PubSub connection and blocks until ctx is done. It applies
@@ -137,12 +161,19 @@ func (b *Bridge) Run(ctx context.Context) {
 		ch := ps.Channel()
 	drain:
 		for {
+			// Prioritize pending (un)subscribes: apply the full queued batch
+			// before handling any inbound message so subscription/refcount state
+			// never lags behind local membership while messages are flowing, and
+			// so a backed-up queue can always be drained (the deadlock guard).
+			for _, cmd := range b.takePending() {
+				b.applyCmd(ctx, ps, refs, cmd)
+			}
 			select {
 			case <-ctx.Done():
 				_ = ps.Close()
 				return
-			case cmd := <-b.cmds:
-				b.applyCmd(ctx, ps, refs, cmd)
+			case <-b.wake:
+				// New commands queued: loop to drain pending at the top.
 			case msg, ok := <-ch:
 				if !ok {
 					break drain
