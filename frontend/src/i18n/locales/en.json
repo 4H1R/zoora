@@ -3102,6 +3102,16 @@
         "title": "No messages yet",
         "description": "Send the first message to start the conversation."
       }
+    },
+    "composer": {
+      "placeholder": "Write a message…",
+      "send": "Send",
+      "emoji": "Emoji",
+      "emojiSearch": "Search emoji",
+      "emojiEmpty": "No emoji found",
+      "emojiLoading": "Loading…",
+      "replyingTo": "Replying to {{name}}",
+      "cancelReply": "Cancel reply"
     }
   }
 }

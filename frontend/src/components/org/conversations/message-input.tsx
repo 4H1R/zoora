@@ -1,0 +1,329 @@
+import type { InfiniteData } from "@tanstack/react-query"
+
+import { useQueryClient } from "@tanstack/react-query"
+import { EmojiPicker } from "frimousse"
+import { SendHorizontalIcon, SmileIcon, XIcon } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
+
+import { useGetConversationsIdMembers } from "@/api/conversations/conversations"
+import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useChatUi } from "@/stores/chat-ui"
+import { cn } from "@/lib/utils"
+
+import type { ChatMessage } from "./lib/messages"
+import {
+  type MentionCandidate,
+  type MentionQuery,
+  detectMention,
+  insertAtCaret,
+  insertMention,
+  resolveMentions,
+} from "./lib/mentions"
+import { chatKeys } from "./lib/query-keys"
+import { MentionPopover } from "./mention-popover"
+import { useSendMessage } from "./use-send-message"
+
+type MessagesCache = InfiniteData<ChatMessage[]>
+
+// Cap the mention autocomplete so a huge channel doesn't render a wall of rows.
+const MAX_MENTION_ROWS = 8
+
+interface MessageInputProps {
+  convId: string
+}
+
+/**
+ * The thread composer: an auto-growing textarea with @mention autocomplete, an
+ * emoji picker, a reply strip, and send. Enter sends / Shift+Enter inserts a
+ * newline — but an open mention OR emoji popover GUARDS Enter so it selects /
+ * stays put instead of firing an accidental send. Mentions are re-derived from
+ * the final text at send time (`resolveMentions`), so deleting an inserted name
+ * correctly drops it. The composer owns clearing its own input.
+ */
+export function MessageInput({ convId }: MessageInputProps) {
+  const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  const { send } = useSendMessage(convId)
+
+  const replyTo = useChatUi((s) => s.replyTo)
+  const setReplyTo = useChatUi((s) => s.setReplyTo)
+
+  const { data: membersData } = useGetConversationsIdMembers(convId)
+  // Map API members → mention candidates (id + display name), dropping anyone
+  // without both. This is the FULL list used to resolve mentions at send time.
+  const members: MentionCandidate[] = (membersData?.status === 200 ? (membersData.data.data ?? []) : [])
+    .map((m) => ({ id: m.user_id ?? m.user?.id ?? "", name: m.user?.name ?? "" }))
+    .filter((m) => m.id && m.name)
+
+  const [value, setValue] = useState("")
+  const [mentionQuery, setMentionQuery] = useState<MentionQuery | null>(null)
+  const [mentionIndex, setMentionIndex] = useState(0)
+  const [emojiOpen, setEmojiOpen] = useState(false)
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  // Last known caret offset, kept fresh so an emoji inserted while the picker
+  // popover holds focus still lands where the user left off.
+  const caretPosRef = useRef(0)
+  // When set, the value-sync effect restores the caret here after a programmatic
+  // edit (mention/emoji insert) and refocuses the textarea.
+  const pendingCaretRef = useRef<number | null>(null)
+
+  // Members matching the in-progress token, longest list capped. Case-insensitive
+  // prefix-or-substring match keeps it forgiving.
+  const mentionMatches: MentionCandidate[] = mentionQuery
+    ? members
+        .filter((m) => m.name.toLowerCase().includes(mentionQuery.token.toLowerCase()))
+        .slice(0, MAX_MENTION_ROWS)
+    : []
+  const mentionOpen = mentionMatches.length > 0
+
+  // The referenced message for the reply strip, read live from the message cache.
+  const replyMessage = replyTo
+    ? queryClient
+        .getQueryData<MessagesCache>(chatKeys.messages(convId))
+        ?.pages.flat()
+        .find((m) => m.id === replyTo)
+    : undefined
+
+  // Auto-grow: reset then match content height; CSS `max-h-40` caps it and lets
+  // it scroll past that.
+  useEffect(() => {
+    const el = textareaRef.current
+    if (!el) return
+    el.style.height = "auto"
+    el.style.height = `${el.scrollHeight}px`
+  }, [value])
+
+  // Restore caret + focus after a programmatic edit (mention / emoji insert).
+  useEffect(() => {
+    const caret = pendingCaretRef.current
+    if (caret == null) return
+    pendingCaretRef.current = null
+    const el = textareaRef.current
+    if (!el) return
+    el.focus()
+    el.setSelectionRange(caret, caret)
+    caretPosRef.current = caret
+  }, [value])
+
+  // Autofocus on mount and whenever a reply is (re)targeted at this composer.
+  useEffect(() => {
+    textareaRef.current?.focus()
+  }, [replyTo])
+
+  // Recompute the active `@token` from the text up to the caret.
+  function refreshMention(nextValue: string, caret: number) {
+    caretPosRef.current = caret
+    const query = detectMention(nextValue.slice(0, caret))
+    setMentionQuery(query)
+    setMentionIndex(0)
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    const next = e.target.value
+    setValue(next)
+    refreshMention(next, e.target.selectionStart)
+  }
+
+  // Caret moved without a value change (click / arrow keys) — re-detect.
+  function handleCaretSync(e: React.SyntheticEvent<HTMLTextAreaElement>) {
+    refreshMention(value, e.currentTarget.selectionStart)
+  }
+
+  // Commit a chosen member: swap the `@token` span for `@<Name> ` and park the
+  // caret past the trailing space.
+  function commitMention(member: MentionCandidate) {
+    if (!mentionQuery) return
+    const caret = textareaRef.current?.selectionStart ?? value.length
+    const { value: next, caret: nextCaret } = insertMention(value, mentionQuery, caret, member.name)
+    setValue(next)
+    pendingCaretRef.current = nextCaret
+    setMentionQuery(null)
+  }
+
+  function insertEmoji(emoji: string) {
+    const caret = caretPosRef.current
+    const { value: next, caret: nextCaret } = insertAtCaret(value, caret, emoji)
+    setValue(next)
+    pendingCaretRef.current = nextCaret
+    setEmojiOpen(false)
+  }
+
+  function submit() {
+    const content = value.trim()
+    if (!content) return
+    send({
+      content,
+      replyToMessageId: replyTo ?? undefined,
+      mentions: resolveMentions(content, members),
+    })
+    setValue("")
+    setReplyTo(null)
+    setMentionQuery(null)
+    caretPosRef.current = 0
+    pendingCaretRef.current = 0
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    // Mention popover captures navigation + selection keys first.
+    if (mentionOpen) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault()
+        setMentionIndex((i) => (i + 1) % mentionMatches.length)
+        return
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault()
+        setMentionIndex((i) => (i - 1 + mentionMatches.length) % mentionMatches.length)
+        return
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault()
+        commitMention(mentionMatches[mentionIndex])
+        return
+      }
+      if (e.key === "Escape") {
+        e.preventDefault()
+        setMentionQuery(null)
+        return
+      }
+    }
+
+    // Enter-guard: never send while a popover (mention OR emoji) is open.
+    if (e.key === "Enter" && !e.shiftKey && !mentionOpen && !emojiOpen) {
+      e.preventDefault()
+      submit()
+    }
+  }
+
+  const canSend = value.trim().length > 0
+
+  return (
+    <div className="border-t px-3 py-3">
+      <div className="bg-card focus-within:ring-ring/40 relative flex flex-col gap-1.5 rounded-2xl border p-1.5 shadow-sm transition focus-within:ring-2">
+        {/* Reply strip — accent start-border, sender + snippet, X to clear. */}
+        {replyMessage && (
+          <div className="border-primary bg-muted/50 flex items-center gap-2 rounded-lg border-s-2 px-2.5 py-1.5">
+            <div className="flex min-w-0 flex-col">
+              <span className="text-primary text-xs font-semibold">
+                {t("conversations.composer.replyingTo", { name: replyMessage.sender?.name ?? "" })}
+              </span>
+              <span className="text-muted-foreground truncate text-xs">{replyMessage.content}</span>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="ms-auto shrink-0"
+              aria-label={t("conversations.composer.cancelReply")}
+              onClick={() => setReplyTo(null)}
+            >
+              <XIcon />
+            </Button>
+          </div>
+        )}
+
+        {mentionOpen && (
+          <MentionPopover
+            members={mentionMatches}
+            activeIndex={mentionIndex}
+            onSelect={commitMention}
+            onHover={setMentionIndex}
+          />
+        )}
+
+        <div className="flex items-end gap-1">
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onKeyUp={handleCaretSync}
+            onClick={handleCaretSync}
+            rows={1}
+            placeholder={t("conversations.composer.placeholder")}
+            aria-label={t("conversations.composer.placeholder")}
+            className="text-foreground placeholder:text-muted-foreground max-h-40 min-h-9 flex-1 resize-none bg-transparent px-2 py-1.5 text-sm leading-relaxed outline-none"
+          />
+
+          <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
+            <PopoverTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-muted-foreground shrink-0"
+                  aria-label={t("conversations.composer.emoji")}
+                />
+              }
+            >
+              <SmileIcon />
+            </PopoverTrigger>
+            <PopoverContent align="end" side="top" className="w-fit p-0">
+              <EmojiPicker.Root
+                onEmojiSelect={({ emoji }) => insertEmoji(emoji)}
+                className="isolate flex h-80 w-72 flex-col"
+              >
+                <EmojiPicker.Search
+                  placeholder={t("conversations.composer.emojiSearch")}
+                  className="bg-muted/60 placeholder:text-muted-foreground focus-visible:ring-ring/40 m-2 rounded-lg px-2.5 py-2 text-sm outline-none focus-visible:ring-2"
+                />
+                <EmojiPicker.Viewport className="relative flex-1 outline-hidden">
+                  <EmojiPicker.Loading className="text-muted-foreground absolute inset-0 flex items-center justify-center text-sm">
+                    {t("conversations.composer.emojiLoading")}
+                  </EmojiPicker.Loading>
+                  <EmojiPicker.Empty className="text-muted-foreground absolute inset-0 flex items-center justify-center text-sm">
+                    {t("conversations.composer.emojiEmpty")}
+                  </EmojiPicker.Empty>
+                  <EmojiPicker.List
+                    className="select-none pb-2"
+                    components={{
+                      CategoryHeader: ({ category, ...props }) => (
+                        <div
+                          className="bg-popover text-muted-foreground px-2 pt-2 pb-1 text-xs font-medium"
+                          {...props}
+                        >
+                          {category.label}
+                        </div>
+                      ),
+                      Row: ({ children, ...props }) => (
+                        <div className="scroll-my-1 px-1" {...props}>
+                          {children}
+                        </div>
+                      ),
+                      Emoji: ({ emoji, ...props }) => (
+                        <button
+                          className={cn(
+                            "flex size-8 items-center justify-center rounded-md text-lg",
+                            emoji.isActive && "bg-accent"
+                          )}
+                          {...props}
+                        >
+                          {emoji.emoji}
+                        </button>
+                      ),
+                    }}
+                  />
+                </EmojiPicker.Viewport>
+              </EmojiPicker.Root>
+            </PopoverContent>
+          </Popover>
+
+          <Button
+            type="button"
+            size="icon-sm"
+            className="shrink-0"
+            disabled={!canSend}
+            aria-label={t("conversations.composer.send")}
+            onClick={submit}
+          >
+            <SendHorizontalIcon className="rtl:rotate-180" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}

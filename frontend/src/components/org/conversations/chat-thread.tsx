@@ -15,6 +15,7 @@ import { ChatThreadSkeleton } from "./chat-thread.skeleton"
 import { JumpToMessageProvider } from "./jump-context"
 import { conversationTint, initials } from "./lib/avatar"
 import { findGroupIndex, groupMessages } from "./lib/messages"
+import { MessageInput } from "./message-input"
 import { MessageList } from "./message-list"
 import { useConversations } from "./use-conversations"
 import { useMarkRead } from "./use-mark-read"
@@ -184,7 +185,8 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
         )}
       </div>
 
-      {/* Phase 6: <MessageInput convId={convId} /> mounts here (bottom composer). */}
+      {/* Bottom composer: auto-grow textarea, @mentions, emoji, reply strip. */}
+      <MessageInput convId={convId} />
     </div>
     </JumpToMessageProvider>
   )

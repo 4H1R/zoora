@@ -3102,6 +3102,16 @@
         "title": "هنوز پیامی نیست",
         "description": "برای شروع گفتگو، اولین پیام را بفرستید."
       }
+    },
+    "composer": {
+      "placeholder": "پیامی بنویسید…",
+      "send": "ارسال",
+      "emoji": "ایموجی",
+      "emojiSearch": "جستجوی ایموجی",
+      "emojiEmpty": "ایموجی‌ای یافت نشد",
+      "emojiLoading": "در حال بارگذاری…",
+      "replyingTo": "در پاسخ به {{name}}",
+      "cancelReply": "لغو پاسخ"
     }
   }
 }
