@@ -23,6 +23,7 @@ import (
 	"github.com/4H1R/zoora/internal/classes"
 	"github.com/4H1R/zoora/internal/config"
 	"github.com/4H1R/zoora/internal/connectors"
+	"github.com/4H1R/zoora/internal/conversations"
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/entitlements"
 	"github.com/4H1R/zoora/internal/gradebook"
@@ -141,6 +142,11 @@ func main() {
 	qaVoteRepo := qa.NewVoteRepository(db)
 	chatRepo := chat.NewChatRepository(db)
 	chatMessageRepo := chat.NewMessageRepository(db)
+	convRepo := conversations.NewConversationRepository(db)
+	convMemberRepo := conversations.NewMemberRepository(db)
+	convMessageRepo := conversations.NewMessageRepository(db)
+	convReactionRepo := conversations.NewReactionRepository(db)
+	convMentionRepo := conversations.NewMentionRepository(db) // Phase 1 stub — replaced in Phase 3
 	entitlementRepo := entitlements.NewRepository(db)
 	entitlementService := entitlements.NewService(entitlementRepo)
 
@@ -173,6 +179,12 @@ func main() {
 	changelogService := changelog.NewServiceWithMedia(changelogRepo, mediaRepo, storageClient, log)
 	livekitClient := lk.NewClient(cfg, log)
 	chatService := chat.NewService(chatRepo, chatMessageRepo, transactor, log, livekitClient, liveRoomRepo)
+	conversationService := conversations.NewService(
+		convRepo, convMemberRepo, convMessageRepo, convReactionRepo, convMentionRepo,
+		transactor, log,
+		nil, // broadcaster — wired in Phase 2
+		nil, // notifier    — wired in Phase 3
+	)
 	pollService := polls.NewService(pollRepo, pollAnswerRepo, log)
 	qaAuthorizer := livesessions.NewModelAuthorizer(liveRoomRepo, classSessionRepo, classRepo, classMemberRepo)
 	qaBroadcaster := qa.NewBroadcaster(livekitClient, liveRoomRepo, log)
@@ -354,6 +366,9 @@ func main() {
 
 	chatHandler := chat.NewHandler(chatService)
 	chatHandler.RegisterRoutes(v1, authMiddleware, perm)
+
+	conversationHandler := conversations.NewHandler(conversationService)
+	conversationHandler.RegisterRoutes(v1, authMiddleware, perm)
 
 	attendanceHandler := attendance.NewHandler(attendanceService)
 	attendanceHandler.RegisterRoutes(v1, authMiddleware, perm)

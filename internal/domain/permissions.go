@@ -63,6 +63,8 @@ const (
 	PermChatsDelete            PermissionName = "chats:delete"
 	PermChatsWrite             PermissionName = "chats:write"
 	PermChatsManage            PermissionName = "chats:manage"
+	PermConversationsView      PermissionName = "conversations:view"
+	PermConversationsManage    PermissionName = "conversations:manage" // create/delete groups+channels, manage members
 	PermQAView                 PermissionName = "qa:view"
 	PermQACreate               PermissionName = "qa:create"
 	PermQADelete               PermissionName = "qa:delete"
@@ -131,6 +133,7 @@ var AllPermissions = []PermissionName{
 	PermPollsUpdate, PermPollsUpdateAny, PermPollsDelete,
 	PermChatsView, PermChatsCreate, PermChatsUpdate, PermChatsDelete,
 	PermChatsWrite, PermChatsManage,
+	PermConversationsView, PermConversationsManage,
 	PermQAView, PermQACreate, PermQADelete, PermQAModerate, PermQAManageAny,
 	PermMediaView, PermMediaViewAny, PermMediaCreate, PermMediaDelete, PermMediaDeleteAny,
 	PermPracticesView, PermPracticesViewAny, PermPracticesCreate, PermPracticesCreateAny,
