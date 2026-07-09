@@ -234,6 +234,7 @@
   },
   "common": {
     "brandName": "Zoora",
+    "back": "Go back",
     "autoSessionTitle": "Class {{date}} at {{time}}",
     "dateTimePicker": {
       "placeholder": "Pick a date",
@@ -3088,6 +3089,19 @@
         "description": "Choose a conversation from the list to start messaging."
       },
       "comingSoon": "Message thread coming soon."
+    },
+    "thread": {
+      "direct": "Direct message",
+      "members_one": "{{count}} member",
+      "members_other": "{{count}} members",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "edited": "edited",
+      "failed": "Not delivered",
+      "empty": {
+        "title": "No messages yet",
+        "description": "Send the first message to start the conversation."
+      }
     }
   }
 }

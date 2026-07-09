@@ -234,6 +234,7 @@
   },
   "common": {
     "brandName": "زورا",
+    "back": "بازگشت",
     "autoSessionTitle": "کلاس {{date}} ساعت {{time}}",
     "dateTimePicker": {
       "placeholder": "انتخاب تاریخ",
@@ -3088,6 +3089,19 @@
         "description": "برای شروع پیام‌رسانی، گفتگویی را از فهرست انتخاب کنید."
       },
       "comingSoon": "بخش پیام‌ها به‌زودی اضافه می‌شود."
+    },
+    "thread": {
+      "direct": "پیام مستقیم",
+      "members_one": "{{count}} عضو",
+      "members_other": "{{count}} عضو",
+      "today": "امروز",
+      "yesterday": "دیروز",
+      "edited": "ویرایش‌شده",
+      "failed": "ارسال نشد",
+      "empty": {
+        "title": "هنوز پیامی نیست",
+        "description": "برای شروع گفتگو، اولین پیام را بفرستید."
+      }
     }
   }
 }
