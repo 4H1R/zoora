@@ -2,7 +2,7 @@ import type { MentionCandidate } from "./lib/mentions"
 import type { VirtuosoHandle } from "react-virtuoso"
 
 import { Link, useNavigate } from "@tanstack/react-router"
-import { ArrowLeftIcon, MessagesSquareIcon } from "lucide-react"
+import { ArrowLeftIcon, MessagesSquareIcon, MoreVerticalIcon, Settings2Icon, UsersIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useAccess } from "react-access-engine"
 import { useTranslation } from "react-i18next"
@@ -10,22 +10,26 @@ import { useTranslation } from "react-i18next"
 import { useGetConversationsIdMembers } from "@/api/conversations/conversations"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { EmptyState } from "@/components/ui/empty-state"
 import { formatRelativeTime } from "@/lib/relative-time"
 import { cn } from "@/lib/utils"
 import { useChatUi } from "@/stores/chat-ui"
 
 import { ChatThreadSkeleton } from "./chat-thread.skeleton"
+import { ConversationSettings } from "./conversation-settings"
 import { InConversationSearch } from "./in-conversation-search"
 import { JumpToMessageProvider } from "./jump-context"
 import { conversationTint, initials } from "./lib/avatar"
 import { findGroupIndex, groupMessages } from "./lib/messages"
 import { lastOwnMessageId } from "./lib/read-receipts"
+import { MembersSheet } from "./members-sheet"
 import { MessageInput } from "./message-input"
 import { MessageList } from "./message-list"
 import { PinnedBar } from "./pinned-bar"
 import { PresenceDot } from "./presence-dot"
 import { TypingIndicator } from "./typing-indicator"
+import { useConversationPermissions } from "./use-conversation-permissions"
 import { useConversations } from "./use-conversations"
 import { useMarkRead } from "./use-mark-read"
 import { useMessages } from "./use-messages"
@@ -50,9 +54,14 @@ interface ChatThreadProps {
 export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
   const { t, i18n } = useTranslation()
   const { user } = useAccess()
+  const { canManage } = useConversationPermissions()
   const navigate = useNavigate()
   const { data: conversations } = useConversations()
   const conversation = conversations?.find((c) => c.id === convId)
+
+  // Roster + settings slide-overs opened from the header actions menu.
+  const [membersOpen, setMembersOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   // Members drive @mention highlighting in every bubble; fetched once here and
   // threaded down so bubbles don't each subscribe. Same mapping as the composer.
@@ -154,9 +163,7 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
   // Header presence. DM → the partner's online/last-seen; group → an online count.
   const partnerId = isDirect ? memberUserIds.find((id) => id !== user.id) : undefined
   const partnerPresence = partnerId ? getPresence(partnerId) : undefined
-  const onlineCount = isDirect
-    ? 0
-    : memberUserIds.filter((id) => id !== user.id && getPresence(id)?.online).length
+  const onlineCount = isDirect ? 0 : memberUserIds.filter((id) => id !== user.id && getPresence(id)?.online).length
 
   let subtitle: string
   if (isDirect) {
@@ -168,8 +175,7 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
     else subtitle = t("conversations.thread.direct")
   } else {
     const base = t("conversations.thread.members", { count: memberCount })
-    subtitle =
-      onlineCount > 0 ? `${base} · ${t("conversations.presence.membersOnline", { count: onlineCount })}` : base
+    subtitle = onlineCount > 0 ? `${base} · ${t("conversations.presence.membersOnline", { count: onlineCount })}` : base
   }
 
   return (
@@ -196,7 +202,7 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
             </Avatar>
             {/* Online dot for DMs once presence is known. */}
             {isDirect && partnerPresence && (
-              <PresenceDot online={partnerPresence.online} className="absolute -bottom-0.5 -end-0.5" />
+              <PresenceDot online={partnerPresence.online} className="absolute -end-0.5 -bottom-0.5" />
             )}
           </div>
 
@@ -208,8 +214,37 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
           {/* Thread actions mount at the end; in-thread search is the first. */}
           <div className="ms-auto flex items-center gap-1">
             <InConversationSearch convId={convId} />
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="ghost" size="icon-sm" aria-label={t("conversations.thread.actions")}>
+                    <MoreVerticalIcon />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="end" className="min-w-48">
+                <DropdownMenuItem onClick={() => setMembersOpen(true)}>
+                  <UsersIcon data-icon="inline-start" />
+                  {t("conversations.thread.viewMembers")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+                  <Settings2Icon data-icon="inline-start" />
+                  {t("conversations.thread.settings")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
+
+        <MembersSheet convId={convId} open={membersOpen} onOpenChange={setMembersOpen} canManage={canManage} />
+        {conversation && (
+          <ConversationSettings
+            conversation={conversation}
+            open={settingsOpen}
+            onOpenChange={setSettingsOpen}
+            canManage={canManage}
+          />
+        )}
 
         {/* Pinned strip: sits between the header and the list; self-hides when empty. */}
         <PinnedBar convId={convId} />

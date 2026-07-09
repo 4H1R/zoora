@@ -1,8 +1,9 @@
+import type { GithubCom4H1RZooraInternalDomainConversation as Conversation } from "@/api/model"
+
 import { Link } from "@tanstack/react-router"
-import { HashIcon, UsersIcon } from "lucide-react"
+import { BellOffIcon, HashIcon, UsersIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import type { GithubCom4H1RZooraInternalDomainConversation as Conversation } from "@/api/model"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { formatRelativeTime } from "@/lib/relative-time"
@@ -50,9 +51,11 @@ interface ConversationItemProps {
   isActive: boolean
   /** DM partner online state; `undefined` for non-DM rows or unknown presence. */
   presenceOnline?: boolean
+  /** Whether the viewer has muted this conversation — shows a muted glyph. */
+  muted?: boolean
 }
 
-export function ConversationItem({ conversation, isActive, presenceOnline }: ConversationItemProps) {
+export function ConversationItem({ conversation, isActive, presenceOnline, muted }: ConversationItemProps) {
   const { t, i18n } = useTranslation()
 
   const id = conversation.id ?? ""
@@ -78,9 +81,7 @@ export function ConversationItem({ conversation, isActive, presenceOnline }: Con
       )}
     >
       {/* Active accent bar pinned to the start edge (RTL-safe via `start-0`). */}
-      {isActive && (
-        <span className="bg-primary absolute inset-y-2 start-0 w-0.5 rounded-full" aria-hidden />
-      )}
+      {isActive && <span className="bg-primary absolute inset-y-2 start-0 w-0.5 rounded-full" aria-hidden />}
 
       <div className="relative shrink-0">
         <Avatar className="size-10">
@@ -90,25 +91,33 @@ export function ConversationItem({ conversation, isActive, presenceOnline }: Con
           </AvatarFallback>
         </Avatar>
         {TypeIcon && (
-          <span className="bg-background ring-background text-muted-foreground absolute -bottom-0.5 -end-0.5 flex size-4 items-center justify-center rounded-full ring-2">
+          <span className="bg-background ring-background text-muted-foreground absolute -end-0.5 -bottom-0.5 flex size-4 items-center justify-center rounded-full ring-2">
             <TypeIcon className="size-2.5" />
           </span>
         )}
         {/* Online dot for DMs (no type glyph to collide with). */}
         {presenceOnline !== undefined && (
-          <PresenceDot online={presenceOnline} className="absolute -bottom-0.5 -end-0.5" />
+          <PresenceDot online={presenceOnline} className="absolute -end-0.5 -bottom-0.5" />
         )}
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex items-center justify-between gap-2">
-          <span
-            className={cn(
-              "truncate text-sm leading-tight",
-              unread ? "text-foreground font-semibold" : "text-foreground/90 font-medium"
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span
+              className={cn(
+                "truncate text-sm leading-tight",
+                unread ? "text-foreground font-semibold" : "text-foreground/90 font-medium"
+              )}
+            >
+              {name}
+            </span>
+            {muted && (
+              <BellOffIcon
+                className="text-muted-foreground size-3.5 shrink-0"
+                aria-label={t("conversations.item.muted")}
+              />
             )}
-          >
-            {name}
           </span>
           {timestamp && (
             <time className="text-muted-foreground shrink-0 font-mono text-[11px] tabular-nums">

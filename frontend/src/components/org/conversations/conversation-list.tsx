@@ -1,10 +1,11 @@
+import type { GithubCom4H1RZooraInternalDomainConversation as Conversation } from "@/api/model"
+
 import { useParams } from "@tanstack/react-router"
 import { MessagesSquareIcon, SearchIcon, SearchXIcon, SquarePenIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useAccess } from "react-access-engine"
 import { useTranslation } from "react-i18next"
 
-import type { GithubCom4H1RZooraInternalDomainConversation as Conversation } from "@/api/model"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Input } from "@/components/ui/input"
@@ -13,8 +14,11 @@ import { cn } from "@/lib/utils"
 
 import { ConversationItem } from "./conversation-item"
 import { ConversationListSkeleton } from "./conversation-list.skeleton"
+import { isMuted, viewerMutedUntil } from "./lib/mute"
 import { directPartnerId } from "./lib/presence"
+import { NewConversationDialog } from "./new-conversation-dialog"
 import { SearchDialog } from "./search-dialog"
+import { useConversationPermissions } from "./use-conversation-permissions"
 import { useConversations } from "./use-conversations"
 import { usePresence } from "./use-presence"
 
@@ -23,10 +27,7 @@ import { usePresence } from "./use-presence"
 function filterConversations(items: Conversation[], query: string): Conversation[] {
   const q = query.trim().toLowerCase()
   if (!q) return items
-  return items.filter(
-    (c) =>
-      c.name?.toLowerCase().includes(q) || c.last_message?.content?.toLowerCase().includes(q)
-  )
+  return items.filter((c) => c.name?.toLowerCase().includes(q) || c.last_message?.content?.toLowerCase().includes(q))
 }
 
 /**
@@ -37,9 +38,11 @@ function filterConversations(items: Conversation[], query: string): Conversation
 export function ConversationSidebar() {
   const { t } = useTranslation()
   const { user } = useAccess()
+  const { canManage } = useConversationPermissions()
   const { data: conversations, isLoading } = useConversations()
   const [query, setQuery] = useState("")
   const [searchOpen, setSearchOpen] = useState(false)
+  const [newOpen, setNewOpen] = useState(false)
 
   // Cmd/Ctrl+K opens the org-wide search palette. Cmd+B is taken by the app
   // sidebar toggle; K is free, so there's no collision.
@@ -63,9 +66,7 @@ export function ConversationSidebar() {
 
   // One batched presence query for every DM partner in the sidebar; each direct
   // row shows an online dot resolved from it. Group/channel rows have no dot.
-  const dmPartnerIds = items
-    .map((c) => directPartnerId(c, user.id))
-    .filter((id): id is string => Boolean(id))
+  const dmPartnerIds = items.map((c) => directPartnerId(c, user.id)).filter((id): id is string => Boolean(id))
   const getPresence = usePresence(dmPartnerIds)
 
   return (
@@ -82,12 +83,12 @@ export function ConversationSidebar() {
           >
             <SearchIcon />
           </Button>
-          {/* Placeholder — the create dialog lands in a later phase. */}
           <Button
             variant="ghost"
             size="icon-sm"
             aria-label={t("conversations.sidebar.newConversation")}
             title={t("conversations.sidebar.newConversation")}
+            onClick={() => setNewOpen(true)}
           >
             <SquarePenIcon />
           </Button>
@@ -95,6 +96,7 @@ export function ConversationSidebar() {
       </div>
 
       <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+      <NewConversationDialog open={newOpen} onOpenChange={setNewOpen} canManage={canManage} />
 
       <div className="px-3 pb-2">
         <div className="relative">
@@ -134,6 +136,7 @@ export function ConversationSidebar() {
                   conversation={conversation}
                   isActive={conversation.id === activeId}
                   presenceOnline={partnerId ? getPresence(partnerId)?.online : undefined}
+                  muted={isMuted(viewerMutedUntil(conversation, user.id))}
                 />
               )
             })}
