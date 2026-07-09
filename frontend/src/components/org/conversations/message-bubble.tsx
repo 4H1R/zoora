@@ -14,6 +14,7 @@ import { chatKeys } from "./lib/query-keys"
 import { MessageActions } from "./message-actions"
 import { MessageContent } from "./message-content"
 import { ReactionBar } from "./reaction-bar"
+import { ReadReceipt } from "./read-receipt"
 import { useSendMessage } from "./use-send-message"
 
 type MessagesCache = InfiniteData<ChatMessage[]>
@@ -25,6 +26,10 @@ interface MessageBubbleProps {
   members: MentionCandidate[]
   /** Author is the signed-in user — aligns to the end side with accent color. */
   isOwn: boolean
+  /** Conversation type — DM gets a tick receipt, group a "read by N" caption. */
+  conversationType?: string
+  /** This is the user's newest confirmed message — gates the group read receipt. */
+  isLatestOwn?: boolean
   /** Transient jump flash (5.3): ring the bubble, fading out via transition. */
   isHighlighted?: boolean
 }
@@ -37,7 +42,15 @@ interface MessageBubbleProps {
  * retry / discard affordance. Reactions arrive in a later phase via the slot
  * below.
  */
-export function MessageBubble({ message, convId, members, isOwn, isHighlighted = false }: MessageBubbleProps) {
+export function MessageBubble({
+  message,
+  convId,
+  members,
+  isOwn,
+  conversationType,
+  isLatestOwn = false,
+  isHighlighted = false,
+}: MessageBubbleProps) {
   const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
   const jumpToMessage = useJumpToMessage()
@@ -103,6 +116,15 @@ export function MessageBubble({ message, convId, members, isOwn, isHighlighted =
           >
             {message.is_edited && <span className="italic">{t("conversations.thread.edited")}</span>}
             <time dateTime={message.created_at}>{time}</time>
+            {/* Read receipt: own + confirmed only (tick for DMs, "read by N" for groups). */}
+            {isOwn && !status && (
+              <ReadReceipt
+                convId={convId}
+                messageId={messageId}
+                conversationType={conversationType}
+                isLatestOwn={isLatestOwn}
+              />
+            )}
           </div>
         </div>
 

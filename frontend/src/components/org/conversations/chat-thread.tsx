@@ -11,6 +11,7 @@ import { useGetConversationsIdMembers } from "@/api/conversations/conversations"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
+import { formatRelativeTime } from "@/lib/relative-time"
 import { cn } from "@/lib/utils"
 import { useChatUi } from "@/stores/chat-ui"
 
@@ -18,13 +19,17 @@ import { ChatThreadSkeleton } from "./chat-thread.skeleton"
 import { JumpToMessageProvider } from "./jump-context"
 import { conversationTint, initials } from "./lib/avatar"
 import { findGroupIndex, groupMessages } from "./lib/messages"
+import { lastOwnMessageId } from "./lib/read-receipts"
 import { MessageInput } from "./message-input"
 import { MessageList } from "./message-list"
 import { PinnedBar } from "./pinned-bar"
+import { PresenceDot } from "./presence-dot"
 import { TypingIndicator } from "./typing-indicator"
 import { useConversations } from "./use-conversations"
 import { useMarkRead } from "./use-mark-read"
 import { useMessages } from "./use-messages"
+import { usePresence } from "./use-presence"
+import { useReadStateSync } from "./use-read-state"
 
 // How long a jumped-to bubble keeps its highlight ring before it fades out.
 const HIGHLIGHT_MS = 1500
@@ -42,7 +47,7 @@ interface ChatThreadProps {
  * to a specific message.
  */
 export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { user } = useAccess()
   const navigate = useNavigate()
   const { data: conversations } = useConversations()
@@ -51,9 +56,19 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
   // Members drive @mention highlighting in every bubble; fetched once here and
   // threaded down so bubbles don't each subscribe. Same mapping as the composer.
   const { data: membersData } = useGetConversationsIdMembers(convId)
-  const members: MentionCandidate[] = (membersData?.status === 200 ? (membersData.data.data ?? []) : [])
+  const memberRows = membersData?.status === 200 ? (membersData.data.data ?? []) : []
+  const members: MentionCandidate[] = memberRows
     .map((m) => ({ id: m.user_id ?? m.user?.id ?? "", name: m.user?.name ?? "" }))
     .filter((m) => m.id && m.name)
+
+  // Presence for everyone in the OPEN conversation (drives the header dot +
+  // subtitle). Sidebar DM presence is scoped separately in `ConversationSidebar`.
+  const memberUserIds = memberRows.map((m) => m.user_id ?? m.user?.id ?? "").filter(Boolean)
+  const getPresence = usePresence(memberUserIds)
+
+  // Seed + live-merge the shared read-cursor store for this thread so own bubbles
+  // can show read receipts.
+  useReadStateSync(convId)
 
   const virtuosoRef = useRef<VirtuosoHandle>(null)
   const scrollToMessageId = useChatUi((s) => s.scrollToMessageId)
@@ -131,9 +146,30 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
   const name = conversation?.name ?? convId
   const isDirect = conversation?.type === "direct"
   const memberCount = conversation?.members?.length ?? 0
-  const subtitle = isDirect
-    ? t("conversations.thread.direct")
-    : t("conversations.thread.members", { count: memberCount })
+
+  // Newest own confirmed message — the only bubble that carries a group receipt.
+  const ownLatestId = lastOwnMessageId(messages, user.id)
+
+  // Header presence. DM → the partner's online/last-seen; group → an online count.
+  const partnerId = isDirect ? memberUserIds.find((id) => id !== user.id) : undefined
+  const partnerPresence = partnerId ? getPresence(partnerId) : undefined
+  const onlineCount = isDirect
+    ? 0
+    : memberUserIds.filter((id) => id !== user.id && getPresence(id)?.online).length
+
+  let subtitle: string
+  if (isDirect) {
+    if (partnerPresence?.online) subtitle = t("conversations.presence.online")
+    else if (partnerPresence?.lastSeen)
+      subtitle = t("conversations.presence.lastSeen", {
+        time: formatRelativeTime(partnerPresence.lastSeen, i18n.language),
+      })
+    else subtitle = t("conversations.thread.direct")
+  } else {
+    const base = t("conversations.thread.members", { count: memberCount })
+    subtitle =
+      onlineCount > 0 ? `${base} · ${t("conversations.presence.membersOnline", { count: onlineCount })}` : base
+  }
 
   return (
     <JumpToMessageProvider value={jumpToMessage}>
@@ -150,12 +186,18 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
             <ArrowLeftIcon className="rtl:rotate-180" />
           </Button>
 
-          <Avatar className="size-9">
-            {conversation?.avatar_url && <AvatarImage src={conversation.avatar_url} alt={name} />}
-            <AvatarFallback className={cn("text-xs font-semibold", conversationTint(conversation?.color_index))}>
-              {initials(name)}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative shrink-0">
+            <Avatar className="size-9">
+              {conversation?.avatar_url && <AvatarImage src={conversation.avatar_url} alt={name} />}
+              <AvatarFallback className={cn("text-xs font-semibold", conversationTint(conversation?.color_index))}>
+                {initials(name)}
+              </AvatarFallback>
+            </Avatar>
+            {/* Online dot for DMs once presence is known. */}
+            {isDirect && partnerPresence && (
+              <PresenceDot online={partnerPresence.online} className="absolute -bottom-0.5 -end-0.5" />
+            )}
+          </div>
 
           <div className="flex min-w-0 flex-col">
             <p className="truncate text-sm leading-tight font-semibold">{name}</p>
@@ -189,6 +231,7 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
               members={members}
               currentUserId={user.id}
               conversationType={conversation?.type}
+              lastOwnMessageId={ownLatestId}
               hasPreviousPage={hasPreviousPage}
               fetchPreviousPage={fetchPreviousPage}
               isFetchingPreviousPage={isFetchingPreviousPage}

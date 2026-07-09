@@ -21,6 +21,8 @@ interface MessageListProps {
   currentUserId: string
   /** Direct DMs hide sender names; groups/channels show them. */
   conversationType?: string
+  /** Newest own confirmed message id — gates the group "read by N" receipt. */
+  lastOwnMessageId: string | null
   hasPreviousPage: boolean
   fetchPreviousPage: () => void
   isFetchingPreviousPage: boolean
@@ -70,6 +72,7 @@ export function MessageList({
   members,
   currentUserId,
   conversationType,
+  lastOwnMessageId,
   hasPreviousPage,
   fetchPreviousPage,
   isFetchingPreviousPage,
@@ -122,6 +125,8 @@ export function MessageList({
                 convId={convId}
                 members={members}
                 isOwn={isOwn}
+                conversationType={conversationType}
+                isLatestOwn={isOwn && !!lastOwnMessageId && message.id === lastOwnMessageId}
                 isHighlighted={message.id === highlightId}
               />
             )}

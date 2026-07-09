@@ -1,6 +1,7 @@
 import { useParams } from "@tanstack/react-router"
 import { MessagesSquareIcon, SearchIcon, SearchXIcon, SquarePenIcon } from "lucide-react"
 import { useState } from "react"
+import { useAccess } from "react-access-engine"
 import { useTranslation } from "react-i18next"
 
 import type { GithubCom4H1RZooraInternalDomainConversation as Conversation } from "@/api/model"
@@ -12,7 +13,9 @@ import { cn } from "@/lib/utils"
 
 import { ConversationItem } from "./conversation-item"
 import { ConversationListSkeleton } from "./conversation-list.skeleton"
+import { directPartnerId } from "./lib/presence"
 import { useConversations } from "./use-conversations"
+import { usePresence } from "./use-presence"
 
 // Client-side name/preview filter. The list is a single small page (v1), so
 // filtering locally keeps search instant; server search arrives in a later phase.
@@ -32,6 +35,7 @@ function filterConversations(items: Conversation[], query: string): Conversation
  */
 export function ConversationSidebar() {
   const { t } = useTranslation()
+  const { user } = useAccess()
   const { data: conversations, isLoading } = useConversations()
   const [query, setQuery] = useState("")
 
@@ -41,6 +45,13 @@ export function ConversationSidebar() {
   const items = conversations ?? []
   const filtered = filterConversations(items, query)
   const isSearching = query.trim().length > 0
+
+  // One batched presence query for every DM partner in the sidebar; each direct
+  // row shows an online dot resolved from it. Group/channel rows have no dot.
+  const dmPartnerIds = items
+    .map((c) => directPartnerId(c, user.id))
+    .filter((id): id is string => Boolean(id))
+  const getPresence = usePresence(dmPartnerIds)
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
@@ -87,13 +98,17 @@ export function ConversationSidebar() {
       ) : (
         <ScrollArea className="min-h-0 flex-1">
           <div className="flex flex-col gap-0.5 px-2 pt-1 pb-3">
-            {filtered.map((conversation) => (
-              <ConversationItem
-                key={conversation.id}
-                conversation={conversation}
-                isActive={conversation.id === activeId}
-              />
-            ))}
+            {filtered.map((conversation) => {
+              const partnerId = directPartnerId(conversation, user.id)
+              return (
+                <ConversationItem
+                  key={conversation.id}
+                  conversation={conversation}
+                  isActive={conversation.id === activeId}
+                  presenceOnline={partnerId ? getPresence(partnerId)?.online : undefined}
+                />
+              )
+            })}
           </div>
         </ScrollArea>
       )}

@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { formatRelativeTime } from "@/lib/relative-time"
 import { cn } from "@/lib/utils"
 
+import { PresenceDot } from "./presence-dot"
+
 // Server hands us a stable `color_index` per conversation; map it onto a fixed
 // palette of soft tints (Tailwind scale, light + dark) so a given conversation
 // keeps the same accent everywhere. No hashing, no arbitrary hex.
@@ -46,9 +48,11 @@ const TYPE_GLYPH = {
 interface ConversationItemProps {
   conversation: Conversation
   isActive: boolean
+  /** DM partner online state; `undefined` for non-DM rows or unknown presence. */
+  presenceOnline?: boolean
 }
 
-export function ConversationItem({ conversation, isActive }: ConversationItemProps) {
+export function ConversationItem({ conversation, isActive, presenceOnline }: ConversationItemProps) {
   const { t, i18n } = useTranslation()
 
   const id = conversation.id ?? ""
@@ -89,6 +93,10 @@ export function ConversationItem({ conversation, isActive }: ConversationItemPro
           <span className="bg-background ring-background text-muted-foreground absolute -bottom-0.5 -end-0.5 flex size-4 items-center justify-center rounded-full ring-2">
             <TypeIcon className="size-2.5" />
           </span>
+        )}
+        {/* Online dot for DMs (no type glyph to collide with). */}
+        {presenceOnline !== undefined && (
+          <PresenceDot online={presenceOnline} className="absolute -bottom-0.5 -end-0.5" />
         )}
       </div>
 

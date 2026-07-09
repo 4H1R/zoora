@@ -3110,6 +3110,17 @@
       "two": "{{name1}} و {{name2}} در حال تایپ هستند…",
       "many": "چند نفر در حال تایپ هستند…"
     },
+    "presence": {
+      "online": "آنلاین",
+      "lastSeen": "آخرین بازدید {{time}}",
+      "membersOnline": "{{count}} آنلاین"
+    },
+    "receipts": {
+      "sent": "ارسال شد",
+      "read": "خوانده شد",
+      "readBy_one": "خوانده‌شده توسط {{count}} نفر",
+      "readBy_other": "خوانده‌شده توسط {{count}} نفر"
+    },
     "actions": {
       "reply": "پاسخ",
       "edit": "ویرایش",

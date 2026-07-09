@@ -198,7 +198,10 @@ export function createChatEventHandler(opts: {
       }
 
       case "message_read": {
-        // TODO(read-receipts): read-receipt UI lands in Phase 7; no-op for now.
+        // Read receipts (Phase 7) are owned by `use-read-state.ts`, which
+        // subscribes to the raw stream and advances the `chat-read` store scoped
+        // to the OPEN conversation. Handling it here too would double-count, so
+        // the central reducer deliberately no-ops it.
         return
       }
 

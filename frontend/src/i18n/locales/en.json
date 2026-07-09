@@ -3110,6 +3110,17 @@
       "two": "{{name1}} and {{name2}} are typing…",
       "many": "Several people are typing…"
     },
+    "presence": {
+      "online": "Online",
+      "lastSeen": "Last seen {{time}}",
+      "membersOnline": "{{count}} online"
+    },
+    "receipts": {
+      "sent": "Sent",
+      "read": "Read",
+      "readBy_one": "Read by {{count}}",
+      "readBy_other": "Read by {{count}}"
+    },
     "actions": {
       "reply": "Reply",
       "edit": "Edit",
