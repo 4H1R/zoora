@@ -3,6 +3,7 @@ package conversations
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -39,7 +40,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		authed.GET("/conversations", perm(domain.PermConversationsView), h.List)
 		authed.POST("/conversations", perm(domain.PermConversationsView), h.Create) // group/channel (service enforces manage)
 		authed.POST("/conversations/direct", perm(domain.PermConversationsView), h.CreateDirect)
-		authed.GET("/conversations/search", perm(domain.PermConversationsView), h.Search) // global ?q= (registered before /:id so gin's tree matches the static segment first)
+		authed.GET("/conversations/search", perm(domain.PermConversationsView), h.Search)      // global ?q= (registered before /:id so gin's tree matches the static segment first)
+		authed.GET("/conversations/presence", perm(domain.PermConversationsView), h.GetPresence) // batch online/last-seen (static segment, before /:id)
 		authed.GET("/conversations/:id", perm(domain.PermConversationsView), id, h.Get)
 		authed.PATCH("/conversations/:id", perm(domain.PermConversationsView), id, h.Update)
 		authed.DELETE("/conversations/:id", perm(domain.PermConversationsView), id, h.Delete)
@@ -630,6 +632,58 @@ func (h *Handler) Search(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, msgs)
+}
+
+// maxPresenceIDs caps how many user ids a single presence lookup may request,
+// bounding the per-id org-membership checks the service performs.
+const maxPresenceIDs = 100
+
+// parsePresenceIDs parses the comma-separated ?user_ids= list into deduped
+// UUIDs, silently skipping blank/unparseable entries and truncating at
+// maxPresenceIDs (matching the tolerant query parsing used elsewhere).
+func parsePresenceIDs(raw string) []uuid.UUID {
+	if raw == "" {
+		return nil
+	}
+	seen := make(map[uuid.UUID]bool)
+	ids := make([]uuid.UUID, 0)
+	for _, part := range strings.Split(raw, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		id, err := uuid.Parse(part)
+		if err != nil || seen[id] {
+			continue
+		}
+		seen[id] = true
+		ids = append(ids, id)
+		if len(ids) == maxPresenceIDs {
+			break
+		}
+	}
+	return ids
+}
+
+// GetPresence returns the online/last-seen status for a batch of users.
+// @Summary Batch user presence
+// @Description Returns online/last-seen status for the requested users, filtered to the caller's organization. Pass a comma-separated ?user_ids= list (capped at 100; unknown or cross-org ids are omitted from the response).
+// @Tags Conversations
+// @Produce json
+// @Security BearerAuth
+// @Param user_ids query string true "Comma-separated user UUIDs (max 100)"
+// @Success 200 {object} domain.Response{data=map[string]domain.PresenceStatus}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/presence [get]
+func (h *Handler) GetPresence(c *gin.Context) {
+	ids := parsePresenceIDs(c.Query("user_ids"))
+	statuses, err := h.svc.Presence(c.Request.Context(), ids)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, statuses)
 }
 
 // SearchInConv performs an in-conversation nav search.

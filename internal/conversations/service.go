@@ -36,6 +36,12 @@ type mediaLookup interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*domain.Media, error)
 }
 
+// presenceReader is the online/last-seen read port (Phase 2 supplies an
+// adapter over chathub.Presence; nil = presence disabled, returns empty).
+type presenceReader interface {
+	Get(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]domain.PresenceStatus, error)
+}
+
 type service struct {
 	convRepo     domain.ConversationRepository
 	memberRepo   domain.ConversationMemberRepository
@@ -44,10 +50,11 @@ type service struct {
 	mentionRepo  domain.ConversationMentionRepository
 	transactor   domain.Transactor
 	logger       *slog.Logger
-	rt           broadcaster // may be nil
-	notif        notifier    // may be nil
-	users        userLookup  // may be nil
-	media        mediaLookup // may be nil
+	rt           broadcaster    // may be nil
+	notif        notifier       // may be nil
+	users        userLookup     // may be nil
+	media        mediaLookup    // may be nil
+	presence     presenceReader // may be nil
 }
 
 func NewService(
@@ -62,8 +69,9 @@ func NewService(
 	notif notifier,
 	users userLookup,
 	media mediaLookup,
+	presence presenceReader,
 ) domain.ConversationService {
-	return &service{convRepo, memberRepo, messageRepo, reactionRepo, mentionRepo, transactor, logger, rt, notif, users, media}
+	return &service{convRepo, memberRepo, messageRepo, reactionRepo, mentionRepo, transactor, logger, rt, notif, users, media, presence}
 }
 
 // caller resolves the authenticated caller and enforces the org + feature
@@ -936,4 +944,39 @@ func (s *service) SearchInConversation(ctx context.Context, convID uuid.UUID, q 
 		return nil, err
 	}
 	return s.serializeMessages(ctx, msgs), nil
+}
+
+// Presence returns the online/last-seen status for the requested user ids,
+// restricted to users in the caller's organization. Ids in a different org (or
+// that don't resolve to a user) are silently dropped, so callers can only
+// observe presence of people they could plausibly share a conversation with.
+// The org filter reuses the per-user userLookup port; when that port is not
+// wired (unit tests) the filter is skipped, matching the other cross-org
+// guards. Requested ids should be capped by the handler (see GetPresence).
+func (s *service) Presence(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]domain.PresenceStatus, error) {
+	caller, err := s.caller(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if s.presence == nil || len(ids) == 0 {
+		return map[uuid.UUID]domain.PresenceStatus{}, nil
+	}
+	return s.presence.Get(ctx, s.sameOrgIDs(ctx, caller, ids))
+}
+
+// sameOrgIDs filters ids down to users in the caller's organization. A nil
+// userLookup port (unit tests) short-circuits to the full list.
+func (s *service) sameOrgIDs(ctx context.Context, caller domain.Caller, ids []uuid.UUID) []uuid.UUID {
+	if s.users == nil {
+		return ids
+	}
+	allowed := make([]uuid.UUID, 0, len(ids))
+	for _, id := range ids {
+		org, err := s.users.OrgID(ctx, id)
+		if err != nil || org == nil || *org != *caller.OrgID {
+			continue
+		}
+		allowed = append(allowed, id)
+	}
+	return allowed
 }
