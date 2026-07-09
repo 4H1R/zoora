@@ -23,6 +23,11 @@ const (
 	// flow — no dedicated upload endpoint (see conversations package).
 	MediaModelConversation = "conversation"
 	MediaCollectionAttach  = "attachments"
+	// MediaModelTicket is the model type for ticket attachments; ModelID is
+	// the CLASS ID (the ticket id doesn't exist yet when the first message's
+	// files are presigned). Validation in the tickets service checks
+	// ModelID == ticket.ClassID.
+	MediaModelTicket = "ticket"
 )
 
 type Media struct {
