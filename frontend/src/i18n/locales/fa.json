@@ -1477,7 +1477,8 @@
       "attendance": "حضور و غیاب",
       "recordings": "ضبط‌ها",
       "zoora": "زورا",
-      "conversations": "گفتگو"
+      "conversations": "گفتگو",
+      "tickets": "تیکت‌ها"
     },
     "practices": {
       "title": "تکالیف",
@@ -3046,6 +3047,44 @@
       "noPricesHint": "برای شروع یک قیمت پلن اضافه کنید.",
       "noInvoices": "صورتحسابی نیست",
       "noInvoicesHint": "برای شروع یک صورتحساب ایجاد کنید."
+    }
+  },
+  "tickets": {
+    "title": "تیکت‌ها",
+    "subtitle": "سوال‌ها و اعتراض‌های نمره در همه کلاس‌های شما",
+    "empty": { "title": "هنوز تیکتی ندارید", "description": "برای پرسیدن سوال یا اعتراض به نمره، تیکت جدیدی ثبت کنید." },
+    "new": "تیکت جدید",
+    "type": { "question": "سوال", "grade_objection": "اعتراض به نمره", "other": "سایر" },
+    "status": { "open": "باز", "answered": "پاسخ داده شده", "closed": "بسته" },
+    "filters": { "all": "همه", "status": "وضعیت", "type": "نوع", "class": "کلاس" },
+    "form": {
+      "class": "کلاس",
+      "classPlaceholder": "کلاس را انتخاب کنید",
+      "type": "نوع",
+      "title": "عنوان",
+      "titlePlaceholder": "خلاصه کوتاهی از موضوع",
+      "body": "پیام",
+      "bodyPlaceholder": "سوال یا اعتراض خود را شرح دهید…",
+      "target": "نمره مورد اعتراض",
+      "targetGeneral": "کلی (بدون نمره مشخص)",
+      "targetQuiz": "آزمون",
+      "targetColumn": "ستون کارنامه",
+      "targetQuizPlaceholder": "آزمون را انتخاب کنید",
+      "targetColumnPlaceholder": "ستون را انتخاب کنید",
+      "submit": "ثبت تیکت",
+      "attachments": "پیوست‌ها",
+      "attach": "افزودن فایل"
+    },
+    "thread": {
+      "reply": "پاسخ",
+      "replyPlaceholder": "پاسخ خود را بنویسید…",
+      "close": "بستن تیکت",
+      "closed": "این تیکت بسته شده است.",
+      "you": "شما",
+      "selectPrompt": "برای مشاهده گفتگو یک تیکت انتخاب کنید",
+      "waitingOnYou": "در انتظار پاسخ شما",
+      "back": "بازگشت",
+      "attachment": "پیوست"
     }
   },
   "conversations": {

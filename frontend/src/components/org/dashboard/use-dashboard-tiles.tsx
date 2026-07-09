@@ -16,6 +16,7 @@ const TILE_KEYS: OrgRouteKey[] = [
   "exams",
   "grades",
   "attendance",
+  "tickets",
   "users",
   "roles",
   "files",

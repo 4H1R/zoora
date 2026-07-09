@@ -1415,7 +1415,8 @@
       "attendance": "Attendance",
       "recordings": "Recordings",
       "zoora": "Zoora",
-      "conversations": "Chat"
+      "conversations": "Chat",
+      "tickets": "Tickets"
     },
     "practices": {
       "title": "Practices",
@@ -3046,6 +3047,44 @@
       "noPricesHint": "Add a plan price to get started.",
       "noInvoices": "No invoices",
       "noInvoicesHint": "Create an invoice to get started."
+    }
+  },
+  "tickets": {
+    "title": "Tickets",
+    "subtitle": "Questions and grade objections across your classes",
+    "empty": { "title": "No tickets yet", "description": "Open a ticket to ask a question or dispute a grade." },
+    "new": "New ticket",
+    "type": { "question": "Question", "grade_objection": "Grade objection", "other": "Other" },
+    "status": { "open": "Open", "answered": "Answered", "closed": "Closed" },
+    "filters": { "all": "All", "status": "Status", "type": "Type", "class": "Class" },
+    "form": {
+      "class": "Class",
+      "classPlaceholder": "Select a class",
+      "type": "Type",
+      "title": "Title",
+      "titlePlaceholder": "Short summary of your issue",
+      "body": "Message",
+      "bodyPlaceholder": "Describe your question or objection…",
+      "target": "Disputed grade",
+      "targetGeneral": "General (no specific grade)",
+      "targetQuiz": "Exam",
+      "targetColumn": "Gradebook column",
+      "targetQuizPlaceholder": "Select an exam",
+      "targetColumnPlaceholder": "Select a column",
+      "submit": "Open ticket",
+      "attachments": "Attachments",
+      "attach": "Attach file"
+    },
+    "thread": {
+      "reply": "Reply",
+      "replyPlaceholder": "Write a reply…",
+      "close": "Close ticket",
+      "closed": "This ticket is closed.",
+      "you": "You",
+      "selectPrompt": "Select a ticket to view the conversation",
+      "waitingOnYou": "Waiting on you",
+      "back": "Back",
+      "attachment": "Attachment"
     }
   },
   "conversations": {

@@ -15,6 +15,7 @@ import {
   SchoolIcon,
   SettingsIcon,
   ShieldIcon,
+  TicketIcon,
   UsersIcon,
   VideoIcon,
 } from "lucide-react"
@@ -37,6 +38,7 @@ export type OrgRouteKey =
   | "files"
   | "notifications"
   | "conversations"
+  | "tickets"
 
 // OrgRouteSpec is the single source of truth for the per-route metadata shared
 // between the sidebar nav (org-nav.tsx) and the dashboard tiles
@@ -151,5 +153,11 @@ export const ORG_ROUTES: Record<OrgRouteKey, OrgRouteSpec> = {
     perms: ["conversations:view", "conversations:manage"],
     feature: "chat",
     featureExemptPerms: ["conversations:manage"],
+  },
+  tickets: {
+    i18nKey: "org.nav.tickets",
+    icon: <TicketIcon />,
+    segment: "tickets",
+    perms: ["tickets:view", "tickets:manage"],
   },
 }

@@ -72,6 +72,9 @@ export const GithubCom4H1RZooraInternalDomainPermissionName = {
   PermConversationsView: 'conversations:view',
   /** create\/delete groups+channels, manage members */
   PermConversationsManage: 'conversations:manage',
+  PermTicketsView: 'tickets:view',
+  /** reply-as-handler + close on owned classes\' tickets */
+  PermTicketsManage: 'tickets:manage',
   PermQAView: 'qa:view',
   PermQACreate: 'qa:create',
   PermQADelete: 'qa:delete',
