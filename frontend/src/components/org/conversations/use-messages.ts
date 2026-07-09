@@ -41,7 +41,12 @@ export function unwrapMessagesPage(res: getConversationsIdMessagesResponse): Cha
  * page), so the two stay coherent.
  *
  * - `aroundMessageId` seeds a window centered on a message (deep-link / jump to
- *   a pinned message); omitting it seeds the latest page.
+ *   a pinned message); omitting it seeds the latest page. When set, the query
+ *   uses a SEPARATE, id-keyed cache (`chatKeys.messagesAround`) so a warm base
+ *   cache (with `staleTime: Infinity`) cannot ignore the `{around}` initial page
+ *   param. That around-view is transient and does NOT receive live WS appends
+ *   (the reducer writes the base `messages(convId)` cache) — fine for a
+ *   read-only jump; clearing `?msg` returns to the live base thread.
  * - Fetch newer (`fetchNextPage`) is only meaningful for an around-seed — for a
  *   latest-seed the newest page is already loaded and WS appends new messages
  *   live, so `hasNextPage` stays false.
@@ -55,7 +60,7 @@ export function useMessages(convId: string, aroundMessageId?: string) {
   const seededAround = Boolean(aroundMessageId)
 
   const query = useInfiniteQuery({
-    queryKey: chatKeys.messages(convId),
+    queryKey: aroundMessageId ? chatKeys.messagesAround(convId, aroundMessageId) : chatKeys.messages(convId),
     queryFn: async ({ pageParam, signal }) => {
       const res = await getConversationsIdMessages(convId, { limit: LIMIT, ...pageParam }, { signal })
       return unwrapMessagesPage(res)

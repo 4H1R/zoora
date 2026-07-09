@@ -37,7 +37,9 @@ function ConversationDetail() {
   }, [conversationId])
 
   // Key on conversation + `?msg` so a jump to an UNLOADED message (which sets
-  // `?msg`) remounts the thread and re-seeds the infinite query around that id —
-  // the queryKey itself omits `around`, so a prop change alone would not refetch.
+  // `?msg`) remounts the thread, resetting its scroll/jump state. The infinite
+  // query itself keys on the around-id (`chatKeys.messagesAround`), so each jump
+  // target gets its own cache seeded with `{around}`; clearing `?msg` remounts
+  // back onto the live base cache (`chatKeys.messages`) that the WS reducer feeds.
   return <ChatThread key={`${conversationId}:${msg ?? ""}`} convId={conversationId} aroundMessageId={msg} />
 }
