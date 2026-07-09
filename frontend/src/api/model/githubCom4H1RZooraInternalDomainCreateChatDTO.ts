@@ -9,9 +9,7 @@
 export interface GithubCom4H1RZooraInternalDomainCreateChatDTO {
   /** @maxLength 1000 */
   description?: string;
-  model_id: string;
-  /** @maxLength 100 */
-  model_type: string;
+  live_room_id: string;
   /**
      * @minLength 1
      * @maxLength 255

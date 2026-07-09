@@ -18,6 +18,11 @@ const (
 	// into an org's Shared folder on the files page; ModelID is the org ID.
 	MediaModelOrganization = "organization"
 	MediaCollectionShared  = "shared"
+	// MediaModelConversation is the model type for chat attachments;
+	// ModelID is the conversation ID. Reuses the existing media presign
+	// flow — no dedicated upload endpoint (see conversations package).
+	MediaModelConversation = "conversation"
+	MediaCollectionAttach  = "attachments"
 )
 
 type Media struct {

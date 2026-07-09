@@ -49,7 +49,9 @@ const (
 	LiveRecordingStatusFailed    LiveRecordingStatus = "failed"
 )
 
-// ChatModelLiveSession is the polymorphic chat owner type for live rooms.
+// ChatModelLiveSession is the polymorphic owner type for live rooms, used by
+// PollService's model_type/model_id polymorphism (chat itself moved to a
+// dedicated live_room_id FK; see domain/chat.go).
 const ChatModelLiveSession = "live_session"
 
 type LiveRoomConfig struct {

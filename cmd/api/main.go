@@ -20,9 +20,11 @@ import (
 	"github.com/4H1R/zoora/internal/calendar"
 	"github.com/4H1R/zoora/internal/changelog"
 	"github.com/4H1R/zoora/internal/chat"
+	"github.com/4H1R/zoora/internal/chathub"
 	"github.com/4H1R/zoora/internal/classes"
 	"github.com/4H1R/zoora/internal/config"
 	"github.com/4H1R/zoora/internal/connectors"
+	"github.com/4H1R/zoora/internal/conversations"
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/entitlements"
 	"github.com/4H1R/zoora/internal/gradebook"
@@ -140,9 +142,12 @@ func main() {
 	qaRepo := qa.NewRepository(db)
 	qaVoteRepo := qa.NewVoteRepository(db)
 	chatRepo := chat.NewChatRepository(db)
-	chatMemberRepo := chat.NewMemberRepository(db)
 	chatMessageRepo := chat.NewMessageRepository(db)
-	chatReactionRepo := chat.NewReactionRepository(db)
+	convRepo := conversations.NewConversationRepository(db)
+	convMemberRepo := conversations.NewMemberRepository(db)
+	convMessageRepo := conversations.NewMessageRepository(db)
+	convReactionRepo := conversations.NewReactionRepository(db)
+	convMentionRepo := conversations.NewMentionRepository(db) // Phase 1 stub — replaced in Phase 3
 	entitlementRepo := entitlements.NewRepository(db)
 	entitlementService := entitlements.NewService(entitlementRepo)
 
@@ -174,7 +179,13 @@ func main() {
 	mediaService := media.NewService(mediaRepo, storageClient, entitlementService, log)
 	changelogService := changelog.NewServiceWithMedia(changelogRepo, mediaRepo, storageClient, log)
 	livekitClient := lk.NewClient(cfg, log)
-	chatService := chat.NewService(chatRepo, chatMemberRepo, chatMessageRepo, chatReactionRepo, transactor, log, livekitClient, liveRoomRepo)
+	chatService := chat.NewService(chatRepo, chatMessageRepo, transactor, log, livekitClient, liveRoomRepo)
+
+	convHubMembership := conversations.NewHubMembership(convMemberRepo)
+	chatHub := chathub.NewHub(convHubMembership, log)
+	chatBridge := chathub.NewBridge(chatHub, redisClient, log)
+	go chatBridge.Run(context.Background())
+
 	pollService := polls.NewService(pollRepo, pollAnswerRepo, log)
 	qaAuthorizer := livesessions.NewModelAuthorizer(liveRoomRepo, classSessionRepo, classRepo, classMemberRepo)
 	qaBroadcaster := qa.NewBroadcaster(livekitClient, liveRoomRepo, log)
@@ -293,6 +304,17 @@ func main() {
 	notificationHandler := notifications.NewHandler(notificationService)
 	notificationHandler.RegisterRoutes(v1, authMiddleware)
 
+	convNotifier := conversations.NewNotifier(notificationService, convMemberRepo)
+	convUserLookup := conversations.NewUserOrgLookup(userRepo)
+	conversationService := conversations.NewService(
+		convRepo, convMemberRepo, convMessageRepo, convReactionRepo, convMentionRepo,
+		transactor, log,
+		chatBridge,     // broadcaster (implements ToConversation/ToUser)
+		convNotifier,   // notifier (SendSystem fan-out)
+		convUserLookup, // userLookup (cross-org DM/member guard)
+		mediaRepo,      // mediaLookup (attachment validation on send)
+	)
+
 	// --- billing ---
 	zpBase := "https://payment.zarinpal.com"
 	if cfg.ZarinpalSandbox {
@@ -356,6 +378,10 @@ func main() {
 
 	chatHandler := chat.NewHandler(chatService)
 	chatHandler.RegisterRoutes(v1, authMiddleware, perm)
+
+	conversationHandler := conversations.NewHandler(conversationService)
+	conversationHandler.RegisterRoutes(v1, authMiddleware, perm)
+	v1.GET("/ws", chathub.HandleWS(chatHub, chatBridge, jwtService, log))
 
 	attendanceHandler := attendance.NewHandler(attendanceService)
 	attendanceHandler.RegisterRoutes(v1, authMiddleware, perm)

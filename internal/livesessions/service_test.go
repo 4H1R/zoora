@@ -286,92 +286,71 @@ func (m *mockMemberRepo) ListAllByClass(ctx context.Context, classID uuid.UUID) 
 
 type mockChatService struct{ mock.Mock }
 
-func (m *mockChatService) CreateChat(ctx context.Context, dto domain.CreateChatDTO) (*domain.Chat, error) {
+func (m *mockChatService) CreateChat(ctx context.Context, dto domain.CreateChatDTO) (*domain.LiveRoomChat, error) {
 	a := m.Called(ctx, dto)
 	if a.Get(0) == nil {
 		return nil, a.Error(1)
 	}
-	return a.Get(0).(*domain.Chat), a.Error(1)
+	return a.Get(0).(*domain.LiveRoomChat), a.Error(1)
 }
-func (m *mockChatService) GetChat(ctx context.Context, id uuid.UUID) (*domain.Chat, error) {
+func (m *mockChatService) GetChat(ctx context.Context, id uuid.UUID) (*domain.LiveRoomChat, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
 		return nil, a.Error(1)
 	}
-	return a.Get(0).(*domain.Chat), a.Error(1)
+	return a.Get(0).(*domain.LiveRoomChat), a.Error(1)
 }
-func (m *mockChatService) UpdateChat(ctx context.Context, id uuid.UUID, dto domain.UpdateChatDTO) (*domain.Chat, error) {
+func (m *mockChatService) UpdateChat(ctx context.Context, id uuid.UUID, dto domain.UpdateChatDTO) (*domain.LiveRoomChat, error) {
 	a := m.Called(ctx, id, dto)
 	if a.Get(0) == nil {
 		return nil, a.Error(1)
 	}
-	return a.Get(0).(*domain.Chat), a.Error(1)
+	return a.Get(0).(*domain.LiveRoomChat), a.Error(1)
 }
 func (m *mockChatService) DeleteChat(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
-func (m *mockChatService) ListChats(ctx context.Context, q domain.ListChatsQuery) ([]domain.Chat, int64, error) {
+func (m *mockChatService) ListChats(ctx context.Context, q domain.ListChatsQuery) ([]domain.LiveRoomChat, int64, error) {
 	a := m.Called(ctx, q)
-	return a.Get(0).([]domain.Chat), a.Get(1).(int64), a.Error(2)
+	return a.Get(0).([]domain.LiveRoomChat), a.Get(1).(int64), a.Error(2)
 }
-func (m *mockChatService) AddMember(ctx context.Context, chatID uuid.UUID, dto domain.AddChatMemberDTO) (*domain.ChatMember, error) {
+func (m *mockChatService) SendMessage(ctx context.Context, chatID uuid.UUID, dto domain.SendMessageDTO) (*domain.LiveRoomMessage, error) {
 	a := m.Called(ctx, chatID, dto)
 	if a.Get(0) == nil {
 		return nil, a.Error(1)
 	}
-	return a.Get(0).(*domain.ChatMember), a.Error(1)
+	return a.Get(0).(*domain.LiveRoomMessage), a.Error(1)
 }
-func (m *mockChatService) RemoveMember(ctx context.Context, chatID, userID uuid.UUID) error {
-	return m.Called(ctx, chatID, userID).Error(0)
-}
-func (m *mockChatService) ListMembers(ctx context.Context, chatID uuid.UUID) ([]domain.ChatMember, error) {
-	a := m.Called(ctx, chatID)
-	return a.Get(0).([]domain.ChatMember), a.Error(1)
-}
-func (m *mockChatService) SendMessage(ctx context.Context, chatID uuid.UUID, dto domain.SendMessageDTO) (*domain.Message, error) {
-	a := m.Called(ctx, chatID, dto)
-	if a.Get(0) == nil {
-		return nil, a.Error(1)
-	}
-	return a.Get(0).(*domain.Message), a.Error(1)
-}
-func (m *mockChatService) GetMessage(ctx context.Context, id uuid.UUID) (*domain.Message, error) {
+func (m *mockChatService) GetMessage(ctx context.Context, id uuid.UUID) (*domain.LiveRoomMessage, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
 		return nil, a.Error(1)
 	}
-	return a.Get(0).(*domain.Message), a.Error(1)
+	return a.Get(0).(*domain.LiveRoomMessage), a.Error(1)
 }
-func (m *mockChatService) UpdateMessage(ctx context.Context, id uuid.UUID, dto domain.UpdateMessageDTO) (*domain.Message, error) {
+func (m *mockChatService) UpdateMessage(ctx context.Context, id uuid.UUID, dto domain.UpdateMessageDTO) (*domain.LiveRoomMessage, error) {
 	a := m.Called(ctx, id, dto)
 	if a.Get(0) == nil {
 		return nil, a.Error(1)
 	}
-	return a.Get(0).(*domain.Message), a.Error(1)
+	return a.Get(0).(*domain.LiveRoomMessage), a.Error(1)
 }
 func (m *mockChatService) DeleteMessage(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
-func (m *mockChatService) ListMessages(ctx context.Context, chatID uuid.UUID, q domain.ListMessagesQuery) ([]domain.Message, int64, error) {
+func (m *mockChatService) ListMessages(ctx context.Context, chatID uuid.UUID, q domain.ListMessagesQuery) ([]domain.LiveRoomMessage, int64, error) {
 	a := m.Called(ctx, chatID, q)
-	return a.Get(0).([]domain.Message), a.Get(1).(int64), a.Error(2)
+	return a.Get(0).([]domain.LiveRoomMessage), a.Get(1).(int64), a.Error(2)
 }
-func (m *mockChatService) ToggleReaction(ctx context.Context, messageID uuid.UUID, dto domain.ToggleReactionDTO) (*domain.Message, error) {
-	a := m.Called(ctx, messageID, dto)
+func (m *mockChatService) FindChatByRoom(ctx context.Context, liveRoomID uuid.UUID) (*domain.LiveRoomChat, error) {
+	a := m.Called(ctx, liveRoomID)
 	if a.Get(0) == nil {
 		return nil, a.Error(1)
 	}
-	return a.Get(0).(*domain.Message), a.Error(1)
+	return a.Get(0).(*domain.LiveRoomChat), a.Error(1)
 }
-func (m *mockChatService) FindChatByModel(ctx context.Context, modelType string, modelID uuid.UUID) (*domain.Chat, error) {
-	a := m.Called(ctx, modelType, modelID)
-	if a.Get(0) == nil {
-		return nil, a.Error(1)
-	}
-	return a.Get(0).(*domain.Chat), a.Error(1)
-}
-func (m *mockChatService) ArchiveByModel(ctx context.Context, modelType string, modelID uuid.UUID) error {
-	return m.Called(ctx, modelType, modelID).Error(0)
+func (m *mockChatService) ArchiveByRoom(ctx context.Context, liveRoomID uuid.UUID) error {
+	return m.Called(ctx, liveRoomID).Error(0)
 }
 
 // mockPollService satisfies domain.PollService; only CloseByModel is exercised
@@ -613,7 +592,7 @@ func TestCreateRoom_Teacher_Success(t *testing.T) {
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
 	roomRepo.On("Create", mock.Anything, mock.AnythingOfType("*domain.LiveRoom")).Return(nil)
 	chatSvc.On("CreateChat", mock.Anything, mock.AnythingOfType("domain.CreateChatDTO")).
-		Return(&domain.Chat{ID: uuid.New()}, nil)
+		Return(&domain.LiveRoomChat{ID: uuid.New()}, nil)
 
 	room, err := svc.CreateRoom(teacherCtx(), domain.CreateLiveRoomDTO{
 		ClassSessionID: testSessionID,
@@ -759,8 +738,8 @@ func TestCreateRoom_CreatesChat(t *testing.T) {
 	classRepo.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
 	roomRepo.On("Create", mock.Anything, mock.AnythingOfType("*domain.LiveRoom")).Return(nil)
 	chatSvc.On("CreateChat", mock.Anything, mock.MatchedBy(func(dto domain.CreateChatDTO) bool {
-		return dto.ModelType == "live_session" && dto.Name == "Chat – Algebra 101"
-	})).Return(&domain.Chat{ID: uuid.New()}, nil)
+		return dto.LiveRoomID != "" && dto.Name == "Chat – Algebra 101"
+	})).Return(&domain.LiveRoomChat{ID: uuid.New()}, nil)
 
 	room, err := svc.CreateRoom(teacherCtx(), domain.CreateLiveRoomDTO{
 		ClassSessionID: testSessionID,
@@ -813,7 +792,7 @@ func TestEndRoom_ArchivesChat(t *testing.T) {
 	roomRepo.On("Transition", mock.Anything, mock.AnythingOfType("*domain.LiveRoom"), domain.LiveRoomStatusActive).Return(nil)
 	partRepo.On("MarkAllLeft", mock.Anything, testRoomID, mock.AnythingOfType("time.Time")).Return(nil)
 	wbRepo.On("Delete", mock.Anything, testRoomID).Return(nil)
-	chatSvc.On("ArchiveByModel", mock.Anything, "live_session", testRoomID).Return(nil)
+	chatSvc.On("ArchiveByRoom", mock.Anything, testRoomID).Return(nil)
 
 	result, err := svc.EndRoom(teacherCtx(), testRoomID)
 	assert.NoError(t, err)

@@ -12,6 +12,9 @@ CREATE TABLE users (
     disabled_at TIMESTAMPTZ,
     disabled_by UUID,
     disabled_reason TEXT,
+    -- Per-user changelog "seen" marker. Defaults to row creation time so a fresh
+    -- signup is considered caught-up on everything before they joined.
+    changelog_last_seen_at TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT fk_users_organization_id FOREIGN KEY (organization_id) REFERENCES organizations (id) ON DELETE SET NULL,
     CONSTRAINT fk_users_role_id FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE SET NULL
 );

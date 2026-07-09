@@ -7,7 +7,7 @@ import {
   useGetChatsChatIdMessages,
   usePostChatsChatIdMessages,
 } from "@/api/chat/chat"
-import type { GithubCom4H1RZooraInternalDomainMessage } from "@/api/model"
+import type { GithubCom4H1RZooraInternalDomainLiveRoomMessage } from "@/api/model"
 
 import { decodeRoomEvent } from "./room-events"
 import { useRoomChannel } from "./use-room-channel"
@@ -72,7 +72,7 @@ export function useRoomChat(chatId: string | undefined) {
 
   const rawMessages =
     data?.status === 200
-      ? ((data.data.data?.items ?? []) as GithubCom4H1RZooraInternalDomainMessage[])
+      ? ((data.data.data?.items ?? []) as GithubCom4H1RZooraInternalDomainLiveRoomMessage[])
       : []
 
   // Merge persisted history with live messages, deduping by id. The persisted

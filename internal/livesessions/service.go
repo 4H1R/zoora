@@ -53,7 +53,7 @@ type service struct {
 	sessions     domain.ClassSessionRepository
 	classes      domain.ClassRepository
 	members      domain.ClassMemberRepository
-	chatSvc      domain.ChatService
+	chatSvc      domain.LiveRoomChatService
 	pollSvc      domain.PollService
 	tx           domain.Transactor
 	livekit      LiveKitClient
@@ -73,7 +73,7 @@ func NewService(
 	sessions domain.ClassSessionRepository,
 	classes domain.ClassRepository,
 	members domain.ClassMemberRepository,
-	chatSvc domain.ChatService,
+	chatSvc domain.LiveRoomChatService,
 	pollSvc domain.PollService,
 	tx domain.Transactor,
 	livekit LiveKitClient,
@@ -209,9 +209,8 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreateLiveRoomDTO) 
 
 		chatName := fmt.Sprintf("Chat – %s", session.Name)
 		_, cErr := s.chatSvc.CreateChat(txCtx, domain.CreateChatDTO{
-			Name:      chatName,
-			ModelType: domain.ChatModelLiveSession,
-			ModelID:   room.ID.String(),
+			Name:       chatName,
+			LiveRoomID: room.ID.String(),
 		})
 		return cErr
 	})
@@ -364,7 +363,7 @@ func (s *service) JoinRoom(ctx context.Context, roomID uuid.UUID) (*domain.JoinL
 		Room:       room,
 	}
 
-	if chat, err := s.chatSvc.FindChatByModel(ctx, domain.ChatModelLiveSession, roomID); err == nil {
+	if chat, err := s.chatSvc.FindChatByRoom(ctx, roomID); err == nil {
 		resp.ChatID = &chat.ID
 	}
 
@@ -496,7 +495,7 @@ func (s *service) endRoomInternal(ctx context.Context, room *domain.LiveRoom) (*
 		s.logger.Error("end room: delete livekit room", "room_id", room.ID.String(), "error", err)
 	}
 
-	if err := s.chatSvc.ArchiveByModel(ctx, domain.ChatModelLiveSession, room.ID); err != nil {
+	if err := s.chatSvc.ArchiveByRoom(ctx, room.ID); err != nil {
 		s.logger.Error("failed to archive chat for room", "room_id", room.ID.String(), "error", err)
 	}
 

@@ -8,13 +8,9 @@
 
 export type GetChatsParams = {
 /**
- * Model type filter
+ * Live room UUID filter
  */
-model_type?: string;
-/**
- * Model UUID filter
- */
-model_id?: string;
+live_room_id?: string;
 /**
  * Status filter
  */
