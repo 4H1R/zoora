@@ -1,7 +1,19 @@
 import { describe, expect, it } from "vitest"
 
-import { dedupSortMessages, deriveCursors, groupMessages, reconcileOptimistic } from "./messages"
+import {
+  dedupSortMessages,
+  deriveCursors,
+  groupMessages,
+  nextPageParam,
+  prevPageParam,
+  reconcileOptimistic,
+} from "./messages"
 import type { ChatMessage } from "./messages"
+
+// Build a page of `n` ASCENDING messages whose ids sort after `startCode`.
+function page(startCode: number, n: number): ChatMessage[] {
+  return Array.from({ length: n }, (_, i) => ({ id: String.fromCharCode(startCode + i) }) as ChatMessage)
+}
 
 // Build a message with an id and a created_at derived from a base time + offset seconds.
 const BASE = new Date("2026-07-09T10:00:00.000Z").getTime()
@@ -85,6 +97,59 @@ describe("groupMessages", () => {
 
   it("empty -> no groups", () => {
     expect(groupMessages([])).toEqual([])
+  })
+})
+
+describe("nextPageParam (NEWER / bottom)", () => {
+  const LIMIT = 3
+
+  it("latest-seed never fetches newer (WS appends live)", () => {
+    // Full latest page — still no newer page: the latest page IS the newest.
+    expect(nextPageParam([page(97, 3)], page(97, 3), LIMIT, false)).toBeUndefined()
+  })
+
+  it("around-seed with a FULL page allows a next (after) cursor at the newest id", () => {
+    const p = page(97, 3) // a,b,c
+    expect(nextPageParam([p], p, LIMIT, true)).toEqual({ after: "c" })
+  })
+
+  it("around-seed with a SHORT page is exhausted (undefined)", () => {
+    const p = page(97, 2) // a,b (< limit)
+    expect(nextPageParam([p], p, LIMIT, true)).toBeUndefined()
+  })
+
+  it("around-seed empty page -> undefined", () => {
+    expect(nextPageParam([[]], [], LIMIT, true)).toBeUndefined()
+  })
+
+  it("around-seed uses the OVERALL newest id across all loaded pages", () => {
+    const older = page(97, 3) // a,b,c (prepended top)
+    const bottom = page(100, 3) // d,e,f (newest-position page)
+    expect(nextPageParam([older, bottom], bottom, LIMIT, true)).toEqual({ after: "f" })
+  })
+})
+
+describe("prevPageParam (OLDER / top)", () => {
+  const LIMIT = 3
+
+  it("full first page allows a previous (before) cursor at the oldest id", () => {
+    const p = page(97, 3) // a,b,c
+    expect(prevPageParam([p], p, LIMIT)).toEqual({ before: "a" })
+  })
+
+  it("short first page is exhausted (undefined)", () => {
+    const p = page(97, 2) // a,b (< limit)
+    expect(prevPageParam([p], p, LIMIT)).toBeUndefined()
+  })
+
+  it("empty first page -> undefined", () => {
+    expect(prevPageParam([[]], [], LIMIT)).toBeUndefined()
+  })
+
+  it("uses the OVERALL oldest id across all loaded pages", () => {
+    const top = page(97, 3) // a,b,c (oldest-position page)
+    const bottom = page(100, 3) // d,e,f
+    expect(prevPageParam([top, bottom], top, LIMIT)).toEqual({ before: "a" })
   })
 })
 

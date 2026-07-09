@@ -44,6 +44,51 @@ export function deriveCursors(msgs: ChatMessage[]): { before: string | null; aft
   }
 }
 
+/**
+ * Decide the pageParam for the NEXT (newer, appended-at-bottom) page of the
+ * bidirectional message thread. Pure so the direction/exhaustion logic is
+ * testable in isolation — this is where off-by-one/direction bugs hide.
+ *
+ * - Latest-seed (`seededAround === false`): the bottom page is already the
+ *   newest page and realtime WS events append new messages live, so there is
+ *   never a "newer" page to fetch → always `undefined`.
+ * - Around-seed: newer messages may exist beyond the window. Allow an `after`
+ *   fetch while the newest-position page comes back FULL; a short page means the
+ *   newer end is exhausted.
+ *
+ * `lastPage` is the newest-position (bottom) page; the cursor is the overall
+ * newest id across every loaded page (robust to per-page storage order).
+ */
+export function nextPageParam(
+  allPages: ChatMessage[][],
+  lastPage: ChatMessage[],
+  limit: number,
+  seededAround: boolean
+): { after: string } | undefined {
+  if (!seededAround) return undefined
+  if (lastPage.length < limit) return undefined
+  const { after } = deriveCursors(dedupSortMessages(allPages.flat()))
+  return after ? { after } : undefined
+}
+
+/**
+ * Decide the pageParam for the PREVIOUS (older, prepended-at-top) page. Allow a
+ * `before` fetch while the oldest-position page comes back FULL; a short (or
+ * empty) first page means the older end is exhausted → `undefined`.
+ *
+ * `firstPage` is the oldest-position (top) page; the cursor is the overall
+ * oldest id across every loaded page.
+ */
+export function prevPageParam(
+  allPages: ChatMessage[][],
+  firstPage: ChatMessage[],
+  limit: number
+): { before: string } | undefined {
+  if (firstPage.length < limit) return undefined
+  const { before } = deriveCursors(dedupSortMessages(allPages.flat()))
+  return before ? { before } : undefined
+}
+
 function isoDate(created?: string): string {
   if (!created) return "unknown"
   // Local calendar day, YYYY-MM-DD.
