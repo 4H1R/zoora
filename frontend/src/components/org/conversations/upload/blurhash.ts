@@ -1,4 +1,4 @@
-import { encode } from "blurhash"
+import { decode, encode } from "blurhash"
 
 import { isImage } from "./compress"
 
@@ -60,6 +60,30 @@ export async function encodeBlurhash(file: File): Promise<string | null> {
 
     const [cx, cy] = blurhashComponents()
     return encode(data, w, h, cx, cy)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Decode a BlurHash string into a tiny PNG data URL usable as an <img>/CSS
+ * background placeholder. Returns null on any failure (bad hash, no canvas) so
+ * callers can fall back to a plain tinted box. The decoded grid is deliberately
+ * small — it's scaled up (blurred) by the browser, so 32px is plenty.
+ */
+export function blurhashToDataUrl(hash: string, width = 32, height = 32): string | null {
+  if (!hash) return null
+  try {
+    const pixels = decode(hash, width, height)
+    const canvas = document.createElement("canvas")
+    canvas.width = width
+    canvas.height = height
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return null
+    const imageData = ctx.createImageData(width, height)
+    imageData.data.set(pixels)
+    ctx.putImageData(imageData, 0, 0)
+    return canvas.toDataURL()
   } catch {
     return null
   }

@@ -1689,8 +1689,16 @@
           }
         },
         "features": {
-          "free": ["Core virtual classrooms", "Exams, homework & gradebook", "Offline rooms & notifications"],
-          "plus": ["Everything in Free", "More storage & live capacity", "Ticketing & file sharing"],
+          "free": [
+            "Core virtual classrooms",
+            "Exams, homework & gradebook",
+            "Offline rooms & notifications"
+          ],
+          "plus": [
+            "Everything in Free",
+            "More storage & live capacity",
+            "Ticketing & file sharing"
+          ],
           "pro": [
             "Everything in Plus",
             "Whiteboard & chat",
@@ -1698,7 +1706,12 @@
             "Messenger & email connectors",
             "AI assistance"
           ],
-          "max": ["Everything in Pro", "Cloud recordings", "Auto grading", "Single sign-on (SSO)"]
+          "max": [
+            "Everything in Pro",
+            "Cloud recordings",
+            "Auto grading",
+            "Single sign-on (SSO)"
+          ]
         }
       },
       "members": "Members",
@@ -3154,7 +3167,15 @@
       "cancelReply": "Cancel reply",
       "editing": "Editing message",
       "cancelEdit": "Cancel edit",
-      "saveEdit": "Save changes"
+      "saveEdit": "Save changes",
+      "attach": "Attach files"
+    },
+    "attachments": {
+      "tray": "Selected attachments",
+      "remove": "Remove attachment",
+      "cancel": "Cancel upload",
+      "open": "Open image",
+      "image": "Image"
     }
   }
 }

@@ -1,12 +1,52 @@
 import type { GithubCom4H1RZooraInternalDomainConversationMessage } from "@/api/model"
 
 /**
- * A conversation message enriched with a client-only optimistic status. The
+ * Client-only, pre-confirmation view of a single attachment on an optimistic
+ * bubble. It drives the Telegram-style render (blob preview → progress ring →
+ * real media) BEFORE the server ever assigns a `media_ids` entry.
+ *
+ * - `localId` is a client uuid, stable for the lifetime of the optimistic bubble
+ *   (progress/status updates and cancel/retry all key off it).
+ * - `blobUrl` is an `URL.createObjectURL` handle for images only; it is revoked
+ *   once the confirmed message swaps in (see `use-send-attachments`).
+ * - `mediaId` is filled in once the file's upload resolves.
+ */
+export interface LocalAttachment {
+  localId: string
+  name: string
+  contentType: string
+  size: number
+  blobUrl?: string
+  blurhash?: string | null
+  width?: number
+  height?: number
+  /** 0..1 upload fraction. */
+  progress: number
+  status: "uploading" | "done" | "error"
+  mediaId?: string
+}
+
+/**
+ * A conversation message enriched with client-only optimistic fields. The
  * `_status` field only exists for locally-created bubbles that have not yet
  * been confirmed by the server; server-reconciled messages clear it.
+ * `_attachments` carries the pre-confirmation attachment previews so a bubble
+ * can render its images/files before `media_ids` exist.
  */
 export type ChatMessage = GithubCom4H1RZooraInternalDomainConversationMessage & {
   _status?: "sending" | "failed"
+  _attachments?: LocalAttachment[]
+}
+
+/**
+ * Backend stores conversation `media_ids` as uuid STRINGS, but the generated
+ * OpenAPI model types them `number[]`. Normalize to string ids for resolving
+ * download URLs / metadata regardless of the on-the-wire runtime shape.
+ */
+export function mediaIdStrings(message: ChatMessage): string[] {
+  const ids = message.media_ids as unknown as Array<string | number> | undefined
+  if (!ids) return []
+  return ids.map((id) => String(id)).filter((id) => id.length > 0)
 }
 
 export type Group = {

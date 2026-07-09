@@ -4,7 +4,7 @@ import type { InfiniteData } from "@tanstack/react-query"
 
 import { useQueryClient } from "@tanstack/react-query"
 import { EmojiPicker } from "frimousse"
-import { CheckIcon, PencilIcon, SendHorizontalIcon, SmileIcon, XIcon } from "lucide-react"
+import { CheckIcon, PaperclipIcon, PencilIcon, SendHorizontalIcon, SmileIcon, XIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useThrottledCallback } from "use-debounce"
@@ -15,11 +15,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils"
 import { useChatUi } from "@/stores/chat-ui"
 
+import { AttachmentTray } from "./attachment-tray"
 import { useChatWs } from "./chat-provider"
 import { detectMention, insertAtCaret, insertMention, resolveMentions } from "./lib/mentions"
 import { replaceMessage } from "./lib/optimistic"
 import { chatKeys } from "./lib/query-keys"
 import { MentionPopover } from "./mention-popover"
+import { capFiles, MAX_MEDIA_PER_MESSAGE } from "./upload/upload-manager"
+import { useSendAttachments } from "./use-send-attachments"
 import { useSendMessage } from "./use-send-message"
 
 type MessagesCache = InfiniteData<ChatMessage[]>
@@ -47,6 +50,7 @@ export function MessageInput({ convId }: MessageInputProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { send } = useSendMessage(convId)
+  const { sendWithAttachments } = useSendAttachments(convId)
   const editMutation = usePatchConversationsMessagesMessageId()
   const { typing } = useChatWs()
 
@@ -72,8 +76,12 @@ export function MessageInput({ convId }: MessageInputProps) {
   const [mentionQuery, setMentionQuery] = useState<MentionQuery | null>(null)
   const [mentionIndex, setMentionIndex] = useState(0)
   const [emojiOpen, setEmojiOpen] = useState(false)
+  // Staged (pre-send) attachments — ephemeral composer state, cleared on send.
+  const [files, setFiles] = useState<File[]>([])
+  const [dragOver, setDragOver] = useState(false)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   // Last known caret offset, kept fresh so an emoji inserted while the picker
   // popover holds focus still lands where the user left off.
   const caretPosRef = useRef(0)
@@ -144,6 +152,7 @@ export function MessageInput({ convId }: MessageInputProps) {
       setValue(content)
       pendingCaretRef.current = content.length
       setReplyTo(null)
+      setFiles([])
     } else {
       setValue("")
       caretPosRef.current = 0
@@ -221,18 +230,71 @@ export function MessageInput({ convId }: MessageInputProps) {
     setEditing(null)
   }
 
+  // Stage files, capping the combined set at the per-message media limit.
+  function addFiles(incoming: File[]) {
+    if (incoming.length === 0) return
+    setFiles((prev) => capFiles([...prev, ...incoming]))
+  }
+
+  function removeFile(index: number) {
+    setFiles((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  function onFilePick(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files) addFiles(Array.from(e.target.files))
+    // Reset so re-picking the same file still fires a change event.
+    e.target.value = ""
+  }
+
+  // Pasted images (and any other files) land in the tray; text paste is untouched.
+  function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const pasted = e.clipboardData?.files
+    if (pasted && pasted.length > 0) addFiles(Array.from(pasted))
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setDragOver(false)
+    const dropped = e.dataTransfer?.files
+    if (dropped && dropped.length > 0) addFiles(Array.from(dropped))
+  }
+
+  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+    if (editingMessageId) return
+    e.preventDefault()
+    setDragOver(true)
+  }
+
+  function handleDragLeave(e: React.DragEvent<HTMLDivElement>) {
+    // Only clear when the pointer actually leaves the composer, not a child.
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
+    setDragOver(false)
+  }
+
   function submit() {
     const content = value.trim()
-    if (!content) return
     if (editingMessageId) {
+      if (!content) return
       submitEdit(editingMessageId, content)
-    } else {
+    } else if (files.length > 0) {
+      // Attachments allow an empty caption.
+      sendWithAttachments({
+        content,
+        files,
+        replyToMessageId: replyTo ?? undefined,
+        mentions: resolveMentions(content, members),
+      })
+      setReplyTo(null)
+      setFiles([])
+    } else if (content) {
       send({
         content,
         replyToMessageId: replyTo ?? undefined,
         mentions: resolveMentions(content, members),
       })
       setReplyTo(null)
+    } else {
+      return
     }
     setValue("")
     setMentionQuery(null)
@@ -279,11 +341,20 @@ export function MessageInput({ convId }: MessageInputProps) {
     }
   }
 
-  const canSend = value.trim().length > 0
+  const canAttach = !editingMessageId && files.length < MAX_MEDIA_PER_MESSAGE
+  const canSend = value.trim().length > 0 || (files.length > 0 && !editingMessageId)
 
   return (
     <div className="border-t px-3 py-3">
-      <div className="bg-card focus-within:ring-ring/40 relative flex flex-col gap-1.5 rounded-2xl border p-1.5 shadow-sm transition focus-within:ring-2">
+      <div
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        className={cn(
+          "bg-card focus-within:ring-ring/40 relative flex flex-col gap-1.5 rounded-2xl border p-1.5 shadow-sm transition focus-within:ring-2",
+          dragOver && "ring-primary ring-2"
+        )}
+      >
         {/* Editing strip — supersedes the reply strip; X (or Esc) cancels. */}
         {editingMessage && (
           <div className="border-primary bg-muted/50 flex items-center gap-2 rounded-lg border-s-2 px-2.5 py-1.5">
@@ -336,7 +407,33 @@ export function MessageInput({ convId }: MessageInputProps) {
           />
         )}
 
+        {/* Pre-send attachment tray — hidden while editing (no media edits). */}
+        {!editingMessageId && files.length > 0 && <AttachmentTray files={files} onRemove={removeFile} />}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={onFilePick}
+          aria-hidden
+          tabIndex={-1}
+        />
+
         <div className="flex items-end gap-1">
+          {/* Attach files — disabled while editing or at the media cap. */}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="text-muted-foreground shrink-0"
+            disabled={!canAttach}
+            aria-label={t("conversations.composer.attach")}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <PaperclipIcon />
+          </Button>
+
           <textarea
             ref={textareaRef}
             value={value}
@@ -344,6 +441,7 @@ export function MessageInput({ convId }: MessageInputProps) {
             onKeyDown={handleKeyDown}
             onKeyUp={handleCaretSync}
             onClick={handleCaretSync}
+            onPaste={handlePaste}
             rows={1}
             placeholder={t("conversations.composer.placeholder")}
             aria-label={t("conversations.composer.placeholder")}

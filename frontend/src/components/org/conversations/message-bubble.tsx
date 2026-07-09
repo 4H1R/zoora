@@ -7,14 +7,17 @@ import { useTranslation } from "react-i18next"
 
 import { cn } from "@/lib/utils"
 
+import { AttachmentBubble } from "./attachment-bubble"
 import { useJumpToMessage } from "./jump-context"
 import { formatTimeOfDay } from "./lib/chat-time"
+import { mediaIdStrings } from "./lib/messages"
 import { removeMessage } from "./lib/optimistic"
 import { chatKeys } from "./lib/query-keys"
 import { MessageActions } from "./message-actions"
 import { MessageContent } from "./message-content"
 import { ReactionBar } from "./reaction-bar"
 import { ReadReceipt } from "./read-receipt"
+import { useSendAttachments } from "./use-send-attachments"
 import { useSendMessage } from "./use-send-message"
 
 type MessagesCache = InfiniteData<ChatMessage[]>
@@ -55,11 +58,18 @@ export function MessageBubble({
   const queryClient = useQueryClient()
   const jumpToMessage = useJumpToMessage()
   const { retry } = useSendMessage(convId)
+  const { retry: retryAttachments, discard: discardAttachments } = useSendAttachments(convId)
 
   const status = message._status
   const time = formatTimeOfDay(message.created_at, i18n.language)
   const messageId = message.id ?? ""
   const key = chatKeys.messages(convId)
+
+  // An attachment bubble carries client-only previews OR confirmed media ids;
+  // failed retries/discards route through the attachment pipeline.
+  const isAttachmentMsg = (message._attachments?.length ?? 0) > 0
+  const hasMedia = isAttachmentMsg || mediaIdStrings(message).length > 0
+  const hasContent = !!message.content?.trim()
 
   // The referenced message for the reply preview, read live from the cache.
   // Non-reactive (mirrors the composer): the target is usually already loaded.
@@ -72,8 +82,18 @@ export function MessageBubble({
     : undefined
 
   // Drop a failed optimistic bubble that never reached the server — purely local.
+  // Attachment bubbles also abort any in-flight uploads and revoke blob URLs.
   function discardFailed() {
+    if (isAttachmentMsg) {
+      discardAttachments(messageId)
+      return
+    }
     queryClient.setQueryData<MessagesCache>(key, (old) => removeMessage(old, messageId))
+  }
+
+  function retryFailed() {
+    if (isAttachmentMsg) retryAttachments(messageId)
+    else retry(messageId)
   }
 
   return (
@@ -100,13 +120,16 @@ export function MessageBubble({
       <div className={cn("flex items-center gap-1", isOwn ? "flex-row-reverse" : "flex-row")}>
         <div
           className={cn(
-            "relative w-fit max-w-[min(85%,42rem)] rounded-2xl px-3 py-2 text-sm leading-relaxed shadow-sm transition duration-500",
+            "relative w-fit max-w-[min(85%,42rem)] rounded-2xl text-sm leading-relaxed shadow-sm transition duration-500",
+            hasMedia && !hasContent ? "p-1.5" : "px-3 py-2",
             isOwn ? "bg-primary text-primary-foreground rounded-ee-md" : "bg-muted text-foreground rounded-es-md",
             status === "sending" && "opacity-60",
             isHighlighted && "ring-primary ring-offset-background ring-2 ring-offset-2"
           )}
         >
-          <MessageContent content={message.content ?? ""} members={members} isOwn={isOwn} />
+          {hasMedia && <AttachmentBubble message={message} convId={convId} isOwn={isOwn} />}
+
+          {hasContent && <MessageContent content={message.content ?? ""} members={members} isOwn={isOwn} />}
 
           <div
             className={cn(
@@ -143,7 +166,7 @@ export function MessageBubble({
       {status === "failed" && (
         <div className={cn("mt-0.5 flex items-center gap-2 px-1 text-xs", isOwn ? "flex-row-reverse" : "flex-row")}>
           <span className="text-destructive">{t("conversations.thread.failed")}</span>
-          <button type="button" className="text-primary font-medium hover:underline" onClick={() => retry(messageId)}>
+          <button type="button" className="text-primary font-medium hover:underline" onClick={retryFailed}>
             {t("conversations.actions.retry")}
           </button>
           <button
