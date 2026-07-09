@@ -373,3 +373,132 @@ func TestCreate_ColumnMustBelongToClass(t *testing.T) {
 	var verr *domain.ValidationError
 	assert.ErrorAs(t, err, &verr)
 }
+
+// ---- read / reply / close tests ----
+
+func mustCreate(t *testing.T, e *env) *domain.Ticket {
+	t.Helper()
+	tk, err := e.svc.Create(e.studentCtx(), validCreate(e))
+	require.NoError(t, err)
+	e.notifier.calls = nil // reset so reply tests assert cleanly
+	return tk
+}
+
+func TestGet_CreatorAndHandlerCanView(t *testing.T) {
+	e := newEnv(t)
+	tk := mustCreate(t, e)
+
+	got, err := e.svc.Get(e.studentCtx(), tk.ID)
+	require.NoError(t, err)
+	require.Len(t, got.Messages, 1)
+
+	_, err = e.svc.Get(e.teacherCtx(), tk.ID)
+	require.NoError(t, err)
+
+	_, err = e.svc.Get(e.outsiderCtx(), tk.ID)
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+func TestGet_TeacherWithoutManagePermForbidden(t *testing.T) {
+	e := newEnv(t)
+	tk := mustCreate(t, e)
+	// Same user as the class teacher but WITHOUT tickets:manage.
+	ctx := domain.WithCaller(context.Background(), domain.Caller{
+		UserID: e.teacher, OrgID: &e.orgID,
+		Permissions: []string{string(domain.PermTicketsView)},
+	})
+	_, err := e.svc.Get(ctx, tk.ID)
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+func TestList_ScopedToCreatorAndOwnedClasses(t *testing.T) {
+	e := newEnv(t)
+	tk := mustCreate(t, e)
+
+	// Student sees own ticket.
+	got, total, err := e.svc.List(e.studentCtx(), domain.ListTicketsQuery{})
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), total)
+	assert.Equal(t, tk.ID, got[0].ID)
+
+	// Teacher (class owner) sees it too.
+	_, total, err = e.svc.List(e.teacherCtx(), domain.ListTicketsQuery{})
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), total)
+
+	// Outsider sees nothing.
+	_, total, err = e.svc.List(e.outsiderCtx(), domain.ListTicketsQuery{})
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), total)
+}
+
+func TestAddMessage_StatusTransitionsAndNotify(t *testing.T) {
+	e := newEnv(t)
+	tk := mustCreate(t, e)
+
+	// Handler reply -> answered, notifies creator.
+	_, err := e.svc.AddMessage(e.teacherCtx(), tk.ID, domain.AddTicketMessageDTO{Body: "Checked, grade stands."})
+	require.NoError(t, err)
+	got, _ := fakeTicketRepo{e.store}.FindByID(context.Background(), tk.ID)
+	assert.Equal(t, domain.TicketStatusAnswered, got.Status)
+	require.Len(t, e.notifier.calls, 1)
+	assert.Equal(t, "replied", e.notifier.calls[0].kind)
+	assert.Equal(t, e.student, e.notifier.calls[0].recipient)
+
+	// Creator reply -> back to open, notifies teacher.
+	_, err = e.svc.AddMessage(e.studentCtx(), tk.ID, domain.AddTicketMessageDTO{Body: "But question 3 was ambiguous."})
+	require.NoError(t, err)
+	got, _ = fakeTicketRepo{e.store}.FindByID(context.Background(), tk.ID)
+	assert.Equal(t, domain.TicketStatusOpen, got.Status)
+	require.Len(t, e.notifier.calls, 2)
+	assert.Equal(t, e.teacher, e.notifier.calls[1].recipient)
+}
+
+func TestAddMessage_OutsiderForbidden(t *testing.T) {
+	e := newEnv(t)
+	tk := mustCreate(t, e)
+	_, err := e.svc.AddMessage(e.outsiderCtx(), tk.ID, domain.AddTicketMessageDTO{Body: "hi"})
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+func TestClose_ThenReadOnly(t *testing.T) {
+	e := newEnv(t)
+	tk := mustCreate(t, e)
+
+	closed, err := e.svc.Close(e.teacherCtx(), tk.ID)
+	require.NoError(t, err)
+	assert.Equal(t, domain.TicketStatusClosed, closed.Status)
+	require.NotNil(t, closed.ClosedBy)
+	assert.Equal(t, e.teacher, *closed.ClosedBy)
+
+	// Closed = read-only.
+	_, err = e.svc.AddMessage(e.studentCtx(), tk.ID, domain.AddTicketMessageDTO{Body: "one more thing"})
+	var verr *domain.ValidationError
+	assert.ErrorAs(t, err, &verr)
+
+	// No double close.
+	_, err = e.svc.Close(e.studentCtx(), tk.ID)
+	assert.ErrorAs(t, err, &verr)
+}
+
+func TestClose_ByCreator(t *testing.T) {
+	e := newEnv(t)
+	tk := mustCreate(t, e)
+	closed, err := e.svc.Close(e.studentCtx(), tk.ID)
+	require.NoError(t, err)
+	assert.Equal(t, domain.TicketStatusClosed, closed.Status)
+}
+
+func TestUnenrolledCreatorKeepsAccess(t *testing.T) {
+	e := newEnv(t)
+	tk := mustCreate(t, e)
+	// Hard-remove enrollment (mirrors ClassMember hard delete).
+	e.store.mu.Lock()
+	delete(e.store.members[e.classID], e.student)
+	e.store.mu.Unlock()
+
+	_, err := e.svc.Get(e.studentCtx(), tk.ID)
+	require.NoError(t, err)
+	_, err = e.svc.AddMessage(e.studentCtx(), tk.ID, domain.AddTicketMessageDTO{Body: "still here"})
+	require.NoError(t, err)
+}

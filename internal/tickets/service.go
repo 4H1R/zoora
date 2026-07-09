@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -237,18 +238,123 @@ func (s *service) Create(ctx context.Context, dto domain.CreateTicketDTO) (*doma
 	return t, nil
 }
 
+// loadForAccess fetches the ticket + its class and enforces the view tier:
+// creator, handler (class teacher with tickets:manage), or platform admin.
+func (s *service) loadForAccess(ctx context.Context, caller domain.Caller, id uuid.UUID) (*domain.Ticket, *domain.Class, error) {
+	t, err := s.tickets.FindByID(ctx, id)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !caller.IsAdmin && t.OrganizationID != *caller.OrgID {
+		return nil, nil, domain.ErrForbidden
+	}
+	class, err := s.classes.FindByID(ctx, t.ClassID)
+	if err != nil {
+		return nil, nil, err
+	}
+	if t.UserID != caller.UserID && !isHandler(caller, class) {
+		return nil, nil, domain.ErrForbidden
+	}
+	return t, class, nil
+}
+
 func (s *service) Get(ctx context.Context, id uuid.UUID) (*domain.Ticket, error) {
-	return nil, domain.ErrNotFound // implemented in Task 5
+	caller, err := s.caller(ctx)
+	if err != nil {
+		return nil, err
+	}
+	t, _, err := s.loadForAccess(ctx, caller, id)
+	if err != nil {
+		return nil, err
+	}
+	msgs, err := s.messages.ListByTicket(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	t.Messages = msgs
+	return t, nil
 }
 
 func (s *service) List(ctx context.Context, q domain.ListTicketsQuery) ([]domain.Ticket, int64, error) {
-	return nil, 0, domain.ErrNotFound // implemented in Task 5
+	caller, err := s.caller(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	scope := domain.TicketListScope{OrganizationID: caller.OrgID, UserID: &caller.UserID}
+	if caller.IsAdmin {
+		scope.UserID = nil // platform admin: every ticket in the org
+	}
+	return s.tickets.List(ctx, scope, q)
 }
 
 func (s *service) AddMessage(ctx context.Context, ticketID uuid.UUID, dto domain.AddTicketMessageDTO) (*domain.TicketMessage, error) {
-	return nil, domain.ErrNotFound // implemented in Task 5
+	caller, err := s.caller(ctx)
+	if err != nil {
+		return nil, err
+	}
+	t, class, err := s.loadForAccess(ctx, caller, ticketID)
+	if err != nil {
+		return nil, err
+	}
+	if t.Status == domain.TicketStatusClosed {
+		return nil, domain.NewValidationError(map[string]string{"ticket": "ticket is closed"})
+	}
+	if err := s.validateMedia(ctx, caller, t.ClassID, dto.MediaIDs); err != nil {
+		return nil, err
+	}
+
+	msg := &domain.TicketMessage{
+		TicketID: ticketID,
+		UserID:   caller.UserID,
+		Body:     dto.Body,
+		MediaIDs: marshalMediaIDs(dto.MediaIDs),
+	}
+	if err := s.messages.Create(ctx, msg); err != nil {
+		return nil, err
+	}
+
+	// Status derives from who spoke last: creator reply re-opens, handler
+	// reply marks answered. (A creator who is also the teacher counts as
+	// creator — their ticket stays open for a real counterparty reply.)
+	isCreator := t.UserID == caller.UserID
+	newStatus := domain.TicketStatusAnswered
+	if isCreator {
+		newStatus = domain.TicketStatusOpen
+	}
+	if err := s.tickets.SetStatus(ctx, ticketID, newStatus, nil, nil); err != nil {
+		return nil, err
+	}
+
+	recipient := t.UserID // handler replied -> notify creator
+	if isCreator {
+		recipient = class.UserID // creator replied -> notify teacher
+	}
+	if s.notif != nil && recipient != caller.UserID {
+		if nerr := s.notif.TicketReplied(ctx, t, msg, recipient); nerr != nil {
+			s.logger.Error("tickets.AddMessage notify", "ticket_id", ticketID, "error", nerr)
+		}
+	}
+	return msg, nil
 }
 
 func (s *service) Close(ctx context.Context, ticketID uuid.UUID) (*domain.Ticket, error) {
-	return nil, domain.ErrNotFound // implemented in Task 5
+	caller, err := s.caller(ctx)
+	if err != nil {
+		return nil, err
+	}
+	t, _, err := s.loadForAccess(ctx, caller, ticketID)
+	if err != nil {
+		return nil, err
+	}
+	if t.Status == domain.TicketStatusClosed {
+		return nil, domain.NewValidationError(map[string]string{"ticket": "ticket is already closed"})
+	}
+	now := time.Now()
+	if err := s.tickets.SetStatus(ctx, ticketID, domain.TicketStatusClosed, &caller.UserID, &now); err != nil {
+		return nil, err
+	}
+	t.Status = domain.TicketStatusClosed
+	t.ClosedBy = &caller.UserID
+	t.ClosedAt = &now
+	return t, nil
 }
