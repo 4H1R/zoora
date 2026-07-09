@@ -1,6 +1,6 @@
 import { useParams } from "@tanstack/react-router"
 import { MessagesSquareIcon, SearchIcon, SearchXIcon, SquarePenIcon } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useAccess } from "react-access-engine"
 import { useTranslation } from "react-i18next"
 
@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 import { ConversationItem } from "./conversation-item"
 import { ConversationListSkeleton } from "./conversation-list.skeleton"
 import { directPartnerId } from "./lib/presence"
+import { SearchDialog } from "./search-dialog"
 import { useConversations } from "./use-conversations"
 import { usePresence } from "./use-presence"
 
@@ -38,6 +39,20 @@ export function ConversationSidebar() {
   const { user } = useAccess()
   const { data: conversations, isLoading } = useConversations()
   const [query, setQuery] = useState("")
+  const [searchOpen, setSearchOpen] = useState(false)
+
+  // Cmd/Ctrl+K opens the org-wide search palette. Cmd+B is taken by the app
+  // sidebar toggle; K is free, so there's no collision.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key.toLowerCase() === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        setSearchOpen((prev) => !prev)
+      }
+    }
+    document.addEventListener("keydown", onKeyDown)
+    return () => document.removeEventListener("keydown", onKeyDown)
+  }, [])
 
   const params = useParams({ strict: false }) as { conversationId?: string }
   const activeId = params.conversationId
@@ -57,16 +72,29 @@ export function ConversationSidebar() {
     <div className="flex h-full min-h-0 w-full flex-col">
       <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-3">
         <h2 className="text-base font-semibold tracking-tight">{t("conversations.sidebar.title")}</h2>
-        {/* Placeholder — the create dialog lands in a later phase. */}
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label={t("conversations.sidebar.newConversation")}
-          title={t("conversations.sidebar.newConversation")}
-        >
-          <SquarePenIcon />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t("conversations.search.trigger")}
+            title={t("conversations.search.trigger")}
+            onClick={() => setSearchOpen(true)}
+          >
+            <SearchIcon />
+          </Button>
+          {/* Placeholder — the create dialog lands in a later phase. */}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t("conversations.sidebar.newConversation")}
+            title={t("conversations.sidebar.newConversation")}
+          >
+            <SquarePenIcon />
+          </Button>
+        </div>
       </div>
+
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
 
       <div className="px-3 pb-2">
         <div className="relative">

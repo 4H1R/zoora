@@ -3096,6 +3096,27 @@
     "list": {
       "noMessages": "No messages yet"
     },
+    "search": {
+      "title": "Search chat",
+      "trigger": "Search",
+      "placeholder": "Search conversations and messages…",
+      "hint": "Type at least {{count}} characters to search.",
+      "empty": "No results for “{{query}}”.",
+      "unknownConversation": "Conversation",
+      "groups": {
+        "conversations": "Conversations",
+        "messages": "Messages"
+      },
+      "inThread": {
+        "open": "Search in conversation",
+        "placeholder": "Search this conversation…",
+        "count": "{{current}} of {{total}}",
+        "empty": "No matches",
+        "previous": "Previous match",
+        "next": "Next match",
+        "close": "Close search"
+      }
+    },
     "detail": {
       "empty": {
         "title": "Select a conversation",

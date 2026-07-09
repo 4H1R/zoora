@@ -3096,6 +3096,27 @@
     "list": {
       "noMessages": "هنوز پیامی نیست"
     },
+    "search": {
+      "title": "جستجوی گفتگو",
+      "trigger": "جستجو",
+      "placeholder": "جستجوی گفتگوها و پیام‌ها…",
+      "hint": "برای جستجو حداقل {{count}} نویسه وارد کنید.",
+      "empty": "نتیجه‌ای برای «{{query}}» یافت نشد.",
+      "unknownConversation": "گفتگو",
+      "groups": {
+        "conversations": "گفتگوها",
+        "messages": "پیام‌ها"
+      },
+      "inThread": {
+        "open": "جستجو در گفتگو",
+        "placeholder": "جستجو در این گفتگو…",
+        "count": "{{current}} از {{total}}",
+        "empty": "موردی یافت نشد",
+        "previous": "مورد قبلی",
+        "next": "مورد بعدی",
+        "close": "بستن جستجو"
+      }
+    },
     "detail": {
       "empty": {
         "title": "یک گفتگو را انتخاب کنید",

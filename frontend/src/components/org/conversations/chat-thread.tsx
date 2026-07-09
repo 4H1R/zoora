@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils"
 import { useChatUi } from "@/stores/chat-ui"
 
 import { ChatThreadSkeleton } from "./chat-thread.skeleton"
+import { InConversationSearch } from "./in-conversation-search"
 import { JumpToMessageProvider } from "./jump-context"
 import { conversationTint, initials } from "./lib/avatar"
 import { findGroupIndex, groupMessages } from "./lib/messages"
@@ -204,8 +205,10 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
             <p className="text-muted-foreground truncate text-xs leading-tight">{subtitle}</p>
           </div>
 
-          {/* Phase later: presence indicator + thread actions mount at the end. */}
-          <div className="ms-auto flex items-center gap-1" />
+          {/* Thread actions mount at the end; in-thread search is the first. */}
+          <div className="ms-auto flex items-center gap-1">
+            <InConversationSearch convId={convId} />
+          </div>
         </header>
 
         {/* Pinned strip: sits between the header and the list; self-hides when empty. */}
