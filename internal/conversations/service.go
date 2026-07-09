@@ -624,8 +624,14 @@ func (s *service) afterSend(ctx context.Context, conv *domain.Conversation, msg 
 				"content":         msg.Content,
 				"created_at":      msg.CreatedAt,
 			}
+			// Distinct event type from the room's "new_message": a client viewing
+			// this conversation receives BOTH the room event (full payload) and
+			// this per-user firehose (compact payload) for the same message id.
+			// Sharing the type would let an id-dedup drop the full event and keep
+			// the compact one, rendering a message with a missing sender/reply/
+			// media. "conversation_bump" keeps the firehose a sidebar-only signal.
 			for _, uid := range unmutedRecipients(members, caller.UserID, time.Now()) {
-				s.rt.ToUser(ctx, uid, "new_message", note)
+				s.rt.ToUser(ctx, uid, "conversation_bump", note)
 			}
 		}
 	}

@@ -1354,8 +1354,10 @@ func TestSendMessage_MutedMember_SkippedByNotifier(t *testing.T) {
 
 // TestAfterSend_FansOutPerUserNewMessage covers the two-tier realtime fanout:
 // SendMessage must broadcast "new_message" once to the conversation room AND
-// once per non-sender member to that member's per-user channel, so a
-// client's sidebar can update without having joined the room.
+// a DISTINCT "conversation_bump" once per non-sender member to that member's
+// per-user channel (same message id in both), so a client's sidebar can update
+// without having joined the room while never colliding the compact firehose
+// payload with the room's full message event.
 func TestAfterSend_FansOutPerUserNewMessage(t *testing.T) {
 	orgA, userA, memberB, memberC := uuid.New(), uuid.New(), uuid.New(), uuid.New()
 	svc, _, rt := newServiceWithBroadcaster(t)
@@ -1376,26 +1378,28 @@ func TestAfterSend_FansOutPerUserNewMessage(t *testing.T) {
 
 	var convCalls, userCalls []broadcastCall
 	for _, c := range rt.calls {
-		if c.eventType != "new_message" {
-			continue
-		}
-		switch c.kind {
-		case "conversation":
+		switch {
+		case c.kind == "conversation" && c.eventType == "new_message":
 			convCalls = append(convCalls, c)
-		case "user":
+		case c.kind == "user" && c.eventType == "conversation_bump":
 			userCalls = append(userCalls, c)
+		case c.kind == "user" && c.eventType == "new_message":
+			t.Fatalf("per-user firehose must not use the room event type new_message")
 		}
 	}
 	require.Len(t, convCalls, 1, "exactly one room-level new_message broadcast")
 	assert.Equal(t, conv.ID, convCalls[0].target)
+	roomPayload, ok := convCalls[0].data.(map[string]any)
+	require.True(t, ok, "room payload must be a map")
+	assert.Equal(t, msg.ID.String(), roomPayload["id"], "room event carries the message id")
 
-	require.Len(t, userCalls, 2, "one per-user new_message per non-sender member")
+	require.Len(t, userCalls, 2, "one per-user conversation_bump per non-sender member")
 	targets := map[uuid.UUID]bool{}
 	for _, c := range userCalls {
 		targets[c.target] = true
 		payload, ok := c.data.(map[string]any)
 		require.True(t, ok, "per-user payload must be a map")
-		assert.Equal(t, msg.ID, payload["id"], "per-user payload must carry the same message id as the room event")
+		assert.Equal(t, msg.ID, payload["id"], "per-user bump must carry the same message id as the room event")
 	}
 	assert.True(t, targets[memberB])
 	assert.True(t, targets[memberC])
@@ -1404,7 +1408,7 @@ func TestAfterSend_FansOutPerUserNewMessage(t *testing.T) {
 
 // TestAfterSend_PerUserFanout_SkipsMutedMember mirrors the notifier's
 // mute-gating: a member who muted the conversation must not receive the
-// per-user new_message fanout either.
+// per-user conversation_bump fanout either.
 func TestAfterSend_PerUserFanout_SkipsMutedMember(t *testing.T) {
 	orgA, userA, memberB, memberC := uuid.New(), uuid.New(), uuid.New(), uuid.New()
 	svc, _, rt := newServiceWithBroadcaster(t)
@@ -1428,7 +1432,7 @@ func TestAfterSend_PerUserFanout_SkipsMutedMember(t *testing.T) {
 	defer rt.mu.Unlock()
 	targets := map[uuid.UUID]bool{}
 	for _, c := range rt.calls {
-		if c.kind == "user" && c.eventType == "new_message" {
+		if c.kind == "user" && c.eventType == "conversation_bump" {
 			targets[c.target] = true
 		}
 	}
