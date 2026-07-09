@@ -20,6 +20,7 @@ import { conversationTint, initials } from "./lib/avatar"
 import { findGroupIndex, groupMessages } from "./lib/messages"
 import { MessageInput } from "./message-input"
 import { MessageList } from "./message-list"
+import { PinnedBar } from "./pinned-bar"
 import { useConversations } from "./use-conversations"
 import { useMarkRead } from "./use-mark-read"
 import { useMessages } from "./use-messages"
@@ -163,6 +164,9 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
           {/* Phase later: presence indicator + thread actions mount at the end. */}
           <div className="ms-auto flex items-center gap-1" />
         </header>
+
+        {/* Pinned strip: sits between the header and the list; self-hides when empty. */}
+        <PinnedBar convId={convId} />
 
         {/* Message region fills the remaining height. */}
         <div className="relative flex min-h-0 flex-1 flex-col">

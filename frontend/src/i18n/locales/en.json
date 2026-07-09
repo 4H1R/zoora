@@ -3110,10 +3110,18 @@
       "edit": "Edit",
       "delete": "Delete",
       "retry": "Retry",
+      "pin": "Pin",
+      "unpin": "Unpin",
       "deleteConfirm": {
         "title": "Delete message?",
         "description": "This message will be permanently deleted. This action cannot be undone."
       }
+    },
+    "pinned": {
+      "count_one": "{{count}} pinned message",
+      "count_other": "{{count}} pinned messages",
+      "jump": "Jump to pinned message",
+      "attachment": "Attachment"
     },
     "reactions": {
       "add": "Add reaction",

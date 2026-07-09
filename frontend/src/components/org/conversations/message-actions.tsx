@@ -2,7 +2,7 @@ import type { ChatMessage } from "./lib/messages"
 import type { InfiniteData } from "@tanstack/react-query"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { PencilIcon, ReplyIcon, Trash2Icon } from "lucide-react"
+import { PencilIcon, PinIcon, PinOffIcon, ReplyIcon, Trash2Icon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
@@ -24,6 +24,7 @@ import { useChatUi } from "@/stores/chat-ui"
 import { removeMessage } from "./lib/optimistic"
 import { chatKeys } from "./lib/query-keys"
 import { ReactionPicker } from "./reaction-picker"
+import { usePinActions } from "./use-pins"
 import { useToggleReaction } from "./use-toggle-reaction"
 
 type MessagesCache = InfiniteData<ChatMessage[]>
@@ -50,6 +51,7 @@ export function MessageActions({ message, isOwn, convId, className }: MessageAct
   const setEditing = useChatUi((s) => s.setEditing)
   const deleteMutation = useDeleteConversationsMessagesMessageId()
   const { toggle } = useToggleReaction(convId)
+  const { pin, unpin } = usePinActions(convId)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   const messageId = message.id ?? ""
@@ -114,7 +116,17 @@ export function MessageActions({ message, isOwn, convId, className }: MessageAct
         </>
       )}
 
-      {/* Pin action mounts here in a later phase (a small "more" menu). */}
+      {/* Pin / unpin — offered on every message; backend enforces who may pin. */}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        className="text-muted-foreground hover:text-foreground size-7 rounded-full"
+        aria-label={message.is_pinned ? t("conversations.actions.unpin") : t("conversations.actions.pin")}
+        onClick={() => (message.is_pinned ? unpin(messageId) : pin(messageId))}
+      >
+        {message.is_pinned ? <PinOffIcon /> : <PinIcon />}
+      </Button>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
