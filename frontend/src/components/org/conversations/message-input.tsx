@@ -7,6 +7,7 @@ import { EmojiPicker } from "frimousse"
 import { CheckIcon, PaperclipIcon, PencilIcon, SendHorizontalIcon, SmileIcon, XIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 import { useThrottledCallback } from "use-debounce"
 
 import { useGetConversationsIdMembers, usePatchConversationsMessagesMessageId } from "@/api/conversations/conversations"
@@ -230,10 +231,20 @@ export function MessageInput({ convId }: MessageInputProps) {
     setEditing(null)
   }
 
-  // Stage files, capping the combined set at the per-message media limit.
+  // Stage files, capping the combined set at the per-message media limit. When
+  // the cap truncates the selection, surface it so the excess isn't dropped
+  // silently.
   function addFiles(incoming: File[]) {
     if (incoming.length === 0) return
-    setFiles((prev) => capFiles([...prev, ...incoming]))
+    const combined = [...files, ...incoming]
+    const capped = capFiles(combined)
+    const dropped = combined.length - capped.length
+    if (dropped > 0) {
+      toast.warning(
+        t("conversations.attachments.capExceeded", { max: MAX_MEDIA_PER_MESSAGE, count: dropped })
+      )
+    }
+    setFiles(capped)
   }
 
   function removeFile(index: number) {
