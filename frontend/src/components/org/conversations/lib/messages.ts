@@ -149,6 +149,20 @@ export function findGroupIndex(groups: Group[], messageId: string): number {
 }
 
 /**
+ * Newest message id that is safe to acknowledge as read: the last (newest, since
+ * the list is ASCENDING) message that is NOT an unconfirmed optimistic bubble
+ * (`_status` set) and carries a real id. Returns null when the list is empty or
+ * every message is still optimistic — nothing server-known to mark read.
+ */
+export function newestReadableId(messages: ChatMessage[]): string | null {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i]
+    if (m._status === undefined && m.id) return m.id
+  }
+  return null
+}
+
+/**
  * Merge an incoming (server-confirmed) message into an existing ASCENDING list.
  * If the id already exists, replace it in place and clear `_status`; otherwise
  * append. Always returns a new array.

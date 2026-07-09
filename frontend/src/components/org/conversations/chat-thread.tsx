@@ -17,6 +17,7 @@ import { conversationTint, initials } from "./lib/avatar"
 import { findGroupIndex, groupMessages } from "./lib/messages"
 import { MessageList } from "./message-list"
 import { useConversations } from "./use-conversations"
+import { useMarkRead } from "./use-mark-read"
 import { useMessages } from "./use-messages"
 
 // How long a jumped-to bubble keeps its highlight ring before it fades out.
@@ -62,6 +63,8 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
     isFetchingPreviousPage,
     isLoading,
   } = useMessages(convId, aroundMessageId)
+
+  useMarkRead(convId, messages, atBottom)
 
   // Scroll the virtual list to the group holding `id` and flash the bubble. No-op
   // if the message is not currently loaded (caller decides the fallback).

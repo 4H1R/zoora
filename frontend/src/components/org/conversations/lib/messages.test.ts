@@ -5,6 +5,7 @@ import {
   deriveCursors,
   findGroupIndex,
   groupMessages,
+  newestReadableId,
   nextPageParam,
   prevPageParam,
   reconcileOptimistic,
@@ -185,6 +186,31 @@ describe("findGroupIndex", () => {
 
   it("returns -1 for empty groups", () => {
     expect(findGroupIndex([], "a")).toBe(-1)
+  })
+})
+
+describe("newestReadableId", () => {
+  it("returns the newest (last) non-optimistic id", () => {
+    expect(newestReadableId([msg("a", "u1"), msg("b", "u1")])).toBe("b")
+  })
+
+  it("skips trailing optimistic bubbles and returns the newest confirmed id", () => {
+    const messages = [
+      msg("a", "u1"),
+      msg("b", "u1"),
+      msg("c", "u1", 0, { _status: "sending" }),
+      msg("d", "u1", 0, { _status: "failed" }),
+    ]
+    expect(newestReadableId(messages)).toBe("b")
+  })
+
+  it("returns null when every message is optimistic", () => {
+    const messages = [msg("a", "u1", 0, { _status: "sending" }), msg("b", "u1", 0, { _status: "failed" })]
+    expect(newestReadableId(messages)).toBeNull()
+  })
+
+  it("returns null for an empty list", () => {
+    expect(newestReadableId([])).toBeNull()
   })
 })
 
