@@ -548,6 +548,58 @@ func (noopTx) RunInTx(ctx context.Context, fn func(context.Context) error) error
 	return fn(ctx)
 }
 
+// ---- broadcaster ----
+
+// broadcastCall records one realtime broadcaster invocation, tagged by kind
+// ("conversation" for ToConversation, "user" for ToUser) so tests can filter
+// by fanout tier without needing separate slices per method.
+type broadcastCall struct {
+	kind      string
+	target    uuid.UUID
+	eventType string
+	data      any
+}
+
+// fakeBroadcaster stands in for the service's broadcaster (realtime) port,
+// recording every ToConversation/ToUser call for assertion.
+type fakeBroadcaster struct {
+	mu    sync.Mutex
+	calls []broadcastCall
+}
+
+func (f *fakeBroadcaster) ToConversation(_ context.Context, convID uuid.UUID, eventType string, data any) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.calls = append(f.calls, broadcastCall{kind: "conversation", target: convID, eventType: eventType, data: data})
+}
+
+func (f *fakeBroadcaster) ToUser(_ context.Context, userID uuid.UUID, eventType string, data any) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.calls = append(f.calls, broadcastCall{kind: "user", target: userID, eventType: eventType, data: data})
+}
+
+// newServiceWithBroadcaster wires a fakeBroadcaster as the service's rt port
+// for the realtime fanout tests (Task 1.3).
+func newServiceWithBroadcaster(_ *testing.T) (domain.ConversationService, *fakeStore, *fakeBroadcaster) {
+	s := newFakeStore()
+	rt := &fakeBroadcaster{}
+	svc := conversations.NewService(
+		fakeConvRepo{s: s},
+		fakeMemberRepo{s: s},
+		fakeMessageRepo{s: s},
+		fakeReactionRepo{s: s},
+		nil, // mentionRepo: not needed for fanout coverage
+		noopTx{},
+		slog.Default(),
+		rt,
+		nil, // notifier
+		nil, // userLookup
+		nil, // mediaLookup
+	)
+	return svc, s, rt
+}
+
 // ---- test harness ----
 
 func newTestService(_ *testing.T) (domain.ConversationService, *fakeStore) {
@@ -1250,6 +1302,90 @@ func TestSendMessage_MutedMember_SkippedByNotifier(t *testing.T) {
 	require.Len(t, notifSvc.calls, 1)
 	assert.ElementsMatch(t, []uuid.UUID{memberC}, notifSvc.calls[0].Audience.UserIDs,
 		"muted memberB is excluded by the Notifier; sender userA is excluded by recipient resolution")
+}
+
+// TestAfterSend_FansOutPerUserNewMessage covers the two-tier realtime fanout:
+// SendMessage must broadcast "new_message" once to the conversation room AND
+// once per non-sender member to that member's per-user channel, so a
+// client's sidebar can update without having joined the room.
+func TestAfterSend_FansOutPerUserNewMessage(t *testing.T) {
+	orgA, userA, memberB, memberC := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	svc, _, rt := newServiceWithBroadcaster(t)
+	adminCtx := callerCtx(orgA, userA, true)
+
+	conv, err := svc.CreateGroupOrChannel(adminCtx, domain.CreateConversationDTO{
+		Type:      domain.ConversationTypeGroup,
+		Name:      "Engineering",
+		MemberIDs: []string{memberB.String(), memberC.String()},
+	})
+	require.NoError(t, err)
+
+	msg, err := svc.SendMessage(adminCtx, conv.ID, domain.SendConversationMessageDTO{Content: "hi all"})
+	require.NoError(t, err)
+
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
+
+	var convCalls, userCalls []broadcastCall
+	for _, c := range rt.calls {
+		if c.eventType != "new_message" {
+			continue
+		}
+		switch c.kind {
+		case "conversation":
+			convCalls = append(convCalls, c)
+		case "user":
+			userCalls = append(userCalls, c)
+		}
+	}
+	require.Len(t, convCalls, 1, "exactly one room-level new_message broadcast")
+	assert.Equal(t, conv.ID, convCalls[0].target)
+
+	require.Len(t, userCalls, 2, "one per-user new_message per non-sender member")
+	targets := map[uuid.UUID]bool{}
+	for _, c := range userCalls {
+		targets[c.target] = true
+		payload, ok := c.data.(map[string]any)
+		require.True(t, ok, "per-user payload must be a map")
+		assert.Equal(t, msg.ID, payload["id"], "per-user payload must carry the same message id as the room event")
+	}
+	assert.True(t, targets[memberB])
+	assert.True(t, targets[memberC])
+	assert.False(t, targets[userA], "sender must not receive its own per-user fanout")
+}
+
+// TestAfterSend_PerUserFanout_SkipsMutedMember mirrors the notifier's
+// mute-gating: a member who muted the conversation must not receive the
+// per-user new_message fanout either.
+func TestAfterSend_PerUserFanout_SkipsMutedMember(t *testing.T) {
+	orgA, userA, memberB, memberC := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	svc, _, rt := newServiceWithBroadcaster(t)
+	adminCtx := callerCtx(orgA, userA, true)
+
+	conv, err := svc.CreateGroupOrChannel(adminCtx, domain.CreateConversationDTO{
+		Type:      domain.ConversationTypeGroup,
+		Name:      "Engineering",
+		MemberIDs: []string{memberB.String(), memberC.String()},
+	})
+	require.NoError(t, err)
+
+	mutedCtx := callerCtx(orgA, memberB, false)
+	future := time.Now().Add(24 * time.Hour)
+	require.NoError(t, svc.SetMuted(mutedCtx, conv.ID, &future))
+
+	_, err = svc.SendMessage(adminCtx, conv.ID, domain.SendConversationMessageDTO{Content: "hi all"})
+	require.NoError(t, err)
+
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
+	targets := map[uuid.UUID]bool{}
+	for _, c := range rt.calls {
+		if c.kind == "user" && c.eventType == "new_message" {
+			targets[c.target] = true
+		}
+	}
+	assert.True(t, targets[memberC], "unmuted member C must still be fanned out to")
+	assert.False(t, targets[memberB], "muted member B must not be fanned out to")
 }
 
 // TestCreateGroupOrChannel_UserLookup_SkipsCrossOrgMember exercises the

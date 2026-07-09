@@ -601,6 +601,25 @@ func (s *service) SendMessage(ctx context.Context, convID uuid.UUID, dto domain.
 func (s *service) afterSend(ctx context.Context, conv *domain.Conversation, msg *domain.ConversationMessage, dto domain.SendConversationMessageDTO, caller domain.Caller, mentioned []uuid.UUID) {
 	if s.rt != nil {
 		s.rt.ToConversation(ctx, conv.ID, "new_message", messagePayload(msg, caller))
+
+		// Two-tier fanout: also nudge each unmuted non-sender member's
+		// per-user channel with a compact payload, so a client's sidebar can
+		// update without having joined this conversation's WS room.
+		members, merr := s.memberRepo.ListByConversation(ctx, conv.ID)
+		if merr != nil {
+			s.logger.Error("conversations.afterSend member list", "conversation_id", conv.ID, "error", merr)
+		} else {
+			note := map[string]any{
+				"conversation_id": conv.ID,
+				"id":              msg.ID,
+				"sender_id":       msg.SenderID,
+				"content":         msg.Content,
+				"created_at":      msg.CreatedAt,
+			}
+			for _, uid := range unmutedRecipients(members, caller.UserID, time.Now()) {
+				s.rt.ToUser(ctx, uid, "new_message", note)
+			}
+		}
 	}
 	if s.notif == nil {
 		return
