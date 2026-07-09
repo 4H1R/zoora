@@ -89,3 +89,53 @@ func TestRemoveSocket_ReportsRoomsAndLastSocket(t *testing.T) {
 		t.Fatalf("c2 joined no rooms, expected 0 reported, got %d", len(rooms))
 	}
 }
+
+// TestSubscribeHooks_FireOnZeroToOneTransitions verifies the exact-subscribe
+// plumbing: the conversation channel (un)subscribes only on the first-join /
+// last-leave of a conversation, and the user channel only on the first / last
+// socket of a user — regardless of how many extra sockets/joins sit in between.
+func TestSubscribeHooks_FireOnZeroToOneTransitions(t *testing.T) {
+	h := NewHub(fakeMembers{ok: true}, testLogger())
+
+	var convSubs, convUnsubs, userSubs, userUnsubs int
+	h.onFirstJoin = func(uuid.UUID) { convSubs++ }
+	h.onLastLeave = func(uuid.UUID) { convUnsubs++ }
+	h.onUserFirstSocket = func(uuid.UUID) { userSubs++ }
+	h.onUserLastSocket = func(uuid.UUID) { userUnsubs++ }
+
+	userID := uuid.New()
+	convID := uuid.New()
+
+	c1 := &conn{userID: userID, send: make(chan outbound, 4), rooms: map[uuid.UUID]bool{}}
+	c2 := &conn{userID: userID, send: make(chan outbound, 4), rooms: map[uuid.UUID]bool{}}
+
+	h.addSocket(c1) // first socket for user -> userSubs
+	h.addSocket(c2) // same user, second socket -> no hook
+	if userSubs != 1 {
+		t.Fatalf("userSubs = %d, want 1 (only first socket subscribes)", userSubs)
+	}
+
+	h.joinRoom(c1, convID) // first joiner -> convSubs
+	h.joinRoom(c2, convID) // second joiner, same conv -> no hook
+	if convSubs != 1 {
+		t.Fatalf("convSubs = %d, want 1 (only first join subscribes)", convSubs)
+	}
+
+	h.leaveRoom(c1, convID) // conv still has c2 -> no unsub
+	if convUnsubs != 0 {
+		t.Fatalf("convUnsubs = %d, want 0 while a joiner remains", convUnsubs)
+	}
+	h.leaveRoom(c2, convID) // last leaver -> convUnsubs
+	if convUnsubs != 1 {
+		t.Fatalf("convUnsubs = %d, want 1 (last leave unsubscribes)", convUnsubs)
+	}
+
+	h.removeSocket(c1) // user still has c2 -> no user unsub
+	if userUnsubs != 0 {
+		t.Fatalf("userUnsubs = %d, want 0 while a socket remains", userUnsubs)
+	}
+	h.removeSocket(c2) // last socket -> userUnsubs
+	if userUnsubs != 1 {
+		t.Fatalf("userUnsubs = %d, want 1 (last socket unsubscribes)", userUnsubs)
+	}
+}

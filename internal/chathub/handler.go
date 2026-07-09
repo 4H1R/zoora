@@ -41,17 +41,30 @@ var upgrader = websocket.Upgrader{
 // and fans out presence_update events to the rooms the socket had joined.
 func HandleWS(hub *Hub, bridge *Bridge, presence *Presence, jwt *auth.JWTService, logger *slog.Logger) gin.HandlerFunc {
 	hooks := presenceHooks{
-		markOnline: func(userID uuid.UUID) {
-			if err := presence.MarkOnline(context.Background(), userID); err != nil {
-				logger.Warn("chathub presence MarkOnline failed", "user_id", userID, "error", err)
+		onConnect: func(userID uuid.UUID) {
+			if _, err := presence.Connect(context.Background(), userID); err != nil {
+				logger.Warn("chathub presence Connect failed", "user_id", userID, "error", err)
+			}
+		},
+		onHeartbeat: func(userID uuid.UUID) {
+			if err := presence.Refresh(context.Background(), userID); err != nil {
+				logger.Warn("chathub presence Refresh failed", "user_id", userID, "error", err)
 			}
 		},
 		onJoin: func(userID, convID uuid.UUID) {
 			bridge.ToConversation(context.Background(), convID, presenceUpdateEvent, presencePayload(userID, true))
 		},
-		markOffline: func(userID uuid.UUID, rooms []uuid.UUID) {
-			if err := presence.MarkOffline(context.Background(), userID); err != nil {
-				logger.Warn("chathub presence MarkOffline failed", "user_id", userID, "error", err)
+		onDisconnect: func(userID uuid.UUID, rooms []uuid.UUID) {
+			offline, err := presence.Disconnect(context.Background(), userID)
+			if err != nil {
+				logger.Warn("chathub presence Disconnect failed", "user_id", userID, "error", err)
+				return
+			}
+			// Only broadcast offline once the user's LAST socket across all
+			// instances is gone — otherwise a user still connected elsewhere
+			// would be shown offline (the multi-instance bug this fixes).
+			if !offline {
+				return
 			}
 			for _, convID := range rooms {
 				bridge.ToConversation(context.Background(), convID, presenceUpdateEvent, presencePayload(userID, false))

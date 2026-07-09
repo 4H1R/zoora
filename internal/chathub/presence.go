@@ -21,10 +21,19 @@ type Status struct {
 	LastSeen time.Time `json:"last_seen"`
 }
 
-// Presence tracks per-user online/offline state in Redis: a volatile key
-// with a TTL (existence = online, refreshed on every heartbeat) and a
-// durable last-seen timestamp updated whenever the user goes online or
-// offline.
+// Presence tracks per-user online state in Redis as a cross-instance refcount
+// of live sockets. presence:online:<uid> holds the number of sockets currently
+// connected for the user across ALL app instances; the user is online while it
+// is > 0. A TTL is (re)armed on connect and every heartbeat so a crashed
+// instance's sockets cannot pin a user online forever — the count self-heals
+// when the key expires. presence:seen:<uid> is a durable last-seen timestamp,
+// updated when a user comes online and when their last socket goes.
+//
+// This is what makes presence correct across multiple app instances: earlier
+// each instance deleted the online key when ITS last socket for the user
+// dropped, marking a user offline even while they were still connected on
+// another instance. Counting sockets instead of "last socket on this instance"
+// removes that false-offline.
 type Presence struct {
 	rdb *redis.Client
 	ttl time.Duration
@@ -37,34 +46,76 @@ func NewPresence(rdb *redis.Client, ttl time.Duration) *Presence {
 func onlineKey(uid uuid.UUID) string { return presenceOnlinePrefix + uid.String() }
 func seenKey(uid uuid.UUID) string   { return presenceSeenPrefix + uid.String() }
 
-// MarkOnline marks uid online for the configured TTL and records the
-// current time as last-seen.
-func (p *Presence) MarkOnline(ctx context.Context, uid uuid.UUID) error {
+// connectScript increments the socket count, (re)arms the TTL, and stamps
+// last-seen — atomically, so a crash between INCR and EXPIRE can't leave a
+// TTL-less key that pins the user online forever. Returns the new count so the
+// caller can detect the 0->1 online transition.
+var connectScript = redis.NewScript(`
+local n = redis.call('INCR', KEYS[1])
+redis.call('EXPIRE', KEYS[1], ARGV[1])
+redis.call('SET', KEYS[2], ARGV[2])
+return n
+`)
+
+// disconnectScript decrements the socket count. When it reaches zero (or below,
+// e.g. after a partial crash-recovery left the counter stale) it deletes the
+// key and stamps last-seen, returning 0 to signal the user is now fully
+// offline. Otherwise it refreshes the TTL for the still-connected sockets and
+// returns the remaining count.
+var disconnectScript = redis.NewScript(`
+local n = redis.call('DECR', KEYS[1])
+if n <= 0 then
+  redis.call('DEL', KEYS[1])
+  redis.call('SET', KEYS[2], ARGV[1])
+  return 0
+end
+redis.call('EXPIRE', KEYS[1], ARGV[2])
+return n
+`)
+
+func (p *Presence) ttlSeconds() int { return int(p.ttl.Seconds()) }
+
+// Connect registers a newly-opened socket for uid and refreshes the online TTL.
+// It returns true when this was the user's first live socket anywhere (0->1),
+// i.e. they just came online.
+func (p *Presence) Connect(ctx context.Context, uid uuid.UUID) (online bool, err error) {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
-	pipe := p.rdb.Pipeline()
-	pipe.Set(ctx, onlineKey(uid), "1", p.ttl)
-	pipe.Set(ctx, seenKey(uid), now, 0)
-	if _, err := pipe.Exec(ctx); err != nil {
-		return fmt.Errorf("presence.MarkOnline: %w", err)
+	n, err := connectScript.Run(ctx, p.rdb,
+		[]string{onlineKey(uid), seenKey(uid)}, p.ttlSeconds(), now).Int64()
+	if err != nil {
+		return false, fmt.Errorf("presence.Connect: %w", err)
+	}
+	return n == 1, nil
+}
+
+// Refresh extends the online TTL on a heartbeat without changing the socket
+// count. A missing key (already expired) is left absent: Refresh never
+// resurrects a user the count logic considers offline.
+func (p *Presence) Refresh(ctx context.Context, uid uuid.UUID) error {
+	if err := p.rdb.Expire(ctx, onlineKey(uid), p.ttl).Err(); err != nil {
+		return fmt.Errorf("presence.Refresh: %w", err)
 	}
 	return nil
 }
 
-// MarkOffline clears uid's online state and records the current time as
-// last-seen.
-func (p *Presence) MarkOffline(ctx context.Context, uid uuid.UUID) error {
+// Disconnect deregisters a closed socket for uid. It returns true when the
+// user's last socket across all instances has gone — i.e. they are now offline,
+// at which point last-seen is stamped. While other sockets remain it refreshes
+// the TTL and returns false.
+func (p *Presence) Disconnect(ctx context.Context, uid uuid.UUID) (offline bool, err error) {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
-	pipe := p.rdb.Pipeline()
-	pipe.Del(ctx, onlineKey(uid))
-	pipe.Set(ctx, seenKey(uid), now, 0)
-	if _, err := pipe.Exec(ctx); err != nil {
-		return fmt.Errorf("presence.MarkOffline: %w", err)
+	n, err := disconnectScript.Run(ctx, p.rdb,
+		[]string{onlineKey(uid), seenKey(uid)}, now, p.ttlSeconds()).Int64()
+	if err != nil {
+		return false, fmt.Errorf("presence.Disconnect: %w", err)
 	}
-	return nil
+	return n == 0, nil
 }
 
 // Get returns the presence Status for each requested user id. Users with no
-// recorded last-seen timestamp get a zero-value LastSeen.
+// recorded last-seen timestamp get a zero-value LastSeen. A present online key
+// means at least one live socket (the counter is deleted at zero), so its mere
+// existence is the online signal.
 func (p *Presence) Get(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]Status, error) {
 	result := make(map[uuid.UUID]Status, len(ids))
 	if len(ids) == 0 {

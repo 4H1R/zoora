@@ -33,16 +33,20 @@ type clientMsg struct {
 // Redis Bridge are available) so chathub never imports the conversations
 // package. Any hook may be nil (e.g. in tests), in which case it is skipped.
 type presenceHooks struct {
-	// markOnline is called when the socket registers and on every pong, to set
-	// and refresh the user's online TTL.
-	markOnline func(userID uuid.UUID)
+	// onConnect is called once when the socket registers, to count it toward the
+	// user's cross-instance live-socket total (0->1 means they came online).
+	onConnect func(userID uuid.UUID)
+	// onHeartbeat is called on every pong to refresh the user's online TTL
+	// without changing the socket count.
+	onHeartbeat func(userID uuid.UUID)
 	// onJoin is called after a successful room join so the rest of the room
 	// learns this user is present.
 	onJoin func(userID, convID uuid.UUID)
-	// markOffline is called only when the user's LAST socket on this instance
-	// disconnects; rooms are the conversations that socket had joined, so the
-	// caller can publish a presence_update to each.
-	markOffline func(userID uuid.UUID, rooms []uuid.UUID)
+	// onDisconnect is called for EVERY socket close (not just the instance's
+	// last) so the socket is decremented from the cross-instance count; rooms
+	// are the conversations that socket had joined, for offline fan-out when the
+	// count reaches zero.
+	onDisconnect func(userID uuid.UUID, rooms []uuid.UUID)
 }
 
 // serve registers the socket with the hub and runs its pumps until the
@@ -51,8 +55,8 @@ type presenceHooks struct {
 func (h *Hub) serve(ctx context.Context, ws *websocket.Conn, userID uuid.UUID, publishTyping func(convID, uid uuid.UUID), hooks presenceHooks) {
 	c := &conn{userID: userID, send: make(chan outbound, 64), rooms: map[uuid.UUID]bool{}}
 	h.addSocket(c)
-	if hooks.markOnline != nil {
-		hooks.markOnline(userID)
+	if hooks.onConnect != nil {
+		hooks.onConnect(userID)
 	}
 
 	go h.writePump(ws, c)
@@ -61,17 +65,20 @@ func (h *Hub) serve(ctx context.Context, ws *websocket.Conn, userID uuid.UUID, p
 
 func (h *Hub) readPump(ctx context.Context, ws *websocket.Conn, c *conn, publishTyping func(convID, uid uuid.UUID), hooks presenceHooks) {
 	defer func() {
-		rooms, lastSocket := h.removeSocket(c)
-		if lastSocket && hooks.markOffline != nil {
-			hooks.markOffline(c.userID, rooms)
+		// Every socket must decrement the cross-instance count, so fire
+		// onDisconnect regardless of whether this was the instance's last socket
+		// for the user; the presence layer decides when the user is truly offline.
+		rooms, _ := h.removeSocket(c)
+		if hooks.onDisconnect != nil {
+			hooks.onDisconnect(c.userID, rooms)
 		}
 		_ = ws.Close()
 	}()
 	ws.SetReadLimit(maxMessageSize)
 	_ = ws.SetReadDeadline(time.Now().Add(pingPeriod + pongWait))
 	ws.SetPongHandler(func(string) error {
-		if hooks.markOnline != nil {
-			hooks.markOnline(c.userID) // refresh online TTL on heartbeat
+		if hooks.onHeartbeat != nil {
+			hooks.onHeartbeat(c.userID) // refresh online TTL on heartbeat
 		}
 		return ws.SetReadDeadline(time.Now().Add(pingPeriod + pongWait))
 	})

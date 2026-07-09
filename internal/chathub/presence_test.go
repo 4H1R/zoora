@@ -10,20 +10,27 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func TestPresence_MarkOnline_TTL(t *testing.T) {
-	ctx := context.Background()
+func newTestPresence(t *testing.T, ttl time.Duration) (*Presence, *miniredis.Miniredis) {
+	t.Helper()
 	server := miniredis.RunT(t)
 	rdb := redis.NewClient(&redis.Options{Addr: server.Addr()})
 	t.Cleanup(func() { _ = rdb.Close() })
+	return NewPresence(rdb, ttl), server
+}
 
-	ttl := 5 * time.Second
-	p := NewPresence(rdb, ttl)
+func TestPresence_Connect_MarksOnlineWithTTL(t *testing.T) {
+	ctx := context.Background()
+	p, server := newTestPresence(t, 5*time.Second)
 
 	userA := uuid.New()
 	userB := uuid.New()
 
-	if err := p.MarkOnline(ctx, userA); err != nil {
-		t.Fatalf("MarkOnline() error = %v", err)
+	online, err := p.Connect(ctx, userA)
+	if err != nil {
+		t.Fatalf("Connect() error = %v", err)
+	}
+	if !online {
+		t.Fatal("first Connect should report online (0->1)")
 	}
 
 	statuses, err := p.Get(ctx, []uuid.UUID{userA, userB})
@@ -31,62 +38,109 @@ func TestPresence_MarkOnline_TTL(t *testing.T) {
 		t.Fatalf("Get() error = %v", err)
 	}
 	if !statuses[userA].Online {
-		t.Fatalf("userA Online = false, want true")
+		t.Fatal("userA Online = false, want true")
 	}
 	if statuses[userB].Online {
-		t.Fatalf("userB Online = true, want false")
+		t.Fatal("userB Online = true, want false")
 	}
 
-	server.FastForward(ttl + time.Second)
+	server.FastForward(6 * time.Second)
 
-	statuses, err = p.Get(ctx, []uuid.UUID{userA, userB})
+	statuses, err = p.Get(ctx, []uuid.UUID{userA})
 	if err != nil {
 		t.Fatalf("Get() after TTL error = %v", err)
 	}
 	if statuses[userA].Online {
-		t.Fatalf("userA Online = true after TTL expiry, want false")
+		t.Fatal("userA Online = true after TTL expiry, want false")
 	}
 	if statuses[userA].LastSeen.IsZero() {
-		t.Fatalf("userA LastSeen is zero after TTL expiry, want non-zero (seen key should survive)")
+		t.Fatal("userA LastSeen is zero after TTL expiry, want non-zero (seen key survives)")
 	}
 }
 
-func TestPresence_MarkOffline(t *testing.T) {
+// TestPresence_MultiSocket_StaysOnlineUntilLastDisconnect is the core
+// multi-instance fix: a user with two live sockets stays online after one
+// disconnects, and only goes offline when the last socket goes. Two Connects
+// stand in for the same user connected to two app instances sharing Redis.
+func TestPresence_MultiSocket_StaysOnlineUntilLastDisconnect(t *testing.T) {
 	ctx := context.Background()
-	server := miniredis.RunT(t)
-	rdb := redis.NewClient(&redis.Options{Addr: server.Addr()})
-	t.Cleanup(func() { _ = rdb.Close() })
+	p, _ := newTestPresence(t, 30*time.Second)
+	user := uuid.New()
 
-	p := NewPresence(rdb, 30*time.Second)
-	userA := uuid.New()
-
-	if err := p.MarkOnline(ctx, userA); err != nil {
-		t.Fatalf("MarkOnline() error = %v", err)
+	if online, _ := p.Connect(ctx, user); !online {
+		t.Fatal("first Connect should report online")
+	}
+	if online, _ := p.Connect(ctx, user); online {
+		t.Fatal("second Connect must NOT report a fresh online transition")
 	}
 
-	statuses, err := p.Get(ctx, []uuid.UUID{userA})
+	// First socket drops: user still online on the second.
+	offline, err := p.Disconnect(ctx, user)
 	if err != nil {
-		t.Fatalf("Get() error = %v", err)
+		t.Fatalf("Disconnect() error = %v", err)
 	}
-	firstSeen := statuses[userA].LastSeen
-	if firstSeen.IsZero() {
-		t.Fatalf("LastSeen is zero after MarkOnline, want non-zero")
+	if offline {
+		t.Fatal("Disconnect with a socket remaining must not report offline")
 	}
-
-	server.FastForward(1 * time.Second)
-
-	if err := p.MarkOffline(ctx, userA); err != nil {
-		t.Fatalf("MarkOffline() error = %v", err)
+	statuses, _ := p.Get(ctx, []uuid.UUID{user})
+	if !statuses[user].Online {
+		t.Fatal("user should still be Online while one socket remains")
 	}
 
-	statuses, err = p.Get(ctx, []uuid.UUID{userA})
+	// Last socket drops: now offline.
+	offline, err = p.Disconnect(ctx, user)
 	if err != nil {
-		t.Fatalf("Get() after MarkOffline error = %v", err)
+		t.Fatalf("Disconnect() error = %v", err)
 	}
-	if statuses[userA].Online {
-		t.Fatalf("Online = true after MarkOffline, want false")
+	if !offline {
+		t.Fatal("Disconnect of the last socket must report offline")
 	}
-	if !statuses[userA].LastSeen.After(firstSeen) {
-		t.Fatalf("LastSeen = %v, want after %v (advanced on MarkOffline)", statuses[userA].LastSeen, firstSeen)
+	statuses, _ = p.Get(ctx, []uuid.UUID{user})
+	if statuses[user].Online {
+		t.Fatal("user should be offline after last socket disconnect")
+	}
+	if statuses[user].LastSeen.IsZero() {
+		t.Fatal("LastSeen should be stamped on going offline")
+	}
+}
+
+func TestPresence_Disconnect_BelowZeroSelfHeals(t *testing.T) {
+	ctx := context.Background()
+	p, _ := newTestPresence(t, 30*time.Second)
+	user := uuid.New()
+
+	// Disconnect with no prior Connect (e.g. crash-recovery skew): must report
+	// offline and not leave a negative counter pinning odd state.
+	offline, err := p.Disconnect(ctx, user)
+	if err != nil {
+		t.Fatalf("Disconnect() error = %v", err)
+	}
+	if !offline {
+		t.Fatal("Disconnect below zero should report offline")
+	}
+	statuses, _ := p.Get(ctx, []uuid.UUID{user})
+	if statuses[user].Online {
+		t.Fatal("user should be offline after self-healing disconnect")
+	}
+}
+
+func TestPresence_Refresh_ExtendsTTL(t *testing.T) {
+	ctx := context.Background()
+	p, server := newTestPresence(t, 10*time.Second)
+	user := uuid.New()
+
+	if _, err := p.Connect(ctx, user); err != nil {
+		t.Fatalf("Connect() error = %v", err)
+	}
+
+	server.FastForward(8 * time.Second) // within TTL
+	if err := p.Refresh(ctx, user); err != nil {
+		t.Fatalf("Refresh() error = %v", err)
+	}
+	server.FastForward(8 * time.Second) // would have expired without the refresh
+
+	statuses, _ := p.Get(ctx, []uuid.UUID{user})
+	if !statuses[user].Online {
+		t.Fatal("user should still be online after a heartbeat refresh")
 	}
 }
