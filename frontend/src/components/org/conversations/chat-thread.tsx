@@ -21,6 +21,7 @@ import { findGroupIndex, groupMessages } from "./lib/messages"
 import { MessageInput } from "./message-input"
 import { MessageList } from "./message-list"
 import { PinnedBar } from "./pinned-bar"
+import { TypingIndicator } from "./typing-indicator"
 import { useConversations } from "./use-conversations"
 import { useMarkRead } from "./use-mark-read"
 import { useMessages } from "./use-messages"
@@ -200,6 +201,9 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
             />
           )}
         </div>
+
+        {/* "X is typing…" strip — fixed height so it never bumps the composer. */}
+        <TypingIndicator convId={convId} />
 
         {/* Bottom composer: auto-grow textarea, @mentions, emoji, reply strip. */}
         <MessageInput convId={convId} />

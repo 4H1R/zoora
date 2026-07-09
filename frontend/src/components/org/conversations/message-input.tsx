@@ -7,6 +7,7 @@ import { EmojiPicker } from "frimousse"
 import { CheckIcon, PencilIcon, SendHorizontalIcon, SmileIcon, XIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { useThrottledCallback } from "use-debounce"
 
 import { useGetConversationsIdMembers, usePatchConversationsMessagesMessageId } from "@/api/conversations/conversations"
 import { Button } from "@/components/ui/button"
@@ -14,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils"
 import { useChatUi } from "@/stores/chat-ui"
 
+import { useChatWs } from "./chat-provider"
 import { detectMention, insertAtCaret, insertMention, resolveMentions } from "./lib/mentions"
 import { replaceMessage } from "./lib/optimistic"
 import { chatKeys } from "./lib/query-keys"
@@ -24,6 +26,10 @@ type MessagesCache = InfiniteData<ChatMessage[]>
 
 // Cap the mention autocomplete so a huge channel doesn't render a wall of rows.
 const MAX_MENTION_ROWS = 8
+
+// Leading-edge throttle for outgoing typing signals — at most once per window,
+// fired immediately on the first keystroke of a burst.
+const TYPING_THROTTLE_MS = 3000
 
 interface MessageInputProps {
   convId: string
@@ -42,6 +48,11 @@ export function MessageInput({ convId }: MessageInputProps) {
   const queryClient = useQueryClient()
   const { send } = useSendMessage(convId)
   const editMutation = usePatchConversationsMessagesMessageId()
+  const { typing } = useChatWs()
+
+  // Leading-edge throttle: at most one `typing` frame per TYPING_THROTTLE_MS,
+  // fired on the first non-empty keystroke of a burst.
+  const sendTyping = useThrottledCallback(() => typing(convId), TYPING_THROTTLE_MS, { trailing: false })
 
   const replyTo = useChatUi((s) => s.replyTo)
   const setReplyTo = useChatUi((s) => s.setReplyTo)
@@ -152,6 +163,7 @@ export function MessageInput({ convId }: MessageInputProps) {
     const next = e.target.value
     setValue(next)
     refreshMention(next, e.target.selectionStart)
+    if (next.trim()) sendTyping()
   }
 
   // Caret moved without a value change (click / arrow keys) — re-detect.
