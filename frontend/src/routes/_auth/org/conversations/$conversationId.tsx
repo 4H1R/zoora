@@ -36,5 +36,8 @@ function ConversationDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId])
 
-  return <ChatThread convId={conversationId} aroundMessageId={msg} />
+  // Key on conversation + `?msg` so a jump to an UNLOADED message (which sets
+  // `?msg`) remounts the thread and re-seeds the infinite query around that id —
+  // the queryKey itself omits `around`, so a prop change alone would not refetch.
+  return <ChatThread key={`${conversationId}:${msg ?? ""}`} convId={conversationId} aroundMessageId={msg} />
 }

@@ -139,6 +139,16 @@ export function groupMessages(msgs: ChatMessage[]): Group[] {
 }
 
 /**
+ * Index of the render GROUP that contains `messageId`, or -1 if no loaded group
+ * holds it. The index is in the SAME space `<Virtuoso>` renders (day dividers
+ * included), so it can be handed straight to `scrollToIndex`. Day dividers carry
+ * no messages, so they never match — only `messages` groups are searched.
+ */
+export function findGroupIndex(groups: Group[], messageId: string): number {
+  return groups.findIndex((g) => g.type === "messages" && g.messages.some((m) => m.id === messageId))
+}
+
+/**
  * Merge an incoming (server-confirmed) message into an existing ASCENDING list.
  * If the id already exists, replace it in place and clear `_status`; otherwise
  * append. Always returns a new array.

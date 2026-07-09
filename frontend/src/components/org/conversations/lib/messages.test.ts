@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   dedupSortMessages,
   deriveCursors,
+  findGroupIndex,
   groupMessages,
   nextPageParam,
   prevPageParam,
@@ -150,6 +151,40 @@ describe("prevPageParam (OLDER / top)", () => {
     const top = page(97, 3) // a,b,c (oldest-position page)
     const bottom = page(100, 3) // d,e,f
     expect(prevPageParam([top, bottom], top, LIMIT)).toEqual({ before: "a" })
+  })
+})
+
+describe("findGroupIndex", () => {
+  it("returns the index of the messages group containing the id (past a leading day divider)", () => {
+    const groups = groupMessages([msg("a", "u1", 0), msg("b", "u2", 60)])
+    // groups: [day, {a}, {b}] — day divider offsets the message groups by one.
+    expect(groups[0].type).toBe("day")
+    expect(findGroupIndex(groups, "a")).toBe(1)
+    expect(findGroupIndex(groups, "b")).toBe(2)
+  })
+
+  it("finds an id nested inside a multi-message group", () => {
+    const groups = groupMessages([msg("a", "u1", 0), msg("b", "u1", 60)])
+    // groups: [day, {a,b}] — both live in the same group at index 1.
+    expect(findGroupIndex(groups, "a")).toBe(1)
+    expect(findGroupIndex(groups, "b")).toBe(1)
+  })
+
+  it("respects day-divider offsets across days", () => {
+    const day2 = 26 * 60 * 60 // +26h -> next calendar day
+    const groups = groupMessages([msg("a", "u1", 0), msg("b", "u1", day2)])
+    // groups: [day1, {a}, day2, {b}]
+    expect(findGroupIndex(groups, "a")).toBe(1)
+    expect(findGroupIndex(groups, "b")).toBe(3)
+  })
+
+  it("returns -1 when the message is not loaded", () => {
+    const groups = groupMessages([msg("a", "u1", 0)])
+    expect(findGroupIndex(groups, "zzz")).toBe(-1)
+  })
+
+  it("returns -1 for empty groups", () => {
+    expect(findGroupIndex([], "a")).toBe(-1)
   })
 })
 

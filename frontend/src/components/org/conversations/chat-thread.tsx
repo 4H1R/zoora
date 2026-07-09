@@ -1,6 +1,6 @@
-import { Link } from "@tanstack/react-router"
+import { Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeftIcon, MessagesSquareIcon } from "lucide-react"
-import { useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useAccess } from "react-access-engine"
 import { useTranslation } from "react-i18next"
 import type { VirtuosoHandle } from "react-virtuoso"
@@ -8,13 +8,19 @@ import type { VirtuosoHandle } from "react-virtuoso"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
+import { useChatUi } from "@/stores/chat-ui"
 import { cn } from "@/lib/utils"
 
 import { ChatThreadSkeleton } from "./chat-thread.skeleton"
+import { JumpToMessageProvider } from "./jump-context"
 import { conversationTint, initials } from "./lib/avatar"
+import { findGroupIndex, groupMessages } from "./lib/messages"
 import { MessageList } from "./message-list"
 import { useConversations } from "./use-conversations"
 import { useMessages } from "./use-messages"
+
+// How long a jumped-to bubble keeps its highlight ring before it fades out.
+const HIGHLIGHT_MS = 1500
 
 interface ChatThreadProps {
   convId: string
@@ -31,10 +37,21 @@ interface ChatThreadProps {
 export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
   const { t } = useTranslation()
   const { user } = useAccess()
+  const navigate = useNavigate()
   const { data: conversations } = useConversations()
   const conversation = conversations?.find((c) => c.id === convId)
 
   const virtuosoRef = useRef<VirtuosoHandle>(null)
+  const scrollToMessageId = useChatUi((s) => s.scrollToMessageId)
+  const requestScrollTo = useChatUi((s) => s.requestScrollTo)
+
+  // Pinned to the bottom? Lifted from the list so the mark-read hook can gate
+  // read receipts on it. Starts true so an initial-load-at-bottom marks read.
+  const [atBottom, setAtBottom] = useState(true)
+  // Transient jump flash target; cleared by a timeout after HIGHLIGHT_MS.
+  const [highlightId, setHighlightId] = useState<string | null>(null)
+  // Whether the deep-link (`?msg`) initial jump has already fired for this mount.
+  const didInitialJumpRef = useRef(false)
 
   const {
     messages,
@@ -46,6 +63,55 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
     isLoading,
   } = useMessages(convId, aroundMessageId)
 
+  // Scroll the virtual list to the group holding `id` and flash the bubble. No-op
+  // if the message is not currently loaded (caller decides the fallback).
+  function scrollToLoaded(id: string): boolean {
+    const index = findGroupIndex(groupMessages(messages), id)
+    if (index < 0) return false
+    virtuosoRef.current?.scrollToIndex({ index, align: "center", behavior: "smooth" })
+    setHighlightId(id)
+    return true
+  }
+
+  // Reply-preview / mention / pin jump entry point (wired via context for Phase
+  // 6). Loaded target → smooth in-thread scroll; unloaded → set `?msg` so the
+  // thread re-seeds a window around it (see the deep-link effect below).
+  function jumpToMessage(id: string) {
+    if (messages.some((m) => m.id === id)) {
+      requestScrollTo(id)
+    } else {
+      navigate({ to: ".", search: (prev) => ({ ...prev, msg: id }) })
+    }
+  }
+
+  // React to store-driven jump requests (`requestScrollTo`). If the target isn't
+  // loaded, fall back to re-seeding via `?msg`. Always clears the request.
+  useEffect(() => {
+    if (!scrollToMessageId) return
+    if (!scrollToLoaded(scrollToMessageId)) {
+      navigate({ to: ".", search: (prev) => ({ ...prev, msg: scrollToMessageId }) })
+    }
+    requestScrollTo(null)
+    // scrollToLoaded reads `messages`; re-run when either the request or the
+    // loaded window changes so a just-arrived target still resolves.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scrollToMessageId, messages])
+
+  // Deep-link jump: once the `?msg`-seeded window has loaded the target, center
+  // and flash it exactly once per mount.
+  useEffect(() => {
+    if (!aroundMessageId || didInitialJumpRef.current) return
+    if (scrollToLoaded(aroundMessageId)) didInitialJumpRef.current = true
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aroundMessageId, messages])
+
+  // Fade the highlight ring after a beat.
+  useEffect(() => {
+    if (!highlightId) return
+    const timer = setTimeout(() => setHighlightId(null), HIGHLIGHT_MS)
+    return () => clearTimeout(timer)
+  }, [highlightId])
+
   const name = conversation?.name ?? convId
   const isDirect = conversation?.type === "direct"
   const memberCount = conversation?.members?.length ?? 0
@@ -54,6 +120,7 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
     : t("conversations.thread.members", { count: memberCount })
 
   return (
+    <JumpToMessageProvider value={jumpToMessage}>
     <div className="flex min-h-0 flex-1 flex-col">
       {/* Header: identity + subtitle. Presence + actions land in the end slot. */}
       <header className="flex items-center gap-3 border-b px-4 py-3">
@@ -107,11 +174,15 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
             hasNextPage={hasNextPage}
             fetchNextPage={fetchNextPage}
             virtuosoRef={virtuosoRef}
+            atBottom={atBottom}
+            onAtBottomChange={setAtBottom}
+            highlightId={highlightId}
           />
         )}
       </div>
 
       {/* Phase 6: <MessageInput convId={convId} /> mounts here (bottom composer). */}
     </div>
+    </JumpToMessageProvider>
   )
 }

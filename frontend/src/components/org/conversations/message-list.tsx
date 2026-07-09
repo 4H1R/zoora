@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { Virtuoso, type VirtuosoHandle } from "react-virtuoso"
 
 import { Spinner } from "@/components/ui/spinner"
@@ -25,6 +24,12 @@ interface MessageListProps {
    * pinned / deep-linked message). Owned by the parent thread.
    */
   virtuosoRef: React.Ref<VirtuosoHandle>
+  /** Whether the list is pinned to the bottom. Lifted to the thread so the
+   * mark-read hook can gate receipts on it; also drives `followOutput`. */
+  atBottom: boolean
+  onAtBottomChange: (atBottom: boolean) => void
+  /** Message to flash after a jump (5.3). Matching bubble renders highlighted. */
+  highlightId: string | null
 }
 
 // Extra context handed to Virtuoso's Header slot so it can render the
@@ -62,8 +67,10 @@ export function MessageList({
   hasNextPage,
   fetchNextPage,
   virtuosoRef,
+  atBottom,
+  onAtBottomChange,
+  highlightId,
 }: MessageListProps) {
-  const [atBottom, setAtBottom] = useState(true)
   const groups = groupMessages(messages)
   const showSenderNames = conversationType !== "direct"
 
@@ -85,7 +92,7 @@ export function MessageList({
       }}
       increaseViewportBy={{ top: 600, bottom: 600 }}
       atBottomThreshold={100}
-      atBottomStateChange={setAtBottom}
+      atBottomStateChange={onAtBottomChange}
       components={{ Header: ListHeader }}
       itemContent={(index, group) => {
         if (group.type === "day") {
@@ -100,7 +107,13 @@ export function MessageList({
             group={group}
             isOwn={isOwn}
             showSenderName={showSenderNames && !isOwn}
-            renderBubble={(message) => <MessageBubble message={message} isOwn={isOwn} />}
+            renderBubble={(message) => (
+              <MessageBubble
+                message={message}
+                isOwn={isOwn}
+                isHighlighted={message.id === highlightId}
+              />
+            )}
           />
         )
       }}
