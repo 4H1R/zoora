@@ -19,7 +19,13 @@ export async function enablePush(): Promise<
     messagingSenderId: clientEnv.VITE_FIREBASE_SENDER_ID,
     appId: clientEnv.VITE_FIREBASE_APP_ID,
   })
-  const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js")
+  // Register under a dedicated subpath scope so this SW does NOT share scope "/"
+  // with the workbox PWA service worker. Same scope = one registration slot, so
+  // the two would overwrite each other on every load and each swap fires
+  // workbox's onNeedRefresh → "new version available" toast spam.
+  const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js", {
+    scope: "/firebase-cloud-messaging-push-scope",
+  })
   const token = await getToken(getMessaging(app), {
     vapidKey: clientEnv.VITE_FIREBASE_VAPID_KEY,
     serviceWorkerRegistration: registration,
