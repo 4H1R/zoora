@@ -2,18 +2,29 @@ package organizations_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/organizations"
 )
+
+// fakeEnqueuer records enqueued tasks so cleanup-scheduling can be asserted.
+type fakeEnqueuer struct{ tasks []*asynq.Task }
+
+func (f *fakeEnqueuer) Enqueue(t *asynq.Task, _ ...asynq.Option) (*asynq.TaskInfo, error) {
+	f.tasks = append(f.tasks, t)
+	return &asynq.TaskInfo{}, nil
+}
 
 type orgRepoMock struct{ mock.Mock }
 
@@ -88,11 +99,44 @@ func (noopSettingsRepo) FindByOrgID(ctx context.Context, orgID uuid.UUID) (*doma
 func (noopSettingsRepo) Update(ctx context.Context, s *domain.OrganizationSettings) error { return nil }
 
 func newOrganizationService(repo *orgRepoMock) domain.OrganizationService {
-	return organizations.NewService(repo, nil, noopSettingsRepo{}, nil, slog.Default())
+	return organizations.NewService(repo, nil, noopSettingsRepo{}, nil, nil, slog.Default())
 }
 
 func orgCaller(userID uuid.UUID, orgID *uuid.UUID, isAdmin bool) context.Context {
 	return domain.WithCaller(context.Background(), domain.Caller{UserID: userID, OrgID: orgID, IsAdmin: isAdmin})
+}
+
+func TestAdminHardDelete_EnqueuesStorageCleanup(t *testing.T) {
+	repo := &orgRepoMock{}
+	q := &fakeEnqueuer{}
+	svc := organizations.NewService(repo, nil, noopSettingsRepo{}, nil, q, slog.Default())
+
+	orgID := uuid.New()
+	repo.On("HardDelete", mock.Anything, orgID).Return(nil)
+
+	adminCtx := orgCaller(uuid.New(), nil, true)
+	require.NoError(t, svc.AdminHardDelete(adminCtx, orgID))
+
+	require.Len(t, q.tasks, 1)
+	task := q.tasks[0]
+	assert.Equal(t, domain.TypeOrganizationCleanup, task.Type())
+	var payload domain.OrganizationCleanupPayload
+	require.NoError(t, json.Unmarshal(task.Payload(), &payload))
+	assert.Equal(t, orgID, payload.OrganizationID)
+	repo.AssertExpectations(t)
+}
+
+func TestAdminHardDelete_RepoError_NoCleanupEnqueued(t *testing.T) {
+	repo := &orgRepoMock{}
+	q := &fakeEnqueuer{}
+	svc := organizations.NewService(repo, nil, noopSettingsRepo{}, nil, q, slog.Default())
+
+	orgID := uuid.New()
+	repo.On("HardDelete", mock.Anything, orgID).Return(errors.New("boom"))
+
+	adminCtx := orgCaller(uuid.New(), nil, true)
+	assert.Error(t, svc.AdminHardDelete(adminCtx, orgID))
+	assert.Empty(t, q.tasks)
 }
 
 func orgAdminCtx() context.Context {

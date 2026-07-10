@@ -13,8 +13,6 @@ export interface GithubCom4H1RZooraInternalDomainCreateConversationDTO {
      * @maximum 6
      */
   color_index?: number;
-  /** @maxLength 1000 */
-  description?: string;
   /** @maxItems 500 */
   member_ids?: string[];
   /** @maxLength 255 */

@@ -47,6 +47,14 @@ type Media struct {
 	UpdatedAt        time.Time       `json:"updated_at"`
 }
 
+// OrgStoragePrefix is the S3 key prefix under which every object owned by an
+// organization lives. Deleting an org purges all objects under this prefix in
+// one sweep — the single source of truth for the per-tenant namespace shared
+// with S3Key below.
+func OrgStoragePrefix(orgID uuid.UUID) string {
+	return "orgs/" + orgID.String() + "/"
+}
+
 // S3Key returns the object storage path for this media record. Objects are
 // namespaced per tenant under orgs/{org_id}/ so a single bucket isolates each
 // organization's files by key prefix. Records with no organization (e.g.
@@ -54,7 +62,7 @@ type Media struct {
 func (m Media) S3Key() string {
 	base := m.ModelType + "/" + m.ModelID.String() + "/" + m.CollectionName + "/" + m.FileName
 	if m.OrganizationID != nil {
-		return "orgs/" + m.OrganizationID.String() + "/" + base
+		return OrgStoragePrefix(*m.OrganizationID) + base
 	}
 	return base
 }

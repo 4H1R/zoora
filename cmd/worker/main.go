@@ -181,6 +181,7 @@ func main() {
 	mediaRepo := media.NewRepository(db)
 	mediaService := media.NewService(mediaRepo, storageClient, nil, log)
 	queueServer.HandleFunc(domain.TypeMediaCleanup, media.NewCleanupHandler(mediaService))
+	queueServer.HandleFunc(domain.TypeOrganizationCleanup, organizations.NewCleanupHandler(storageClient))
 
 	retentionSweeper := livesessions.NewRetentionSweeper(livesessions.NewRetentionRepository(db), storageClient, log)
 	queueServer.HandleFunc(domain.TypeRecordingRetentionSweep, livesessions.NewRetentionSweepHandler(retentionSweeper))

@@ -12,6 +12,5 @@ export interface GithubCom4H1RZooraInternalDomainAdminUpdateUserDTO {
   name?: string;
   password?: string;
   role_id?: string;
-  /** @minLength 3 */
   username?: string;
 }

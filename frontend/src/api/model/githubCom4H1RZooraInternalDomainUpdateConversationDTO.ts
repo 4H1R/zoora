@@ -14,8 +14,6 @@ export interface GithubCom4H1RZooraInternalDomainUpdateConversationDTO {
      * @maximum 6
      */
   color_index?: number;
-  /** @maxLength 1000 */
-  description?: string;
   /**
      * @minLength 1
      * @maxLength 255

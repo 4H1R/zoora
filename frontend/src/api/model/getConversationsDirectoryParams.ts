@@ -6,9 +6,9 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface GithubCom4H1RZooraInternalDomainUpdateUserDTO {
-  /** @minLength 2 */
-  name?: string;
-  role_id?: string;
-  username?: string;
-}
+export type GetConversationsDirectoryParams = {
+/**
+ * Substring match on username/name
+ */
+search?: string;
+};

@@ -14,6 +14,5 @@ export interface GithubCom4H1RZooraInternalDomainCreateUserDTO {
   /** @minLength 6 */
   password: string;
   role_id?: string;
-  /** @minLength 3 */
   username: string;
 }

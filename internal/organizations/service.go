@@ -6,22 +6,30 @@ import (
 	"log/slog"
 
 	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/platform/cache"
 )
 
+// enqueuer is the async task port used to schedule background cleanup after an
+// admin hard-deletes an org. Nil = skip enqueue (e.g. unit tests).
+type enqueuer interface {
+	Enqueue(task *asynq.Task, opts ...asynq.Option) (*asynq.TaskInfo, error)
+}
+
 type service struct {
 	repo         domain.OrganizationRepository
 	userRepo     domain.UserRepository
 	settingsRepo domain.OrganizationSettingsRepository
 	redis        *redis.Client
+	queue        enqueuer // may be nil
 	logger       *slog.Logger
 }
 
-func NewService(repo domain.OrganizationRepository, userRepo domain.UserRepository, settingsRepo domain.OrganizationSettingsRepository, rdb *redis.Client, logger *slog.Logger) domain.OrganizationService {
-	return &service{repo: repo, userRepo: userRepo, settingsRepo: settingsRepo, redis: rdb, logger: logger}
+func NewService(repo domain.OrganizationRepository, userRepo domain.UserRepository, settingsRepo domain.OrganizationSettingsRepository, rdb *redis.Client, queue enqueuer, logger *slog.Logger) domain.OrganizationService {
+	return &service{repo: repo, userRepo: userRepo, settingsRepo: settingsRepo, redis: rdb, queue: queue, logger: logger}
 }
 
 // bustTenant removes cached slug->org entries after a slug or status change so

@@ -37,6 +37,13 @@ import type {
   GetConversations200,
   GetConversations401,
   GetConversations403,
+  GetConversationsDirectory200,
+  GetConversationsDirectory401,
+  GetConversationsDirectory403,
+  GetConversationsDirectoryParams,
+  GetConversationsDirectoryUsername200,
+  GetConversationsDirectoryUsername401,
+  GetConversationsDirectoryUsername404,
   GetConversationsId200,
   GetConversationsId401,
   GetConversationsId403,
@@ -486,7 +493,263 @@ export const usePostConversationsDirect = <TError = ErrorType<PostConversationsD
       > => {
       return useMutation(getPostConversationsDirectMutationOptions(options), queryClient);
     }
-    export type deleteConversationsMessagesMessageIdResponse200 = {
+    export type getConversationsDirectoryResponse200 = {
+  data: GetConversationsDirectory200
+  status: 200
+}
+
+export type getConversationsDirectoryResponse401 = {
+  data: GetConversationsDirectory401
+  status: 401
+}
+
+export type getConversationsDirectoryResponse403 = {
+  data: GetConversationsDirectory403
+  status: 403
+}
+
+export type getConversationsDirectoryResponseSuccess = (getConversationsDirectoryResponse200) & {
+  headers: Headers;
+};
+export type getConversationsDirectoryResponseError = (getConversationsDirectoryResponse401 | getConversationsDirectoryResponse403) & {
+  headers: Headers;
+};
+
+export type getConversationsDirectoryResponse = (getConversationsDirectoryResponseSuccess | getConversationsDirectoryResponseError)
+
+export const getGetConversationsDirectoryUrl = (params?: GetConversationsDirectoryParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/conversations/directory?${stringifiedParams}` : `/conversations/directory`
+}
+
+/**
+ * Member-safe people search for starting DMs / resolving mentions. Returns id, name, username only.
+ * @summary Search user directory (chat discovery)
+ */
+export const getConversationsDirectory = async (params?: GetConversationsDirectoryParams, options?: RequestInit): Promise<getConversationsDirectoryResponse> => {
+
+  return customInstance<getConversationsDirectoryResponse>(getGetConversationsDirectoryUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetConversationsDirectoryQueryKey = (params?: GetConversationsDirectoryParams,) => {
+    return [
+    `/conversations/directory`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetConversationsDirectoryQueryOptions = <TData = Awaited<ReturnType<typeof getConversationsDirectory>>, TError = ErrorType<GetConversationsDirectory401 | GetConversationsDirectory403>>(params?: GetConversationsDirectoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversationsDirectory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetConversationsDirectoryQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getConversationsDirectory>>> = ({ signal }) => getConversationsDirectory(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getConversationsDirectory>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetConversationsDirectoryQueryResult = NonNullable<Awaited<ReturnType<typeof getConversationsDirectory>>>
+export type GetConversationsDirectoryQueryError = ErrorType<GetConversationsDirectory401 | GetConversationsDirectory403>
+
+
+export function useGetConversationsDirectory<TData = Awaited<ReturnType<typeof getConversationsDirectory>>, TError = ErrorType<GetConversationsDirectory401 | GetConversationsDirectory403>>(
+ params: undefined |  GetConversationsDirectoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversationsDirectory>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConversationsDirectory>>,
+          TError,
+          Awaited<ReturnType<typeof getConversationsDirectory>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConversationsDirectory<TData = Awaited<ReturnType<typeof getConversationsDirectory>>, TError = ErrorType<GetConversationsDirectory401 | GetConversationsDirectory403>>(
+ params?: GetConversationsDirectoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversationsDirectory>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConversationsDirectory>>,
+          TError,
+          Awaited<ReturnType<typeof getConversationsDirectory>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConversationsDirectory<TData = Awaited<ReturnType<typeof getConversationsDirectory>>, TError = ErrorType<GetConversationsDirectory401 | GetConversationsDirectory403>>(
+ params?: GetConversationsDirectoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversationsDirectory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Search user directory (chat discovery)
+ */
+
+export function useGetConversationsDirectory<TData = Awaited<ReturnType<typeof getConversationsDirectory>>, TError = ErrorType<GetConversationsDirectory401 | GetConversationsDirectory403>>(
+ params?: GetConversationsDirectoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversationsDirectory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetConversationsDirectoryQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type getConversationsDirectoryUsernameResponse200 = {
+  data: GetConversationsDirectoryUsername200
+  status: 200
+}
+
+export type getConversationsDirectoryUsernameResponse401 = {
+  data: GetConversationsDirectoryUsername401
+  status: 401
+}
+
+export type getConversationsDirectoryUsernameResponse404 = {
+  data: GetConversationsDirectoryUsername404
+  status: 404
+}
+
+export type getConversationsDirectoryUsernameResponseSuccess = (getConversationsDirectoryUsernameResponse200) & {
+  headers: Headers;
+};
+export type getConversationsDirectoryUsernameResponseError = (getConversationsDirectoryUsernameResponse401 | getConversationsDirectoryUsernameResponse404) & {
+  headers: Headers;
+};
+
+export type getConversationsDirectoryUsernameResponse = (getConversationsDirectoryUsernameResponseSuccess | getConversationsDirectoryUsernameResponseError)
+
+export const getGetConversationsDirectoryUsernameUrl = (username: string,) => {
+
+
+
+
+  return `/conversations/directory/${username}`
+}
+
+/**
+ * @summary Resolve directory user by username
+ */
+export const getConversationsDirectoryUsername = async (username: string, options?: RequestInit): Promise<getConversationsDirectoryUsernameResponse> => {
+
+  return customInstance<getConversationsDirectoryUsernameResponse>(getGetConversationsDirectoryUsernameUrl(username),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetConversationsDirectoryUsernameQueryKey = (username: string,) => {
+    return [
+    `/conversations/directory/${username}`
+    ] as const;
+    }
+
+
+export const getGetConversationsDirectoryUsernameQueryOptions = <TData = Awaited<ReturnType<typeof getConversationsDirectoryUsername>>, TError = ErrorType<GetConversationsDirectoryUsername401 | GetConversationsDirectoryUsername404>>(username: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversationsDirectoryUsername>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetConversationsDirectoryUsernameQueryKey(username);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getConversationsDirectoryUsername>>> = ({ signal }) => getConversationsDirectoryUsername(username, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: username !== null && username !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getConversationsDirectoryUsername>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetConversationsDirectoryUsernameQueryResult = NonNullable<Awaited<ReturnType<typeof getConversationsDirectoryUsername>>>
+export type GetConversationsDirectoryUsernameQueryError = ErrorType<GetConversationsDirectoryUsername401 | GetConversationsDirectoryUsername404>
+
+
+export function useGetConversationsDirectoryUsername<TData = Awaited<ReturnType<typeof getConversationsDirectoryUsername>>, TError = ErrorType<GetConversationsDirectoryUsername401 | GetConversationsDirectoryUsername404>>(
+ username: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversationsDirectoryUsername>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConversationsDirectoryUsername>>,
+          TError,
+          Awaited<ReturnType<typeof getConversationsDirectoryUsername>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConversationsDirectoryUsername<TData = Awaited<ReturnType<typeof getConversationsDirectoryUsername>>, TError = ErrorType<GetConversationsDirectoryUsername401 | GetConversationsDirectoryUsername404>>(
+ username: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversationsDirectoryUsername>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConversationsDirectoryUsername>>,
+          TError,
+          Awaited<ReturnType<typeof getConversationsDirectoryUsername>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConversationsDirectoryUsername<TData = Awaited<ReturnType<typeof getConversationsDirectoryUsername>>, TError = ErrorType<GetConversationsDirectoryUsername401 | GetConversationsDirectoryUsername404>>(
+ username: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversationsDirectoryUsername>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Resolve directory user by username
+ */
+
+export function useGetConversationsDirectoryUsername<TData = Awaited<ReturnType<typeof getConversationsDirectoryUsername>>, TError = ErrorType<GetConversationsDirectoryUsername401 | GetConversationsDirectoryUsername404>>(
+ username: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConversationsDirectoryUsername>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetConversationsDirectoryUsernameQueryOptions(username,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type deleteConversationsMessagesMessageIdResponse200 = {
   data: GithubCom4H1RZooraInternalDomainResponse
   status: 200
 }

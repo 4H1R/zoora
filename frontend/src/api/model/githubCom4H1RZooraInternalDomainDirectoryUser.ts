@@ -6,9 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface GithubCom4H1RZooraInternalDomainUpdateUserDTO {
-  /** @minLength 2 */
+export interface GithubCom4H1RZooraInternalDomainDirectoryUser {
+  id?: string;
   name?: string;
-  role_id?: string;
   username?: string;
 }

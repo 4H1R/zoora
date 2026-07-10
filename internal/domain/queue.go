@@ -7,6 +7,7 @@ const (
 	TypeLiveSessionCloseIfNoHost = "livesession:close-if-no-host"
 	TypeAttendanceAutoMark       = "attendance:auto-mark"
 	TypeMediaCleanup             = "media:cleanup"
+	TypeOrganizationCleanup      = "organization:cleanup"
 	TypeRecordingRetentionSweep  = "recording:retention-sweep"
 	TypeNotificationFanout       = "notification:fanout"
 	TypeNotificationDeliverBot   = "notification:deliver-bot"
@@ -59,6 +60,14 @@ type MediaCleanupPayload struct {
 	ModelType      string    `json:"model_type"`
 	ModelID        uuid.UUID `json:"model_id"`
 	CollectionName string    `json:"collection_name"`
+}
+
+// OrganizationCleanupPayload is the Asynq payload for purging an org's S3
+// objects after an admin hard-deletes it. Media rows are removed by the DB
+// org FK cascade; this task drops the underlying storage under the org's
+// key prefix (orgs/{org_id}/), which no FK covers.
+type OrganizationCleanupPayload struct {
+	OrganizationID uuid.UUID `json:"organization_id"`
 }
 
 // InvoiceGeneratePDFPayload renders and stores an invoice receipt PDF.

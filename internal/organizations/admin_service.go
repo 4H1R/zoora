@@ -2,9 +2,11 @@ package organizations
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/platform/cache"
@@ -107,7 +109,26 @@ func (s *service) AdminHardDelete(ctx context.Context, id uuid.UUID) error {
 		"org_id", id.String(),
 		"deleted_by", caller.UserID.String(),
 	)
+	s.enqueueStorageCleanup(ctx, id)
 	return nil
+}
+
+// enqueueStorageCleanup schedules deletion of the org's S3 objects under its
+// key prefix. The DB org FK cascade already dropped the media rows; no FK
+// covers the storage objects, so a background sweep purges them. Best-effort:
+// a nil queue or enqueue failure is logged and never blocks the delete.
+func (s *service) enqueueStorageCleanup(ctx context.Context, orgID uuid.UUID) {
+	if s.queue == nil {
+		return
+	}
+	payload, err := json.Marshal(domain.OrganizationCleanupPayload{OrganizationID: orgID})
+	if err != nil {
+		s.logger.Error("org storage cleanup enqueue: marshal payload", "org_id", orgID.String(), "error", err)
+		return
+	}
+	if _, err := s.queue.Enqueue(asynq.NewTask(domain.TypeOrganizationCleanup, payload)); err != nil {
+		s.logger.Error("org storage cleanup enqueue", "org_id", orgID.String(), "error", err)
+	}
 }
 
 func (s *service) SetPlan(ctx context.Context, id uuid.UUID, dto domain.SetPlanDTO) (*domain.Organization, error) {

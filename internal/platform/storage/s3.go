@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 
 	"github.com/4H1R/zoora/internal/config"
 )
@@ -154,6 +155,37 @@ func (c *Client) DeleteObject(ctx context.Context, key string) error {
 	})
 	if err != nil {
 		return fmt.Errorf("deleting object: %w", err)
+	}
+	return nil
+}
+
+// DeleteByPrefix removes every object whose key begins with prefix, paging
+// through the listing and batch-deleting up to 1000 keys per call (the S3
+// DeleteObjects limit). Used to purge a whole tenant's storage on org delete.
+// Idempotent: an empty listing is a no-op.
+func (c *Client) DeleteByPrefix(ctx context.Context, prefix string) error {
+	paginator := s3.NewListObjectsV2Paginator(c.s3, &s3.ListObjectsV2Input{
+		Bucket: aws.String(c.bucket),
+		Prefix: aws.String(prefix),
+	})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return fmt.Errorf("listing objects for prefix %s: %w", prefix, err)
+		}
+		if len(page.Contents) == 0 {
+			continue
+		}
+		ids := make([]types.ObjectIdentifier, 0, len(page.Contents))
+		for _, obj := range page.Contents {
+			ids = append(ids, types.ObjectIdentifier{Key: obj.Key})
+		}
+		if _, err := c.s3.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+			Bucket: aws.String(c.bucket),
+			Delete: &types.Delete{Objects: ids, Quiet: aws.Bool(true)},
+		}); err != nil {
+			return fmt.Errorf("deleting objects for prefix %s: %w", prefix, err)
+		}
 	}
 	return nil
 }

@@ -14,7 +14,6 @@ export interface GithubCom4H1RZooraInternalDomainConversation {
   color_index?: number;
   created_at?: string;
   created_by?: string;
-  description?: string;
   id?: string;
   last_message?: GithubCom4H1RZooraInternalDomainConversationMessage;
   /** Computed / preloaded, not columns. */
