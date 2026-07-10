@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 
 	"github.com/4H1R/zoora/internal/domain"
 )
@@ -23,10 +24,12 @@ type notifier interface {
 	NotifyMessage(ctx context.Context, conv *domain.Conversation, msg *domain.ConversationMessage, recipientIDs []uuid.UUID) error
 }
 
-// userLookup is the cross-org guard port (Phase 3 supplies impl; nil = skip
-// the check, which is what the unit tests do).
+// userLookup is the cross-org guard + directory port (Phase 3 supplies impl;
+// nil = skip, which is what the unit tests do).
 type userLookup interface {
 	OrgID(ctx context.Context, userID uuid.UUID) (*uuid.UUID, error)
+	DirectorySearch(ctx context.Context, orgID uuid.UUID, query string, limit int) ([]domain.DirectoryUser, error)
+	DirectoryByUsername(ctx context.Context, orgID uuid.UUID, username string) (*domain.DirectoryUser, error)
 }
 
 // mediaLookup is the attachment-validation read port (Phase 3 supplies
@@ -42,6 +45,12 @@ type presenceReader interface {
 	Get(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]domain.PresenceStatus, error)
 }
 
+// enqueuer is the async task port used to schedule attachment cleanup when a
+// conversation is deleted (nil = skip enqueue, which is what unit tests do).
+type enqueuer interface {
+	Enqueue(task *asynq.Task, opts ...asynq.Option) (*asynq.TaskInfo, error)
+}
+
 type service struct {
 	convRepo     domain.ConversationRepository
 	memberRepo   domain.ConversationMemberRepository
@@ -55,6 +64,7 @@ type service struct {
 	users        userLookup     // may be nil
 	media        mediaLookup    // may be nil
 	presence     presenceReader // may be nil
+	queue        enqueuer       // may be nil
 }
 
 func NewService(
@@ -70,8 +80,9 @@ func NewService(
 	users userLookup,
 	media mediaLookup,
 	presence presenceReader,
+	queue enqueuer,
 ) domain.ConversationService {
-	return &service{convRepo, memberRepo, messageRepo, reactionRepo, mentionRepo, transactor, logger, rt, notif, users, media, presence}
+	return &service{convRepo, memberRepo, messageRepo, reactionRepo, mentionRepo, transactor, logger, rt, notif, users, media, presence, queue}
 }
 
 // caller resolves the authenticated caller and enforces the org + feature
@@ -212,6 +223,54 @@ func (s *service) CreateOrGetDirect(ctx context.Context, dto domain.CreateDirect
 	return conv, nil
 }
 
+const directorySearchLimit = 20
+
+func (s *service) SearchDirectory(ctx context.Context, query string, limit int) ([]domain.DirectoryUser, error) {
+	caller, err := s.caller(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if caller.OrgID == nil {
+		return nil, domain.ErrForbidden
+	}
+	if s.users == nil {
+		return []domain.DirectoryUser{}, nil
+	}
+	if limit <= 0 || limit > directorySearchLimit {
+		limit = directorySearchLimit
+	}
+	// Over-fetch by one so dropping the caller still yields up to `limit` rows.
+	rows, err := s.users.DirectorySearch(ctx, *caller.OrgID, query, limit+1)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]domain.DirectoryUser, 0, len(rows))
+	for _, u := range rows {
+		if u.ID == caller.UserID {
+			continue
+		}
+		out = append(out, u)
+		if len(out) == limit {
+			break
+		}
+	}
+	return out, nil
+}
+
+func (s *service) GetDirectoryUser(ctx context.Context, username string) (*domain.DirectoryUser, error) {
+	caller, err := s.caller(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if caller.OrgID == nil {
+		return nil, domain.ErrForbidden
+	}
+	if s.users == nil {
+		return nil, domain.ErrNotFound
+	}
+	return s.users.DirectoryByUsername(ctx, *caller.OrgID, username)
+}
+
 func (s *service) CreateGroupOrChannel(ctx context.Context, dto domain.CreateConversationDTO) (*domain.Conversation, error) {
 	caller, err := s.caller(ctx)
 	if err != nil {
@@ -233,7 +292,6 @@ func (s *service) CreateGroupOrChannel(ctx context.Context, dto domain.CreateCon
 			OrganizationID: *caller.OrgID,
 			Type:           dto.Type,
 			Name:           dto.Name,
-			Description:    dto.Description,
 			ColorIndex:     dto.ColorIndex,
 			CreatedBy:      &caller.UserID,
 		}
@@ -303,9 +361,6 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateCon
 	if dto.Name != nil {
 		conv.Name = *dto.Name
 	}
-	if dto.Description != nil {
-		conv.Description = *dto.Description
-	}
 	if dto.AvatarURL != nil {
 		conv.AvatarURL = *dto.AvatarURL
 	}
@@ -337,7 +392,34 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	if !s.canManageConversation(caller, conv, member) {
 		return domain.ErrForbidden
 	}
-	return s.convRepo.Delete(ctx, id)
+	if err := s.convRepo.Delete(ctx, id); err != nil {
+		return err
+	}
+	s.enqueueAttachmentCleanup(ctx, id)
+	return nil
+}
+
+// enqueueAttachmentCleanup schedules deletion of a deleted conversation's chat
+// attachments (media rows + S3 objects). The DB cascade drops messages, but the
+// polymorphic media table has no FK to conversations, so its rows and S3
+// objects would otherwise orphan. Best-effort: a nil queue or enqueue failure
+// is logged and never blocks the delete.
+func (s *service) enqueueAttachmentCleanup(ctx context.Context, convID uuid.UUID) {
+	if s.queue == nil {
+		return
+	}
+	payload, err := json.Marshal(domain.MediaCleanupPayload{
+		ModelType:      domain.MediaModelConversation,
+		ModelID:        convID,
+		CollectionName: domain.MediaCollectionAttach,
+	})
+	if err != nil {
+		s.logger.Error("attachment cleanup enqueue: marshal payload", "conversation_id", convID.String(), "error", err)
+		return
+	}
+	if _, err := s.queue.Enqueue(asynq.NewTask(domain.TypeMediaCleanup, payload)); err != nil {
+		s.logger.Error("attachment cleanup enqueue", "conversation_id", convID.String(), "error", err)
+	}
 }
 
 // ListForCaller populates the computed UnreadCount + LastMessage fields per

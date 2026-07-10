@@ -263,7 +263,7 @@ function RouteComponent() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl pb-24">
+    <div className="mx-auto w-full max-w-3xl pb-24">
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
         <section className="relative overflow-hidden rounded-2xl border">
           <div
@@ -523,7 +523,7 @@ function PlanCard({
  * the two labelled sections. */
 function SettingsSkeleton() {
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 pb-24">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 pb-24">
       <section className="rounded-2xl border p-6 sm:p-8">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-6">
           <Skeleton className="size-18 shrink-0 rounded-2xl" />

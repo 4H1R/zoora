@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router"
 import { useEffect } from "react"
 import { AccessProvider } from "react-access-engine"
 import { useTranslation } from "react-i18next"
@@ -19,9 +19,10 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { useDirection } from "@/components/ui/direction"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { buildAccess } from "@/lib/access"
-import { useEntitlements } from "@/lib/entitlements"
+import { useFeatureGate } from "@/lib/entitlements"
 import { buildOrgNavGroups } from "@/lib/org-nav"
 import { ORG_ROUTES } from "@/lib/org-routes"
+import { cn } from "@/lib/utils"
 
 export const Route = createFileRoute("/_auth/org")({
   component: RouteComponent,
@@ -40,10 +41,16 @@ const SEGMENT_KEYS: Record<string, string> = {
 function RouteComponent() {
   const { t } = useTranslation()
   const { data, isLoading: userLoading } = useGetUsersMe()
-  const { entitlements } = useEntitlements()
+  const hasFeature = useFeatureGate()
   const direction = useDirection()
   const sidebarSide = direction === "rtl" ? "right" : "left"
   const navigate = useNavigate()
+
+  // Conversations is a full-height master-detail chat that should span the whole
+  // available width on desktop rather than being capped by the centered
+  // `container` max-width used by every other org page.
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const fullBleed = pathname.startsWith(`/org/${ORG_ROUTES.conversations.segment}`)
 
   const user = (data?.status === 200 && data.data.data) || undefined
   const access = user ? buildAccess(user) : null
@@ -61,7 +68,6 @@ function RouteComponent() {
   if (userLoading || !access) return <SplashScreen />
   if (!user || !user.organization_id) return null
 
-  const hasFeature = (feature: string) => !!entitlements?.features?.[feature]
   const navGroups = buildOrgNavGroups(t, access.has, hasFeature)
 
   const layout = (
@@ -87,7 +93,12 @@ function RouteComponent() {
             </header>
             <MajorModal />
             <MobileBreadcrumb className="px-4 pt-4 pb-2 md:hidden" />
-            <div className="container flex flex-1 flex-col gap-4 py-4">
+            <div
+              className={cn(
+                "flex flex-1 flex-col gap-4 py-4",
+                fullBleed ? "min-h-0 px-4" : "container"
+              )}
+            >
               <Outlet />
             </div>
           </SidebarInset>

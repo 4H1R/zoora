@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Spinner } from "@/components/ui/spinner"
+import { useProfileCard } from "@/stores/profile-card"
 import { cn } from "@/lib/utils"
 
 import { avatarTint, initials } from "./lib/avatar"
@@ -39,6 +40,7 @@ interface MembersSheetProps {
 export function MembersSheet({ convId, open, onOpenChange, canManage }: MembersSheetProps) {
   const { t } = useTranslation()
   const { user } = useAccess()
+  const openCard = useProfileCard((s) => s.open)
   const { invalidateMembers, invalidateConversations } = useChatCache()
   const [pendingRemoval, setPendingRemoval] = useState<ConversationMember | null>(null)
 
@@ -113,23 +115,31 @@ export function MembersSheet({ convId, open, onOpenChange, canManage }: MembersS
                   key={member.id ?? memberUserId}
                   className="group hover:bg-muted/50 flex items-center gap-3 rounded-lg px-2 py-2"
                 >
-                  <Avatar className="size-9 shrink-0">
-                    <AvatarFallback className={cn("text-xs font-semibold", avatarTint(memberUserId))}>
-                      {initials(name)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openCard({ userId: memberUserId, name, username: member.user?.username })
+                    }
+                    className="flex min-w-0 flex-1 items-center gap-3 text-start"
+                  >
+                    <Avatar className="size-9 shrink-0">
+                      <AvatarFallback className={cn("text-xs font-semibold", avatarTint(memberUserId))}>
+                        {initials(name)}
+                      </AvatarFallback>
+                    </Avatar>
 
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-sm font-medium">
-                      {name}
-                      {isSelf && (
-                        <span className="text-muted-foreground ms-1 font-normal">{t("conversations.members.you")}</span>
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate text-sm font-medium">
+                        {name}
+                        {isSelf && (
+                          <span className="text-muted-foreground ms-1 font-normal">{t("conversations.members.you")}</span>
+                        )}
+                      </span>
+                      {member.user?.username && (
+                        <span className="text-muted-foreground truncate font-mono text-xs">{member.user.username}</span>
                       )}
-                    </span>
-                    {member.user?.username && (
-                      <span className="text-muted-foreground truncate font-mono text-xs">{member.user.username}</span>
-                    )}
-                  </div>
+                    </div>
+                  </button>
 
                   {member.role && (
                     <Badge variant="secondary" className="shrink-0 capitalize">

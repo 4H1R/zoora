@@ -26,7 +26,11 @@ import { cn } from "@/lib/utils"
 
 const baseSchema = z.object({
   name: z.string().min(2),
-  username: z.string().min(3),
+  username: z
+    .string()
+    .min(3)
+    .max(30)
+    .regex(/^[a-z0-9_.]+$/),
   password: z.string(),
   role_id: z.string().optional(),
 })

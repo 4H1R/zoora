@@ -30,7 +30,11 @@ import { useAdminStore } from "@/stores/admin"
 const baseSchema = z.object({
   organization_id: z.string().uuid().optional(),
   name: z.string().min(2),
-  username: z.string().min(3),
+  username: z
+    .string()
+    .min(3)
+    .max(30)
+    .regex(/^[a-z0-9_.]+$/),
   password: z.string(),
   role_id: z.string().optional(),
   is_admin: z.boolean().default(false),

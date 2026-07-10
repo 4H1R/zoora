@@ -3,6 +3,8 @@ import type { OrgRouteKey } from "@/lib/org-routes"
 import { useAccess } from "react-access-engine"
 import { useTranslation } from "react-i18next"
 
+import { useFeatureGate } from "@/lib/entitlements"
+import { navVisible } from "@/lib/org-nav"
 import { ORG_ROUTES } from "@/lib/org-routes"
 
 import type { DashboardTileSpec } from "./tile-grid"
@@ -12,6 +14,7 @@ import type { DashboardTileSpec } from "./tile-grid"
 const TILE_KEYS: OrgRouteKey[] = [
   "calendar",
   "classes",
+  "conversations",
   "online-classes",
   "exams",
   "grades",
@@ -23,13 +26,16 @@ const TILE_KEYS: OrgRouteKey[] = [
   "settings",
 ]
 
-// Returns permission-filtered launcher tiles; same grid for all roles.
+// Returns launcher tiles gated by the SAME rule as the sidebar nav (navVisible):
+// permission + plan feature, with the manage-only upgrade exemption. Same grid
+// for all roles.
 export function useDashboardTiles(): DashboardTileSpec[] {
   const { can } = useAccess()
   const { t } = useTranslation()
+  const hasFeature = useFeatureGate()
 
   return TILE_KEYS.map((key) => ({ key, spec: ORG_ROUTES[key] }))
-    .filter(({ spec }) => !spec.perms || spec.perms.some((p) => can(p)))
+    .filter(({ spec }) => navVisible(spec, can, hasFeature))
     .map(({ key, spec }) => ({
       key,
       label: t(spec.i18nKey),

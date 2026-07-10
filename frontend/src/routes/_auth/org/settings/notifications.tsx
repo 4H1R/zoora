@@ -26,7 +26,7 @@ function ConnectorSettingsPage() {
   const connectors = (data?.status === 200 && data.data.data) || []
 
   return (
-    <div className="mx-auto w-full max-w-2xl">
+    <div className="mx-auto w-full max-w-3xl">
       <PageHeader title={t("notifications.connectors.title")} />
       <p className="text-muted-foreground mt-1.5 text-sm">{t("notifications.connectors.description")}</p>
 

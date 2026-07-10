@@ -28,7 +28,7 @@ type User struct {
 
 type CreateUserDTO struct {
 	OrganizationID *uuid.UUID `json:"organization_id"`
-	Username       string     `json:"username" binding:"required,min=3"`
+	Username       string     `json:"username" binding:"required,username"`
 	Name           string     `json:"name" binding:"required,min=2"`
 	Password       string     `json:"password" binding:"required,min=6"`
 	IsAdmin        bool       `json:"is_admin"`
@@ -36,7 +36,7 @@ type CreateUserDTO struct {
 }
 
 type UpdateUserDTO struct {
-	Username *string    `json:"username" binding:"omitempty,min=3"`
+	Username *string    `json:"username" binding:"omitempty,username"`
 	Name     *string    `json:"name" binding:"omitempty,min=2"`
 	RoleID   *uuid.UUID `json:"role_id"`
 }
@@ -57,7 +57,7 @@ type LoginDTO struct {
 
 type AdminCreateUserDTO struct {
 	OrganizationID *uuid.UUID `json:"organization_id"`
-	Username       string     `json:"username" binding:"required,min=3"`
+	Username       string     `json:"username" binding:"required,username"`
 	Name           string     `json:"name" binding:"required,min=2"`
 	Password       string     `json:"password" binding:"required,strongpassword"`
 	IsAdmin        bool       `json:"is_admin"`
@@ -65,7 +65,7 @@ type AdminCreateUserDTO struct {
 }
 
 type AdminUpdateUserDTO struct {
-	Username *string    `json:"username" binding:"omitempty,min=3"`
+	Username *string    `json:"username" binding:"omitempty,username"`
 	Name     *string    `json:"name" binding:"omitempty,min=2"`
 	Password *string    `json:"password" binding:"omitempty,strongpassword"`
 	IsAdmin  *bool      `json:"is_admin"`
@@ -120,6 +120,10 @@ type UserRepository interface {
 	FindByIDWithPermissions(ctx context.Context, id uuid.UUID) (*User, error)
 	// FindByUsernameAndOrg looks up an active org member by (org, username).
 	FindByUsernameAndOrg(ctx context.Context, username string, orgID uuid.UUID) (*User, error)
+	// SearchActiveInOrg returns up to `limit` active (non-disabled) users in the
+	// org whose username or name ILIKE-matches query, ordered by username asc.
+	// An empty query returns the first page of active org users.
+	SearchActiveInOrg(ctx context.Context, orgID uuid.UUID, query string, limit int) ([]User, error)
 	// FindAdminByUsername looks up a platform admin (org_id IS NULL, is_admin).
 	FindAdminByUsername(ctx context.Context, username string) (*User, error)
 	Update(ctx context.Context, user *User) error

@@ -1,4 +1,3 @@
-import type { MentionCandidate } from "./lib/mentions"
 import type { ChatMessage, Group } from "./lib/messages"
 import type { VirtuosoHandle } from "react-virtuoso"
 
@@ -15,14 +14,10 @@ interface MessageListProps {
   messages: ChatMessage[]
   /** Conversation id — threaded to each bubble for cache/actions lookups. */
   convId: string
-  /** Conversation members, for @mention highlighting inside bubbles. */
-  members: MentionCandidate[]
   /** Signed-in user id — decides own vs. other alignment. */
   currentUserId: string
   /** Direct DMs hide sender names; groups/channels show them. */
   conversationType?: string
-  /** Newest own confirmed message id — gates the group "read by N" receipt. */
-  lastOwnMessageId: string | null
   hasPreviousPage: boolean
   fetchPreviousPage: () => void
   isFetchingPreviousPage: boolean
@@ -69,10 +64,8 @@ function ListHeader({ context }: { context?: ListContext }) {
 export function MessageList({
   messages,
   convId,
-  members,
   currentUserId,
   conversationType,
-  lastOwnMessageId,
   hasPreviousPage,
   fetchPreviousPage,
   isFetchingPreviousPage,
@@ -123,10 +116,8 @@ export function MessageList({
               <MessageBubble
                 message={message}
                 convId={convId}
-                members={members}
                 isOwn={isOwn}
                 conversationType={conversationType}
-                isLatestOwn={isOwn && !!lastOwnMessageId && message.id === lastOwnMessageId}
                 isHighlighted={message.id === highlightId}
               />
             )}

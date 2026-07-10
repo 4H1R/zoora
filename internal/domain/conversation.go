@@ -49,7 +49,6 @@ type Conversation struct {
 	OrganizationID uuid.UUID        `gorm:"type:uuid;not null;index" json:"organization_id"`
 	Type           ConversationType `gorm:"type:varchar(20);not null" json:"type"`
 	Name           string           `gorm:"type:varchar(255);not null;default:''" json:"name"`
-	Description    string           `gorm:"type:text;not null;default:''" json:"description"`
 	AvatarURL      string           `gorm:"type:text;not null;default:''" json:"avatar_url"`
 	ColorIndex     int16            `gorm:"not null;default:0" json:"color_index"`
 	CreatedBy      *uuid.UUID       `gorm:"type:uuid" json:"created_by"`
@@ -113,7 +112,6 @@ type ConversationMention struct {
 type CreateConversationDTO struct {
 	Type        ConversationType `json:"type" binding:"required"`
 	Name        string           `json:"name" binding:"omitempty,max=255"`
-	Description string           `json:"description" binding:"omitempty,max=1000"`
 	ColorIndex  int16            `json:"color_index" binding:"omitempty,min=0,max=6"`
 	MemberIDs   []string         `json:"member_ids" binding:"omitempty,max=500,dive,uuid"`
 }
@@ -122,9 +120,17 @@ type CreateDirectDTO struct {
 	UserID string `json:"user_id" binding:"required,uuid"`
 }
 
+// DirectoryUser is the member-safe public projection of a user for chat
+// discovery (people search + @mention resolve). It deliberately excludes
+// admin-only fields (org id, role, disabled/audit columns).
+type DirectoryUser struct {
+	ID       uuid.UUID `json:"id"`
+	Name     string    `json:"name"`
+	Username string    `json:"username"`
+}
+
 type UpdateConversationDTO struct {
 	Name        *string `json:"name" binding:"omitempty,min=1,max=255"`
-	Description *string `json:"description" binding:"omitempty,max=1000"`
 	AvatarURL   *string `json:"avatar_url" binding:"omitempty,max=1000"`
 	ColorIndex  *int16  `json:"color_index" binding:"omitempty,min=0,max=6"`
 }
@@ -257,4 +263,11 @@ type ConversationService interface {
 	// Presence returns the online/last-seen status for each requested user id,
 	// filtered to users in the caller's organization.
 	Presence(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]PresenceStatus, error)
+
+	// SearchDirectory returns active users in the caller's org (minus the
+	// caller) whose username or name matches query, for chat discovery.
+	SearchDirectory(ctx context.Context, query string, limit int) ([]DirectoryUser, error)
+	// GetDirectoryUser resolves one active org user by exact username, for lazy
+	// @mention click resolution. Returns ErrNotFound if none.
+	GetDirectoryUser(ctx context.Context, username string) (*DirectoryUser, error)
 }

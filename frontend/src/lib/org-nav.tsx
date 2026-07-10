@@ -20,7 +20,7 @@ type NavGroupSpec = {
 //  2. feature — the org plan must include it. When it doesn't, the item is
 //     hidden, EXCEPT for holders of featureExemptPerms, who see it and land on
 //     an upgrade page (drives conversion for the people who can pay).
-function navVisible(
+export function navVisible(
   spec: OrgRouteSpec,
   has: (perm: AppPermission) => boolean,
   hasFeature: (feature: FeatureKey) => boolean

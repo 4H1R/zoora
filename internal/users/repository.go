@@ -125,6 +125,20 @@ func (r *repository) List(ctx context.Context, scope domain.UserListScope, p dom
 	return users, total, nil
 }
 
+func (r *repository) SearchActiveInOrg(ctx context.Context, orgID uuid.UUID, query string, limit int) ([]domain.User, error) {
+	q := r.baseQuery(ctx).
+		Where("organization_id = ? AND disabled_at IS NULL", orgID)
+	if query != "" {
+		like := "%" + query + "%"
+		q = q.Where("username ILIKE ? OR name ILIKE ?", like, like)
+	}
+	var users []domain.User
+	if err := q.Order("username asc").Limit(limit).Find(&users).Error; err != nil {
+		return nil, fmt.Errorf("users.repository.SearchActiveInOrg: %w", err)
+	}
+	return users, nil
+}
+
 // StatusCounts returns the caller-scoped user totals broken down by lockout
 // state. The scope's Disabled filter is intentionally ignored so the tab
 // counts stay stable regardless of which tab is active.

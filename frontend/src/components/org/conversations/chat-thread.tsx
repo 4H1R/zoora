@@ -1,4 +1,3 @@
-import type { MentionCandidate } from "./lib/mentions"
 import type { VirtuosoHandle } from "react-virtuoso"
 
 import { Link, useNavigate } from "@tanstack/react-router"
@@ -22,7 +21,6 @@ import { InConversationSearch } from "./in-conversation-search"
 import { JumpToMessageProvider } from "./jump-context"
 import { conversationTint, initials } from "./lib/avatar"
 import { findGroupIndex, groupMessages } from "./lib/messages"
-import { lastOwnMessageId } from "./lib/read-receipts"
 import { MembersSheet } from "./members-sheet"
 import { MessageInput } from "./message-input"
 import { MessageList } from "./message-list"
@@ -63,13 +61,10 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
   const [membersOpen, setMembersOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
-  // Members drive @mention highlighting in every bubble; fetched once here and
-  // threaded down so bubbles don't each subscribe. Same mapping as the composer.
+  // Roster fetched once here for the header count + presence ids. @mention
+  // rendering no longer needs members (bubbles tokenize @username directly).
   const { data: membersData } = useGetConversationsIdMembers(convId)
   const memberRows = membersData?.status === 200 ? (membersData.data.data ?? []) : []
-  const members: MentionCandidate[] = memberRows
-    .map((m) => ({ id: m.user_id ?? m.user?.id ?? "", name: m.user?.name ?? "" }))
-    .filter((m) => m.id && m.name)
 
   // Presence for everyone in the OPEN conversation (drives the header dot +
   // subtitle). Sidebar DM presence is scoped separately in `ConversationSidebar`.
@@ -155,10 +150,7 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
 
   const name = conversation?.name ?? convId
   const isDirect = conversation?.type === "direct"
-  const memberCount = conversation?.members?.length ?? 0
-
-  // Newest own confirmed message — the only bubble that carries a group receipt.
-  const ownLatestId = lastOwnMessageId(messages, user.id)
+  const memberCount = memberRows.length
 
   // Header presence. DM → the partner's online/last-seen; group → an online count.
   const partnerId = isDirect ? memberUserIds.find((id) => id !== user.id) : undefined
@@ -266,10 +258,8 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
             <MessageList
               messages={messages}
               convId={convId}
-              members={members}
               currentUserId={user.id}
               conversationType={conversation?.type}
-              lastOwnMessageId={ownLatestId}
               hasPreviousPage={hasPreviousPage}
               fetchPreviousPage={fetchPreviousPage}
               isFetchingPreviousPage={isFetchingPreviousPage}

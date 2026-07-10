@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, useParams } from "@tanstack/react-router"
 
 import { ChatUpgrade } from "@/components/org/conversations/chat-upgrade"
 import { ConversationSidebar } from "@/components/org/conversations/conversation-list"
+import { ProfileCardDialog } from "@/components/org/conversations/profile-card-dialog"
 import { useConversationPermissions } from "@/components/org/conversations/use-conversation-permissions"
 import { Spinner } from "@/components/ui/spinner"
 import { useOrgGuard } from "@/lib/access"
@@ -53,6 +54,7 @@ function ConversationsLayout() {
       <main className={cn("min-w-0 flex-1 flex-col", hasDetail ? "flex" : "hidden md:flex")}>
         <Outlet />
       </main>
+      <ProfileCardDialog />
     </div>
   )
 }

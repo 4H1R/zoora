@@ -35,19 +35,16 @@ export function countReaders(
 }
 
 /**
- * The newest own, server-confirmed message id in an ASCENDING list — the only
- * message that carries the group "read by N" affordance (keeps the thread from
- * sprouting a receipt under every own bubble). Skips optimistic bubbles
- * (`_status` set) and messages without an id. Null when the user has no
- * confirmed message loaded.
+ * True when EVERY id in `otherIds` has a read pointer at or past `messageId` —
+ * the "read by all" signal that flips a sent bubble to the double tick. False
+ * when `otherIds` is empty (a solo conversation with no other members never
+ * reaches "read"), guarding against a vacuous all-true.
  */
-export function lastOwnMessageId(
-  messages: { id?: string; sender_id?: string; _status?: unknown }[],
-  selfUserId: string
-): string | null {
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const m = messages[i]
-    if (m.sender_id === selfUserId && m._status === undefined && m.id) return m.id
-  }
-  return null
+export function isReadByAll(
+  readPointers: Record<string, string | undefined>,
+  otherIds: string[],
+  messageId: string
+): boolean {
+  if (otherIds.length === 0) return false
+  return otherIds.every((id) => isReadBy(readPointers[id], messageId))
 }

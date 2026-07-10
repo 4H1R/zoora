@@ -1,11 +1,8 @@
 import { describe, expect, it } from "vitest"
 
-import type {
-  GithubCom4H1RZooraInternalDomainConversation as Conversation,
-  GithubCom4H1RZooraInternalDomainConversationMessage as ConversationMessage,
-} from "@/api/model"
+import type { GithubCom4H1RZooraInternalDomainConversationMessage as ConversationMessage } from "@/api/model"
 
-import { filterConversationsByQuery, matchesKey, nextMatchIndex } from "./search"
+import { matchesKey, nextMatchIndex } from "./search"
 
 describe("nextMatchIndex", () => {
   it("advances forward within range", () => {
@@ -37,34 +34,6 @@ describe("nextMatchIndex", () => {
   it("stays on the only item in a single-match list", () => {
     expect(nextMatchIndex(0, 1, 1)).toBe(0)
     expect(nextMatchIndex(0, 1, -1)).toBe(0)
-  })
-})
-
-function conv(over: Partial<Conversation>): Conversation {
-  return { id: "c1", type: "group", ...over }
-}
-
-describe("filterConversationsByQuery", () => {
-  const items = [
-    conv({ id: "a", name: "Design team" }),
-    conv({ id: "b", name: "Engineering", last_message: { content: "deploy is green" } }),
-    conv({ id: "c", name: "Random" }),
-  ]
-
-  it("returns an empty list for a blank query", () => {
-    expect(filterConversationsByQuery(items, "  ")).toEqual([])
-  })
-
-  it("matches on conversation name, case-insensitively", () => {
-    expect(filterConversationsByQuery(items, "design").map((c) => c.id)).toEqual(["a"])
-  })
-
-  it("matches on the last message preview", () => {
-    expect(filterConversationsByQuery(items, "deploy").map((c) => c.id)).toEqual(["b"])
-  })
-
-  it("returns every match", () => {
-    expect(filterConversationsByQuery(items, "n").map((c) => c.id)).toEqual(["a", "b", "c"])
   })
 })
 

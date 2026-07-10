@@ -67,11 +67,16 @@ export function MessageInput({ convId }: MessageInputProps) {
   const key = chatKeys.messages(convId)
 
   const { data: membersData } = useGetConversationsIdMembers(convId)
-  // Map API members → mention candidates (id + display name), dropping anyone
-  // without both. This is the FULL list used to resolve mentions at send time.
+  // Map API members → mention candidates (id + display name + username),
+  // dropping anyone without id+username. This is the FULL list used to resolve
+  // @username mentions to ids at send time.
   const members: MentionCandidate[] = (membersData?.status === 200 ? (membersData.data.data ?? []) : [])
-    .map((m) => ({ id: m.user_id ?? m.user?.id ?? "", name: m.user?.name ?? "" }))
-    .filter((m) => m.id && m.name)
+    .map((m) => ({
+      id: m.user_id ?? m.user?.id ?? "",
+      name: m.user?.name ?? "",
+      username: m.user?.username ?? "",
+    }))
+    .filter((m) => m.id && m.username)
 
   const [value, setValue] = useState("")
   const [mentionQuery, setMentionQuery] = useState<MentionQuery | null>(null)
@@ -93,7 +98,12 @@ export function MessageInput({ convId }: MessageInputProps) {
   // Members matching the in-progress token, longest list capped. Case-insensitive
   // prefix-or-substring match keeps it forgiving.
   const mentionMatches: MentionCandidate[] = mentionQuery
-    ? members.filter((m) => m.name.toLowerCase().includes(mentionQuery.token.toLowerCase())).slice(0, MAX_MENTION_ROWS)
+    ? members
+        .filter((m) => {
+          const q = mentionQuery.token.toLowerCase()
+          return m.username.includes(q) || m.name.toLowerCase().includes(q)
+        })
+        .slice(0, MAX_MENTION_ROWS)
     : []
   const mentionOpen = mentionMatches.length > 0
 
@@ -181,12 +191,12 @@ export function MessageInput({ convId }: MessageInputProps) {
     refreshMention(value, e.currentTarget.selectionStart)
   }
 
-  // Commit a chosen member: swap the `@token` span for `@<Name> ` and park the
+  // Commit a chosen member: swap the `@token` span for `@username ` and park the
   // caret past the trailing space.
   function commitMention(member: MentionCandidate) {
     if (!mentionQuery) return
     const caret = textareaRef.current?.selectionStart ?? value.length
-    const { value: next, caret: nextCaret } = insertMention(value, mentionQuery, caret, member.name)
+    const { value: next, caret: nextCaret } = insertMention(value, mentionQuery, caret, member.username)
     setValue(next)
     pendingCaretRef.current = nextCaret
     setMentionQuery(null)

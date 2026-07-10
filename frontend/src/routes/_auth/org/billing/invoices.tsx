@@ -102,7 +102,7 @@ function InvoicesPage() {
   if (!allowed) return null
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <PageHeader
         title={t("billing.invoicesTitle")}
         actions={

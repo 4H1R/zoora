@@ -3,7 +3,6 @@ CREATE TABLE conversations (
     organization_id UUID         NOT NULL,
     type            VARCHAR(20)  NOT NULL,
     name            VARCHAR(255) NOT NULL DEFAULT '',
-    description     TEXT         NOT NULL DEFAULT '',
     avatar_url      TEXT         NOT NULL DEFAULT '',
     color_index     SMALLINT     NOT NULL DEFAULT 0,
     created_by      UUID,

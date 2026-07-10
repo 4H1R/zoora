@@ -1,4 +1,3 @@
-import { AtSignIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -57,7 +56,7 @@ export function MentionPopover({ members, activeIndex, onSelect, onHover }: Ment
             </AvatarFallback>
           </Avatar>
           <span className="truncate">{member.name}</span>
-          <AtSignIcon className="text-muted-foreground ms-auto size-3.5 shrink-0" />
+          <span className="text-muted-foreground ms-auto shrink-0 font-mono text-xs">@{member.username}</span>
         </button>
       ))}
     </div>

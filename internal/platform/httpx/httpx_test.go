@@ -95,3 +95,18 @@ func TestBindUUIDQueries_NoFieldsNoOp(t *testing.T) {
 	err := BindUUIDQueries(c, map[string]**uuid.UUID{})
 	assert.NoError(t, err)
 }
+
+func TestUsernameValidator(t *testing.T) {
+	ok := []string{"ali", "ali_r", "sara.k", "abc123", "a_b.c"}
+	bad := []string{"ab", "Ali", "ali r", "ali-r", "toolong_username_exceeding_thirty_chars"}
+	for _, s := range ok {
+		if !usernameRe.MatchString(s) {
+			t.Errorf("expected %q valid", s)
+		}
+	}
+	for _, s := range bad {
+		if usernameRe.MatchString(s) {
+			t.Errorf("expected %q invalid", s)
+		}
+	}
+}

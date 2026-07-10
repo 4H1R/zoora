@@ -18,6 +18,7 @@ import {
   usePostConversationsIdLeave,
   usePostConversationsIdMute,
 } from "@/api/conversations/conversations"
+import { FormSaveBar } from "@/components/form-save-bar"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,14 +35,12 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Spinner } from "@/components/ui/spinner"
-import { Textarea } from "@/components/ui/textarea"
 
 import { isMuted, muteUntilISO } from "./lib/mute"
 import { useChatCache } from "./use-chat-cache"
 
 const detailsSchema = z.object({
   name: z.string().min(1).max(255),
-  description: z.string().max(1000).optional(),
 })
 
 type DetailsValues = z.infer<typeof detailsSchema>
@@ -57,7 +56,7 @@ interface ConversationSettingsProps {
 }
 
 /**
- * Per-conversation settings slide-over: rename + description (managers only),
+ * Per-conversation settings slide-over: rename (managers only),
  * notification muting (any member, with quick presets), and the leave / delete
  * actions. Leave and delete confirm, then navigate back to the list.
  */
@@ -81,18 +80,19 @@ export function ConversationSettings({ conversation, open, onOpenChange, canMana
 
   const form = useForm<DetailsValues>({
     resolver: zodResolver(detailsSchema),
-    defaultValues: { name: conversation.name ?? "", description: conversation.description ?? "" },
+    defaultValues: { name: conversation.name ?? "" },
   })
 
   useEffect(() => {
-    if (open) form.reset({ name: conversation.name ?? "", description: conversation.description ?? "" })
+    if (open) form.reset({ name: conversation.name ?? "" })
   }, [open, conversation.id])
 
   const patchMutation = usePatchConversationsId({
     mutation: {
-      onSuccess: (res) => {
+      onSuccess: (res, vars) => {
         if (res.status === 200) {
           toast.success(t("conversations.settings.saved"))
+          form.reset({ name: vars.data.name ?? "" })
           invalidateConversations()
         } else {
           toast.error(t("conversations.settings.saveError"))
@@ -139,7 +139,7 @@ export function ConversationSettings({ conversation, open, onOpenChange, canMana
   const onSaveDetails = form.handleSubmit((values) => {
     patchMutation.mutate({
       id: convId,
-      data: { name: values.name.trim(), description: values.description?.trim() || undefined },
+      data: { name: values.name.trim() },
     })
   })
 
@@ -167,17 +167,6 @@ export function ConversationSettings({ conversation, open, onOpenChange, canMana
                 <Input id="settings-name" {...form.register("name")} />
                 <FieldError errors={[form.formState.errors.name]} />
               </Field>
-              <Field data-invalid={!!form.formState.errors.description || undefined}>
-                <FieldLabel htmlFor="settings-description">{t("conversations.new.fields.description")}</FieldLabel>
-                <Textarea id="settings-description" rows={3} {...form.register("description")} />
-                <FieldError errors={[form.formState.errors.description]} />
-              </Field>
-              <div className="flex justify-end">
-                <Button type="submit" size="sm" disabled={patchMutation.isPending}>
-                  {patchMutation.isPending && <Spinner />}
-                  {t("common.save")}
-                </Button>
-              </div>
             </form>
           )}
 
@@ -239,6 +228,10 @@ export function ConversationSettings({ conversation, open, onOpenChange, canMana
             )}
           </div>
         </div>
+
+        {canEditDetails && (
+          <FormSaveBar form={form} onSave={onSaveDetails} isPending={patchMutation.isPending} />
+        )}
       </SheetContent>
 
       <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>

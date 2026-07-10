@@ -2,6 +2,7 @@ package conversations_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"sort"
@@ -11,12 +12,21 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/4H1R/zoora/internal/conversations"
 	"github.com/4H1R/zoora/internal/domain"
 )
+
+// fakeEnqueuer records enqueued tasks so cleanup-scheduling can be asserted.
+type fakeEnqueuer struct{ tasks []*asynq.Task }
+
+func (f *fakeEnqueuer) Enqueue(t *asynq.Task, _ ...asynq.Option) (*asynq.TaskInfo, error) {
+	f.tasks = append(f.tasks, t)
+	return &asynq.TaskInfo{}, nil
+}
 
 // ---- in-memory fake repo set ----
 //
@@ -597,6 +607,7 @@ func newServiceWithBroadcaster(_ *testing.T) (domain.ConversationService, *fakeS
 		nil, // userLookup
 		nil, // mediaLookup
 		nil, // presenceReader
+		nil, // enqueuer
 	)
 	return svc, s, rt
 }
@@ -618,6 +629,7 @@ func newTestService(_ *testing.T) (domain.ConversationService, *fakeStore) {
 		nil, // userLookup: wired in Phase 3 — nil skips cross-org checks in unit tests
 		nil, // mediaLookup: wired in Phase 3 — nil skips attachment validation in unit tests
 		nil, // presenceReader: wired in Phase 2 — nil returns empty presence in unit tests
+		nil, // enqueuer
 	)
 	return svc, s
 }
@@ -676,13 +688,28 @@ func (f *fakeNotifier) NotifyMessage(_ context.Context, conv *domain.Conversatio
 // cross-org resolution to succeed for specific users (nil map entries look
 // up as domain.ErrNotFound, mirroring "user does not exist").
 type fakeUserLookup struct {
-	orgs map[uuid.UUID]uuid.UUID // userID -> orgID
+	orgs      map[uuid.UUID]uuid.UUID // userID -> orgID
+	directory []domain.DirectoryUser  // returned verbatim by DirectorySearch
 }
 
 func (f *fakeUserLookup) OrgID(_ context.Context, userID uuid.UUID) (*uuid.UUID, error) {
 	if org, ok := f.orgs[userID]; ok {
 		o := org
 		return &o, nil
+	}
+	return nil, domain.ErrNotFound
+}
+
+func (f *fakeUserLookup) DirectorySearch(_ context.Context, _ uuid.UUID, _ string, _ int) ([]domain.DirectoryUser, error) {
+	return f.directory, nil
+}
+
+func (f *fakeUserLookup) DirectoryByUsername(_ context.Context, _ uuid.UUID, username string) (*domain.DirectoryUser, error) {
+	for _, u := range f.directory {
+		if u.Username == username {
+			cp := u
+			return &cp, nil
+		}
 	}
 	return nil, domain.ErrNotFound
 }
@@ -740,6 +767,7 @@ func newServiceWithPresence(_ *testing.T, users *fakeUserLookup, presence *fakeP
 		users,
 		nil, // mediaLookup
 		presence,
+		nil, // enqueuer
 	)
 	return svc, s
 }
@@ -782,6 +810,7 @@ func newServiceWithMentionAndNotify(_ *testing.T) (domain.ConversationService, *
 		nil, // userLookup: nil skips cross-org checks
 		nil, // mediaLookup
 		nil, // presenceReader
+		nil, // enqueuer
 	)
 	return svc, s, mentionRepo, notif
 }
@@ -806,6 +835,7 @@ func newServiceWithRealNotifier(_ *testing.T) (domain.ConversationService, *fake
 		nil, // userLookup
 		nil, // mediaLookup
 		nil, // presenceReader
+		nil, // enqueuer
 	)
 	return svc, s, notifSvc
 }
@@ -830,6 +860,7 @@ func newServiceWithMedia(_ *testing.T) (domain.ConversationService, *fakeStore, 
 		nil, // userLookup
 		media,
 		nil, // presenceReader
+		nil, // enqueuer
 	)
 	return svc, s, media
 }
@@ -1197,6 +1228,59 @@ func TestDeleteMessage_SameOrgManager_Allowed(t *testing.T) {
 	assert.Len(t, store.msgOrder[conv.ID], 0)
 }
 
+// newTestServiceWithQueue mirrors newTestService but wires a fake enqueuer so
+// tests can assert cleanup tasks are scheduled. logger is slog.Default() since
+// the delete path logs on enqueue failure.
+func newTestServiceWithQueue(_ *testing.T) (domain.ConversationService, *fakeStore, *fakeEnqueuer) {
+	s := newFakeStore()
+	q := &fakeEnqueuer{}
+	svc := conversations.NewService(
+		fakeConvRepo{s: s},
+		fakeMemberRepo{s: s},
+		fakeMessageRepo{s: s},
+		fakeReactionRepo{s: s},
+		nil, // mentionRepo
+		noopTx{},
+		slog.Default(),
+		nil, // broadcaster
+		nil, // notifier
+		nil, // userLookup
+		nil, // mediaLookup
+		nil, // presenceReader
+		q,
+	)
+	return svc, s, q
+}
+
+func TestDelete_EnqueuesAttachmentCleanup(t *testing.T) {
+	orgA, userA := uuid.New(), uuid.New()
+	svc, _, q := newTestServiceWithQueue(t)
+	conv := newGroup(t, svc, orgA, userA)
+
+	mgrCtx := callerCtx(orgA, userA, false, managePerm)
+	require.NoError(t, svc.Delete(mgrCtx, conv.ID))
+
+	require.Len(t, q.tasks, 1)
+	task := q.tasks[0]
+	assert.Equal(t, domain.TypeMediaCleanup, task.Type())
+	var payload domain.MediaCleanupPayload
+	require.NoError(t, json.Unmarshal(task.Payload(), &payload))
+	assert.Equal(t, domain.MediaModelConversation, payload.ModelType)
+	assert.Equal(t, conv.ID, payload.ModelID)
+	assert.Equal(t, domain.MediaCollectionAttach, payload.CollectionName)
+}
+
+func TestDelete_Forbidden_NoCleanupEnqueued(t *testing.T) {
+	orgA, userA, outsider := uuid.New(), uuid.New(), uuid.New()
+	svc, _, q := newTestServiceWithQueue(t)
+	conv := newGroup(t, svc, orgA, userA)
+
+	// A non-member with no manage perm cannot delete; nothing is enqueued.
+	err := svc.Delete(callerCtx(orgA, outsider, false), conv.ID)
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+	assert.Empty(t, q.tasks)
+}
+
 func TestAddMember_ConvAdmin_Works_PlainMember_Forbidden(t *testing.T) {
 	orgA, userA, convAdmin, plain, newbie := uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New()
 	svc, _ := newTestService(t)
@@ -1466,6 +1550,7 @@ func TestCreateGroupOrChannel_UserLookup_SkipsCrossOrgMember(t *testing.T) {
 		users,
 		nil, // mediaLookup
 		nil, // presenceReader
+		nil, // enqueuer
 	)
 	ctx := callerCtx(orgA, userA, true)
 
@@ -1616,4 +1701,30 @@ func TestListMessages_SerializesReactions(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, msgs, 1)
 	assert.Equal(t, 1, msgs[0].Reactions["🔥"], "ListMessages must serialize reaction counts, not leave Reactions nil")
+}
+
+// TestSearchDirectory_ExcludesSelf verifies chat discovery drops the caller
+// from its own directory results while keeping other org members.
+func TestSearchDirectory_ExcludesSelf(t *testing.T) {
+	orgA := uuid.New()
+	self, other := uuid.New(), uuid.New()
+	users := &fakeUserLookup{
+		orgs: map[uuid.UUID]uuid.UUID{self: orgA, other: orgA},
+		directory: []domain.DirectoryUser{
+			{ID: self, Name: "Me", Username: "me"},
+			{ID: other, Name: "Other", Username: "other"},
+		},
+	}
+	svc, _ := newServiceWithPresence(t, users, &fakePresence{})
+	ctx := callerCtx(orgA, self, false)
+
+	got, err := svc.SearchDirectory(ctx, "o", 20)
+	require.NoError(t, err)
+
+	var ids []uuid.UUID
+	for _, u := range got {
+		ids = append(ids, u.ID)
+	}
+	assert.NotContains(t, ids, self, "caller must be excluded from directory results")
+	assert.Contains(t, ids, other)
 }

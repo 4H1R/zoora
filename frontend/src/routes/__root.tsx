@@ -27,7 +27,11 @@ function RootComponent() {
   const { i18n } = useTranslation()
   const theme = useThemeStore((s) => s.theme)
 
-  const lang = (i18n.language in languages ? i18n.language : "fa") as Language
+  // Detector may hand back a region locale ("en-US"); resolvedLanguage is
+  // guaranteed to be one of supportedLngs, so region variants no longer fall
+  // through to the "fa" default and wrongly force RTL on English.
+  const resolved = i18n.resolvedLanguage ?? i18n.language
+  const lang = (resolved in languages ? resolved : "en") as Language
 
   const dir = languages[lang].dir
 

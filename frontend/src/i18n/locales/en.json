@@ -1690,8 +1690,16 @@
           }
         },
         "features": {
-          "free": ["Core virtual classrooms", "Exams, homework & gradebook", "Offline rooms & notifications"],
-          "plus": ["Everything in Free", "More storage & live capacity", "Ticketing & file sharing"],
+          "free": [
+            "Core virtual classrooms",
+            "Exams, homework & gradebook",
+            "Offline rooms & notifications"
+          ],
+          "plus": [
+            "Everything in Free",
+            "More storage & live capacity",
+            "Ticketing & file sharing"
+          ],
           "pro": [
             "Everything in Plus",
             "Whiteboard & chat",
@@ -1699,7 +1707,12 @@
             "Messenger & email connectors",
             "AI assistance"
           ],
-          "max": ["Everything in Pro", "Cloud recordings", "Auto grading", "Single sign-on (SSO)"]
+          "max": [
+            "Everything in Pro",
+            "Cloud recordings",
+            "Auto grading",
+            "Single sign-on (SSO)"
+          ]
         }
       },
       "members": "Members",
@@ -3054,11 +3067,27 @@
     "title": "Tickets",
     "error": "Something went wrong. Try again.",
     "subtitle": "Questions and grade objections across your classes",
-    "empty": { "title": "No tickets yet", "description": "Open a ticket to ask a question or dispute a grade." },
+    "empty": {
+      "title": "No tickets yet",
+      "description": "Open a ticket to ask a question or dispute a grade."
+    },
     "new": "New ticket",
-    "type": { "question": "Question", "grade_objection": "Grade objection", "other": "Other" },
-    "status": { "open": "Open", "answered": "Answered", "closed": "Closed" },
-    "filters": { "all": "All", "status": "Status", "type": "Type", "class": "Class" },
+    "type": {
+      "question": "Question",
+      "grade_objection": "Grade objection",
+      "other": "Other"
+    },
+    "status": {
+      "open": "Open",
+      "answered": "Answered",
+      "closed": "Closed"
+    },
+    "filters": {
+      "all": "All",
+      "status": "Status",
+      "type": "Type",
+      "class": "Class"
+    },
     "form": {
       "class": "Class",
       "classPlaceholder": "Select a class",
@@ -3125,16 +3154,6 @@
       "noMessages": "No messages yet"
     },
     "search": {
-      "title": "Search chat",
-      "trigger": "Search",
-      "placeholder": "Search conversations and messages…",
-      "hint": "Type at least {{count}} characters to search.",
-      "empty": "No results for “{{query}}”.",
-      "unknownConversation": "Conversation",
-      "groups": {
-        "conversations": "Conversations",
-        "messages": "Messages"
-      },
       "inThread": {
         "open": "Search in conversation",
         "placeholder": "Search this conversation…",
@@ -3181,6 +3200,7 @@
       "membersOnline": "{{count}} online"
     },
     "receipts": {
+      "sending": "Sending",
       "sent": "Sent",
       "read": "Read",
       "readBy_one": "Read by {{count}}",
@@ -3236,8 +3256,8 @@
       "muted": "Muted"
     },
     "new": {
-      "title": "New conversation",
-      "description": "Start a direct message, or create a group or channel.",
+      "title": "New group or channel",
+      "description": "Create a group or channel.",
       "start": "Start chat",
       "created": "Conversation created",
       "error": "Couldn't start the conversation. Please try again.",
@@ -3251,8 +3271,6 @@
         "userPlaceholder": "Select a person",
         "name": "Name",
         "namePlaceholder": "e.g. Design team",
-        "description": "Description",
-        "descriptionPlaceholder": "What's this conversation about? (optional)",
         "members": "Members"
       }
     },
@@ -3306,6 +3324,13 @@
         "confirmTitle": "Delete conversation?",
         "confirmDescription": "This permanently deletes the conversation and all its messages for everyone. This cannot be undone."
       }
+    },
+    "profile": {
+      "title": "Profile",
+      "sendMessage": "Send message",
+      "you": "This is you",
+      "notFound": "User not found",
+      "error": "Couldn't start the conversation. Please try again."
     }
   }
 }

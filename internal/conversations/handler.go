@@ -40,8 +40,10 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		authed.GET("/conversations", perm(domain.PermConversationsView), h.List)
 		authed.POST("/conversations", perm(domain.PermConversationsView), h.Create) // group/channel (service enforces manage)
 		authed.POST("/conversations/direct", perm(domain.PermConversationsView), h.CreateDirect)
-		authed.GET("/conversations/search", perm(domain.PermConversationsView), h.Search)      // global ?q= (registered before /:id so gin's tree matches the static segment first)
-		authed.GET("/conversations/presence", perm(domain.PermConversationsView), h.GetPresence) // batch online/last-seen (static segment, before /:id)
+		authed.GET("/conversations/search", perm(domain.PermConversationsView), h.Search)                        // global ?q= (registered before /:id so gin's tree matches the static segment first)
+		authed.GET("/conversations/presence", perm(domain.PermConversationsView), h.GetPresence)                 // batch online/last-seen (static segment, before /:id)
+		authed.GET("/conversations/directory", perm(domain.PermConversationsView), h.SearchDirectory)            // people search (static, before /:id)
+		authed.GET("/conversations/directory/:username", perm(domain.PermConversationsView), h.GetDirectoryUser) // mention resolve by username
 		authed.GET("/conversations/:id", perm(domain.PermConversationsView), id, h.Get)
 		authed.PATCH("/conversations/:id", perm(domain.PermConversationsView), id, h.Update)
 		authed.DELETE("/conversations/:id", perm(domain.PermConversationsView), id, h.Delete)
@@ -632,6 +634,47 @@ func (h *Handler) Search(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, msgs)
+}
+
+// SearchDirectory lists active org users (minus the caller) for chat discovery.
+// @Summary Search user directory (chat discovery)
+// @Description Member-safe people search for starting DMs / resolving mentions. Returns id, name, username only.
+// @Tags Conversations
+// @Produce json
+// @Security BearerAuth
+// @Param search query string false "Substring match on username/name"
+// @Success 200 {object} domain.Response{data=[]domain.DirectoryUser}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/directory [get]
+func (h *Handler) SearchDirectory(c *gin.Context) {
+	q := strings.TrimSpace(c.Query("search"))
+	users, err := h.svc.SearchDirectory(c.Request.Context(), q, searchLimit(c))
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, users)
+}
+
+// GetDirectoryUser resolves one active org user by exact username.
+// @Summary Resolve directory user by username
+// @Tags Conversations
+// @Produce json
+// @Security BearerAuth
+// @Param username path string true "Username (without leading @)"
+// @Success 200 {object} domain.Response{data=domain.DirectoryUser}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /conversations/directory/{username} [get]
+func (h *Handler) GetDirectoryUser(c *gin.Context) {
+	username := strings.TrimSpace(c.Param("username"))
+	u, err := h.svc.GetDirectoryUser(c.Request.Context(), username)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, u)
 }
 
 // maxPresenceIDs caps how many user ids a single presence lookup may request,

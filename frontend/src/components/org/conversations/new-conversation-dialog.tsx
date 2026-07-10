@@ -1,14 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate } from "@tanstack/react-router"
-import { HashIcon, UserIcon, UsersIcon } from "lucide-react"
+import { HashIcon, UsersIcon } from "lucide-react"
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
 
-import { usePostConversations, usePostConversationsDirect } from "@/api/conversations/conversations"
-import { UserSelect } from "@/components/form/user-select"
+import { usePostConversations } from "@/api/conversations/conversations"
 import { UserMultiSelect } from "@/components/notifications/user-multi-select"
 import { Button } from "@/components/ui/button"
 import {
@@ -24,7 +23,6 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
 
 import { useChatCache } from "./use-chat-cache"
 
@@ -33,19 +31,11 @@ import { useChatCache } from "./use-chat-cache"
 // channel). Keeping one schema lets the type toggle preserve entered fields.
 const schema = z
   .object({
-    type: z.enum(["direct", "group", "channel"]),
-    user_id: z.string().optional(),
+    type: z.enum(["group", "channel"]),
     name: z.string().max(255).optional(),
-    description: z.string().max(1000).optional(),
     member_ids: z.array(z.string()),
   })
   .superRefine((v, ctx) => {
-    if (v.type === "direct") {
-      if (!v.user_id) {
-        ctx.addIssue({ code: "custom", path: ["user_id"], params: { i18n: "validation.required" } })
-      }
-      return
-    }
     if (!v.name || v.name.trim().length === 0) {
       ctx.addIssue({ code: "custom", path: ["name"], params: { i18n: "validation.required" } })
     }
@@ -54,10 +44,8 @@ const schema = z
 type FormValues = z.infer<typeof schema>
 
 const DEFAULTS: FormValues = {
-  type: "direct",
-  user_id: undefined,
+  type: "group",
   name: "",
-  description: "",
   member_ids: [],
 }
 
@@ -72,7 +60,7 @@ interface NewConversationDialogProps {
 /**
  * Start-a-conversation dialog. A type toggle (Direct / Group / Channel) swaps the
  * body: direct picks a single org user and hits the idempotent DM endpoint;
- * group/channel take a name (+ optional description) and members. On success we
+ * group/channel take a name and members. On success we
  * refresh the sidebar and navigate straight into the new conversation.
  */
 export function NewConversationDialog({ open, onOpenChange, canManage }: NewConversationDialogProps) {
@@ -91,23 +79,12 @@ export function NewConversationDialog({ open, onOpenChange, canManage }: NewConv
 
   const type = form.watch("type")
   const memberIds = form.watch("member_ids")
-  const userId = form.watch("user_id")
 
   function goToConversation(id?: string) {
     onOpenChange(false)
     invalidateConversations()
     if (id) navigate({ to: "/org/conversations/$conversationId", params: { conversationId: id } })
   }
-
-  const directMutation = usePostConversationsDirect({
-    mutation: {
-      onSuccess: (res) => {
-        if (res.status === 201) goToConversation(res.data.data?.id)
-        else toast.error(t("conversations.new.error"))
-      },
-      onError: () => toast.error(t("conversations.new.error")),
-    },
-  })
 
   const createMutation = usePostConversations({
     mutation: {
@@ -123,19 +100,13 @@ export function NewConversationDialog({ open, onOpenChange, canManage }: NewConv
     },
   })
 
-  const isPending = directMutation.isPending || createMutation.isPending
+  const isPending = createMutation.isPending
 
   const onSubmit = form.handleSubmit((values) => {
-    if (values.type === "direct") {
-      if (!values.user_id) return
-      directMutation.mutate({ data: { user_id: values.user_id } })
-      return
-    }
     createMutation.mutate({
       data: {
         type: values.type,
         name: values.name?.trim(),
-        description: values.description?.trim() || undefined,
         member_ids: values.member_ids,
       },
     })
@@ -155,10 +126,6 @@ export function NewConversationDialog({ open, onOpenChange, canManage }: NewConv
           {canManage && (
             <Tabs value={type} onValueChange={(value) => form.setValue("type", value as FormValues["type"])}>
               <TabsList className="w-full">
-                <TabsTrigger value="direct">
-                  <UserIcon data-icon="inline-start" />
-                  {t("conversations.new.type.direct")}
-                </TabsTrigger>
                 <TabsTrigger value="group">
                   <UsersIcon data-icon="inline-start" />
                   {t("conversations.new.type.group")}
@@ -172,54 +139,27 @@ export function NewConversationDialog({ open, onOpenChange, canManage }: NewConv
           )}
 
           <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-x-clip overflow-y-auto px-1">
-            {type === "direct" ? (
-              <Field data-invalid={!!errors.user_id || undefined}>
-                <FieldLabel>{t("conversations.new.fields.user")}</FieldLabel>
-                <UserSelect
-                  value={userId}
-                  onChange={(id) => form.setValue("user_id", id, { shouldValidate: true })}
-                  placeholder={t("conversations.new.fields.userPlaceholder")}
-                />
-                <FieldError errors={[errors.user_id]} />
-              </Field>
-            ) : (
-              <>
-                <Field data-invalid={!!errors.name || undefined}>
-                  <FieldLabel htmlFor="conversation-name">{t("conversations.new.fields.name")}</FieldLabel>
-                  <Input
-                    id="conversation-name"
-                    {...form.register("name")}
-                    placeholder={t("conversations.new.fields.namePlaceholder")}
-                  />
-                  <FieldError errors={[errors.name]} />
-                </Field>
+            <Field data-invalid={!!errors.name || undefined}>
+              <FieldLabel htmlFor="conversation-name">{t("conversations.new.fields.name")}</FieldLabel>
+              <Input
+                id="conversation-name"
+                {...form.register("name")}
+                placeholder={t("conversations.new.fields.namePlaceholder")}
+              />
+              <FieldError errors={[errors.name]} />
+            </Field>
 
-                <Field data-invalid={!!errors.description || undefined}>
-                  <FieldLabel htmlFor="conversation-description">
-                    {t("conversations.new.fields.description")}
-                  </FieldLabel>
-                  <Textarea
-                    id="conversation-description"
-                    rows={3}
-                    {...form.register("description")}
-                    placeholder={t("conversations.new.fields.descriptionPlaceholder")}
-                  />
-                  <FieldError errors={[errors.description]} />
-                </Field>
-
-                <Field>
-                  <FieldLabel>{t("conversations.new.fields.members")}</FieldLabel>
-                  <UserMultiSelect value={memberIds} onChange={(ids) => form.setValue("member_ids", ids)} />
-                </Field>
-              </>
-            )}
+            <Field>
+              <FieldLabel>{t("conversations.new.fields.members")}</FieldLabel>
+              <UserMultiSelect value={memberIds} onChange={(ids) => form.setValue("member_ids", ids)} />
+            </Field>
           </div>
 
           <DialogFooter>
             <DialogClose render={<Button variant="outline" disabled={isPending} />}>{t("common.cancel")}</DialogClose>
             <Button type="submit" disabled={isPending}>
               {isPending && <Spinner />}
-              {type === "direct" ? t("conversations.new.start") : t("common.create")}
+              {t("common.create")}
             </Button>
           </DialogFooter>
         </form>

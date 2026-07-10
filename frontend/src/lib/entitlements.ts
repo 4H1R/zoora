@@ -34,3 +34,12 @@ export function useHasFeature(feature: FeatureKey): { enabled: boolean; isLoadin
   const { entitlements, isLoading } = useEntitlements()
   return { enabled: !!entitlements?.features?.[feature], isLoading }
 }
+
+// useFeatureGate returns a predicate for gating many features at once — the shape
+// navVisible (org-nav.tsx) expects. Use it wherever you'd otherwise re-write the
+// `(f) => !!entitlements?.features?.[f]` closure (sidebar nav, dashboard tiles).
+// Loading resolves to false, matching useHasFeature.
+export function useFeatureGate(): (feature: FeatureKey) => boolean {
+  const { entitlements } = useEntitlements()
+  return (feature) => !!entitlements?.features?.[feature]
+}

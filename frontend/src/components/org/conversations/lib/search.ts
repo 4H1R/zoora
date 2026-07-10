@@ -1,7 +1,4 @@
-import type {
-  GithubCom4H1RZooraInternalDomainConversation as Conversation,
-  GithubCom4H1RZooraInternalDomainConversationMessage as ConversationMessage,
-} from "@/api/model"
+import type { GithubCom4H1RZooraInternalDomainConversationMessage as ConversationMessage } from "@/api/model"
 
 /**
  * Cycle a match cursor by one step with wraparound. `dir` is +1 (next) or -1
@@ -12,19 +9,6 @@ import type {
 export function nextMatchIndex(current: number, len: number, dir: 1 | -1): number {
   if (len <= 0) return -1
   return (((current + dir) % len) + len) % len
-}
-
-/**
- * Local name/preview filter over the already-loaded conversation list. Global
- * search only returns MESSAGES, so the dialog's "Conversations" group is derived
- * client-side from the sidebar list the user already has.
- */
-export function filterConversationsByQuery(items: Conversation[], query: string): Conversation[] {
-  const q = query.trim().toLowerCase()
-  if (!q) return []
-  return items.filter(
-    (c) => c.name?.toLowerCase().includes(q) || c.last_message?.content?.toLowerCase().includes(q)
-  )
 }
 
 /**

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { countReaders, isReadBy, lastOwnMessageId } from "./read-receipts"
+import { countReaders, isReadBy, isReadByAll } from "./read-receipts"
 
 describe("isReadBy", () => {
   it("is false when the pointer is missing or empty", () => {
@@ -54,21 +54,18 @@ describe("countReaders", () => {
   })
 })
 
-describe("lastOwnMessageId", () => {
-  const m = (id: string, sender_id: string, _status?: "sending" | "failed") => ({ id, sender_id, _status })
-
-  it("returns the newest own confirmed id in an ascending list", () => {
-    const list = [m("m1", "me"), m("m2", "other"), m("m3", "me"), m("m4", "other")]
-    expect(lastOwnMessageId(list, "me")).toBe("m3")
+describe("isReadByAll", () => {
+  it("is false when there are no other members (solo conversation)", () => {
+    expect(isReadByAll({ me: "m9" }, [], "m5")).toBe(false)
   })
 
-  it("skips optimistic (unconfirmed) own bubbles", () => {
-    const list = [m("m1", "me"), m("m2", "me", "sending")]
-    expect(lastOwnMessageId(list, "me")).toBe("m1")
+  it("is true only when every other member has reached the message", () => {
+    const pointers = { a: "m9", b: "m5" }
+    expect(isReadByAll(pointers, ["a", "b"], "m5")).toBe(true)
   })
 
-  it("returns null when the user has no confirmed message", () => {
-    expect(lastOwnMessageId([m("m1", "other")], "me")).toBeNull()
-    expect(lastOwnMessageId([], "me")).toBeNull()
+  it("is false when any other member is behind or missing", () => {
+    expect(isReadByAll({ a: "m9", b: "m2" }, ["a", "b"], "m5")).toBe(false)
+    expect(isReadByAll({ a: "m9" }, ["a", "b"], "m5")).toBe(false)
   })
 })

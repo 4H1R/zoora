@@ -188,6 +188,11 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 		o.Name = factory.T("Zoora Demo", "زورا دمو")
 		o.Slug = "acme"
 		o.Description = factory.T("Demo organization for development", "سازمان نمونه برای توسعه")
+		// Top-tier plan (max tier at the largest capacity), valid for a year so
+		// every plan-gated feature is unlocked in dev.
+		o.Plan = domain.PlanKey(domain.TierMax, domain.PlanSizes[len(domain.PlanSizes)-1])
+		planExpiry := time.Now().AddDate(1, 0, 0)
+		o.PlanExpiresAt = &planExpiry
 	})
 	randomOrg := factory.NewOrganization(func(o *domain.Organization) {
 		o.Slug = "globex"

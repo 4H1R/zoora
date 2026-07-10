@@ -79,7 +79,7 @@ function BillingPage() {
   if (!allowed) return null
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+    <div className="mx-auto flex w-full flex-col gap-6">
       <PageHeader
         title={t("billing.title")}
         actions={

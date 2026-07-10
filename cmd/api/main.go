@@ -161,7 +161,7 @@ func main() {
 	orgSettingsService := orgsettings.NewService(orgSettingsRepo, log)
 
 	userService := users.NewService(userRepo, roleRepo, entitlementService, redisClient, log)
-	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, log)
+	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, queueClient, log)
 	classService := classes.NewService(classRepo, classSessionRepo, classMemberRepo, log)
 	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, log)
 	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, log)
@@ -316,6 +316,7 @@ func main() {
 		convUserLookup, // userLookup (cross-org DM/member guard)
 		mediaRepo,      // mediaLookup (attachment validation on send)
 		presenceReaderAdapter{p: chatPresence}, // presenceReader (batch online/last-seen)
+		queueClient,                            // enqueuer (attachment cleanup on delete)
 	)
 
 	// --- billing ---
