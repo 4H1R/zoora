@@ -151,7 +151,7 @@ func main() {
 	notificationRepo := notifications.NewRepository(db)
 	notificationService := notifications.NewService(
 		notificationRepo, classRepo, connectorRepo, orgSettingsService,
-		nil, senders, 0, log,
+		queueClient, senders, 0, log,
 	)
 	queueServer.HandleFunc(domain.TypeNotificationFanout, notifications.NewFanoutHandler(notificationService))
 	queueServer.HandleFunc(domain.TypeNotificationDeliverBot, notifications.NewDeliverBotHandler(notificationService))

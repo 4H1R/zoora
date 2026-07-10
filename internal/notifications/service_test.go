@@ -7,9 +7,30 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 
 	"github.com/4H1R/zoora/internal/domain"
 )
+
+// fakeQueue records enqueued task types so tests can assert that fan-out
+// actually schedules the per-channel send tasks (the prod bug: a nil queue
+// created delivery rows but silently enqueued nothing).
+type fakeQueue struct{ enqueued []string }
+
+func (q *fakeQueue) Enqueue(task *asynq.Task, _ ...asynq.Option) (*asynq.TaskInfo, error) {
+	q.enqueued = append(q.enqueued, task.Type())
+	return &asynq.TaskInfo{}, nil
+}
+
+func (q *fakeQueue) countByType(taskType string) int {
+	n := 0
+	for _, t := range q.enqueued {
+		if t == taskType {
+			n++
+		}
+	}
+	return n
+}
 
 type mockRepo struct {
 	domain.NotificationRepository // panic on unstubbed calls
@@ -42,6 +63,22 @@ type markedCall struct {
 func (m *mockRepo) CreateDeliveries(_ context.Context, d []domain.NotificationDelivery) error {
 	m.deliveriesCreated = append(m.deliveriesCreated, d...)
 	return nil
+}
+
+// ListPendingDeliveries mimics the post-insert read-back: it returns the
+// created rows for the requested channel (with an ID assigned, as the real
+// upsert would) so enqueueDeliveries can schedule a send task per row.
+func (m *mockRepo) ListPendingDeliveries(_ context.Context, _ uuid.UUID, channel domain.ConnectorType) ([]domain.NotificationDelivery, error) {
+	var rows []domain.NotificationDelivery
+	for _, d := range m.deliveriesCreated {
+		if d.Channel == channel {
+			if d.ID == uuid.Nil {
+				d.ID = uuid.New()
+			}
+			rows = append(rows, d)
+		}
+	}
+	return rows, nil
 }
 func (m *mockRepo) ListDeliveriesByIDs(context.Context, []uuid.UUID) ([]domain.NotificationDelivery, error) {
 	return m.deliveriesByID, nil
@@ -445,6 +482,67 @@ func TestDeliverPushPrunesInvalidTokens(t *testing.T) {
 	}
 	if !sawFailed || !sawSent {
 		t.Fatalf("marks = %+v, want a failed and a sent", repo.marked)
+	}
+}
+
+// TestFanoutEnqueuesSendTasks is the regression guard for the prod incident
+// where the worker built the notification service with a nil queue: delivery
+// rows were created but no send task was ever enqueued, so bot deliveries sat
+// stuck "pending" forever. With a wired queue, fan-out must enqueue one
+// deliver-bot task per bot row and a batched task for SMS/push.
+func TestFanoutEnqueuesSendTasks(t *testing.T) {
+	u1, u2 := uuid.New(), uuid.New()
+	n := &domain.Notification{
+		ID:             uuid.New(),
+		OrganizationID: nil, // system notification → SMS allowed
+		Audience:       domain.NotificationAudience{Type: domain.AudienceUsers, UserIDs: []uuid.UUID{u1, u2}},
+	}
+	repo := &mockRepo{found: n}
+	connRepo := &mockConnectorRepo{conns: []domain.UserConnector{
+		{UserID: u1, Type: domain.ConnectorTelegram, Target: "111"},
+		{UserID: u2, Type: domain.ConnectorBale, Target: "222"},
+		{UserID: u1, Type: domain.ConnectorPush, Target: "tok"},
+		{UserID: u2, Type: domain.ConnectorSMS, Target: "09120000001"},
+	}}
+	q := &fakeQueue{}
+	svc := NewService(repo, &mockClassRepo{}, connRepo, mockOrgSettings{smsEnabled: false}, q, Senders{}, 10, nil)
+
+	if err := svc.Fanout(context.Background(), n.ID); err != nil {
+		t.Fatalf("Fanout: %v", err)
+	}
+	if got := q.countByType(domain.TypeNotificationDeliverBot); got != 2 {
+		t.Fatalf("deliver-bot tasks = %d, want 2 (telegram + bale)", got)
+	}
+	if got := q.countByType(domain.TypeNotificationDeliverPush); got != 1 {
+		t.Fatalf("deliver-push tasks = %d, want 1", got)
+	}
+	if got := q.countByType(domain.TypeNotificationDeliverSMS); got != 1 {
+		t.Fatalf("deliver-sms tasks = %d, want 1", got)
+	}
+}
+
+// TestFanoutNilQueueCreatesRowsButEnqueuesNothing documents the footgun that
+// caused the incident: a nil queue is a silent no-op for enqueueing, so rows
+// are created but never sent. This is the exact state to avoid in production
+// wiring — see cmd/worker/main.go, which must pass the real queue client.
+func TestFanoutNilQueueCreatesRowsButEnqueuesNothing(t *testing.T) {
+	u1 := uuid.New()
+	n := &domain.Notification{
+		ID:             uuid.New(),
+		OrganizationID: nil,
+		Audience:       domain.NotificationAudience{Type: domain.AudienceUsers, UserIDs: []uuid.UUID{u1}},
+	}
+	repo := &mockRepo{found: n}
+	connRepo := &mockConnectorRepo{conns: []domain.UserConnector{
+		{UserID: u1, Type: domain.ConnectorTelegram, Target: "111"},
+	}}
+	svc := NewService(repo, &mockClassRepo{}, connRepo, mockOrgSettings{}, nil, Senders{}, 10, nil)
+
+	if err := svc.Fanout(context.Background(), n.ID); err != nil {
+		t.Fatalf("Fanout: %v", err)
+	}
+	if len(repo.deliveriesCreated) != 1 {
+		t.Fatalf("deliveries created = %d, want 1 (rows still snapshotted)", len(repo.deliveriesCreated))
 	}
 }
 

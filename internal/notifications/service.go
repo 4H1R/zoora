@@ -11,11 +11,19 @@ import (
 	"github.com/hibiken/asynq"
 
 	"github.com/4H1R/zoora/internal/domain"
-	"github.com/4H1R/zoora/internal/platform/queue"
 )
 
 // QueueName isolates notification fan-out from critical live-session tasks.
 const QueueName = "notifications"
+
+// Enqueuer is the subset of the queue client the service needs. It is an
+// interface (not the concrete *queue.Client) so that fan-out's downstream task
+// enqueueing is observable in tests: a service wired with a nil queue silently
+// created delivery rows but never enqueued the send tasks, leaving them stuck
+// "pending" in prod. *queue.Client satisfies this.
+type Enqueuer interface {
+	Enqueue(task *asynq.Task, opts ...asynq.Option) (*asynq.TaskInfo, error)
+}
 
 // Authorization always happens in the service layer so handlers stay thin.
 // Send matrix: superAdmin → any audience; notifications:send_any → own-org
@@ -36,7 +44,7 @@ type service struct {
 	classRepo     domain.ClassRepository
 	connectorRepo domain.UserConnectorRepository
 	orgSettings   domain.OrganizationSettingsProvider
-	queue         *queue.Client
+	queue         Enqueuer
 	senders       Senders
 	ratePerHour   int
 	logger        *slog.Logger
@@ -47,7 +55,7 @@ func NewService(
 	classRepo domain.ClassRepository,
 	connectorRepo domain.UserConnectorRepository, // nil ok: fan-out skips external channels
 	orgSettings domain.OrganizationSettingsProvider, // nil ok: SMS gate treated as disabled
-	queueClient *queue.Client,
+	queueClient Enqueuer,
 	senders Senders,
 	ratePerHour int,
 	logger *slog.Logger,
