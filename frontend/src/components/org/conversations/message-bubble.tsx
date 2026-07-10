@@ -109,7 +109,7 @@ export function MessageBubble({
           type="button"
           onClick={() => jumpToMessage(replyToId)}
           className={cn(
-            "border-primary/60 bg-muted/60 hover:bg-muted mb-0.5 flex max-w-[50%] flex-col items-start gap-0.5 rounded-lg border-s-2 px-2.5 py-1 text-start transition",
+            "border-primary/60 bg-muted/60 hover:bg-muted mb-0.5 flex max-w-[95%] flex-col items-start gap-0.5 rounded-lg border-s-2 px-2.5 py-1 text-start transition sm:max-w-[50%]",
             isOwn ? "ms-1" : "me-1"
           )}
         >
@@ -122,7 +122,7 @@ export function MessageBubble({
         </button>
       )}
 
-      <div className={cn("flex max-w-[50%] items-center gap-1", isOwn ? "flex-row" : "flex-row-reverse")}>
+      <div className={cn("flex max-w-[95%] items-center gap-1 sm:max-w-[50%]", isOwn ? "flex-row" : "flex-row-reverse")}>
         {maybeWithMenu(
           <div
             className={cn(

@@ -50,7 +50,12 @@ function RouteComponent() {
   // available width on desktop rather than being capped by the centered
   // `container` max-width used by every other org page.
   const pathname = useRouterState({ select: (s) => s.location.pathname })
-  const fullBleed = pathname.startsWith(`/org/${ORG_ROUTES.conversations.segment}`)
+  const convBase = `/org/${ORG_ROUTES.conversations.segment}`
+  const fullBleed = pathname.startsWith(convBase)
+  // A specific conversation is open (detail pane, not the list). On mobile this
+  // thread should own the whole screen — hide the app header + breadcrumb and
+  // drop the surrounding padding so it goes edge to edge. Desktop is unchanged.
+  const chatDetail = fullBleed && pathname.slice(convBase.length).replace(/\//g, "").length > 0
 
   const user = (data?.status === 200 && data.data.data) || undefined
   const access = user ? buildAccess(user) : null
@@ -76,7 +81,12 @@ function RouteComponent() {
         <SidebarProvider>
           <AppSidebar user={user} navGroups={navGroups} side={sidebarSide} contentExtra={<NavZoora />} />
           <SidebarInset>
-            <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+            <header
+              className={cn(
+                "flex h-16 shrink-0 items-center gap-2 border-b px-4",
+                chatDetail && "hidden md:flex"
+              )}
+            >
               <SidebarTrigger className="md:hidden" />
               <SidebarBreadcrumb
                 className="hidden md:flex"
@@ -92,11 +102,14 @@ function RouteComponent() {
               </div>
             </header>
             <MajorModal />
-            <MobileBreadcrumb className="px-4 pt-4 pb-2 md:hidden" />
+            {!chatDetail && <MobileBreadcrumb className="px-4 pt-4 pb-2 md:hidden" />}
             <div
               className={cn(
-                "flex flex-1 flex-col gap-4 py-4",
-                fullBleed ? "min-h-0 px-4" : "container"
+                "flex flex-1 flex-col",
+                fullBleed ? "min-h-0" : "container",
+                chatDetail
+                  ? "gap-0 p-0 md:gap-4 md:px-4 md:py-4"
+                  : cn("gap-4 py-4", fullBleed && "px-4")
               )}
             >
               <Outlet />

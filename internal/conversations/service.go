@@ -767,6 +767,14 @@ func (s *service) SendMessage(ctx context.Context, convID uuid.UUID, dto domain.
 		}
 	}
 
+	// Attribute the sender on the returned row: the repo Create doesn't preload
+	// Sender, and with `json:"sender,omitempty"` a nil Sender is dropped from the
+	// POST response — which would clobber the WS echo's good sender on the client
+	// merge. SenderID is the caller here, so populate it from caller identity.
+	if msg.Sender == nil && msg.SenderID != nil && *msg.SenderID == caller.UserID {
+		msg.Sender = &domain.User{ID: caller.UserID, Name: caller.Name}
+	}
+
 	// Phase 3 Step 5 wires notifications via `mentioned`; Phase 2 wires rt broadcast.
 	s.afterSend(ctx, conv, msg, caller, mentioned)
 	return msg, nil

@@ -174,9 +174,6 @@ export function ConnectorCard({ type, connector }: ConnectorCardProps) {
             </Button>
           )
         )}
-        {pushUnavailable && (
-          <span className="text-muted-foreground text-xs">{t("notifications.connectors.pushUnavailable")}</span>
-        )}
       </div>
 
       {(type === ConnectorType.ConnectorTelegram || type === ConnectorType.ConnectorBale) && (

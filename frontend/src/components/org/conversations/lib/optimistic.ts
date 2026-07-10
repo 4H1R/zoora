@@ -38,6 +38,12 @@ export function insertOptimistic(old: MessagesCache | undefined, msg: ChatMessag
  * No-op (returns `old` unchanged) when the cache is absent or the id is not
  * loaded — the WS `new_message` echo appends it in that case. Mirrors the
  * reducer's `replaceMessageInInfinite`.
+ *
+ * The POST send-response omits `sender` (the backend returns the non-preloaded
+ * row, `json:"sender,omitempty"`), while the WS `new_message` echo carries a
+ * populated one. Both converge on the same client id, so if the POST response
+ * wins the race it must NOT clobber a good sender with an empty one — keep the
+ * existing sender whenever the incoming payload lacks a usable name.
  */
 export function replaceMessage(old: MessagesCache | undefined, msg: ChatMessage): MessagesCache | undefined {
   if (!old) return old
@@ -47,7 +53,9 @@ export function replaceMessage(old: MessagesCache | undefined, msg: ChatMessage)
     if (idx === -1) return page
     changed = true
     const next = page.slice()
-    next[idx] = { ...msg, _status: undefined }
+    const prev = page[idx]
+    const sender = msg.sender?.name?.trim() ? msg.sender : (prev.sender ?? msg.sender)
+    next[idx] = { ...msg, sender, _status: undefined }
     return next
   })
   return changed ? { ...old, pages } : old

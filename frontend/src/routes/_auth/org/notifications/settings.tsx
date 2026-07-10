@@ -16,7 +16,6 @@ export const Route = createFileRoute("/_auth/org/notifications/settings")({
 const CHANNELS = [
   ConnectorType.ConnectorTelegram,
   ConnectorType.ConnectorBale,
-  ConnectorType.ConnectorSMS,
   ConnectorType.ConnectorPush,
 ] as const
 

@@ -42,7 +42,13 @@ function ConversationsLayout() {
   if (!chatEnabled) return <ChatUpgrade canUpgrade={canUpgrade} />
 
   return (
-    <div className="bg-card flex flex-1 overflow-hidden rounded-xl border">
+    <div
+      className={cn(
+        "bg-card flex flex-1 overflow-hidden border",
+        // Detail open on mobile → edge-to-edge (no rounded corners / side border).
+        hasDetail ? "rounded-none border-0 md:rounded-xl md:border" : "rounded-xl"
+      )}
+    >
       <aside
         className={cn(
           "bg-card flex w-full flex-col border-e md:w-80 md:shrink-0 xl:w-96",

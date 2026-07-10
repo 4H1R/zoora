@@ -68,7 +68,13 @@ export function VideoAttachment({
           src={src}
           preload="metadata"
           playsInline
-          onClick={() => !uploading && playback.toggle()}
+          // The bubble-wide context menu opens on `mousedown`; tapping the frame
+          // toggles playback and must not also open the menu.
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation()
+            if (!uploading) playback.toggle()
+          }}
           className={cn("w-full cursor-pointer object-contain", fullscreen ? "h-full max-h-full" : "max-h-80")}
         />
       ) : (
@@ -79,7 +85,11 @@ export function VideoAttachment({
       {src && !uploading && !errored && !playback.playing && (
         <button
           type="button"
-          onClick={playback.toggle}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation()
+            playback.toggle()
+          }}
           aria-label={t("conversations.player.play")}
           className="absolute inset-0 m-auto flex size-14 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition hover:bg-black/65 active:scale-95"
         >
@@ -121,7 +131,11 @@ export function VideoAttachment({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={playback.toggle}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation()
+                playback.toggle()
+              }}
               aria-label={playback.playing ? t("conversations.player.pause") : t("conversations.player.play")}
               className="flex size-6 items-center justify-center rounded-md transition hover:bg-white/15"
             >
@@ -139,7 +153,11 @@ export function VideoAttachment({
             <DownloadButton url={src} name={name} tone="overlay" />
             <button
               type="button"
-              onClick={toggleFullscreen}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation()
+                toggleFullscreen()
+              }}
               aria-label={fullscreen ? t("conversations.player.exitFullscreen") : t("conversations.player.fullscreen")}
               className="flex size-6 items-center justify-center rounded-md transition hover:bg-white/15"
             >

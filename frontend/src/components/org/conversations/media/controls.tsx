@@ -35,7 +35,12 @@ function seekHandlers(onSeek?: (fraction: number) => void) {
   }
 
   return {
+    // The context-menu trigger opens on `mousedown` (base-ui/floating-ui useClick),
+    // so a scrub must stop mousedown too — not just click/pointerdown — or the menu
+    // opens alongside the seek. A seek is a play interaction, not a menu open.
+    onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation(),
     onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => {
+      e.stopPropagation()
       e.currentTarget.setPointerCapture(e.pointerId)
       onSeek(fractionAt(e.currentTarget, e.clientX))
     },
@@ -43,6 +48,7 @@ function seekHandlers(onSeek?: (fraction: number) => void) {
       if (!e.currentTarget.hasPointerCapture(e.pointerId)) return
       onSeek(fractionAt(e.currentTarget, e.clientX))
     },
+    onClick: (e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation(),
   }
 }
 
@@ -168,6 +174,7 @@ export function RatePill({ tone, className }: { tone: ControlTone; className?: s
   return (
     <button
       type="button"
+      onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => {
         e.stopPropagation()
         cycleRate()
@@ -211,7 +218,12 @@ export function PlayPauseButton({
   return (
     <button
       type="button"
-      onClick={onToggle}
+      // The bubble-wide context-menu trigger opens on `mousedown`, so stop that too.
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation()
+        onToggle()
+      }}
       disabled={disabled}
       aria-label={playing ? t("conversations.player.pause") : t("conversations.player.play")}
       className={cn(
@@ -257,6 +269,7 @@ export function DownloadButton({
       target="_blank"
       rel="noopener noreferrer"
       download={name}
+      onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
       aria-label={t("conversations.player.download")}
       className={cn("shrink-0 transition", tones[tone], className)}

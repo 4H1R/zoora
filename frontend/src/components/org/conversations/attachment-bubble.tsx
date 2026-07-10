@@ -303,6 +303,7 @@ function BlurhashImage({
         <img
           src={src}
           alt={alt}
+          onMouseDown={onClick ? (e) => e.stopPropagation() : undefined}
           onClick={onClick}
           onLoad={() => setLoaded(true)}
           className={cn(
@@ -325,7 +326,16 @@ function LightboxImage({ src, alt, className }: { src?: string; alt: string; cla
   return (
     <Dialog>
       <DialogTrigger
-        render={<button type="button" aria-label={t("conversations.attachments.open")} className={className} />}
+        render={
+          <button
+            type="button"
+            // Opening the lightbox must not also open the bubble-wide context menu,
+            // which triggers on `mousedown` (base-ui/floating-ui).
+            onMouseDown={(e) => e.stopPropagation()}
+            aria-label={t("conversations.attachments.open")}
+            className={className}
+          />
+        }
       >
         <img src={src} alt={alt} className="size-full object-cover" />
       </DialogTrigger>
