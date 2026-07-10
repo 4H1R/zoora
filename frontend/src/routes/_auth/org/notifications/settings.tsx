@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/page-header"
 import { Skeleton } from "@/components/ui/skeleton"
 import { orgHead } from "@/lib/org-head"
 
-export const Route = createFileRoute("/_auth/org/settings/notifications")({
+export const Route = createFileRoute("/_auth/org/notifications/settings")({
   head: () => orgHead("notifications.connectors.title"),
   component: ConnectorSettingsPage,
 })

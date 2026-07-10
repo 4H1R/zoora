@@ -2,7 +2,7 @@ import type { GithubCom4H1RZooraInternalDomainNotificationInboxItem as InboxItem
 
 import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
-import { BellIcon, CheckCheckIcon, SendIcon } from "lucide-react"
+import { BellIcon, CheckCheckIcon, SendIcon, SettingsIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
@@ -67,6 +67,10 @@ function NotificationsInboxPage() {
         title={t("notifications.title")}
         actions={
           <>
+            <Button variant="outline" size="sm" render={<Link to="/org/notifications/settings" />}>
+              <SettingsIcon />
+              {t("notifications.connectors.title")}
+            </Button>
             <Button variant="outline" size="sm" disabled={markAllRead.isPending} onClick={() => markAllRead.mutate()}>
               <CheckCheckIcon />
               {t("notifications.markAllRead")}
