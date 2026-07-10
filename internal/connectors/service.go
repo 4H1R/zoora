@@ -29,17 +29,19 @@ type BotLinkConfig struct {
 
 type service struct {
 	repo   domain.UserConnectorRepository
+	users  domain.UserRepository         // nil ok: skips greeting enrichment
+	orgs   domain.OrganizationRepository // nil ok: skips org name in greeting
 	rdb    *redis.Client
 	sms    domain.SMSSender
 	bots   BotLinkConfig
 	logger *slog.Logger
 }
 
-func NewService(repo domain.UserConnectorRepository, rdb *redis.Client, smsSender domain.SMSSender, bots BotLinkConfig, logger *slog.Logger) domain.ConnectorService {
+func NewService(repo domain.UserConnectorRepository, users domain.UserRepository, orgs domain.OrganizationRepository, rdb *redis.Client, smsSender domain.SMSSender, bots BotLinkConfig, logger *slog.Logger) domain.ConnectorService {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &service{repo: repo, rdb: rdb, sms: smsSender, bots: bots, logger: logger}
+	return &service{repo: repo, users: users, orgs: orgs, rdb: rdb, sms: smsSender, bots: bots, logger: logger}
 }
 
 func linkKey(t domain.ConnectorType, token string) string {
@@ -87,27 +89,55 @@ func (s *service) CreateLinkToken(ctx context.Context, t domain.ConnectorType) (
 
 // CompleteLink runs in the worker (bot poller) — no Caller in ctx; identity
 // comes from the one-time token.
-func (s *service) CompleteLink(ctx context.Context, t domain.ConnectorType, token, chatID string) error {
+func (s *service) CompleteLink(ctx context.Context, t domain.ConnectorType, token, chatID string) (*domain.ConnectorLinkResult, error) {
 	key := linkKey(t, token)
 	val, err := s.rdb.GetDel(ctx, key).Result()
 	if err == redis.Nil {
-		return domain.ErrNotFound
+		return nil, domain.ErrNotFound
 	}
 	if err != nil {
-		return fmt.Errorf("connectors.service.CompleteLink: %w", err)
+		return nil, fmt.Errorf("connectors.service.CompleteLink: %w", err)
 	}
 	userID, err := uuid.Parse(val)
 	if err != nil {
-		return fmt.Errorf("connectors.service.CompleteLink: bad stored user id: %w", err)
+		return nil, fmt.Errorf("connectors.service.CompleteLink: bad stored user id: %w", err)
 	}
 	now := time.Now()
-	return s.repo.Create(ctx, &domain.UserConnector{
+	if err := s.repo.Create(ctx, &domain.UserConnector{
 		UserID:     userID,
 		Type:       t,
 		Target:     chatID,
 		VerifiedAt: &now,
 		Enabled:    true,
-	})
+	}); err != nil {
+		return nil, err
+	}
+	return s.linkResult(ctx, userID), nil
+}
+
+// linkResult best-effort resolves the greeting fields. Lookup failures are
+// logged and yield an empty/partial result — the link already succeeded, so we
+// never fail it just because we couldn't fetch a display name.
+func (s *service) linkResult(ctx context.Context, userID uuid.UUID) *domain.ConnectorLinkResult {
+	res := &domain.ConnectorLinkResult{}
+	if s.users == nil {
+		return res
+	}
+	u, err := s.users.FindByID(ctx, userID)
+	if err != nil {
+		s.logger.Warn("connectors.linkResult: user lookup failed", "user_id", userID, "error", err)
+		return res
+	}
+	res.Username, res.Name = u.Username, u.Name
+	if u.OrganizationID != nil && s.orgs != nil {
+		org, err := s.orgs.FindByID(ctx, *u.OrganizationID)
+		if err != nil {
+			s.logger.Warn("connectors.linkResult: org lookup failed", "org_id", *u.OrganizationID, "error", err)
+		} else {
+			res.OrgName = org.Name
+		}
+	}
+	return res
 }
 
 type otpRecord struct {

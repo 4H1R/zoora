@@ -303,7 +303,7 @@ func main() {
 	}
 
 	connectorRepo := connectors.NewRepository(db)
-	connectorService := connectors.NewService(connectorRepo, redisClient, smsSender, connectors.BotLinkConfig{
+	connectorService := connectors.NewService(connectorRepo, userRepo, orgRepo, redisClient, smsSender, connectors.BotLinkConfig{
 		TelegramBotUsername: cfg.TelegramBotUsername,
 		BaleBotUsername:     cfg.BaleBotUsername,
 	}, log)

@@ -58,6 +58,16 @@ type UpdateConnectorDTO struct {
 	Enabled *bool `json:"enabled" binding:"required"`
 }
 
+// ConnectorLinkResult describes the account a bot chat was just linked to,
+// used to greet the user after /start. OrgName is empty for platform admins
+// (no organization). Name fields may be empty if enrichment lookups fail —
+// the link itself still succeeds.
+type ConnectorLinkResult struct {
+	Username string
+	Name     string
+	OrgName  string
+}
+
 // --- interfaces ---
 
 type UserConnectorRepository interface {
@@ -75,8 +85,9 @@ type UserConnectorRepository interface {
 type ConnectorService interface {
 	// CreateLinkToken issues a one-time bot-linking token (telegram|bale).
 	CreateLinkToken(ctx context.Context, t ConnectorType) (*LinkTokenResponse, error)
-	// CompleteLink is called by the worker bot poller on /start <token>.
-	CompleteLink(ctx context.Context, t ConnectorType, token, chatID string) error
+	// CompleteLink is called by the worker bot poller on /start <token>. It
+	// returns the linked account so the poller can greet the user by name/org.
+	CompleteLink(ctx context.Context, t ConnectorType, token, chatID string) (*ConnectorLinkResult, error)
 	RequestSMSOTP(ctx context.Context, dto RequestSMSOTPDTO) error
 	VerifySMSOTP(ctx context.Context, dto VerifySMSOTPDTO) error
 	RegisterPushToken(ctx context.Context, dto RegisterPushTokenDTO) (*UserConnector, error)

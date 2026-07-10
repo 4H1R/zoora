@@ -29,6 +29,30 @@ func (m *mockConnRepo) FindByID(context.Context, uuid.UUID) (*domain.UserConnect
 	return m.byID, nil
 }
 
+type mockUserRepo struct {
+	domain.UserRepository
+	user *domain.User
+}
+
+func (m *mockUserRepo) FindByID(context.Context, uuid.UUID) (*domain.User, error) {
+	if m.user == nil {
+		return nil, domain.ErrNotFound
+	}
+	return m.user, nil
+}
+
+type mockOrgRepo struct {
+	domain.OrganizationRepository
+	org *domain.Organization
+}
+
+func (m *mockOrgRepo) FindByID(context.Context, uuid.UUID) (*domain.Organization, error) {
+	if m.org == nil {
+		return nil, domain.ErrNotFound
+	}
+	return m.org, nil
+}
+
 type mockSMS struct{ otpPhone, otpCode string }
 
 func (m *mockSMS) SendBulk(context.Context, []string, string) error { return nil }
@@ -41,7 +65,7 @@ func testService(t *testing.T, repo domain.UserConnectorRepository, sms domain.S
 	t.Helper()
 	mr := miniredis.RunT(t)
 	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
-	svc := NewService(repo, rdb, sms, BotLinkConfig{TelegramBotUsername: "zoora_bot", BaleBotUsername: "zoora_bale_bot"}, nil)
+	svc := NewService(repo, nil, nil, rdb, sms, BotLinkConfig{TelegramBotUsername: "zoora_bot", BaleBotUsername: "zoora_bale_bot"}, nil)
 	return svc, rdb
 }
 
@@ -65,7 +89,7 @@ func TestCreateLinkTokenAndCompleteLink(t *testing.T) {
 		t.Fatalf("deep link = %s", resp.DeepLink)
 	}
 
-	if err := svc.CompleteLink(context.Background(), domain.ConnectorTelegram, resp.Token, "424242"); err != nil {
+	if _, err := svc.CompleteLink(context.Background(), domain.ConnectorTelegram, resp.Token, "424242"); err != nil {
 		t.Fatalf("CompleteLink: %v", err)
 	}
 	if repo.created == nil || repo.created.UserID != userID || repo.created.Target != "424242" {
@@ -76,8 +100,53 @@ func TestCreateLinkTokenAndCompleteLink(t *testing.T) {
 	}
 
 	// Token is one-time.
-	if err := svc.CompleteLink(context.Background(), domain.ConnectorTelegram, resp.Token, "424242"); !errors.Is(err, domain.ErrNotFound) {
+	if _, err := svc.CompleteLink(context.Background(), domain.ConnectorTelegram, resp.Token, "424242"); !errors.Is(err, domain.ErrNotFound) {
 		t.Fatalf("reuse err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestCompleteLinkReturnsAccountGreeting(t *testing.T) {
+	repo := &mockConnRepo{}
+	orgID := uuid.New()
+	userID := uuid.New()
+	userRepo := &mockUserRepo{user: &domain.User{ID: userID, Username: "ali", Name: "Ali A", OrganizationID: &orgID}}
+	orgRepo := &mockOrgRepo{org: &domain.Organization{ID: orgID, Name: "Acme"}}
+	mr := miniredis.RunT(t)
+	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	svc := NewService(repo, userRepo, orgRepo, rdb, &mockSMS{}, BotLinkConfig{TelegramBotUsername: "zoora_bot"}, nil)
+
+	resp, err := svc.CreateLinkToken(callerCtx(userID), domain.ConnectorTelegram)
+	if err != nil {
+		t.Fatalf("CreateLinkToken: %v", err)
+	}
+	res, err := svc.CompleteLink(context.Background(), domain.ConnectorTelegram, resp.Token, "424242")
+	if err != nil {
+		t.Fatalf("CompleteLink: %v", err)
+	}
+	if res.Username != "ali" || res.Name != "Ali A" || res.OrgName != "Acme" {
+		t.Fatalf("result = %+v, want ali/Ali A/Acme", res)
+	}
+}
+
+func TestConnectedMessage(t *testing.T) {
+	tests := []struct {
+		name string
+		res  *domain.ConnectorLinkResult
+		want string
+	}{
+		{"nil falls back", nil, "✅ Connected! You will now receive Zoora notifications here."},
+		{"no username falls back", &domain.ConnectorLinkResult{}, "✅ Connected! You will now receive Zoora notifications here."},
+		{"username + name + org", &domain.ConnectorLinkResult{Username: "ali", Name: "Ali A", OrgName: "Acme"},
+			"✅ Connected as @ali (Ali A) · Acme.\nYou will now receive Zoora notifications for this account here."},
+		{"username only", &domain.ConnectorLinkResult{Username: "ali"},
+			"✅ Connected as @ali.\nYou will now receive Zoora notifications for this account here."},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := connectedMessage(tt.res); got != tt.want {
+				t.Fatalf("connectedMessage = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }
 

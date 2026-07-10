@@ -62,10 +62,28 @@ func (p *Poller) handleMessage(ctx context.Context, m *bots.Message) {
 		return
 	}
 	chatID := strconv.FormatInt(m.Chat.ID, 10)
-	if err := p.svc.CompleteLink(ctx, p.kind, strings.TrimSpace(token), chatID); err != nil {
+	res, err := p.svc.CompleteLink(ctx, p.kind, strings.TrimSpace(token), chatID)
+	if err != nil {
 		p.logger.Warn("link completion failed", "bot", p.kind, "error", err)
 		_ = p.bot.SendMessage(ctx, chatID, "Link failed or expired. Request a new link from your Zoora settings.")
 		return
 	}
-	_ = p.bot.SendMessage(ctx, chatID, "✅ Connected! You will now receive Zoora notifications here.")
+	_ = p.bot.SendMessage(ctx, chatID, connectedMessage(res))
+}
+
+// connectedMessage builds the /start confirmation, naming the account and org
+// when available and degrading gracefully when enrichment lookups came back
+// empty.
+func connectedMessage(res *domain.ConnectorLinkResult) string {
+	if res == nil || res.Username == "" {
+		return "✅ Connected! You will now receive Zoora notifications here."
+	}
+	who := "@" + res.Username
+	if res.Name != "" {
+		who += " (" + res.Name + ")"
+	}
+	if res.OrgName != "" {
+		return "✅ Connected as " + who + " · " + res.OrgName + ".\nYou will now receive Zoora notifications for this account here."
+	}
+	return "✅ Connected as " + who + ".\nYou will now receive Zoora notifications for this account here."
 }

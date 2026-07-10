@@ -33,6 +33,7 @@ import (
 	"github.com/4H1R/zoora/internal/platform/sms"
 	"github.com/4H1R/zoora/internal/platform/storage"
 	"github.com/4H1R/zoora/internal/polls"
+	"github.com/4H1R/zoora/internal/users"
 )
 
 func main() {
@@ -165,7 +166,9 @@ func main() {
 		log.Error("failed to connect to redis", "error", err)
 		os.Exit(1)
 	}
-	connectorService := connectors.NewService(connectorRepo, redisClient, smsSender, connectors.BotLinkConfig{
+	userRepo := users.NewRepository(db)
+	orgRepo := organizations.NewRepository(db)
+	connectorService := connectors.NewService(connectorRepo, userRepo, orgRepo, redisClient, smsSender, connectors.BotLinkConfig{
 		TelegramBotUsername: cfg.TelegramBotUsername,
 		BaleBotUsername:     cfg.BaleBotUsername,
 	}, log)
@@ -192,8 +195,8 @@ func main() {
 	queueServer.HandleFunc(domain.TypeRecordingRetentionSweep, livesessions.NewRetentionSweepHandler(retentionSweeper))
 
 	// --- billing (worker: PDF generation + reminder/expire sweeps only; no
-	// gateway calls, so the payment registry is empty). ---
-	orgRepo := organizations.NewRepository(db)
+	// gateway calls, so the payment registry is empty). orgRepo is built above
+	// for the connector link greeting. ---
 	billingRepo := billing.NewRepository(db)
 	billingIssuer := billing.IssuerConfig{
 		Name:       cfg.InvoiceIssuerName,
