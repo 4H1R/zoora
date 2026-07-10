@@ -7,6 +7,7 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools"
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 
+import { ConnectionBanner } from "@/components/connection-banner"
 import { ErrorScreen } from "@/components/error-screen"
 import { NotFound } from "@/components/not-found"
 import { PWAUpdater } from "@/components/pwa-updater"
@@ -48,6 +49,7 @@ function RootComponent() {
     <DirectionProvider direction={dir}>
       <HeadContent />
       <Outlet />
+      <ConnectionBanner />
       <Toaster />
       <PWAUpdater />
       {/*<ReactQueryDevtools buttonPosition="bottom-left" />

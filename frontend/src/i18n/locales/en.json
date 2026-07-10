@@ -1,4 +1,14 @@
 {
+  "connectivity": {
+    "offline": {
+      "title": "You're offline",
+      "hint": "Check your internet connection — changes won't save until you're back."
+    },
+    "backOnline": "Back online",
+    "chat": {
+      "reconnecting": "Reconnecting to chat…"
+    }
+  },
   "pwa": {
     "updateTitle": "A new version of Zoora is available.",
     "updateAction": "Reload",

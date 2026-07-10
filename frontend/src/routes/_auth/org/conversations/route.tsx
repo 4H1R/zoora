@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, useParams } from "@tanstack/react-router"
 
+import { ChatConnectionBanner } from "@/components/connection-banner"
 import { ChatUpgrade } from "@/components/org/conversations/chat-upgrade"
 import { ConversationSidebar } from "@/components/org/conversations/conversation-list"
 import { ProfileCardDialog } from "@/components/org/conversations/profile-card-dialog"
@@ -42,25 +43,28 @@ function ConversationsLayout() {
   if (!chatEnabled) return <ChatUpgrade canUpgrade={canUpgrade} />
 
   return (
-    <div
-      className={cn(
-        "bg-card flex flex-1 overflow-hidden border",
-        // Detail open on mobile → edge-to-edge (no rounded corners / side border).
-        hasDetail ? "rounded-none border-0 md:rounded-xl md:border" : "rounded-xl"
-      )}
-    >
-      <aside
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <ChatConnectionBanner />
+      <div
         className={cn(
-          "bg-card flex w-full flex-col border-e md:w-80 md:shrink-0 xl:w-96",
-          hasDetail && "hidden md:flex"
+          "bg-card flex min-h-0 flex-1 overflow-hidden border",
+          // Detail open on mobile → edge-to-edge (no rounded corners / side border).
+          hasDetail ? "rounded-none border-0 md:rounded-xl md:border" : "rounded-xl"
         )}
       >
-        <ConversationSidebar />
-      </aside>
-      <main className={cn("min-w-0 flex-1 flex-col", hasDetail ? "flex" : "hidden md:flex")}>
-        <Outlet />
-      </main>
-      <ProfileCardDialog />
+        <aside
+          className={cn(
+            "bg-card flex w-full flex-col border-e md:w-80 md:shrink-0 xl:w-96",
+            hasDetail && "hidden md:flex"
+          )}
+        >
+          <ConversationSidebar />
+        </aside>
+        <main className={cn("min-w-0 flex-1 flex-col", hasDetail ? "flex" : "hidden md:flex")}>
+          <Outlet />
+        </main>
+        <ProfileCardDialog />
+      </div>
     </div>
   )
 }

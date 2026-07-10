@@ -26,24 +26,40 @@ export default defineConfig({
       registerType: 'prompt',
       // Registration is wired manually via virtual:pwa-register in src/pwa.ts.
       injectRegister: null,
-      // Cache the app shell + hashed static assets. Fonts (woff2) included so
-      // Geist/Vazirmatn render offline.
+      // Cache hashed static assets for offline + instant repeat loads. Fonts
+      // (woff2) included so Geist/Vazirmatn render offline. index.html is
+      // deliberately NOT precached (no `html` in the glob) — see the
+      // NetworkFirst navigation rule below: an online user must always get the
+      // freshest shell without waiting for an SW update prompt. Precaching the
+      // shell cache-first is the classic "stale app shell" bug.
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
+        globPatterns: ['**/*.{js,css,ico,png,svg,webp,woff2}'],
         // The live-room bundle (livekit + tldraw + pdfjs) is ~2.7 MB and lazily
         // loaded only when entering a room. Keep it out of the install-time
         // precache — the runtime rule below caches it on first use instead.
         globIgnores: ['**/_liveId-*.js'],
-        // SPA fallback: unmatched navigations serve index.html so deep links
-        // work offline. Never intercept the API or LiveKit signalling paths.
+        // Offline-only fallback: when the network is unreachable the
+        // NetworkFirst navigation rule serves this cached shell so deep links
+        // still work. Online, navigations always hit the network first.
         navigateFallback: '/index.html',
-        // Also exclude the dedicated FCM background worker so it is served
-        // as-is on its own scope instead of falling back to index.html.
+        // Never intercept the API, LiveKit signalling, or the FCM worker scope.
         navigateFallbackDenylist: [/^\/api/, /^\/rtc/, /^\/firebase-messaging-sw\.js$/],
-        // Never cache auth'd API responses. Hashed JS/CSS chunks are
-        // immutable, so cache them stale-while-revalidate as they're requested
-        // — covers the excluded live-room chunk and any future big splits.
         runtimeCaching: [
+          // App shell / navigations → NetworkFirst. Online users get the
+          // latest index.html (→ latest hashed chunk refs → latest app) with
+          // no reload prompt; a 3s timeout falls back to the cached shell on
+          // slow/absent networks so offline still works.
+          {
+            urlPattern: ({ request }) => request.mode === "navigate",
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "app-shell",
+              networkTimeoutSeconds: 3,
+            },
+          },
+          // Hashed JS/CSS/workers are immutable — serve stale-while-revalidate
+          // so they load instantly and refresh in the background. Covers the
+          // excluded live-room chunk and any future big splits.
           {
             urlPattern: ({ request }) =>
               request.destination === "script" ||
