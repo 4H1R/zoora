@@ -11,10 +11,10 @@ importScripts("https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js
 importScripts("https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js")
 
 firebase.initializeApp({
-  apiKey: "REPLACE_WITH_VITE_FIREBASE_API_KEY",
-  projectId: "REPLACE_WITH_VITE_FIREBASE_PROJECT_ID",
-  messagingSenderId: "REPLACE_WITH_VITE_FIREBASE_SENDER_ID",
-  appId: "REPLACE_WITH_VITE_FIREBASE_APP_ID",
+  apiKey: "AIzaSyAkbK44ZDOeg5zdPaIO63rROs5KvkwgFRc",
+  projectId: "zoora-a55fa",
+  messagingSenderId: "255482847291",
+  appId: "1:255482847291:web:3039a7b3405bf481a77c1e",
 })
 
 // Background pushes: FCM renders `notification` payloads automatically; this
