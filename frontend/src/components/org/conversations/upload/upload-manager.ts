@@ -28,6 +28,12 @@ export interface UploadResult {
 export interface UploadOptions {
   onProgress?: (progress: number) => void
   signal?: AbortSignal
+  /**
+   * Telegram "Send as a document": upload the original bytes untouched (no
+   * image compression, no blurhash) so the file is preserved and rendered as a
+   * file chip rather than an inline image.
+   */
+  asDocument?: boolean
 }
 
 /**
@@ -127,16 +133,18 @@ export async function uploadFile(
   convId: string,
   opts: UploadOptions = {}
 ): Promise<UploadResult> {
-  const { onProgress, signal } = opts
+  const { onProgress, signal, asDocument } = opts
   if (signal?.aborted) throw abortError()
 
-  const img = isImage(file)
+  // Document mode preserves the original bytes and skips the image pipeline
+  // entirely — the file will render as a chip, so blurhash/dimensions are moot.
+  const img = !asDocument && isImage(file)
 
   // Compression and blurhash/dimensions are independent — run them together.
   // Each best-effort helper resolves to null on failure, so the upload still
   // proceeds without a placeholder.
   const [compressed, blurhash, dims] = await Promise.all([
-    compressImage(file),
+    asDocument ? Promise.resolve(file) : compressImage(file),
     img ? encodeBlurhash(file) : Promise.resolve(null),
     img ? imageDimensions(file) : Promise.resolve(null),
   ])

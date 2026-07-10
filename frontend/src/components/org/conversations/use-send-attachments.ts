@@ -49,6 +49,7 @@ export interface SendWithAttachmentsInput {
   files: File[]
   replyToMessageId?: string
   mentions?: string[]
+  asDocument?: boolean
 }
 
 function buildDto(id: string, input: PendingSendInput, mediaIds: string[]): SendMessageDTO {
@@ -56,6 +57,7 @@ function buildDto(id: string, input: PendingSendInput, mediaIds: string[]): Send
   if (input.replyToMessageId) dto.reply_to_message_id = input.replyToMessageId
   if (input.mentions && input.mentions.length > 0) dto.mentions = input.mentions
   if (mediaIds.length > 0) dto.media_ids = mediaIds
+  if (input.asDocument) dto.as_document = true
   return dto
 }
 
@@ -118,9 +120,11 @@ export function useSendAttachments(convId: string) {
   // `_attachments`. Resolves once every file settles (fulfilled, errored, or
   // canceled) so `finalize` can decide the message's fate.
   function uploadAll(msgId: string, pendings: PendingFile[]) {
+    const asDocument = getPending(msgId)?.input.asDocument
     const tasks = pendings.map((p) =>
       uploadFile(p.file, convId, {
         signal: p.controller.signal,
+        asDocument,
         onProgress: (prog) => setCache((old) => updateAttachmentProgress(old, msgId, p.localId, prog)),
       })
         .then((res) => {
@@ -167,7 +171,7 @@ export function useSendAttachments(convId: string) {
     return getCache()?.pages.flat().find((m) => m.id === msgId)?.content ?? ""
   }
 
-  function sendWithAttachments({ content, files, replyToMessageId, mentions }: SendWithAttachmentsInput) {
+  function sendWithAttachments({ content, files, replyToMessageId, mentions, asDocument }: SendWithAttachmentsInput) {
     const capped = capFiles(files)
     if (capped.length === 0) return
 
@@ -177,7 +181,7 @@ export function useSendAttachments(convId: string) {
       name: file.name,
       contentType: file.type || "application/octet-stream",
       size: file.size,
-      blobUrl: isImage(file) ? URL.createObjectURL(file) : undefined,
+      blobUrl: !asDocument && isImage(file) ? URL.createObjectURL(file) : undefined,
       blurhash: null,
       progress: 0,
       status: "uploading",
@@ -191,6 +195,7 @@ export function useSendAttachments(convId: string) {
       content,
       reply_to_message_id: replyToMessageId,
       media_ids: [],
+      as_document: asDocument,
       created_at: new Date().toISOString(),
       _status: "sending",
       _attachments: attachments,
@@ -202,7 +207,7 @@ export function useSendAttachments(convId: string) {
       file,
       controller: new AbortController(),
     }))
-    setPending(id, { files: pendings, input: { content, replyToMessageId, mentions } })
+    setPending(id, { files: pendings, input: { content, replyToMessageId, mentions, asDocument } })
     uploadAll(id, pendings)
   }
 

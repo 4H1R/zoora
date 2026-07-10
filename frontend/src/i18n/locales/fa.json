@@ -3250,7 +3250,16 @@
       "open": "باز کردن تصویر",
       "image": "تصویر",
       "capExceeded_one": "حداکثر {{max}} فایل می‌توانید پیوست کنید — ۱ فایل اضافه نشد.",
-      "capExceeded_other": "حداکثر {{max}} فایل می‌توانید پیوست کنید — {{count}} فایل اضافه نشد."
+      "capExceeded_other": "حداکثر {{max}} فایل می‌توانید پیوست کنید — {{count}} فایل اضافه نشد.",
+      "dialogImage_one": "ارسال تصویر",
+      "dialogImage_other": "ارسال {{count}} تصویر",
+      "dialogFile_one": "ارسال فایل",
+      "dialogFile_other": "ارسال {{count}} فایل",
+      "asDocument": "ارسال به‌صورت فایل",
+      "caption": "افزودن توضیح…",
+      "dialogAdd": "افزودن",
+      "dialogCancel": "لغو",
+      "dialogSend": "ارسال"
     },
     "item": {
       "muted": "بی‌صدا"

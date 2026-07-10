@@ -16,12 +16,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils"
 import { useChatUi } from "@/stores/chat-ui"
 
-import { AttachmentTray } from "./attachment-tray"
 import { useChatWs } from "./chat-provider"
 import { detectMention, insertAtCaret, insertMention, resolveMentions } from "./lib/mentions"
 import { replaceMessage } from "./lib/optimistic"
 import { chatKeys } from "./lib/query-keys"
 import { MentionPopover } from "./mention-popover"
+import { SendAttachmentsDialog } from "./send-attachments-dialog"
 import { capFiles, MAX_MEDIA_PER_MESSAGE } from "./upload/upload-manager"
 import { useSendAttachments } from "./use-send-attachments"
 import { useSendMessage } from "./use-send-message"
@@ -297,16 +297,6 @@ export function MessageInput({ convId }: MessageInputProps) {
     if (editingMessageId) {
       if (!content) return
       submitEdit(editingMessageId, content)
-    } else if (files.length > 0) {
-      // Attachments allow an empty caption.
-      sendWithAttachments({
-        content,
-        files,
-        replyToMessageId: replyTo ?? undefined,
-        mentions: resolveMentions(content, members),
-      })
-      setReplyTo(null)
-      setFiles([])
     } else if (content) {
       send({
         content,
@@ -321,6 +311,20 @@ export function MessageInput({ convId }: MessageInputProps) {
     setMentionQuery(null)
     caretPosRef.current = 0
     pendingCaretRef.current = 0
+  }
+
+  // Fire from the Telegram-style attachment dialog: caption + document flag come
+  // from the modal; the composer only supplies reply target + resolved mentions.
+  function sendAttachments(caption: string, asDocument: boolean) {
+    sendWithAttachments({
+      content: caption,
+      files,
+      replyToMessageId: replyTo ?? undefined,
+      mentions: resolveMentions(caption, members),
+      asDocument,
+    })
+    setReplyTo(null)
+    setFiles([])
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -363,7 +367,9 @@ export function MessageInput({ convId }: MessageInputProps) {
   }
 
   const canAttach = !editingMessageId && files.length < MAX_MEDIA_PER_MESSAGE
-  const canSend = value.trim().length > 0 || (files.length > 0 && !editingMessageId)
+  // The composer send button only fires text now — attachments are sent from the
+  // dialog. Enter in the textarea still guards against sending while staging.
+  const canSend = value.trim().length > 0
 
   return (
     <div className="border-t px-3 py-3">
@@ -428,8 +434,16 @@ export function MessageInput({ convId }: MessageInputProps) {
           />
         )}
 
-        {/* Pre-send attachment tray — hidden while editing (no media edits). */}
-        {!editingMessageId && files.length > 0 && <AttachmentTray files={files} onRemove={removeFile} />}
+        {/* Telegram-style pre-send dialog — hidden while editing (no media edits). */}
+        {!editingMessageId && (
+          <SendAttachmentsDialog
+            files={files}
+            onSend={sendAttachments}
+            onRemove={removeFile}
+            onAddMore={() => fileInputRef.current?.click()}
+            onCancel={() => setFiles([])}
+          />
+        )}
 
         <input
           ref={fileInputRef}

@@ -9,6 +9,7 @@ import type { GithubCom4H1RZooraInternalDomainConversationMessageReactions } fro
 import type { GithubCom4H1RZooraInternalDomainUser } from './githubCom4H1RZooraInternalDomainUser';
 
 export interface GithubCom4H1RZooraInternalDomainConversationMessage {
+  as_document?: boolean;
   content?: string;
   conversation_id?: string;
   created_at?: string;

@@ -7,11 +7,9 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainSendConversationMessageDTO {
-  /**
-     * @minLength 1
-     * @maxLength 10000
-     */
-  content: string;
+  as_document?: boolean;
+  /** @maxLength 10000 */
+  content?: string;
   /** client-supplied uuidv7 (idempotency) */
   id?: string;
   /** @maxItems 20 */

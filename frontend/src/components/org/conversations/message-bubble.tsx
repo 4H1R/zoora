@@ -102,7 +102,7 @@ export function MessageBubble({
     )
 
   return (
-    <div className={cn("group/message flex flex-col", isOwn ? "items-start" : "items-end")}>
+    <div className={cn("group/message flex w-full flex-col", isOwn ? "items-start" : "items-end")}>
       {/* Reply preview: accent start-border strip, click jumps to the target. */}
       {replyToId && (
         <button
@@ -126,7 +126,7 @@ export function MessageBubble({
         {maybeWithMenu(
           <div
             className={cn(
-              "relative w-fit rounded-2xl text-sm leading-relaxed shadow-sm transition duration-500",
+              "relative w-fit min-w-0 rounded-2xl text-sm leading-relaxed shadow-sm transition duration-500",
               hasMedia && !hasContent ? "p-1.5" : "px-3 py-2",
               isOwn ? "bg-primary text-primary-foreground rounded-es-md" : "bg-muted text-foreground rounded-ee-md",
               status === "sending" && "opacity-60",

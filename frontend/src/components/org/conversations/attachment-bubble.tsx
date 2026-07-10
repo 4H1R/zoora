@@ -28,13 +28,24 @@ interface AttachmentBubbleProps {
  * presigned display URLs). Renders nothing when a message has no media.
  */
 export function AttachmentBubble({ message, convId, isOwn }: AttachmentBubbleProps) {
+  // "Send as a document" forces every attachment to render as a file chip,
+  // regardless of mime type (Telegram parity).
+  const asDocument = message.as_document ?? false
   const local = message._attachments
   if (local && local.length > 0) {
-    return <LocalAttachments attachments={local} convId={convId} msgId={message.id ?? ""} isOwn={isOwn} />
+    return (
+      <LocalAttachments
+        attachments={local}
+        convId={convId}
+        msgId={message.id ?? ""}
+        isOwn={isOwn}
+        asDocument={asDocument}
+      />
+    )
   }
 
   const ids = mediaIdStrings(message)
-  if (ids.length > 0) return <ConfirmedAttachments ids={ids} isOwn={isOwn} />
+  if (ids.length > 0) return <ConfirmedAttachments ids={ids} isOwn={isOwn} asDocument={asDocument} />
 
   return null
 }
@@ -54,18 +65,20 @@ function LocalAttachments({
   convId,
   msgId,
   isOwn,
+  asDocument,
 }: {
   attachments: LocalAttachment[]
   convId: string
   msgId: string
   isOwn: boolean
+  asDocument: boolean
 }) {
   const { cancelAttachment } = useSendAttachments(convId)
 
   return (
     <div className={cn("mb-1 grid gap-1", gridClass(attachments.length))}>
       {attachments.map((a) => {
-        const image = !!a.blobUrl || isImageType({ type: a.contentType })
+        const image = !asDocument && (!!a.blobUrl || isImageType({ type: a.contentType }))
         const single = attachments.length <= 1
         return image ? (
           <LocalImageCell
@@ -141,17 +154,27 @@ function LocalImageCell({
 /*  Confirmed (server-persisted) attachments                                   */
 /* -------------------------------------------------------------------------- */
 
-function ConfirmedAttachments({ ids, isOwn }: { ids: string[]; isOwn: boolean }) {
+function ConfirmedAttachments({ ids, isOwn, asDocument }: { ids: string[]; isOwn: boolean; asDocument: boolean }) {
   return (
     <div className={cn("mb-1 grid gap-1", gridClass(ids.length))}>
       {ids.map((id) => (
-        <ConfirmedAttachment key={id} id={id} isOwn={isOwn} multiple={ids.length > 1} />
+        <ConfirmedAttachment key={id} id={id} isOwn={isOwn} multiple={ids.length > 1} asDocument={asDocument} />
       ))}
     </div>
   )
 }
 
-function ConfirmedAttachment({ id, isOwn, multiple }: { id: string; isOwn: boolean; multiple: boolean }) {
+function ConfirmedAttachment({
+  id,
+  isOwn,
+  multiple,
+  asDocument,
+}: {
+  id: string
+  isOwn: boolean
+  multiple: boolean
+  asDocument: boolean
+}) {
   const { data: meta } = useMediaMeta(id)
   const { data: url } = useMediaUrl(id)
 
@@ -160,7 +183,7 @@ function ConfirmedAttachment({ id, isOwn, multiple }: { id: string; isOwn: boole
     return <div className={cn("bg-muted animate-pulse rounded-xl", multiple ? "aspect-square" : "aspect-video")} />
   }
 
-  const isImg = (meta?.mime_type ?? "").startsWith("image/")
+  const isImg = !asDocument && (meta?.mime_type ?? "").startsWith("image/")
 
   if (isImg) {
     return (

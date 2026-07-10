@@ -86,6 +86,7 @@ type ConversationMessage struct {
 	PinnedBy         *uuid.UUID      `gorm:"type:uuid" json:"pinned_by"`
 	PinnedAt         *time.Time      `json:"pinned_at"`
 	MediaIDs         json.RawMessage `gorm:"type:jsonb;not null;default:'[]'" json:"media_ids"`
+	AsDocument       bool            `gorm:"not null;default:false" json:"as_document"`
 	CreatedAt        time.Time       `json:"created_at"`
 	UpdatedAt        time.Time       `json:"updated_at"`
 
@@ -142,10 +143,11 @@ type AddConversationMemberDTO struct {
 
 type SendConversationMessageDTO struct {
 	ID               *string  `json:"id" binding:"omitempty,uuid"` // client-supplied uuidv7 (idempotency)
-	Content          string   `json:"content" binding:"required,min=1,max=10000"`
+	Content          string   `json:"content" binding:"required_without=MediaIDs,max=10000"`
 	ReplyToMessageID *string  `json:"reply_to_message_id" binding:"omitempty,uuid"`
 	MentionUserIDs   []string `json:"mentions" binding:"omitempty,max=100,dive,uuid"`
 	MediaIDs         []string `json:"media_ids" binding:"omitempty,max=20,dive,uuid"`
+	AsDocument       bool     `json:"as_document" binding:"omitempty"`
 }
 
 type UpdateConversationMessageDTO struct {

@@ -1,4 +1,5 @@
 import { useNavigate } from "@tanstack/react-router"
+import { useRef } from "react"
 import { useAccess } from "react-access-engine"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -73,27 +74,44 @@ export function ProfileCardDialog() {
   const notFound = needsResolve && resolveQuery.data?.status === 404
   const loading = needsResolve && resolveQuery.isFetching
 
+  // Keep the last resolved card so the "not found" fallback never flashes
+  // during the dialog's close animation, when `target` is already null.
+  const lastCard = useRef<{
+    userId: string
+    name: string
+    username?: string
+    isSelf: boolean
+  } | null>(null)
+  if (open && userId) {
+    lastCard.current = { userId, name, username, isSelf }
+  }
+  const card = open ? (userId ? { userId, name, username, isSelf } : null) : lastCard.current
+
   return (
     <Dialog open={open} onOpenChange={(next) => !next && close()}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader className="sr-only">
-          <DialogTitle>{name || username || t("conversations.profile.title")}</DialogTitle>
+          <DialogTitle>
+            {card?.name || card?.username || t("conversations.profile.title")}
+          </DialogTitle>
         </DialogHeader>
 
         {loading ? (
           <div className="flex items-center justify-center py-10">
             <Spinner className="text-muted-foreground size-5" />
           </div>
-        ) : notFound || !userId ? (
-          <p className="text-muted-foreground py-8 text-center text-sm">
-            {t("conversations.profile.notFound")}
-          </p>
+        ) : !card ? (
+          notFound ? (
+            <p className="text-muted-foreground py-8 text-center text-sm">
+              {t("conversations.profile.notFound")}
+            </p>
+          ) : null
         ) : (
           <div className="flex flex-col items-center gap-3 py-2">
             <div className="relative">
               <Avatar className="size-20">
-                <AvatarFallback className={cn("text-2xl font-semibold", avatarTint(userId))}>
-                  {initials(name)}
+                <AvatarFallback className={cn("text-2xl font-semibold", avatarTint(card.userId))}>
+                  {initials(card.name)}
                 </AvatarFallback>
               </Avatar>
               {presence && (
@@ -104,17 +122,19 @@ export function ProfileCardDialog() {
             </div>
 
             <div className="flex flex-col items-center gap-0.5 text-center">
-              <span className="text-lg font-semibold">{name}</span>
-              {username && <span className="text-muted-foreground font-mono text-sm">@{username}</span>}
+              <span className="text-lg font-semibold">{card.name}</span>
+              {card.username && (
+                <span className="text-muted-foreground font-mono text-sm">@{card.username}</span>
+              )}
             </div>
 
-            {isSelf ? (
+            {card.isSelf ? (
               <span className="text-muted-foreground text-sm">{t("conversations.profile.you")}</span>
             ) : (
               <Button
                 className="w-full"
                 disabled={directMutation.isPending}
-                onClick={() => directMutation.mutate({ data: { user_id: userId } })}
+                onClick={() => directMutation.mutate({ data: { user_id: card.userId } })}
               >
                 {directMutation.isPending && <Spinner />}
                 {t("conversations.profile.sendMessage")}

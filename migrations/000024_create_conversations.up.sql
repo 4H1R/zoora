@@ -51,6 +51,7 @@ CREATE TABLE conversation_messages (
     pinned_by            UUID,
     pinned_at            TIMESTAMPTZ,
     media_ids            JSONB       NOT NULL DEFAULT '[]',
+    as_document          BOOLEAN     NOT NULL DEFAULT FALSE,
     created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_conv_messages_conv FOREIGN KEY (conversation_id) REFERENCES conversations (id) ON DELETE CASCADE,

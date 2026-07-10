@@ -3250,7 +3250,16 @@
       "open": "Open image",
       "image": "Image",
       "capExceeded_one": "You can attach up to {{max}} files — 1 file wasn't added.",
-      "capExceeded_other": "You can attach up to {{max}} files — {{count}} files weren't added."
+      "capExceeded_other": "You can attach up to {{max}} files — {{count}} files weren't added.",
+      "dialogImage_one": "Send an image",
+      "dialogImage_other": "Send {{count}} images",
+      "dialogFile_one": "Send a file",
+      "dialogFile_other": "Send {{count}} files",
+      "asDocument": "Send as a document",
+      "caption": "Add a caption…",
+      "dialogAdd": "Add",
+      "dialogCancel": "Cancel",
+      "dialogSend": "Send"
     },
     "item": {
       "muted": "Muted"

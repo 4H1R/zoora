@@ -24,6 +24,8 @@ export interface PendingSendInput {
   content: string
   replyToMessageId?: string
   mentions?: string[]
+  /** Telegram "Send as a document": force file-chip rendering for every media. */
+  asDocument?: boolean
 }
 
 interface PendingEntry {

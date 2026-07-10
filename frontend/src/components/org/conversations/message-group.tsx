@@ -55,7 +55,9 @@ export function MessageGroup({ group, isOwn, showSenderName, renderBubble }: Mes
           </button>
         )}
         {group.messages.map((message) => (
-          <div key={message.id}>{renderBubble(message)}</div>
+          <div key={message.id} className="w-full">
+            {renderBubble(message)}
+          </div>
         ))}
       </div>
     </div>

@@ -618,6 +618,7 @@ func (s *service) SendMessage(ctx context.Context, convID uuid.UUID, dto domain.
 		SenderID:       &caller.UserID,
 		Content:        dto.Content,
 		MediaIDs:       json.RawMessage(`[]`),
+		AsDocument:     dto.AsDocument && len(dto.MediaIDs) > 0,
 	}
 	if dto.ID != nil {
 		id, _ := uuid.Parse(*dto.ID)

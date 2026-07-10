@@ -112,7 +112,7 @@ export function MessageContextMenu({ message, isOwn, convId, children }: Message
       {coarse ? (
         <DropdownMenu>
           {/* Tap the bubble to open; w-fit hugs it, select-none avoids stray selection. */}
-          <DropdownMenuTrigger render={<div className="w-fit cursor-pointer select-none">{children}</div>} />
+          <DropdownMenuTrigger render={<div className="w-fit min-w-0 cursor-pointer select-none">{children}</div>} />
           <DropdownMenuContent align="center" side="top" className="min-w-44">
             {items(DropdownMenuItem, DropdownMenuSeparator)}
           </DropdownMenuContent>
@@ -120,7 +120,7 @@ export function MessageContextMenu({ message, isOwn, convId, children }: Message
       ) : (
         <ContextMenu>
           {/* w-fit hugs the bubble; select-text keeps copy working. */}
-          <ContextMenuTrigger className="w-fit select-text">{children}</ContextMenuTrigger>
+          <ContextMenuTrigger className="w-fit min-w-0 select-text">{children}</ContextMenuTrigger>
           <ContextMenuContent className="min-w-44">{items(ContextMenuItem, ContextMenuSeparator)}</ContextMenuContent>
         </ContextMenu>
       )}
