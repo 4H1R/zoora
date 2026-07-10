@@ -250,6 +250,24 @@ func (r fakeMemberRepo) ListByConversation(_ context.Context, convID uuid.UUID) 
 	return out, nil
 }
 
+func (r fakeMemberRepo) ListPageMembers(_ context.Context, convIDs, directIDs []uuid.UUID, viewerID uuid.UUID) ([]domain.ConversationMember, error) {
+	r.s.mu.Lock()
+	defer r.s.mu.Unlock()
+	direct := map[uuid.UUID]bool{}
+	for _, id := range directIDs {
+		direct[id] = true
+	}
+	var out []domain.ConversationMember
+	for _, cid := range convIDs {
+		for _, m := range r.s.members[cid] {
+			if m.UserID == viewerID || direct[cid] {
+				out = append(out, m)
+			}
+		}
+	}
+	return out, nil
+}
+
 func (r fakeMemberRepo) ListUserIDs(_ context.Context, convID uuid.UUID) ([]uuid.UUID, error) {
 	r.s.mu.Lock()
 	defer r.s.mu.Unlock()
@@ -283,13 +301,24 @@ func (r fakeMemberRepo) SetMuted(_ context.Context, convID, userID uuid.UUID, un
 	return nil
 }
 
-// UnreadCount counts messages with sender != userID that were created after
-// the member's last-read position, using insertion order (msgOrder) as the
-// "newer than" relation — the fake equivalent of the real repo's
-// `id > last_read_message_id` keyset comparison on time-sortable uuidv7 ids.
-func (r fakeMemberRepo) UnreadCount(_ context.Context, convID, userID uuid.UUID) (int64, error) {
+// UnreadCounts batches unreadCountLocked over convIDs, mirroring the real
+// repo's single grouped query.
+func (r fakeMemberRepo) UnreadCounts(_ context.Context, userID uuid.UUID, convIDs []uuid.UUID) (map[uuid.UUID]int64, error) {
 	r.s.mu.Lock()
 	defer r.s.mu.Unlock()
+	out := make(map[uuid.UUID]int64, len(convIDs))
+	for _, cid := range convIDs {
+		out[cid] = r.unreadCountLocked(cid, userID)
+	}
+	return out, nil
+}
+
+// unreadCountLocked counts messages with sender != userID that were created
+// after the member's last-read position, using insertion order (msgOrder) as
+// the "newer than" relation — the fake equivalent of the real repo's
+// `id > last_read_message_id` keyset comparison on time-sortable uuidv7 ids.
+// Caller must hold s.mu.
+func (r fakeMemberRepo) unreadCountLocked(convID, userID uuid.UUID) int64 {
 	order := r.s.msgOrder[convID]
 	lastReadPos := -1
 	if i := r.memberIdx(convID, userID); i >= 0 {
@@ -312,7 +341,7 @@ func (r fakeMemberRepo) UnreadCount(_ context.Context, convID, userID uuid.UUID)
 			count++
 		}
 	}
-	return count, nil
+	return count
 }
 
 // ---- message repo ----
@@ -393,15 +422,18 @@ func (r fakeMessageRepo) ListWindow(_ context.Context, convID uuid.UUID, cur dom
 	return out, nil
 }
 
-func (r fakeMessageRepo) Latest(_ context.Context, convID uuid.UUID) (*domain.ConversationMessage, error) {
+func (r fakeMessageRepo) LatestByConversation(_ context.Context, convIDs []uuid.UUID) (map[uuid.UUID]domain.ConversationMessage, error) {
 	r.s.mu.Lock()
 	defer r.s.mu.Unlock()
-	order := r.s.msgOrder[convID]
-	if len(order) == 0 {
-		return nil, domain.ErrNotFound
+	out := make(map[uuid.UUID]domain.ConversationMessage, len(convIDs))
+	for _, cid := range convIDs {
+		order := r.s.msgOrder[cid]
+		if len(order) == 0 {
+			continue
+		}
+		out[cid] = r.s.msgs[order[len(order)-1]]
 	}
-	m := r.s.msgs[order[len(order)-1]]
-	return &m, nil
+	return out, nil
 }
 
 func (r fakeMessageRepo) ListPinned(_ context.Context, convID uuid.UUID) ([]domain.ConversationMessage, error) {
@@ -550,6 +582,50 @@ func (r fakeReactionRepo) CountByMessage(_ context.Context, messageID uuid.UUID)
 	return out, nil
 }
 
+func (r fakeReactionRepo) CountByMessages(_ context.Context, messageIDs []uuid.UUID) (map[uuid.UUID]map[string]int, error) {
+	r.s.mu.Lock()
+	defer r.s.mu.Unlock()
+	out := map[uuid.UUID]map[string]int{}
+	for _, id := range messageIDs {
+		if len(r.s.reactions[id]) == 0 {
+			continue
+		}
+		counts := map[string]int{}
+		for _, x := range r.s.reactions[id] {
+			counts[x.Emoji]++
+		}
+		out[id] = counts
+	}
+	return out, nil
+}
+
+// ---- permissive security-port stubs ----
+//
+// The userDirectory and attachmentValidator ports are REQUIRED by NewService
+// (they back multi-tenant guards). Tests that don't exercise those guards use
+// these permissive stubs; guard-specific tests wire fakeUserLookup /
+// the real AttachmentValidator instead.
+
+type allowAllUsers struct{}
+
+func (allowAllUsers) FilterSameOrg(_ context.Context, _ uuid.UUID, ids []uuid.UUID) ([]uuid.UUID, error) {
+	return ids, nil
+}
+
+func (allowAllUsers) DirectorySearch(_ context.Context, _ uuid.UUID, _ string, _ int) ([]domain.DirectoryUser, error) {
+	return nil, nil
+}
+
+func (allowAllUsers) DirectoryByUsername(_ context.Context, _ uuid.UUID, _ string) (*domain.DirectoryUser, error) {
+	return nil, domain.ErrNotFound
+}
+
+type allowAllMedia struct{}
+
+func (allowAllMedia) ValidateAttachments(_ context.Context, _, _ uuid.UUID, _ []string) error {
+	return nil
+}
+
 // ---- transactor ----
 
 type noopTx struct{}
@@ -589,6 +665,14 @@ func (f *fakeBroadcaster) ToUser(_ context.Context, userID uuid.UUID, eventType 
 	f.calls = append(f.calls, broadcastCall{kind: "user", target: userID, eventType: eventType, data: data})
 }
 
+func (f *fakeBroadcaster) ToUsers(_ context.Context, userIDs []uuid.UUID, eventType string, data any) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, uid := range userIDs {
+		f.calls = append(f.calls, broadcastCall{kind: "user", target: uid, eventType: eventType, data: data})
+	}
+}
+
 // newServiceWithBroadcaster wires a fakeBroadcaster as the service's rt port
 // for the realtime fanout tests (Task 1.3).
 func newServiceWithBroadcaster(_ *testing.T) (domain.ConversationService, *fakeStore, *fakeBroadcaster) {
@@ -603,11 +687,11 @@ func newServiceWithBroadcaster(_ *testing.T) (domain.ConversationService, *fakeS
 		noopTx{},
 		slog.Default(),
 		rt,
-		nil, // notifier
-		nil, // userLookup
-		nil, // mediaLookup
-		nil, // presenceReader
-		nil, // enqueuer
+		nil,             // notifier
+		allowAllUsers{}, // userDirectory (permissive stub)
+		allowAllMedia{}, // attachmentValidator (permissive stub)
+		nil,             // presenceReader
+		nil,             // enqueuer
 	)
 	return svc, s, rt
 }
@@ -623,13 +707,13 @@ func newTestService(_ *testing.T) (domain.ConversationService, *fakeStore) {
 		fakeReactionRepo{s: s},
 		nil, // mentionRepo: unused until Phase 3
 		noopTx{},
-		nil, // logger left nil to catch accidental use in Phase 1 methods; wire slog.Default() if a method needs logging
-		nil, // broadcaster: wired in Phase 2
-		nil, // notifier: wired in Phase 3
-		nil, // userLookup: wired in Phase 3 — nil skips cross-org checks in unit tests
-		nil, // mediaLookup: wired in Phase 3 — nil skips attachment validation in unit tests
-		nil, // presenceReader: wired in Phase 2 — nil returns empty presence in unit tests
-		nil, // enqueuer
+		nil,             // logger left nil to catch accidental use in Phase 1 methods; wire slog.Default() if a method needs logging
+		nil,             // broadcaster: wired in Phase 2
+		nil,             // notifier: wired in Phase 3
+		allowAllUsers{}, // userDirectory (permissive stub)
+		allowAllMedia{}, // attachmentValidator (permissive stub)
+		nil,             // presenceReader: wired in Phase 2 — nil returns empty presence in unit tests
+		nil,             // enqueuer
 	)
 	return svc, s
 }
@@ -684,20 +768,22 @@ func (f *fakeNotifier) NotifyMessage(_ context.Context, conv *domain.Conversatio
 	return nil
 }
 
-// fakeUserLookup backs the service's userLookup port for tests that need
-// cross-org resolution to succeed for specific users (nil map entries look
-// up as domain.ErrNotFound, mirroring "user does not exist").
+// fakeUserLookup backs the service's userDirectory port for tests that need
+// cross-org resolution: only ids present in orgs with a matching org pass
+// FilterSameOrg (absent ids mirror "user does not exist").
 type fakeUserLookup struct {
 	orgs      map[uuid.UUID]uuid.UUID // userID -> orgID
 	directory []domain.DirectoryUser  // returned verbatim by DirectorySearch
 }
 
-func (f *fakeUserLookup) OrgID(_ context.Context, userID uuid.UUID) (*uuid.UUID, error) {
-	if org, ok := f.orgs[userID]; ok {
-		o := org
-		return &o, nil
+func (f *fakeUserLookup) FilterSameOrg(_ context.Context, orgID uuid.UUID, ids []uuid.UUID) ([]uuid.UUID, error) {
+	var out []uuid.UUID
+	for _, id := range ids {
+		if f.orgs[id] == orgID {
+			out = append(out, id)
+		}
 	}
-	return nil, domain.ErrNotFound
+	return out, nil
 }
 
 func (f *fakeUserLookup) DirectorySearch(_ context.Context, _ uuid.UUID, _ string, _ int) ([]domain.DirectoryUser, error) {
@@ -714,9 +800,11 @@ func (f *fakeUserLookup) DirectoryByUsername(_ context.Context, _ uuid.UUID, use
 	return nil, domain.ErrNotFound
 }
 
-// fakeMediaLookup backs the service's mediaLookup port for the attachment
-// validation tests.
+// fakeMediaLookup is a fake domain.MediaRepository (nil-embed, FindByID only)
+// wired through the REAL conversations.AttachmentValidator so the actual
+// org/conversation binding checks run in the attachment tests.
 type fakeMediaLookup struct {
+	domain.MediaRepository
 	items map[uuid.UUID]domain.Media
 }
 
@@ -765,7 +853,7 @@ func newServiceWithPresence(_ *testing.T, users *fakeUserLookup, presence *fakeP
 		nil, // broadcaster
 		nil, // notifier
 		users,
-		nil, // mediaLookup
+		allowAllMedia{}, // attachmentValidator (permissive stub)
 		presence,
 		nil, // enqueuer
 	)
@@ -807,10 +895,10 @@ func newServiceWithMentionAndNotify(_ *testing.T) (domain.ConversationService, *
 		slog.Default(),
 		nil, // broadcaster
 		notif,
-		nil, // userLookup: nil skips cross-org checks
-		nil, // mediaLookup
-		nil, // presenceReader
-		nil, // enqueuer
+		allowAllUsers{}, // userDirectory (permissive stub)
+		allowAllMedia{}, // attachmentValidator (permissive stub)
+		nil,             // presenceReader
+		nil,             // enqueuer
 	)
 	return svc, s, mentionRepo, notif
 }
@@ -821,7 +909,7 @@ func newServiceWithMentionAndNotify(_ *testing.T) (domain.ConversationService, *
 func newServiceWithRealNotifier(_ *testing.T) (domain.ConversationService, *fakeStore, *fakeNotificationService) {
 	s := newFakeStore()
 	notifSvc := &fakeNotificationService{}
-	realNotifier := conversations.NewNotifier(notifSvc, fakeMemberRepo{s: s})
+	realNotifier := conversations.NewNotifier(notifSvc)
 	svc := conversations.NewService(
 		fakeConvRepo{s: s},
 		fakeMemberRepo{s: s},
@@ -832,10 +920,10 @@ func newServiceWithRealNotifier(_ *testing.T) (domain.ConversationService, *fake
 		slog.Default(),
 		nil, // broadcaster
 		realNotifier,
-		nil, // userLookup
-		nil, // mediaLookup
-		nil, // presenceReader
-		nil, // enqueuer
+		allowAllUsers{}, // userDirectory (permissive stub)
+		allowAllMedia{}, // attachmentValidator (permissive stub)
+		nil,             // presenceReader
+		nil,             // enqueuer
 	)
 	return svc, s, notifSvc
 }
@@ -847,6 +935,7 @@ func newServiceWithRealNotifier(_ *testing.T) (domain.ConversationService, *fake
 func newServiceWithMedia(_ *testing.T) (domain.ConversationService, *fakeStore, *fakeMediaLookup) {
 	s := newFakeStore()
 	media := &fakeMediaLookup{items: map[uuid.UUID]domain.Media{}}
+	validator := conversations.NewAttachmentValidator(media)
 	svc := conversations.NewService(
 		fakeConvRepo{s: s},
 		fakeMemberRepo{s: s},
@@ -855,10 +944,10 @@ func newServiceWithMedia(_ *testing.T) (domain.ConversationService, *fakeStore, 
 		nil, // mentionRepo
 		noopTx{},
 		slog.Default(),
-		nil, // broadcaster
-		nil, // notifier
-		nil, // userLookup
-		media,
+		nil,             // broadcaster
+		nil,             // notifier
+		allowAllUsers{}, // userDirectory (permissive stub)
+		validator,
 		nil, // presenceReader
 		nil, // enqueuer
 	)
@@ -1242,11 +1331,11 @@ func newTestServiceWithQueue(_ *testing.T) (domain.ConversationService, *fakeSto
 		nil, // mentionRepo
 		noopTx{},
 		slog.Default(),
-		nil, // broadcaster
-		nil, // notifier
-		nil, // userLookup
-		nil, // mediaLookup
-		nil, // presenceReader
+		nil,             // broadcaster
+		nil,             // notifier
+		allowAllUsers{}, // userDirectory (permissive stub)
+		allowAllMedia{}, // attachmentValidator (permissive stub)
+		nil,             // presenceReader
 		q,
 	)
 	return svc, s, q
@@ -1548,9 +1637,9 @@ func TestCreateGroupOrChannel_UserLookup_SkipsCrossOrgMember(t *testing.T) {
 		nil, // broadcaster
 		nil, // notifier
 		users,
-		nil, // mediaLookup
-		nil, // presenceReader
-		nil, // enqueuer
+		allowAllMedia{}, // attachmentValidator (permissive stub)
+		nil,             // presenceReader
+		nil,             // enqueuer
 	)
 	ctx := callerCtx(orgA, userA, true)
 
@@ -1727,4 +1816,211 @@ func TestSearchDirectory_ExcludesSelf(t *testing.T) {
 	}
 	assert.NotContains(t, ids, self, "caller must be excluded from directory results")
 	assert.Contains(t, ids, other)
+}
+
+// ---- DM integrity guards ----
+
+// A direct conversation's roster is fixed by its direct_key: adding a third
+// member, removing a side, or leaving would strand or corrupt the DM.
+
+func TestAddMember_DirectConversation_Rejected(t *testing.T) {
+	orgA, userA, userB, userC := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	svc, _ := newTestService(t)
+	ctxA := callerCtx(orgA, userA, true)
+
+	conv, err := svc.CreateOrGetDirect(ctxA, domain.CreateDirectDTO{UserID: userB.String()})
+	require.NoError(t, err)
+
+	_, err = svc.AddMember(ctxA, conv.ID, domain.AddConversationMemberDTO{UserID: userC.String()})
+	assert.ErrorIs(t, err, domain.ErrValidation, "adding a member to a DM must be rejected")
+}
+
+func TestRemoveMember_DirectConversation_Rejected(t *testing.T) {
+	orgA, userA, userB := uuid.New(), uuid.New(), uuid.New()
+	svc, _ := newTestService(t)
+	ctxA := callerCtx(orgA, userA, true)
+
+	conv, err := svc.CreateOrGetDirect(ctxA, domain.CreateDirectDTO{UserID: userB.String()})
+	require.NoError(t, err)
+
+	err = svc.RemoveMember(ctxA, conv.ID, userB)
+	assert.ErrorIs(t, err, domain.ErrValidation, "removing a DM member must be rejected")
+}
+
+func TestLeave_DirectConversation_Rejected(t *testing.T) {
+	orgA, userA, userB := uuid.New(), uuid.New(), uuid.New()
+	svc, _ := newTestService(t)
+	ctxA := callerCtx(orgA, userA, false)
+
+	conv, err := svc.CreateOrGetDirect(ctxA, domain.CreateDirectDTO{UserID: userB.String()})
+	require.NoError(t, err)
+
+	err = svc.Leave(ctxA, conv.ID)
+	assert.ErrorIs(t, err, domain.ErrValidation, "leaving a DM must be rejected")
+
+	// Both sides still resolve the same conversation afterwards.
+	again, err := svc.CreateOrGetDirect(ctxA, domain.CreateDirectDTO{UserID: userB.String()})
+	require.NoError(t, err)
+	assert.Equal(t, conv.ID, again.ID)
+}
+
+func TestLeave_GroupConversation_StillWorks(t *testing.T) {
+	orgA, manager, member := uuid.New(), uuid.New(), uuid.New()
+	svc, _ := newTestService(t)
+	conv := newGroup(t, svc, orgA, manager)
+
+	mgrCtx := callerCtx(orgA, manager, false, managePerm)
+	_, err := svc.AddMember(mgrCtx, conv.ID, domain.AddConversationMemberDTO{UserID: member.String()})
+	require.NoError(t, err)
+
+	err = svc.Leave(callerCtx(orgA, member, false), conv.ID)
+	require.NoError(t, err)
+}
+
+// ---- MarkRead read-pointer integrity ----
+
+// The read pointer feeds keyset unread counts, so it must reference a message
+// in THIS conversation — a foreign (other-conversation) id is rejected.
+func TestMarkRead_ForeignMessage_Rejected(t *testing.T) {
+	orgA, userA, userB, userC := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	svc, _ := newTestService(t)
+	ctxA := callerCtx(orgA, userA, false)
+	ctxB := callerCtx(orgA, userB, false)
+
+	convAB, err := svc.CreateOrGetDirect(ctxA, domain.CreateDirectDTO{UserID: userB.String()})
+	require.NoError(t, err)
+	convAC, err := svc.CreateOrGetDirect(ctxA, domain.CreateDirectDTO{UserID: userC.String()})
+	require.NoError(t, err)
+
+	foreign, err := svc.SendMessage(ctxA, convAC.ID, domain.SendConversationMessageDTO{Content: "other conv"})
+	require.NoError(t, err)
+
+	err = svc.MarkRead(ctxB, convAB.ID, domain.MarkReadDTO{MessageID: foreign.ID.String()})
+	assert.ErrorIs(t, err, domain.ErrValidation, "a read pointer into another conversation must be rejected")
+
+	err = svc.MarkRead(ctxB, convAB.ID, domain.MarkReadDTO{MessageID: uuid.New().String()})
+	assert.ErrorIs(t, err, domain.ErrValidation, "an unknown message id must be rejected")
+}
+
+// ---- realtime payload attribution ----
+
+// An admin editing someone else's message must NOT re-attribute it: the
+// message_updated broadcast carries the ORIGINAL sender, and flags the edit.
+func TestEditMessage_BroadcastKeepsOriginalSender(t *testing.T) {
+	orgA, admin, author := uuid.New(), uuid.New(), uuid.New()
+	svc, _, rt := newServiceWithBroadcaster(t)
+	adminCtx := callerCtx(orgA, admin, true)
+	authorCtx := callerCtx(orgA, author, false)
+
+	conv, err := svc.CreateGroupOrChannel(adminCtx, domain.CreateConversationDTO{
+		Type: domain.ConversationTypeGroup, Name: "Engineering",
+		MemberIDs: []string{author.String()},
+	})
+	require.NoError(t, err)
+
+	msg, err := svc.SendMessage(authorCtx, conv.ID, domain.SendConversationMessageDTO{Content: "original"})
+	require.NoError(t, err)
+
+	_, err = svc.EditMessage(adminCtx, msg.ID, domain.UpdateConversationMessageDTO{Content: "edited by admin"})
+	require.NoError(t, err)
+
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
+	var updated *broadcastCall
+	for i := range rt.calls {
+		if rt.calls[i].eventType == "message_updated" {
+			updated = &rt.calls[i]
+		}
+	}
+	require.NotNil(t, updated, "message_updated must be broadcast")
+	payload, ok := updated.data.(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, author.String(), payload["sender_id"], "broadcast must keep the original sender, not the editor")
+	assert.Equal(t, true, payload["is_edited"], "broadcast must flag the edit")
+}
+
+// The room new_message payload carries the document-mode flag so realtime
+// clients render attachments correctly without a refetch.
+func TestSendMessage_BroadcastCarriesAsDocument(t *testing.T) {
+	orgA, userA, userB := uuid.New(), uuid.New(), uuid.New()
+	svc, _, rt := newServiceWithBroadcaster(t)
+	ctxA := callerCtx(orgA, userA, false)
+
+	conv, err := svc.CreateOrGetDirect(ctxA, domain.CreateDirectDTO{UserID: userB.String()})
+	require.NoError(t, err)
+
+	_, err = svc.SendMessage(ctxA, conv.ID, domain.SendConversationMessageDTO{
+		Content: "doc", MediaIDs: []string{uuid.New().String()}, AsDocument: true,
+	})
+	require.NoError(t, err)
+
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
+	var room *broadcastCall
+	for i := range rt.calls {
+		if rt.calls[i].kind == "conversation" && rt.calls[i].eventType == "new_message" {
+			room = &rt.calls[i]
+		}
+	}
+	require.NotNil(t, room)
+	payload, ok := room.data.(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, true, payload["as_document"])
+}
+
+// ---- in-conversation search minimum query length ----
+
+func TestSearchInConversation_ShortQuery_Rejected(t *testing.T) {
+	orgA, userA, userB := uuid.New(), uuid.New(), uuid.New()
+	svc, _ := newTestService(t)
+	ctxA := callerCtx(orgA, userA, false)
+
+	conv, err := svc.CreateOrGetDirect(ctxA, domain.CreateDirectDTO{UserID: userB.String()})
+	require.NoError(t, err)
+
+	_, err = svc.SearchInConversation(ctxA, conv.ID, "x", 10)
+	assert.ErrorIs(t, err, domain.ErrValidation)
+}
+
+// ---- list decoration: member rows for the client ----
+
+// The list must carry the member rows the client depends on: the full DM pair
+// (drives the sidebar title + presence dot) and the viewer's own row on
+// groups (drives the muted glyph). CreateOrGetDirect returns them too, so a
+// freshly-started DM can be titled without a roster round-trip.
+func TestListForCaller_DecoratesMembers(t *testing.T) {
+	orgA, userA, userB, manager := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	svc, _ := newTestService(t)
+	ctxA := callerCtx(orgA, userA, false)
+
+	dm, err := svc.CreateOrGetDirect(ctxA, domain.CreateDirectDTO{UserID: userB.String()})
+	require.NoError(t, err)
+	require.Len(t, dm.Members, 2, "CreateOrGetDirect returns the DM pair inline")
+
+	group := newGroup(t, svc, orgA, manager)
+	mgrCtx := callerCtx(orgA, manager, false, managePerm)
+	_, err = svc.AddMember(mgrCtx, group.ID, domain.AddConversationMemberDTO{UserID: userA.String()})
+	require.NoError(t, err)
+
+	convs, _, err := svc.ListForCaller(ctxA, domain.ListConversationsQuery{})
+	require.NoError(t, err)
+	require.Len(t, convs, 2)
+
+	for _, c := range convs {
+		switch c.Type {
+		case domain.ConversationTypeDirect:
+			ids := []uuid.UUID{}
+			for _, m := range c.Members {
+				ids = append(ids, m.UserID)
+			}
+			assert.ElementsMatch(t, []uuid.UUID{userA, userB}, ids, "DM rows carry BOTH members")
+		case domain.ConversationTypeGroup:
+			require.Len(t, c.Members, 1, "group rows carry only the viewer's own member row")
+			assert.Equal(t, userA, c.Members[0].UserID)
+		}
+	}
+
+	got, err := svc.Get(ctxA, dm.ID)
+	require.NoError(t, err)
+	assert.Len(t, got.Members, 2, "Get on a DM includes the pair")
 }

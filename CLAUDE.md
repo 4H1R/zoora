@@ -1,6 +1,10 @@
 # Project
 
-Zoora Backend — a Go video conferencing and virtual classroom SaaS (Multi Tenant). Two binaries from the same codebase: API server (`cmd/api`) and Asynq worker (`cmd/worker`).
+Zoora — a video conferencing, virtual classroom, and LMS (learning management system) SaaS (Multi Tenant). Monorepo: Go backend at the repo root plus a `frontend/` folder with the web client.
+
+The backend builds two binaries from the same codebase: API server (`cmd/api`) and Asynq worker (`cmd/worker`).
+
+This file covers the **backend**. For frontend work (stack, commands, conventions) see `frontend/CLAUDE.md`.
 
 ## Commands
 

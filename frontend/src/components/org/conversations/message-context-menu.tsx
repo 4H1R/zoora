@@ -32,6 +32,7 @@ import {
 import { useCoarsePointer } from "@/hooks/use-coarse-pointer"
 
 import { QUICK_EMOJIS } from "./lib/reactions"
+import { useConversationPermissions } from "./use-conversation-permissions"
 import { useMessageActions } from "./use-message-actions"
 
 interface MessageContextMenuProps {
@@ -61,6 +62,7 @@ type MenuSeparatorComp = (props: Record<string, never>) => ReactNode
  */
 export function MessageContextMenu({ message, isOwn, convId, children }: MessageContextMenuProps) {
   const { t } = useTranslation()
+  const { canManage } = useConversationPermissions()
   const actions = useMessageActions(message, convId)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const coarse = useCoarsePointer()
@@ -84,18 +86,26 @@ export function MessageContextMenu({ message, isOwn, convId, children }: Message
         {t("conversations.actions.reply")}
       </Item>
 
-      <Item onClick={actions.togglePin}>
-        {message.is_pinned ? <PinOffIcon /> : <PinIcon />}
-        {message.is_pinned ? t("conversations.actions.unpin") : t("conversations.actions.pin")}
-      </Item>
+      {/* Pinning is a manage-tier action server-side — showing it to plain
+          members would only produce a silent 403. */}
+      {canManage && (
+        <Item onClick={actions.togglePin}>
+          {message.is_pinned ? <PinOffIcon /> : <PinIcon />}
+          {message.is_pinned ? t("conversations.actions.unpin") : t("conversations.actions.pin")}
+        </Item>
+      )}
 
       {isOwn && (
-        <>
-          <Item onClick={actions.edit}>
-            <PencilIcon />
-            {t("conversations.actions.edit")}
-          </Item>
+        <Item onClick={actions.edit}>
+          <PencilIcon />
+          {t("conversations.actions.edit")}
+        </Item>
+      )}
 
+      {/* The sender may always delete their own message; managers may moderate
+          anyone's (mirrors the backend's sender-or-manage tier). */}
+      {(isOwn || canManage) && (
+        <>
           <Separator />
 
           <Item variant="destructive" onClick={() => setConfirmOpen(true)}>

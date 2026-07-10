@@ -257,6 +257,27 @@ func (b *Bridge) ToUser(ctx context.Context, userID uuid.UUID, eventType string,
 	b.publish(ctx, userChannelPrefix+userID.String(), eventType, data)
 }
 
+// ToUsers publishes one event to many per-user channels in a single Redis
+// pipeline (one round-trip and one marshal, however many recipients), used by
+// the per-user sidebar fanout on message send.
+func (b *Bridge) ToUsers(ctx context.Context, userIDs []uuid.UUID, eventType string, data any) {
+	if len(userIDs) == 0 {
+		return
+	}
+	payload, err := json.Marshal(envelope{Type: eventType, Data: data})
+	if err != nil {
+		b.logger.Error("chathub.publish marshal", "event", eventType, "error", err)
+		return
+	}
+	pipe := b.rdb.Pipeline()
+	for _, uid := range userIDs {
+		pipe.Publish(ctx, userChannelPrefix+uid.String(), payload)
+	}
+	if _, err := pipe.Exec(ctx); err != nil {
+		b.logger.Error("chathub.publish pipeline", "event", eventType, "error", err)
+	}
+}
+
 // PublishTyping is passed into the connection read-pump.
 func (b *Bridge) PublishTyping(convID, userID uuid.UUID) {
 	b.publish(context.Background(), convChannelPrefix+convID.String(), "user_typing",

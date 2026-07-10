@@ -2,6 +2,7 @@ import type { GithubCom4H1RZooraInternalDomainConversation as Conversation } fro
 
 import { Link } from "@tanstack/react-router"
 import { BellOffIcon, HashIcon, UsersIcon } from "lucide-react"
+import { useAccess } from "react-access-engine"
 import { useTranslation } from "react-i18next"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -9,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { formatRelativeTime } from "@/lib/relative-time"
 import { cn } from "@/lib/utils"
 
+import { conversationTitle } from "./lib/conversation-title"
 import { PresenceDot } from "./presence-dot"
 
 // Server hands us a stable `color_index` per conversation; map it onto a fixed
@@ -57,9 +59,10 @@ interface ConversationItemProps {
 
 export function ConversationItem({ conversation, isActive, presenceOnline, muted }: ConversationItemProps) {
   const { t, i18n } = useTranslation()
+  const { user } = useAccess()
 
   const id = conversation.id ?? ""
-  const name = conversation.name ?? ""
+  const name = conversationTitle(conversation, user.id)
   const unreadCount = conversation.unread_count ?? 0
   const unread = unreadCount > 0
   const last = conversation.last_message

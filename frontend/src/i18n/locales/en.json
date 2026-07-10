@@ -3200,6 +3200,8 @@
       "retry": "Retry",
       "pin": "Pin",
       "unpin": "Unpin",
+      "pinError": "Could not pin the message",
+      "deleteError": "Could not delete the message",
       "deleteConfirm": {
         "title": "Delete message?",
         "description": "This message will be permanently deleted. This action cannot be undone."

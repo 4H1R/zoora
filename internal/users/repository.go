@@ -139,6 +139,19 @@ func (r *repository) SearchActiveInOrg(ctx context.Context, orgID uuid.UUID, que
 	return users, nil
 }
 
+func (r *repository) FilterIDsInOrg(ctx context.Context, orgID uuid.UUID, ids []uuid.UUID) ([]uuid.UUID, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var out []uuid.UUID
+	if err := r.baseQuery(ctx).
+		Where("organization_id = ? AND id IN ?", orgID, ids).
+		Pluck("id", &out).Error; err != nil {
+		return nil, fmt.Errorf("users.repository.FilterIDsInOrg: %w", err)
+	}
+	return out, nil
+}
+
 // StatusCounts returns the caller-scoped user totals broken down by lockout
 // state. The scope's Disabled filter is intentionally ignored so the tab
 // counts stay stable regardless of which tab is active.

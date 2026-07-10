@@ -16,7 +16,11 @@ export interface GithubCom4H1RZooraInternalDomainConversationMessage {
   id?: string;
   is_edited?: boolean;
   is_pinned?: boolean;
-  media_ids?: number[];
+  /**
+     * swaggertype: the raw JSON column holds an array of media uuid strings —
+     * without the hint swag renders json.RawMessage as integer[].
+     */
+  media_ids?: string[];
   pinned_at?: string;
   pinned_by?: string;
   reactions?: GithubCom4H1RZooraInternalDomainConversationMessageReactions;

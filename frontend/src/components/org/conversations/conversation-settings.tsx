@@ -204,17 +204,21 @@ export function ConversationSettings({ conversation, open, onOpenChange, canMana
             )}
           </div>
 
-          {/* Destructive actions. */}
+          {/* Destructive actions. Leaving a DM is not a thing (the pair is
+              fixed server-side and the backend rejects it), so the action only
+              renders for groups/channels. */}
           <div className="flex flex-col gap-2 border-t pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="text-destructive hover:text-destructive justify-start"
-              onClick={() => setConfirmLeave(true)}
-            >
-              <LogOutIcon className="rtl:-scale-x-100" />
-              {t("conversations.settings.leave.action")}
-            </Button>
+            {!isDirect && (
+              <Button
+                type="button"
+                variant="outline"
+                className="text-destructive hover:text-destructive justify-start"
+                onClick={() => setConfirmLeave(true)}
+              >
+                <LogOutIcon className="rtl:-scale-x-100" />
+                {t("conversations.settings.leave.action")}
+              </Button>
+            )}
             {canManage && (
               <Button
                 type="button"

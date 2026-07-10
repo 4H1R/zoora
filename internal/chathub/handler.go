@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -29,17 +30,49 @@ func presencePayload(userID uuid.UUID, online bool) map[string]any {
 	}
 }
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin:     func(r *http.Request) bool { return true }, // TODO tighten in prod via allowed origins
+// originChecker builds the WS upgrade Origin allow-list check (the CSWSH
+// guard: without it any website a logged-in user visits could open an
+// authenticated socket). Semantics mirror the HTTP CORS middleware config:
+// "*" (the dev default) allows every origin; otherwise the Origin header must
+// exactly match an allowed entry. Requests with NO Origin header are allowed —
+// they come from non-browser clients, which cannot be CSWSH'd (the attack
+// requires a victim browser attaching credentials), and the ?token= JWT is
+// still required either way.
+func originChecker(allowedOrigins []string) func(*http.Request) bool {
+	allowAll := false
+	allowed := make(map[string]bool, len(allowedOrigins))
+	for _, o := range allowedOrigins {
+		o = strings.TrimRight(strings.ToLower(strings.TrimSpace(o)), "/")
+		if o == "*" {
+			allowAll = true
+		}
+		if o != "" {
+			allowed[o] = true
+		}
+	}
+	return func(r *http.Request) bool {
+		if allowAll {
+			return true
+		}
+		origin := strings.TrimRight(strings.ToLower(r.Header.Get("Origin")), "/")
+		if origin == "" {
+			return true
+		}
+		return allowed[origin]
+	}
 }
 
 // HandleWS upgrades the connection, authenticates via ?token=, and serves it.
+// allowedOrigins is the browser Origin allow-list (share the CORS config).
 // presence tracks per-user online state: the socket lifecycle marks the user
 // online on connect and every heartbeat, offline when their last socket drops,
 // and fans out presence_update events to the rooms the socket had joined.
-func HandleWS(hub *Hub, bridge *Bridge, presence *Presence, jwt *auth.JWTService, logger *slog.Logger) gin.HandlerFunc {
+func HandleWS(hub *Hub, bridge *Bridge, presence *Presence, jwt *auth.JWTService, allowedOrigins []string, logger *slog.Logger) gin.HandlerFunc {
+	upgrader := websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin:     originChecker(allowedOrigins),
+	}
 	hooks := presenceHooks{
 		onConnect: func(userID uuid.UUID) {
 			if _, err := presence.Connect(context.Background(), userID); err != nil {

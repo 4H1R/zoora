@@ -2,6 +2,8 @@ import type { ChatMessage } from "./lib/messages"
 import type { InfiniteData } from "@tanstack/react-query"
 
 import { useQueryClient } from "@tanstack/react-query"
+import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 
 import { useDeleteConversationsMessagesMessageId } from "@/api/conversations/conversations"
 import { useChatUi } from "@/stores/chat-ui"
@@ -21,6 +23,7 @@ type MessagesCache = InfiniteData<ChatMessage[]>
  * callers own the confirmation UI.
  */
 export function useMessageActions(message: ChatMessage, convId: string) {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const setReplyTo = useChatUi((s) => s.setReplyTo)
   const setEditing = useChatUi((s) => s.setEditing)
@@ -47,6 +50,7 @@ export function useMessageActions(message: ChatMessage, convId: string) {
             // Re-add the removed bubble, then reconcile against the server.
             if (snapshot) queryClient.setQueryData(key, snapshot)
             queryClient.invalidateQueries({ queryKey: key })
+            toast.error(t("conversations.actions.deleteError"))
           },
         }
       )

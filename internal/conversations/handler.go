@@ -35,36 +35,39 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 	msgID := httpx.RequireUUIDParam("messageId")
 	userID := httpx.RequireUUIDParam("userId")
 
-	authed := rg.Group("", authMiddleware)
+	// Every conversations route shares the same view-permission gate, so it is
+	// applied once at the group level; finer-grained authz (manage/membership)
+	// lives in the service.
+	authed := rg.Group("", authMiddleware, perm(domain.PermConversationsView))
 	{
-		authed.GET("/conversations", perm(domain.PermConversationsView), h.List)
-		authed.POST("/conversations", perm(domain.PermConversationsView), h.Create) // group/channel (service enforces manage)
-		authed.POST("/conversations/direct", perm(domain.PermConversationsView), h.CreateDirect)
-		authed.GET("/conversations/search", perm(domain.PermConversationsView), h.Search)                        // global ?q= (registered before /:id so gin's tree matches the static segment first)
-		authed.GET("/conversations/presence", perm(domain.PermConversationsView), h.GetPresence)                 // batch online/last-seen (static segment, before /:id)
-		authed.GET("/conversations/directory", perm(domain.PermConversationsView), h.SearchDirectory)            // people search (static, before /:id)
-		authed.GET("/conversations/directory/:username", perm(domain.PermConversationsView), h.GetDirectoryUser) // mention resolve by username
-		authed.GET("/conversations/:id", perm(domain.PermConversationsView), id, h.Get)
-		authed.PATCH("/conversations/:id", perm(domain.PermConversationsView), id, h.Update)
-		authed.DELETE("/conversations/:id", perm(domain.PermConversationsView), id, h.Delete)
+		authed.GET("/conversations", h.List)
+		authed.POST("/conversations", h.Create) // group/channel (service enforces manage)
+		authed.POST("/conversations/direct", h.CreateDirect)
+		authed.GET("/conversations/search", h.Search)                        // global ?q= (registered before /:id so gin's tree matches the static segment first)
+		authed.GET("/conversations/presence", h.GetPresence)                 // batch online/last-seen (static segment, before /:id)
+		authed.GET("/conversations/directory", h.SearchDirectory)            // people search (static, before /:id)
+		authed.GET("/conversations/directory/:username", h.GetDirectoryUser) // mention resolve by username
+		authed.GET("/conversations/:id", id, h.Get)
+		authed.PATCH("/conversations/:id", id, h.Update)
+		authed.DELETE("/conversations/:id", id, h.Delete)
 
-		authed.GET("/conversations/:id/members", perm(domain.PermConversationsView), id, h.ListMembers)
-		authed.POST("/conversations/:id/members", perm(domain.PermConversationsView), id, h.AddMember)
-		authed.DELETE("/conversations/:id/members/:userId", perm(domain.PermConversationsView), id, userID, h.RemoveMember)
-		authed.POST("/conversations/:id/leave", perm(domain.PermConversationsView), id, h.Leave)
-		authed.POST("/conversations/:id/read", perm(domain.PermConversationsView), id, h.MarkRead)
-		authed.POST("/conversations/:id/mute", perm(domain.PermConversationsView), id, h.SetMuted)
+		authed.GET("/conversations/:id/members", id, h.ListMembers)
+		authed.POST("/conversations/:id/members", id, h.AddMember)
+		authed.DELETE("/conversations/:id/members/:userId", id, userID, h.RemoveMember)
+		authed.POST("/conversations/:id/leave", id, h.Leave)
+		authed.POST("/conversations/:id/read", id, h.MarkRead)
+		authed.POST("/conversations/:id/mute", id, h.SetMuted)
 
-		authed.GET("/conversations/:id/messages", perm(domain.PermConversationsView), id, h.ListMessages)
-		authed.POST("/conversations/:id/messages", perm(domain.PermConversationsView), id, h.SendMessage)
-		authed.GET("/conversations/:id/pins", perm(domain.PermConversationsView), id, h.ListPinned)
-		authed.GET("/conversations/:id/search", perm(domain.PermConversationsView), id, h.SearchInConv) // nav ?q=
+		authed.GET("/conversations/:id/messages", id, h.ListMessages)
+		authed.POST("/conversations/:id/messages", id, h.SendMessage)
+		authed.GET("/conversations/:id/pins", id, h.ListPinned)
+		authed.GET("/conversations/:id/search", id, h.SearchInConv) // nav ?q=
 
-		authed.PATCH("/conversations/messages/:messageId", perm(domain.PermConversationsView), msgID, h.EditMessage)
-		authed.DELETE("/conversations/messages/:messageId", perm(domain.PermConversationsView), msgID, h.DeleteMessage)
-		authed.POST("/conversations/messages/:messageId/reactions", perm(domain.PermConversationsView), msgID, h.ToggleReaction)
-		authed.POST("/conversations/messages/:messageId/pin", perm(domain.PermConversationsView), msgID, h.Pin)
-		authed.POST("/conversations/messages/:messageId/unpin", perm(domain.PermConversationsView), msgID, h.Unpin)
+		authed.PATCH("/conversations/messages/:messageId", msgID, h.EditMessage)
+		authed.DELETE("/conversations/messages/:messageId", msgID, h.DeleteMessage)
+		authed.POST("/conversations/messages/:messageId/reactions", msgID, h.ToggleReaction)
+		authed.POST("/conversations/messages/:messageId/pin", msgID, h.Pin)
+		authed.POST("/conversations/messages/:messageId/unpin", msgID, h.Unpin)
 	}
 }
 
@@ -82,8 +85,10 @@ func parsePositiveInt(s string) (int, error) {
 
 // parseCursor builds a domain.MessageCursor from the request's query string
 // (limit/before/after/around). Unparseable values are silently ignored in
-// favour of defaults, matching listparams.Bind's tolerant behaviour.
-func parseCursor(c *gin.Context) domain.MessageCursor {
+// favour of defaults, matching listparams.Bind's tolerant behaviour — but
+// supplying MORE than one of before/after/around is rejected rather than
+// silently prioritized, since the caller's intent is ambiguous.
+func parseCursor(c *gin.Context) (domain.MessageCursor, error) {
 	var cur domain.MessageCursor
 	cur.Limit = 50
 	if v := c.Query("limit"); v != "" {
@@ -91,22 +96,29 @@ func parseCursor(c *gin.Context) domain.MessageCursor {
 			cur.Limit = n
 		}
 	}
+	set := 0
 	if v := c.Query("before"); v != "" {
 		if id, err := uuid.Parse(v); err == nil {
 			cur.Before = &id
+			set++
 		}
 	}
 	if v := c.Query("after"); v != "" {
 		if id, err := uuid.Parse(v); err == nil {
 			cur.After = &id
+			set++
 		}
 	}
 	if v := c.Query("around"); v != "" {
 		if id, err := uuid.Parse(v); err == nil {
 			cur.Around = &id
+			set++
 		}
 	}
-	return cur
+	if set > 1 {
+		return cur, domain.NewValidationError(map[string]string{"cursor": "only one of before, after, around may be set"})
+	}
+	return cur, nil
 }
 
 // List returns conversations the caller is a member of.
@@ -285,7 +297,7 @@ func (h *Handler) ListMembers(c *gin.Context) {
 
 // AddMember adds a user to a group/channel conversation.
 // @Summary Add conversation member
-// @Description Platform admins, same-org PermConversationsManage holders, and conversation-admin members may add; the user must resolve to the caller's org.
+// @Description Platform admins, same-org PermConversationsManage holders, and conversation-admin members may add; the user must resolve to the caller's org. Direct conversations reject member changes (their roster is fixed by the DM pair).
 // @Tags Conversations
 // @Accept json
 // @Produce json
@@ -332,8 +344,10 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, nil)
 }
 
-// Leave removes the caller from a conversation.
+// Leave removes the caller from a conversation. Direct conversations cannot
+// be left (the DM pair is fixed); delete is the only exit.
 // @Summary Leave conversation
+// @Description Not allowed on direct conversations (400): leaving would strand the DM pair permanently.
 // @Tags Conversations
 // @Produce json
 // @Security BearerAuth
@@ -353,6 +367,7 @@ func (h *Handler) Leave(c *gin.Context) {
 
 // MarkRead advances the caller's read cursor for a conversation.
 // @Summary Mark conversation read
+// @Description message_id must reference a message in this conversation (400 otherwise).
 // @Tags Conversations
 // @Accept json
 // @Produce json
@@ -414,7 +429,7 @@ func (h *Handler) SetMuted(c *gin.Context) {
 
 // ListMessages returns a keyset window of messages in a conversation.
 // @Summary List conversation messages
-// @Description Keyset-paginated message window. Exactly one of before/after/around may be set; none returns the latest page. Each message's reactions map is populated (Step 11 serialization); media_ids are returned raw for the client to resolve.
+// @Description Keyset-paginated message window. At most one of before/after/around may be set (400 otherwise); none returns the latest page. Each message's reactions map is populated; media_ids are returned raw for the client to resolve.
 // @Tags Conversations
 // @Produce json
 // @Security BearerAuth
@@ -429,7 +444,11 @@ func (h *Handler) SetMuted(c *gin.Context) {
 // @Failure 404 {object} domain.Response{error=domain.ErrorBody}
 // @Router /conversations/{id}/messages [get]
 func (h *Handler) ListMessages(c *gin.Context) {
-	cur := parseCursor(c)
+	cur, err := parseCursor(c)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
 	msgs, err := h.svc.ListMessages(c.Request.Context(), httpx.UUIDParam(c, "id"), cur)
 	if err != nil {
 		_ = c.Error(err)
@@ -731,7 +750,7 @@ func (h *Handler) GetPresence(c *gin.Context) {
 
 // SearchInConv performs an in-conversation nav search.
 // @Summary Search messages (in conversation)
-// @Description ILIKE substring nav search within a single conversation, gated on membership.
+// @Description ILIKE substring nav search within a single conversation, gated on membership. Requires q of at least 2 characters.
 // @Tags Conversations
 // @Produce json
 // @Security BearerAuth

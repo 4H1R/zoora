@@ -8,7 +8,7 @@ import (
 	"github.com/4H1R/zoora/internal/domain"
 )
 
-// UserOrgLookup adapts domain.UserRepository to the service's userLookup
+// UserOrgLookup adapts domain.UserRepository to the service's userDirectory
 // port, used to enforce the cross-org DM/member guards (Phase 3 Step 6).
 type UserOrgLookup struct {
 	users domain.UserRepository
@@ -18,14 +18,10 @@ func NewUserOrgLookup(users domain.UserRepository) *UserOrgLookup {
 	return &UserOrgLookup{users: users}
 }
 
-// OrgID returns the user's organization id, or nil if the user has none
-// (e.g. a platform admin). Returns an error if the user cannot be found.
-func (a *UserOrgLookup) OrgID(ctx context.Context, userID uuid.UUID) (*uuid.UUID, error) {
-	u, err := a.users.FindByID(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-	return u.OrganizationID, nil
+// FilterSameOrg returns the subset of ids belonging to users in orgID, in one
+// query — the batch form of the cross-org guard.
+func (a *UserOrgLookup) FilterSameOrg(ctx context.Context, orgID uuid.UUID, ids []uuid.UUID) ([]uuid.UUID, error) {
+	return a.users.FilterIDsInOrg(ctx, orgID, ids)
 }
 
 // DirectorySearch returns member-safe projections of active org users matching

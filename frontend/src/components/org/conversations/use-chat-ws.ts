@@ -103,6 +103,7 @@ type ConversationBump = {
   conversation_id?: string
   id?: string
   sender_id?: string
+  sender?: { id?: string; name?: string }
   content?: string
   created_at?: string
 }
@@ -162,6 +163,7 @@ export function createChatEventHandler(opts: {
               id: bump.id,
               conversation_id: convId,
               sender_id: bump.sender_id,
+              sender: bump.sender,
               content: bump.content,
               created_at: bump.created_at,
             } as ChatMessage)

@@ -179,6 +179,24 @@ func (r *memberRepository) ListByConversation(ctx context.Context, convID uuid.U
 	return ms, nil
 }
 
+func (r *memberRepository) ListPageMembers(ctx context.Context, convIDs, directIDs []uuid.UUID, viewerID uuid.UUID) ([]domain.ConversationMember, error) {
+	if len(convIDs) == 0 {
+		return nil, nil
+	}
+	q := database.DB(ctx, r.db).Preload("User").
+		Where("conversation_id IN ?", convIDs)
+	if len(directIDs) > 0 {
+		q = q.Where("user_id = ? OR conversation_id IN ?", viewerID, directIDs)
+	} else {
+		q = q.Where("user_id = ?", viewerID)
+	}
+	var ms []domain.ConversationMember
+	if err := q.Find(&ms).Error; err != nil {
+		return nil, fmt.Errorf("conversations.repository.member.ListPageMembers: %w", err)
+	}
+	return ms, nil
+}
+
 func (r *memberRepository) ListUserIDs(ctx context.Context, convID uuid.UUID) ([]uuid.UUID, error) {
 	var ids []uuid.UUID
 	if err := database.DB(ctx, r.db).Model(&domain.ConversationMember{}).
@@ -214,19 +232,34 @@ func (r *memberRepository) SetMuted(ctx context.Context, convID, userID uuid.UUI
 	return nil
 }
 
-// UnreadCount: messages newer than the member's last_read pointer (keyset on
-// id), excluding the member's own messages (sending doesn't bump last_read).
-func (r *memberRepository) UnreadCount(ctx context.Context, convID, userID uuid.UUID) (int64, error) {
-	var count int64
-	q := database.DB(ctx, r.db).Model(&domain.ConversationMessage{}).
-		Where("conversation_id = ?", convID).
-		Where("sender_id IS DISTINCT FROM ?", userID).
-		Where(`id > COALESCE((SELECT last_read_message_id FROM conversation_members
-		        WHERE conversation_id = ? AND user_id = ?), '00000000-0000-0000-0000-000000000000'::uuid)`, convID, userID)
-	if err := q.Count(&count).Error; err != nil {
-		return 0, fmt.Errorf("conversations.repository.member.UnreadCount: %w", err)
+// UnreadCounts: per-conversation counts of messages newer than the member's
+// last_read pointer (keyset on id), excluding the member's own messages
+// (sending doesn't bump last_read) — one grouped query for a whole page.
+func (r *memberRepository) UnreadCounts(ctx context.Context, userID uuid.UUID, convIDs []uuid.UUID) (map[uuid.UUID]int64, error) {
+	out := make(map[uuid.UUID]int64, len(convIDs))
+	if len(convIDs) == 0 {
+		return out, nil
 	}
-	return count, nil
+	type row struct {
+		ConversationID uuid.UUID
+		N              int64
+	}
+	var rows []row
+	err := database.DB(ctx, r.db).Model(&domain.ConversationMessage{}).
+		Select("conversation_messages.conversation_id, COUNT(*) AS n").
+		Joins(`JOIN conversation_members m ON m.conversation_id = conversation_messages.conversation_id AND m.user_id = ?`, userID).
+		Where("conversation_messages.conversation_id IN ?", convIDs).
+		Where("conversation_messages.sender_id IS DISTINCT FROM ?", userID).
+		Where(`conversation_messages.id > COALESCE(m.last_read_message_id, '00000000-0000-0000-0000-000000000000'::uuid)`).
+		Group("conversation_messages.conversation_id").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("conversations.repository.member.UnreadCounts: %w", err)
+	}
+	for _, x := range rows {
+		out[x.ConversationID] = x.N
+	}
+	return out, nil
 }
 
 // ---- Message repository ----
@@ -332,16 +365,26 @@ func (r *messageRepository) ListWindow(ctx context.Context, convID uuid.UUID, cu
 	}
 }
 
-func (r *messageRepository) Latest(ctx context.Context, convID uuid.UUID) (*domain.ConversationMessage, error) {
-	var m domain.ConversationMessage
-	err := database.DB(ctx, r.db).Where("conversation_id = ?", convID).Order("id DESC").First(&m).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, domain.ErrNotFound
-		}
-		return nil, fmt.Errorf("conversations.repository.message.Latest: %w", err)
+// LatestByConversation: each conversation's newest message (max uuidv7 id) in
+// one DISTINCT ON query.
+func (r *messageRepository) LatestByConversation(ctx context.Context, convIDs []uuid.UUID) (map[uuid.UUID]domain.ConversationMessage, error) {
+	out := make(map[uuid.UUID]domain.ConversationMessage, len(convIDs))
+	if len(convIDs) == 0 {
+		return out, nil
 	}
-	return &m, nil
+	var msgs []domain.ConversationMessage
+	err := database.DB(ctx, r.db).
+		Select("DISTINCT ON (conversation_id) *").
+		Where("conversation_id IN ?", convIDs).
+		Order("conversation_id, id DESC").
+		Find(&msgs).Error
+	if err != nil {
+		return nil, fmt.Errorf("conversations.repository.message.LatestByConversation: %w", err)
+	}
+	for _, m := range msgs {
+		out[m.ConversationID] = m
+	}
+	return out, nil
 }
 
 func (r *messageRepository) ListPinned(ctx context.Context, convID uuid.UUID) ([]domain.ConversationMessage, error) {
@@ -432,6 +475,34 @@ func (r *reactionRepository) CountByMessage(ctx context.Context, messageID uuid.
 	out := make(map[string]int, len(rows))
 	for _, x := range rows {
 		out[x.Emoji] = x.N
+	}
+	return out, nil
+}
+
+// CountByMessages: emoji counts for a whole page of messages in one
+// GROUP BY (message_id, emoji) query.
+func (r *reactionRepository) CountByMessages(ctx context.Context, messageIDs []uuid.UUID) (map[uuid.UUID]map[string]int, error) {
+	out := make(map[uuid.UUID]map[string]int, len(messageIDs))
+	if len(messageIDs) == 0 {
+		return out, nil
+	}
+	type row struct {
+		MessageID uuid.UUID
+		Emoji     string
+		N         int
+	}
+	var rows []row
+	if err := database.DB(ctx, r.db).Model(&domain.ConversationMessageReaction{}).
+		Select("message_id, emoji, COUNT(*) AS n").
+		Where("message_id IN ?", messageIDs).
+		Group("message_id, emoji").Scan(&rows).Error; err != nil {
+		return nil, fmt.Errorf("conversations.repository.reaction.CountByMessages: %w", err)
+	}
+	for _, x := range rows {
+		if out[x.MessageID] == nil {
+			out[x.MessageID] = map[string]int{}
+		}
+		out[x.MessageID][x.Emoji] = x.N
 	}
 	return out, nil
 }

@@ -163,7 +163,7 @@ func main() {
 	convMemberRepo := conversations.NewMemberRepository(db)
 	convMessageRepo := conversations.NewMessageRepository(db)
 	convReactionRepo := conversations.NewReactionRepository(db)
-	convMentionRepo := conversations.NewMentionRepository(db) // Phase 1 stub — replaced in Phase 3
+	convMentionRepo := conversations.NewMentionRepository(db)
 	entitlementRepo := entitlements.NewRepository(db)
 	entitlementService := entitlements.NewService(entitlementRepo)
 
@@ -198,10 +198,10 @@ func main() {
 	chatService := chat.NewService(chatRepo, chatMessageRepo, transactor, log, livekitClient, liveRoomRepo)
 
 	convHubMembership := conversations.NewHubMembership(convMemberRepo)
-	chatHub := chathub.NewHub(convHubMembership, log)
-	chatBridge := chathub.NewBridge(chatHub, pubsubRedisClient, log)
-	chatPresence := chathub.NewPresence(pubsubRedisClient, chathub.PresenceTTL)
-	go chatBridge.Run(context.Background())
+	convHub := chathub.NewHub(convHubMembership, log)
+	convBridge := chathub.NewBridge(convHub, pubsubRedisClient, log)
+	convPresence := chathub.NewPresence(pubsubRedisClient, chathub.PresenceTTL)
+	go convBridge.Run(context.Background())
 
 	pollService := polls.NewService(pollRepo, pollAnswerRepo, log)
 	qaAuthorizer := livesessions.NewModelAuthorizer(liveRoomRepo, classSessionRepo, classRepo, classMemberRepo)
@@ -321,17 +321,17 @@ func main() {
 	notificationHandler := notifications.NewHandler(notificationService)
 	notificationHandler.RegisterRoutes(v1, authMiddleware)
 
-	convNotifier := conversations.NewNotifier(notificationService, convMemberRepo)
+	convNotifier := conversations.NewNotifier(notificationService)
 	convUserLookup := conversations.NewUserOrgLookup(userRepo)
 	conversationService := conversations.NewService(
 		convRepo, convMemberRepo, convMessageRepo, convReactionRepo, convMentionRepo,
 		transactor, log,
-		chatBridge,     // broadcaster (implements ToConversation/ToUser)
+		convBridge,     // broadcaster (implements ToConversation/ToUser/ToUsers)
 		convNotifier,   // notifier (SendSystem fan-out)
-		convUserLookup, // userLookup (cross-org DM/member guard)
-		mediaRepo,      // mediaLookup (attachment validation on send)
-		presenceReaderAdapter{p: chatPresence}, // presenceReader (batch online/last-seen)
-		queueClient,                            // enqueuer (attachment cleanup on delete)
+		convUserLookup, // userDirectory (cross-org DM/member guard, required)
+		conversations.NewAttachmentValidator(mediaRepo), // attachmentValidator (required)
+		presenceReaderAdapter{p: convPresence},          // presenceReader (batch online/last-seen)
+		queueClient,                                     // enqueuer (attachment cleanup on delete)
 	)
 
 	// --- billing ---
@@ -400,7 +400,7 @@ func main() {
 
 	conversationHandler := conversations.NewHandler(conversationService)
 	conversationHandler.RegisterRoutes(v1, authMiddleware, perm)
-	v1.GET("/ws", chathub.HandleWS(chatHub, chatBridge, chatPresence, jwtService, log))
+	v1.GET("/ws", chathub.HandleWS(convHub, convBridge, convPresence, jwtService, cfg.CORSAllowedOrigins, log))
 
 	attendanceHandler := attendance.NewHandler(attendanceService)
 	attendanceHandler.RegisterRoutes(v1, authMiddleware, perm)

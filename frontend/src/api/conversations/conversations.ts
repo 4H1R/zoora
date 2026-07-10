@@ -1898,6 +1898,7 @@ export const getPostConversationsIdLeaveUrl = (id: string,) => {
 }
 
 /**
+ * Not allowed on direct conversations (400): leaving would strand the DM pair permanently.
  * @summary Leave conversation
  */
 export const postConversationsIdLeave = async (id: string, options?: RequestInit): Promise<postConversationsIdLeaveResponse> => {
@@ -2131,7 +2132,7 @@ export const getPostConversationsIdMembersUrl = (id: string,) => {
 }
 
 /**
- * Platform admins, same-org PermConversationsManage holders, and conversation-admin members may add; the user must resolve to the caller's org.
+ * Platform admins, same-org PermConversationsManage holders, and conversation-admin members may add; the user must resolve to the caller's org. Direct conversations reject member changes (their roster is fixed by the DM pair).
  * @summary Add conversation member
  */
 export const postConversationsIdMembers = async (id: string,
@@ -2341,7 +2342,7 @@ export const getGetConversationsIdMessagesUrl = (id: string,
 }
 
 /**
- * Keyset-paginated message window. Exactly one of before/after/around may be set; none returns the latest page. Each message's reactions map is populated (Step 11 serialization); media_ids are returned raw for the client to resolve.
+ * Keyset-paginated message window. At most one of before/after/around may be set (400 otherwise); none returns the latest page. Each message's reactions map is populated; media_ids are returned raw for the client to resolve.
  * @summary List conversation messages
  */
 export const getConversationsIdMessages = async (id: string,
@@ -2824,6 +2825,7 @@ export const getPostConversationsIdReadUrl = (id: string,) => {
 }
 
 /**
+ * message_id must reference a message in this conversation (400 otherwise).
  * @summary Mark conversation read
  */
 export const postConversationsIdRead = async (id: string,
@@ -2932,7 +2934,7 @@ export const getGetConversationsIdSearchUrl = (id: string,
 }
 
 /**
- * ILIKE substring nav search within a single conversation, gated on membership.
+ * ILIKE substring nav search within a single conversation, gated on membership. Requires q of at least 2 characters.
  * @summary Search messages (in conversation)
  */
 export const getConversationsIdSearch = async (id: string,

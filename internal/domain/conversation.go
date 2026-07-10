@@ -85,7 +85,9 @@ type ConversationMessage struct {
 	IsPinned         bool            `gorm:"not null;default:false" json:"is_pinned"`
 	PinnedBy         *uuid.UUID      `gorm:"type:uuid" json:"pinned_by"`
 	PinnedAt         *time.Time      `json:"pinned_at"`
-	MediaIDs         json.RawMessage `gorm:"type:jsonb;not null;default:'[]'" json:"media_ids"`
+	// swaggertype: the raw JSON column holds an array of media uuid strings —
+	// without the hint swag renders json.RawMessage as integer[].
+	MediaIDs         json.RawMessage `gorm:"type:jsonb;not null;default:'[]'" json:"media_ids" swaggertype:"array,string"`
 	AsDocument       bool            `gorm:"not null;default:false" json:"as_document"`
 	CreatedAt        time.Time       `json:"created_at"`
 	UpdatedAt        time.Time       `json:"updated_at"`
@@ -111,10 +113,10 @@ type ConversationMention struct {
 // ---- DTOs ----
 
 type CreateConversationDTO struct {
-	Type        ConversationType `json:"type" binding:"required"`
-	Name        string           `json:"name" binding:"omitempty,max=255"`
-	ColorIndex  int16            `json:"color_index" binding:"omitempty,min=0,max=6"`
-	MemberIDs   []string         `json:"member_ids" binding:"omitempty,max=500,dive,uuid"`
+	Type       ConversationType `json:"type" binding:"required"`
+	Name       string           `json:"name" binding:"omitempty,max=255"`
+	ColorIndex int16            `json:"color_index" binding:"omitempty,min=0,max=6"`
+	MemberIDs  []string         `json:"member_ids" binding:"omitempty,max=500,dive,uuid"`
 }
 
 type CreateDirectDTO struct {
@@ -131,9 +133,9 @@ type DirectoryUser struct {
 }
 
 type UpdateConversationDTO struct {
-	Name        *string `json:"name" binding:"omitempty,min=1,max=255"`
-	AvatarURL   *string `json:"avatar_url" binding:"omitempty,max=1000"`
-	ColorIndex  *int16  `json:"color_index" binding:"omitempty,min=0,max=6"`
+	Name       *string `json:"name" binding:"omitempty,min=1,max=255"`
+	AvatarURL  *string `json:"avatar_url" binding:"omitempty,max=1000"`
+	ColorIndex *int16  `json:"color_index" binding:"omitempty,min=0,max=6"`
 }
 
 type AddConversationMemberDTO struct {
@@ -170,7 +172,7 @@ type MessageCursor struct {
 	Before *uuid.UUID
 	After  *uuid.UUID
 	Around *uuid.UUID
-	Limit  int // clamped 1..100 by service
+	Limit  int // clamped 1..100 by the repository
 }
 
 type ListConversationsQuery struct {
@@ -197,10 +199,17 @@ type ConversationMemberRepository interface {
 	FindByConversationAndUser(ctx context.Context, convID, userID uuid.UUID) (*ConversationMember, error)
 	Delete(ctx context.Context, convID, userID uuid.UUID) error
 	ListByConversation(ctx context.Context, convID uuid.UUID) ([]ConversationMember, error)
+	// ListPageMembers returns the member rows needed to decorate one page of
+	// conversations, in one query: ALL members of the direct conversations
+	// (the DM pair drives the client's title/presence) plus the viewer's OWN
+	// row in every conversation (drives muted state). User is preloaded.
+	ListPageMembers(ctx context.Context, convIDs, directIDs []uuid.UUID, viewerID uuid.UUID) ([]ConversationMember, error)
 	ListUserIDs(ctx context.Context, convID uuid.UUID) ([]uuid.UUID, error)
 	SetLastRead(ctx context.Context, convID, userID, messageID uuid.UUID, at time.Time) error
 	SetMuted(ctx context.Context, convID, userID uuid.UUID, until *time.Time) error
-	UnreadCount(ctx context.Context, convID, userID uuid.UUID) (int64, error)
+	// UnreadCounts returns the user's unread-message count per conversation in
+	// one query; conversations with no unread messages may be absent.
+	UnreadCounts(ctx context.Context, userID uuid.UUID, convIDs []uuid.UUID) (map[uuid.UUID]int64, error)
 }
 
 type ConversationMessageRepository interface {
@@ -209,7 +218,9 @@ type ConversationMessageRepository interface {
 	Update(ctx context.Context, m *ConversationMessage) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	ListWindow(ctx context.Context, convID uuid.UUID, cur MessageCursor) ([]ConversationMessage, error)
-	Latest(ctx context.Context, convID uuid.UUID) (*ConversationMessage, error)
+	// LatestByConversation returns each conversation's newest message in one
+	// query; conversations with no messages are absent from the map.
+	LatestByConversation(ctx context.Context, convIDs []uuid.UUID) (map[uuid.UUID]ConversationMessage, error)
 	ListPinned(ctx context.Context, convID uuid.UUID) ([]ConversationMessage, error)
 	SetPinned(ctx context.Context, id uuid.UUID, pinned bool, by *uuid.UUID, at *time.Time) error
 	// SearchInConversation: ILIKE nav search (Phase 3 adds full-text global).
@@ -224,6 +235,9 @@ type ConversationReactionRepository interface {
 	Delete(ctx context.Context, messageID, userID uuid.UUID, emoji string) error
 	FindByMessageAndUser(ctx context.Context, messageID, userID uuid.UUID, emoji string) (*ConversationMessageReaction, error)
 	CountByMessage(ctx context.Context, messageID uuid.UUID) (map[string]int, error)
+	// CountByMessages returns per-message emoji counts for a whole page in one
+	// query; messages with no reactions are absent from the map.
+	CountByMessages(ctx context.Context, messageIDs []uuid.UUID) (map[uuid.UUID]map[string]int, error)
 }
 
 type ConversationMentionRepository interface { // Phase 3

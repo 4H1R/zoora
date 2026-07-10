@@ -20,6 +20,7 @@ import { ConversationSettings } from "./conversation-settings"
 import { InConversationSearch } from "./in-conversation-search"
 import { JumpToMessageProvider } from "./jump-context"
 import { conversationTint, initials } from "./lib/avatar"
+import { conversationTitle } from "./lib/conversation-title"
 import { findGroupIndex, groupMessages } from "./lib/messages"
 import { MembersSheet } from "./members-sheet"
 import { MessageInput } from "./message-input"
@@ -148,7 +149,7 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
     return () => clearTimeout(timer)
   }, [highlightId])
 
-  const name = conversation?.name ?? convId
+  const name = (conversation && conversationTitle(conversation, user.id)) || convId
   const isDirect = conversation?.type === "direct"
   const memberCount = memberRows.length
 
@@ -228,7 +229,12 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
           </div>
         </header>
 
-        <MembersSheet convId={convId} open={membersOpen} onOpenChange={setMembersOpen} canManage={canManage} />
+        <MembersSheet
+          convId={convId}
+          open={membersOpen}
+          onOpenChange={setMembersOpen}
+          canManage={canManage && !isDirect}
+        />
         {conversation && (
           <ConversationSettings
             conversation={conversation}

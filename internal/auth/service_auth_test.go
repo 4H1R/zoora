@@ -58,6 +58,13 @@ func (m *mockUserRepo) SearchActiveInOrg(ctx context.Context, orgID uuid.UUID, q
 	}
 	return args.Get(0).([]domain.User), args.Error(1)
 }
+func (m *mockUserRepo) FilterIDsInOrg(ctx context.Context, orgID uuid.UUID, ids []uuid.UUID) ([]uuid.UUID, error) {
+	args := m.Called(ctx, orgID, ids)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]uuid.UUID), args.Error(1)
+}
 func (m *mockUserRepo) FindAdminByUsername(ctx context.Context, username string) (*domain.User, error) {
 	args := m.Called(ctx, username)
 	if args.Get(0) == nil {

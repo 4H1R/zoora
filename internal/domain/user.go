@@ -9,21 +9,21 @@ import (
 )
 
 type User struct {
-	ID             uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	OrganizationID *uuid.UUID     `gorm:"type:uuid;index" json:"organization_id,omitempty"`
-	RoleID         *uuid.UUID     `gorm:"type:uuid;index" json:"role_id,omitempty"`
-	Username       string         `gorm:"not null" json:"username"`
-	Name           string         `gorm:"not null" json:"name"`
-	Password       string         `gorm:"not null" json:"-"`
-	IsAdmin        bool           `gorm:"not null;default:false" json:"is_admin"`
-	Role           *Role          `gorm:"foreignKey:RoleID" json:"role,omitempty"`
-	CreatedAt      time.Time      `json:"created_at"`
-	UpdatedAt      time.Time      `json:"updated_at"`
-	ChangelogLastSeenAt *time.Time `gorm:"column:changelog_last_seen_at" json:"-"`
-	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`
-	DisabledAt     *time.Time     `gorm:"index" json:"disabled_at,omitempty"`
-	DisabledBy     *uuid.UUID     `gorm:"type:uuid" json:"disabled_by,omitempty"`
-	DisabledReason *string        `json:"disabled_reason,omitempty"`
+	ID                  uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	OrganizationID      *uuid.UUID     `gorm:"type:uuid;index" json:"organization_id,omitempty"`
+	RoleID              *uuid.UUID     `gorm:"type:uuid;index" json:"role_id,omitempty"`
+	Username            string         `gorm:"not null" json:"username"`
+	Name                string         `gorm:"not null" json:"name"`
+	Password            string         `gorm:"not null" json:"-"`
+	IsAdmin             bool           `gorm:"not null;default:false" json:"is_admin"`
+	Role                *Role          `gorm:"foreignKey:RoleID" json:"role,omitempty"`
+	CreatedAt           time.Time      `json:"created_at"`
+	UpdatedAt           time.Time      `json:"updated_at"`
+	ChangelogLastSeenAt *time.Time     `gorm:"column:changelog_last_seen_at" json:"-"`
+	DeletedAt           gorm.DeletedAt `gorm:"index" json:"-"`
+	DisabledAt          *time.Time     `gorm:"index" json:"disabled_at,omitempty"`
+	DisabledBy          *uuid.UUID     `gorm:"type:uuid" json:"disabled_by,omitempty"`
+	DisabledReason      *string        `json:"disabled_reason,omitempty"`
 }
 
 type CreateUserDTO struct {
@@ -124,6 +124,9 @@ type UserRepository interface {
 	// org whose username or name ILIKE-matches query, ordered by username asc.
 	// An empty query returns the first page of active org users.
 	SearchActiveInOrg(ctx context.Context, orgID uuid.UUID, query string, limit int) ([]User, error)
+	// FilterIDsInOrg returns the subset of ids that belong to users in the org,
+	// in one query. Unknown and cross-org ids are silently dropped.
+	FilterIDsInOrg(ctx context.Context, orgID uuid.UUID, ids []uuid.UUID) ([]uuid.UUID, error)
 	// FindAdminByUsername looks up a platform admin (org_id IS NULL, is_admin).
 	FindAdminByUsername(ctx context.Context, username string) (*User, error)
 	Update(ctx context.Context, user *User) error

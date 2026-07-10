@@ -1,6 +1,8 @@
 import type { ChatMessage } from "./lib/messages"
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 
 import {
   getConversationsIdPins,
@@ -53,6 +55,7 @@ export function usePins(convId: string) {
  *    flag refreshes and the per-message action toggles its label/icon.
  */
 export function usePinActions(convId: string) {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const pinMutation = usePostConversationsMessagesMessageIdPin()
   const unpinMutation = usePostConversationsMessagesMessageIdUnpin()
@@ -62,12 +65,14 @@ export function usePinActions(convId: string) {
     queryClient.invalidateQueries({ queryKey: chatKeys.messages(convId) })
   }
 
+  const onError = () => toast.error(t("conversations.actions.pinError"))
+
   function pin(messageId: string) {
-    pinMutation.mutate({ messageId }, { onSuccess: invalidate })
+    pinMutation.mutate({ messageId }, { onSuccess: invalidate, onError })
   }
 
   function unpin(messageId: string) {
-    unpinMutation.mutate({ messageId }, { onSuccess: invalidate })
+    unpinMutation.mutate({ messageId }, { onSuccess: invalidate, onError })
   }
 
   return {

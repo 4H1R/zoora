@@ -15,17 +15,16 @@ import (
 // point that bypasses caller auth + rate limiting (this is a system send).
 type Notifier struct {
 	notifications domain.NotificationService
-	members       domain.ConversationMemberRepository
 }
 
-func NewNotifier(n domain.NotificationService, members domain.ConversationMemberRepository) *Notifier {
-	return &Notifier{notifications: n, members: members}
+func NewNotifier(n domain.NotificationService) *Notifier {
+	return &Notifier{notifications: n}
 }
 
 // unmutedRecipients returns member UserIDs excluding the sender and any
-// member whose MutedUntil is still in the future. Pure/no I/O so it can back
-// both the notifier's mute-gating and the realtime per-user fanout without
-// duplicating the filter logic.
+// member whose MutedUntil is still in the future. Pure/no I/O; afterSend
+// applies it once to the roster it already fetched, so the realtime per-user
+// fanout and the notification recipients share one mute filter.
 func unmutedRecipients(members []domain.ConversationMember, sender uuid.UUID, now time.Time) []uuid.UUID {
 	var out []uuid.UUID
 	for _, m := range members {
@@ -40,25 +39,11 @@ func unmutedRecipients(members []domain.ConversationMember, sender uuid.UUID, no
 	return out
 }
 
-// NotifyMessage sends in-app + push to the resolved recipients, skipping
-// muted members. Errors are the caller's to log-and-continue on.
+// NotifyMessage sends in-app + push to the resolved recipients. Recipients
+// arrive already sender-excluded and mute-filtered (afterSend owns that
+// filter). Errors are the caller's to log-and-continue on.
 func (nx *Notifier) NotifyMessage(ctx context.Context, conv *domain.Conversation, msg *domain.ConversationMessage, recipientIDs []uuid.UUID) error {
-	if len(recipientIDs) == 0 {
-		return nil
-	}
-	// Filter muted.
-	now := time.Now()
-	var targets []uuid.UUID
-	for _, uid := range recipientIDs {
-		m, err := nx.members.FindByConversationAndUser(ctx, conv.ID, uid)
-		if err != nil {
-			continue
-		}
-		if m.MutedUntil != nil && m.MutedUntil.After(now) {
-			continue
-		}
-		targets = append(targets, uid)
-	}
+	targets := recipientIDs
 	if len(targets) == 0 {
 		return nil
 	}

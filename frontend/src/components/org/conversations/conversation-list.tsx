@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 
 import { ConversationItem } from "./conversation-item"
 import { ConversationListSkeleton } from "./conversation-list.skeleton"
+import { conversationTitle } from "./lib/conversation-title"
 import { isMuted, viewerMutedUntil } from "./lib/mute"
 import { directPartnerId } from "./lib/presence"
 import { NewConversationDialog } from "./new-conversation-dialog"
@@ -21,12 +22,17 @@ import { useConversationPermissions } from "./use-conversation-permissions"
 import { useConversations } from "./use-conversations"
 import { usePresence } from "./use-presence"
 
-// Client-side name/preview filter. The list is a single small page (v1), so
+// Client-side title/preview filter. The list is a single small page (v1), so
 // filtering locally keeps search instant; server search arrives in a later phase.
-function filterConversations(items: Conversation[], query: string): Conversation[] {
+// Matching runs on the DISPLAY title (DMs are titled after the partner, not the
+// empty stored name).
+function filterConversations(items: Conversation[], query: string, selfId: string): Conversation[] {
   const q = query.trim().toLowerCase()
   if (!q) return items
-  return items.filter((c) => c.name?.toLowerCase().includes(q) || c.last_message?.content?.toLowerCase().includes(q))
+  return items.filter(
+    (c) =>
+      conversationTitle(c, selfId).toLowerCase().includes(q) || c.last_message?.content?.toLowerCase().includes(q)
+  )
 }
 
 /**
@@ -46,7 +52,7 @@ export function ConversationSidebar() {
   const activeId = params.conversationId
 
   const items = conversations ?? []
-  const filtered = filterConversations(items, query)
+  const filtered = filterConversations(items, query, user.id)
   const isSearching = query.trim().length > 0
 
   // One batched presence query for every DM partner in the sidebar; each direct

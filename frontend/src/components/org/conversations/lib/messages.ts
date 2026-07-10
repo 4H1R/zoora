@@ -40,12 +40,13 @@ export type ChatMessage = GithubCom4H1RZooraInternalDomainConversationMessage & 
 }
 
 /**
- * Backend stores conversation `media_ids` as uuid STRINGS, but the generated
- * OpenAPI model types them `number[]`. Normalize to string ids for resolving
- * download URLs / metadata regardless of the on-the-wire runtime shape.
+ * Backend stores conversation `media_ids` as uuid strings (and the OpenAPI
+ * model now types them `string[]`). Keep a defensive normalization anyway —
+ * WS payloads carry the raw JSON column, so this is the single choke point
+ * whatever the runtime shape.
  */
 export function mediaIdStrings(message: ChatMessage): string[] {
-  const ids = message.media_ids as unknown as Array<string | number> | undefined
+  const ids = message.media_ids as Array<string | number> | undefined
   if (!ids) return []
   return ids.map((id) => String(id)).filter((id) => id.length > 0)
 }
