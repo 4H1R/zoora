@@ -32,23 +32,38 @@ func presencePayload(userID uuid.UUID, online bool) map[string]any {
 
 // originChecker builds the WS upgrade Origin allow-list check (the CSWSH
 // guard: without it any website a logged-in user visits could open an
-// authenticated socket). Semantics mirror the HTTP CORS middleware config:
-// "*" (the dev default) allows every origin; otherwise the Origin header must
-// exactly match an allowed entry. Requests with NO Origin header are allowed —
-// they come from non-browser clients, which cannot be CSWSH'd (the attack
-// requires a victim browser attaching credentials), and the ?token= JWT is
-// still required either way.
+// authenticated socket). Semantics mirror the HTTP CORS middleware config
+// (middleware.CORS with AllowWildcard): "*" (the dev default) allows every
+// origin; a single "*" inside an entry is a wildcard matched by prefix+suffix
+// (e.g. "https://*.zoora.ir" — the multi-tenant subdomain case, where each org
+// is served from its own <org>.zoora.ir host); every other entry must match
+// exactly. Requests with NO Origin header are allowed — they come from
+// non-browser clients, which cannot be CSWSH'd (the attack requires a victim
+// browser attaching credentials), and the ?token= JWT is still required either
+// way.
 func originChecker(allowedOrigins []string) func(*http.Request) bool {
 	allowAll := false
-	allowed := make(map[string]bool, len(allowedOrigins))
+	exact := make(map[string]bool, len(allowedOrigins))
+	type wildcard struct{ prefix, suffix string }
+	var wildcards []wildcard
 	for _, o := range allowedOrigins {
 		o = strings.TrimRight(strings.ToLower(strings.TrimSpace(o)), "/")
+		if o == "" {
+			continue
+		}
 		if o == "*" {
 			allowAll = true
+			continue
 		}
-		if o != "" {
-			allowed[o] = true
+		// Single-"*" wildcard, mirroring gin-contrib/cors AllowWildcard: split
+		// into fixed prefix/suffix and match by both ends. Extra "*"s beyond the
+		// first are treated as literal, which cannot match a real Origin — so a
+		// malformed pattern fails closed rather than widening the allow-list.
+		if i := strings.IndexByte(o, '*'); i >= 0 {
+			wildcards = append(wildcards, wildcard{prefix: o[:i], suffix: o[i+1:]})
+			continue
 		}
+		exact[o] = true
 	}
 	return func(r *http.Request) bool {
 		if allowAll {
@@ -58,7 +73,17 @@ func originChecker(allowedOrigins []string) func(*http.Request) bool {
 		if origin == "" {
 			return true
 		}
-		return allowed[origin]
+		if exact[origin] {
+			return true
+		}
+		for _, w := range wildcards {
+			if len(origin) >= len(w.prefix)+len(w.suffix) &&
+				strings.HasPrefix(origin, w.prefix) &&
+				strings.HasSuffix(origin, w.suffix) {
+				return true
+			}
+		}
+		return false
 	}
 }
 

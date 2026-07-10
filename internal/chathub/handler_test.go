@@ -30,6 +30,11 @@ func TestOriginChecker(t *testing.T) {
 		{"trailing slash normalized", []string{"https://app.zoora.io/"}, "https://app.zoora.io", true},
 		{"foreign origin rejected", []string{"https://app.zoora.io"}, "https://evil.example", false},
 		{"subdomain not implicitly allowed", []string{"https://zoora.io"}, "https://evil.zoora.io", false},
+		{"wildcard subdomain allowed", []string{"https://*.zoora.ir"}, "https://acme.zoora.ir", true},
+		{"wildcard matches any tenant", []string{"https://*.zoora.ir"}, "https://other-org.zoora.ir", true},
+		{"wildcard rejects foreign suffix", []string{"https://*.zoora.ir"}, "https://acme.evil.com", false},
+		{"wildcard requires https scheme", []string{"https://*.zoora.ir"}, "http://acme.zoora.ir", false},
+		{"wildcard does not match apex", []string{"https://*.zoora.ir"}, "https://zoora.ir", false},
 		{"no Origin header allowed (non-browser client)", []string{"https://app.zoora.io"}, "", true},
 		{"empty allow-list rejects browser origins", nil, "https://app.zoora.io", false},
 	}
