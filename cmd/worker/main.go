@@ -46,19 +46,24 @@ func main() {
 
 	log = logger.New(cfg.IsDevelopment(), cfg.LogLevel)
 
-	db, err := database.NewConnection(cfg.DatabaseURL, log, cfg.IsDevelopment())
+	db, err := database.NewConnection(cfg.DatabaseURL, cfg.DatabaseReplicaURL, database.PoolConfig{
+		MaxOpenConns:    cfg.DBMaxOpenConns,
+		MaxIdleConns:    cfg.DBMaxIdleConns,
+		ConnMaxLifetime: cfg.DBConnMaxLifetime,
+		ConnMaxIdleTime: cfg.DBConnMaxIdleTime,
+	}, log, cfg.IsDevelopment())
 	if err != nil {
 		log.Error("failed to connect to database", "error", err)
 		os.Exit(1)
 	}
 
-	queueServer, err := queue.NewServer(cfg.RedisURL, log)
+	queueServer, err := queue.NewServer(cfg.QueueRedisURL(), log)
 	if err != nil {
 		log.Error("failed to initialize queue server", "error", err)
 		os.Exit(1)
 	}
 
-	queueClient, err := queue.NewClient(cfg.RedisURL, log)
+	queueClient, err := queue.NewClient(cfg.QueueRedisURL(), log)
 	if err != nil {
 		log.Error("failed to initialize queue client", "error", err)
 		os.Exit(1)
@@ -155,7 +160,7 @@ func main() {
 
 	// Bot pollers complete connector links via /start <token>. They need redis
 	// (link tokens) and the connector service.
-	redisClient, err := cache.NewRedisClient(cfg.RedisURL, log)
+	redisClient, err := cache.NewRedisClient(cfg.CacheRedisURL(), log)
 	if err != nil {
 		log.Error("failed to connect to redis", "error", err)
 		os.Exit(1)
@@ -220,7 +225,7 @@ func main() {
 	// Periodic safety net for missed LiveKit webhooks: re-scan for active rooms
 	// whose host went stale and close the ones LiveKit confirms are host-less.
 	// The event-driven webhook path is primary; this catches dropped events.
-	redisOpt, err := asynq.ParseRedisURI(cfg.RedisURL)
+	redisOpt, err := asynq.ParseRedisURI(cfg.QueueRedisURL())
 	if err != nil {
 		log.Error("failed to parse redis URI for scheduler", "error", err)
 		os.Exit(1)
@@ -230,7 +235,7 @@ func main() {
 		log.Error("failed to register auto-close schedule", "error", err)
 		os.Exit(1)
 	}
-	if _, err := scheduler.Register("@every 24h", asynq.NewTask(domain.TypeRecordingRetentionSweep, nil)); err != nil {
+	if _, err := scheduler.Register("@every 24h", asynq.NewTask(domain.TypeRecordingRetentionSweep, nil), asynq.Queue(domain.QueueMedia)); err != nil {
 		log.Error("failed to register recording-retention schedule", "error", err)
 		os.Exit(1)
 	}

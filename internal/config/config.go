@@ -8,9 +8,25 @@ import (
 )
 
 type Config struct {
-	Port             string `env:"PORT"               envDefault:"8080"`
-	DatabaseURL      string `env:"DATABASE_URL,required"`
-	RedisURL         string `env:"REDIS_URL,required"`
+	Port        string `env:"PORT"               envDefault:"8080"`
+	DatabaseURL string `env:"DATABASE_URL,required"`
+	// DatabaseReplicaURL routes reads to a read replica via gorm dbresolver when
+	// set. Empty keeps all reads and writes on the primary (current behavior), so
+	// adding a replica later is a config flip, not a code change.
+	DatabaseReplicaURL string `env:"DATABASE_REPLICA_URL"`
+	// Connection-pool sizing per process. Both the API and the worker open their
+	// own pool, so plan Postgres max_connections for (pods * DBMaxOpenConns) * 2.
+	DBMaxOpenConns    int           `env:"DB_MAX_OPEN_CONNS"    envDefault:"25"`
+	DBMaxIdleConns    int           `env:"DB_MAX_IDLE_CONNS"    envDefault:"10"`
+	DBConnMaxLifetime time.Duration `env:"DB_CONN_MAX_LIFETIME" envDefault:"5m"`
+	DBConnMaxIdleTime time.Duration `env:"DB_CONN_MAX_IDLE_TIME" envDefault:"1m"`
+	RedisURL          string        `env:"REDIS_URL,required"`
+	// Per-role Redis URLs. Each falls back to RedisURL when empty, so one Redis
+	// instance stays the default; splitting queue / pub-sub / cache onto separate
+	// instances later is a config change, not a code change.
+	RedisQueueURL  string `env:"REDIS_QUEUE_URL"`
+	RedisPubSubURL string `env:"REDIS_PUBSUB_URL"`
+	RedisCacheURL  string `env:"REDIS_CACHE_URL"`
 	LiveKitHost      string `env:"LIVEKIT_HOST,required"`
 	LiveKitPublicURL string `env:"LIVEKIT_PUBLIC_URL"`
 	LiveKitAPIKey    string `env:"LIVEKIT_API_KEY,required"`
@@ -82,6 +98,19 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("parsing config: %w", err)
 	}
 	return cfg, nil
+}
+
+// QueueRedisURL / PubSubRedisURL / CacheRedisURL resolve the per-role Redis URL,
+// falling back to the shared RedisURL when the role-specific one is unset.
+func (c *Config) QueueRedisURL() string  { return firstNonEmpty(c.RedisQueueURL, c.RedisURL) }
+func (c *Config) PubSubRedisURL() string { return firstNonEmpty(c.RedisPubSubURL, c.RedisURL) }
+func (c *Config) CacheRedisURL() string  { return firstNonEmpty(c.RedisCacheURL, c.RedisURL) }
+
+func firstNonEmpty(a, b string) string {
+	if a != "" {
+		return a
+	}
+	return b
 }
 
 func (c *Config) IsDevelopment() bool {

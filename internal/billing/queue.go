@@ -33,7 +33,7 @@ func (q *queueEnqueuer) EnqueuePDF(ctx context.Context, invoiceID uuid.UUID) err
 		return fmt.Errorf("billing.queue.EnqueuePDF marshal: %w", err)
 	}
 	task := asynq.NewTask(domain.TypeInvoiceGeneratePDF, payload)
-	if _, err := q.client.Enqueue(task, asynq.MaxRetry(5)); err != nil {
+	if _, err := q.client.Enqueue(task, asynq.MaxRetry(5), asynq.Queue(domain.QueueMedia)); err != nil {
 		return fmt.Errorf("billing.queue.EnqueuePDF: %w", err)
 	}
 	return nil

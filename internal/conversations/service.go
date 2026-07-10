@@ -417,7 +417,7 @@ func (s *service) enqueueAttachmentCleanup(ctx context.Context, convID uuid.UUID
 		s.logger.Error("attachment cleanup enqueue: marshal payload", "conversation_id", convID.String(), "error", err)
 		return
 	}
-	if _, err := s.queue.Enqueue(asynq.NewTask(domain.TypeMediaCleanup, payload)); err != nil {
+	if _, err := s.queue.Enqueue(asynq.NewTask(domain.TypeMediaCleanup, payload), asynq.Queue(domain.QueueMedia)); err != nil {
 		s.logger.Error("attachment cleanup enqueue", "conversation_id", convID.String(), "error", err)
 	}
 }

@@ -560,7 +560,7 @@ func (s *service) enqueueSlidesCleanup(ctx context.Context, room *domain.LiveRoo
 		s.logger.Error("slides cleanup enqueue: marshal payload", "room_id", room.ID.String(), "error", err)
 		return
 	}
-	if _, err := s.queue.Enqueue(asynq.NewTask(domain.TypeMediaCleanup, payload)); err != nil {
+	if _, err := s.queue.Enqueue(asynq.NewTask(domain.TypeMediaCleanup, payload), asynq.Queue(domain.QueueMedia)); err != nil {
 		s.logger.Error("slides cleanup enqueue", "room_id", room.ID.String(), "error", err)
 	}
 }

@@ -27,9 +27,10 @@ func NewServer(redisURL string, logger *slog.Logger) (*Server, error) {
 	srv := asynq.NewServer(opts, asynq.Config{
 		Concurrency: 10,
 		Queues: map[string]int{
-			"critical":      6,
-			"default":       3,
-			"notifications": 1,
+			domain.QueueCritical:      6,
+			domain.QueueDefault:       3,
+			domain.QueueMedia:         2,
+			domain.QueueNotifications: 1,
 		},
 		Logger: NewAsynqLogger(logger),
 	})

@@ -126,7 +126,7 @@ func (s *service) enqueueStorageCleanup(ctx context.Context, orgID uuid.UUID) {
 		s.logger.Error("org storage cleanup enqueue: marshal payload", "org_id", orgID.String(), "error", err)
 		return
 	}
-	if _, err := s.queue.Enqueue(asynq.NewTask(domain.TypeOrganizationCleanup, payload)); err != nil {
+	if _, err := s.queue.Enqueue(asynq.NewTask(domain.TypeOrganizationCleanup, payload), asynq.Queue(domain.QueueMedia)); err != nil {
 		s.logger.Error("org storage cleanup enqueue", "org_id", orgID.String(), "error", err)
 	}
 }

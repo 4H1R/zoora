@@ -171,6 +171,18 @@
    retint the accent to our brand green, route text to our font, and round the
    panels/canvas to our radius so the tools feel native. Scoped to
    .zoora-whiteboard so nothing leaks. */
+
+/* Trap tldraw's internal stacking. Its UI layer (.tlui-layout) sits at z-index
+   300 with its own stacking context, but the whiteboard wrapper establishes no
+   context of its own — so on mobile that z:300 chrome competes at the root level
+   and paints above our overlays. The three-dot "more" menu (a Sheet portaled to
+   <body> at z-50) is the visible victim: it opened behind the tldraw toolbar.
+   isolation:isolate makes .zoora-whiteboard its own stacking context so every
+   tldraw z-index stays contained below the portaled Sheet/Dialog layers. */
+.zoora-whiteboard {
+  isolation: isolate;
+}
+
 .zoora-whiteboard .tl-container {
   /* Brand green replaces tldraw's blue for selection, focus rings and the
      active-tool highlight — the single most obvious "this isn't ours" signal.

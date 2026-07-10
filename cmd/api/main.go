@@ -88,15 +88,30 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	db, err := database.NewConnection(cfg.DatabaseURL, log, cfg.IsDevelopment())
+	db, err := database.NewConnection(cfg.DatabaseURL, cfg.DatabaseReplicaURL, database.PoolConfig{
+		MaxOpenConns:    cfg.DBMaxOpenConns,
+		MaxIdleConns:    cfg.DBMaxIdleConns,
+		ConnMaxLifetime: cfg.DBConnMaxLifetime,
+		ConnMaxIdleTime: cfg.DBConnMaxIdleTime,
+	}, log, cfg.IsDevelopment())
 	if err != nil {
 		log.Error("failed to connect to database", "error", err)
 		os.Exit(1)
 	}
 
-	redisClient, err := cache.NewRedisClient(cfg.RedisURL, log)
+	// Cache-role Redis: auth, tenant resolve, rate-limit, entity caches. Falls
+	// back to the shared instance until REDIS_CACHE_URL is set.
+	redisClient, err := cache.NewRedisClient(cfg.CacheRedisURL(), log)
 	if err != nil {
 		log.Error("failed to connect to redis", "error", err)
+		os.Exit(1)
+	}
+
+	// Pub/sub-role Redis: WebSocket fan-out bridge + presence. Split from the
+	// cache instance via REDIS_PUBSUB_URL when realtime traffic needs isolation.
+	pubsubRedisClient, err := cache.NewRedisClient(cfg.PubSubRedisURL(), log)
+	if err != nil {
+		log.Error("failed to connect to pub/sub redis", "error", err)
 		os.Exit(1)
 	}
 
@@ -106,7 +121,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	queueClient, err := queue.NewClient(cfg.RedisURL, log)
+	queueClient, err := queue.NewClient(cfg.QueueRedisURL(), log)
 	if err != nil {
 		log.Error("failed to initialize queue client", "error", err)
 		os.Exit(1)
@@ -184,8 +199,8 @@ func main() {
 
 	convHubMembership := conversations.NewHubMembership(convMemberRepo)
 	chatHub := chathub.NewHub(convHubMembership, log)
-	chatBridge := chathub.NewBridge(chatHub, redisClient, log)
-	chatPresence := chathub.NewPresence(redisClient, chathub.PresenceTTL)
+	chatBridge := chathub.NewBridge(chatHub, pubsubRedisClient, log)
+	chatPresence := chathub.NewPresence(pubsubRedisClient, chathub.PresenceTTL)
 	go chatBridge.Run(context.Background())
 
 	pollService := polls.NewService(pollRepo, pollAnswerRepo, log)
@@ -469,6 +484,7 @@ func main() {
 	sqlDB, _ := db.DB()
 	sqlDB.Close()
 	redisClient.Close()
+	pubsubRedisClient.Close()
 
 	log.Info("server stopped")
 }

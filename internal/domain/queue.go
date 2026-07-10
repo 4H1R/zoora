@@ -2,6 +2,16 @@ package domain
 
 import "github.com/google/uuid"
 
+// Asynq queue names. Weighted priority is configured on the worker server. Media
+// isolates slow S3 / headless-Chrome work (cleanup, org purge, retention sweep,
+// invoice PDF) so a burst of it can't starve latency-sensitive default tasks.
+const (
+	QueueCritical      = "critical"
+	QueueDefault       = "default"
+	QueueNotifications = "notifications"
+	QueueMedia         = "media"
+)
+
 const (
 	TypeLiveSessionAutoClose     = "livesession:auto-close"
 	TypeLiveSessionCloseIfNoHost = "livesession:close-if-no-host"
