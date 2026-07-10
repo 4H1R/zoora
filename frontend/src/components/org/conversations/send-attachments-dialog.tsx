@@ -77,10 +77,7 @@ export function SendAttachmentsDialog({ files, onSend, onRemove, onAddMore, onCa
 
         {/* Preview grid — a lone item goes full-width, the rest tile. */}
         <div
-          className={cn(
-            "grid max-h-72 gap-2 overflow-y-auto",
-            files.length <= 1 ? "grid-cols-1" : "grid-cols-3"
-          )}
+          className={cn("grid gap-2", files.length <= 1 ? "grid-cols-1" : "max-h-72 grid-cols-3 overflow-y-auto p-2")}
           aria-label={t("conversations.attachments.tray")}
         >
           {files.map((file, index) => (
@@ -229,11 +226,17 @@ function PreviewItem({
   }, [file, image])
 
   return (
-    <div className="group/preview relative">
+    <div className={cn("group/preview relative", single && image && "mx-auto w-fit max-w-full")}>
       <div
         className={cn(
           "border-border bg-muted flex items-center justify-center overflow-hidden rounded-xl border",
-          image ? (single ? "w-full" : "aspect-square") : single ? "aspect-video w-full" : "aspect-square",
+          image
+            ? single
+              ? "max-h-72 w-fit max-w-full"
+              : "aspect-square"
+            : single
+              ? "aspect-video w-full"
+              : "aspect-square",
           !image && "flex-col gap-1 p-2"
         )}
       >
@@ -241,7 +244,7 @@ function PreviewItem({
           <img
             src={blobUrl}
             alt={file.name}
-            className={cn("object-contain", single ? "max-h-72 w-full" : "size-full")}
+            className={cn("object-contain", single ? "max-h-72 w-auto max-w-full" : "size-full")}
           />
         ) : (
           <>

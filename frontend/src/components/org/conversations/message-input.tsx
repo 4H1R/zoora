@@ -4,8 +4,10 @@ import type { InfiniteData } from "@tanstack/react-query"
 
 import { useQueryClient } from "@tanstack/react-query"
 import { EmojiPicker } from "frimousse"
-import { CheckIcon, PaperclipIcon, PencilIcon, SendHorizontalIcon, SmileIcon, XIcon } from "lucide-react"
+import { CheckIcon, MicIcon, PaperclipIcon, PencilIcon, SendHorizontalIcon, SmileIcon, XIcon } from "lucide-react"
+import { AnimatePresence, motion } from "motion/react"
 import { useEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { useThrottledCallback } from "use-debounce"
@@ -20,6 +22,8 @@ import { useChatWs } from "./chat-provider"
 import { detectMention, insertAtCaret, insertMention, resolveMentions } from "./lib/mentions"
 import { replaceMessage } from "./lib/optimistic"
 import { chatKeys } from "./lib/query-keys"
+import { useVoiceRecorder } from "./media/use-voice-recorder"
+import { VoiceRecorderStrip } from "./media/voice-recorder"
 import { MentionPopover } from "./mention-popover"
 import { SendAttachmentsDialog } from "./send-attachments-dialog"
 import { capFiles, MAX_MEDIA_PER_MESSAGE } from "./upload/upload-manager"
@@ -85,6 +89,14 @@ export function MessageInput({ convId }: MessageInputProps) {
   // Staged (pre-send) attachments — ephemeral composer state, cleared on send.
   const [files, setFiles] = useState<File[]>([])
   const [dragOver, setDragOver] = useState(false)
+  // Nested dragenter/dragleave pairs fire per element — count them so the drop
+  // overlay only clears when the pointer truly leaves the window.
+  const dragDepthRef = useRef(0)
+
+  // Voice-message capture. While recording/previewing, the strip replaces the
+  // whole input row (Telegram flow).
+  const recorder = useVoiceRecorder()
+  const voiceActive = recorder.status !== "idle"
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -250,9 +262,7 @@ export function MessageInput({ convId }: MessageInputProps) {
     const capped = capFiles(combined)
     const dropped = combined.length - capped.length
     if (dropped > 0) {
-      toast.warning(
-        t("conversations.attachments.capExceeded", { max: MAX_MEDIA_PER_MESSAGE, count: dropped })
-      )
+      toast.warning(t("conversations.attachments.capExceeded", { max: MAX_MEDIA_PER_MESSAGE, count: dropped }))
     }
     setFiles(capped)
   }
@@ -267,30 +277,60 @@ export function MessageInput({ convId }: MessageInputProps) {
     e.target.value = ""
   }
 
-  // Pasted images (and any other files) land in the tray; text paste is untouched.
-  function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
-    const pasted = e.clipboardData?.files
-    if (pasted && pasted.length > 0) addFiles(Array.from(pasted))
-  }
-
-  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
-    e.preventDefault()
-    setDragOver(false)
-    const dropped = e.dataTransfer?.files
-    if (dropped && dropped.length > 0) addFiles(Array.from(dropped))
-  }
-
-  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+  // Whole-page attach surface: dragging files anywhere over the window raises a
+  // drop overlay, and Ctrl/Cmd+V with files on the clipboard stages them — both
+  // land in the same pre-send dialog as the paperclip. Disabled while editing
+  // (no media edits).
+  useEffect(() => {
     if (editingMessageId) return
-    e.preventDefault()
-    setDragOver(true)
-  }
 
-  function handleDragLeave(e: React.DragEvent<HTMLDivElement>) {
-    // Only clear when the pointer actually leaves the composer, not a child.
-    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
-    setDragOver(false)
-  }
+    const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes("Files")
+
+    const onDragEnter = (e: DragEvent) => {
+      if (!hasFiles(e)) return
+      dragDepthRef.current++
+      setDragOver(true)
+    }
+    const onDragOver = (e: DragEvent) => {
+      // preventDefault is what makes the window a legal drop target.
+      if (hasFiles(e)) e.preventDefault()
+    }
+    const onDragLeave = (e: DragEvent) => {
+      if (!hasFiles(e)) return
+      dragDepthRef.current = Math.max(0, dragDepthRef.current - 1)
+      if (dragDepthRef.current === 0) setDragOver(false)
+    }
+    const onDrop = (e: DragEvent) => {
+      if (!hasFiles(e)) return
+      e.preventDefault()
+      dragDepthRef.current = 0
+      setDragOver(false)
+      const dropped = e.dataTransfer?.files
+      if (dropped && dropped.length > 0) addFiles(Array.from(dropped))
+    }
+    const onPaste = (e: ClipboardEvent) => {
+      const pasted = e.clipboardData?.files
+      if (pasted && pasted.length > 0) {
+        e.preventDefault()
+        addFiles(Array.from(pasted))
+      }
+    }
+
+    window.addEventListener("dragenter", onDragEnter)
+    window.addEventListener("dragover", onDragOver)
+    window.addEventListener("dragleave", onDragLeave)
+    window.addEventListener("drop", onDrop)
+    window.addEventListener("paste", onPaste)
+    return () => {
+      window.removeEventListener("dragenter", onDragEnter)
+      window.removeEventListener("dragover", onDragOver)
+      window.removeEventListener("dragleave", onDragLeave)
+      window.removeEventListener("drop", onDrop)
+      window.removeEventListener("paste", onPaste)
+    }
+    // `addFiles` closes over `files` for the cap toast — re-bind as it changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingMessageId, files])
 
   function submit() {
     const content = value.trim()
@@ -325,6 +365,19 @@ export function MessageInput({ convId }: MessageInputProps) {
     })
     setReplyTo(null)
     setFiles([])
+  }
+
+  async function startVoice() {
+    const ok = await recorder.start()
+    if (!ok) toast.error(t("conversations.voice.micDenied"))
+  }
+
+  // Send the take — works both mid-recording (stops first) and from preview.
+  async function sendVoice() {
+    const file = await recorder.finish()
+    if (!file) return
+    sendWithAttachments({ content: "", files: [file], replyToMessageId: replyTo ?? undefined })
+    setReplyTo(null)
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -373,10 +426,37 @@ export function MessageInput({ convId }: MessageInputProps) {
 
   return (
     <div className="border-t px-3 py-3">
+      {/* Full-window drop overlay — any file drag anywhere lands here. */}
+      {createPortal(
+        <AnimatePresence>
+          {dragOver && !editingMessageId && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="bg-background/80 fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-sm"
+            >
+              <motion.div
+                initial={{ scale: 0.92, y: 8 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.92, y: 8 }}
+                transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                className="border-primary/50 bg-card flex flex-col items-center gap-3 rounded-3xl border-2 border-dashed px-12 py-10 shadow-lg"
+              >
+                <span className="bg-primary/10 text-primary flex size-14 items-center justify-center rounded-full">
+                  <PaperclipIcon className="size-6" />
+                </span>
+                <p className="text-base font-semibold">{t("conversations.drop.title")}</p>
+                <p className="text-muted-foreground text-sm">{t("conversations.drop.subtitle")}</p>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
       <div
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
         className={cn(
           "bg-card focus-within:ring-ring/40 relative flex flex-col gap-1.5 rounded-2xl border p-1.5 shadow-sm transition focus-within:ring-2",
           dragOver && "ring-primary ring-2"
@@ -455,106 +535,147 @@ export function MessageInput({ convId }: MessageInputProps) {
           tabIndex={-1}
         />
 
-        <div className="flex items-end gap-1">
-          {/* Attach files — disabled while editing or at the media cap. */}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="text-muted-foreground shrink-0"
-            disabled={!canAttach}
-            aria-label={t("conversations.composer.attach")}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <PaperclipIcon />
-          </Button>
-
-          <textarea
-            ref={textareaRef}
-            value={value}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            onKeyUp={handleCaretSync}
-            onClick={handleCaretSync}
-            onPaste={handlePaste}
-            rows={1}
-            placeholder={t("conversations.composer.placeholder")}
-            aria-label={t("conversations.composer.placeholder")}
-            className="text-foreground placeholder:text-muted-foreground max-h-40 min-h-9 flex-1 resize-none bg-transparent px-2 py-1.5 text-sm leading-relaxed outline-none"
-          />
-
-          <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
-            <PopoverTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="text-muted-foreground shrink-0"
-                  aria-label={t("conversations.composer.emoji")}
-                />
-              }
+        {voiceActive ? (
+          <VoiceRecorderStrip recorder={recorder} onSend={() => void sendVoice()} />
+        ) : (
+          <div className="flex items-end gap-1">
+            {/* Attach files — disabled while editing or at the media cap. */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground shrink-0"
+              disabled={!canAttach}
+              aria-label={t("conversations.composer.attach")}
+              onClick={() => fileInputRef.current?.click()}
             >
-              <SmileIcon />
-            </PopoverTrigger>
-            <PopoverContent align="end" side="top" className="w-fit p-0">
-              <EmojiPicker.Root
-                onEmojiSelect={({ emoji }) => insertEmoji(emoji)}
-                className="isolate flex h-80 w-72 flex-col"
-              >
-                <EmojiPicker.Search
-                  placeholder={t("conversations.composer.emojiSearch")}
-                  className="bg-muted/60 placeholder:text-muted-foreground focus-visible:ring-ring/40 m-2 rounded-lg px-2.5 py-2 text-sm outline-none focus-visible:ring-2"
-                />
-                <EmojiPicker.Viewport className="relative flex-1 outline-hidden">
-                  <EmojiPicker.Loading className="text-muted-foreground absolute inset-0 flex items-center justify-center text-sm">
-                    {t("conversations.composer.emojiLoading")}
-                  </EmojiPicker.Loading>
-                  <EmojiPicker.Empty className="text-muted-foreground absolute inset-0 flex items-center justify-center text-sm">
-                    {t("conversations.composer.emojiEmpty")}
-                  </EmojiPicker.Empty>
-                  <EmojiPicker.List
-                    className="pb-2 select-none"
-                    components={{
-                      CategoryHeader: ({ category, ...props }) => (
-                        <div className="bg-popover text-muted-foreground px-2 pt-2 pb-1 text-xs font-medium" {...props}>
-                          {category.label}
-                        </div>
-                      ),
-                      Row: ({ children, ...props }) => (
-                        <div className="scroll-my-1 px-1" {...props}>
-                          {children}
-                        </div>
-                      ),
-                      Emoji: ({ emoji, ...props }) => (
-                        <button
-                          className={cn(
-                            "flex size-8 items-center justify-center rounded-md text-lg",
-                            emoji.isActive && "bg-accent"
-                          )}
-                          {...props}
-                        >
-                          {emoji.emoji}
-                        </button>
-                      ),
-                    }}
-                  />
-                </EmojiPicker.Viewport>
-              </EmojiPicker.Root>
-            </PopoverContent>
-          </Popover>
+              <PaperclipIcon />
+            </Button>
 
-          <Button
-            type="button"
-            size="icon-sm"
-            className="shrink-0"
-            disabled={!canSend}
-            aria-label={editingMessageId ? t("conversations.composer.saveEdit") : t("conversations.composer.send")}
-            onClick={submit}
-          >
-            {editingMessageId ? <CheckIcon /> : <SendHorizontalIcon className="rtl:rotate-180" />}
-          </Button>
-        </div>
+            <textarea
+              ref={textareaRef}
+              value={value}
+              onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              onKeyUp={handleCaretSync}
+              onClick={handleCaretSync}
+              rows={1}
+              placeholder={t("conversations.composer.placeholder")}
+              aria-label={t("conversations.composer.placeholder")}
+              className="text-foreground placeholder:text-muted-foreground max-h-40 min-h-9 flex-1 resize-none bg-transparent px-2 py-1.5 text-sm leading-relaxed outline-none"
+            />
+
+            <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
+              <PopoverTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="text-muted-foreground shrink-0"
+                    aria-label={t("conversations.composer.emoji")}
+                  />
+                }
+              >
+                <SmileIcon />
+              </PopoverTrigger>
+              <PopoverContent align="end" side="top" className="w-fit p-0">
+                <EmojiPicker.Root
+                  onEmojiSelect={({ emoji }) => insertEmoji(emoji)}
+                  className="isolate flex h-80 w-72 flex-col"
+                >
+                  <EmojiPicker.Search
+                    placeholder={t("conversations.composer.emojiSearch")}
+                    className="bg-muted/60 placeholder:text-muted-foreground focus-visible:ring-ring/40 m-2 rounded-lg px-2.5 py-2 text-sm outline-none focus-visible:ring-2"
+                  />
+                  <EmojiPicker.Viewport className="relative flex-1 outline-hidden">
+                    <EmojiPicker.Loading className="text-muted-foreground absolute inset-0 flex items-center justify-center text-sm">
+                      {t("conversations.composer.emojiLoading")}
+                    </EmojiPicker.Loading>
+                    <EmojiPicker.Empty className="text-muted-foreground absolute inset-0 flex items-center justify-center text-sm">
+                      {t("conversations.composer.emojiEmpty")}
+                    </EmojiPicker.Empty>
+                    <EmojiPicker.List
+                      className="pb-2 select-none"
+                      components={{
+                        CategoryHeader: ({ category, ...props }) => (
+                          <div
+                            className="bg-popover text-muted-foreground px-2 pt-2 pb-1 text-xs font-medium"
+                            {...props}
+                          >
+                            {category.label}
+                          </div>
+                        ),
+                        Row: ({ children, ...props }) => (
+                          <div className="scroll-my-1 px-1" {...props}>
+                            {children}
+                          </div>
+                        ),
+                        Emoji: ({ emoji, ...props }) => (
+                          <button
+                            className={cn(
+                              "flex size-8 items-center justify-center rounded-md text-lg",
+                              emoji.isActive && "bg-accent"
+                            )}
+                            {...props}
+                          >
+                            {emoji.emoji}
+                          </button>
+                        ),
+                      }}
+                    />
+                  </EmojiPicker.Viewport>
+                </EmojiPicker.Root>
+              </PopoverContent>
+            </Popover>
+
+            {/* Send when there's text (or an edit in flight); mic when empty. */}
+            <AnimatePresence mode="popLayout" initial={false}>
+              {canSend || editingMessageId ? (
+                <motion.div
+                  key="send"
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.6, opacity: 0 }}
+                  transition={{ duration: 0.12 }}
+                  className="shrink-0"
+                >
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    disabled={!canSend}
+                    aria-label={
+                      editingMessageId ? t("conversations.composer.saveEdit") : t("conversations.composer.send")
+                    }
+                    onClick={submit}
+                  >
+                    {editingMessageId ? <CheckIcon /> : <SendHorizontalIcon className="rtl:rotate-180" />}
+                  </Button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="mic"
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.6, opacity: 0 }}
+                  transition={{ duration: 0.12 }}
+                  className="shrink-0"
+                >
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="text-muted-foreground hover:text-foreground"
+                    aria-label={t("conversations.voice.record")}
+                    onClick={() => void startVoice()}
+                  >
+                    <MicIcon />
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
     </div>
   )

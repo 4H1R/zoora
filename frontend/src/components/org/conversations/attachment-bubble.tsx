@@ -8,9 +8,10 @@ import { formatBytes } from "@/components/org/files/utils"
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 
-import { mediaIdStrings } from "./lib/messages"
 import { ProgressRing } from "./attachment-progress-ring"
-import { isImage as isImageType } from "./upload/compress"
+import { mediaIdStrings } from "./lib/messages"
+import { AudioAttachment } from "./media/audio-attachment"
+import { VideoAttachment } from "./media/video-attachment"
 import { blurhashToDataUrl } from "./upload/blurhash"
 import { useMediaMeta, useMediaUrl } from "./use-media-attachment"
 import { useSendAttachments } from "./use-send-attachments"
@@ -53,7 +54,19 @@ export function AttachmentBubble({ message, convId, isOwn }: AttachmentBubblePro
 // Column count for the attachment grid: a lone item goes full-bleed, everything
 // else tiles two-up.
 function gridClass(count: number): string {
-  return count <= 1 ? "grid-cols-1 max-w-64" : "grid-cols-2 max-w-80"
+  return count <= 1 ? "grid-cols-1 max-w-80" : "grid-cols-2 max-w-80"
+}
+
+// Playable kind for an attachment mime — players only render outside document
+// mode ("Send as a document" always falls back to the file chip).
+type MediaKind = "image" | "audio" | "video" | "file"
+
+function mediaKind(mime: string, asDocument: boolean): MediaKind {
+  if (asDocument) return "file"
+  if (mime.startsWith("image/")) return "image"
+  if (mime.startsWith("audio/")) return "audio"
+  if (mime.startsWith("video/")) return "video"
+  return "file"
 }
 
 /* -------------------------------------------------------------------------- */
@@ -78,24 +91,53 @@ function LocalAttachments({
   return (
     <div className={cn("mb-1 grid gap-1", gridClass(attachments.length))}>
       {attachments.map((a) => {
-        const image = !asDocument && (!!a.blobUrl || isImageType({ type: a.contentType }))
+        const kind = mediaKind(a.contentType, asDocument)
         const single = attachments.length <= 1
-        return image ? (
-          <LocalImageCell
-            key={a.localId}
-            att={a}
-            single={single}
-            onCancel={() => cancelAttachment(msgId, a.localId)}
-          />
-        ) : (
-          <div key={a.localId} className={cn(attachments.length > 1 && "col-span-2")}>
+        const cancel = () => cancelAttachment(msgId, a.localId)
+
+        if (kind === "image") {
+          return <LocalImageCell key={a.localId} att={a} single={single} onCancel={cancel} />
+        }
+        if (kind === "audio") {
+          return (
+            <div key={a.localId} className={cn(!single && "col-span-2")}>
+              <AudioAttachment
+                src={a.blobUrl}
+                name={a.name}
+                size={a.size}
+                isOwn={isOwn}
+                seed={a.localId}
+                uploading={a.status === "uploading"}
+                progress={a.progress}
+                errored={a.status === "error"}
+                onCancel={cancel}
+              />
+            </div>
+          )
+        }
+        if (kind === "video") {
+          return (
+            <div key={a.localId} className={cn(!single && "col-span-2")}>
+              <VideoAttachment
+                src={a.blobUrl}
+                name={a.name}
+                uploading={a.status === "uploading"}
+                progress={a.progress}
+                errored={a.status === "error"}
+                onCancel={cancel}
+              />
+            </div>
+          )
+        }
+        return (
+          <div key={a.localId} className={cn(!single && "col-span-2")}>
             <FileChip
               name={a.name}
               size={a.size}
               isOwn={isOwn}
               status={a.status}
               progress={a.progress}
-              onCancel={() => cancelAttachment(msgId, a.localId)}
+              onCancel={cancel}
             />
           </div>
         )
@@ -104,15 +146,7 @@ function LocalAttachments({
   )
 }
 
-function LocalImageCell({
-  att,
-  single,
-  onCancel,
-}: {
-  att: LocalAttachment
-  single: boolean
-  onCancel: () => void
-}) {
+function LocalImageCell({ att, single, onCancel }: { att: LocalAttachment; single: boolean; onCancel: () => void }) {
   const { t } = useTranslation()
   const uploading = att.status === "uploading"
   const errored = att.status === "error"
@@ -183,9 +217,10 @@ function ConfirmedAttachment({
     return <div className={cn("bg-muted animate-pulse rounded-xl", multiple ? "aspect-square" : "aspect-video")} />
   }
 
-  const isImg = !asDocument && (meta?.mime_type ?? "").startsWith("image/")
+  const name = meta?.name ?? meta?.file_name ?? id
+  const kind = mediaKind(meta?.mime_type ?? "", asDocument)
 
-  if (isImg) {
+  if (kind === "image") {
     return (
       <LightboxImage
         src={url ?? undefined}
@@ -195,14 +230,25 @@ function ConfirmedAttachment({
     )
   }
 
+  if (kind === "audio") {
+    return (
+      <div className={cn(multiple && "col-span-2")}>
+        <AudioAttachment src={url ?? undefined} name={name} size={meta?.size} isOwn={isOwn} seed={id} />
+      </div>
+    )
+  }
+
+  if (kind === "video") {
+    return (
+      <div className={cn(multiple && "col-span-2")}>
+        <VideoAttachment src={url ?? undefined} name={name} />
+      </div>
+    )
+  }
+
   return (
     <div className={cn(multiple && "col-span-2")}>
-      <FileChip
-        name={meta?.name ?? meta?.file_name ?? id}
-        size={meta?.size}
-        isOwn={isOwn}
-        downloadUrl={url ?? undefined}
-      />
+      <FileChip name={name} size={meta?.size} isOwn={isOwn} downloadUrl={url ?? undefined} />
     </div>
   )
 }
@@ -362,7 +408,13 @@ function FileChip({
 
   if (downloadUrl && !uploading) {
     return (
-      <a href={downloadUrl} target="_blank" rel="noopener noreferrer" download={name} className={cn(shell, "hover:bg-muted")}>
+      <a
+        href={downloadUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        download={name}
+        className={cn(shell, isOwn ? "hover:bg-primary-foreground/20" : "hover:bg-muted")}
+      >
         {body}
       </a>
     )

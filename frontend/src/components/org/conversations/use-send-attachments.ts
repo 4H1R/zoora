@@ -1,17 +1,15 @@
 import type { ChatMessage, LocalAttachment } from "./lib/messages"
 import type { PendingFile, PendingSendInput } from "./upload/pending-registry"
+import type { postConversationsIdMessagesResponse } from "@/api/conversations/conversations"
+import type { GithubCom4H1RZooraInternalDomainSendConversationMessageDTO as SendMessageDTO } from "@/api/model"
 import type { InfiniteData } from "@tanstack/react-query"
 
 import { useQueryClient } from "@tanstack/react-query"
 import { useAccess } from "react-access-engine"
 import { uuidv7 } from "uuidv7"
 
-import {
-  type postConversationsIdMessagesResponse,
-  usePostConversationsIdMessages,
-} from "@/api/conversations/conversations"
+import { usePostConversationsIdMessages } from "@/api/conversations/conversations"
 import { useGetUsersMe } from "@/api/users/users"
-import type { GithubCom4H1RZooraInternalDomainSendConversationMessageDTO as SendMessageDTO } from "@/api/model"
 
 import {
   allAttachmentsSucceeded,
@@ -168,7 +166,11 @@ export function useSendAttachments(convId: string) {
   }
 
   function getMessageContent(msgId: string): string {
-    return getCache()?.pages.flat().find((m) => m.id === msgId)?.content ?? ""
+    return (
+      getCache()
+        ?.pages.flat()
+        .find((m) => m.id === msgId)?.content ?? ""
+    )
   }
 
   function sendWithAttachments({ content, files, replyToMessageId, mentions, asDocument }: SendWithAttachmentsInput) {
@@ -176,12 +178,15 @@ export function useSendAttachments(convId: string) {
     if (capped.length === 0) return
 
     const id = uuidv7()
+    // Images preview inline; audio/video get a blob source so their players
+    // are usable while the upload is still in flight.
+    const previewable = (f: File) => isImage(f) || f.type.startsWith("audio/") || f.type.startsWith("video/")
     const attachments: LocalAttachment[] = capped.map((file) => ({
       localId: uuidv7(),
       name: file.name,
       contentType: file.type || "application/octet-stream",
       size: file.size,
-      blobUrl: !asDocument && isImage(file) ? URL.createObjectURL(file) : undefined,
+      blobUrl: !asDocument && previewable(file) ? URL.createObjectURL(file) : undefined,
       blurhash: null,
       progress: 0,
       status: "uploading",

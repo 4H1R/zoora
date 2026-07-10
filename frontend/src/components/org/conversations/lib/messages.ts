@@ -7,8 +7,9 @@ import type { GithubCom4H1RZooraInternalDomainConversationMessage } from "@/api/
  *
  * - `localId` is a client uuid, stable for the lifetime of the optimistic bubble
  *   (progress/status updates and cancel/retry all key off it).
- * - `blobUrl` is an `URL.createObjectURL` handle for images only; it is revoked
- *   once the confirmed message swaps in (see `use-send-attachments`).
+ * - `blobUrl` is an `URL.createObjectURL` handle for inline-previewable media
+ *   (images, audio, video); it is revoked once the confirmed message swaps in
+ *   (see `use-send-attachments`).
  * - `mediaId` is filled in once the file's upload resolves.
  */
 export interface LocalAttachment {
