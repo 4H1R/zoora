@@ -67,7 +67,11 @@ func originChecker(allowedOrigins []string) func(*http.Request) bool {
 // presence tracks per-user online state: the socket lifecycle marks the user
 // online on connect and every heartbeat, offline when their last socket drops,
 // and fans out presence_update events to the rooms the socket had joined.
-func HandleWS(hub *Hub, bridge *Bridge, presence *Presence, jwt *auth.JWTService, allowedOrigins []string, logger *slog.Logger) gin.HandlerFunc {
+// authRedis is the CACHE-role Redis client (the same one auth.Middleware and the
+// auth service use). The token-revocation key lives there, NOT on the pub/sub
+// client the Bridge uses — with scale-out those are different instances, so the
+// revoke check must read authRedis or it silently fails open/closed.
+func HandleWS(hub *Hub, bridge *Bridge, presence *Presence, jwt *auth.JWTService, authRedis *redis.Client, allowedOrigins []string, logger *slog.Logger) gin.HandlerFunc {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -118,8 +122,9 @@ func HandleWS(hub *Hub, bridge *Bridge, presence *Presence, jwt *auth.JWTService
 		// auth.Middleware rejects revoked/logged-out tokens by checking Redis
 		// (see internal/auth/middleware.go's isRevoked); a bare ValidateToken
 		// does not. Replicate that check here so a logged-out token can't open
-		// a live socket. bridge.rdb is the same client auth.Middleware uses.
-		if isTokenRevoked(c.Request.Context(), bridge.rdb, claims) {
+		// a live socket. Use authRedis (cache role) — the revoke key is written
+		// there, not on the Bridge's pub/sub client.
+		if isTokenRevoked(c.Request.Context(), authRedis, claims) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 			return
 		}

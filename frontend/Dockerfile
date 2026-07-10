@@ -7,6 +7,9 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 # Same-origin: the SPA calls /api/v1 on its own host; nginx proxies to the API.
 ENV VITE_API_URL=/api/v1
+# Host-relative WS path; the client derives wss://<current-host> at runtime.
+# ENV overrides the tracked .env — without this, prod baked ws://localhost:8080.
+ENV VITE_WS_URL=/api/v1/ws
 # Tenant config baked at build time. ENV overrides the tracked .env (localhost).
 ARG VITE_BASE_DOMAIN
 ARG VITE_ADMIN_SUBDOMAIN=admin

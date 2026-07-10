@@ -400,7 +400,7 @@ func main() {
 
 	conversationHandler := conversations.NewHandler(conversationService)
 	conversationHandler.RegisterRoutes(v1, authMiddleware, perm)
-	v1.GET("/ws", chathub.HandleWS(convHub, convBridge, convPresence, jwtService, cfg.CORSAllowedOrigins, log))
+	v1.GET("/ws", chathub.HandleWS(convHub, convBridge, convPresence, jwtService, redisClient, cfg.CORSAllowedOrigins, log))
 
 	attendanceHandler := attendance.NewHandler(attendanceService)
 	attendanceHandler.RegisterRoutes(v1, authMiddleware, perm)

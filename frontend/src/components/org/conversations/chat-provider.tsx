@@ -7,6 +7,7 @@ import { clientEnv } from "@/config/env"
 
 import { chatKeys } from "./lib/query-keys"
 import { ChatWsClient, type WsEvent } from "./lib/ws-client"
+import { resolveWsUrl } from "./lib/ws-url"
 import { createChatEventHandler } from "./use-chat-ws"
 
 type Status = "online" | "offline"
@@ -57,7 +58,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const client = new ChatWsClient(
-      clientEnv.VITE_WS_URL,
+      resolveWsUrl(clientEnv.VITE_WS_URL),
       () => localStorage.getItem(AUTH_TOKEN_KEY),
       (e) => {
         handleRef.current(e)

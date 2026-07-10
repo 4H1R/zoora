@@ -94,7 +94,9 @@ export default defineConfig({
     proxy: {
       // changeOrigin: false preserves Host: <slug>.localhost so the Go tenant
       // middleware resolves the right org from the subdomain.
-      '/api': { target: 'http://localhost:8080', changeOrigin: false },
+      // ws:true so the conversations hub upgrade (/api/v1/ws) is proxied too —
+      // the client uses a host-relative WS URL now, not a hardcoded :8080.
+      '/api': { target: 'http://localhost:8080', changeOrigin: false, ws: true },
       // LiveKit signal WS. Browser->Docker-Desktop port 7880 forwards plain HTTP
       // but drops the WebSocket upgrade; route it through Vite (proven WS path)
       // so the upgrade actually reaches the container. ws:true enables upgrade.
@@ -106,7 +108,9 @@ export default defineConfig({
     port: 3000,
     allowedHosts: ['.localhost', '.zoora.local'],
     proxy: {
-      '/api': { target: 'http://localhost:8080', changeOrigin: false },
+      // ws:true so the conversations hub upgrade (/api/v1/ws) is proxied too —
+      // the client uses a host-relative WS URL now, not a hardcoded :8080.
+      '/api': { target: 'http://localhost:8080', changeOrigin: false, ws: true },
       '/rtc': { target: 'http://localhost:7880', changeOrigin: true, ws: true },
     },
   },
