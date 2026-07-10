@@ -124,6 +124,14 @@ services:
         env_file: [.env.prod]
         environment:
             <<: *backend-env
+            # Path is both the container env value and the mount target below,
+            # driven by one interpolated var so host path == container path.
+            FCM_CREDENTIALS_FILE: "${FCM_CREDENTIALS_FILE}"
+        volumes:
+            # Bind the host JSON to the same absolute path inside the container.
+            # Falls back to /dev/null when unset so an empty value (push disabled)
+            # doesn't break `compose up` with an invalid empty mount source.
+            - "${FCM_CREDENTIALS_FILE:-/dev/null}:${FCM_CREDENTIALS_FILE:-/dev/null}:ro"
         depends_on:
             pgsql: { condition: service_healthy }
             redis: { condition: service_healthy }
