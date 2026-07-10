@@ -185,6 +185,7 @@ func main() {
 	convHubMembership := conversations.NewHubMembership(convMemberRepo)
 	chatHub := chathub.NewHub(convHubMembership, log)
 	chatBridge := chathub.NewBridge(chatHub, redisClient, log)
+	chatPresence := chathub.NewPresence(redisClient, chathub.PresenceTTL)
 	go chatBridge.Run(context.Background())
 
 	pollService := polls.NewService(pollRepo, pollAnswerRepo, log)
@@ -314,6 +315,7 @@ func main() {
 		convNotifier,   // notifier (SendSystem fan-out)
 		convUserLookup, // userLookup (cross-org DM/member guard)
 		mediaRepo,      // mediaLookup (attachment validation on send)
+		presenceReaderAdapter{p: chatPresence}, // presenceReader (batch online/last-seen)
 	)
 
 	// --- billing ---
@@ -382,7 +384,7 @@ func main() {
 
 	conversationHandler := conversations.NewHandler(conversationService)
 	conversationHandler.RegisterRoutes(v1, authMiddleware, perm)
-	v1.GET("/ws", chathub.HandleWS(chatHub, chatBridge, jwtService, log))
+	v1.GET("/ws", chathub.HandleWS(chatHub, chatBridge, chatPresence, jwtService, log))
 
 	attendanceHandler := attendance.NewHandler(attendanceService)
 	attendanceHandler.RegisterRoutes(v1, authMiddleware, perm)

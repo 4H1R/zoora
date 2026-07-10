@@ -2,6 +2,8 @@ import { z } from "zod"
 
 const clientEnvSchema = z.object({
   VITE_API_URL: z.string().min(1),
+  // WebSocket endpoint for the realtime conversations hub.
+  VITE_WS_URL: z.string().min(1),
   // Firebase web-push config. Optional — when any of these is unset the browser
   // push connector hides its Connect button (deployment has push disabled).
   VITE_FIREBASE_API_KEY: z.string().optional(),

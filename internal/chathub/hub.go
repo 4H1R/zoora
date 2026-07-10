@@ -39,11 +39,16 @@ type Hub struct {
 	members     membership
 	logger      *slog.Logger
 
-	// onFirstJoin/onLastLeave notify the redis bridge to (un)subscribe. They are
-	// invoked while h.mu is held, so they MUST NOT call back into the Hub
-	// (RWMutex is not reentrant — doing so would deadlock).
-	onFirstJoin func(convID uuid.UUID)
-	onLastLeave func(convID uuid.UUID)
+	// onFirstJoin/onLastLeave notify the redis bridge to (un)subscribe the
+	// conversation channel on the 0<->1 room-membership transition;
+	// onUserFirstSocket/onUserLastSocket do the same for the user channel on the
+	// 0<->1 socket transition. All four are invoked while h.mu is held, so they
+	// MUST NOT call back into the Hub (RWMutex is not reentrant — doing so would
+	// deadlock) or perform blocking I/O; the bridge only enqueues.
+	onFirstJoin       func(convID uuid.UUID)
+	onLastLeave       func(convID uuid.UUID)
+	onUserFirstSocket func(userID uuid.UUID)
+	onUserLastSocket  func(userID uuid.UUID)
 }
 
 func NewHub(members membership, logger *slog.Logger) *Hub {
@@ -60,14 +65,24 @@ func (h *Hub) addSocket(c *conn) {
 	defer h.mu.Unlock()
 	if h.userSockets[c.userID] == nil {
 		h.userSockets[c.userID] = make(map[*conn]bool)
+		if h.onUserFirstSocket != nil {
+			h.onUserFirstSocket(c.userID) // first socket for this user here: subscribe user channel
+		}
 	}
 	h.userSockets[c.userID][c] = true
 }
 
-func (h *Hub) removeSocket(c *conn) {
+// removeSocket detaches c from every room it joined and from its user's socket
+// set, returning the conversations it had joined (for presence fan-out) and
+// whether this was the user's LAST socket on this instance (so the caller can
+// mark the user offline only once, supporting multi-device). Both are computed
+// under a single lock so they cannot race a concurrent join/leave on c.
+func (h *Hub) removeSocket(c *conn) (rooms []uuid.UUID, lastSocket bool) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
+	rooms = make([]uuid.UUID, 0, len(c.rooms))
 	for convID := range c.rooms {
+		rooms = append(rooms, convID)
 		if set := h.rooms[convID]; set != nil {
 			delete(set, c)
 			if len(set) == 0 {
@@ -82,9 +97,14 @@ func (h *Hub) removeSocket(c *conn) {
 		delete(set, c)
 		if len(set) == 0 {
 			delete(h.userSockets, c.userID)
+			lastSocket = true
+			if h.onUserLastSocket != nil {
+				h.onUserLastSocket(c.userID) // last socket for this user here: unsubscribe user channel
+			}
 		}
 	}
 	close(c.send)
+	return rooms, lastSocket
 }
 
 func (h *Hub) joinRoom(c *conn, convID uuid.UUID) {

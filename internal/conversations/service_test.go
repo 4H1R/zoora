@@ -548,6 +548,59 @@ func (noopTx) RunInTx(ctx context.Context, fn func(context.Context) error) error
 	return fn(ctx)
 }
 
+// ---- broadcaster ----
+
+// broadcastCall records one realtime broadcaster invocation, tagged by kind
+// ("conversation" for ToConversation, "user" for ToUser) so tests can filter
+// by fanout tier without needing separate slices per method.
+type broadcastCall struct {
+	kind      string
+	target    uuid.UUID
+	eventType string
+	data      any
+}
+
+// fakeBroadcaster stands in for the service's broadcaster (realtime) port,
+// recording every ToConversation/ToUser call for assertion.
+type fakeBroadcaster struct {
+	mu    sync.Mutex
+	calls []broadcastCall
+}
+
+func (f *fakeBroadcaster) ToConversation(_ context.Context, convID uuid.UUID, eventType string, data any) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.calls = append(f.calls, broadcastCall{kind: "conversation", target: convID, eventType: eventType, data: data})
+}
+
+func (f *fakeBroadcaster) ToUser(_ context.Context, userID uuid.UUID, eventType string, data any) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.calls = append(f.calls, broadcastCall{kind: "user", target: userID, eventType: eventType, data: data})
+}
+
+// newServiceWithBroadcaster wires a fakeBroadcaster as the service's rt port
+// for the realtime fanout tests (Task 1.3).
+func newServiceWithBroadcaster(_ *testing.T) (domain.ConversationService, *fakeStore, *fakeBroadcaster) {
+	s := newFakeStore()
+	rt := &fakeBroadcaster{}
+	svc := conversations.NewService(
+		fakeConvRepo{s: s},
+		fakeMemberRepo{s: s},
+		fakeMessageRepo{s: s},
+		fakeReactionRepo{s: s},
+		nil, // mentionRepo: not needed for fanout coverage
+		noopTx{},
+		slog.Default(),
+		rt,
+		nil, // notifier
+		nil, // userLookup
+		nil, // mediaLookup
+		nil, // presenceReader
+	)
+	return svc, s, rt
+}
+
 // ---- test harness ----
 
 func newTestService(_ *testing.T) (domain.ConversationService, *fakeStore) {
@@ -564,6 +617,7 @@ func newTestService(_ *testing.T) (domain.ConversationService, *fakeStore) {
 		nil, // notifier: wired in Phase 3
 		nil, // userLookup: wired in Phase 3 — nil skips cross-org checks in unit tests
 		nil, // mediaLookup: wired in Phase 3 — nil skips attachment validation in unit tests
+		nil, // presenceReader: wired in Phase 2 — nil returns empty presence in unit tests
 	)
 	return svc, s
 }
@@ -647,6 +701,49 @@ func (f *fakeMediaLookup) FindByID(_ context.Context, id uuid.UUID) (*domain.Med
 	return nil, domain.ErrNotFound
 }
 
+// fakePresence backs the service's presenceReader port, recording the ids the
+// service actually forwards (post org-filter) and returning a canned status
+// for each so tests can assert both the authz filter and the pass-through.
+type fakePresence struct {
+	mu      sync.Mutex
+	gotIDs  []uuid.UUID
+	online  map[uuid.UUID]bool // which ids report Online=true
+	lastGet time.Time
+}
+
+func (f *fakePresence) Get(_ context.Context, ids []uuid.UUID) (map[uuid.UUID]domain.PresenceStatus, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.gotIDs = append([]uuid.UUID(nil), ids...)
+	f.lastGet = time.Now()
+	out := make(map[uuid.UUID]domain.PresenceStatus, len(ids))
+	for _, id := range ids {
+		out[id] = domain.PresenceStatus{Online: f.online[id], LastSeen: f.lastGet}
+	}
+	return out, nil
+}
+
+// newServiceWithPresence wires a fakePresence + fakeUserLookup so the org
+// filter in Presence runs end-to-end.
+func newServiceWithPresence(_ *testing.T, users *fakeUserLookup, presence *fakePresence) (domain.ConversationService, *fakeStore) {
+	s := newFakeStore()
+	svc := conversations.NewService(
+		fakeConvRepo{s: s},
+		fakeMemberRepo{s: s},
+		fakeMessageRepo{s: s},
+		fakeReactionRepo{s: s},
+		nil, // mentionRepo
+		noopTx{},
+		slog.Default(),
+		nil, // broadcaster
+		nil, // notifier
+		users,
+		nil, // mediaLookup
+		presence,
+	)
+	return svc, s
+}
+
 // fakeNotificationService implements domain.NotificationService by embedding
 // a nil interface and overriding only SendSystem — the single method the
 // real conversations.Notifier calls. Any other method would panic on the nil
@@ -684,6 +781,7 @@ func newServiceWithMentionAndNotify(_ *testing.T) (domain.ConversationService, *
 		notif,
 		nil, // userLookup: nil skips cross-org checks
 		nil, // mediaLookup
+		nil, // presenceReader
 	)
 	return svc, s, mentionRepo, notif
 }
@@ -707,6 +805,7 @@ func newServiceWithRealNotifier(_ *testing.T) (domain.ConversationService, *fake
 		realNotifier,
 		nil, // userLookup
 		nil, // mediaLookup
+		nil, // presenceReader
 	)
 	return svc, s, notifSvc
 }
@@ -730,6 +829,7 @@ func newServiceWithMedia(_ *testing.T) (domain.ConversationService, *fakeStore, 
 		nil, // notifier
 		nil, // userLookup
 		media,
+		nil, // presenceReader
 	)
 	return svc, s, media
 }
@@ -1252,6 +1352,94 @@ func TestSendMessage_MutedMember_SkippedByNotifier(t *testing.T) {
 		"muted memberB is excluded by the Notifier; sender userA is excluded by recipient resolution")
 }
 
+// TestAfterSend_FansOutPerUserNewMessage covers the two-tier realtime fanout:
+// SendMessage must broadcast "new_message" once to the conversation room AND
+// a DISTINCT "conversation_bump" once per non-sender member to that member's
+// per-user channel (same message id in both), so a client's sidebar can update
+// without having joined the room while never colliding the compact firehose
+// payload with the room's full message event.
+func TestAfterSend_FansOutPerUserNewMessage(t *testing.T) {
+	orgA, userA, memberB, memberC := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	svc, _, rt := newServiceWithBroadcaster(t)
+	adminCtx := callerCtx(orgA, userA, true)
+
+	conv, err := svc.CreateGroupOrChannel(adminCtx, domain.CreateConversationDTO{
+		Type:      domain.ConversationTypeGroup,
+		Name:      "Engineering",
+		MemberIDs: []string{memberB.String(), memberC.String()},
+	})
+	require.NoError(t, err)
+
+	msg, err := svc.SendMessage(adminCtx, conv.ID, domain.SendConversationMessageDTO{Content: "hi all"})
+	require.NoError(t, err)
+
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
+
+	var convCalls, userCalls []broadcastCall
+	for _, c := range rt.calls {
+		switch {
+		case c.kind == "conversation" && c.eventType == "new_message":
+			convCalls = append(convCalls, c)
+		case c.kind == "user" && c.eventType == "conversation_bump":
+			userCalls = append(userCalls, c)
+		case c.kind == "user" && c.eventType == "new_message":
+			t.Fatalf("per-user firehose must not use the room event type new_message")
+		}
+	}
+	require.Len(t, convCalls, 1, "exactly one room-level new_message broadcast")
+	assert.Equal(t, conv.ID, convCalls[0].target)
+	roomPayload, ok := convCalls[0].data.(map[string]any)
+	require.True(t, ok, "room payload must be a map")
+	assert.Equal(t, msg.ID.String(), roomPayload["id"], "room event carries the message id")
+
+	require.Len(t, userCalls, 2, "one per-user conversation_bump per non-sender member")
+	targets := map[uuid.UUID]bool{}
+	for _, c := range userCalls {
+		targets[c.target] = true
+		payload, ok := c.data.(map[string]any)
+		require.True(t, ok, "per-user payload must be a map")
+		assert.Equal(t, msg.ID, payload["id"], "per-user bump must carry the same message id as the room event")
+	}
+	assert.True(t, targets[memberB])
+	assert.True(t, targets[memberC])
+	assert.False(t, targets[userA], "sender must not receive its own per-user fanout")
+}
+
+// TestAfterSend_PerUserFanout_SkipsMutedMember mirrors the notifier's
+// mute-gating: a member who muted the conversation must not receive the
+// per-user conversation_bump fanout either.
+func TestAfterSend_PerUserFanout_SkipsMutedMember(t *testing.T) {
+	orgA, userA, memberB, memberC := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	svc, _, rt := newServiceWithBroadcaster(t)
+	adminCtx := callerCtx(orgA, userA, true)
+
+	conv, err := svc.CreateGroupOrChannel(adminCtx, domain.CreateConversationDTO{
+		Type:      domain.ConversationTypeGroup,
+		Name:      "Engineering",
+		MemberIDs: []string{memberB.String(), memberC.String()},
+	})
+	require.NoError(t, err)
+
+	mutedCtx := callerCtx(orgA, memberB, false)
+	future := time.Now().Add(24 * time.Hour)
+	require.NoError(t, svc.SetMuted(mutedCtx, conv.ID, &future))
+
+	_, err = svc.SendMessage(adminCtx, conv.ID, domain.SendConversationMessageDTO{Content: "hi all"})
+	require.NoError(t, err)
+
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
+	targets := map[uuid.UUID]bool{}
+	for _, c := range rt.calls {
+		if c.kind == "user" && c.eventType == "conversation_bump" {
+			targets[c.target] = true
+		}
+	}
+	assert.True(t, targets[memberC], "unmuted member C must still be fanned out to")
+	assert.False(t, targets[memberB], "muted member B must not be fanned out to")
+}
+
 // TestCreateGroupOrChannel_UserLookup_SkipsCrossOrgMember exercises the
 // fakeUserLookup port directly (wired non-nil, unlike the other harnesses
 // above which skip the cross-org check via nil): a requested member that
@@ -1277,6 +1465,7 @@ func TestCreateGroupOrChannel_UserLookup_SkipsCrossOrgMember(t *testing.T) {
 		nil, // notifier
 		users,
 		nil, // mediaLookup
+		nil, // presenceReader
 	)
 	ctx := callerCtx(orgA, userA, true)
 
@@ -1295,6 +1484,50 @@ func TestCreateGroupOrChannel_UserLookup_SkipsCrossOrgMember(t *testing.T) {
 	}
 	assert.Contains(t, ids, sameOrgUser)
 	assert.NotContains(t, ids, crossOrgUser, "a member id resolving to a different org must be silently skipped")
+}
+
+// TestPresence_FiltersToCallerOrg verifies the batch presence endpoint's authz
+// rule: requested ids are dropped unless they resolve to the caller's org, and
+// only the surviving ids are forwarded to the presence tracker.
+func TestPresence_FiltersToCallerOrg(t *testing.T) {
+	orgA, orgB := uuid.New(), uuid.New()
+	caller, sameOrgUser, crossOrgUser := uuid.New(), uuid.New(), uuid.New()
+	unknownUser := uuid.New() // not in the lookup at all
+
+	users := &fakeUserLookup{orgs: map[uuid.UUID]uuid.UUID{
+		caller:       orgA,
+		sameOrgUser:  orgA,
+		crossOrgUser: orgB,
+	}}
+	presence := &fakePresence{online: map[uuid.UUID]bool{sameOrgUser: true}}
+	svc, _ := newServiceWithPresence(t, users, presence)
+	ctx := callerCtx(orgA, caller, false)
+
+	statuses, err := svc.Presence(ctx, []uuid.UUID{sameOrgUser, crossOrgUser, unknownUser})
+	require.NoError(t, err)
+
+	// Only the same-org user survives the filter.
+	assert.Contains(t, presence.gotIDs, sameOrgUser)
+	assert.NotContains(t, presence.gotIDs, crossOrgUser, "cross-org id must be filtered out before the presence lookup")
+	assert.NotContains(t, presence.gotIDs, unknownUser, "unresolvable id must be filtered out before the presence lookup")
+
+	_, hasSame := statuses[sameOrgUser]
+	assert.True(t, hasSame, "same-org user must appear in the result")
+	assert.True(t, statuses[sameOrgUser].Online, "same-org user reports online")
+	_, hasCross := statuses[crossOrgUser]
+	assert.False(t, hasCross, "cross-org user must be absent from the result")
+}
+
+// TestPresence_NoReader returns an empty map (not an error) when presence is
+// unwired, so the endpoint degrades gracefully.
+func TestPresence_NoReader(t *testing.T) {
+	orgA, userA := uuid.New(), uuid.New()
+	svc, _ := newTestService(t) // presenceReader nil
+	ctx := callerCtx(orgA, userA, false)
+
+	statuses, err := svc.Presence(ctx, []uuid.UUID{uuid.New()})
+	require.NoError(t, err)
+	assert.Empty(t, statuses)
 }
 
 func TestSearch_RequiresMinLength(t *testing.T) {

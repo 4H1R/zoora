@@ -8,6 +8,15 @@ import (
 	"github.com/google/uuid"
 )
 
+// PresenceStatus reports whether a user is currently online and, regardless of
+// current online state, when they were last seen. It mirrors the chathub
+// presence tracker's status across the service boundary so the conversations
+// package need not import chathub.
+type PresenceStatus struct {
+	Online   bool      `json:"online"`
+	LastSeen time.Time `json:"last_seen"`
+}
+
 type ConversationType string
 
 const (
@@ -244,4 +253,8 @@ type ConversationService interface {
 	Search(ctx context.Context, q string, limit int) ([]ConversationMessage, error)
 	// SearchInConversation performs an in-conversation ILIKE nav search.
 	SearchInConversation(ctx context.Context, convID uuid.UUID, q string, limit int) ([]ConversationMessage, error)
+
+	// Presence returns the online/last-seen status for each requested user id,
+	// filtered to users in the caller's organization.
+	Presence(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]PresenceStatus, error)
 }

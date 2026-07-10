@@ -234,6 +234,7 @@
   },
   "common": {
     "brandName": "Zoora",
+    "back": "Go back",
     "autoSessionTitle": "Class {{date}} at {{time}}",
     "dateTimePicker": {
       "placeholder": "Pick a date",
@@ -3106,6 +3107,205 @@
     "placeholder": {
       "title": "Conversations",
       "description": "Chat is enabled for your plan. The messaging experience will live here."
+    },
+    "sidebar": {
+      "title": "Chat",
+      "newConversation": "New conversation",
+      "searchPlaceholder": "Search conversations",
+      "empty": {
+        "title": "No conversations yet",
+        "description": "Your conversations will appear here once you start chatting."
+      },
+      "searchEmpty": {
+        "title": "No matches",
+        "description": "No conversations match “{{query}}”."
+      }
+    },
+    "list": {
+      "noMessages": "No messages yet"
+    },
+    "search": {
+      "title": "Search chat",
+      "trigger": "Search",
+      "placeholder": "Search conversations and messages…",
+      "hint": "Type at least {{count}} characters to search.",
+      "empty": "No results for “{{query}}”.",
+      "unknownConversation": "Conversation",
+      "groups": {
+        "conversations": "Conversations",
+        "messages": "Messages"
+      },
+      "inThread": {
+        "open": "Search in conversation",
+        "placeholder": "Search this conversation…",
+        "count": "{{current}} of {{total}}",
+        "empty": "No matches",
+        "previous": "Previous match",
+        "next": "Next match",
+        "close": "Close search"
+      }
+    },
+    "detail": {
+      "empty": {
+        "title": "Select a conversation",
+        "description": "Choose a conversation from the list to start messaging."
+      },
+      "comingSoon": "Message thread coming soon."
+    },
+    "thread": {
+      "direct": "Direct message",
+      "members_one": "{{count}} member",
+      "members_other": "{{count}} members",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "edited": "edited",
+      "failed": "Not delivered",
+      "replyTo": "Message",
+      "replyUnavailable": "Original message unavailable",
+      "empty": {
+        "title": "No messages yet",
+        "description": "Send the first message to start the conversation."
+      },
+      "actions": "Conversation options",
+      "viewMembers": "View members",
+      "settings": "Conversation settings"
+    },
+    "typing": {
+      "one": "{{name}} is typing…",
+      "two": "{{name1}} and {{name2}} are typing…",
+      "many": "Several people are typing…"
+    },
+    "presence": {
+      "online": "Online",
+      "lastSeen": "Last seen {{time}}",
+      "membersOnline": "{{count}} online"
+    },
+    "receipts": {
+      "sent": "Sent",
+      "read": "Read",
+      "readBy_one": "Read by {{count}}",
+      "readBy_other": "Read by {{count}}"
+    },
+    "actions": {
+      "reply": "Reply",
+      "edit": "Edit",
+      "delete": "Delete",
+      "retry": "Retry",
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "deleteConfirm": {
+        "title": "Delete message?",
+        "description": "This message will be permanently deleted. This action cannot be undone."
+      }
+    },
+    "pinned": {
+      "count_one": "{{count}} pinned message",
+      "count_other": "{{count}} pinned messages",
+      "jump": "Jump to pinned message",
+      "attachment": "Attachment"
+    },
+    "reactions": {
+      "add": "Add reaction",
+      "toggle": "Toggle {{emoji}} reaction"
+    },
+    "composer": {
+      "placeholder": "Write a message…",
+      "send": "Send",
+      "emoji": "Emoji",
+      "emojiSearch": "Search emoji",
+      "emojiEmpty": "No emoji found",
+      "emojiLoading": "Loading…",
+      "replyingTo": "Replying to {{name}}",
+      "cancelReply": "Cancel reply",
+      "editing": "Editing message",
+      "cancelEdit": "Cancel edit",
+      "saveEdit": "Save changes",
+      "attach": "Attach files",
+      "mentions": "Mentions"
+    },
+    "attachments": {
+      "tray": "Selected attachments",
+      "remove": "Remove attachment",
+      "cancel": "Cancel upload",
+      "open": "Open image",
+      "image": "Image",
+      "capExceeded_one": "You can attach up to {{max}} files — 1 file wasn't added.",
+      "capExceeded_other": "You can attach up to {{max}} files — {{count}} files weren't added."
+    },
+    "item": {
+      "muted": "Muted"
+    },
+    "new": {
+      "title": "New conversation",
+      "description": "Start a direct message, or create a group or channel.",
+      "start": "Start chat",
+      "created": "Conversation created",
+      "error": "Couldn't start the conversation. Please try again.",
+      "type": {
+        "direct": "Direct",
+        "group": "Group",
+        "channel": "Channel"
+      },
+      "fields": {
+        "user": "Person",
+        "userPlaceholder": "Select a person",
+        "name": "Name",
+        "namePlaceholder": "e.g. Design team",
+        "description": "Description",
+        "descriptionPlaceholder": "What's this conversation about? (optional)",
+        "members": "Members"
+      }
+    },
+    "members": {
+      "title": "Members",
+      "count_one": "{{count}} member",
+      "count_other": "{{count}} members",
+      "you": "(you)",
+      "addPlaceholder": "Add a member",
+      "addSuccess": "Member added",
+      "addError": "Couldn't add the member.",
+      "remove": "Remove member",
+      "removeSuccess": "Member removed",
+      "removeError": "Couldn't remove the member.",
+      "role": {
+        "admin": "Admin",
+        "member": "Member",
+        "read_only": "Read only"
+      }
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "Manage this conversation.",
+      "saved": "Changes saved",
+      "saveError": "Couldn't save changes.",
+      "mute": {
+        "label": "Mute notifications",
+        "on": "Muted",
+        "off": "Not muted",
+        "action": "Mute",
+        "unmute": "Unmute",
+        "error": "Couldn't update mute settings.",
+        "duration": {
+          "1h": "For 1 hour",
+          "8h": "For 8 hours",
+          "1w": "For 1 week",
+          "forever": "Until I turn it back on"
+        }
+      },
+      "leave": {
+        "action": "Leave conversation",
+        "success": "You left the conversation",
+        "error": "Couldn't leave the conversation.",
+        "confirmTitle": "Leave conversation?",
+        "confirmDescription": "You'll stop receiving messages from this conversation. You can be re-added later."
+      },
+      "delete": {
+        "action": "Delete conversation",
+        "success": "Conversation deleted",
+        "error": "Couldn't delete the conversation.",
+        "confirmTitle": "Delete conversation?",
+        "confirmDescription": "This permanently deletes the conversation and all its messages for everyone. This cannot be undone."
+      }
     }
   }
 }

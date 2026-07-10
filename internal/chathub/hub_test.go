@@ -48,3 +48,94 @@ func TestDeliverToRoom_SkipsNonJoiner(t *testing.T) {
 	default:
 	}
 }
+
+// TestRemoveSocket_ReportsRoomsAndLastSocket covers the presence lifecycle
+// signal: removeSocket returns the rooms the socket had joined and whether it
+// was the user's last socket (so the caller marks offline exactly once).
+func TestRemoveSocket_ReportsRoomsAndLastSocket(t *testing.T) {
+	h := NewHub(fakeMembers{ok: true}, testLogger())
+	userID := uuid.New()
+	convA, convB := uuid.New(), uuid.New()
+
+	c1 := &conn{userID: userID, send: make(chan outbound, 4), rooms: map[uuid.UUID]bool{}}
+	c2 := &conn{userID: userID, send: make(chan outbound, 4), rooms: map[uuid.UUID]bool{}}
+	h.addSocket(c1)
+	h.addSocket(c2)
+	h.joinRoom(c1, convA)
+	h.joinRoom(c1, convB)
+
+	// First socket leaves: reports its rooms but is NOT the last socket.
+	rooms, last := h.removeSocket(c1)
+	if last {
+		t.Fatal("removing c1 while c2 remains must not report lastSocket")
+	}
+	if len(rooms) != 2 {
+		t.Fatalf("expected 2 rooms reported, got %d", len(rooms))
+	}
+	got := map[uuid.UUID]bool{}
+	for _, r := range rooms {
+		got[r] = true
+	}
+	if !got[convA] || !got[convB] {
+		t.Fatalf("expected rooms convA and convB, got %v", rooms)
+	}
+
+	// Second socket leaves: it joined no rooms, and IS the last socket.
+	rooms, last = h.removeSocket(c2)
+	if !last {
+		t.Fatal("removing the final socket must report lastSocket=true")
+	}
+	if len(rooms) != 0 {
+		t.Fatalf("c2 joined no rooms, expected 0 reported, got %d", len(rooms))
+	}
+}
+
+// TestSubscribeHooks_FireOnZeroToOneTransitions verifies the exact-subscribe
+// plumbing: the conversation channel (un)subscribes only on the first-join /
+// last-leave of a conversation, and the user channel only on the first / last
+// socket of a user — regardless of how many extra sockets/joins sit in between.
+func TestSubscribeHooks_FireOnZeroToOneTransitions(t *testing.T) {
+	h := NewHub(fakeMembers{ok: true}, testLogger())
+
+	var convSubs, convUnsubs, userSubs, userUnsubs int
+	h.onFirstJoin = func(uuid.UUID) { convSubs++ }
+	h.onLastLeave = func(uuid.UUID) { convUnsubs++ }
+	h.onUserFirstSocket = func(uuid.UUID) { userSubs++ }
+	h.onUserLastSocket = func(uuid.UUID) { userUnsubs++ }
+
+	userID := uuid.New()
+	convID := uuid.New()
+
+	c1 := &conn{userID: userID, send: make(chan outbound, 4), rooms: map[uuid.UUID]bool{}}
+	c2 := &conn{userID: userID, send: make(chan outbound, 4), rooms: map[uuid.UUID]bool{}}
+
+	h.addSocket(c1) // first socket for user -> userSubs
+	h.addSocket(c2) // same user, second socket -> no hook
+	if userSubs != 1 {
+		t.Fatalf("userSubs = %d, want 1 (only first socket subscribes)", userSubs)
+	}
+
+	h.joinRoom(c1, convID) // first joiner -> convSubs
+	h.joinRoom(c2, convID) // second joiner, same conv -> no hook
+	if convSubs != 1 {
+		t.Fatalf("convSubs = %d, want 1 (only first join subscribes)", convSubs)
+	}
+
+	h.leaveRoom(c1, convID) // conv still has c2 -> no unsub
+	if convUnsubs != 0 {
+		t.Fatalf("convUnsubs = %d, want 0 while a joiner remains", convUnsubs)
+	}
+	h.leaveRoom(c2, convID) // last leaver -> convUnsubs
+	if convUnsubs != 1 {
+		t.Fatalf("convUnsubs = %d, want 1 (last leave unsubscribes)", convUnsubs)
+	}
+
+	h.removeSocket(c1) // user still has c2 -> no user unsub
+	if userUnsubs != 0 {
+		t.Fatalf("userUnsubs = %d, want 0 while a socket remains", userUnsubs)
+	}
+	h.removeSocket(c2) // last socket -> userUnsubs
+	if userUnsubs != 1 {
+		t.Fatalf("userUnsubs = %d, want 1 (last socket unsubscribes)", userUnsubs)
+	}
+}

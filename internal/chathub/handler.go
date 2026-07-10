@@ -6,13 +6,28 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/redis/go-redis/v9"
 
 	"github.com/4H1R/zoora/internal/auth"
 )
+
+// presenceUpdateEvent is the WS/Redis envelope type broadcast when a user's
+// presence changes (joins a room, or their last socket disconnects).
+const presenceUpdateEvent = "presence_update"
+
+// presencePayload builds the presence_update event body fanned out to a room.
+func presencePayload(userID uuid.UUID, online bool) map[string]any {
+	return map[string]any{
+		"user_id":   userID.String(),
+		"online":    online,
+		"last_seen": time.Now().UTC().Format(time.RFC3339),
+	}
+}
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -21,7 +36,41 @@ var upgrader = websocket.Upgrader{
 }
 
 // HandleWS upgrades the connection, authenticates via ?token=, and serves it.
-func HandleWS(hub *Hub, bridge *Bridge, jwt *auth.JWTService, logger *slog.Logger) gin.HandlerFunc {
+// presence tracks per-user online state: the socket lifecycle marks the user
+// online on connect and every heartbeat, offline when their last socket drops,
+// and fans out presence_update events to the rooms the socket had joined.
+func HandleWS(hub *Hub, bridge *Bridge, presence *Presence, jwt *auth.JWTService, logger *slog.Logger) gin.HandlerFunc {
+	hooks := presenceHooks{
+		onConnect: func(userID uuid.UUID) {
+			if _, err := presence.Connect(context.Background(), userID); err != nil {
+				logger.Warn("chathub presence Connect failed", "user_id", userID, "error", err)
+			}
+		},
+		onHeartbeat: func(userID uuid.UUID) {
+			if err := presence.Refresh(context.Background(), userID); err != nil {
+				logger.Warn("chathub presence Refresh failed", "user_id", userID, "error", err)
+			}
+		},
+		onJoin: func(userID, convID uuid.UUID) {
+			bridge.ToConversation(context.Background(), convID, presenceUpdateEvent, presencePayload(userID, true))
+		},
+		onDisconnect: func(userID uuid.UUID, rooms []uuid.UUID) {
+			offline, err := presence.Disconnect(context.Background(), userID)
+			if err != nil {
+				logger.Warn("chathub presence Disconnect failed", "user_id", userID, "error", err)
+				return
+			}
+			// Only broadcast offline once the user's LAST socket across all
+			// instances is gone — otherwise a user still connected elsewhere
+			// would be shown offline (the multi-instance bug this fixes).
+			if !offline {
+				return
+			}
+			for _, convID := range rooms {
+				bridge.ToConversation(context.Background(), convID, presenceUpdateEvent, presencePayload(userID, false))
+			}
+		},
+	}
 	return func(c *gin.Context) {
 		token := c.Query("token")
 		if token == "" {
@@ -47,7 +96,7 @@ func HandleWS(hub *Hub, bridge *Bridge, jwt *auth.JWTService, logger *slog.Logge
 			return
 		}
 		// Detach from the request ctx so the socket outlives the HTTP handler.
-		hub.serve(context.Background(), ws, claims.UserID, bridge.PublishTyping)
+		hub.serve(context.Background(), ws, claims.UserID, bridge.PublishTyping, hooks)
 	}
 }
 

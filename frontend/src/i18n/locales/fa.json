@@ -234,6 +234,7 @@
   },
   "common": {
     "brandName": "زورا",
+    "back": "بازگشت",
     "autoSessionTitle": "کلاس {{date}} ساعت {{time}}",
     "dateTimePicker": {
       "placeholder": "انتخاب تاریخ",
@@ -3106,6 +3107,205 @@
     "placeholder": {
       "title": "گفتگوها",
       "description": "گفتگو برای پلن شما فعال است. تجربه پیام‌رسانی اینجا قرار خواهد گرفت."
+    },
+    "sidebar": {
+      "title": "گفتگو",
+      "newConversation": "گفتگوی جدید",
+      "searchPlaceholder": "جستجوی گفتگوها",
+      "empty": {
+        "title": "هنوز گفتگویی نیست",
+        "description": "گفتگوهای شما پس از شروع پیام‌رسانی اینجا نمایش داده می‌شوند."
+      },
+      "searchEmpty": {
+        "title": "نتیجه‌ای یافت نشد",
+        "description": "هیچ گفتگویی با «{{query}}» مطابقت ندارد."
+      }
+    },
+    "list": {
+      "noMessages": "هنوز پیامی نیست"
+    },
+    "search": {
+      "title": "جستجوی گفتگو",
+      "trigger": "جستجو",
+      "placeholder": "جستجوی گفتگوها و پیام‌ها…",
+      "hint": "برای جستجو حداقل {{count}} نویسه وارد کنید.",
+      "empty": "نتیجه‌ای برای «{{query}}» یافت نشد.",
+      "unknownConversation": "گفتگو",
+      "groups": {
+        "conversations": "گفتگوها",
+        "messages": "پیام‌ها"
+      },
+      "inThread": {
+        "open": "جستجو در گفتگو",
+        "placeholder": "جستجو در این گفتگو…",
+        "count": "{{current}} از {{total}}",
+        "empty": "موردی یافت نشد",
+        "previous": "مورد قبلی",
+        "next": "مورد بعدی",
+        "close": "بستن جستجو"
+      }
+    },
+    "detail": {
+      "empty": {
+        "title": "یک گفتگو را انتخاب کنید",
+        "description": "برای شروع پیام‌رسانی، گفتگویی را از فهرست انتخاب کنید."
+      },
+      "comingSoon": "بخش پیام‌ها به‌زودی اضافه می‌شود."
+    },
+    "thread": {
+      "direct": "پیام مستقیم",
+      "members_one": "{{count}} عضو",
+      "members_other": "{{count}} عضو",
+      "today": "امروز",
+      "yesterday": "دیروز",
+      "edited": "ویرایش‌شده",
+      "failed": "ارسال نشد",
+      "replyTo": "پیام",
+      "replyUnavailable": "پیام اصلی در دسترس نیست",
+      "empty": {
+        "title": "هنوز پیامی نیست",
+        "description": "برای شروع گفتگو، اولین پیام را بفرستید."
+      },
+      "actions": "گزینه‌های گفتگو",
+      "viewMembers": "مشاهده اعضا",
+      "settings": "تنظیمات گفتگو"
+    },
+    "typing": {
+      "one": "{{name}} در حال تایپ است…",
+      "two": "{{name1}} و {{name2}} در حال تایپ هستند…",
+      "many": "چند نفر در حال تایپ هستند…"
+    },
+    "presence": {
+      "online": "آنلاین",
+      "lastSeen": "آخرین بازدید {{time}}",
+      "membersOnline": "{{count}} آنلاین"
+    },
+    "receipts": {
+      "sent": "ارسال شد",
+      "read": "خوانده شد",
+      "readBy_one": "خوانده‌شده توسط {{count}} نفر",
+      "readBy_other": "خوانده‌شده توسط {{count}} نفر"
+    },
+    "actions": {
+      "reply": "پاسخ",
+      "edit": "ویرایش",
+      "delete": "حذف",
+      "retry": "تلاش دوباره",
+      "pin": "سنجاق کردن",
+      "unpin": "برداشتن سنجاق",
+      "deleteConfirm": {
+        "title": "پیام حذف شود؟",
+        "description": "این پیام برای همیشه حذف می‌شود. این عمل قابل بازگشت نیست."
+      }
+    },
+    "pinned": {
+      "count_one": "{{count}} پیام سنجاق‌شده",
+      "count_other": "{{count}} پیام سنجاق‌شده",
+      "jump": "رفتن به پیام سنجاق‌شده",
+      "attachment": "پیوست"
+    },
+    "reactions": {
+      "add": "افزودن واکنش",
+      "toggle": "تغییر واکنش {{emoji}}"
+    },
+    "composer": {
+      "placeholder": "پیامی بنویسید…",
+      "send": "ارسال",
+      "emoji": "ایموجی",
+      "emojiSearch": "جستجوی ایموجی",
+      "emojiEmpty": "ایموجی‌ای یافت نشد",
+      "emojiLoading": "در حال بارگذاری…",
+      "replyingTo": "در پاسخ به {{name}}",
+      "cancelReply": "لغو پاسخ",
+      "editing": "ویرایش پیام",
+      "cancelEdit": "لغو ویرایش",
+      "saveEdit": "ذخیره تغییرات",
+      "attach": "پیوست فایل",
+      "mentions": "منشن‌ها"
+    },
+    "attachments": {
+      "tray": "پیوست‌های انتخاب‌شده",
+      "remove": "حذف پیوست",
+      "cancel": "لغو بارگذاری",
+      "open": "باز کردن تصویر",
+      "image": "تصویر",
+      "capExceeded_one": "حداکثر {{max}} فایل می‌توانید پیوست کنید — ۱ فایل اضافه نشد.",
+      "capExceeded_other": "حداکثر {{max}} فایل می‌توانید پیوست کنید — {{count}} فایل اضافه نشد."
+    },
+    "item": {
+      "muted": "بی‌صدا"
+    },
+    "new": {
+      "title": "گفتگوی جدید",
+      "description": "یک پیام مستقیم بفرستید یا گروه یا کانال بسازید.",
+      "start": "شروع گفتگو",
+      "created": "گفتگو ایجاد شد",
+      "error": "شروع گفتگو ممکن نشد. لطفاً دوباره تلاش کنید.",
+      "type": {
+        "direct": "مستقیم",
+        "group": "گروه",
+        "channel": "کانال"
+      },
+      "fields": {
+        "user": "شخص",
+        "userPlaceholder": "یک شخص را انتخاب کنید",
+        "name": "نام",
+        "namePlaceholder": "مثلاً تیم طراحی",
+        "description": "توضیحات",
+        "descriptionPlaceholder": "این گفتگو دربارهٔ چیست؟ (اختیاری)",
+        "members": "اعضا"
+      }
+    },
+    "members": {
+      "title": "اعضا",
+      "count_one": "{{count}} عضو",
+      "count_other": "{{count}} عضو",
+      "you": "(شما)",
+      "addPlaceholder": "افزودن عضو",
+      "addSuccess": "عضو اضافه شد",
+      "addError": "افزودن عضو ممکن نشد.",
+      "remove": "حذف عضو",
+      "removeSuccess": "عضو حذف شد",
+      "removeError": "حذف عضو ممکن نشد.",
+      "role": {
+        "admin": "مدیر",
+        "member": "عضو",
+        "read_only": "فقط خواندنی"
+      }
+    },
+    "settings": {
+      "title": "تنظیمات",
+      "description": "این گفتگو را مدیریت کنید.",
+      "saved": "تغییرات ذخیره شد",
+      "saveError": "ذخیرهٔ تغییرات ممکن نشد.",
+      "mute": {
+        "label": "بی‌صدا کردن اعلان‌ها",
+        "on": "بی‌صدا",
+        "off": "بی‌صدا نیست",
+        "action": "بی‌صدا",
+        "unmute": "باصدا",
+        "error": "به‌روزرسانی تنظیمات بی‌صدا ممکن نشد.",
+        "duration": {
+          "1h": "برای ۱ ساعت",
+          "8h": "برای ۸ ساعت",
+          "1w": "برای ۱ هفته",
+          "forever": "تا زمانی که خودم فعال کنم"
+        }
+      },
+      "leave": {
+        "action": "ترک گفتگو",
+        "success": "از گفتگو خارج شدید",
+        "error": "ترک گفتگو ممکن نشد.",
+        "confirmTitle": "گفتگو ترک شود؟",
+        "confirmDescription": "دیگر پیام‌های این گفتگو را دریافت نخواهید کرد. بعداً می‌توانید دوباره اضافه شوید."
+      },
+      "delete": {
+        "action": "حذف گفتگو",
+        "success": "گفتگو حذف شد",
+        "error": "حذف گفتگو ممکن نشد.",
+        "confirmTitle": "گفتگو حذف شود؟",
+        "confirmDescription": "این کار گفتگو و همهٔ پیام‌های آن را برای همه به‌طور دائمی حذف می‌کند و قابل بازگشت نیست."
+      }
     }
   }
 }
