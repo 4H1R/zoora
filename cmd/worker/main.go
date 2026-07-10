@@ -213,8 +213,8 @@ func main() {
 		notificationService,
 		billingPDF,
 		billing.BillingConfig{
-			AppBaseURL: cfg.AppBaseURL,
-			Issuer:     billingIssuer,
+			AppURLTemplate: cfg.AppURLTemplate,
+			Issuer:         billingIssuer,
 		},
 		log,
 	)

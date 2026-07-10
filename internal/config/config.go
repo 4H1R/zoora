@@ -86,7 +86,11 @@ type Config struct {
 	InvoiceIssuerEconomicID string `env:"INVOICE_ISSUER_ECONOMIC_ID"`
 	InvoiceIssuerAddress    string `env:"INVOICE_ISSUER_ADDRESS"`
 	InvoiceIssuerPhone      string `env:"INVOICE_ISSUER_PHONE"`
-	AppBaseURL              string `env:"APP_BASE_URL" envDefault:"http://localhost:5173"`
+	// AppURLTemplate builds tenant-facing links (payment-return redirects, billing
+	// reminders). MUST contain "{slug}" — every org is served from its own
+	// <slug>.<domain> subdomain, so a static host would send users to the wrong
+	// tenant. Dev points at the Vite dev server; prod is injected from DOMAIN.
+	AppURLTemplate string `env:"APP_URL_TEMPLATE" envDefault:"http://{slug}.localhost:5173"`
 	// Remote Chromium CDP URL (e.g. http://chrome:9222) for headless PDF receipt
 	// rendering. Empty launches a local headless Chromium via the exec allocator.
 	ChromeRemoteURL string `env:"CHROME_REMOTE_URL"`

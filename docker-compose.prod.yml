@@ -15,6 +15,9 @@ x-backend-env: &backend-env
     S3_PUBLIC_ENDPOINT: "https://s3.${DOMAIN}"
     BASE_DOMAIN: "${DOMAIN}"
     ADMIN_SUBDOMAIN: "admin"
+    # Tenant-facing link template. "{slug}" is substituted per org for billing
+    # redirects/reminders; derived from DOMAIN so it never drifts.
+    APP_URL_TEMPLATE: "https://{slug}.${DOMAIN}"
     # Headless Chromium for PDF receipt rendering runs as its own service.
     CHROME_REMOTE_URL: "http://chrome:9222"
 

@@ -65,9 +65,11 @@ type service struct {
 // BillingConfig carries the runtime knobs the service needs (from config.Config).
 type BillingConfig struct {
 	CallbackBaseURL string
-	AppBaseURL      string
-	PendingTTL      time.Duration // how long a pending invoice stays payable (default 7d)
-	Issuer          IssuerConfig
+	// AppURLTemplate is the tenant-facing URL template containing "{slug}". Each
+	// org is served from its own subdomain, so per-org links substitute the slug.
+	AppURLTemplate string
+	PendingTTL     time.Duration // how long a pending invoice stays payable (default 7d)
+	Issuer         IssuerConfig
 }
 
 // IssuerConfig identifies the merchant on the PDF receipt (added early so the
@@ -176,8 +178,10 @@ func (s *service) Checkout(ctx context.Context, dto domain.CheckoutDTO) (*domain
 		return nil, err
 	}
 
-	// Open the gateway attempt.
-	callbackURL := fmt.Sprintf("%s/api/billing/callback/%s", s.cfg.CallbackBaseURL, dto.Gateway)
+	// Open the gateway attempt. Carry the org slug on the callback so the public
+	// return handler can redirect the browser to THIS org's subdomain even when
+	// the invoice/payment lookup fails (multi-tenant: each org has its own host).
+	callbackURL := fmt.Sprintf("%s/api/billing/callback/%s?org=%s", s.cfg.CallbackBaseURL, dto.Gateway, org.Slug)
 	out, err := gw.Request(ctx, payment.RequestInput{
 		Amount:      inv.Total,
 		Currency:    inv.Currency,

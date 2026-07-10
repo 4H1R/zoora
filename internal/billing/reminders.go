@@ -3,6 +3,7 @@ package billing
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -30,7 +31,7 @@ func (s *service) RunReminderSweep(ctx context.Context, now time.Time) error {
 			continue
 		}
 		periodKey := reminderPeriodKey(*org.PlanExpiresAt)
-		if err := s.sendReminderOnce(ctx, kind, org.ID, periodKey, renewalTitle(kind), renewalBody(kind, org), s.renewActionURL()); err != nil {
+		if err := s.sendReminderOnce(ctx, kind, org.ID, periodKey, renewalTitle(kind), renewalBody(kind, org), s.renewActionURL); err != nil {
 			s.logger.Error("billing: renewal reminder failed", "org_id", org.ID, "kind", kind, "error", err)
 		}
 	}
@@ -55,7 +56,8 @@ func (s *service) unpaidReminders(ctx context.Context, now time.Time, kind domai
 		return err
 	}
 	for _, inv := range invs {
-		if err := s.sendReminderOnce(ctx, kind, inv.ID, inv.ID.String(), unpaidTitle(), unpaidBody(inv), s.invoiceActionURL(inv)); err != nil {
+		action := func(slug string) string { return s.invoiceActionURL(slug, inv) }
+		if err := s.sendReminderOnce(ctx, kind, inv.ID, inv.ID.String(), unpaidTitle(), unpaidBody(inv), action); err != nil {
 			s.logger.Error("billing: unpaid reminder failed", "invoice_id", inv.ID, "error", err)
 		}
 	}
@@ -63,7 +65,9 @@ func (s *service) unpaidReminders(ctx context.Context, now time.Time, kind domai
 }
 
 // sendReminderOnce dedups then sends a SYSTEM notification to the org's members.
-func (s *service) sendReminderOnce(ctx context.Context, kind domain.BillingReminderKind, subjectID uuid.UUID, periodKey, title, body, actionURL string) error {
+// actionFor receives the org slug and returns the tenant-specific action URL, so
+// the link points at the org's own subdomain (multi-tenant).
+func (s *service) sendReminderOnce(ctx context.Context, kind domain.BillingReminderKind, subjectID uuid.UUID, periodKey, title, body string, actionFor func(slug string) string) error {
 	already, err := s.repo.ReminderAlreadySent(ctx, kind, subjectID, periodKey)
 	if err != nil {
 		return err
@@ -82,7 +86,12 @@ func (s *service) sendReminderOnce(ctx context.Context, kind domain.BillingRemin
 		}
 		orgID = inv.OrganizationID
 	}
-	action := actionURL
+	// Resolve the org's slug to build a link to its own subdomain.
+	org, err := s.orgRepo.FindByID(ctx, orgID)
+	if err != nil {
+		return err
+	}
+	action := actionFor(org.Slug)
 	if err := s.notifier.SendSystem(ctx, domain.SystemNotificationInput{
 		OrganizationID: &orgID,
 		Category:       domain.NotificationCategoryReminder,
@@ -108,9 +117,15 @@ func (s *service) ExpireStaleInvoices(ctx context.Context, now time.Time) error 
 	return nil
 }
 
-func (s *service) renewActionURL() string { return s.cfg.AppBaseURL + "/org/billing" }
-func (s *service) invoiceActionURL(inv domain.Invoice) string {
-	return fmt.Sprintf("%s/org/billing/invoices/%s", s.cfg.AppBaseURL, inv.ID)
+// orgBaseURL renders the tenant-facing base URL for one org's subdomain by
+// substituting {slug} in the configured template (e.g. https://acme.zoora.ir).
+func (s *service) orgBaseURL(slug string) string {
+	return strings.ReplaceAll(s.cfg.AppURLTemplate, "{slug}", slug)
+}
+
+func (s *service) renewActionURL(slug string) string { return s.orgBaseURL(slug) + "/org/billing" }
+func (s *service) invoiceActionURL(slug string, inv domain.Invoice) string {
+	return fmt.Sprintf("%s/org/billing/invoices/%s", s.orgBaseURL(slug), inv.ID)
 }
 
 func renewalTitle(kind domain.BillingReminderKind) string {

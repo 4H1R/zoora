@@ -2,6 +2,7 @@ package billing
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -17,12 +18,14 @@ var invoiceListConfig = domain.ListConfig{
 }
 
 type Handler struct {
-	svc        domain.BillingService
-	appBaseURL string
+	svc domain.BillingService
+	// appURLTemplate is the tenant-facing URL template containing "{slug}"; the
+	// callback substitutes the org slug so the browser returns to its own host.
+	appURLTemplate string
 }
 
-func NewHandler(svc domain.BillingService, appBaseURL string) *Handler {
-	return &Handler{svc: svc, appBaseURL: appBaseURL}
+func NewHandler(svc domain.BillingService, appURLTemplate string) *Handler {
+	return &Handler{svc: svc, appURLTemplate: appURLTemplate}
 }
 
 // RegisterRoutes wires org billing routes (auth + billing:manage) plus the
@@ -157,21 +160,24 @@ func (h *Handler) Callback(c *gin.Context) {
 	gateway := domain.GatewayName(c.Param("gateway"))
 	authority := c.Query("Authority")
 	status := c.Query("Status") // Zarinpal: "OK" | "NOK"
+	// slug identifies the org whose subdomain we redirect back to; set on the
+	// callback URL at checkout so it survives even when the invoice lookup fails.
+	slug := c.Query("org")
 	inv, err := h.svc.HandleCallback(c.Request.Context(), gateway, authority, status == "OK")
 	// Redirect regardless — the result page reads the invoice status.
 	if err != nil {
-		c.Redirect(http.StatusFound, h.resultURL("error", nil))
+		c.Redirect(http.StatusFound, h.resultURL(slug, "error", nil))
 		return
 	}
 	outcome := "failed"
 	if inv.Status == domain.InvoiceStatusPaid {
 		outcome = "success"
 	}
-	c.Redirect(http.StatusFound, h.resultURL(outcome, inv))
+	c.Redirect(http.StatusFound, h.resultURL(slug, outcome, inv))
 }
 
-func (h *Handler) resultURL(outcome string, inv *domain.Invoice) string {
-	base := h.appBaseURL + "/org/billing/result?status=" + outcome
+func (h *Handler) resultURL(slug, outcome string, inv *domain.Invoice) string {
+	base := strings.ReplaceAll(h.appURLTemplate, "{slug}", slug) + "/org/billing/result?status=" + outcome
 	if inv != nil {
 		base += "&invoice=" + inv.ID.String()
 	}

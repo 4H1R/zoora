@@ -365,13 +365,13 @@ func main() {
 		billingPDF,
 		billing.BillingConfig{
 			CallbackBaseURL: cfg.ZarinpalCallbackBaseURL,
-			AppBaseURL:      cfg.AppBaseURL,
+			AppURLTemplate:  cfg.AppURLTemplate,
 			Issuer:          billingIssuer,
 		},
 		log,
 	)
 	billingAdminSvc := billing.NewAdminService(billingSvc)
-	billingHandler := billing.NewHandler(billingSvc, cfg.AppBaseURL)
+	billingHandler := billing.NewHandler(billingSvc, cfg.AppURLTemplate)
 	billingHandler.RegisterRoutes(v1, authMiddleware, perm)
 	billingAdminHandler := billing.NewAdminHandler(billingAdminSvc)
 
