@@ -29,7 +29,7 @@ export function ChatThreadSkeleton() {
           ) : (
             <Skeleton className="size-8 shrink-0 rounded-full" />
           )}
-          <div className={cn("flex flex-col gap-0.5", row.own ? "items-end" : "items-start")}>
+          <div className={cn("flex flex-col gap-1.5", row.own ? "items-end" : "items-start")}>
             {row.widths.map((w, j) => (
               <Skeleton key={j} className={cn("h-9 rounded-2xl", w)} />
             ))}

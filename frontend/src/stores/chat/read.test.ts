@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest"
 
-import { useChatRead } from "./chat-read"
+import { useChatRead } from "./read"
 
 beforeEach(() => {
   useChatRead.setState({ byConv: {} })

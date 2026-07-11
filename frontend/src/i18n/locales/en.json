@@ -3145,6 +3145,31 @@
       "searchEmpty": {
         "title": "No matches",
         "description": "No conversations match “{{query}}”."
+      },
+      "filter": {
+        "all": "All",
+        "unread": "Unread",
+        "direct": "Direct",
+        "group": "Groups",
+        "channel": "Channels",
+        "empty": {
+          "unread": {
+            "title": "All caught up",
+            "description": "You have no unread conversations."
+          },
+          "direct": {
+            "title": "No direct messages",
+            "description": "Your direct messages will appear here."
+          },
+          "group": {
+            "title": "No groups",
+            "description": "Groups you join will appear here."
+          },
+          "channel": {
+            "title": "No channels",
+            "description": "Channels you follow will appear here."
+          }
+        }
       }
     },
     "list": {
@@ -3300,6 +3325,11 @@
         "name": "Name",
         "namePlaceholder": "e.g. Design team",
         "members": "Members"
+      },
+      "menu": {
+        "direct": "New direct message",
+        "group": "New group",
+        "channel": "New channel"
       }
     },
     "members": {
@@ -3359,6 +3389,17 @@
       "you": "This is you",
       "notFound": "User not found",
       "error": "Couldn't start the conversation. Please try again."
+    },
+    "direct": {
+      "title": "New message",
+      "description": "Choose someone to start a direct message.",
+      "searchPlaceholder": "Search people",
+      "hint": "Search by name or @username to start a chat.",
+      "empty": "No people found",
+      "error": "Couldn't start the conversation. Please try again."
+    },
+    "deleted": {
+      "toast": "This conversation was deleted"
     }
   }
 }

@@ -3,7 +3,7 @@ import type { ChatMessage } from "./lib/messages"
 import { useTranslation } from "react-i18next"
 
 import { cn } from "@/lib/utils"
-import { useChatReactions } from "@/stores/chat-reactions"
+import { useChatReactions } from "@/stores/chat"
 
 import { useToggleReaction } from "./use-toggle-reaction"
 

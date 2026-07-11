@@ -72,7 +72,7 @@ export function AudioAttachment({
   const tone = isOwn ? "own" : "accent"
 
   const audioRef = useRef<HTMLAudioElement>(null)
-  const playback = useMediaPlayback(audioRef)
+  const playback = useMediaPlayback(audioRef, src)
   const started = playback.playing || playback.currentTime > 0
   const fraction = playback.duration > 0 ? Math.min(1, playback.currentTime / playback.duration) : 0
 

@@ -37,7 +37,7 @@ export function VideoAttachment({
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const playback = useMediaPlayback(videoRef)
+  const playback = useMediaPlayback(videoRef, src)
   const [fullscreen, setFullscreen] = useState(false)
 
   const started = playback.playing || playback.currentTime > 0

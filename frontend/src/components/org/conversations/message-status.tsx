@@ -26,9 +26,11 @@ interface MessageStatusProps {
  *
  * - PENDING (`status === "sending"`): a clock — not yet acknowledged by server.
  * - SENT (confirmed, not yet read by all): a single tick.
- * - READ (confirmed, every OTHER member's read cursor has reached it): a blue
- *   double tick. Channels stay at a single tick (broadcast, no all-read signal);
- *   a solo conversation with no other members also stays single.
+ * - READ (confirmed, every OTHER member's read cursor has reached it): a
+ *   full-contrast double tick (crisp `primary-foreground` vs the faded single
+ *   tick — reads in both themes, unlike a fixed sky tint that muddied against
+ *   the accent bubble). Channels stay at a single tick (broadcast, no all-read
+ *   signal); a solo conversation with no other members also stays single.
  *
  * A group/channel bubble that at least one other member has read carries a
  * native `title` ("read by N") so the per-reader count isn't lost.
@@ -65,7 +67,7 @@ export function MessageStatus({ convId, messageId, conversationType, status }: M
 
   const icon = (
     <Icon
-      className={cn("size-3 shrink-0", allRead ? "text-sky-300" : "text-primary-foreground/60")}
+      className={cn("size-3 shrink-0", allRead ? "text-primary-foreground" : "text-primary-foreground/60")}
       aria-label={label}
     />
   )

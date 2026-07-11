@@ -236,6 +236,23 @@ export function createChatEventHandler(opts: {
         return
       }
 
+      case "conversation_deleted": {
+        const { conversation_id: convId } = e.data as { conversation_id?: string }
+        if (!convId) return
+        // Drop the sidebar row immediately so the list reflects the deletion
+        // without a refetch. Redirecting a member who's viewing this thread is
+        // owned by the conversation route (it subscribes to the raw stream).
+        queryClient.setQueryData<Conversation[]>(chatKeys.conversations(), (old) =>
+          old ? old.filter((c) => c.id !== convId) : old
+        )
+        // Purge the thread caches (base + any jump-to "around" views by prefix,
+        // pins, members) so a stale thread can't linger if the row is reopened.
+        queryClient.removeQueries({ queryKey: chatKeys.messages(convId) })
+        queryClient.removeQueries({ queryKey: chatKeys.pins(convId) })
+        queryClient.removeQueries({ queryKey: chatKeys.members(convId) })
+        return
+      }
+
       // user_typing / presence_update are intentionally NOT owned here — Phase 7
       // subscribes to the raw event stream for typing + presence UI.
       default:

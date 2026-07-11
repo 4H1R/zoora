@@ -16,7 +16,7 @@ import { useGetConversationsIdMembers, usePatchConversationsMessagesMessageId } 
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import { useChatUi } from "@/stores/chat-ui"
+import { useChatUi } from "@/stores/chat"
 
 import { useChatWs } from "./chat-provider"
 import { detectMention, insertAtCaret, insertMention, resolveMentions } from "./lib/mentions"

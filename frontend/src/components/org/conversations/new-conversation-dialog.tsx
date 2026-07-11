@@ -26,9 +26,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { useChatCache } from "./use-chat-cache"
 
-// A single flat form spanning all three conversation types; `superRefine`
-// applies the per-type required rules (partner for direct, name for group /
-// channel). Keeping one schema lets the type toggle preserve entered fields.
+// Group/channel creation only (DMs use the dedicated NewDirectDialog picker).
+// `superRefine` enforces the shared required-name rule; the group/channel toggle
+// preserves entered fields.
 const schema = z
   .object({
     type: z.enum(["group", "channel"]),
@@ -52,18 +52,17 @@ const DEFAULTS: FormValues = {
 interface NewConversationDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** Whether the viewer may create groups/channels (conversations:manage). When
-   * false only direct messages are offered. */
-  canManage: boolean
+  /** Which type the dialog opens on (the menu preselects group vs channel). */
+  initialType?: FormValues["type"]
 }
 
 /**
- * Start-a-conversation dialog. A type toggle (Direct / Group / Channel) swaps the
- * body: direct picks a single org user and hits the idempotent DM endpoint;
- * group/channel take a name and members. On success we
- * refresh the sidebar and navigate straight into the new conversation.
+ * Create-a-group-or-channel dialog. Only opened from the manager-only create
+ * menu (conversations:manage is enforced at that call site), so the type toggle
+ * renders unconditionally. On success we refresh the sidebar and navigate
+ * straight into the new conversation. Direct messages use NewDirectDialog.
  */
-export function NewConversationDialog({ open, onOpenChange, canManage }: NewConversationDialogProps) {
+export function NewConversationDialog({ open, onOpenChange, initialType = "group" }: NewConversationDialogProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { invalidateConversations } = useChatCache()
@@ -74,8 +73,8 @@ export function NewConversationDialog({ open, onOpenChange, canManage }: NewConv
   })
 
   useEffect(() => {
-    if (open) form.reset(DEFAULTS)
-  }, [open])
+    if (open) form.reset({ ...DEFAULTS, type: initialType })
+  }, [open, initialType])
 
   const type = form.watch("type")
   const memberIds = form.watch("member_ids")
@@ -123,20 +122,18 @@ export function NewConversationDialog({ open, onOpenChange, canManage }: NewConv
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col gap-4">
-          {canManage && (
-            <Tabs value={type} onValueChange={(value) => form.setValue("type", value as FormValues["type"])}>
-              <TabsList className="w-full">
-                <TabsTrigger value="group">
-                  <UsersIcon data-icon="inline-start" />
-                  {t("conversations.new.type.group")}
-                </TabsTrigger>
-                <TabsTrigger value="channel">
-                  <HashIcon data-icon="inline-start" />
-                  {t("conversations.new.type.channel")}
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          )}
+          <Tabs value={type} onValueChange={(value) => form.setValue("type", value as FormValues["type"])}>
+            <TabsList className="w-full">
+              <TabsTrigger value="group">
+                <UsersIcon data-icon="inline-start" />
+                {t("conversations.new.type.group")}
+              </TabsTrigger>
+              <TabsTrigger value="channel">
+                <HashIcon data-icon="inline-start" />
+                {t("conversations.new.type.channel")}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
           <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-x-clip overflow-y-auto px-1">
             <Field data-invalid={!!errors.name || undefined}>

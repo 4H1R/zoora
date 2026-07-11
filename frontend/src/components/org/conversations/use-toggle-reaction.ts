@@ -4,7 +4,7 @@ import type { InfiniteData } from "@tanstack/react-query"
 import { useQueryClient } from "@tanstack/react-query"
 
 import { usePostConversationsMessagesMessageIdReactions } from "@/api/conversations/conversations"
-import { useChatReactions } from "@/stores/chat-reactions"
+import { useChatReactions } from "@/stores/chat"
 
 import { applyReactionCounts } from "./lib/optimistic"
 import { chatKeys } from "./lib/query-keys"

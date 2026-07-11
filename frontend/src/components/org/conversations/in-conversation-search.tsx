@@ -87,8 +87,10 @@ export function InConversationSearch({ convId }: InConversationSearchProps) {
   const counter = total > 0 ? t("conversations.search.inThread.count", { current: current + 1, total }) : ""
 
   return (
-    <div className="flex items-center gap-1">
-      <div className="relative">
+    // On mobile the open panel takes over the whole header row (avatar + title
+    // don't fit alongside the input); on `sm`+ it sits inline in the actions slot.
+    <div className="absolute inset-x-0 inset-y-0 z-10 flex items-center gap-1 bg-background px-4 sm:static sm:z-auto sm:bg-transparent sm:px-0">
+      <div className="relative min-w-0 flex-1 sm:flex-none">
         <SearchIcon className="text-muted-foreground pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2" />
         <Input
           autoFocus
@@ -104,7 +106,7 @@ export function InConversationSearch({ convId }: InConversationSearchProps) {
             }
           }}
           placeholder={t("conversations.search.inThread.placeholder")}
-          className="h-8 w-40 ps-9 pe-16 sm:w-64"
+          className="h-8 w-full ps-9 pe-16 sm:w-64"
         />
         <span className="text-muted-foreground pointer-events-none absolute end-2.5 top-1/2 -translate-y-1/2 font-mono text-xs tabular-nums">
           {hasQuery ? (total > 0 ? counter : t("conversations.search.inThread.empty")) : ""}

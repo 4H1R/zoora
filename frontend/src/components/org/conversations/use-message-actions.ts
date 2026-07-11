@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { useDeleteConversationsMessagesMessageId } from "@/api/conversations/conversations"
-import { useChatUi } from "@/stores/chat-ui"
+import { useChatUi } from "@/stores/chat"
 
 import { removeMessage } from "./lib/optimistic"
 import { chatKeys } from "./lib/query-keys"

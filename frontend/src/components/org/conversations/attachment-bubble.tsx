@@ -5,7 +5,7 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { formatBytes } from "@/components/org/files/utils"
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useImageLightbox } from "@/stores/image-lightbox"
 import { cn } from "@/lib/utils"
 
 import { ProgressRing } from "./attachment-progress-ring"
@@ -317,33 +317,29 @@ function BlurhashImage({
   )
 }
 
-/** A confirmed image thumbnail that opens a full-size lightbox on click. */
+/**
+ * A confirmed image thumbnail that opens the shared full-size lightbox. The
+ * viewer itself lives at the route root (see {@link ImageLightbox}), not here —
+ * a Dialog nested inside the bubble's context menu reopens that menu on dismiss.
+ */
 function LightboxImage({ src, alt, className }: { src?: string; alt: string; className?: string }) {
   const { t } = useTranslation()
+  const openLightbox = useImageLightbox((s) => s.open)
 
   if (!src) return <div className={cn("bg-muted animate-pulse", className)} />
 
   return (
-    <Dialog>
-      <DialogTrigger
-        render={
-          <button
-            type="button"
-            // Opening the lightbox must not also open the bubble-wide context menu,
-            // which triggers on `mousedown` (base-ui/floating-ui).
-            onMouseDown={(e) => e.stopPropagation()}
-            aria-label={t("conversations.attachments.open")}
-            className={className}
-          />
-        }
-      >
-        <img src={src} alt={alt} className="size-full object-cover" />
-      </DialogTrigger>
-      <DialogContent className="border-0 bg-transparent p-0 shadow-none sm:max-w-3xl">
-        <DialogTitle className="sr-only">{alt || t("conversations.attachments.image")}</DialogTitle>
-        <img src={src} alt={alt} className="max-h-[80vh] w-full rounded-lg object-contain" />
-      </DialogContent>
-    </Dialog>
+    <button
+      type="button"
+      // Opening the lightbox must not also open the bubble-wide context menu,
+      // which triggers on `mousedown` (base-ui/floating-ui).
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={() => openLightbox(src, alt)}
+      aria-label={t("conversations.attachments.open")}
+      className={className}
+    >
+      <img src={src} alt={alt} className="size-full object-cover" />
+    </button>
   )
 }
 

@@ -3,6 +3,7 @@ import { createFileRoute, Outlet, useParams } from "@tanstack/react-router"
 import { ChatConnectionBanner } from "@/components/connection-banner"
 import { ChatUpgrade } from "@/components/org/conversations/chat-upgrade"
 import { ConversationSidebar } from "@/components/org/conversations/conversation-list"
+import { ImageLightbox } from "@/components/org/conversations/image-lightbox"
 import { ProfileCardDialog } from "@/components/org/conversations/profile-card-dialog"
 import { useConversationPermissions } from "@/components/org/conversations/use-conversation-permissions"
 import { Spinner } from "@/components/ui/spinner"
@@ -64,6 +65,7 @@ function ConversationsLayout() {
           <Outlet />
         </main>
         <ProfileCardDialog />
+        <ImageLightbox />
       </div>
     </div>
   )

@@ -235,7 +235,16 @@ func (s *service) CreateOrGetDirect(ctx context.Context, dto domain.CreateDirect
 		}
 		return nil, err
 	}
-	return s.withMembers(ctx, conv), nil
+	conv = s.withMembers(ctx, conv)
+	if s.rt != nil {
+		// The other member hasn't joined this brand-new DM's WS room, so their
+		// sidebar would miss it until a manual refresh. Nudge their per-user
+		// channel directly (mirrors AddMember) so the list surfaces the new
+		// conversation in real time — the first message's conversation_bump
+		// alone can't, since the row isn't loaded yet.
+		s.rt.ToUser(ctx, other, "conversation_updated", conv)
+	}
+	return conv, nil
 }
 
 // withMembers decorates a conversation with its (User-preloaded) member rows —
@@ -467,11 +476,29 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateCon
 }
 
 func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
-	if _, _, err := s.convForManage(ctx, id); err != nil {
+	caller, _, err := s.convForManage(ctx, id)
+	if err != nil {
 		return err
 	}
+	// Capture the roster BEFORE the delete cascades the member rows away — we
+	// need it to notify each member's per-user channel that the conversation is
+	// gone. Best-effort: a failed read just skips the realtime nudge.
+	members, merr := s.memberRepo.ListByConversation(ctx, id)
 	if err := s.convRepo.Delete(ctx, id); err != nil {
 		return err
+	}
+	if s.rt != nil && merr == nil {
+		// Members haven't joined the (now-deleted) WS room, so nudge each
+		// per-user channel directly: clients drop the thread + list row, and a
+		// member viewing the conversation is redirected back to the list.
+		// deleted_by lets a client suppress the "was deleted" toast for the
+		// actor themselves (who already got a delete-success toast).
+		for _, m := range members {
+			s.rt.ToUser(ctx, m.UserID, "conversation_deleted", map[string]any{
+				"conversation_id": id.String(),
+				"deleted_by":      caller.UserID.String(),
+			})
+		}
 	}
 	s.enqueueAttachmentCleanup(ctx, id)
 	return nil

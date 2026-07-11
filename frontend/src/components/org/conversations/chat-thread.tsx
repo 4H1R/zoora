@@ -13,8 +13,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { EmptyState } from "@/components/ui/empty-state"
 import { formatRelativeTime } from "@/lib/relative-time"
 import { cn } from "@/lib/utils"
-import { useChatUi } from "@/stores/chat-ui"
+import { useChatUi } from "@/stores/chat"
 
+import { ChatBackground } from "./chat-background"
 import { ChatThreadSkeleton } from "./chat-thread.skeleton"
 import { ConversationSettings } from "./conversation-settings"
 import { InConversationSearch } from "./in-conversation-search"
@@ -153,10 +154,16 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
   const isDirect = conversation?.type === "direct"
   const memberCount = memberRows.length
 
-  // Header presence. DM → the partner's online/last-seen; group → an online count.
+  // Header presence. DM → the partner's online/last-seen; group → an online count
+  // that INCLUDES the viewer's own session. Self is counted from local state (the
+  // viewer is connected by definition) rather than the server snapshot, so the
+  // count is right even before the snapshot echoes our own presence back — a
+  // fully-online 2-person group reads "2", not "1".
   const partnerId = isDirect ? memberUserIds.find((id) => id !== user.id) : undefined
   const partnerPresence = partnerId ? getPresence(partnerId) : undefined
-  const onlineCount = isDirect ? 0 : memberUserIds.filter((id) => id !== user.id && getPresence(id)?.online).length
+  const selfOnline = memberUserIds.includes(user.id) ? 1 : 0
+  const othersOnline = memberUserIds.filter((id) => id !== user.id && getPresence(id)?.online).length
+  const onlineCount = isDirect ? 0 : selfOnline + othersOnline
 
   let subtitle: string
   if (isDirect) {
@@ -174,8 +181,9 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
   return (
     <JumpToMessageProvider value={jumpToMessage}>
       <div className="flex min-h-0 flex-1 flex-col">
-        {/* Header: identity + subtitle. Presence + actions land in the end slot. */}
-        <header className="flex items-center gap-3 border-b px-4 py-3">
+        {/* Header: identity + subtitle. Presence + actions land in the end slot.
+            `relative` anchors the in-thread search overlay (mobile full-width). */}
+        <header className="relative flex items-center gap-3 border-b px-4 py-3">
           <Button
             variant="ghost"
             size="icon-sm"
@@ -247,8 +255,10 @@ export function ChatThread({ convId, aroundMessageId }: ChatThreadProps) {
         {/* Pinned strip: sits between the header and the list; self-hides when empty. */}
         <PinnedBar convId={convId} />
 
-        {/* Message region fills the remaining height. */}
-        <div className="relative flex min-h-0 flex-1 flex-col">
+        {/* Message region fills the remaining height. `isolate` scopes the doodle
+            wallpaper's negative z-index so it sits behind the list, not the card. */}
+        <div className="relative isolate flex min-h-0 flex-1 flex-col">
+          <ChatBackground />
           {isLoading ? (
             <ChatThreadSkeleton />
           ) : messages.length === 0 ? (

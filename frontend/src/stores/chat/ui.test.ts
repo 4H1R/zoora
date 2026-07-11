@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest"
 
-import { useChatUi } from "./chat-ui"
+import { useChatUi } from "./ui"
 
 describe("useChatUi", () => {
   beforeEach(() => {

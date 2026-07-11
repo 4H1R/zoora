@@ -25,7 +25,7 @@ export interface MediaPlayback {
  * real duration to materialize — voice notes are small, so the extra range
  * fetch is negligible.
  */
-export function useMediaPlayback(ref: RefObject<HTMLMediaElement | null>): MediaPlayback {
+export function useMediaPlayback(ref: RefObject<HTMLMediaElement | null>, src?: string): MediaPlayback {
   const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -93,8 +93,12 @@ export function useMediaPlayback(ref: RefObject<HTMLMediaElement | null>): Media
       el.removeEventListener("ended", onStop)
       releasePlayback(pause)
     }
+    // Re-bind when the media element (re)mounts. Conditionally-rendered players
+    // (e.g. video, which mounts only once its src resolves) attach their element
+    // AFTER the initial mount, so keying on `src` re-runs this to catch it — and
+    // also re-subscribes on a source swap.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [src])
 
   function toggle() {
     const el = ref.current

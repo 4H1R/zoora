@@ -37,23 +37,31 @@ export function CalendarBoard({
     const types = Array.from(new Set((buckets.get(key) ?? []).map((e) => e.type)))
     const selected = modifiers.selected
     return (
-      <button {...rest} className={cn(className, "relative")}>
-        {children}
-        {types.length > 0 && (
-          <span className="pointer-events-none absolute inset-x-0 bottom-1 flex justify-center gap-0.5">
-            {types.slice(0, 4).map((type) => (
-              <span
-                key={type}
-                className={cn(
-                  "h-1.5 w-1.5 rounded-full",
-                  // On the selected (filled) cell, colored dots wash out — show
-                  // them in the foreground color so they stay legible.
-                  selected ? "bg-primary-foreground" : eventDotColor(type)
-                )}
-              />
-            ))}
-          </span>
+      <button
+        {...rest}
+        className={cn(
+          className,
+          // Stack the number over a fixed dot row so the dots never crowd the
+          // digit; a taller cell gives both room to breathe.
+          "relative flex h-11 w-full flex-col items-center justify-center gap-1"
         )}
+      >
+        <span className="leading-none">{children}</span>
+        {/* Reserve the dot row on every cell so the number sits at the same
+            height whether or not a day has events. */}
+        <span className="pointer-events-none flex h-1.5 items-center justify-center gap-1">
+          {types.slice(0, 4).map((type) => (
+            <span
+              key={type}
+              className={cn(
+                "h-1.5 w-1.5 rounded-full",
+                // On the selected (green) cell the colored dots wash out — swap
+                // to crisp white so they stay legible in both light and dark.
+                selected ? "bg-white" : eventDotColor(type)
+              )}
+            />
+          ))}
+        </span>
       </button>
     )
   }

@@ -70,10 +70,16 @@ export function MessageContextMenu({ message, isOwn, convId, children }: Message
   // Items shared verbatim between the two menus; only the primitives differ.
   const items = (Item: MenuItemComp, Separator: MenuSeparatorComp) => (
     <>
-      {/* Quick reaction row — one tap toggles the emoji, then closes. */}
-      <div className="flex items-center gap-0.5 px-1 pb-1">
+      {/* Quick reaction row — one tap toggles the emoji, then closes. Scrolls
+          horizontally so the emoji count never dictates the menu width (which
+          the narrower text actions below should own). */}
+      <div className="hide-scrollbar flex items-center gap-0.5 overflow-x-auto px-1 pb-1">
         {QUICK_EMOJIS.map((emoji) => (
-          <Item key={emoji} onClick={() => actions.react(emoji)} className="size-8 justify-center p-0 text-base">
+          <Item
+            key={emoji}
+            onClick={() => actions.react(emoji)}
+            className="size-8 shrink-0 justify-center p-0 text-base"
+          >
             {emoji}
           </Item>
         ))}
@@ -123,7 +129,7 @@ export function MessageContextMenu({ message, isOwn, convId, children }: Message
         <DropdownMenu>
           {/* Tap the bubble to open; w-fit hugs it, select-none avoids stray selection. */}
           <DropdownMenuTrigger render={<div className="w-fit min-w-0 cursor-pointer select-none">{children}</div>} />
-          <DropdownMenuContent align="center" side="top" className="min-w-44">
+          <DropdownMenuContent align="center" side="top" className="w-44">
             {items(DropdownMenuItem, DropdownMenuSeparator)}
           </DropdownMenuContent>
         </DropdownMenu>
@@ -131,7 +137,7 @@ export function MessageContextMenu({ message, isOwn, convId, children }: Message
         <ContextMenu>
           {/* w-fit hugs the bubble; select-text keeps copy working. */}
           <ContextMenuTrigger className="w-fit min-w-0 select-text">{children}</ContextMenuTrigger>
-          <ContextMenuContent className="min-w-44">{items(ContextMenuItem, ContextMenuSeparator)}</ContextMenuContent>
+          <ContextMenuContent className="w-44">{items(ContextMenuItem, ContextMenuSeparator)}</ContextMenuContent>
         </ContextMenu>
       )}
 

@@ -30,21 +30,25 @@ export function MessageGroup({ group, isOwn, showSenderName, renderBubble }: Mes
   return (
     <div
       className={cn(
-        "flex items-end gap-2 px-4 py-1",
+        "flex items-end gap-2 px-4 py-1.5",
         isOwn ? "flex-row pe-12" : "flex-row-reverse ps-12"
       )}
     >
-      {/* Sender avatar (own included), pinned to the group's last bubble. No
-          server-side avatar image exists yet, so this is initials-only. */}
-      <button type="button" onClick={openSender} className="self-end" aria-label={senderName}>
-        <Avatar className="size-8">
-          <AvatarFallback className={cn("text-[11px] font-semibold", avatarTint(sender?.id))}>
-            {initials(senderName)}
-          </AvatarFallback>
-        </Avatar>
-      </button>
+      {/* Sender avatar (other senders only), pinned to the group's last bubble.
+          Own messages drop it — the accent bubble + end-side alignment already
+          signal authorship (iMessage/Telegram asymmetry). Initials-only for now,
+          as no server-side avatar image exists yet. */}
+      {!isOwn && (
+        <button type="button" onClick={openSender} className="self-end" aria-label={senderName}>
+          <Avatar className="size-8">
+            <AvatarFallback className={cn("text-[11px] font-semibold", avatarTint(sender?.id))}>
+              {initials(senderName)}
+            </AvatarFallback>
+          </Avatar>
+        </button>
+      )}
 
-      <div className={cn("flex min-w-0 flex-1 flex-col gap-0.5", isOwn ? "items-start" : "items-end")}>
+      <div className={cn("flex min-w-0 flex-1 flex-col gap-1.5", isOwn ? "items-start" : "items-end")}>
         {showSenderName && senderName && (
           <button
             type="button"

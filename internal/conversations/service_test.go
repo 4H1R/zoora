@@ -1968,6 +1968,86 @@ func TestSendMessage_BroadcastCarriesAsDocument(t *testing.T) {
 	assert.Equal(t, true, payload["as_document"])
 }
 
+// Creating a brand-new DM must nudge the OTHER member's per-user channel with
+// conversation_updated, so their sidebar surfaces the new conversation in real
+// time instead of only after a manual refresh. Regression: CreateOrGetDirect
+// previously emitted no realtime event at all.
+func TestCreateOrGetDirect_NudgesOtherMember(t *testing.T) {
+	orgA, userA, userB := uuid.New(), uuid.New(), uuid.New()
+	svc, _, rt := newServiceWithBroadcaster(t)
+	ctxA := callerCtx(orgA, userA, false)
+
+	conv, err := svc.CreateOrGetDirect(ctxA, domain.CreateDirectDTO{UserID: userB.String()})
+	require.NoError(t, err)
+
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
+	var nudge *broadcastCall
+	for i := range rt.calls {
+		if rt.calls[i].kind == "user" && rt.calls[i].eventType == "conversation_updated" {
+			nudge = &rt.calls[i]
+		}
+	}
+	require.NotNil(t, nudge, "the other member must be nudged on new-DM creation")
+	assert.Equal(t, userB, nudge.target, "the nudge must target the OTHER member, not the creator")
+	_ = conv
+}
+
+// Re-fetching an existing DM must NOT re-nudge — the row is already in the
+// other member's list, so a spurious conversation_updated would refetch for no
+// reason.
+func TestCreateOrGetDirect_ExistingDoesNotRenudge(t *testing.T) {
+	orgA, userA, userB := uuid.New(), uuid.New(), uuid.New()
+	svc, _, rt := newServiceWithBroadcaster(t)
+	ctxA := callerCtx(orgA, userA, false)
+
+	_, err := svc.CreateOrGetDirect(ctxA, domain.CreateDirectDTO{UserID: userB.String()})
+	require.NoError(t, err)
+
+	rt.mu.Lock()
+	before := len(rt.calls)
+	rt.mu.Unlock()
+
+	_, err = svc.CreateOrGetDirect(ctxA, domain.CreateDirectDTO{UserID: userB.String()})
+	require.NoError(t, err)
+
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
+	assert.Equal(t, before, len(rt.calls), "returning an existing DM must not emit further realtime events")
+}
+
+// Deleting a conversation must notify every member's per-user channel with
+// conversation_deleted so their clients drop the thread/list row (and redirect
+// a viewer) without a manual refresh. Regression: Delete emitted no event.
+func TestDelete_NotifiesAllMembers(t *testing.T) {
+	orgA, admin, other := uuid.New(), uuid.New(), uuid.New()
+	svc, _, rt := newServiceWithBroadcaster(t)
+	adminCtx := callerCtx(orgA, admin, true)
+
+	conv, err := svc.CreateGroupOrChannel(adminCtx, domain.CreateConversationDTO{
+		Type: domain.ConversationTypeGroup, Name: "Engineering",
+		MemberIDs: []string{other.String()},
+	})
+	require.NoError(t, err)
+
+	err = svc.Delete(adminCtx, conv.ID)
+	require.NoError(t, err)
+
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
+	notified := map[uuid.UUID]bool{}
+	for i := range rt.calls {
+		if rt.calls[i].kind == "user" && rt.calls[i].eventType == "conversation_deleted" {
+			notified[rt.calls[i].target] = true
+			payload, ok := rt.calls[i].data.(map[string]any)
+			require.True(t, ok)
+			assert.Equal(t, conv.ID.String(), payload["conversation_id"])
+		}
+	}
+	assert.True(t, notified[admin], "the deleter must be notified")
+	assert.True(t, notified[other], "the other member must be notified")
+}
+
 // ---- in-conversation search minimum query length ----
 
 func TestSearchInConversation_ShortQuery_Rejected(t *testing.T) {
