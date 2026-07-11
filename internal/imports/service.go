@@ -245,7 +245,6 @@ func (s *service) fail(ctx context.Context, job *domain.ImportJob, msg string) e
 	return nil
 }
 
-//nolint:unused // wired in by Task 8's processUsers row handler, not yet called
 func generatePassword() (string, error) {
 	b := make([]byte, 10)
 	for i := range b {
@@ -258,14 +257,9 @@ func generatePassword() (string, error) {
 	return string(b), nil
 }
 
-// processUsers and processClasses are temporary stubs so the package
-// compiles and ProcessJob is fully wired. Tasks 8-9 move these into
-// process_users.go / process_classes.go and replace the bodies with real
-// row-by-row processing.
-func (s *service) processUsers(ctx context.Context, job *domain.ImportJob, data []byte) error {
-	return s.fail(ctx, job, "not implemented")
-}
-
+// processClasses is a temporary stub so the package compiles and ProcessJob
+// is fully wired. Task 9 moves this into process_classes.go and replaces the
+// body with real row-by-row processing.
 func (s *service) processClasses(ctx context.Context, job *domain.ImportJob, data []byte) error {
 	return s.fail(ctx, job, "not implemented")
 }
