@@ -62,9 +62,6 @@ export function LandingNav() {
           >
             {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
           </button>
-          <Link to="/login" className={cn(buttonVariants({ variant: "ghost" }), "hidden rounded-full sm:inline-flex")}>
-            {t("landing.nav.signIn")}
-          </Link>
           <Link to="/get-started" className={cn(buttonVariants({ variant: "default" }), "rounded-full px-4")}>
             {t("landing.nav.getStarted")}
           </Link>
