@@ -37,6 +37,12 @@ func username(fl validator.FieldLevel) bool {
 	return usernameRe.MatchString(fl.Field().String())
 }
 
+// ValidUsername reports whether s satisfies the same rule as the "username"
+// binding validator: 3-30 chars, lowercase letters, digits, dot, underscore.
+func ValidUsername(s string) bool {
+	return usernameRe.MatchString(s)
+}
+
 func QueryInt(c *gin.Context, key string, defaultVal int) int {
 	raw := c.Query(key)
 	if raw == "" {

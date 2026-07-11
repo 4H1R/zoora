@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"strings"
 	"time"
@@ -128,6 +129,24 @@ func (c *Client) GeneratePresignedDownloadURL(ctx context.Context, key string, e
 		return "", fmt.Errorf("generating presigned download URL: %w", err)
 	}
 	return req.URL, nil
+}
+
+// GetObject downloads an object's full contents. Intended for small
+// server-processed files (e.g. import spreadsheets, capped at 10MB upstream).
+func (c *Client) GetObject(ctx context.Context, key string) ([]byte, error) {
+	out, err := c.s3.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(c.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("storage.GetObject %s: %w", key, err)
+	}
+	defer out.Body.Close()
+	data, err := io.ReadAll(out.Body)
+	if err != nil {
+		return nil, fmt.Errorf("storage.GetObject read %s: %w", key, err)
+	}
+	return data, nil
 }
 
 // PutObject uploads bytes to the bucket under key with the given content type.
