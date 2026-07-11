@@ -28,6 +28,7 @@ import (
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/entitlements"
 	"github.com/4H1R/zoora/internal/gradebook"
+	"github.com/4H1R/zoora/internal/imports"
 	"github.com/4H1R/zoora/internal/leads"
 	"github.com/4H1R/zoora/internal/livesessions"
 	"github.com/4H1R/zoora/internal/media"
@@ -170,6 +171,13 @@ func main() {
 	entitlementRepo := entitlements.NewRepository(db)
 	entitlementService := entitlements.NewService(entitlementRepo)
 
+	importRepo := imports.NewRepository(db)
+	importService := imports.NewService(
+		importRepo, userRepo, roleRepo, classRepo, classMemberRepo, mediaRepo,
+		entitlementService, storageClient, queueClient,
+		imports.NewRedisResultStore(redisClient), log,
+	)
+
 	authMiddleware := auth.Middleware(jwtService, redisClient, roleRepo, userRepo, entitlementRepo)
 	tenantMiddleware := middleware.Tenant(redisClient, orgRepo, cfg.BaseDomain, cfg.AdminSubdomain)
 
@@ -302,6 +310,9 @@ func main() {
 
 	classHandler := classes.NewHandler(classService)
 	classHandler.RegisterRoutes(v1, authMiddleware, perm)
+
+	importHandler := imports.NewHandler(importService)
+	importHandler.RegisterRoutes(v1, authMiddleware, perm)
 
 	questionBankHandler := questionbanks.NewHandler(questionBankService)
 	questionBankHandler.RegisterRoutes(v1, authMiddleware, perm)

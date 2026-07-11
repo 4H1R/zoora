@@ -15,6 +15,8 @@ import (
 	"github.com/4H1R/zoora/internal/config"
 	"github.com/4H1R/zoora/internal/connectors"
 	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/entitlements"
+	"github.com/4H1R/zoora/internal/imports"
 	"github.com/4H1R/zoora/internal/livesessions"
 	"github.com/4H1R/zoora/internal/media"
 	"github.com/4H1R/zoora/internal/notifications"
@@ -33,6 +35,7 @@ import (
 	"github.com/4H1R/zoora/internal/platform/sms"
 	"github.com/4H1R/zoora/internal/platform/storage"
 	"github.com/4H1R/zoora/internal/polls"
+	"github.com/4H1R/zoora/internal/roles"
 	"github.com/4H1R/zoora/internal/users"
 )
 
@@ -191,6 +194,19 @@ func main() {
 	mediaService := media.NewService(mediaRepo, storageClient, nil, log)
 	queueServer.HandleFunc(domain.TypeMediaCleanup, media.NewCleanupHandler(mediaService))
 	queueServer.HandleFunc(domain.TypeOrganizationCleanup, organizations.NewCleanupHandler(storageClient))
+
+	// --- bulk imports: service isn't used to enqueue here (only the API does),
+	// but the constructor requires a queue client + result store regardless. ---
+	roleRepo := roles.NewRoleRepository(db)
+	entitlementRepo := entitlements.NewRepository(db)
+	entitlementService := entitlements.NewService(entitlementRepo)
+	importRepo := imports.NewRepository(db)
+	importService := imports.NewService(
+		importRepo, userRepo, roleRepo, classRepo, classMemberRepo, mediaRepo,
+		entitlementService, storageClient, queueClient,
+		imports.NewRedisResultStore(redisClient), log,
+	)
+	queueServer.HandleFunc(domain.TypeImportProcess, imports.NewProcessHandler(importService))
 
 	retentionSweeper := livesessions.NewRetentionSweeper(livesessions.NewRetentionRepository(db), storageClient, log)
 	queueServer.HandleFunc(domain.TypeRecordingRetentionSweep, livesessions.NewRetentionSweepHandler(retentionSweeper))
