@@ -908,6 +908,103 @@ func TestProcessUsers_ProgressUpdatesEvery25Creates(t *testing.T) {
 	deps.repo.AssertNumberOfCalls(t, "UpdateProgress", 1)
 }
 
+// TestProcessUsers_RowValidationErrors pins the row-error branches inside
+// processUsers that TestProcessUsers_MixedOutcomes only exercises indirectly
+// via lumped failed-count assertions: bad name, bad username format, unknown
+// role, ambiguous role name, and duplicate username in file. It also proves
+// username normalization (lowercased+trimmed before validation) by feeding a
+// mixed-case, padded username that only becomes valid once normalized.
+func TestProcessUsers_RowValidationErrors(t *testing.T) {
+	orgID := uuid.New()
+	// Two roles differing only in case/ID collapse onto the same lookup key
+	// ("student"), so resolveRole reports "ambiguous role name" instead of
+	// picking one.
+	studentA := domain.Role{ID: uuid.New(), Name: "Student", IsPreset: true}
+	studentB := domain.Role{ID: uuid.New(), Name: "STUDENT", IsPreset: false}
+
+	file := usersXLSX(t, [][]string{
+		{"name", "username", "password", "role"},
+		{" A ", "badname.user", "password9", "-"},                     // row 2: name is 1 rune after trim
+		{"Valid Name", "ab", "password9", "-"},                        // row 3: username too short (<3)
+		{"Role Unknown", "unknown.role", "password9", "doesnotexist"}, // row 4: unknown role
+		{"Role Ambig", "ambig.role", "password9", "student"},          // row 5: ambiguous role
+		{"Dup One", "dup.user", "password9", "-"},                     // row 6: created
+		{"Dup Two", "DUP.USER", "password9", "-"},                     // row 7: duplicate of row 6 after normalization
+		{"Ali R", "  Ali.R  ", "password9", "-"},                      // row 8: normalizes to "ali.r", created
+	})
+
+	deps := newUsersProcessDeps(t)
+	deps.storage.On("GetObject", mock.Anything, mock.Anything).Return(file, nil)
+	deps.roles.On("List", mock.Anything, mock.Anything).Return([]domain.Role{studentA, studentB}, nil)
+	deps.users.On("FindByUsernames", mock.Anything, orgID, mock.Anything).Return([]domain.User{}, nil)
+
+	var createdUsers []*domain.User
+	deps.users.On("Create", mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) { createdUsers = append(createdUsers, args.Get(1).(*domain.User)) }).
+		Return(nil)
+
+	deps.repo.On("Update", mock.Anything, mock.Anything).Return(nil)
+	deps.repo.On("UpdateProgress", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+
+	var resultBytes []byte
+	deps.results.On("Set", mock.Anything, mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) { resultBytes = args.Get(2).([]byte) }).
+		Return(nil)
+
+	job, payload := usersJobAndPayload(orgID, []string{string(domain.PermUsersCreate), string(domain.PermRolesUpdate)})
+	deps.repo.On("FindByID", mock.Anything, job.ID).Return(job, nil)
+
+	svc := newTestService(t, deps.testDeps)
+	require.NoError(t, svc.ProcessJob(context.Background(), payload))
+
+	assert.Equal(t, domain.ImportStatusCompleted, job.Status)
+	assert.Equal(t, 7, job.TotalRows)
+	assert.Equal(t, 2, job.CreatedCount) // dup.user + ali.r
+	assert.Equal(t, 0, job.SkippedCount)
+	assert.Equal(t, 5, job.FailedCount) // bad name, bad username, unknown role, ambiguous role, duplicate
+
+	// exact created-user set, distinguishing the two survivors from the five
+	// row errors, and pinning the normalized username's exact form.
+	require.Len(t, createdUsers, 2)
+	createdUsernames := make(map[string]bool, len(createdUsers))
+	for _, u := range createdUsers {
+		createdUsernames[u.Username] = true
+	}
+	assert.True(t, createdUsernames["dup.user"])
+	assert.True(t, createdUsernames["ali.r"], "mixed-case padded username must normalize to exactly \"ali.r\"")
+
+	// per-row messages, read back from the captured result file — the same
+	// pattern TestProcessUsers_GeneratedPasswordOnlyInResultFile uses.
+	require.NotNil(t, resultBytes)
+	f, err := excelize.OpenReader(bytes.NewReader(resultBytes))
+	require.NoError(t, err)
+	defer f.Close()
+	rows2, err := f.GetRows(f.GetSheetList()[0])
+	require.NoError(t, err)
+	require.Len(t, rows2, 8) // header + 7 data rows
+
+	// columns: name(0) username(1) role(2) status(3) message(4) generated_password(5)
+	assert.Equal(t, "error", rows2[1][3])
+	assert.Equal(t, "name must be at least 2 characters", rows2[1][4])
+
+	assert.Equal(t, "error", rows2[2][3])
+	assert.Equal(t, "username must be 3-30 chars: lowercase letters, digits, dot or underscore", rows2[2][4])
+
+	assert.Equal(t, "error", rows2[3][3])
+	assert.Equal(t, "unknown role", rows2[3][4])
+
+	assert.Equal(t, "error", rows2[4][3])
+	assert.Equal(t, "ambiguous role name", rows2[4][4])
+
+	assert.Equal(t, "created", rows2[5][3])
+
+	assert.Equal(t, "error", rows2[6][3])
+	assert.Equal(t, "duplicate username in file", rows2[6][4])
+
+	assert.Equal(t, "created", rows2[7][3])
+	assert.Equal(t, "ali.r", rows2[7][1], "result file must reflect the normalized username")
+}
+
 // TestProcessUsers_GeneratedPasswordOnlyInResultFile covers behavior spec
 // bullet 7: an empty password cell gets a generated 10-char password that
 // appears in the result file but never on the stored user -- only its
