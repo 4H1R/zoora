@@ -36,7 +36,7 @@ type MemberRow struct {
 func ParseUsersFile(data []byte) ([]UserRow, error) {
 	f, err := excelize.OpenReader(bytes.NewReader(data))
 	if err != nil {
-		return nil, fmt.Errorf("could not read xlsx file")
+		return nil, fmt.Errorf("could not read xlsx file: %w", err)
 	}
 	defer f.Close()
 
@@ -75,7 +75,7 @@ func ParseUsersFile(data []byte) ([]UserRow, error) {
 func ParseClassesFile(data []byte) ([]ClassRow, []MemberRow, error) {
 	f, err := excelize.OpenReader(bytes.NewReader(data))
 	if err != nil {
-		return nil, nil, fmt.Errorf("could not read xlsx file")
+		return nil, nil, fmt.Errorf("could not read xlsx file: %w", err)
 	}
 	defer f.Close()
 
@@ -155,7 +155,7 @@ func sheetRows(f *excelize.File, name string, index int) ([][]string, error) {
 	}
 	rows, err := f.GetRows(sheet)
 	if err != nil {
-		return nil, fmt.Errorf("could not read sheet %q", sheet)
+		return nil, fmt.Errorf("could not read sheet %q: %w", sheet, err)
 	}
 	if len(rows) == 0 {
 		return nil, fmt.Errorf("sheet %q is empty", sheet)
