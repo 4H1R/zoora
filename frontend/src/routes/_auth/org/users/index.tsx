@@ -2,7 +2,7 @@ import type { GithubCom4H1RZooraInternalDomainUser as User } from "@/api/model"
 
 import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
-import { PlusIcon, UsersIcon } from "lucide-react"
+import { PlusIcon, UploadIcon, UsersIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -23,6 +23,7 @@ import { StatusTabs } from "@/components/data-table/status-tabs"
 import { TableFilter } from "@/components/data-table/table-filter"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { DisableConfirmDialog } from "@/components/form/disable-confirm-dialog"
+import { ImportDialog } from "@/components/org/import/import-dialog"
 import { useUserPermissions } from "@/components/org/users/use-user-permissions"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
@@ -63,6 +64,7 @@ function UsersPage() {
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
 
   const [formOpen, setFormOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null)
   const [disableTarget, setDisableTarget] = useState<User | null>(null)
@@ -176,10 +178,16 @@ function UsersPage() {
         title={t("org.users.title")}
         actions={
           canCreate && (
-            <Button size="sm" onClick={handleCreate}>
-              <PlusIcon data-icon="inline-start" />
-              {t("org.users.newUser")}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+                <UploadIcon data-icon="inline-start" />
+                {t("org.import.button")}
+              </Button>
+              <Button size="sm" onClick={handleCreate}>
+                <PlusIcon data-icon="inline-start" />
+                {t("org.users.newUser")}
+              </Button>
+            </div>
           )
         }
       />
@@ -206,6 +214,8 @@ function UsersPage() {
       </Card>
 
       <UserFormDialog open={formOpen} onOpenChange={setFormOpen} user={editingUser} organizationId={orgId} />
+
+      <ImportDialog open={importOpen} onOpenChange={setImportOpen} type="users" />
 
       <DeleteConfirmDialog
         open={!!deleteTarget}
