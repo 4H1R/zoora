@@ -9,8 +9,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/platform/cache"
 )
 
 // QueueName isolates notification fan-out from critical live-session tasks.
@@ -47,6 +49,7 @@ type service struct {
 	queue         Enqueuer
 	senders       Senders
 	ratePerHour   int
+	rdb           *redis.Client // nil disables unread-count caching (unit tests)
 	logger        *slog.Logger
 }
 
@@ -58,6 +61,7 @@ func NewService(
 	queueClient Enqueuer,
 	senders Senders,
 	ratePerHour int,
+	rdb *redis.Client, // nil ok: disables unread-count caching
 	logger *slog.Logger,
 ) domain.NotificationService {
 	if logger == nil {
@@ -71,6 +75,7 @@ func NewService(
 		queue:         queueClient,
 		senders:       senders,
 		ratePerHour:   ratePerHour,
+		rdb:           rdb,
 		logger:        logger,
 	}
 }
@@ -287,14 +292,30 @@ func (s *service) ListInbox(ctx context.Context, p domain.ListParams) ([]domain.
 	return s.repo.ListInbox(ctx, caller.UserID, p.Limit(), p.Offset())
 }
 
+// Status returns the caller's unread count. The bell badge polls this every
+// ~30s per client, so it is cached behind a short TTL and invalidated on every
+// write that changes the count (mark-read, mark-all-read, fan-out).
 func (s *service) Status(ctx context.Context) (*domain.NotificationStatus, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
+
+	if s.rdb != nil {
+		if unread, err := cache.GetUnreadCount(ctx, s.rdb, caller.UserID); err == nil {
+			return &domain.NotificationStatus{UnreadCount: unread}, nil
+		}
+	}
+
 	unread, err := s.repo.CountUnread(ctx, caller.UserID)
 	if err != nil {
 		return nil, err
+	}
+
+	if s.rdb != nil {
+		if err := cache.SetUnreadCount(ctx, s.rdb, caller.UserID, unread); err != nil {
+			s.logger.WarnContext(ctx, "caching unread count", "error", err)
+		}
 	}
 	return &domain.NotificationStatus{UnreadCount: unread}, nil
 }
@@ -305,7 +326,11 @@ func (s *service) MarkRead(ctx context.Context, id uuid.UUID) error {
 		return domain.ErrForbidden
 	}
 	// Server clock — never trust a client-sent timestamp.
-	return s.repo.MarkRead(ctx, id, caller.UserID, time.Now())
+	if err := s.repo.MarkRead(ctx, id, caller.UserID, time.Now()); err != nil {
+		return err
+	}
+	s.invalidateUnread(ctx, caller.UserID)
+	return nil
 }
 
 func (s *service) MarkAllRead(ctx context.Context) error {
@@ -313,7 +338,22 @@ func (s *service) MarkAllRead(ctx context.Context) error {
 	if !ok {
 		return domain.ErrForbidden
 	}
-	return s.repo.MarkAllRead(ctx, caller.UserID, time.Now())
+	if err := s.repo.MarkAllRead(ctx, caller.UserID, time.Now()); err != nil {
+		return err
+	}
+	s.invalidateUnread(ctx, caller.UserID)
+	return nil
+}
+
+// invalidateUnread drops a user's cached unread count. Best-effort: the short
+// TTL is the backstop, so a redis error is logged, not surfaced.
+func (s *service) invalidateUnread(ctx context.Context, userID uuid.UUID) {
+	if s.rdb == nil {
+		return
+	}
+	if err := cache.InvalidateUnreadCount(ctx, s.rdb, userID); err != nil {
+		s.logger.WarnContext(ctx, "invalidating unread count", "error", err, "user_id", userID)
+	}
 }
 
 func (s *service) ListSent(ctx context.Context, p domain.ListParams) ([]domain.Notification, int64, error) {
@@ -349,6 +389,13 @@ func (s *service) Fanout(ctx context.Context, notificationID uuid.UUID) error {
 	}
 	if err := s.repo.CreateRecipients(ctx, recipients); err != nil {
 		return err
+	}
+	// New inbox rows raise these users' unread counts — drop their cached badge
+	// so the next poll reflects the notification within the TTL window.
+	if s.rdb != nil && len(recipientIDs) > 0 {
+		if err := cache.InvalidateUnreadCounts(ctx, s.rdb, recipientIDs); err != nil {
+			s.logger.WarnContext(ctx, "invalidating unread counts after fan-out", "error", err)
+		}
 	}
 	s.logger.Info("notification fan-out complete",
 		"notification_id", n.ID, "recipients", len(recipients))

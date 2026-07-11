@@ -57,7 +57,7 @@ func TestStatusReportsUnseenAndMajor(t *testing.T) {
 		latestMajor: major,
 		latestPub:   &domain.ChangelogEntry{Version: &v},
 	}
-	svc := NewService(repo, nil, nil)
+	svc := NewService(repo, nil, nil, nil)
 
 	got, err := svc.Status(ctxWithCaller())
 	if err != nil {
@@ -75,7 +75,7 @@ func TestStatusReportsUnseenAndMajor(t *testing.T) {
 }
 
 func TestStatusRequiresCaller(t *testing.T) {
-	svc := NewService(&mockRepo{}, nil, nil)
+	svc := NewService(&mockRepo{}, nil, nil, nil)
 	if _, err := svc.Status(context.Background()); err == nil {
 		t.Fatal("expected ErrForbidden without caller")
 	}

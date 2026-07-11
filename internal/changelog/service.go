@@ -5,7 +5,10 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/redis/go-redis/v9"
+
 	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/platform/cache"
 )
 
 const presignUploadExpiry = 15 * time.Minute
@@ -22,18 +25,19 @@ type service struct {
 	repo      domain.ChangelogRepository
 	mediaRepo domain.MediaRepository // media rows for changelog assets
 	storage   objectStorage
+	rdb       *redis.Client // nil disables status caching (unit tests)
 	logger    *slog.Logger
 }
 
-// NewService builds the changelog service. mediaRepo/storage may be nil in
+// NewService builds the changelog service. mediaRepo/storage/rdb may be nil in
 // unit tests that only exercise read/status paths.
-func NewService(repo domain.ChangelogRepository, storage objectStorage, logger *slog.Logger) domain.ChangelogService {
-	return &service{repo: repo, storage: storage, logger: logger}
+func NewService(repo domain.ChangelogRepository, storage objectStorage, rdb *redis.Client, logger *slog.Logger) domain.ChangelogService {
+	return &service{repo: repo, storage: storage, rdb: rdb, logger: logger}
 }
 
 // NewServiceWithMedia wires the media repository for admin media management.
-func NewServiceWithMedia(repo domain.ChangelogRepository, mediaRepo domain.MediaRepository, storage objectStorage, logger *slog.Logger) domain.ChangelogService {
-	return &service{repo: repo, mediaRepo: mediaRepo, storage: storage, logger: logger}
+func NewServiceWithMedia(repo domain.ChangelogRepository, mediaRepo domain.MediaRepository, storage objectStorage, rdb *redis.Client, logger *slog.Logger) domain.ChangelogService {
+	return &service{repo: repo, mediaRepo: mediaRepo, storage: storage, rdb: rdb, logger: logger}
 }
 
 func (s *service) ListPublished(ctx context.Context, p domain.ListParams) ([]domain.ChangelogEntry, int64, error) {
@@ -48,6 +52,13 @@ func (s *service) Status(ctx context.Context) (*domain.ChangelogStatus, error) {
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
+
+	if s.rdb != nil {
+		if st, err := cache.GetChangelogStatus(ctx, s.rdb, caller.UserID); err == nil {
+			return st, nil
+		}
+	}
+
 	seen, err := s.repo.GetLastSeen(ctx, caller.UserID)
 	if err != nil {
 		return nil, err
@@ -72,6 +83,12 @@ func (s *service) Status(ctx context.Context) (*domain.ChangelogStatus, error) {
 	if latest != nil {
 		st.CurrentVersion = latest.Version
 	}
+
+	if s.rdb != nil {
+		if err := cache.SetChangelogStatus(ctx, s.rdb, caller.UserID, st); err != nil {
+			s.logger.WarnContext(ctx, "caching changelog status", "error", err)
+		}
+	}
 	return st, nil
 }
 
@@ -81,5 +98,14 @@ func (s *service) MarkSeen(ctx context.Context) error {
 		return domain.ErrForbidden
 	}
 	// Server clock — never trust a client-sent timestamp (skew).
-	return s.repo.UpdateLastSeen(ctx, caller.UserID, time.Now())
+	if err := s.repo.UpdateLastSeen(ctx, caller.UserID, time.Now()); err != nil {
+		return err
+	}
+	// Drop the cached badge so it clears on the next poll immediately.
+	if s.rdb != nil {
+		if err := cache.InvalidateChangelogStatus(ctx, s.rdb, caller.UserID); err != nil {
+			s.logger.WarnContext(ctx, "invalidating changelog status", "error", err)
+		}
+	}
+	return nil
 }

@@ -29,7 +29,7 @@ func rng() domain.CalendarRange {
 }
 
 func TestListEvents_NoCaller_Forbidden(t *testing.T) {
-	svc := NewService(&fakeRepo{}, nil)
+	svc := NewService(&fakeRepo{}, nil, nil)
 	_, err := svc.ListEvents(context.Background(), rng())
 	if err != domain.ErrForbidden {
 		t.Fatalf("want ErrForbidden, got %v", err)
@@ -38,7 +38,7 @@ func TestListEvents_NoCaller_Forbidden(t *testing.T) {
 
 func TestResolveScope_Admin_All(t *testing.T) {
 	fr := &fakeRepo{}
-	svc := NewService(fr, nil)
+	svc := NewService(fr, nil, nil)
 	_, err := svc.ListEvents(newCtx(domain.Caller{IsAdmin: true}), rng())
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
@@ -50,7 +50,7 @@ func TestResolveScope_Admin_All(t *testing.T) {
 
 func TestResolveScope_ViewAny_OrgBounded(t *testing.T) {
 	fr := &fakeRepo{}
-	svc := NewService(fr, nil)
+	svc := NewService(fr, nil, nil)
 	org := uuid.New()
 	caller := domain.Caller{OrgID: &org, Permissions: []string{string(domain.PermClassesViewAny)}}
 	_, _ = svc.ListEvents(newCtx(caller), rng())
@@ -61,7 +61,7 @@ func TestResolveScope_ViewAny_OrgBounded(t *testing.T) {
 
 func TestResolveScope_Plain_TeacherAndMember(t *testing.T) {
 	fr := &fakeRepo{}
-	svc := NewService(fr, nil)
+	svc := NewService(fr, nil, nil)
 	uid := uuid.New()
 	caller := domain.Caller{UserID: uid}
 	_, _ = svc.ListEvents(newCtx(caller), rng())

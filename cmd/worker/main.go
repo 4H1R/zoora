@@ -148,24 +148,25 @@ func main() {
 		senders.Bale = baleBot
 	}
 
+	// Redis (cache role) is created up front: fan-out invalidates recipients'
+	// cached unread counts, and the bot pollers below need link tokens.
+	redisClient, err := cache.NewRedisClient(cfg.CacheRedisURL(), log)
+	if err != nil {
+		log.Error("failed to connect to redis", "error", err)
+		os.Exit(1)
+	}
+
 	connectorRepo := connectors.NewRepository(db)
 	notificationRepo := notifications.NewRepository(db)
 	notificationService := notifications.NewService(
 		notificationRepo, classRepo, connectorRepo, orgSettingsService,
-		queueClient, senders, 0, log,
+		queueClient, senders, 0, redisClient, log,
 	)
 	queueServer.HandleFunc(domain.TypeNotificationFanout, notifications.NewFanoutHandler(notificationService))
 	queueServer.HandleFunc(domain.TypeNotificationDeliverBot, notifications.NewDeliverBotHandler(notificationService))
 	queueServer.HandleFunc(domain.TypeNotificationDeliverSMS, notifications.NewDeliverSMSHandler(notificationService))
 	queueServer.HandleFunc(domain.TypeNotificationDeliverPush, notifications.NewDeliverPushHandler(notificationService))
 
-	// Bot pollers complete connector links via /start <token>. They need redis
-	// (link tokens) and the connector service.
-	redisClient, err := cache.NewRedisClient(cfg.CacheRedisURL(), log)
-	if err != nil {
-		log.Error("failed to connect to redis", "error", err)
-		os.Exit(1)
-	}
 	userRepo := users.NewRepository(db)
 	orgRepo := organizations.NewRepository(db)
 	connectorService := connectors.NewService(connectorRepo, userRepo, orgRepo, redisClient, smsSender, connectors.BotLinkConfig{

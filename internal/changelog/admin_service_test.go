@@ -49,7 +49,7 @@ func adminCtx() context.Context {
 
 func TestPublishIsIdempotentOnTimestamp(t *testing.T) {
 	repo := &stubRepo{}
-	svc := NewService(repo, nil, nil)
+	svc := NewService(repo, nil, nil, nil)
 	first := time.Now().Add(-time.Hour)
 	repo.entry = &domain.ChangelogEntry{ID: uuid.New(), PublishedAt: &first}
 
@@ -64,7 +64,7 @@ func TestPublishIsIdempotentOnTimestamp(t *testing.T) {
 
 func TestPublishRequiresAdmin(t *testing.T) {
 	repo := &stubRepo{}
-	svc := NewService(repo, nil, nil)
+	svc := NewService(repo, nil, nil, nil)
 	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New()}) // not admin
 	if _, err := svc.AdminPublish(ctx, uuid.New()); err == nil {
 		t.Fatal("expected ErrForbidden for non-admin")

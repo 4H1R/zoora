@@ -196,7 +196,7 @@ func main() {
 	roleService := roles.NewService(roleRepo, permRepo, transactor, redisClient, log)
 	authBusinessService := auth.NewAuthService(userRepo, jwtService, redisClient, log)
 	mediaService := media.NewService(mediaRepo, storageClient, entitlementService, log)
-	changelogService := changelog.NewServiceWithMedia(changelogRepo, mediaRepo, storageClient, log)
+	changelogService := changelog.NewServiceWithMedia(changelogRepo, mediaRepo, storageClient, redisClient, log)
 	tutorialService := tutorials.NewService(tutorialRepo, log)
 	livekitClient := lk.NewClient(cfg, log)
 	chatService := chat.NewService(chatRepo, chatMessageRepo, transactor, log, livekitClient, liveRoomRepo)
@@ -323,7 +323,7 @@ func main() {
 	// worker-side.
 	notificationService := notifications.NewService(
 		notificationRepo, classRepo, connectorRepo, orgSettingsService,
-		queueClient, notifications.Senders{SMS: smsSender}, cfg.NotificationSendRatePerHour, log,
+		queueClient, notifications.Senders{SMS: smsSender}, cfg.NotificationSendRatePerHour, redisClient, log,
 	)
 	notificationHandler := notifications.NewHandler(notificationService)
 	notificationHandler.RegisterRoutes(v1, authMiddleware)
@@ -386,7 +386,7 @@ func main() {
 	liveSessionHandler.RegisterRoutes(v1, authMiddleware, perm)
 
 	calendarRepo := calendar.NewRepository(db)
-	calendarService := calendar.NewService(calendarRepo, log)
+	calendarService := calendar.NewService(calendarRepo, redisClient, log)
 	calendarHandler := calendar.NewHandler(calendarService)
 	calendarHandler.RegisterRoutes(v1, authMiddleware)
 
