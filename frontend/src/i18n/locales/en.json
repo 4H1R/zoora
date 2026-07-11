@@ -1569,6 +1569,7 @@
       "fileTooLarge": "File exceeds 10MB",
       "invalidType": "Only .xlsx files are accepted",
       "uploadError": "Upload failed",
+      "downloadError": "Download failed",
       "processing": "Processing…",
       "progress": "{{processed}} of {{total}} rows",
       "created": "Created",

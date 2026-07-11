@@ -79,6 +79,7 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
   const pickFile = () => inputRef.current?.click()
 
   const handleFile = async (file: File) => {
+    if (uploading) return
     if (!file.name.toLowerCase().endsWith(".xlsx")) {
       toast.error(t("org.import.invalidType"))
       return
@@ -139,7 +140,7 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
       URL.revokeObjectURL(url)
     } catch (err) {
       console.error(err)
-      toast.error(t("org.import.uploadError"))
+      toast.error(t("org.import.downloadError"))
     } finally {
       setDownloading(false)
     }

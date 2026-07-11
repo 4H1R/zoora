@@ -1631,6 +1631,7 @@
       "fileTooLarge": "حجم فایل بیشتر از ۱۰ مگابایت است",
       "invalidType": "فقط فایل .xlsx پذیرفته می‌شود",
       "uploadError": "بارگذاری ناموفق بود",
+      "downloadError": "دانلود ناموفق بود",
       "processing": "در حال پردازش…",
       "progress": "{{processed}} از {{total}} ردیف",
       "created": "ایجادشده",
