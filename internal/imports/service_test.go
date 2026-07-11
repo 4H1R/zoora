@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
@@ -93,8 +94,8 @@ func (m *mockMediaRepo) ListFiles(ctx context.Context, orgID uuid.UUID, modelTyp
 
 type mockObjectStore struct{ mock.Mock }
 
-func (m *mockObjectStore) GetObject(ctx context.Context, key string) ([]byte, error) {
-	args := m.Called(ctx, key)
+func (m *mockObjectStore) GetObject(ctx context.Context, key string, maxSize int64) ([]byte, error) {
+	args := m.Called(ctx, key, maxSize)
 	b, _ := args.Get(0).([]byte)
 	return b, args.Error(1)
 }
@@ -360,7 +361,12 @@ type testDeps struct {
 func newTestService(t *testing.T, deps testDeps) domain.ImportService {
 	t.Helper()
 	if deps.job == nil {
-		deps.job = &mockJobRepo{}
+		job := &mockJobRepo{}
+		// Default: no prior job for the org/type, so Create's
+		// one-running-import-per-org guard doesn't block tests that don't
+		// care about it.
+		job.On("Latest", mock.Anything, mock.Anything, mock.Anything).Return(nil, domain.ErrNotFound)
+		deps.job = job
 	}
 	if deps.users == nil {
 		deps.users = stubUserRepo{}
@@ -484,6 +490,7 @@ func TestCreateImport_CreatesJobAndEnqueues(t *testing.T) {
 		Return(&domain.Media{ID: mediaID, OrganizationID: &orgID, FileName: "u.xlsx", Size: 1 << 20}, nil)
 
 	job := &mockJobRepo{}
+	job.On("Latest", mock.Anything, orgID, domain.ImportTypeUsers).Return(nil, domain.ErrNotFound)
 	job.On("Create", mock.Anything, mock.MatchedBy(func(j *domain.ImportJob) bool {
 		return j.OrganizationID == orgID &&
 			j.UserID == userID &&
@@ -535,6 +542,65 @@ func TestCreateImport_CreatesJobAndEnqueues(t *testing.T) {
 	assert.Equal(t, domain.PlanFree, payload.Plan)
 }
 
+// TestCreateImport_RunningJobConflicts covers the one-running-import-per-org
+// guard: a still-running (pending/processing, not stale) prior job of the
+// same type blocks a new Create before media is even looked up.
+func TestCreateImport_RunningJobConflicts(t *testing.T) {
+	orgID := uuid.New()
+
+	job := &mockJobRepo{}
+	job.On("Latest", mock.Anything, orgID, domain.ImportTypeUsers).
+		Return(&domain.ImportJob{
+			ID: uuid.New(), OrganizationID: orgID, Type: domain.ImportTypeUsers,
+			Status: domain.ImportStatusProcessing, UpdatedAt: time.Now(),
+		}, nil)
+
+	media := &mockMediaRepo{}
+	svc := newTestService(t, testDeps{job: job, media: media})
+
+	_, err := svc.Create(callerCtx(orgID, string(domain.PermUsersCreate)), domain.CreateImportJobDTO{
+		Type: domain.ImportTypeUsers, MediaID: uuid.New(),
+	})
+
+	assert.ErrorIs(t, err, domain.ErrConflict)
+	media.AssertNotCalled(t, "FindByID", mock.Anything, mock.Anything)
+}
+
+// TestCreateImport_StaleRunningJobDoesNotConflict covers the flip side: a
+// pending/processing job whose UpdatedAt is older than staleImportAfter is
+// treated as dead (crashed worker), so Create proceeds instead of
+// conflicting.
+func TestCreateImport_StaleRunningJobDoesNotConflict(t *testing.T) {
+	orgID := uuid.New()
+	mediaID := uuid.New()
+
+	job := &mockJobRepo{}
+	job.On("Latest", mock.Anything, orgID, domain.ImportTypeUsers).
+		Return(&domain.ImportJob{
+			ID: uuid.New(), OrganizationID: orgID, Type: domain.ImportTypeUsers,
+			Status: domain.ImportStatusProcessing, UpdatedAt: time.Now().Add(-20 * time.Minute),
+		}, nil)
+	job.On("Create", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		args.Get(1).(*domain.ImportJob).ID = uuid.New()
+	}).Return(nil)
+
+	media := &mockMediaRepo{}
+	media.On("FindByID", mock.Anything, mediaID).
+		Return(&domain.Media{ID: mediaID, OrganizationID: &orgID, FileName: "u.xlsx", Size: 100}, nil)
+
+	queue := &mockEnqueuer{}
+	queue.On("Enqueue", mock.Anything, mock.Anything).Return(&asynq.TaskInfo{}, nil)
+
+	svc := newTestService(t, testDeps{job: job, media: media, queue: queue})
+
+	created, err := svc.Create(callerCtx(orgID, string(domain.PermUsersCreate)), domain.CreateImportJobDTO{
+		Type: domain.ImportTypeUsers, MediaID: mediaID,
+	})
+
+	assert.NoError(t, err)
+	assert.NotNil(t, created)
+}
+
 func TestGetImport_WrongOrg(t *testing.T) {
 	orgID, otherOrg := uuid.New(), uuid.New()
 	jobID := uuid.New()
@@ -559,6 +625,63 @@ func TestLatest_NoJobReturnsNilNil(t *testing.T) {
 	result, err := svc.Latest(callerCtx(orgID, string(domain.PermUsersCreate)), domain.ImportTypeUsers)
 	assert.NoError(t, err)
 	assert.Nil(t, result)
+}
+
+// TestLatest_StaleRunningJobMarkedFailed covers the stuck-job escape hatch:
+// a pending/processing job whose UpdatedAt is older than staleImportAfter
+// (no clock injection exists, so a fixed 20-minute-old timestamp stands in
+// for "worker crashed a while ago") gets marked failed and persisted before
+// being returned, so the polling dialog and the one-running-import guard
+// don't wedge forever on a dead worker.
+func TestLatest_StaleRunningJobMarkedFailed(t *testing.T) {
+	orgID := uuid.New()
+	jobID := uuid.New()
+	staleTime := time.Now().Add(-20 * time.Minute)
+
+	job := &mockJobRepo{}
+	job.On("Latest", mock.Anything, orgID, domain.ImportTypeUsers).
+		Return(&domain.ImportJob{
+			ID: jobID, OrganizationID: orgID, Type: domain.ImportTypeUsers,
+			Status: domain.ImportStatusProcessing, UpdatedAt: staleTime,
+		}, nil)
+	job.On("Update", mock.Anything, mock.MatchedBy(func(j *domain.ImportJob) bool {
+		return j.ID == jobID && j.Status == domain.ImportStatusFailed &&
+			j.Error != nil && *j.Error == "import timed out"
+	})).Return(nil)
+
+	svc := newTestService(t, testDeps{job: job})
+	result, err := svc.Latest(callerCtx(orgID, string(domain.PermUsersCreate)), domain.ImportTypeUsers)
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, domain.ImportStatusFailed, result.Status)
+	require.NotNil(t, result.Error)
+	assert.Equal(t, "import timed out", *result.Error)
+	job.AssertExpectations(t)
+}
+
+// TestLatest_FreshRunningJobUnchanged covers the flip side: a recently
+// updated pending/processing job is returned exactly as stored, with no
+// repo.Update call at all.
+func TestLatest_FreshRunningJobUnchanged(t *testing.T) {
+	orgID := uuid.New()
+	jobID := uuid.New()
+
+	job := &mockJobRepo{}
+	job.On("Latest", mock.Anything, orgID, domain.ImportTypeUsers).
+		Return(&domain.ImportJob{
+			ID: jobID, OrganizationID: orgID, Type: domain.ImportTypeUsers,
+			Status: domain.ImportStatusProcessing, UpdatedAt: time.Now(),
+		}, nil)
+
+	svc := newTestService(t, testDeps{job: job})
+	result, err := svc.Latest(callerCtx(orgID, string(domain.PermUsersCreate)), domain.ImportTypeUsers)
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, domain.ImportStatusProcessing, result.Status)
+	assert.Nil(t, result.Error)
+	job.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
 }
 
 func TestResult_ChecksPermThenReadsStore(t *testing.T) {
@@ -767,7 +890,7 @@ func TestProcessUsers_MixedOutcomes(t *testing.T) {
 	})
 
 	deps := newUsersProcessDeps(t) // wires: media.FindByID → media row, storage.GetObject → file
-	deps.storage.On("GetObject", mock.Anything, mock.Anything).Return(file, nil)
+	deps.storage.On("GetObject", mock.Anything, mock.Anything, mock.Anything).Return(file, nil)
 	deps.roles.On("List", mock.Anything, mock.Anything).Return([]domain.Role{studentRole}, nil)
 	deps.users.On("FindByUsernames", mock.Anything, orgID, mock.Anything).
 		Return([]domain.User{{Username: "already.there"}}, nil)
@@ -816,7 +939,7 @@ func TestProcessUsers_SeatLimitFailsWholeJob(t *testing.T) {
 	})
 
 	deps := newUsersProcessDeps(t)
-	deps.storage.On("GetObject", mock.Anything, mock.Anything).Return(file, nil)
+	deps.storage.On("GetObject", mock.Anything, mock.Anything, mock.Anything).Return(file, nil)
 	deps.roles.On("List", mock.Anything, mock.Anything).Return([]domain.Role{}, nil)
 	deps.users.On("FindByUsernames", mock.Anything, orgID, mock.Anything).Return([]domain.User{}, nil)
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(nil)
@@ -852,7 +975,7 @@ func TestProcessUsers_ManagerRoleRejectedForNonAdmin(t *testing.T) {
 	})
 
 	deps := newUsersProcessDeps(t)
-	deps.storage.On("GetObject", mock.Anything, mock.Anything).Return(file, nil)
+	deps.storage.On("GetObject", mock.Anything, mock.Anything, mock.Anything).Return(file, nil)
 	deps.roles.On("List", mock.Anything, mock.Anything).Return([]domain.Role{managerRole}, nil)
 	deps.users.On("FindByUsernames", mock.Anything, orgID, mock.Anything).Return([]domain.User{}, nil)
 	deps.users.On("Create", mock.Anything, mock.Anything).Return(nil)
@@ -896,7 +1019,7 @@ func TestProcessUsers_NamedRoleRejectedWithoutPermission(t *testing.T) {
 	})
 
 	deps := newUsersProcessDeps(t)
-	deps.storage.On("GetObject", mock.Anything, mock.Anything).Return(file, nil)
+	deps.storage.On("GetObject", mock.Anything, mock.Anything, mock.Anything).Return(file, nil)
 	deps.roles.On("List", mock.Anything, mock.Anything).Return([]domain.Role{studentRole}, nil)
 	deps.users.On("FindByUsernames", mock.Anything, orgID, mock.Anything).Return([]domain.User{}, nil)
 	deps.users.On("Create", mock.Anything, mock.Anything).Return(nil)
@@ -938,7 +1061,7 @@ func TestProcessUsers_ConflictRaceOnCreateSkipsRow(t *testing.T) {
 	})
 
 	deps := newUsersProcessDeps(t)
-	deps.storage.On("GetObject", mock.Anything, mock.Anything).Return(file, nil)
+	deps.storage.On("GetObject", mock.Anything, mock.Anything, mock.Anything).Return(file, nil)
 	deps.roles.On("List", mock.Anything, mock.Anything).Return([]domain.Role{}, nil)
 	deps.users.On("FindByUsernames", mock.Anything, orgID, mock.Anything).Return([]domain.User{}, nil) // precheck misses it
 	deps.users.On("Create", mock.Anything, mock.Anything).Return(domain.ErrConflict)                   // create-time race
@@ -967,7 +1090,7 @@ func TestProcessUsers_UnparseableFileFailsJob(t *testing.T) {
 	orgID := uuid.New()
 
 	deps := newUsersProcessDeps(t)
-	deps.storage.On("GetObject", mock.Anything, mock.Anything).Return([]byte("junk"), nil)
+	deps.storage.On("GetObject", mock.Anything, mock.Anything, mock.Anything).Return([]byte("junk"), nil)
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(nil)
 
 	job, payload := usersJobAndPayload(orgID, []string{string(domain.PermUsersCreate)})
@@ -995,7 +1118,7 @@ func TestProcessUsers_ProgressUpdatesEvery25Creates(t *testing.T) {
 	file := usersXLSX(t, rows)
 
 	deps := newUsersProcessDeps(t)
-	deps.storage.On("GetObject", mock.Anything, mock.Anything).Return(file, nil)
+	deps.storage.On("GetObject", mock.Anything, mock.Anything, mock.Anything).Return(file, nil)
 	deps.roles.On("List", mock.Anything, mock.Anything).Return([]domain.Role{}, nil)
 	deps.users.On("FindByUsernames", mock.Anything, orgID, mock.Anything).Return([]domain.User{}, nil)
 	deps.users.On("Create", mock.Anything, mock.Anything).Return(nil)
@@ -1043,7 +1166,7 @@ func TestProcessUsers_RowValidationErrors(t *testing.T) {
 	})
 
 	deps := newUsersProcessDeps(t)
-	deps.storage.On("GetObject", mock.Anything, mock.Anything).Return(file, nil)
+	deps.storage.On("GetObject", mock.Anything, mock.Anything, mock.Anything).Return(file, nil)
 	deps.roles.On("List", mock.Anything, mock.Anything).Return([]domain.Role{studentA, studentB}, nil)
 	deps.users.On("FindByUsernames", mock.Anything, orgID, mock.Anything).Return([]domain.User{}, nil)
 
@@ -1127,7 +1250,7 @@ func TestProcessUsers_GeneratedPasswordOnlyInResultFile(t *testing.T) {
 	})
 
 	deps := newUsersProcessDeps(t)
-	deps.storage.On("GetObject", mock.Anything, mock.Anything).Return(file, nil)
+	deps.storage.On("GetObject", mock.Anything, mock.Anything, mock.Anything).Return(file, nil)
 	deps.roles.On("List", mock.Anything, mock.Anything).Return([]domain.Role{}, nil)
 	deps.users.On("FindByUsernames", mock.Anything, orgID, mock.Anything).Return([]domain.User{}, nil)
 
@@ -1192,7 +1315,7 @@ func TestProcessClasses_MixedOutcomes(t *testing.T) {
 		})
 
 	deps := newClassesProcessDeps(t)
-	deps.storage.On("GetObject", mock.Anything, mock.Anything).Return(file, nil)
+	deps.storage.On("GetObject", mock.Anything, mock.Anything, mock.Anything).Return(file, nil)
 	deps.users.On("FindByUsernames", mock.Anything, orgID, mock.Anything).
 		Return([]domain.User{{ID: ali, Username: "ali.r"}, {ID: sara, Username: "sara.k"}}, nil)
 	deps.classes.On("ListByNames", mock.Anything, orgID, mock.Anything).
@@ -1251,7 +1374,7 @@ func TestProcessClasses_AmbiguousExistingName(t *testing.T) {
 		})
 
 	deps := newClassesProcessDeps(t)
-	deps.storage.On("GetObject", mock.Anything, mock.Anything).Return(file, nil)
+	deps.storage.On("GetObject", mock.Anything, mock.Anything, mock.Anything).Return(file, nil)
 	deps.users.On("FindByUsernames", mock.Anything, orgID, mock.Anything).
 		Return([]domain.User{{ID: ali, Username: "ali.r"}, {ID: sara, Username: "sara.k"}}, nil)
 	deps.classes.On("ListByNames", mock.Anything, orgID, mock.Anything).
@@ -1303,7 +1426,7 @@ func TestProcessClasses_CapacityFull(t *testing.T) {
 		})
 
 	deps := newClassesProcessDeps(t)
-	deps.storage.On("GetObject", mock.Anything, mock.Anything).Return(file, nil)
+	deps.storage.On("GetObject", mock.Anything, mock.Anything, mock.Anything).Return(file, nil)
 	deps.users.On("FindByUsernames", mock.Anything, orgID, mock.Anything).
 		Return([]domain.User{{ID: ali, Username: "ali.r"}, {ID: sara, Username: "sara.k"}}, nil)
 	deps.classes.On("ListByNames", mock.Anything, orgID, mock.Anything).
@@ -1350,7 +1473,7 @@ func TestProcessClasses_DuplicateMemberConflictSkips(t *testing.T) {
 		})
 
 	deps := newClassesProcessDeps(t)
-	deps.storage.On("GetObject", mock.Anything, mock.Anything).Return(file, nil)
+	deps.storage.On("GetObject", mock.Anything, mock.Anything, mock.Anything).Return(file, nil)
 	deps.users.On("FindByUsernames", mock.Anything, orgID, mock.Anything).
 		Return([]domain.User{{ID: ali, Username: "ali.r"}, {ID: sara, Username: "sara.k"}}, nil)
 	deps.classes.On("ListByNames", mock.Anything, orgID, mock.Anything).Return([]domain.Class{}, nil)

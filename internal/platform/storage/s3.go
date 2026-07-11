@@ -132,8 +132,14 @@ func (c *Client) GeneratePresignedDownloadURL(ctx context.Context, key string, e
 }
 
 // GetObject downloads an object's full contents. Intended for small
-// server-processed files (e.g. import spreadsheets, capped at 10MB upstream).
-func (c *Client) GetObject(ctx context.Context, key string) ([]byte, error) {
+// server-processed files (e.g. import spreadsheets).
+//
+// maxSize bounds how much is ever read into memory: a maxSize <= 0 means no
+// limit. When positive, a lying/absent Content-Length is not trusted alone —
+// the body is also wrapped in an io.LimitReader capped at maxSize+1 so a
+// read that hits the extra byte proves the object exceeds the limit even if
+// S3 reported a smaller (or chunked/missing) size upfront.
+func (c *Client) GetObject(ctx context.Context, key string, maxSize int64) ([]byte, error) {
 	out, err := c.s3.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(c.bucket),
 		Key:    aws.String(key),
@@ -142,6 +148,21 @@ func (c *Client) GetObject(ctx context.Context, key string) ([]byte, error) {
 		return nil, fmt.Errorf("storage.GetObject %s: %w", key, err)
 	}
 	defer out.Body.Close()
+
+	if maxSize > 0 {
+		if out.ContentLength != nil && aws.ToInt64(out.ContentLength) > maxSize {
+			return nil, fmt.Errorf("storage.GetObject %s: object size %d exceeds limit %d", key, aws.ToInt64(out.ContentLength), maxSize)
+		}
+		data, err := io.ReadAll(io.LimitReader(out.Body, maxSize+1))
+		if err != nil {
+			return nil, fmt.Errorf("storage.GetObject read %s: %w", key, err)
+		}
+		if int64(len(data)) > maxSize {
+			return nil, fmt.Errorf("storage.GetObject %s: object exceeds limit %d", key, maxSize)
+		}
+		return data, nil
+	}
+
 	data, err := io.ReadAll(out.Body)
 	if err != nil {
 		return nil, fmt.Errorf("storage.GetObject read %s: %w", key, err)

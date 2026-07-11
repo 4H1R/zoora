@@ -79,7 +79,7 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
   const pickFile = () => inputRef.current?.click()
 
   const handleFile = async (file: File) => {
-    if (uploading) return
+    if (uploading || createImport.isPending) return
     if (!file.name.toLowerCase().endsWith(".xlsx")) {
       toast.error(t("org.import.invalidType"))
       return
@@ -172,9 +172,9 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
                 if (file) void handleFile(file)
               }}
               className="text-muted-foreground hover:bg-accent flex flex-col items-center gap-2 rounded-lg border border-dashed p-8"
-              disabled={uploading}
+              disabled={uploading || createImport.isPending}
             >
-              {uploading ? <Spinner /> : <UploadIcon className="size-6" />}
+              {uploading || createImport.isPending ? <Spinner /> : <UploadIcon className="size-6" />}
               <span className="text-sm">{t("org.import.dropHint")}</span>
             </button>
             <input
@@ -182,6 +182,7 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
               type="file"
               accept=".xlsx"
               className="hidden"
+              disabled={uploading || createImport.isPending}
               onChange={(e) => {
                 const file = e.target.files?.[0]
                 e.target.value = ""

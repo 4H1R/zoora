@@ -11,6 +11,15 @@ import (
 // MaxRows caps data rows per sheet — bcrypt cost makes bigger files a worker hog.
 const MaxRows = 5000
 
+// unzipSizeLimit and unzipXMLSizeLimit bound how much excelize will inflate
+// from a zip-bomb .xlsx: the archive as a whole and any single worksheet XML
+// member are each capped at 100MB, well above any legitimate MaxRows-sized
+// import but far short of a maliciously crafted archive's default ceiling.
+var parseOptions = excelize.Options{
+	UnzipSizeLimit:    100 << 20,
+	UnzipXMLSizeLimit: 100 << 20,
+}
+
 type UserRow struct {
 	RowNum   int // 1-based Excel row
 	Name     string
@@ -34,7 +43,7 @@ type MemberRow struct {
 }
 
 func ParseUsersFile(data []byte) ([]UserRow, error) {
-	f, err := excelize.OpenReader(bytes.NewReader(data))
+	f, err := excelize.OpenReader(bytes.NewReader(data), parseOptions)
 	if err != nil {
 		return nil, fmt.Errorf("could not read xlsx file: %w", err)
 	}
@@ -73,7 +82,7 @@ func ParseUsersFile(data []byte) ([]UserRow, error) {
 }
 
 func ParseClassesFile(data []byte) ([]ClassRow, []MemberRow, error) {
-	f, err := excelize.OpenReader(bytes.NewReader(data))
+	f, err := excelize.OpenReader(bytes.NewReader(data), parseOptions)
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not read xlsx file: %w", err)
 	}

@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"math/big"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
@@ -21,10 +22,20 @@ const (
 	maxImportFileSize = 10 << 20 // 10MB
 	progressBatch     = 25
 	passwordAlphabet  = "abcdefghjkmnpqrstuvwxyz23456789" // no ambiguous chars
+
+	// staleImportAfter bounds how long a pending/processing job is trusted
+	// to still be alive. The worker enqueues with MaxRetry(0), so a crashed
+	// or killed worker leaves the job wedged in "processing" forever with
+	// nothing to retry it — that would otherwise jam both the one-running-
+	// import-per-org guard and the org's polling dialog indefinitely.
+	// Progress updates touch UpdatedAt every progressBatch rows on a live
+	// job, so 15 minutes with no update means the job is genuinely dead,
+	// not just slow.
+	staleImportAfter = 15 * time.Minute
 )
 
 type ObjectStore interface {
-	GetObject(ctx context.Context, key string) ([]byte, error)
+	GetObject(ctx context.Context, key string, maxSize int64) ([]byte, error)
 }
 
 type Enqueuer interface {
@@ -89,6 +100,18 @@ func requireImportPermission(caller domain.Caller, t domain.ImportType) error {
 	return domain.ErrForbidden
 }
 
+// isRunning reports whether a job is still pending or actively processing.
+func isRunning(job *domain.ImportJob) bool {
+	return job.Status == domain.ImportStatusPending || job.Status == domain.ImportStatusProcessing
+}
+
+// isStale reports whether a running job's UpdatedAt is old enough that it
+// must be a crashed worker rather than genuine in-progress work. See
+// staleImportAfter for the rationale.
+func isStale(job *domain.ImportJob) bool {
+	return time.Since(job.UpdatedAt) > staleImportAfter
+}
+
 func (s *service) Create(ctx context.Context, dto domain.CreateImportJobDTO) (*domain.ImportJob, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok || caller.OrgID == nil {
@@ -96,6 +119,19 @@ func (s *service) Create(ctx context.Context, dto domain.CreateImportJobDTO) (*d
 	}
 	if err := requireImportPermission(caller, dto.Type); err != nil {
 		return nil, err
+	}
+
+	// One running import per org per type: prevents seat-limit TOCTOU races
+	// across concurrent imports and keeps the org-wide latest-poll UX (the
+	// dialog just polls Latest) coherent -- a second job while one is live
+	// would orphan the first from the UI. Stale (crashed-worker) jobs don't
+	// block a new attempt.
+	existing, err := s.repo.Latest(ctx, *caller.OrgID, dto.Type)
+	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+		return nil, err
+	}
+	if existing != nil && isRunning(existing) && !isStale(existing) {
+		return nil, domain.ErrConflict
 	}
 
 	m, err := s.media.FindByID(ctx, dto.MediaID)
@@ -142,7 +178,9 @@ func (s *service) Create(ctx context.Context, dto domain.CreateImportJobDTO) (*d
 		msg := "failed to enqueue import task"
 		job.Status = domain.ImportStatusFailed
 		job.Error = &msg
-		_ = s.repo.Update(ctx, job)
+		if uerr := s.repo.Update(ctx, job); uerr != nil {
+			s.logger.Error("import job fail-mark failed", "job_id", job.ID.String(), "error", uerr)
+		}
 		return nil, fmt.Errorf("imports.service.Create enqueue: %w", err)
 	}
 	s.logger.Info("import job created", "job_id", job.ID.String(), "type", string(job.Type), "created_by", caller.UserID.String())
@@ -179,7 +217,25 @@ func (s *service) Latest(ctx context.Context, t domain.ImportType) (*domain.Impo
 	if errors.Is(err, domain.ErrNotFound) {
 		return nil, nil // "no job yet" is a normal answer, not an error
 	}
-	return job, err
+	if err != nil {
+		return nil, err
+	}
+
+	// Stuck-job escape hatch: MaxRetry(0) means a crashed worker leaves the
+	// job "processing" forever with nothing left to retry it, which would
+	// otherwise wedge the org's import dialog (and the one-running-import
+	// guard) indefinitely. Progress updates every progressBatch rows keep
+	// UpdatedAt fresh on a live job, so staleImportAfter with no update
+	// means the job is genuinely dead, not just slow.
+	if isRunning(job) && isStale(job) {
+		msg := "import timed out"
+		job.Status = domain.ImportStatusFailed
+		job.Error = &msg
+		if err := s.repo.Update(ctx, job); err != nil {
+			return nil, err
+		}
+	}
+	return job, nil
 }
 
 func (s *service) Result(ctx context.Context, id uuid.UUID) ([]byte, error) {
@@ -217,7 +273,7 @@ func (s *service) ProcessJob(ctx context.Context, p domain.ImportProcessPayload)
 	if err != nil {
 		return s.fail(ctx, job, "uploaded file not found")
 	}
-	data, err := s.storage.GetObject(ctx, m.S3Key())
+	data, err := s.storage.GetObject(ctx, m.S3Key(), maxImportFileSize)
 	if err != nil {
 		s.logger.Error("import download failed", "job_id", job.ID.String(), "error", err)
 		return s.fail(ctx, job, "could not read uploaded file")
