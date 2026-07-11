@@ -64,6 +64,9 @@ type Config struct {
 	// NotificationSendRatePerHour caps how many notifications one non-admin
 	// sender may create per hour. 0 disables the limit.
 	NotificationSendRatePerHour int `env:"NOTIFICATION_SEND_RATE_PER_HOUR" envDefault:"10"`
+	// RateLimitDisabled turns off all HTTP rate limiting. Load-testing escape
+	// hatch only — ignored (with a warning) when Environment is production.
+	RateLimitDisabled bool `env:"RATE_LIMIT_DISABLED"`
 
 	// --- notification connectors (all optional; empty disables the channel) ---
 	TelegramBotToken     string `env:"TELEGRAM_BOT_TOKEN"`

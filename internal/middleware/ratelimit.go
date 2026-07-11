@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -13,9 +12,10 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func RateLimit(rdb *redis.Client, name string, limit redis_rate.Limit) gin.HandlerFunc {
-	// Escape hatch for load testing only — never set in production.
-	if os.Getenv("RATE_LIMIT_DISABLED") == "1" {
+func RateLimit(rdb *redis.Client, name string, limit redis_rate.Limit, disabled bool) gin.HandlerFunc {
+	// Load-testing escape hatch; the caller is responsible for never enabling
+	// this in production (main.go forces it off there).
+	if disabled {
 		return func(c *gin.Context) { c.Next() }
 	}
 
@@ -50,36 +50,36 @@ func RateLimit(rdb *redis.Client, name string, limit redis_rate.Limit) gin.Handl
 	}
 }
 
-func GlobalRateLimit(rdb *redis.Client) gin.HandlerFunc {
+func GlobalRateLimit(rdb *redis.Client, disabled bool) gin.HandlerFunc {
 	return RateLimit(rdb, "global", redis_rate.Limit{
 		Rate:   100,
 		Burst:  150,
 		Period: time.Second,
-	})
+	}, disabled)
 }
 
-func AuthRateLimit(rdb *redis.Client) gin.HandlerFunc {
+func AuthRateLimit(rdb *redis.Client, disabled bool) gin.HandlerFunc {
 	return RateLimit(rdb, "auth", redis_rate.Limit{
 		Rate:   5,
 		Burst:  2,
 		Period: time.Minute,
-	})
+	}, disabled)
 }
 
-func UploadRateLimit(rdb *redis.Client) gin.HandlerFunc {
+func UploadRateLimit(rdb *redis.Client, disabled bool) gin.HandlerFunc {
 	return RateLimit(rdb, "upload", redis_rate.Limit{
 		Rate:   3,
 		Burst:  3,
 		Period: time.Minute,
-	})
+	}, disabled)
 }
 
 // LeadRateLimit bounds the public lead-submit endpoint: a handful per IP per
 // hour is plenty for a genuine "get started" form and starves bots.
-func LeadRateLimit(rdb *redis.Client) gin.HandlerFunc {
+func LeadRateLimit(rdb *redis.Client, disabled bool) gin.HandlerFunc {
 	return RateLimit(rdb, "leads", redis_rate.Limit{
 		Rate:   5,
 		Burst:  5,
 		Period: time.Hour,
-	})
+	}, disabled)
 }

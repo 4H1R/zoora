@@ -244,13 +244,22 @@ func main() {
 		log.Error("failed to set trusted proxies", "error", err)
 		os.Exit(1)
 	}
+	// Load-testing escape hatch; never honored in production.
+	rateLimitDisabled := cfg.RateLimitDisabled && !cfg.IsProduction()
+	if cfg.RateLimitDisabled && cfg.IsProduction() {
+		log.Warn("RATE_LIMIT_DISABLED is set but ignored in production")
+	}
+	if rateLimitDisabled {
+		log.Warn("rate limiting is DISABLED (RATE_LIMIT_DISABLED=true)")
+	}
+
 	router.Use(
 		middleware.RequestID(),
 		middleware.Recovery(log),
 		middleware.ErrorHandler(log),
 		middleware.Logging(log),
 		middleware.CORS(cfg.CORSAllowedOrigins),
-		middleware.GlobalRateLimit(redisClient),
+		middleware.GlobalRateLimit(redisClient, rateLimitDisabled),
 	)
 
 	router.GET("/healthz", healthChecker.LivenessHandler)
@@ -268,13 +277,13 @@ func main() {
 	v1 := router.Group("/api/v1", tenantMiddleware)
 
 	authHandler := auth.NewHandler(authBusinessService)
-	authHandler.RegisterRoutes(v1, middleware.AuthRateLimit(redisClient))
+	authHandler.RegisterRoutes(v1, middleware.AuthRateLimit(redisClient, rateLimitDisabled))
 
 	// Public, unauthenticated lead capture from the marketing site. Mounted on
 	// v1 (tenant middleware only injects context, never rejects), so it works
 	// from the apex host. Rate-limited + honeypot-gated against abuse.
 	leadHandler := leads.NewHandler(leadService)
-	leadHandler.RegisterRoutes(v1, middleware.LeadRateLimit(redisClient))
+	leadHandler.RegisterRoutes(v1, middleware.LeadRateLimit(redisClient, rateLimitDisabled))
 
 	perm := auth.RequirePermission
 	permAny := auth.RequireAnyPermission
