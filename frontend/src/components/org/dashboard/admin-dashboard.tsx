@@ -3,10 +3,11 @@ import { useTranslation } from "react-i18next"
 
 import { useGetUsersMe } from "@/api/users/users"
 import { Eyebrow } from "@/components/eyebrow"
-import { InstallAppBanner } from "@/components/pwa/install-app-banner"
+import { ProfileCard } from "@/components/org/dashboard/profile-card"
 import { TileGrid } from "@/components/org/dashboard/tile-grid"
 import { useDashboardTiles } from "@/components/org/dashboard/use-dashboard-tiles"
 import { useGreeting } from "@/components/org/dashboard/use-greeting"
+import { InstallAppBanner } from "@/components/pwa/install-app-banner"
 import { EmptyState } from "@/components/ui/empty-state"
 
 export function AdminDashboard() {
@@ -29,10 +30,7 @@ export function AdminDashboard() {
 
       <div className="flex items-center gap-3.5">
         {initial && (
-          <div
-            aria-hidden
-            className="ring-primary/15 relative size-11 shrink-0 rounded-xl shadow-sm ring-1 ring-inset"
-          >
+          <div aria-hidden className="ring-primary/15 relative size-11 shrink-0 rounded-xl shadow-sm ring-1 ring-inset">
             {/* base gradient + top sheen for depth */}
             <div className="from-primary/25 to-primary/5 absolute inset-0 rounded-xl bg-gradient-to-br" />
             <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-transparent to-white/15 dark:to-white/5" />
@@ -44,11 +42,11 @@ export function AdminDashboard() {
         )}
         <div className="flex min-w-0 flex-col gap-0.5">
           <Eyebrow className="text-primary">{t("org.dashboard.overview")}</Eyebrow>
-          <h1 className="truncate text-xl font-bold tracking-tight text-balance sm:text-2xl">
-            {greeting}
-          </h1>
+          <h1 className="truncate text-xl font-bold tracking-tight text-balance sm:text-2xl">{greeting}</h1>
         </div>
       </div>
+
+      <ProfileCard />
 
       <InstallAppBanner />
 

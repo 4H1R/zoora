@@ -148,7 +148,7 @@ func TestCreateUser_AsAdmin(t *testing.T) {
 
 	repo.On("Create", ctx, mock.AnythingOfType("*domain.User")).Return(nil)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, logger)
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, logger)
 
 	user, err := svc.Create(ctx, domain.CreateUserDTO{
 		Username: "newuser",
@@ -183,7 +183,7 @@ func TestCreateUser_SeatLimitReached(t *testing.T) {
 	})
 	repo := &mockUserRepo{}
 	ent := fakeEntService{userLimitErr: domain.NewLimitError(domain.PlanFree, domain.LimitMaxUsers, 10, 10)}
-	svc := users.NewService(repo, &mockRoleRepo{}, ent, nil, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, ent, nil, nil, slog.Default())
 
 	_, err := svc.Create(ctx, domain.CreateUserDTO{Username: "u", Name: "U", Password: "password123"})
 	assert.ErrorIs(t, err, domain.ErrPlanLimitReached)
@@ -199,7 +199,7 @@ func TestCreateUser_UnderSeatLimitAllows(t *testing.T) {
 	})
 	repo := &mockUserRepo{}
 	repo.On("Create", ctx, mock.AnythingOfType("*domain.User")).Return(nil)
-	svc := users.NewService(repo, &mockRoleRepo{}, fakeEntService{}, nil, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, fakeEntService{}, nil, nil, slog.Default())
 
 	_, err := svc.Create(ctx, domain.CreateUserDTO{Username: "u", Name: "U", Password: "password123"})
 	assert.NoError(t, err)
@@ -213,7 +213,7 @@ func TestCreateUser_DuplicateReturnedByRepo(t *testing.T) {
 
 	repo.On("Create", ctx, mock.AnythingOfType("*domain.User")).Return(domain.ErrConflict)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, logger)
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, logger)
 
 	_, err := svc.Create(ctx, domain.CreateUserDTO{
 		Username: "newuser",
@@ -233,28 +233,11 @@ func TestGetProfile(t *testing.T) {
 	expected := &domain.User{ID: userID, Name: "Test"}
 	repo.On("FindByIDWithPermissions", ctx, userID).Return(expected, nil)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, logger)
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, logger)
 
 	user, err := svc.GetProfile(ctx, userID)
 	assert.NoError(t, err)
 	assert.Equal(t, "Test", user.Name)
-}
-
-func TestUpdateProfile(t *testing.T) {
-	ctx := context.Background()
-	logger := slog.Default()
-	repo := &mockUserRepo{}
-
-	userID := uuid.New()
-	existing := &domain.User{ID: userID, Name: "Old Name"}
-	repo.On("FindByID", ctx, userID).Return(existing, nil)
-	repo.On("Update", ctx, mock.AnythingOfType("*domain.User")).Return(nil)
-
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, logger)
-
-	user, err := svc.UpdateProfile(ctx, userID, domain.UpdateProfileDTO{Name: "New Name"})
-	assert.NoError(t, err)
-	assert.Equal(t, "New Name", user.Name)
 }
 
 func TestList_NoCaller_Forbidden(t *testing.T) {
@@ -262,7 +245,7 @@ func TestList_NoCaller_Forbidden(t *testing.T) {
 	logger := slog.Default()
 	repo := &mockUserRepo{}
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, logger)
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, logger)
 
 	_, _, err := svc.List(ctx, domain.ListParams{}, nil)
 	assert.ErrorIs(t, err, domain.ErrForbidden)
@@ -278,7 +261,7 @@ func TestList_AdminGetsAll(t *testing.T) {
 		return scope.All && scope.OrganizationID == nil
 	}), mock.AnythingOfType("domain.ListParams")).Return(userList, int64(1), nil)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, logger)
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, logger)
 
 	result, total, err := svc.List(ctx, domain.ListParams{Page: 1, PageSize: domain.DefaultPageSize}, nil)
 	assert.NoError(t, err)
@@ -301,7 +284,7 @@ func TestList_ViewAnyScopedToOrg(t *testing.T) {
 		return !scope.All && scope.OrganizationID != nil && *scope.OrganizationID == orgID && scope.UserID == nil
 	}), mock.AnythingOfType("domain.ListParams")).Return(userList, int64(1), nil)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, logger)
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, logger)
 
 	result, total, err := svc.List(ctx, domain.ListParams{Page: 1, PageSize: domain.DefaultPageSize}, nil)
 	assert.NoError(t, err)
@@ -325,7 +308,7 @@ func TestList_ViewOnlyScopedToSelf(t *testing.T) {
 		return !scope.All && scope.OrganizationID == nil && scope.UserID != nil && *scope.UserID == callerID
 	}), mock.AnythingOfType("domain.ListParams")).Return(userList, int64(1), nil)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, logger)
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, logger)
 
 	result, total, err := svc.List(ctx, domain.ListParams{Page: 1, PageSize: domain.DefaultPageSize}, nil)
 	assert.NoError(t, err)
@@ -338,7 +321,7 @@ func TestGetByID_NoCaller_Forbidden(t *testing.T) {
 	logger := slog.Default()
 	repo := &mockUserRepo{}
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, logger)
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, logger)
 
 	_, err := svc.GetByID(ctx, uuid.New())
 	assert.ErrorIs(t, err, domain.ErrForbidden)
@@ -349,7 +332,7 @@ func TestDelete_NoCaller_Forbidden(t *testing.T) {
 	logger := slog.Default()
 	repo := &mockUserRepo{}
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, logger)
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, logger)
 
 	err := svc.Delete(ctx, uuid.New())
 	assert.ErrorIs(t, err, domain.ErrForbidden)
@@ -360,7 +343,7 @@ func TestDelete_SelfDelete_Forbidden(t *testing.T) {
 	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: callerID, IsAdmin: true})
 	repo := &mockUserRepo{}
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, slog.Default())
 
 	err := svc.Delete(ctx, callerID)
 	assert.ErrorIs(t, err, domain.ErrForbidden)
@@ -376,7 +359,7 @@ func TestDelete_Success(t *testing.T) {
 	userID := uuid.New()
 	repo.On("Delete", ctx, userID).Return(nil)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, logger)
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, logger)
 
 	err := svc.Delete(ctx, userID)
 	assert.NoError(t, err)
@@ -392,9 +375,9 @@ func TestChangePassword_WrongCurrentPassword(t *testing.T) {
 	hashed, _ := bcrypt.GenerateFromPassword([]byte("correctpass"), bcrypt.DefaultCost)
 	repo.On("FindByID", ctx, userID).Return(&domain.User{ID: userID, Password: string(hashed)}, nil)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, logger)
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, logger)
 
-	err := svc.ChangePassword(ctx, userID, domain.ChangePasswordDTO{
+	_, err := svc.ChangePassword(ctx, userID, domain.ChangePasswordDTO{
 		CurrentPassword: "wrongpass",
 		NewPassword:     "newStrongPass1!",
 	})
@@ -411,19 +394,20 @@ func TestChangePassword_Success(t *testing.T) {
 	repo.On("FindByID", ctx, userID).Return(&domain.User{ID: userID, Password: string(hashed)}, nil)
 	repo.On("Update", ctx, mock.AnythingOfType("*domain.User")).Return(nil)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, logger)
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, logger)
 
-	err := svc.ChangePassword(ctx, userID, domain.ChangePasswordDTO{
+	token, err := svc.ChangePassword(ctx, userID, domain.ChangePasswordDTO{
 		CurrentPassword: "correctpass",
 		NewPassword:     "newStrongPass1!",
 	})
 	assert.NoError(t, err)
+	assert.Empty(t, token) // nil SessionTokenService in this test → no re-issued token
 	repo.AssertExpectations(t)
 }
 
 func TestService_Disable_SetsFields(t *testing.T) {
 	repo := &mockUserRepo{}
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, slog.Default())
 
 	targetID := uuid.New()
 	callerID := uuid.New()
@@ -444,7 +428,7 @@ func TestService_Disable_SetsFields(t *testing.T) {
 
 func TestService_Disable_CannotDisableSelf(t *testing.T) {
 	repo := &mockUserRepo{}
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, slog.Default())
 
 	id := uuid.New()
 	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: id, IsAdmin: true})
@@ -456,7 +440,7 @@ func TestService_Disable_CannotDisableSelf(t *testing.T) {
 
 func TestService_Disable_NonAdminCannotDisableAdmin(t *testing.T) {
 	repo := &mockUserRepo{}
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, slog.Default())
 
 	orgID := uuid.New()
 	targetID := uuid.New()
@@ -472,7 +456,7 @@ func TestService_Disable_NonAdminCannotDisableAdmin(t *testing.T) {
 
 func TestService_Disable_Idempotent(t *testing.T) {
 	repo := &mockUserRepo{}
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, slog.Default())
 
 	now := time.Now()
 	targetID := uuid.New()
@@ -489,7 +473,7 @@ func TestService_Disable_Idempotent(t *testing.T) {
 
 func TestService_Enable_ClearsFields(t *testing.T) {
 	repo := &mockUserRepo{}
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, slog.Default())
 
 	now := time.Now()
 	by := uuid.New()

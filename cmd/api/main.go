@@ -53,6 +53,7 @@ import (
 	"github.com/4H1R/zoora/internal/quizzes"
 	"github.com/4H1R/zoora/internal/roles"
 	"github.com/4H1R/zoora/internal/tickets"
+	"github.com/4H1R/zoora/internal/tutorials"
 	"github.com/4H1R/zoora/internal/users"
 )
 
@@ -145,6 +146,7 @@ func main() {
 	quizSubmissionRepo := quizzes.NewSubmissionRepository(db)
 	mediaRepo := media.NewRepository(db)
 	changelogRepo := changelog.NewRepository(db)
+	tutorialRepo := tutorials.NewRepository(db)
 	liveRoomRepo := livesessions.NewRoomRepository(db)
 	liveParticipantRepo := livesessions.NewParticipantRepository(db)
 	liveRecordingRepo := livesessions.NewRecordingRepository(db)
@@ -175,7 +177,8 @@ func main() {
 	orgSettingsRepo := orgsettings.NewRepository(db)
 	orgSettingsService := orgsettings.NewService(orgSettingsRepo, log)
 
-	userService := users.NewService(userRepo, roleRepo, entitlementService, redisClient, log)
+	sessionManager := auth.NewSessionManager(jwtService, redisClient)
+	userService := users.NewService(userRepo, roleRepo, entitlementService, redisClient, sessionManager, log)
 	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, queueClient, log)
 	classService := classes.NewService(classRepo, classSessionRepo, classMemberRepo, log)
 	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, log)
@@ -194,6 +197,7 @@ func main() {
 	authBusinessService := auth.NewAuthService(userRepo, jwtService, redisClient, log)
 	mediaService := media.NewService(mediaRepo, storageClient, entitlementService, log)
 	changelogService := changelog.NewServiceWithMedia(changelogRepo, mediaRepo, storageClient, log)
+	tutorialService := tutorials.NewService(tutorialRepo, log)
 	livekitClient := lk.NewClient(cfg, log)
 	chatService := chat.NewService(chatRepo, chatMessageRepo, transactor, log, livekitClient, liveRoomRepo)
 
@@ -290,6 +294,9 @@ func main() {
 
 	changelogHandler := changelog.NewHandler(changelogService)
 	changelogHandler.RegisterRoutes(v1, authMiddleware)
+
+	tutorialHandler := tutorials.NewHandler(tutorialService)
+	tutorialHandler.RegisterRoutes(v1, authMiddleware)
 
 	// SMS channel is optional. When unconfigured, OTP linking and SMS delivery
 	// are disabled (nil sender surfaces a validation error / skips the channel).
@@ -446,10 +453,11 @@ func main() {
 	adminRoleHandler := roles.NewAdminHandler(roleService)
 	adminAttendanceHandler := attendance.NewAdminHandler(attendanceService)
 	adminChangelogHandler := changelog.NewAdminHandler(changelogService)
+	adminTutorialHandler := tutorials.NewAdminHandler(tutorialService)
 	adminOrgSettingsHandler := orgsettings.NewAdminHandler(orgSettingsService)
 
 	adminGroup := v1.Group("/admin", authMiddleware, auth.RequireAdmin())
-	admin.RegisterRoutes(adminGroup, adminUserHandler, adminOrgHandler, adminClassHandler, adminQuestionBankHandler, adminQuizHandler, adminLiveSessionHandler, adminOfflineHandler, adminPracticeHandler, adminPollHandler, adminQAHandler, adminRoleHandler, adminAttendanceHandler, adminChangelogHandler, adminOrgSettingsHandler, billingAdminHandler)
+	admin.RegisterRoutes(adminGroup, adminUserHandler, adminOrgHandler, adminClassHandler, adminQuestionBankHandler, adminQuizHandler, adminLiveSessionHandler, adminOfflineHandler, adminPracticeHandler, adminPollHandler, adminQAHandler, adminRoleHandler, adminAttendanceHandler, adminChangelogHandler, adminTutorialHandler, adminOrgSettingsHandler, billingAdminHandler)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,

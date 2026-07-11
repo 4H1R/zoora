@@ -20,11 +20,12 @@ type service struct {
 	roleRepo domain.RoleRepository
 	ent      entitlements.Service
 	redis    *redis.Client
+	tokens   domain.SessionTokenService
 	logger   *slog.Logger
 }
 
-func NewService(repo domain.UserRepository, roleRepo domain.RoleRepository, ent entitlements.Service, rdb *redis.Client, logger *slog.Logger) domain.UserService {
-	return &service{repo: repo, roleRepo: roleRepo, ent: ent, redis: rdb, logger: logger}
+func NewService(repo domain.UserRepository, roleRepo domain.RoleRepository, ent entitlements.Service, rdb *redis.Client, tokens domain.SessionTokenService, logger *slog.Logger) domain.UserService {
+	return &service{repo: repo, roleRepo: roleRepo, ent: ent, redis: rdb, tokens: tokens, logger: logger}
 }
 
 // bustUser drops the auth-middleware cache for a user after any change to their
@@ -205,40 +206,43 @@ func (s *service) GetProfile(ctx context.Context, id uuid.UUID) (*domain.User, e
 	return s.repo.FindByIDWithPermissions(ctx, id)
 }
 
-func (s *service) ChangePassword(ctx context.Context, id uuid.UUID, dto domain.ChangePasswordDTO) error {
+func (s *service) ChangePassword(ctx context.Context, id uuid.UUID, dto domain.ChangePasswordDTO) (string, error) {
 	user, err := s.repo.FindByID(ctx, id)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(dto.CurrentPassword)); err != nil {
-		return domain.ErrUnauthorized
+		return "", domain.ErrUnauthorized
+	}
+	if dto.NewPassword == dto.CurrentPassword {
+		return "", domain.NewValidationError(map[string]string{"new_password": "must differ from current password"})
 	}
 	hashed, err := bcrypt.GenerateFromPassword([]byte(dto.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
-		return fmt.Errorf("users.service.ChangePassword hash: %w", err)
+		return "", fmt.Errorf("users.service.ChangePassword hash: %w", err)
 	}
 	user.Password = string(hashed)
 	if err := s.repo.Update(ctx, user); err != nil {
-		return err
+		return "", err
 	}
 	s.bustUser(ctx, id)
 	s.logger.Info("password changed", "user_id", id.String())
-	return nil
-}
 
-func (s *service) UpdateProfile(ctx context.Context, id uuid.UUID, dto domain.UpdateProfileDTO) (*domain.User, error) {
-	user, err := s.repo.FindByID(ctx, id)
+	// Log out every other device (tokens issued before now), then mint a fresh
+	// token so this device — whose old token is now revoked — stays signed in.
+	// Revoke first: the new token's IssuedAt is >= the revocation stamp, so it
+	// survives the middleware's `IssuedAt < revokedAt` check.
+	if s.tokens == nil {
+		return "", nil
+	}
+	if err := s.tokens.RevokeUserSessions(ctx, id); err != nil {
+		return "", fmt.Errorf("users.service.ChangePassword revoke: %w", err)
+	}
+	token, err := s.tokens.GenerateToken(id)
 	if err != nil {
-		return nil, err
+		return "", fmt.Errorf("users.service.ChangePassword token: %w", err)
 	}
-	if dto.Name != "" {
-		user.Name = dto.Name
-	}
-	if err := s.repo.Update(ctx, user); err != nil {
-		return nil, err
-	}
-	s.bustUser(ctx, id)
-	return user, nil
+	return token, nil
 }
 
 func (s *service) AssignRole(ctx context.Context, userID uuid.UUID, dto domain.AssignRoleDTO) (*domain.User, error) {

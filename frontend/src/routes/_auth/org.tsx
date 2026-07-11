@@ -6,16 +6,14 @@ import { useTranslation } from "react-i18next"
 import { useGetUsersMe } from "@/api/users/users"
 import { MajorModal } from "@/components/changelog/major-modal"
 import { NavZoora } from "@/components/changelog/nav-zoora"
-import { LanguageSwitcher } from "@/components/language-switcher"
-import { ChatProvider } from "@/components/org/conversations/chat-provider"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 // import { LiveClock } from "@/components/live-clock"
 import { BreadcrumbProvider } from "@/components/layout/breadcrumb-context"
 import { MobileBreadcrumb } from "@/components/layout/mobile-breadcrumb"
 import { SidebarBreadcrumb } from "@/components/layout/sidebar-breadcrumb"
 import { NotificationBell } from "@/components/notifications/notification-bell"
+import { ChatProvider } from "@/components/org/conversations/chat-provider"
 import { SplashScreen } from "@/components/splash-screen"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { useDirection } from "@/components/ui/direction"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { buildAccess } from "@/lib/access"
@@ -36,6 +34,7 @@ const SEGMENT_KEYS: Record<string, string> = {
   members: "org.nav.members",
   "whats-new": "whatsNew.title",
   notifications: "notifications.title",
+  account: "org.nav.account",
 }
 
 function RouteComponent() {
@@ -82,10 +81,7 @@ function RouteComponent() {
           <AppSidebar user={user} navGroups={navGroups} side={sidebarSide} contentExtra={<NavZoora />} />
           <SidebarInset>
             <header
-              className={cn(
-                "flex h-16 shrink-0 items-center gap-2 border-b px-4",
-                chatDetail && "hidden md:flex"
-              )}
+              className={cn("flex h-16 shrink-0 items-center gap-2 border-b px-4", chatDetail && "hidden md:flex")}
             >
               <SidebarTrigger className="md:hidden" />
               <SidebarBreadcrumb
@@ -97,8 +93,6 @@ function RouteComponent() {
               <div className="ms-auto flex items-center gap-2">
                 {/* <LiveClock className="me-1 hidden sm:flex" /> */}
                 <NotificationBell to="/org/notifications" />
-                <LanguageSwitcher />
-                <ThemeToggle />
               </div>
             </header>
             <MajorModal />
@@ -107,9 +101,7 @@ function RouteComponent() {
               className={cn(
                 "flex flex-1 flex-col",
                 fullBleed ? "min-h-0" : "container",
-                chatDetail
-                  ? "gap-0 p-0 md:gap-4 md:px-4 md:py-4"
-                  : cn("gap-4 py-4", fullBleed && "px-4")
+                chatDetail ? "gap-0 p-0 md:gap-4 md:px-4 md:py-4" : cn("gap-4 py-4", fullBleed && "px-4")
               )}
             >
               <Outlet />

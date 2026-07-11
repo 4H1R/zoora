@@ -34,7 +34,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		// Self-access (no permission needed, just authenticated).
 		authed.GET("/users/me", h.GetProfile)
 		authed.GET("/users/me/entitlements", h.GetEntitlements)
-		authed.PUT("/users/me", h.UpdateProfile)
 		authed.POST("/users/me/password", h.ChangePassword)
 
 		// CRUD with self-vs-any permission pattern.
@@ -283,38 +282,16 @@ func (h *Handler) GetEntitlements(c *gin.Context) {
 	domain.SuccessResponse(c, http.StatusOK, caller.Ent.Public())
 }
 
-// @Summary Update my profile
-// @Tags Users
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param body body domain.UpdateProfileDTO true "Profile data"
-// @Success 200 {object} domain.Response{data=domain.User}
-// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
-// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
-// @Failure 500 {object} domain.Response{error=domain.ErrorBody}
-// @Router /users/me [put]
-func (h *Handler) UpdateProfile(c *gin.Context) {
-	var dto domain.UpdateProfileDTO
-	if err := httpx.Bind(c, &dto); err != nil {
-		_ = c.Error(err)
-		return
-	}
-	user, err := h.svc.UpdateProfile(c.Request.Context(), auth.GetUserID(c), dto)
-	if err != nil {
-		_ = c.Error(err)
-		return
-	}
-	domain.SuccessResponse(c, http.StatusOK, user)
-}
-
+// ChangePassword updates the caller's password and returns a fresh token.
+// Changing the password revokes all sessions issued before now (logging out
+// other devices); the returned token keeps the current device signed in.
 // @Summary Change my password
 // @Tags Users
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param body body domain.ChangePasswordDTO true "Password data"
-// @Success 200 {object} domain.Response
+// @Success 200 {object} domain.Response{data=domain.ChangePasswordResponse}
 // @Failure 400 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 500 {object} domain.Response{error=domain.ErrorBody}
@@ -325,11 +302,12 @@ func (h *Handler) ChangePassword(c *gin.Context) {
 		_ = c.Error(err)
 		return
 	}
-	if err := h.svc.ChangePassword(c.Request.Context(), auth.GetUserID(c), dto); err != nil {
+	token, err := h.svc.ChangePassword(c.Request.Context(), auth.GetUserID(c), dto)
+	if err != nil {
 		_ = c.Error(err)
 		return
 	}
-	domain.SuccessResponse(c, http.StatusOK, nil)
+	domain.SuccessResponse(c, http.StatusOK, domain.ChangePasswordResponse{Token: token})
 }
 
 // @Summary Assign role to user

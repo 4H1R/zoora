@@ -14,9 +14,9 @@ import {
  * trigger the native install dialog on a user gesture.
  */
 const DISMISS_KEY = "zoora:pwa-install-dismissed"
-// Re-offer the banner after two weeks instead of hiding it forever — a one-time
+// Re-offer the banner after three days instead of hiding it forever — a one-time
 // "not now" shouldn't permanently kill install discovery on that device.
-const DISMISS_TTL_MS = 1000 * 60 * 60 * 24 * 14
+const DISMISS_TTL_MS = 1000 * 60 * 60 * 24 * 3
 
 function isStandalone() {
   if (typeof window === "undefined") return false

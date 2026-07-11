@@ -28,7 +28,7 @@ func RegisterValidators() error {
 
 func strongPassword(fl validator.FieldLevel) bool {
 	s := fl.Field().String()
-	return len(s) >= 6
+	return len(s) >= 8
 }
 
 var usernameRe = regexp.MustCompile(`^[a-z0-9_.]{3,30}$`)
@@ -172,7 +172,7 @@ func describeTag(fe validator.FieldError) string {
 	case "e164":
 		return "must be E.164 phone format"
 	case "strongpassword":
-		return "must be at least 6 characters"
+		return "must be at least 8 characters"
 	case "username":
 		return "must be 3-30 chars: lowercase letters, digits, dot or underscore"
 	default:

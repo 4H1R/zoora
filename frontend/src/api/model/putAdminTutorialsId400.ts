@@ -8,6 +8,6 @@
 import type { GithubCom4H1RZooraInternalDomainErrorBody } from './githubCom4H1RZooraInternalDomainErrorBody';
 import type { GithubCom4H1RZooraInternalDomainResponse } from './githubCom4H1RZooraInternalDomainResponse';
 
-export type PutUsersMe500 = GithubCom4H1RZooraInternalDomainResponse & {
+export type PutAdminTutorialsId400 = GithubCom4H1RZooraInternalDomainResponse & {
   error?: GithubCom4H1RZooraInternalDomainErrorBody;
 };

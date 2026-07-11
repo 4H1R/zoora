@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface GithubCom4H1RZooraInternalDomainUpdateProfileDTO {
-  /** @minLength 2 */
-  name?: string;
+export interface GithubCom4H1RZooraInternalDomainAparatOEmbedResponse {
+  thumbnail_url?: string;
+  title?: string;
 }

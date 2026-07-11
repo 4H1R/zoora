@@ -50,6 +50,7 @@ pnpm typecheck  # Type check only (no build)
 - File-based routing via TanStack Router — routes in `src/routes/`
 - Route types auto-generated into `src/routeTree.gen.ts` — never edit this file manually
 - Route-level data fetching with React Query loader patterns
+- **Breadcrumbs map path segments through `t(segment)`.** `SidebarBreadcrumb` (used by `admin-breadcrumb.tsx` / org equivalent) falls back to `t(currentSegment)` when a segment isn't in its `SEGMENT_KEYS`. If a route segment name (e.g. `tutorials`) collides with a **top-level i18n key that holds an object**, `t()` returns that object and React throws "Objects are not valid as a React child … an object instead of string", breaking the breadcrumb. When adding an admin route, add its segment to `SEGMENT_KEYS` in `admin-breadcrumb.tsx` pointing at a string title key.
 
 ### State Management
 

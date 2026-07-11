@@ -30,7 +30,7 @@ type CreateUserDTO struct {
 	OrganizationID *uuid.UUID `json:"organization_id"`
 	Username       string     `json:"username" binding:"required,username"`
 	Name           string     `json:"name" binding:"required,min=2"`
-	Password       string     `json:"password" binding:"required,min=6"`
+	Password       string     `json:"password" binding:"required,min=8"`
 	IsAdmin        bool       `json:"is_admin"`
 	RoleID         *uuid.UUID `json:"role_id"`
 }
@@ -41,13 +41,17 @@ type UpdateUserDTO struct {
 	RoleID   *uuid.UUID `json:"role_id"`
 }
 
-type UpdateProfileDTO struct {
-	Name string `json:"name" binding:"omitempty,min=2"`
-}
-
 type ChangePasswordDTO struct {
 	CurrentPassword string `json:"current_password" binding:"required"`
 	NewPassword     string `json:"new_password" binding:"required,strongpassword"`
+}
+
+// ChangePasswordResponse carries a freshly-issued token. Changing the password
+// revokes every session issued before the change (see SessionTokenService); the
+// current device swaps in this token so it stays signed in while other devices
+// are logged out.
+type ChangePasswordResponse struct {
+	Token string `json:"token"`
 }
 
 type LoginDTO struct {
@@ -149,8 +153,10 @@ type UserService interface {
 	List(ctx context.Context, p ListParams, disabled *bool) ([]User, int64, error)
 	StatusCounts(ctx context.Context) (UserStatusCounts, error)
 	GetProfile(ctx context.Context, id uuid.UUID) (*User, error)
-	UpdateProfile(ctx context.Context, id uuid.UUID, dto UpdateProfileDTO) (*User, error)
-	ChangePassword(ctx context.Context, id uuid.UUID, dto ChangePasswordDTO) error
+	// ChangePassword verifies the current password, sets the new one, revokes
+	// all sessions issued before now, and returns a fresh token for the caller's
+	// current device so it stays signed in.
+	ChangePassword(ctx context.Context, id uuid.UUID, dto ChangePasswordDTO) (string, error)
 	AssignRole(ctx context.Context, userID uuid.UUID, dto AssignRoleDTO) (*User, error)
 	RemoveRole(ctx context.Context, userID uuid.UUID) (*User, error)
 	Disable(ctx context.Context, id uuid.UUID, dto DisableUserDTO) (*User, error)
@@ -163,6 +169,16 @@ type UserService interface {
 	AdminUpdate(ctx context.Context, id uuid.UUID, dto AdminUpdateUserDTO) (*User, error)
 	AdminForceResetPassword(ctx context.Context, id uuid.UUID, dto AdminForceResetPasswordDTO) error
 	AdminHardDelete(ctx context.Context, id uuid.UUID) error
+}
+
+// SessionTokenService issues auth tokens and revokes a user's own sessions.
+// It is implemented in the auth package and injected into features that must
+// re-issue or invalidate a caller's own token after proving identity
+// themselves (e.g. self password change) — no caller authz is performed here.
+type SessionTokenService interface {
+	GenerateToken(userID uuid.UUID) (string, error)
+	// RevokeUserSessions invalidates every token issued before now for userID.
+	RevokeUserSessions(ctx context.Context, userID uuid.UUID) error
 }
 
 type AuthService interface {

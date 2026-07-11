@@ -373,6 +373,44 @@
     "light": "Switch to light mode",
     "dark": "Switch to dark mode"
   },
+  "account": {
+    "title": "Account",
+    "menuAction": "Account settings",
+    "subtitle": "Manage your profile, security and preferences",
+    "role": "Role",
+    "username": "Username",
+    "organization": "Organization",
+    "member": "Member",
+    "created": "Member since",
+    "lockedNote": "Contact your administrator to change your name or username.",
+    "security": {
+      "title": "Security",
+      "hint": "Change your password. For your safety this signs out every other device.",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "show": "Show password",
+      "hide": "Hide password",
+      "submit": "Update password",
+      "submitting": "Updating…",
+      "success": "Password changed. Your other devices have been signed out.",
+      "errors": {
+        "currentWrong": "Current password is incorrect",
+        "min": "Must be at least 8 characters",
+        "mismatch": "Passwords do not match",
+        "sameAsCurrent": "New password must differ from your current one",
+        "generic": "Could not change your password. Please try again."
+      }
+    },
+    "preferences": {
+      "title": "Preferences",
+      "hint": "Personalize how Zoora looks and reads for you.",
+      "theme": "Theme",
+      "themeHint": "Switch between light and dark.",
+      "language": "Language",
+      "languageHint": "Choose your display language."
+    }
+  },
   "logout": {
     "success": "You've logged out successfully"
   },
@@ -1347,6 +1385,45 @@
         "published": "Published",
         "drafts": "Drafts"
       }
+    },
+    "tutorials": {
+      "title": "Tutorials",
+      "subtitle": "Publish and order the Aparat how-to videos shown to every organization",
+      "untitled": "Untitled tutorial",
+      "editTitle": "Edit tutorial",
+      "draft": "Draft",
+      "published": "Published",
+      "publishedToast": "Tutorial published",
+      "saveDraft": "Save draft",
+      "saved": "Saved",
+      "publish": "Publish",
+      "unpublish": "Unpublish",
+      "deleted": "Tutorial deleted",
+      "createFailed": "Could not create tutorial",
+      "reorderFailed": "Could not save the new order",
+      "empty": "No tutorials yet",
+      "emptyHint": "Add your first how-to video to help users learn the platform.",
+      "noDescription": "No description",
+      "dragHint": "Drag to reorder",
+      "aparatLink": "Aparat video link",
+      "aparatHint": "Paste the Aparat watch URL (aparat.com/v/…) or the video hash, then load to fetch its poster.",
+      "load": "Load",
+      "badLink": "Couldn't find an Aparat video in that link",
+      "oembedFailed": "Couldn't reach Aparat — enter the thumbnail URL manually",
+      "oembedOk": "Loaded video details from Aparat",
+      "needVideo": "Add an Aparat video before saving",
+      "preview": "Preview",
+      "openOnAparat": "Open on Aparat",
+      "thumbnail": "Thumbnail URL",
+      "titleLabel": "Title",
+      "titlePh": "e.g. How to start a live class",
+      "descriptionLabel": "Description",
+      "descriptionPh": "What this video covers (markdown supported)",
+      "stats": {
+        "total": "Total",
+        "published": "Published",
+        "drafts": "Drafts"
+      }
     }
   },
   "classes": {
@@ -1427,7 +1504,8 @@
       "recordings": "Recordings",
       "zoora": "Zoora",
       "conversations": "Chat",
-      "tickets": "Tickets"
+      "tickets": "Tickets",
+      "account": "Account"
     },
     "practices": {
       "title": "Practices",
@@ -2863,6 +2941,18 @@
     "major": "Major",
     "seeAll": "See all",
     "gotIt": "Got it"
+  },
+  "tutorials": {
+    "title": "Tutorials",
+    "subtitle": "Short videos that walk you through Zoora, step by step.",
+    "eyebrow": "Learn Zoora",
+    "searchPh": "Search tutorials…",
+    "untitled": "Untitled",
+    "nowPlaying": "Now playing",
+    "empty": "No tutorials yet",
+    "emptyHint": "How-to videos will appear here soon.",
+    "noResults": "No tutorials match \"{{query}}\"",
+    "noResultsHint": "Try a different word, or clear the search to see everything."
   },
   "notifications": {
     "title": "Notifications",

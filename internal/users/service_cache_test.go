@@ -10,6 +10,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/platform/cache"
@@ -30,7 +31,7 @@ func newCacheHarness(t *testing.T, repo domain.UserRepository) (domain.UserServi
 		t.Fatalf("seeding user cache: %v", err)
 	}
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, rdb, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, rdb, nil, slog.Default())
 	return svc, rdb, userID
 }
 
@@ -41,14 +42,18 @@ func assertCacheBusted(t *testing.T, rdb *redis.Client, userID uuid.UUID) {
 	}
 }
 
-func TestUpdateProfile_BustsUserCache(t *testing.T) {
+func TestChangePassword_BustsUserCache(t *testing.T) {
 	repo := &mockUserRepo{}
 	svc, rdb, userID := newCacheHarness(t, repo)
 
-	repo.On("FindByID", mock.Anything, userID).Return(&domain.User{ID: userID, Name: "old"}, nil)
+	hashed, _ := bcrypt.GenerateFromPassword([]byte("oldpass12"), bcrypt.DefaultCost)
+	repo.On("FindByID", mock.Anything, userID).Return(&domain.User{ID: userID, Password: string(hashed)}, nil)
 	repo.On("Update", mock.Anything, mock.AnythingOfType("*domain.User")).Return(nil)
 
-	_, err := svc.UpdateProfile(context.Background(), userID, domain.UpdateProfileDTO{Name: "new"})
+	_, err := svc.ChangePassword(context.Background(), userID, domain.ChangePasswordDTO{
+		CurrentPassword: "oldpass12",
+		NewPassword:     "newpass123",
+	})
 	assert.NoError(t, err)
 	assertCacheBusted(t, rdb, userID)
 }
@@ -93,14 +98,18 @@ func TestAdminHardDelete_BustsUserCache(t *testing.T) {
 }
 
 // A failed repo write must NOT bust the cache — the stale entry is still valid.
-func TestUpdateProfile_RepoErrorKeepsCache(t *testing.T) {
+func TestChangePassword_RepoErrorKeepsCache(t *testing.T) {
 	repo := &mockUserRepo{}
 	svc, rdb, userID := newCacheHarness(t, repo)
 
-	repo.On("FindByID", mock.Anything, userID).Return(&domain.User{ID: userID}, nil)
+	hashed, _ := bcrypt.GenerateFromPassword([]byte("oldpass12"), bcrypt.DefaultCost)
+	repo.On("FindByID", mock.Anything, userID).Return(&domain.User{ID: userID, Password: string(hashed)}, nil)
 	repo.On("Update", mock.Anything, mock.AnythingOfType("*domain.User")).Return(assert.AnError)
 
-	_, err := svc.UpdateProfile(context.Background(), userID, domain.UpdateProfileDTO{Name: "new"})
+	_, err := svc.ChangePassword(context.Background(), userID, domain.ChangePasswordDTO{
+		CurrentPassword: "oldpass12",
+		NewPassword:     "newpass123",
+	})
 	assert.Error(t, err)
 	if _, err := cache.GetUser(context.Background(), rdb, userID); err != nil {
 		t.Fatal("user cache was busted despite repo write failure")

@@ -59,7 +59,6 @@ import type {
   GithubCom4H1RZooraInternalDomainCreateUserDTO,
   GithubCom4H1RZooraInternalDomainDisableUserDTO,
   GithubCom4H1RZooraInternalDomainResponse,
-  GithubCom4H1RZooraInternalDomainUpdateProfileDTO,
   GithubCom4H1RZooraInternalDomainUpdateUserDTO,
   PostUsers201,
   PostUsers400,
@@ -77,6 +76,7 @@ import type {
   PostUsersIdEnable403,
   PostUsersIdEnable404,
   PostUsersIdEnable500,
+  PostUsersMePassword200,
   PostUsersMePassword400,
   PostUsersMePassword401,
   PostUsersMePassword500,
@@ -91,11 +91,7 @@ import type {
   PutUsersIdRole401,
   PutUsersIdRole403,
   PutUsersIdRole404,
-  PutUsersIdRole500,
-  PutUsersMe200,
-  PutUsersMe400,
-  PutUsersMe401,
-  PutUsersMe500
+  PutUsersIdRole500
 } from '../model';
 
 import { customInstance } from '.././mutator/custom-instance';
@@ -616,106 +612,7 @@ export function useGetUsersMe<TData = Awaited<ReturnType<typeof getUsersMe>>, TE
 
 
 
-export type putUsersMeResponse200 = {
-  data: PutUsersMe200
-  status: 200
-}
-
-export type putUsersMeResponse400 = {
-  data: PutUsersMe400
-  status: 400
-}
-
-export type putUsersMeResponse401 = {
-  data: PutUsersMe401
-  status: 401
-}
-
-export type putUsersMeResponse500 = {
-  data: PutUsersMe500
-  status: 500
-}
-
-export type putUsersMeResponseSuccess = (putUsersMeResponse200) & {
-  headers: Headers;
-};
-export type putUsersMeResponseError = (putUsersMeResponse400 | putUsersMeResponse401 | putUsersMeResponse500) & {
-  headers: Headers;
-};
-
-export type putUsersMeResponse = (putUsersMeResponseSuccess | putUsersMeResponseError)
-
-export const getPutUsersMeUrl = () => {
-
-
-
-
-  return `/users/me`
-}
-
-/**
- * @summary Update my profile
- */
-export const putUsersMe = async (githubCom4H1RZooraInternalDomainUpdateProfileDTO: GithubCom4H1RZooraInternalDomainUpdateProfileDTO, options?: RequestInit): Promise<putUsersMeResponse> => {
-
-  return customInstance<putUsersMeResponse>(getPutUsersMeUrl(),
-  {
-    ...options,
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(githubCom4H1RZooraInternalDomainUpdateProfileDTO)
-  }
-);}
-
-
-
-
-
-export const getPutUsersMeMutationOptions = <TError = ErrorType<PutUsersMe400 | PutUsersMe401 | PutUsersMe500>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putUsersMe>>, TError,{data: GithubCom4H1RZooraInternalDomainUpdateProfileDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof putUsersMe>>, TError,{data: GithubCom4H1RZooraInternalDomainUpdateProfileDTO}, TContext> => {
-
-const mutationKey = ['putUsersMe'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putUsersMe>>, {data: GithubCom4H1RZooraInternalDomainUpdateProfileDTO}> = (props) => {
-          const {data} = props ?? {};
-
-          return  putUsersMe(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type PutUsersMeMutationResult = NonNullable<Awaited<ReturnType<typeof putUsersMe>>>
-    export type PutUsersMeMutationBody = GithubCom4H1RZooraInternalDomainUpdateProfileDTO
-    export type PutUsersMeMutationError = ErrorType<PutUsersMe400 | PutUsersMe401 | PutUsersMe500>
-
-    /**
- * @summary Update my profile
- */
-export const usePutUsersMe = <TError = ErrorType<PutUsersMe400 | PutUsersMe401 | PutUsersMe500>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putUsersMe>>, TError,{data: GithubCom4H1RZooraInternalDomainUpdateProfileDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof putUsersMe>>,
-        TError,
-        {data: GithubCom4H1RZooraInternalDomainUpdateProfileDTO},
-        TContext
-      > => {
-      return useMutation(getPutUsersMeMutationOptions(options), queryClient);
-    }
-    export type getUsersMeEntitlementsResponse200 = {
+export type getUsersMeEntitlementsResponse200 = {
   data: GetUsersMeEntitlements200
   status: 200
 }
@@ -840,7 +737,7 @@ export function useGetUsersMeEntitlements<TData = Awaited<ReturnType<typeof getU
 
 
 export type postUsersMePasswordResponse200 = {
-  data: GithubCom4H1RZooraInternalDomainResponse
+  data: PostUsersMePassword200
   status: 200
 }
 

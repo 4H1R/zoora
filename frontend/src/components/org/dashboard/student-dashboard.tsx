@@ -18,6 +18,7 @@ import { Card } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 
+import { ProfileCard } from "./profile-card"
 import { TileGrid } from "./tile-grid"
 import { useDashboardTiles } from "./use-dashboard-tiles"
 import { useGreeting } from "./use-greeting"
@@ -55,9 +56,7 @@ export function StudentDashboard() {
   const examsQ = useGetQuizzesMe()
   const allExams: MyExam[] = (examsQ.data?.status === 200 && examsQ.data.data.data?.items) || []
   const examsLoading = examsQ.isPending
-  const upcomingExams = allExams
-    .filter((e) => e.state === "open" || e.state === "upcoming")
-    .slice(0, 5)
+  const upcomingExams = allExams.filter((e) => e.state === "open" || e.state === "upcoming").slice(0, 5)
 
   const gradesQ = useGetGradebookMe()
   const gradebook = (gradesQ.data?.status === 200 && gradesQ.data.data.data) || undefined
@@ -91,6 +90,8 @@ export function StudentDashboard() {
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{greeting}</h1>
       </div>
 
+      <ProfileCard />
+
       <InstallAppBanner />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -118,9 +119,7 @@ export function StudentDashboard() {
               ))}
             </div>
           ) : upcomingExams.length === 0 ? (
-            <p className="text-muted-foreground px-4 py-8 text-center text-sm">
-              {t("org.portal.widgets.noExams")}
-            </p>
+            <p className="text-muted-foreground px-4 py-8 text-center text-sm">{t("org.portal.widgets.noExams")}</p>
           ) : (
             <div className="divide-y">
               {upcomingExams.map((e) => (
@@ -132,9 +131,7 @@ export function StudentDashboard() {
                     <p className="truncate text-sm font-medium">{e.title || "—"}</p>
                     <p className="text-muted-foreground truncate text-xs">{e.class_name || "—"}</p>
                   </div>
-                  <Badge variant={examStateBadgeVariant(e.state)}>
-                    {t(`org.exams.state.${e.state}`)}
-                  </Badge>
+                  <Badge variant={examStateBadgeVariant(e.state)}>{t(`org.exams.state.${e.state}`)}</Badge>
                   {e.state === "open" && (
                     <Link to="/quiz/$quizId" params={{ quizId: e.quiz_id! }}>
                       <Button size="sm">{t("org.exams.start")}</Button>
@@ -170,9 +167,7 @@ export function StudentDashboard() {
               ))}
             </div>
           ) : latestGrades.length === 0 ? (
-            <p className="text-muted-foreground px-4 py-8 text-center text-sm">
-              {t("org.portal.widgets.noGrades")}
-            </p>
+            <p className="text-muted-foreground px-4 py-8 text-center text-sm">{t("org.portal.widgets.noGrades")}</p>
           ) : (
             <div className="divide-y">
               {latestGrades.map((g, i) => (
@@ -194,13 +189,17 @@ export function StudentDashboard() {
 
       {tiles.length > 0 && <TileGrid tiles={tiles} />}
 
-      {tiles.length === 0 && !examsLoading && !gradesLoading && upcomingExams.length === 0 && latestGrades.length === 0 && (
-        <EmptyState
-          icon={GraduationCapIcon}
-          title={t("org.dashboard.memberEmpty.title")}
-          description={t("org.dashboard.memberEmpty.hint")}
-        />
-      )}
+      {tiles.length === 0 &&
+        !examsLoading &&
+        !gradesLoading &&
+        upcomingExams.length === 0 &&
+        latestGrades.length === 0 && (
+          <EmptyState
+            icon={GraduationCapIcon}
+            title={t("org.dashboard.memberEmpty.title")}
+            description={t("org.dashboard.memberEmpty.hint")}
+          />
+        )}
     </div>
   )
 }

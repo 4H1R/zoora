@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router"
-import { SparklesIcon } from "lucide-react"
+import { GraduationCapIcon, SparklesIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { useGetChangelogStatus } from "@/api/changelog/changelog"
@@ -35,6 +35,12 @@ export function NavZoora() {
       url: "/org/whats-new",
       icon: <SparklesIcon />,
       badge: unseen,
+    },
+    {
+      // Evergreen help library — no badge (nothing time-sensitive to nag about).
+      title: t("tutorials.title"),
+      url: "/org/tutorials",
+      icon: <GraduationCapIcon />,
     },
   ]
 

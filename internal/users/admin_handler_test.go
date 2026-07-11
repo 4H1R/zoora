@@ -58,13 +58,9 @@ func (m *mockUserSvc) GetProfile(ctx context.Context, id uuid.UUID) (*domain.Use
 	u, _ := a.Get(0).(*domain.User)
 	return u, a.Error(1)
 }
-func (m *mockUserSvc) UpdateProfile(ctx context.Context, id uuid.UUID, dto domain.UpdateProfileDTO) (*domain.User, error) {
+func (m *mockUserSvc) ChangePassword(ctx context.Context, id uuid.UUID, dto domain.ChangePasswordDTO) (string, error) {
 	a := m.Called(ctx, id, dto)
-	u, _ := a.Get(0).(*domain.User)
-	return u, a.Error(1)
-}
-func (m *mockUserSvc) ChangePassword(ctx context.Context, id uuid.UUID, dto domain.ChangePasswordDTO) error {
-	return m.Called(ctx, id, dto).Error(0)
+	return a.String(0), a.Error(1)
 }
 func (m *mockUserSvc) AdminGetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	a := m.Called(ctx, id)

@@ -6,8 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 import type { GithubCom4H1RZooraInternalDomainResponse } from './githubCom4H1RZooraInternalDomainResponse';
-import type { GithubCom4H1RZooraInternalDomainUser } from './githubCom4H1RZooraInternalDomainUser';
+import type { GithubCom4H1RZooraInternalDomainTutorial } from './githubCom4H1RZooraInternalDomainTutorial';
 
-export type PutUsersMe200 = GithubCom4H1RZooraInternalDomainResponse & {
-  data?: GithubCom4H1RZooraInternalDomainUser;
+export type GetAdminTutorials200 = GithubCom4H1RZooraInternalDomainResponse & {
+  data?: GithubCom4H1RZooraInternalDomainTutorial[];
 };

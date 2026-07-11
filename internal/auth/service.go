@@ -108,6 +108,35 @@ func (s *service) bumpLoginFail(ctx context.Context, key string) bool {
 	return false
 }
 
+// SessionManager issues tokens and revokes a user's own sessions. It performs
+// no caller authorization — unlike AdminRevokeSessions — because callers (e.g.
+// self password change) have already proven identity. Satisfies
+// domain.SessionTokenService.
+type SessionManager struct {
+	jwt   *JWTService
+	redis *redis.Client
+}
+
+func NewSessionManager(jwt *JWTService, rdb *redis.Client) *SessionManager {
+	return &SessionManager{jwt: jwt, redis: rdb}
+}
+
+func (m *SessionManager) GenerateToken(userID uuid.UUID) (string, error) {
+	return m.jwt.GenerateToken(userID)
+}
+
+// RevokeUserSessions invalidates every token issued before now for userID by
+// stamping the revocation marker the auth middleware checks (isRevoked). The
+// caller should mint a replacement token afterwards so its own device — whose
+// old token is now invalid — stays signed in.
+func (m *SessionManager) RevokeUserSessions(ctx context.Context, userID uuid.UUID) error {
+	now := time.Now().Unix()
+	if err := m.redis.Set(ctx, RevokedKey(userID.String()), now, revokedTTL).Err(); err != nil {
+		return fmt.Errorf("auth.RevokeUserSessions: %w", err)
+	}
+	return nil
+}
+
 func (s *service) AdminRevokeSessions(ctx context.Context, userID uuid.UUID) error {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok || !caller.IsAdmin {
