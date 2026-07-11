@@ -139,6 +139,10 @@ type ClassRepository interface {
 	// translate the scope into SQL filters.
 	List(ctx context.Context, scope ClassListScope, p ListParams) ([]Class, int64, error)
 
+	// ListByNames returns all classes in the org whose name is in the list
+	// (names are not unique — callers must handle multiple matches).
+	ListByNames(ctx context.Context, orgID uuid.UUID, names []string) ([]Class, error)
+
 	// Admin-only.
 	HardDelete(ctx context.Context, id uuid.UUID) error
 	FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*Class, error)

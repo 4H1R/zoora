@@ -74,3 +74,38 @@ func TestCheckConcurrentRoomsLimit(t *testing.T) {
 		t.Fatalf("expected rooms limit reached, got %v", err)
 	}
 }
+
+// panicOnCountUsersRepo embeds mockRepo but panics if CountUsers is invoked,
+// used to prove CheckUserLimitN short-circuits before hitting the repo.
+type panicOnCountUsersRepo struct{ mockRepo }
+
+func (m *panicOnCountUsersRepo) CountUsers(context.Context, uuid.UUID) (int64, error) {
+	panic("CountUsers should not be called when n<=0")
+}
+
+func TestCheckUserLimitN(t *testing.T) {
+	ent := domain.PlanCatalog[domain.PlanFree] // Free plan has a finite LimitMaxUsers
+	limit := ent.Limit(domain.LimitMaxUsers)
+
+	t.Run("fits", func(t *testing.T) {
+		svc := NewService(&mockRepo{users: limit - 3})
+		if err := svc.CheckUserLimitN(context.Background(), orgID, ent, 3); err != nil {
+			t.Fatalf("expected allow, got %v", err)
+		}
+	})
+
+	t.Run("exceeds", func(t *testing.T) {
+		svc := NewService(&mockRepo{users: limit - 3})
+		err := svc.CheckUserLimitN(context.Background(), orgID, ent, 4)
+		if !errors.Is(err, domain.ErrPlanLimitReached) {
+			t.Fatalf("expected limit reached, got %v", err)
+		}
+	})
+
+	t.Run("zero new users always ok", func(t *testing.T) {
+		svc := NewService(&panicOnCountUsersRepo{}) // CountUsers must not be called
+		if err := svc.CheckUserLimitN(context.Background(), orgID, ent, 0); err != nil {
+			t.Fatalf("expected allow, got %v", err)
+		}
+	})
+}

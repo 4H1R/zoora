@@ -83,6 +83,9 @@ type fakeEntService struct{ storageErr error }
 func (f fakeEntService) CheckUserLimit(context.Context, uuid.UUID, domain.Entitlements) error {
 	return nil
 }
+func (f fakeEntService) CheckUserLimitN(context.Context, uuid.UUID, domain.Entitlements, int64) error {
+	return nil
+}
 func (f fakeEntService) CheckStorageLimit(context.Context, uuid.UUID, domain.Entitlements, int64) error {
 	return f.storageErr
 }

@@ -12,6 +12,8 @@ import (
 // feature gates do NOT use this — they read Caller.HasFeature directly.
 type Service interface {
 	CheckUserLimit(ctx context.Context, orgID uuid.UUID, ent domain.Entitlements) error
+	// CheckUserLimitN verifies the org can absorb n new users at once.
+	CheckUserLimitN(ctx context.Context, orgID uuid.UUID, ent domain.Entitlements, n int64) error
 	CheckStorageLimit(ctx context.Context, orgID uuid.UUID, ent domain.Entitlements, addBytes int64) error
 	CheckConcurrentRoomsLimit(ctx context.Context, orgID uuid.UUID, ent domain.Entitlements) error
 }
@@ -34,6 +36,23 @@ func (s *service) CheckUserLimit(ctx context.Context, orgID uuid.UUID, ent domai
 	}
 	if !ent.Within(domain.LimitMaxUsers, n) {
 		return domain.NewLimitError(ent.Plan, domain.LimitMaxUsers, n, ent.Limit(domain.LimitMaxUsers))
+	}
+	return nil
+}
+
+// CheckUserLimitN verifies the org can absorb n new users at once.
+// CheckUserLimit permits creating one user while Within(current) holds, so
+// n new users require Within(current + n - 1).
+func (s *service) CheckUserLimitN(ctx context.Context, orgID uuid.UUID, ent domain.Entitlements, n int64) error {
+	if n <= 0 || ent.Unlimited(domain.LimitMaxUsers) {
+		return nil
+	}
+	cur, err := s.repo.CountUsers(ctx, orgID)
+	if err != nil {
+		return err
+	}
+	if !ent.Within(domain.LimitMaxUsers, cur+n-1) {
+		return domain.NewLimitError(ent.Plan, domain.LimitMaxUsers, cur, ent.Limit(domain.LimitMaxUsers))
 	}
 	return nil
 }

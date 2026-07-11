@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { LayoutGrid, PlusIcon } from "lucide-react"
+import { LayoutGrid, PlusIcon, UploadIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
@@ -10,6 +10,7 @@ import { DataTable } from "@/components/data-table/data-table"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { TableFilter } from "@/components/data-table/table-filter"
 import { useClassPermissions } from "@/components/org/classes/use-class-permissions"
+import { ImportDialog } from "@/components/org/import/import-dialog"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -39,7 +40,7 @@ export const Route = createFileRoute("/_auth/org/classes/")({
 function RouteComponent() {
   const { t } = useTranslation()
   const { search, order_by, order_dir, page } = Route.useSearch()
-  const { canView, canCreate } = useClassPermissions()
+  const { canView, canCreate, canCreateAny } = useClassPermissions()
   const allowed = useOrgGuard(["classes:view", "classes:view_any"])
 
   const currentPage = page ?? 1
@@ -59,6 +60,7 @@ function RouteComponent() {
   const total = classesData?.total ?? 0
 
   const [formOpen, setFormOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const { viewMode, setViewMode, isTable } = useViewMode()
 
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
@@ -119,10 +121,18 @@ function RouteComponent() {
         title={t("classesPage.title")}
         actions={
           canCreate && (
-            <Button size="sm" onClick={() => setFormOpen(true)}>
-              <PlusIcon data-icon="inline-start" />
-              {t("classesPage.newClass")}
-            </Button>
+            <div className="flex items-center gap-2">
+              {canCreateAny && (
+                <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+                  <UploadIcon data-icon="inline-start" />
+                  {t("org.import.button")}
+                </Button>
+              )}
+              <Button size="sm" onClick={() => setFormOpen(true)}>
+                <PlusIcon data-icon="inline-start" />
+                {t("classesPage.newClass")}
+              </Button>
+            </div>
           )
         }
       />
@@ -144,6 +154,8 @@ function RouteComponent() {
       {renderContent()}
 
       <CreateClassDialog open={formOpen} onOpenChange={setFormOpen} />
+
+      {canCreateAny && <ImportDialog open={importOpen} onOpenChange={setImportOpen} type="classes" />}
     </div>
   )
 }

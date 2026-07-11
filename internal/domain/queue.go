@@ -27,6 +27,8 @@ const (
 	TypeInvoiceGeneratePDF   = "invoice:generate-pdf"
 	TypeBillingReminderSweep = "billing:reminder-sweep"
 	TypeBillingExpireSweep   = "billing:expire-sweep"
+
+	TypeImportProcess = "import:process"
 )
 
 // NotificationFanoutPayload resolves a notification's audience to user IDs
@@ -83,4 +85,18 @@ type OrganizationCleanupPayload struct {
 // InvoiceGeneratePDFPayload renders and stores an invoice receipt PDF.
 type InvoiceGeneratePDFPayload struct {
 	InvoiceID uuid.UUID `json:"invoice_id"`
+}
+
+// ImportProcessPayload snapshots the enqueueing caller's identity, permissions
+// and plan — the worker ctx has no auth middleware, so authorization guards
+// (Manager-role guard, seat limit) replay against this snapshot. The window
+// between enqueue and processing is seconds; a permission revoked in that
+// window is an accepted race.
+type ImportProcessPayload struct {
+	JobID       uuid.UUID `json:"job_id"`
+	UserID      uuid.UUID `json:"user_id"`
+	OrgID       uuid.UUID `json:"org_id"`
+	IsAdmin     bool      `json:"is_admin"`
+	Permissions []string  `json:"permissions"`
+	Plan        Plan      `json:"plan"`
 }
