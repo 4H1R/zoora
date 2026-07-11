@@ -37,7 +37,7 @@ export function FinalCta() {
               {t("landing.cta.subtitle")}
             </p>
             <Link
-              to="/login"
+              to="/get-started"
               className="group relative mt-9 inline-flex h-12 items-center gap-2 rounded-full bg-white px-7 text-base font-semibold text-[var(--green-800)] shadow-xl transition-transform hover:scale-[1.03] active:scale-100"
             >
               {t("landing.cta.button")}

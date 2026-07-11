@@ -67,3 +67,13 @@ func UploadRateLimit(rdb *redis.Client) gin.HandlerFunc {
 		Period: time.Minute,
 	})
 }
+
+// LeadRateLimit bounds the public lead-submit endpoint: a handful per IP per
+// hour is plenty for a genuine "get started" form and starves bots.
+func LeadRateLimit(rdb *redis.Client) gin.HandlerFunc {
+	return RateLimit(rdb, "leads", redis_rate.Limit{
+		Rate:   5,
+		Burst:  5,
+		Period: time.Hour,
+	})
+}

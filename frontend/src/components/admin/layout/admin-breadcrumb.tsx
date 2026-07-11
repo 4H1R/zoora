@@ -4,11 +4,13 @@ import { SidebarBreadcrumb } from "@/components/layout/sidebar-breadcrumb"
 
 const SEGMENT_KEYS: Record<string, string> = {
   dashboard: "admin.dashboard.title",
+  account: "account.title",
   changelog: "admin.changelog.title",
   tutorials: "admin.tutorials.title",
   classes: "admin.nav.classes",
   corrections: "admin.corrections.title",
   organizations: "admin.organizations",
+  leads: "admin.leads.title",
   permissions: "admin.permissions.title",
   roles: "admin.nav.roles",
   users: "admin.nav.users",

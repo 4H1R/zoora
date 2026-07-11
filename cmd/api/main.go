@@ -28,6 +28,7 @@ import (
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/entitlements"
 	"github.com/4H1R/zoora/internal/gradebook"
+	"github.com/4H1R/zoora/internal/leads"
 	"github.com/4H1R/zoora/internal/livesessions"
 	"github.com/4H1R/zoora/internal/media"
 	"github.com/4H1R/zoora/internal/middleware"
@@ -185,6 +186,9 @@ func main() {
 	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, log)
 	transactor := database.NewTransactor(db)
 
+	leadRepo := leads.NewRepository(db)
+	leadService := leads.NewService(leadRepo, orgRepo, orgSettingsRepo, userRepo, roleRepo, transactor, log)
+
 	// Reconcile the permissions table + preset-role grants with the code-defined
 	// source of truth so renaming/removing a permission constant takes effect on
 	// an existing DB without a destructive reseed.
@@ -265,6 +269,12 @@ func main() {
 
 	authHandler := auth.NewHandler(authBusinessService)
 	authHandler.RegisterRoutes(v1, middleware.AuthRateLimit(redisClient))
+
+	// Public, unauthenticated lead capture from the marketing site. Mounted on
+	// v1 (tenant middleware only injects context, never rejects), so it works
+	// from the apex host. Rate-limited + honeypot-gated against abuse.
+	leadHandler := leads.NewHandler(leadService)
+	leadHandler.RegisterRoutes(v1, middleware.LeadRateLimit(redisClient))
 
 	perm := auth.RequirePermission
 	permAny := auth.RequireAnyPermission
@@ -455,9 +465,10 @@ func main() {
 	adminChangelogHandler := changelog.NewAdminHandler(changelogService)
 	adminTutorialHandler := tutorials.NewAdminHandler(tutorialService)
 	adminOrgSettingsHandler := orgsettings.NewAdminHandler(orgSettingsService)
+	adminLeadHandler := leads.NewAdminHandler(leadService)
 
 	adminGroup := v1.Group("/admin", authMiddleware, auth.RequireAdmin())
-	admin.RegisterRoutes(adminGroup, adminUserHandler, adminOrgHandler, adminClassHandler, adminQuestionBankHandler, adminQuizHandler, adminLiveSessionHandler, adminOfflineHandler, adminPracticeHandler, adminPollHandler, adminQAHandler, adminRoleHandler, adminAttendanceHandler, adminChangelogHandler, adminTutorialHandler, adminOrgSettingsHandler, billingAdminHandler)
+	admin.RegisterRoutes(adminGroup, adminUserHandler, adminOrgHandler, adminClassHandler, adminQuestionBankHandler, adminQuizHandler, adminLiveSessionHandler, adminOfflineHandler, adminPracticeHandler, adminPollHandler, adminQAHandler, adminRoleHandler, adminAttendanceHandler, adminChangelogHandler, adminTutorialHandler, adminOrgSettingsHandler, billingAdminHandler, adminLeadHandler)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,

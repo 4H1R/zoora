@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GuestLoginRouteImport } from './routes/_guest/login'
+import { Route as GuestGetStartedRouteImport } from './routes/_guest/get-started'
 import { Route as AuthOrgRouteImport } from './routes/_auth/org'
 import { Route as AuthOrgIndexRouteImport } from './routes/_auth/org/index'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin/index'
@@ -26,6 +27,7 @@ import { Route as AuthOrgAccountRouteImport } from './routes/_auth/org/account'
 import { Route as AuthLiveLiveIdRouteImport } from './routes/_auth/live/$liveId'
 import { Route as AdminAdminNotificationsRouteImport } from './routes/_admin/admin/notifications'
 import { Route as AdminAdminDashboardRouteImport } from './routes/_admin/admin/dashboard'
+import { Route as AdminAdminAccountRouteImport } from './routes/_admin/admin/account'
 import { Route as AuthOrgConversationsRouteRouteImport } from './routes/_auth/org/conversations/route'
 import { Route as AuthOrgUsersIndexRouteImport } from './routes/_auth/org/users/index'
 import { Route as AuthOrgTicketsIndexRouteImport } from './routes/_auth/org/tickets/index'
@@ -53,6 +55,7 @@ import { Route as AdminAdminPermissionsIndexRouteImport } from './routes/_admin/
 import { Route as AdminAdminOrganizationsIndexRouteImport } from './routes/_admin/admin/organizations/index'
 import { Route as AdminAdminOfflinesIndexRouteImport } from './routes/_admin/admin/offlines/index'
 import { Route as AdminAdminLiveRoomsIndexRouteImport } from './routes/_admin/admin/live-rooms/index'
+import { Route as AdminAdminLeadsIndexRouteImport } from './routes/_admin/admin/leads/index'
 import { Route as AdminAdminGradebookIndexRouteImport } from './routes/_admin/admin/gradebook/index'
 import { Route as AdminAdminCorrectionsIndexRouteImport } from './routes/_admin/admin/corrections/index'
 import { Route as AdminAdminClassesIndexRouteImport } from './routes/_admin/admin/classes/index'
@@ -101,6 +104,11 @@ const IndexRoute = IndexRouteImport.update({
 const GuestLoginRoute = GuestLoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => GuestRoute,
+} as any)
+const GuestGetStartedRoute = GuestGetStartedRouteImport.update({
+  id: '/get-started',
+  path: '/get-started',
   getParentRoute: () => GuestRoute,
 } as any)
 const AuthOrgRoute = AuthOrgRouteImport.update({
@@ -161,6 +169,11 @@ const AdminAdminNotificationsRoute = AdminAdminNotificationsRouteImport.update({
 const AdminAdminDashboardRoute = AdminAdminDashboardRouteImport.update({
   id: '/admin/dashboard',
   path: '/admin/dashboard',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAdminAccountRoute = AdminAdminAccountRouteImport.update({
+  id: '/admin/account',
+  path: '/admin/account',
   getParentRoute: () => AdminRoute,
 } as any)
 const AuthOrgConversationsRouteRoute =
@@ -308,6 +321,11 @@ const AdminAdminLiveRoomsIndexRoute =
     path: '/admin/live-rooms/',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminAdminLeadsIndexRoute = AdminAdminLeadsIndexRouteImport.update({
+  id: '/admin/leads/',
+  path: '/admin/leads/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAdminGradebookIndexRoute =
   AdminAdminGradebookIndexRouteImport.update({
     id: '/admin/gradebook/',
@@ -466,8 +484,10 @@ const AdminAdminClassesClassIdGradebookRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/org': typeof AuthOrgRouteWithChildren
+  '/get-started': typeof GuestGetStartedRoute
   '/login': typeof GuestLoginRoute
   '/org/conversations': typeof AuthOrgConversationsRouteRouteWithChildren
+  '/admin/account': typeof AdminAdminAccountRoute
   '/admin/dashboard': typeof AdminAdminDashboardRoute
   '/admin/notifications': typeof AdminAdminNotificationsRoute
   '/live/$liveId': typeof AuthLiveLiveIdRoute
@@ -495,6 +515,7 @@ export interface FileRoutesByFullPath {
   '/admin/classes/': typeof AdminAdminClassesIndexRoute
   '/admin/corrections/': typeof AdminAdminCorrectionsIndexRoute
   '/admin/gradebook/': typeof AdminAdminGradebookIndexRoute
+  '/admin/leads/': typeof AdminAdminLeadsIndexRoute
   '/admin/live-rooms/': typeof AdminAdminLiveRoomsIndexRoute
   '/admin/offlines/': typeof AdminAdminOfflinesIndexRoute
   '/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
@@ -535,7 +556,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/get-started': typeof GuestGetStartedRoute
   '/login': typeof GuestLoginRoute
+  '/admin/account': typeof AdminAdminAccountRoute
   '/admin/dashboard': typeof AdminAdminDashboardRoute
   '/admin/notifications': typeof AdminAdminNotificationsRoute
   '/live/$liveId': typeof AuthLiveLiveIdRoute
@@ -563,6 +586,7 @@ export interface FileRoutesByTo {
   '/admin/classes': typeof AdminAdminClassesIndexRoute
   '/admin/corrections': typeof AdminAdminCorrectionsIndexRoute
   '/admin/gradebook': typeof AdminAdminGradebookIndexRoute
+  '/admin/leads': typeof AdminAdminLeadsIndexRoute
   '/admin/live-rooms': typeof AdminAdminLiveRoomsIndexRoute
   '/admin/offlines': typeof AdminAdminOfflinesIndexRoute
   '/admin/organizations': typeof AdminAdminOrganizationsIndexRoute
@@ -608,8 +632,10 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteWithChildren
   '/_guest': typeof GuestRouteWithChildren
   '/_auth/org': typeof AuthOrgRouteWithChildren
+  '/_guest/get-started': typeof GuestGetStartedRoute
   '/_guest/login': typeof GuestLoginRoute
   '/_auth/org/conversations': typeof AuthOrgConversationsRouteRouteWithChildren
+  '/_admin/admin/account': typeof AdminAdminAccountRoute
   '/_admin/admin/dashboard': typeof AdminAdminDashboardRoute
   '/_admin/admin/notifications': typeof AdminAdminNotificationsRoute
   '/_auth/live/$liveId': typeof AuthLiveLiveIdRoute
@@ -637,6 +663,7 @@ export interface FileRoutesById {
   '/_admin/admin/classes/': typeof AdminAdminClassesIndexRoute
   '/_admin/admin/corrections/': typeof AdminAdminCorrectionsIndexRoute
   '/_admin/admin/gradebook/': typeof AdminAdminGradebookIndexRoute
+  '/_admin/admin/leads/': typeof AdminAdminLeadsIndexRoute
   '/_admin/admin/live-rooms/': typeof AdminAdminLiveRoomsIndexRoute
   '/_admin/admin/offlines/': typeof AdminAdminOfflinesIndexRoute
   '/_admin/admin/organizations/': typeof AdminAdminOrganizationsIndexRoute
@@ -680,8 +707,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/org'
+    | '/get-started'
     | '/login'
     | '/org/conversations'
+    | '/admin/account'
     | '/admin/dashboard'
     | '/admin/notifications'
     | '/live/$liveId'
@@ -709,6 +738,7 @@ export interface FileRouteTypes {
     | '/admin/classes/'
     | '/admin/corrections/'
     | '/admin/gradebook/'
+    | '/admin/leads/'
     | '/admin/live-rooms/'
     | '/admin/offlines/'
     | '/admin/organizations/'
@@ -749,7 +779,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/get-started'
     | '/login'
+    | '/admin/account'
     | '/admin/dashboard'
     | '/admin/notifications'
     | '/live/$liveId'
@@ -777,6 +809,7 @@ export interface FileRouteTypes {
     | '/admin/classes'
     | '/admin/corrections'
     | '/admin/gradebook'
+    | '/admin/leads'
     | '/admin/live-rooms'
     | '/admin/offlines'
     | '/admin/organizations'
@@ -821,8 +854,10 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/_guest'
     | '/_auth/org'
+    | '/_guest/get-started'
     | '/_guest/login'
     | '/_auth/org/conversations'
+    | '/_admin/admin/account'
     | '/_admin/admin/dashboard'
     | '/_admin/admin/notifications'
     | '/_auth/live/$liveId'
@@ -850,6 +885,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/classes/'
     | '/_admin/admin/corrections/'
     | '/_admin/admin/gradebook/'
+    | '/_admin/admin/leads/'
     | '/_admin/admin/live-rooms/'
     | '/_admin/admin/offlines/'
     | '/_admin/admin/organizations/'
@@ -931,6 +967,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof GuestLoginRouteImport
+      parentRoute: typeof GuestRoute
+    }
+    '/_guest/get-started': {
+      id: '/_guest/get-started'
+      path: '/get-started'
+      fullPath: '/get-started'
+      preLoaderRoute: typeof GuestGetStartedRouteImport
       parentRoute: typeof GuestRoute
     }
     '/_auth/org': {
@@ -1015,6 +1058,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/dashboard'
       fullPath: '/admin/dashboard'
       preLoaderRoute: typeof AdminAdminDashboardRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/account': {
+      id: '/_admin/admin/account'
+      path: '/admin/account'
+      fullPath: '/admin/account'
+      preLoaderRoute: typeof AdminAdminAccountRouteImport
       parentRoute: typeof AdminRoute
     }
     '/_auth/org/conversations': {
@@ -1204,6 +1254,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/live-rooms'
       fullPath: '/admin/live-rooms/'
       preLoaderRoute: typeof AdminAdminLiveRoomsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/leads/': {
+      id: '/_admin/admin/leads/'
+      path: '/admin/leads'
+      fullPath: '/admin/leads/'
+      preLoaderRoute: typeof AdminAdminLeadsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
     '/_admin/admin/gradebook/': {
@@ -1399,6 +1456,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminAdminAccountRoute: typeof AdminAdminAccountRoute
   AdminAdminDashboardRoute: typeof AdminAdminDashboardRoute
   AdminAdminNotificationsRoute: typeof AdminAdminNotificationsRoute
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
@@ -1410,6 +1468,7 @@ interface AdminRouteChildren {
   AdminAdminClassesIndexRoute: typeof AdminAdminClassesIndexRoute
   AdminAdminCorrectionsIndexRoute: typeof AdminAdminCorrectionsIndexRoute
   AdminAdminGradebookIndexRoute: typeof AdminAdminGradebookIndexRoute
+  AdminAdminLeadsIndexRoute: typeof AdminAdminLeadsIndexRoute
   AdminAdminLiveRoomsIndexRoute: typeof AdminAdminLiveRoomsIndexRoute
   AdminAdminOfflinesIndexRoute: typeof AdminAdminOfflinesIndexRoute
   AdminAdminOrganizationsIndexRoute: typeof AdminAdminOrganizationsIndexRoute
@@ -1433,6 +1492,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAdminAccountRoute: AdminAdminAccountRoute,
   AdminAdminDashboardRoute: AdminAdminDashboardRoute,
   AdminAdminNotificationsRoute: AdminAdminNotificationsRoute,
   AdminAdminIndexRoute: AdminAdminIndexRoute,
@@ -1444,6 +1504,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAdminClassesIndexRoute: AdminAdminClassesIndexRoute,
   AdminAdminCorrectionsIndexRoute: AdminAdminCorrectionsIndexRoute,
   AdminAdminGradebookIndexRoute: AdminAdminGradebookIndexRoute,
+  AdminAdminLeadsIndexRoute: AdminAdminLeadsIndexRoute,
   AdminAdminLiveRoomsIndexRoute: AdminAdminLiveRoomsIndexRoute,
   AdminAdminOfflinesIndexRoute: AdminAdminOfflinesIndexRoute,
   AdminAdminOrganizationsIndexRoute: AdminAdminOrganizationsIndexRoute,
@@ -1574,10 +1635,12 @@ const AuthRouteChildren: AuthRouteChildren = {
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 interface GuestRouteChildren {
+  GuestGetStartedRoute: typeof GuestGetStartedRoute
   GuestLoginRoute: typeof GuestLoginRoute
 }
 
 const GuestRouteChildren: GuestRouteChildren = {
+  GuestGetStartedRoute: GuestGetStartedRoute,
   GuestLoginRoute: GuestLoginRoute,
 }
 

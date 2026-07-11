@@ -12,6 +12,7 @@ import {
   FileVideoIcon,
   GraduationCapIcon,
   HelpCircleIcon,
+  InboxIcon,
   KeyIcon,
   LayoutDashboardIcon,
   ReceiptTextIcon,
@@ -49,6 +50,7 @@ export function AppSidebar({
         { title: t("admin.changelog.title"), url: "/admin/changelog", icon: <SparklesIcon /> },
         { title: t("admin.tutorials.title"), url: "/admin/tutorials", icon: <GraduationCapIcon /> },
         { title: t("notifications.title"), url: "/admin/notifications", icon: <BellIcon /> },
+        { title: t("admin.leads.title"), url: "/admin/leads", icon: <InboxIcon /> },
       ],
     },
     {
@@ -97,6 +99,7 @@ export function AppSidebar({
     <AppSidebarShared
       user={user}
       navGroups={navGroups}
+      accountTo="/admin/account"
       headerExtra={<OrgSwitcher selected={activeOrganization} onSelect={setActiveOrganization} />}
       {...props}
     />

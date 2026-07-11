@@ -65,7 +65,7 @@ export function LandingNav() {
           <Link to="/login" className={cn(buttonVariants({ variant: "ghost" }), "hidden rounded-full sm:inline-flex")}>
             {t("landing.nav.signIn")}
           </Link>
-          <Link to="/login" className={cn(buttonVariants({ variant: "default" }), "rounded-full px-4")}>
+          <Link to="/get-started" className={cn(buttonVariants({ variant: "default" }), "rounded-full px-4")}>
             {t("landing.nav.getStarted")}
           </Link>
         </div>

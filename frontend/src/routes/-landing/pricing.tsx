@@ -59,7 +59,8 @@ export function Pricing() {
                 </ul>
 
                 <Link
-                  to="/login"
+                  to="/get-started"
+                  search={{ plan: plan.key }}
                   className={cn(
                     buttonVariants({ variant: plan.highlighted ? "default" : "outline", size: "lg" }),
                     "mt-7 w-full rounded-full"

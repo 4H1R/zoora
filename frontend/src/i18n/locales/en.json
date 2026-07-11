@@ -216,6 +216,24 @@
     "footer": {
       "note": "Crafted for teachers and their students.",
       "rights": "All rights reserved."
+    },
+    "getStarted": {
+      "title": "Get started with Zoora",
+      "subtitle": "Tell us about your team and we will set you up. We will call you to finish onboarding.",
+      "selectedPlan": "Selected plan: {{plan}}",
+      "name": "Your name",
+      "namePlaceholder": "e.g. Sara Ahmadi",
+      "phone": "Phone number",
+      "phonePlaceholder": "e.g. 0912 345 6789",
+      "orgName": "Organization / school name",
+      "orgNamePlaceholder": "e.g. Bright Future Academy",
+      "note": "Anything else? (optional)",
+      "notePlaceholder": "Tell us about your needs…",
+      "submit": "Request access",
+      "error": "Something went wrong. Please try again.",
+      "successTitle": "Thanks — we got it!",
+      "successDescription": "Our team will call you shortly to set up your account and get you started.",
+      "backHome": "Back to home"
     }
   },
   "errorPages": {
@@ -1424,6 +1442,63 @@
         "published": "Published",
         "drafts": "Drafts"
       }
+    },
+    "leads": {
+      "title": "Leads",
+      "subtitle": "Contact requests from the get-started form. Reach out, then convert to provision their org.",
+      "searchPlaceholder": "Search name, org, phone…",
+      "name": "Contact",
+      "orgName": "Organization",
+      "plan": "Plan",
+      "status": "Status",
+      "createdAt": "Received",
+      "noResults": "No leads yet",
+      "noResultsHint": "New get-started requests will show up here",
+      "statusUpdated": "Lead status updated",
+      "deleteSuccess": "Lead deleted",
+      "statusLabels": {
+        "new": "New",
+        "contacted": "Contacted",
+        "converted": "Converted",
+        "rejected": "Rejected"
+      },
+      "tabs": {
+        "all": "All",
+        "new": "New",
+        "contacted": "Contacted",
+        "converted": "Converted",
+        "rejected": "Rejected"
+      },
+      "actions": {
+        "convert": "Convert to org",
+        "markContacted": "Mark as contacted",
+        "markNew": "Mark as new",
+        "markRejected": "Mark as rejected",
+        "delete": "Delete"
+      },
+      "convert": {
+        "title": "Convert lead to organization",
+        "description": "Provision the org and owner account for {{name}}. The owner can log in immediately.",
+        "submit": "Create organization",
+        "success": "Organization and owner account created",
+        "error": "Could not convert lead. Check the slug and try again.",
+        "orgName": "Organization name",
+        "orgNamePlaceholder": "Organization name",
+        "slug": "Slug (subdomain)",
+        "slugPlaceholder": "e.g. acme",
+        "slugHint": "Lowercase letters, numbers and dashes. This becomes their subdomain.",
+        "plan": "Plan",
+        "planPlaceholder": "Select a plan",
+        "expiresAt": "Plan expiry",
+        "expiresAtHint": "Leave empty for a perpetual plan.",
+        "ownerName": "Owner name",
+        "ownerNamePlaceholder": "Full name of the manager",
+        "ownerUsername": "Owner username",
+        "ownerUsernamePlaceholder": "Login username",
+        "ownerPassword": "Owner password",
+        "ownerPasswordPlaceholder": "Initial password",
+        "ownerPasswordHint": "Share this with the owner; they can change it after first login."
+      }
     }
   },
   "classes": {
@@ -1450,7 +1525,7 @@
       "notFoundDescription": "This address doesn't match an active workspace. Check the URL or contact your organization's administrator."
     },
     "title": "Login",
-    "subtitle": "Sign in to continue to your classroom.",
+    "subtitle": "Sign in to continue to your account.",
     "subtitleStudent": "Sign in to see today's classes and resources.",
     "subtitleOrg": "Sign in to manage your organization's learning.",
     "newHere": "New here?",
@@ -1778,8 +1853,16 @@
           }
         },
         "features": {
-          "free": ["Core virtual classrooms", "Exams, homework & gradebook", "Offline rooms & notifications"],
-          "plus": ["Everything in Free", "More storage & live capacity", "Ticketing & file sharing"],
+          "free": [
+            "Core virtual classrooms",
+            "Exams, homework & gradebook",
+            "Offline rooms & notifications"
+          ],
+          "plus": [
+            "Everything in Free",
+            "More storage & live capacity",
+            "Ticketing & file sharing"
+          ],
           "pro": [
             "Everything in Plus",
             "Whiteboard & chat",
@@ -1787,7 +1870,12 @@
             "Messenger & email connectors",
             "AI assistance"
           ],
-          "max": ["Everything in Pro", "Cloud recordings", "Auto grading", "Single sign-on (SSO)"]
+          "max": [
+            "Everything in Pro",
+            "Cloud recordings",
+            "Auto grading",
+            "Single sign-on (SSO)"
+          ]
         }
       },
       "members": "Members",
