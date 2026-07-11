@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -13,6 +14,11 @@ import (
 )
 
 func RateLimit(rdb *redis.Client, name string, limit redis_rate.Limit) gin.HandlerFunc {
+	// Escape hatch for load testing only — never set in production.
+	if os.Getenv("RATE_LIMIT_DISABLED") == "1" {
+		return func(c *gin.Context) { c.Next() }
+	}
+
 	limiter := redis_rate.NewLimiter(rdb)
 
 	return func(c *gin.Context) {
