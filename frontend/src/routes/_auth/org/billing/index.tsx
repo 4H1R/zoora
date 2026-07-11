@@ -37,7 +37,8 @@ function BillingPage() {
   const formatDate = useFormatDate()
   const formatToman = useFormatToman()
 
-  const [interval, setInterval] = useState<BillingInterval>(BillingInterval.BillingIntervalMonthly)
+  // Yearly billing is disabled for now — monthly only.
+  const interval = BillingInterval.BillingIntervalMonthly
   const [size, setSize] = useState<number | null>(null)
 
   const { data: meResponse } = useGetUsersMe()
@@ -96,7 +97,6 @@ function BillingPage() {
         <h2 className="font-heading text-lg font-semibold tracking-tight">{t("billing.choosePlan")}</h2>
         <div className="flex flex-wrap items-center gap-3">
           <SizeToggle value={selectedSize} onChange={setSize} />
-          <IntervalToggle value={interval} onChange={setInterval} />
         </div>
       </div>
 
@@ -108,7 +108,6 @@ function BillingPage() {
             <PlanCard
               key={price.id}
               price={price}
-              interval={interval}
               currentPlan={currentPlan}
               formatToman={formatToman}
               onCheckout={handleCheckout}
@@ -138,33 +137,6 @@ function SizeToggle({ value, onChange }: { value: number; onChange: (v: number) 
           )}
         >
           {t("billing.sizeOption", { size })}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-function IntervalToggle({ value, onChange }: { value: BillingInterval; onChange: (v: BillingInterval) => void }) {
-  const { t } = useTranslation()
-  const options: { value: BillingInterval; label: string }[] = [
-    { value: BillingInterval.BillingIntervalMonthly, label: t("billing.monthly") },
-    { value: BillingInterval.BillingIntervalYearly, label: t("billing.yearly") },
-  ]
-  return (
-    <div className="bg-muted inline-flex rounded-lg p-1">
-      {options.map((opt) => (
-        <button
-          key={opt.value}
-          type="button"
-          onClick={() => onChange(opt.value)}
-          className={cn(
-            "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-            value === opt.value
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          {opt.label}
         </button>
       ))}
     </div>
@@ -208,14 +180,12 @@ function CurrentPlanCard({
 
 function PlanCard({
   price,
-  interval,
   currentPlan,
   formatToman,
   onCheckout,
   isPending,
 }: {
   price: PlanPrice
-  interval: BillingInterval
   currentPlan: string
   formatToman: (amountRial?: number) => string
   onCheckout: (plan: string) => void
@@ -227,7 +197,7 @@ function PlanCard({
 
   const isCurrent = plan === currentPlan
   const isDowngrade = planRank(plan) < planRank(currentPlan)
-  const perLabel = interval === BillingInterval.BillingIntervalYearly ? t("billing.perYear") : t("billing.perMonth")
+  const perLabel = t("billing.perMonth")
 
   return (
     <div

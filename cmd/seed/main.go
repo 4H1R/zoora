@@ -739,8 +739,8 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 	}
 
 	// 22. PlanPrices — default catalog prices (Rial). Org-independent globals.
-	// Monthly base is per 50 members and scales linearly with plan size;
-	// yearly = 10 × monthly (two months free).
+	// Monthly base is per 50 members and scales linearly with plan size.
+	// Yearly billing is disabled for now — monthly only.
 	tierBaseMonthly := map[domain.PlanTier]int64{
 		domain.TierPlus: 1_000_000,
 		domain.TierPro:  2_000_000,
@@ -757,7 +757,6 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 			plan := domain.PlanKey(tier, size)
 			prices = append(prices,
 				factory.NewPlanPrice(plan, domain.BillingIntervalMonthly, func(p *domain.PlanPrice) { p.Amount = monthly }),
-				factory.NewPlanPrice(plan, domain.BillingIntervalYearly, func(p *domain.PlanPrice) { p.Amount = monthly * 10 }),
 			)
 		}
 	}

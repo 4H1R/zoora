@@ -97,10 +97,8 @@ export function PriceFormDialog({ open, onOpenChange, price }: PriceFormDialogPr
       label: `${t(`plans.tiers.${tier}`)} — ${t("plans.sizeSuffix", { size })}`,
     }))
   )
-  const intervalOptions = [
-    { value: BillingInterval.BillingIntervalMonthly, label: t("billing.intervals.monthly") },
-    { value: BillingInterval.BillingIntervalYearly, label: t("billing.intervals.yearly") },
-  ]
+  // Yearly billing is disabled for now — monthly only.
+  const intervalOptions = [{ value: BillingInterval.BillingIntervalMonthly, label: t("billing.intervals.monthly") }]
 
   return (
     <ResourceFormDialog
