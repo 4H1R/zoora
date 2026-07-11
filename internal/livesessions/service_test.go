@@ -241,6 +241,11 @@ func (m *mockClassRepo) List(ctx context.Context, scope domain.ClassListScope, p
 	cs, _ := a.Get(0).([]domain.Class)
 	return cs, a.Get(1).(int64), a.Error(2)
 }
+func (m *mockClassRepo) ListByNames(ctx context.Context, orgID uuid.UUID, names []string) ([]domain.Class, error) {
+	a := m.Called(ctx, orgID, names)
+	cs, _ := a.Get(0).([]domain.Class)
+	return cs, a.Error(1)
+}
 func (m *mockClassRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
@@ -469,6 +474,9 @@ type lkFixture struct {
 type fakeEntSvc struct{ concurrentErr error }
 
 func (f fakeEntSvc) CheckUserLimit(context.Context, uuid.UUID, domain.Entitlements) error { return nil }
+func (f fakeEntSvc) CheckUserLimitN(context.Context, uuid.UUID, domain.Entitlements, int64) error {
+	return nil
+}
 func (f fakeEntSvc) CheckStorageLimit(context.Context, uuid.UUID, domain.Entitlements, int64) error {
 	return nil
 }

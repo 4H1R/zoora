@@ -42,6 +42,13 @@ func (m *mockUserRepo) FindByUsernameAndOrg(ctx context.Context, username string
 	}
 	return args.Get(0).(*domain.User), args.Error(1)
 }
+func (m *mockUserRepo) FindByUsernames(ctx context.Context, orgID uuid.UUID, usernames []string) ([]domain.User, error) {
+	args := m.Called(ctx, orgID, usernames)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.User), args.Error(1)
+}
 func (m *mockUserRepo) SearchActiveInOrg(ctx context.Context, orgID uuid.UUID, query string, limit int) ([]domain.User, error) {
 	args := m.Called(ctx, orgID, query, limit)
 	if args.Get(0) == nil {
@@ -165,6 +172,9 @@ func TestCreateUser_AsAdmin(t *testing.T) {
 type fakeEntService struct{ userLimitErr error }
 
 func (f fakeEntService) CheckUserLimit(context.Context, uuid.UUID, domain.Entitlements) error {
+	return f.userLimitErr
+}
+func (f fakeEntService) CheckUserLimitN(context.Context, uuid.UUID, domain.Entitlements, int64) error {
 	return f.userLimitErr
 }
 func (f fakeEntService) CheckStorageLimit(context.Context, uuid.UUID, domain.Entitlements, int64) error {

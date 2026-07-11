@@ -107,6 +107,19 @@ func (r *classRepository) List(ctx context.Context, scope domain.ClassListScope,
 	return classes, total, nil
 }
 
+func (r *classRepository) ListByNames(ctx context.Context, orgID uuid.UUID, names []string) ([]domain.Class, error) {
+	if len(names) == 0 {
+		return nil, nil
+	}
+	var list []domain.Class
+	if err := database.DB(ctx, r.db).
+		Where("organization_id = ? AND name IN ?", orgID, names).
+		Find(&list).Error; err != nil {
+		return nil, fmt.Errorf("classes.repository.ListByNames: %w", err)
+	}
+	return list, nil
+}
+
 func (r *classRepository) HardDelete(ctx context.Context, id uuid.UUID) error {
 	result := database.DB(ctx, r.db).Unscoped().Delete(&domain.Class{}, "id = ?", id)
 	if result.Error != nil {

@@ -117,6 +117,11 @@ func (m *mockClassRepo) List(ctx context.Context, scope domain.ClassListScope, p
 	cs, _ := a.Get(0).([]domain.Class)
 	return cs, a.Get(1).(int64), a.Error(2)
 }
+func (m *mockClassRepo) ListByNames(ctx context.Context, orgID uuid.UUID, names []string) ([]domain.Class, error) {
+	a := m.Called(ctx, orgID, names)
+	cs, _ := a.Get(0).([]domain.Class)
+	return cs, a.Error(1)
+}
 func (m *mockClassRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }

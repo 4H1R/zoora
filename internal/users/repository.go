@@ -72,6 +72,19 @@ func (r *repository) FindByUsernameAndOrg(ctx context.Context, username string, 
 	return r.findOne(ctx, "username = ? AND organization_id = ?", username, orgID)
 }
 
+func (r *repository) FindByUsernames(ctx context.Context, orgID uuid.UUID, usernames []string) ([]domain.User, error) {
+	if len(usernames) == 0 {
+		return nil, nil
+	}
+	var list []domain.User
+	if err := database.DB(ctx, r.db).
+		Where("organization_id = ? AND username IN ?", orgID, usernames).
+		Find(&list).Error; err != nil {
+		return nil, fmt.Errorf("users.repository.FindByUsernames: %w", err)
+	}
+	return list, nil
+}
+
 func (r *repository) FindAdminByUsername(ctx context.Context, username string) (*domain.User, error) {
 	return r.findOne(ctx, "username = ? AND organization_id IS NULL AND is_admin = true", username)
 }

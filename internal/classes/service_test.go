@@ -42,6 +42,12 @@ func (m *classRepoSvcMock) List(ctx context.Context, scope domain.ClassListScope
 	return items, args.Get(1).(int64), args.Error(2)
 }
 
+func (m *classRepoSvcMock) ListByNames(ctx context.Context, orgID uuid.UUID, names []string) ([]domain.Class, error) {
+	args := m.Called(ctx, orgID, names)
+	items, _ := args.Get(0).([]domain.Class)
+	return items, args.Error(1)
+}
+
 func (m *classRepoSvcMock) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }

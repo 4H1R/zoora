@@ -124,6 +124,8 @@ type UserRepository interface {
 	FindByIDWithPermissions(ctx context.Context, id uuid.UUID) (*User, error)
 	// FindByUsernameAndOrg looks up an active org member by (org, username).
 	FindByUsernameAndOrg(ctx context.Context, username string, orgID uuid.UUID) (*User, error)
+	// FindByUsernames returns the org's users whose username is in the list.
+	FindByUsernames(ctx context.Context, orgID uuid.UUID, usernames []string) ([]User, error)
 	// SearchActiveInOrg returns up to `limit` active (non-disabled) users in the
 	// org whose username or name ILIKE-matches query, ordered by username asc.
 	// An empty query returns the first page of active org users.
