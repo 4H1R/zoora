@@ -644,6 +644,115 @@ func usersJobAndPayload(orgID uuid.UUID, perms []string) (*domain.ImportJob, dom
 	return job, payload
 }
 
+// --- processClasses test wiring ------------------------------------------
+
+// mockClassRepo is a real mock for the two methods processClasses exercises
+// -- ListByNames and Create. The rest of the wide domain.ClassRepository
+// surface is unused by import processing, so those methods return plain
+// zero values like stubClassRepo does.
+type mockClassRepo struct{ mock.Mock }
+
+func (m *mockClassRepo) Create(ctx context.Context, class *domain.Class) error {
+	return m.Called(ctx, class).Error(0)
+}
+func (m *mockClassRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Class, error) {
+	return nil, nil
+}
+func (m *mockClassRepo) Update(ctx context.Context, class *domain.Class) error { return nil }
+func (m *mockClassRepo) Delete(ctx context.Context, id uuid.UUID) error        { return nil }
+func (m *mockClassRepo) List(ctx context.Context, scope domain.ClassListScope, p domain.ListParams) ([]domain.Class, int64, error) {
+	return nil, 0, nil
+}
+func (m *mockClassRepo) ListByNames(ctx context.Context, orgID uuid.UUID, names []string) ([]domain.Class, error) {
+	args := m.Called(ctx, orgID, names)
+	items, _ := args.Get(0).([]domain.Class)
+	return items, args.Error(1)
+}
+func (m *mockClassRepo) HardDelete(ctx context.Context, id uuid.UUID) error { return nil }
+func (m *mockClassRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.Class, error) {
+	return nil, nil
+}
+func (m *mockClassRepo) AdminList(ctx context.Context, q domain.AdminListClassesQuery) ([]domain.Class, int64, error) {
+	return nil, 0, nil
+}
+
+// mockClassMemberRepo is a real mock for the two methods processClasses
+// exercises -- Create and CountByClass. The rest of the wide
+// domain.ClassMemberRepository surface is unused by import processing, so
+// those methods return plain zero values like stubClassMemberRepo does.
+type mockClassMemberRepo struct{ mock.Mock }
+
+func (m *mockClassMemberRepo) Create(ctx context.Context, cm *domain.ClassMember) error {
+	return m.Called(ctx, cm).Error(0)
+}
+func (m *mockClassMemberRepo) Delete(ctx context.Context, classID, userID uuid.UUID) error {
+	return nil
+}
+func (m *mockClassMemberRepo) Exists(ctx context.Context, classID, userID uuid.UUID) (bool, error) {
+	return false, nil
+}
+func (m *mockClassMemberRepo) CountByClass(ctx context.Context, classID uuid.UUID) (int64, error) {
+	args := m.Called(ctx, classID)
+	return args.Get(0).(int64), args.Error(1)
+}
+func (m *mockClassMemberRepo) ListByClass(ctx context.Context, classID uuid.UUID, p domain.ListParams) ([]domain.ClassMember, int64, error) {
+	return nil, 0, nil
+}
+func (m *mockClassMemberRepo) ListAllByClass(ctx context.Context, classID uuid.UUID) ([]domain.ClassMember, error) {
+	return nil, nil
+}
+
+// classesProcessDeps exposes typed mocks for the dependencies processClasses
+// exercises, plus a ready-to-use testDeps for newTestService.
+type classesProcessDeps struct {
+	testDeps testDeps
+	repo     *mockJobRepo
+	users    *mockUserRepo
+	classes  *mockClassRepo
+	members  *mockClassMemberRepo
+	media    *mockMediaRepo
+	storage  *mockObjectStore
+	results  *mockResultStore
+	ent      *fakeEnt
+}
+
+// newClassesProcessDeps wires the media lookup that ProcessJob always
+// performs before dispatching to processClasses, so every test only needs
+// to stub the parts relevant to its scenario (storage.GetObject,
+// classes.ListByNames, etc).
+func newClassesProcessDeps(t *testing.T) classesProcessDeps {
+	t.Helper()
+	media := &mockMediaRepo{}
+	media.On("FindByID", mock.Anything, mock.Anything).
+		Return(&domain.Media{ID: uuid.New(), FileName: "classes.xlsx"}, nil)
+
+	repo := &mockJobRepo{}
+	users := &mockUserRepo{}
+	classes := &mockClassRepo{}
+	members := &mockClassMemberRepo{}
+	storage := &mockObjectStore{}
+	results := &mockResultStore{}
+	ent := &fakeEnt{}
+
+	return classesProcessDeps{
+		repo: repo, users: users, classes: classes, members: members, media: media,
+		storage: storage, results: results, ent: ent,
+		testDeps: testDeps{
+			job: repo, users: users, classes: classes, members: members, media: media,
+			ent: ent, storage: storage, results: results,
+		},
+	}
+}
+
+func classesJobAndPayload(orgID uuid.UUID, perms []string) (*domain.ImportJob, domain.ImportProcessPayload) {
+	jobID, userID, mediaID := uuid.New(), uuid.New(), uuid.New()
+	job := &domain.ImportJob{ID: jobID, OrganizationID: orgID, UserID: userID,
+		MediaID: mediaID, Type: domain.ImportTypeClasses, Status: domain.ImportStatusPending}
+	payload := domain.ImportProcessPayload{JobID: jobID, UserID: userID, OrgID: orgID,
+		Permissions: perms, Plan: domain.PlanFree}
+	return job, payload
+}
+
 func TestProcessUsers_MixedOutcomes(t *testing.T) {
 	orgID := uuid.New()
 	studentRole := domain.Role{ID: uuid.New(), Name: "Student", IsPreset: true}
@@ -1057,4 +1166,248 @@ func TestProcessUsers_GeneratedPasswordOnlyInResultFile(t *testing.T) {
 	// user carries its bcrypt hash, never the plaintext itself.
 	assert.NotEqual(t, createdUser.Password, generated)
 	assert.NoError(t, bcrypt.CompareHashAndPassword([]byte(createdUser.Password), []byte(generated)))
+}
+
+// --- processClasses tests -------------------------------------------------
+
+func TestProcessClasses_MixedOutcomes(t *testing.T) {
+	orgID := uuid.New()
+	ali, sara := uuid.New(), uuid.New()
+	existingClass := domain.Class{ID: uuid.New(), OrganizationID: orgID, UserID: ali, Name: "Old-Class", TotalUsers: 0}
+
+	file := classesXLSX(t,
+		[][]string{
+			{"class_name", "owner_username", "description", "capacity"},
+			{"Math-A", "ali.r", "Algebra", "30"},   // created
+			{"Old-Class", "ali.r", "ignored", "5"}, // reused: skipped, desc/cap ignored
+			{"Ghost", "who.dis", "", ""},           // error: owner not found
+			{"Math-A", "ali.r", "", ""},            // error: duplicate in file
+		},
+		[][]string{
+			{"class_name", "member_username"},
+			{"Math-A", "sara.k"},    // enrolled
+			{"Old-Class", "sara.k"}, // enrolled into reused class
+			{"Ghost", "sara.k"},     // error: class row failed
+			{"Math-A", "no.body"},   // error: member not found
+		})
+
+	deps := newClassesProcessDeps(t)
+	deps.storage.On("GetObject", mock.Anything, mock.Anything).Return(file, nil)
+	deps.users.On("FindByUsernames", mock.Anything, orgID, mock.Anything).
+		Return([]domain.User{{ID: ali, Username: "ali.r"}, {ID: sara, Username: "sara.k"}}, nil)
+	deps.classes.On("ListByNames", mock.Anything, orgID, mock.Anything).
+		Return([]domain.Class{existingClass}, nil)
+	deps.classes.On("Create", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		args.Get(1).(*domain.Class).ID = uuid.New() // simulate DB id assignment
+	}).Return(nil)
+	deps.members.On("Create", mock.Anything, mock.Anything).Return(nil)
+	// Math-A is created with capacity 30 (from the sheet), so its single
+	// enrollment (sara.k) lazily loads the current member count once.
+	// Old-Class is reused with TotalUsers 0 (unlimited), so its enrollment
+	// never triggers a capacity check.
+	deps.members.On("CountByClass", mock.Anything, mock.Anything).Return(int64(0), nil)
+	deps.repo.On("Update", mock.Anything, mock.Anything).Return(nil)
+	deps.repo.On("UpdateProgress", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+	deps.results.On("Set", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	job, payload := classesJobAndPayload(orgID, []string{string(domain.PermClassesCreateAny)})
+	deps.repo.On("FindByID", mock.Anything, job.ID).Return(job, nil)
+
+	svc := newTestService(t, deps.testDeps)
+	require.NoError(t, svc.ProcessJob(context.Background(), payload))
+
+	assert.Equal(t, domain.ImportStatusCompleted, job.Status)
+	assert.Equal(t, 8, job.TotalRows)
+	assert.Equal(t, 3, job.CreatedCount) // Math-A class + 2 enrollments
+	assert.Equal(t, 1, job.SkippedCount) // Old-Class reuse
+	assert.Equal(t, 4, job.FailedCount)
+	deps.classes.AssertNumberOfCalls(t, "Create", 1)
+
+	// reused class untouched: only ONE class create, and the created one is Math-A with sheet values
+	c := deps.classes.Calls[len(deps.classes.Calls)-1].Arguments.Get(1).(*domain.Class)
+	assert.Equal(t, "Math-A", c.Name)
+	assert.Equal(t, ali, c.UserID)
+	assert.Equal(t, 30, c.TotalUsers)
+}
+
+// TestProcessClasses_AmbiguousExistingName covers behavior spec bullet 3's
+// ">1 match" clause: when a class name already resolves to more than one
+// existing class, the class row errors as ambiguous and its member rows
+// error too since the class never resolved to a usable ID.
+func TestProcessClasses_AmbiguousExistingName(t *testing.T) {
+	orgID := uuid.New()
+	ali, sara := uuid.New(), uuid.New()
+	dupA := domain.Class{ID: uuid.New(), OrganizationID: orgID, UserID: ali, Name: "Math-A", TotalUsers: 0}
+	dupB := domain.Class{ID: uuid.New(), OrganizationID: orgID, UserID: ali, Name: "Math-A", TotalUsers: 0}
+
+	file := classesXLSX(t,
+		[][]string{
+			{"class_name", "owner_username", "description", "capacity"},
+			{"Math-A", "ali.r", "Algebra", "30"}, // error: ambiguous
+		},
+		[][]string{
+			{"class_name", "member_username"},
+			{"Math-A", "sara.k"}, // error: class row failed (ambiguous)
+		})
+
+	deps := newClassesProcessDeps(t)
+	deps.storage.On("GetObject", mock.Anything, mock.Anything).Return(file, nil)
+	deps.users.On("FindByUsernames", mock.Anything, orgID, mock.Anything).
+		Return([]domain.User{{ID: ali, Username: "ali.r"}, {ID: sara, Username: "sara.k"}}, nil)
+	deps.classes.On("ListByNames", mock.Anything, orgID, mock.Anything).
+		Return([]domain.Class{dupA, dupB}, nil)
+	deps.repo.On("Update", mock.Anything, mock.Anything).Return(nil)
+	deps.repo.On("UpdateProgress", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+	deps.results.On("Set", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	job, payload := classesJobAndPayload(orgID, []string{string(domain.PermClassesCreateAny)})
+	deps.repo.On("FindByID", mock.Anything, job.ID).Return(job, nil)
+
+	svc := newTestService(t, deps.testDeps)
+	require.NoError(t, svc.ProcessJob(context.Background(), payload))
+
+	assert.Equal(t, domain.ImportStatusCompleted, job.Status)
+	assert.Equal(t, 2, job.TotalRows)
+	assert.Equal(t, 0, job.CreatedCount)
+	assert.Equal(t, 0, job.SkippedCount)
+	assert.Equal(t, 2, job.FailedCount)
+	deps.classes.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+	deps.members.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+
+	rows := classesResultRows(t, resultBytesFromSet(t, deps.results))
+	// Classes sheet: header + 1 data row
+	assert.Equal(t, "error", rows.classes[1][4])
+	assert.Equal(t, "multiple classes with this name already exist", rows.classes[1][5])
+	// Members sheet: header + 1 data row
+	assert.Equal(t, "error", rows.members[1][2])
+	assert.Equal(t, "class not found in Classes sheet (or its row failed)", rows.members[1][3])
+}
+
+// TestProcessClasses_CapacityFull covers behavior spec bullet 4's capacity
+// clause: a reused class with a positive TotalUsers that's already at
+// capacity (per CountByClass) rejects further member rows with "class is
+// full", without ever calling members.Create.
+func TestProcessClasses_CapacityFull(t *testing.T) {
+	orgID := uuid.New()
+	ali, sara := uuid.New(), uuid.New()
+	existingClass := domain.Class{ID: uuid.New(), OrganizationID: orgID, UserID: ali, Name: "Full-Class", TotalUsers: 1}
+
+	file := classesXLSX(t,
+		[][]string{
+			{"class_name", "owner_username", "description", "capacity"},
+			{"Full-Class", "ali.r", "ignored", "5"}, // reused: skipped, sheet capacity ignored
+		},
+		[][]string{
+			{"class_name", "member_username"},
+			{"Full-Class", "sara.k"}, // error: class is full
+		})
+
+	deps := newClassesProcessDeps(t)
+	deps.storage.On("GetObject", mock.Anything, mock.Anything).Return(file, nil)
+	deps.users.On("FindByUsernames", mock.Anything, orgID, mock.Anything).
+		Return([]domain.User{{ID: ali, Username: "ali.r"}, {ID: sara, Username: "sara.k"}}, nil)
+	deps.classes.On("ListByNames", mock.Anything, orgID, mock.Anything).
+		Return([]domain.Class{existingClass}, nil)
+	deps.members.On("CountByClass", mock.Anything, existingClass.ID).Return(int64(1), nil)
+	deps.repo.On("Update", mock.Anything, mock.Anything).Return(nil)
+	deps.repo.On("UpdateProgress", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+	deps.results.On("Set", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	job, payload := classesJobAndPayload(orgID, []string{string(domain.PermClassesCreateAny)})
+	deps.repo.On("FindByID", mock.Anything, job.ID).Return(job, nil)
+
+	svc := newTestService(t, deps.testDeps)
+	require.NoError(t, svc.ProcessJob(context.Background(), payload))
+
+	assert.Equal(t, domain.ImportStatusCompleted, job.Status)
+	assert.Equal(t, 2, job.TotalRows)
+	assert.Equal(t, 0, job.CreatedCount)
+	assert.Equal(t, 1, job.SkippedCount) // reused class row
+	assert.Equal(t, 1, job.FailedCount)  // capacity-full member row
+	deps.members.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+	deps.members.AssertNumberOfCalls(t, "CountByClass", 1)
+
+	rows := classesResultRows(t, resultBytesFromSet(t, deps.results))
+	assert.Equal(t, "error", rows.members[1][2])
+	assert.Equal(t, "class is full", rows.members[1][3])
+}
+
+// TestProcessClasses_DuplicateMemberConflictSkips covers behavior spec
+// bullet 4's conflict clause: members.Create returning domain.ErrConflict
+// (an already-existing membership) is treated as a skip, not a failure.
+func TestProcessClasses_DuplicateMemberConflictSkips(t *testing.T) {
+	orgID := uuid.New()
+	ali, sara := uuid.New(), uuid.New()
+
+	file := classesXLSX(t,
+		[][]string{
+			{"class_name", "owner_username", "description", "capacity"},
+			{"Math-A", "ali.r", "Algebra", ""}, // created
+		},
+		[][]string{
+			{"class_name", "member_username"},
+			{"Math-A", "sara.k"}, // already a member -> conflict -> skipped
+		})
+
+	deps := newClassesProcessDeps(t)
+	deps.storage.On("GetObject", mock.Anything, mock.Anything).Return(file, nil)
+	deps.users.On("FindByUsernames", mock.Anything, orgID, mock.Anything).
+		Return([]domain.User{{ID: ali, Username: "ali.r"}, {ID: sara, Username: "sara.k"}}, nil)
+	deps.classes.On("ListByNames", mock.Anything, orgID, mock.Anything).Return([]domain.Class{}, nil)
+	deps.classes.On("Create", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		args.Get(1).(*domain.Class).ID = uuid.New()
+	}).Return(nil)
+	deps.members.On("Create", mock.Anything, mock.Anything).Return(domain.ErrConflict)
+	deps.repo.On("Update", mock.Anything, mock.Anything).Return(nil)
+	deps.repo.On("UpdateProgress", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+	deps.results.On("Set", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	job, payload := classesJobAndPayload(orgID, []string{string(domain.PermClassesCreateAny)})
+	deps.repo.On("FindByID", mock.Anything, job.ID).Return(job, nil)
+
+	svc := newTestService(t, deps.testDeps)
+	require.NoError(t, svc.ProcessJob(context.Background(), payload))
+
+	assert.Equal(t, domain.ImportStatusCompleted, job.Status)
+	assert.Equal(t, 2, job.TotalRows)
+	assert.Equal(t, 1, job.CreatedCount) // Math-A class created
+	assert.Equal(t, 1, job.SkippedCount) // duplicate member conflict
+	assert.Equal(t, 0, job.FailedCount)
+
+	rows := classesResultRows(t, resultBytesFromSet(t, deps.results))
+	assert.Equal(t, "skipped", rows.members[1][2])
+	assert.Equal(t, "already a member", rows.members[1][3])
+}
+
+// --- shared result-file readback helpers for processClasses tests --------
+
+// resultBytesFromSet extracts the []byte payload from the mockResultStore's
+// captured Set call so tests can assert on per-row messages in the result
+// xlsx, the same way the processUsers tests do.
+func resultBytesFromSet(t *testing.T, results *mockResultStore) []byte {
+	t.Helper()
+	for _, call := range results.Calls {
+		if call.Method == "Set" {
+			return call.Arguments.Get(2).([]byte)
+		}
+	}
+	return nil
+}
+
+type classesResultSheets struct {
+	classes []([]string)
+	members []([]string)
+}
+
+func classesResultRows(t *testing.T, data []byte) classesResultSheets {
+	t.Helper()
+	require.NotNil(t, data)
+	f, err := excelize.OpenReader(bytes.NewReader(data))
+	require.NoError(t, err)
+	defer f.Close()
+	classRows, err := f.GetRows("Classes")
+	require.NoError(t, err)
+	memberRows, err := f.GetRows("Members")
+	require.NoError(t, err)
+	return classesResultSheets{classes: classRows, members: memberRows}
 }

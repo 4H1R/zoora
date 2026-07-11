@@ -256,10 +256,3 @@ func generatePassword() (string, error) {
 	}
 	return string(b), nil
 }
-
-// processClasses is a temporary stub so the package compiles and ProcessJob
-// is fully wired. Task 9 moves this into process_classes.go and replaces the
-// body with real row-by-row processing.
-func (s *service) processClasses(ctx context.Context, job *domain.ImportJob, data []byte) error {
-	return s.fail(ctx, job, "not implemented")
-}
