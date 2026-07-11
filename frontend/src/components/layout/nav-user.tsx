@@ -14,7 +14,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useRoleName } from "@/lib/permissions"
 
-export function NavUser({ user }: { user?: GithubCom4H1RZooraInternalDomainUser }) {
+export function NavUser({
+  user,
+  accountTo = "/org/account",
+}: {
+  user?: GithubCom4H1RZooraInternalDomainUser
+  accountTo?: "/org/account" | "/admin/account"
+}) {
   const { t } = useTranslation()
   const logout = useLogout()
   const roleName = useRoleName()
@@ -47,7 +53,7 @@ export function NavUser({ user }: { user?: GithubCom4H1RZooraInternalDomainUser 
           <ChevronsUpDownIcon className="text-muted-foreground size-3.5 shrink-0" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" side="top" className="min-w-52">
-          <DropdownMenuItem render={<Link to="/org/account" />}>
+          <DropdownMenuItem render={<Link to={accountTo} />}>
             <SettingsIcon className="size-4" />
             {t("account.menuAction")}
           </DropdownMenuItem>

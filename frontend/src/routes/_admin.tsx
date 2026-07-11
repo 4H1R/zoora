@@ -29,7 +29,10 @@ function RouteComponent() {
 
   const user = (data?.status === 200 && data.data.data) || undefined
 
-  if (isLoading || isFetching) return <SplashScreen />
+  // Gate the splash on the initial load only. Blanking on every background
+  // refetch (isFetching) unmounts <Outlet/>, so any child that observes
+  // users/me (e.g. account settings) oscillates mount→refetch→splash forever.
+  if (isLoading) return <SplashScreen />
 
   return (
     <SidebarProvider>
