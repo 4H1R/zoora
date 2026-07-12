@@ -18,6 +18,9 @@ import {
 import { ClassPicker, SessionPicker } from "@/components/admin/forms/ClassSessionPicker"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
 import {
+  antiCheatDefaults,
+  antiCheatFromQuiz,
+  antiCheatSchemaShape,
   QuizCoreFields,
   QuizFlagsFields,
   QuizScheduleFields,
@@ -31,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { isPlanError } from "@/lib/plan-errors"
 
 const TRANSLATION_PREFIX = "admin.quizzes.form"
 
@@ -112,8 +116,7 @@ const createSchema = z
     title: z.string().min(2),
     description: z.string().optional(),
     duration_minutes: z.coerce.number().int().gt(0),
-    no_back_navigation: z.boolean(),
-    shuffle_questions: z.boolean(),
+    ...antiCheatSchemaShape,
     started_at: z.string().min(1),
     ended_at: z.string().min(1),
     negative_mark_mode: z.enum(NEGATIVE_MODES),
@@ -129,8 +132,7 @@ const editSchema = z.object({
   title: z.string().min(2),
   description: z.string().optional(),
   duration_minutes: z.coerce.number().int().gt(0),
-  no_back_navigation: z.boolean(),
-  shuffle_questions: z.boolean(),
+  ...antiCheatSchemaShape,
   negative_mark_mode: z.enum(NEGATIVE_MODES),
   negative_value: z.coerce.number(),
   wrongs_per_point: z.coerce.number().int(),
@@ -147,8 +149,7 @@ const buildCreateDefaults = (classId?: string): CreateValues => ({
   title: "",
   description: "",
   duration_minutes: 30,
-  no_back_navigation: false,
-  shuffle_questions: false,
+  ...antiCheatDefaults,
   started_at: "",
   ended_at: "",
   negative_mark_mode: "none",
@@ -160,8 +161,7 @@ const quizToEditValues = (quiz: Quiz): EditValues => ({
   title: quiz.title ?? "",
   description: quiz.description ?? "",
   duration_minutes: quiz.duration_minutes ?? 30,
-  no_back_navigation: quiz.no_back_navigation ?? false,
-  shuffle_questions: quiz.shuffle_questions ?? false,
+  ...antiCheatFromQuiz(quiz),
   negative_mark_mode: (quiz.negative_mark_mode as NegativeMode) ?? "none",
   negative_value: quiz.negative_value ?? 0,
   wrongs_per_point: quiz.wrongs_per_point ?? 0,
@@ -268,6 +268,12 @@ function CreateDialog({
         onInvalidate()
         onOpenChange(false)
       },
+      // Plan-gate 402s (e.g. advanced anti-cheat) get a central upgrade toast
+      // (main.tsx); only surface the generic failure here.
+      onError: (error) => {
+        if (isPlanError(error)) return
+        toast.error(t(`${TRANSLATION_PREFIX}.createFailed`))
+      },
     },
   })
 
@@ -278,8 +284,7 @@ function CreateDialog({
         title: values.title,
         description: values.description,
         duration_minutes: values.duration_minutes,
-        no_back_navigation: values.no_back_navigation,
-        shuffle_questions: values.shuffle_questions,
+        ...antiCheatFromQuiz(values),
         ...negativePayload(values),
       },
     })
@@ -288,8 +293,6 @@ function CreateDialog({
   const errors = form.formState.errors
   const classId = form.watch("class_id")
   const sessionId = form.watch("class_session_id")
-  const noBack = form.watch("no_back_navigation")
-  const shuffle = form.watch("shuffle_questions")
   const negMode = form.watch("negative_mark_mode") as NegativeMode
   const negValue = form.watch("negative_value") as number
   const negWpp = form.watch("wrongs_per_point") as number
@@ -333,11 +336,8 @@ function CreateDialog({
         <QuizCoreFields register={form.register} errors={errors} prefix={TRANSLATION_PREFIX} />
         <QuizScheduleFields control={form.control as never} errors={errors} prefix={TRANSLATION_PREFIX} />
         <QuizFlagsFields
-          prefix={TRANSLATION_PREFIX}
-          noBackNavigation={noBack}
-          shuffleQuestions={shuffle}
-          onNoBackNavigationChange={(v) => form.setValue("no_back_navigation", v)}
-          onShuffleQuestionsChange={(v) => form.setValue("shuffle_questions", v)}
+          values={antiCheatFromQuiz(form.watch())}
+          onChange={(k, v) => form.setValue(k, v)}
         />
         <QuizNegativeFields
           mode={negMode}
@@ -389,16 +389,13 @@ function EditDialog({ open, onOpenChange, quiz, onInvalidate, t }: EditDialogPro
         title: values.title,
         description: values.description,
         duration_minutes: values.duration_minutes,
-        no_back_navigation: values.no_back_navigation,
-        shuffle_questions: values.shuffle_questions,
+        ...antiCheatFromQuiz(values),
         ...negativePayload(values),
       },
     })
   })
 
   const errors = form.formState.errors
-  const noBack = form.watch("no_back_navigation")
-  const shuffle = form.watch("shuffle_questions")
   const negMode = form.watch("negative_mark_mode") as NegativeMode
   const negValue = form.watch("negative_value") as number
   const negWpp = form.watch("wrongs_per_point") as number
@@ -416,11 +413,8 @@ function EditDialog({ open, onOpenChange, quiz, onInvalidate, t }: EditDialogPro
       <FieldGroup>
         <QuizCoreFields register={form.register} errors={errors} prefix={TRANSLATION_PREFIX} />
         <QuizFlagsFields
-          prefix={TRANSLATION_PREFIX}
-          noBackNavigation={noBack}
-          shuffleQuestions={shuffle}
-          onNoBackNavigationChange={(v) => form.setValue("no_back_navigation", v)}
-          onShuffleQuestionsChange={(v) => form.setValue("shuffle_questions", v)}
+          values={antiCheatFromQuiz(form.watch())}
+          onChange={(k, v) => form.setValue(k, v)}
         />
         <QuizNegativeFields
           mode={negMode}

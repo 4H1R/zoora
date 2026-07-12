@@ -407,6 +407,12 @@ func (s *service) SaveAnswer(ctx context.Context, submissionID uuid.UUID, dto do
 	if sub.Status != domain.SubmissionStatusInProgress {
 		return domain.ErrConflict
 	}
+
+	quiz, err := s.repo.FindByID(ctx, sub.QuizID)
+	if err != nil {
+		return err
+	}
+
 	inSet := false
 	for _, sq := range sub.QuestionSet {
 		if sq.QuestionID == dto.QuestionID {
@@ -421,6 +427,11 @@ func (s *service) SaveAnswer(ctx context.Context, submissionID uuid.UUID, dto do
 	found := false
 	for i := range sub.Answers {
 		if sub.Answers[i].QuestionID == dto.QuestionID {
+			// With no back navigation an answered question is locked: the resume
+			// filter already skips it, so a re-save is a back-nav overwrite attempt.
+			if quiz.NoBackNavigation {
+				return domain.NewValidationError(map[string]string{"question_id": "cannot change an already-answered question (no back navigation)"})
+			}
 			sub.Answers[i].SelectedOptionIDs = dto.SelectedOptionIDs
 			sub.Answers[i].Value = dto.Value
 			sub.Answers[i].SpentSeconds = dto.SpentSeconds
@@ -499,6 +510,12 @@ func (s *service) SubmitQuiz(ctx context.Context, submissionID uuid.UUID, dto do
 		found := false
 		for i := range sub.Answers {
 			if sub.Answers[i].QuestionID == a.QuestionID {
+				// No back navigation: an already-committed answer is final; ignore any
+				// overwrite the client tries to slip in on the bulk submit.
+				if quiz.NoBackNavigation {
+					found = true
+					break
+				}
 				sub.Answers[i].SelectedOptionIDs = a.SelectedOptionIDs
 				sub.Answers[i].Value = a.Value
 				sub.Answers[i].SpentSeconds = a.SpentSeconds

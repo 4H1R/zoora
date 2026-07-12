@@ -35,6 +35,7 @@ interface StartScreenProps {
   totalQuestions: number
   backHref: string
   starting: boolean
+  locating?: boolean
   onBegin: () => void
 }
 
@@ -45,6 +46,7 @@ export function StartScreen({
   totalQuestions,
   backHref,
   starting,
+  locating = false,
   onBegin,
 }: StartScreenProps) {
   const { t } = useTranslation()
@@ -143,9 +145,15 @@ export function StartScreen({
       </section>
 
       <div className="flex items-center gap-3">
-        <Button size="lg" onClick={onBegin} disabled={starting}>
-          {starting ? <Spinner className="size-4" /> : <CheckCircle2Icon className="size-4" />}
-          {t("org.session.quizzes.take.begin")}
+        <Button size="lg" onClick={onBegin} disabled={starting || locating}>
+          {starting || locating ? (
+            <Spinner className="size-4" />
+          ) : (
+            <CheckCircle2Icon className="size-4" />
+          )}
+          {locating
+            ? t("org.session.quizzes.take.requestingLocation")
+            : t("org.session.quizzes.take.begin")}
         </Button>
         <Button variant="outline" render={<Link to={backHref} />}>
           {t("common.cancel")}

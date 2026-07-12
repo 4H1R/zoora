@@ -6,6 +6,7 @@ import type {
 } from "@/api/model"
 
 import { useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -14,6 +15,7 @@ import {
   usePostQuizzesIdSubmissions,
 } from "@/api/quizzes/quizzes"
 
+import { requestGeolocation } from "./geolocation"
 import { CenterMessage } from "./messages"
 import { PlayArea } from "./play-area"
 import { StartScreen } from "./start-screen"
@@ -36,6 +38,7 @@ export function QuizRunner({
 }: QuizRunnerProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const [locating, setLocating] = useState(false)
 
   const startMutation = usePostQuizzesIdSubmissions({
     mutation: {
@@ -79,6 +82,21 @@ export function QuizRunner({
   }
 
   if (!existingSubmission) {
+    async function handleBegin() {
+      if (!room?.id || !quiz.id) return
+      // require_gps: must send coords OR gps_denied, or the backend rejects the
+      // start with a validation error. Denial is non-blocking — proceed anyway.
+      let geo = {}
+      if (quiz.require_gps) {
+        setLocating(true)
+        const result = await requestGeolocation()
+        setLocating(false)
+        if (result.gps_denied) toast.warning(t("org.session.quizzes.take.antiCheat.gpsDenied"))
+        geo = result
+      }
+      startMutation.mutate({ id: quiz.id, data: { quiz_room_id: room.id, ...geo } })
+    }
+
     return (
       <StartScreen
         quiz={quiz}
@@ -87,10 +105,8 @@ export function QuizRunner({
         totalQuestions={questions.length}
         backHref={backHref}
         starting={startMutation.isPending}
-        onBegin={() => {
-          if (!room.id || !quiz.id) return
-          startMutation.mutate({ id: quiz.id, data: { quiz_room_id: room.id } })
-        }}
+        locating={locating}
+        onBegin={() => void handleBegin()}
       />
     )
   }

@@ -923,6 +923,7 @@
         "updateSuccess": "Quiz updated",
         "deleteSuccess": "Quiz deleted",
         "linkRoomFailed": "Quiz created but session room linking failed",
+        "createFailed": "Could not create quiz",
         "negativeMark": {
           "label": "Quiz-wide negative marking",
           "hint": "Applied to questions that have no negative marking of their own."
@@ -2180,13 +2181,15 @@
           "createSuccess": "Quiz created",
           "updateSuccess": "Quiz updated",
           "deleteSuccess": "Quiz deleted",
-          "linkRoomFailed": "Quiz created but session room linking failed"
+          "linkRoomFailed": "Quiz created but session room linking failed",
+          "createFailed": "Could not create quiz"
         },
         "take": {
           "headTitle": "Take quiz",
           "eyebrow": "Quiz · Take",
           "backToSession": "Back to session",
           "begin": "Begin quiz",
+          "requestingLocation": "Requesting location…",
           "previous": "Previous",
           "next": "Next",
           "finish": "Finish quiz",
@@ -2263,6 +2266,11 @@
             "perWrong": "−{{fraction}} per wrong",
             "accumulative": "−1 per {{count}} wrong",
             "breakdown": "A penalty was applied for wrong selections."
+          },
+          "antiCheat": {
+            "gpsDenied": "Location access was denied — the exam will record this. You can continue.",
+            "tabWarning": "Leaving the exam tab is recorded — {{count}} time(s).",
+            "blocked": "This action is disabled during the exam."
           }
         }
       },
@@ -2930,6 +2938,62 @@
       "add": "Add files",
       "empty": "Click to attach files",
       "uploadError": "Upload failed"
+    }
+  },
+  "quizAntiCheat": {
+    "title": "Exam integrity",
+    "subtitle": "Anti-cheat controls applied while students take this quiz.",
+    "activeCount": "{{count}} on",
+    "groups": {
+      "enforced": "Enforced automatically",
+      "monitoring": "Monitoring & logging",
+      "restrictions": "Browser restrictions"
+    },
+    "toggles": {
+      "shuffleQuestions": {
+        "label": "Shuffle question order",
+        "hint": "Each student sees the questions in a different, random order."
+      },
+      "shuffleOptions": {
+        "label": "Shuffle answer options",
+        "hint": "Answer choices are randomized for every student."
+      },
+      "noBackNavigation": {
+        "label": "Lock back navigation",
+        "hint": "Students can't return to a previous question once they move on."
+      },
+      "trackTabSwitches": {
+        "label": "Track tab switching",
+        "hint": "Records how often and how long a student leaves the exam tab, for your review."
+      },
+      "requireGps": {
+        "label": "Require location",
+        "hint": "Asks for the student's location at start and flags submissions from the same place."
+      },
+      "disableCopyPaste": {
+        "label": "Block copy & paste",
+        "hint": "Prevents copying questions and pasting answers during the exam."
+      },
+      "disableRightClickShortcuts": {
+        "label": "Block right-click & shortcuts",
+        "hint": "Disables the context menu and common keyboard shortcuts in the exam view."
+      }
+    }
+  },
+  "planError": {
+    "featureGeneric": "This feature isn't available on your current plan. Upgrade to enable it.",
+    "limitGeneric": "You've reached your plan's limit. Upgrade to continue.",
+    "features": {
+      "recording": "Recording isn't available on your current plan. Upgrade to record live rooms.",
+      "offline_rooms": "Offline rooms aren't available on your current plan. Upgrade to enable them.",
+      "advanced_anticheat": "Advanced anti-cheat isn't available on your current plan. Upgrade to enable it.",
+      "custom_roles": "Custom roles aren't available on your current plan. Upgrade to enable them.",
+      "sso": "SSO isn't available on your current plan. Upgrade to enable it.",
+      "whiteboard": "Whiteboard isn't available on your current plan. Upgrade to enable it.",
+      "chat": "Chat isn't available on your current plan. Upgrade to enable it.",
+      "connectors": "Connectors aren't available on your current plan. Upgrade to enable them.",
+      "auto_grading": "Auto-grading isn't available on your current plan. Upgrade to enable it.",
+      "ai": "AI features aren't available on your current plan. Upgrade to enable them."
     }
   },
   "validation": {

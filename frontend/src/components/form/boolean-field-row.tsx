@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils"
 interface BooleanFieldRowProps {
   label: ReactNode
   hint?: ReactNode
+  /** Optional leading icon, shown in a badge that tints when checked. */
+  icon?: ReactNode
   checked: boolean
   onCheckedChange: (checked: boolean) => void
   disabled?: boolean
@@ -15,6 +17,7 @@ interface BooleanFieldRowProps {
 export function BooleanFieldRow({
   label,
   hint,
+  icon,
   checked,
   onCheckedChange,
   disabled,
@@ -36,6 +39,17 @@ export function BooleanFieldRow({
         disabled={disabled}
         className="mt-0.5 shrink-0"
       />
+      {Boolean(icon) && (
+        <span
+          className={cn(
+            "bg-muted text-muted-foreground mt-px flex size-8 shrink-0 items-center justify-center rounded-md transition-colors",
+            "[&_svg]:size-4",
+            "group-data-[checked=true]/bool-row:bg-primary/10 group-data-[checked=true]/bool-row:text-primary"
+          )}
+        >
+          {icon}
+        </span>
+      )}
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="text-sm leading-snug font-medium">{label}</span>
         {Boolean(hint) && (

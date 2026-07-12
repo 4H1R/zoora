@@ -1104,6 +1104,27 @@ func TestQuizService_SaveAnswer_UpsertsAndKeepsInProgress(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestQuizService_SaveAnswer_NoBackNavigation_RejectsOverwrite(t *testing.T) {
+	studentID := uuid.New()
+	subID := uuid.New()
+	quizID := uuid.New()
+	qid := uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	existing := &domain.QuizSubmission{ID: subID, QuizID: quizID, UserID: studentID, Status: domain.SubmissionStatusInProgress,
+		StartedAt:   time.Now(),
+		QuestionSet: []domain.SubmissionQuestion{{QuestionID: qid}},
+		Answers:     []domain.SubmissionAnswer{{QuestionID: qid, SelectedOptionIDs: []string{"o1"}}}}
+	d.subRepo.On("FindByID", ctx, subID).Return(existing, nil)
+	d.quizRepo.On("FindByID", ctx, quizID).Return(&domain.Quiz{ID: quizID, DurationMinutes: 60, NoBackNavigation: true}, nil)
+
+	svc := d.service()
+	err := svc.SaveAnswer(ctx, subID, domain.SaveAnswerDTO{QuestionID: qid, SelectedOptionIDs: []string{"o2"}})
+	assert.ErrorIs(t, err, domain.ErrValidation)
+	d.subRepo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+}
+
 func TestQuizService_SaveAnswer_RejectsPastDeadline(t *testing.T) {
 	studentID := uuid.New()
 	subID := uuid.New()
@@ -1189,6 +1210,49 @@ func TestQuizService_SubmitQuiz_MergesSavedAnswersAndFiltersFrozenSet(t *testing
 	_, err := svc.SubmitQuiz(ctx, subID, domain.SubmitQuizDTO{Answers: []domain.SubmitAnswerDTO{
 		{QuestionID: q2, SelectedOptionIDs: []string{"o2"}},
 		{QuestionID: qOutside, SelectedOptionIDs: []string{"oX"}},
+	}})
+	assert.NoError(t, err)
+}
+
+func TestQuizService_SubmitQuiz_NoBackNavigation_IgnoresOverwriteOfCommittedAnswer(t *testing.T) {
+	studentID := uuid.New()
+	subID := uuid.New()
+	quizID := uuid.New()
+	q1, q2 := uuid.New(), uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	sub := &domain.QuizSubmission{ID: subID, QuizID: quizID, UserID: studentID,
+		Status: domain.SubmissionStatusInProgress, StartedAt: time.Now(),
+		QuestionSet: []domain.SubmissionQuestion{{QuestionID: q1}, {QuestionID: q2}},
+		Answers:     []domain.SubmissionAnswer{{QuestionID: q1, SelectedOptionIDs: []string{"o1"}}}}
+	now := time.Now()
+	d.subRepo.On("FindByID", ctx, subID).Return(sub, nil)
+	d.quizRepo.On("FindByID", ctx, quizID).Return(&domain.Quiz{ID: quizID, DurationMinutes: 30, NoBackNavigation: true}, nil)
+	d.roomRepo.On("FindOpenByQuizID", ctx, quizID).Return(&domain.QuizRoom{ID: uuid.New(), QuizID: quizID, StartedAt: &now}, nil)
+	d.ruleRepo.On("ListByQuiz", ctx, quizID, mock.Anything).Return([]domain.QuizRule{}, int64(0), nil)
+	d.questionRepo.On("FindByIDs", ctx, mock.Anything).
+		Return([]domain.Question{
+			{ID: q1, Type: domain.QuestionTypeChoice, Options: []domain.QuestionOption{{ID: "o1", Score: 1}, {ID: "oBad"}}},
+			{ID: q2, Type: domain.QuestionTypeChoice, Options: []domain.QuestionOption{{ID: "o2", Score: 1}}},
+		}, nil)
+	d.subRepo.On("Update", ctx, mock.AnythingOfType("*domain.QuizSubmission")).
+		Run(func(args mock.Arguments) {
+			got := args.Get(1).(*domain.QuizSubmission)
+			assert.Len(t, got.Answers, 2)
+			for _, a := range got.Answers {
+				if a.QuestionID == q1 {
+					// committed answer must survive the back-nav overwrite attempt
+					assert.Equal(t, []string{"o1"}, a.SelectedOptionIDs)
+				}
+			}
+		}).Return(nil)
+
+	svc := d.service()
+	// Client tries to rewrite the already-committed q1 and add q2.
+	_, err := svc.SubmitQuiz(ctx, subID, domain.SubmitQuizDTO{Answers: []domain.SubmitAnswerDTO{
+		{QuestionID: q1, SelectedOptionIDs: []string{"oBad"}},
+		{QuestionID: q2, SelectedOptionIDs: []string{"o2"}},
 	}})
 	assert.NoError(t, err)
 }

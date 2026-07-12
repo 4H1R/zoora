@@ -43,6 +43,8 @@ import { clearPersistedState, loadPersistedState, savePersistedState } from "./s
 import { TimerPill } from "./timer-pill"
 import type { AnswerState } from "./types"
 import { emptyAnswer } from "./types"
+import { useExamLockdown } from "./use-exam-lockdown"
+import { useTabVisibility } from "./use-tab-visibility"
 import {
   computeDeadline,
   countAnswered,
@@ -87,6 +89,7 @@ export function PlayArea({ quiz, room, submission, questions, backHref }: PlayAr
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   const submittedRef = useRef(false)
+  const lastBlockToastRef = useRef(0)
 
   useEffect(() => {
     savePersistedState(submissionId, { answers, order: orderedQuestionIds, index })
@@ -95,6 +98,25 @@ export function PlayArea({ quiz, room, submission, questions, backHref }: PlayAr
   const currentQuestionId = orderedQuestionIds[index]
 
   usePerQuestionTimer(currentQuestionId, setAnswers)
+
+  // track_tab_switches: count hidden-tab events + accumulated hidden seconds,
+  // warn (non-blocking) on return, and send the totals on final submit.
+  const tabVisibility = useTabVisibility(Boolean(quiz.track_tab_switches), (count) => {
+    toast.warning(t("org.session.quizzes.take.antiCheat.tabWarning", { count }))
+  })
+
+  // disable_copy_paste / disable_right_click_shortcuts: silent preventDefault
+  // with a throttled toast so rapid attempts don't spam.
+  useExamLockdown({
+    disableCopyPaste: Boolean(quiz.disable_copy_paste),
+    disableShortcuts: Boolean(quiz.disable_right_click_shortcuts),
+    onBlocked: () => {
+      const now = Date.now()
+      if (now - lastBlockToastRef.current < 2000) return
+      lastBlockToastRef.current = now
+      toast.message(t("org.session.quizzes.take.antiCheat.blocked"))
+    },
+  })
 
   const submitMutation = usePostQuizzesSubmissionsSubmissionIdSubmit({
     mutation: {
@@ -122,7 +144,16 @@ export function PlayArea({ quiz, room, submission, questions, backHref }: PlayAr
         spent_seconds: a.spent_seconds,
       }
     })
-    submitMutation.mutate({ submissionId, data: { answers: payload } })
+    const tabStats = quiz.track_tab_switches ? tabVisibility.read() : null
+    submitMutation.mutate({
+      submissionId,
+      data: {
+        answers: payload,
+        ...(tabStats
+          ? { tab_hidden_count: tabStats.count, tab_hidden_seconds: tabStats.seconds }
+          : {}),
+      },
+    })
     if (reason === "auto") toast.message(t("org.session.quizzes.take.autoSubmitNote"))
   }
 
