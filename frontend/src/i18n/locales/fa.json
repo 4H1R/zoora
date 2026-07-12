@@ -2727,7 +2727,12 @@
       "practices": "تمرین‌ها",
       "gradebook": "کارنامه",
       "offlines": "جلسات آفلاین",
-      "attendance": "حضور و غیاب"
+      "attendance": "حضور و غیاب",
+      "conversations": "گفتگوها",
+      "tickets": "تیکت‌ها",
+      "qa": "پرسش و پاسخ",
+      "billing": "صورتحساب",
+      "notifications": "اعلان‌ها"
     },
     "actions": {
       "view": "مشاهده",
@@ -2747,7 +2752,10 @@
       "write": "نوشتن",
       "submit": "ارسال",
       "take": "شرکت در آزمون",
-      "grade": "نمره‌دهی"
+      "grade": "نمره‌دهی",
+      "moderate": "نظارت",
+      "send": "فرستادن",
+      "send_any": "فرستادن همه"
     }
   },
   "liveRoom": {

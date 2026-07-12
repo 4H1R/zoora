@@ -2727,7 +2727,12 @@
       "practices": "Practices",
       "gradebook": "Gradebook",
       "offlines": "Offline Sessions",
-      "attendance": "Attendance"
+      "attendance": "Attendance",
+      "conversations": "Conversations",
+      "tickets": "Tickets",
+      "qa": "Q&A",
+      "billing": "Billing",
+      "notifications": "Notifications"
     },
     "actions": {
       "view": "View",
@@ -2747,7 +2752,10 @@
       "write": "Write",
       "submit": "Submit",
       "take": "Take",
-      "grade": "Grade"
+      "grade": "Grade",
+      "moderate": "Moderate",
+      "send": "Send",
+      "send_any": "Send Any"
     }
   },
   "liveRoom": {

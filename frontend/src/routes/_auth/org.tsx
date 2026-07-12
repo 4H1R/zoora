@@ -32,6 +32,7 @@ export const Route = createFileRoute("/_auth/org")({
 const SEGMENT_KEYS: Record<string, string> = {
   ...Object.fromEntries(Object.values(ORG_ROUTES).map((spec) => [spec.segment, spec.i18nKey])),
   members: "org.nav.members",
+  tutorials: "tutorials.title",
   "whats-new": "whatsNew.title",
   notifications: "notifications.title",
   account: "org.nav.account",
