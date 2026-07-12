@@ -37,6 +37,7 @@ import {
 } from "@/api/live-sessions/live-sessions"
 import { getMediaIdDownloadUrl, postMediaPresign } from "@/api/media/media"
 import { usePostPollsIdAnswer } from "@/api/polls/polls"
+import { isPlanError } from "@/lib/plan-errors"
 import { cn } from "@/lib/utils"
 
 import { ControlBar } from "./control-bar"
@@ -289,10 +290,9 @@ function RoomShell({
             invalidateRecordings()
           },
           onError: (error) => {
-            if (error.response?.data?.error?.code === "FEATURE_NOT_IN_PLAN") {
-              toast.error(t("liveRoom.recording.upgradeRequired"))
-              return
-            }
+            // Plan-gate 402s get a central upgrade toast (see main.tsx); only
+            // handle the non-plan failure here.
+            if (isPlanError(error)) return
             toast.error(t("liveRoom.recording.startError"))
           },
         }
