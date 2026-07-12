@@ -64,54 +64,69 @@ export function TicketList({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-wrap gap-2 border-b p-3">
-        <Select
-          items={statusItems}
-          value={filters.status ?? "all"}
-          onValueChange={(v) => onFiltersChange({ ...filters, status: v === "all" ? undefined : (v ?? undefined) })}
-        >
-          <SelectTrigger size="sm" className="min-w-0 flex-1" aria-label={t("tickets.filters.status")}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {statusItems.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          items={typeItems}
-          value={filters.type ?? "all"}
-          onValueChange={(v) => onFiltersChange({ ...filters, type: v === "all" ? undefined : (v ?? undefined) })}
-        >
-          <SelectTrigger size="sm" className="min-w-0 flex-1" aria-label={t("tickets.filters.type")}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {typeItems.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          items={classItems}
-          value={filters.classId ?? "all"}
-          onValueChange={(v) => onFiltersChange({ ...filters, classId: v === "all" ? undefined : (v ?? undefined) })}
-        >
-          <SelectTrigger size="sm" className="w-full" aria-label={t("tickets.filters.class")}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {classItems.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="min-w-0 flex-1">
+          <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
+            {t("tickets.filters.status")}
+          </label>
+          <Select
+            items={statusItems}
+            value={filters.status ?? "all"}
+            onValueChange={(v) => onFiltersChange({ ...filters, status: v === "all" ? undefined : (v ?? undefined) })}
+          >
+            <SelectTrigger size="sm" className="w-full" aria-label={t("tickets.filters.status")}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {statusItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="min-w-0 flex-1">
+          <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
+            {t("tickets.filters.type")}
+          </label>
+          <Select
+            items={typeItems}
+            value={filters.type ?? "all"}
+            onValueChange={(v) => onFiltersChange({ ...filters, type: v === "all" ? undefined : (v ?? undefined) })}
+          >
+            <SelectTrigger size="sm" className="w-full" aria-label={t("tickets.filters.type")}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {typeItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="w-full">
+          <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
+            {t("tickets.filters.class")}
+          </label>
+          <Select
+            items={classItems}
+            value={filters.classId ?? "all"}
+            onValueChange={(v) => onFiltersChange({ ...filters, classId: v === "all" ? undefined : (v ?? undefined) })}
+          >
+            <SelectTrigger size="sm" className="w-full" aria-label={t("tickets.filters.class")}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {classItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">

@@ -118,7 +118,10 @@ export function DateTimePicker({
           <CalendarIcon className="size-4 opacity-70" />
           <span className="flex-1 text-start">{label}</span>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent
+          className="max-h-[var(--available-height)] w-auto overflow-y-auto overscroll-contain p-0"
+          align="start"
+        >
           <div className="flex flex-col sm:flex-row">
             <Calendar
               mode="single"
@@ -204,10 +207,16 @@ function TimeColumn({ open, values, selected, onSelect, format, ariaLabel, disab
   const activeRef = React.useRef<HTMLButtonElement>(null)
 
   // Center the active cell each time the popover opens so the current value is visible.
+  // Scroll only this column's viewport — `scrollIntoView` would also scroll the popover
+  // (which is height-capped and scrollable on mobile), burying the calendar.
   React.useEffect(() => {
-    if (open && activeRef.current) {
-      activeRef.current.scrollIntoView({ block: "center" })
-    }
+    if (!open || !activeRef.current) return
+    const btn = activeRef.current
+    const viewport = btn.closest<HTMLElement>('[data-slot="scroll-area-viewport"]')
+    if (!viewport) return
+    const btnRect = btn.getBoundingClientRect()
+    const vpRect = viewport.getBoundingClientRect()
+    viewport.scrollTop += btnRect.top - vpRect.top - viewport.clientHeight / 2 + btnRect.height / 2
   }, [open, selected])
 
   return (
