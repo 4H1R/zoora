@@ -9,10 +9,8 @@
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "types": ["node"],
     "skipLibCheck": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    },
-    "ignoreDeprecations": "6.0"
+    }
   }
 }
