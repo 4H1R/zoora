@@ -86,6 +86,11 @@ func (m *mockClassSvc) ListMembers(ctx context.Context, classID uuid.UUID, q dom
 	ms, _ := a.Get(0).([]domain.ClassMember)
 	return ms, a.Get(1).(int64), a.Error(2)
 }
+func (m *mockClassSvc) ProvisionConversation(ctx context.Context, classID uuid.UUID, dto domain.ProvisionClassConversationDTO) (*domain.Conversation, error) {
+	a := m.Called(ctx, classID, dto)
+	conv, _ := a.Get(0).(*domain.Conversation)
+	return conv, a.Error(1)
+}
 
 func (m *mockClassSvc) AdminList(ctx context.Context, q domain.AdminListClassesQuery) ([]domain.Class, int64, error) {
 	a := m.Called(ctx, q)

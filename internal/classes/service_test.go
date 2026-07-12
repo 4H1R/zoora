@@ -144,7 +144,7 @@ func (m *classMemberRepoSvcMock) ListAllByClass(ctx context.Context, classID uui
 	return items, args.Error(1)
 }
 
-func newClassService(repo *classRepoSvcMock, sessions *classSessionRepoSvcMock, members *classMemberRepoSvcMock) domain.ClassService {
+func newClassService(repo *classRepoSvcMock, sessions *classSessionRepoSvcMock, members *classMemberRepoSvcMock, chat ...domain.ClassChatProvisioner) domain.ClassService {
 	if repo == nil {
 		repo = &classRepoSvcMock{}
 	}
@@ -154,7 +154,26 @@ func newClassService(repo *classRepoSvcMock, sessions *classSessionRepoSvcMock, 
 	if members == nil {
 		members = &classMemberRepoSvcMock{}
 	}
-	return classes.NewService(repo, sessions, members, slog.Default())
+	var provisioner domain.ClassChatProvisioner
+	if len(chat) > 0 {
+		provisioner = chat[0]
+	}
+	return classes.NewService(repo, sessions, members, provisioner, slog.Default())
+}
+
+// chatProvisionerMock is a testify mock of domain.ClassChatProvisioner.
+type chatProvisionerMock struct{ mock.Mock }
+
+func (m *chatProvisionerMock) CreateForClass(ctx context.Context, in domain.ProvisionClassChatDTO) (*domain.Conversation, error) {
+	args := m.Called(ctx, in)
+	conv, _ := args.Get(0).(*domain.Conversation)
+	return conv, args.Error(1)
+}
+
+func (m *chatProvisionerMock) SyncClassMembers(ctx context.Context, convID uuid.UUID, memberIDs []uuid.UUID) (*domain.Conversation, error) {
+	args := m.Called(ctx, convID, memberIDs)
+	conv, _ := args.Get(0).(*domain.Conversation)
+	return conv, args.Error(1)
 }
 
 func classCtx(userID uuid.UUID, orgID *uuid.UUID, isAdmin bool, perms ...domain.PermissionName) context.Context {
@@ -440,4 +459,163 @@ func TestClassAdminMethodsRequireAdminAndDefaultPagination(t *testing.T) {
 
 	sessions.On("HardDelete", admin, sessionID).Return(nil)
 	assert.NoError(t, svc.AdminHardDeleteSession(admin, sessionID))
+}
+
+// chatCtx builds a caller context for a chat-enabled org (Pro tier has the chat
+// feature) so the ProvisionConversation feature gate passes for non-admins.
+func chatCtx(userID uuid.UUID, orgID uuid.UUID, perms ...domain.PermissionName) context.Context {
+	p := make([]string, 0, len(perms))
+	for _, perm := range perms {
+		p = append(p, string(perm))
+	}
+	return domain.WithCaller(context.Background(), domain.Caller{
+		UserID:      userID,
+		OrgID:       &orgID,
+		Permissions: p,
+		Ent:         domain.PlanCatalog[domain.PlanKey(domain.TierPro, 50)],
+	})
+}
+
+func TestProvisionConversationCreatesAndLinksForOwningTeacher(t *testing.T) {
+	repo := &classRepoSvcMock{}
+	members := &classMemberRepoSvcMock{}
+	chat := &chatProvisionerMock{}
+	svc := newClassService(repo, nil, members, chat)
+
+	teacherID := uuid.New()
+	orgID := uuid.New()
+	classID := uuid.New()
+	studentA, studentB := uuid.New(), uuid.New()
+	newConvID := uuid.New()
+	ctx := chatCtx(teacherID, orgID) // no perms: authorized purely by ownership
+
+	repo.On("FindByID", ctx, classID).Return(&domain.Class{
+		ID: classID, OrganizationID: orgID, UserID: teacherID, Name: "Algebra",
+	}, nil)
+	members.On("ListAllByClass", ctx, classID).Return([]domain.ClassMember{
+		{UserID: studentA}, {UserID: studentB},
+	}, nil)
+	chat.On("CreateForClass", ctx, mock.MatchedBy(func(in domain.ProvisionClassChatDTO) bool {
+		return in.OrganizationID == orgID &&
+			in.CreatorID == teacherID &&
+			in.Type == domain.ConversationTypeGroup &&
+			in.Name == "Algebra" && // defaults to class name when dto.Name empty
+			len(in.MemberIDs) == 2
+	})).Return(&domain.Conversation{ID: newConvID, Type: domain.ConversationTypeGroup, Name: "Algebra"}, nil)
+	repo.On("Update", ctx, mock.MatchedBy(func(cl *domain.Class) bool {
+		return cl.ConversationID != nil && *cl.ConversationID == newConvID
+	})).Return(nil)
+
+	conv, err := svc.ProvisionConversation(ctx, classID, domain.ProvisionClassConversationDTO{Type: domain.ConversationTypeGroup})
+	assert.NoError(t, err)
+	assert.Equal(t, newConvID, conv.ID)
+	chat.AssertExpectations(t)
+	repo.AssertExpectations(t)
+}
+
+func TestProvisionConversationSyncsWhenAlreadyLinked(t *testing.T) {
+	repo := &classRepoSvcMock{}
+	members := &classMemberRepoSvcMock{}
+	chat := &chatProvisionerMock{}
+	svc := newClassService(repo, nil, members, chat)
+
+	teacherID := uuid.New()
+	orgID := uuid.New()
+	classID := uuid.New()
+	convID := uuid.New()
+	student := uuid.New()
+	ctx := chatCtx(teacherID, orgID)
+
+	repo.On("FindByID", ctx, classID).Return(&domain.Class{
+		ID: classID, OrganizationID: orgID, UserID: teacherID, Name: "Algebra", ConversationID: &convID,
+	}, nil)
+	members.On("ListAllByClass", ctx, classID).Return([]domain.ClassMember{{UserID: student}}, nil)
+	chat.On("SyncClassMembers", ctx, convID, mock.MatchedBy(func(ids []uuid.UUID) bool {
+		return len(ids) == 1 && ids[0] == student
+	})).Return(&domain.Conversation{ID: convID}, nil)
+
+	conv, err := svc.ProvisionConversation(ctx, classID, domain.ProvisionClassConversationDTO{Type: domain.ConversationTypeGroup})
+	assert.NoError(t, err)
+	assert.Equal(t, convID, conv.ID)
+	// No create, no re-link on the sync path.
+	chat.AssertNotCalled(t, "CreateForClass", mock.Anything, mock.Anything)
+	repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+	chat.AssertExpectations(t)
+}
+
+func TestProvisionConversationRecreatesWhenLinkedConversationGone(t *testing.T) {
+	repo := &classRepoSvcMock{}
+	members := &classMemberRepoSvcMock{}
+	chat := &chatProvisionerMock{}
+	svc := newClassService(repo, nil, members, chat)
+
+	teacherID := uuid.New()
+	orgID := uuid.New()
+	classID := uuid.New()
+	staleConvID := uuid.New()
+	newConvID := uuid.New()
+	ctx := chatCtx(teacherID, orgID)
+
+	repo.On("FindByID", ctx, classID).Return(&domain.Class{
+		ID: classID, OrganizationID: orgID, UserID: teacherID, Name: "Algebra", ConversationID: &staleConvID,
+	}, nil)
+	members.On("ListAllByClass", ctx, classID).Return([]domain.ClassMember{}, nil)
+	// Linked conversation was deleted: sync reports not-found, so we recreate.
+	chat.On("SyncClassMembers", ctx, staleConvID, mock.Anything).Return(nil, domain.ErrNotFound)
+	chat.On("CreateForClass", ctx, mock.MatchedBy(func(in domain.ProvisionClassChatDTO) bool {
+		return in.CreatorID == teacherID && in.Type == domain.ConversationTypeChannel
+	})).Return(&domain.Conversation{ID: newConvID, Type: domain.ConversationTypeChannel}, nil)
+	repo.On("Update", ctx, mock.MatchedBy(func(cl *domain.Class) bool {
+		return cl.ConversationID != nil && *cl.ConversationID == newConvID
+	})).Return(nil)
+
+	conv, err := svc.ProvisionConversation(ctx, classID, domain.ProvisionClassConversationDTO{Type: domain.ConversationTypeChannel})
+	assert.NoError(t, err)
+	assert.Equal(t, newConvID, conv.ID)
+	chat.AssertExpectations(t)
+	repo.AssertExpectations(t)
+}
+
+func TestProvisionConversationForbiddenForNonManager(t *testing.T) {
+	repo := &classRepoSvcMock{}
+	chat := &chatProvisionerMock{}
+	svc := newClassService(repo, nil, nil, chat)
+
+	teacherID := uuid.New()
+	studentID := uuid.New()
+	orgID := uuid.New()
+	classID := uuid.New()
+	ctx := chatCtx(studentID, orgID) // not the owner, no manage perms
+
+	repo.On("FindByID", ctx, classID).Return(&domain.Class{
+		ID: classID, OrganizationID: orgID, UserID: teacherID, Name: "Algebra",
+	}, nil)
+
+	_, err := svc.ProvisionConversation(ctx, classID, domain.ProvisionClassConversationDTO{Type: domain.ConversationTypeGroup})
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+	chat.AssertNotCalled(t, "CreateForClass", mock.Anything, mock.Anything)
+}
+
+func TestProvisionConversationRequiresChatFeature(t *testing.T) {
+	repo := &classRepoSvcMock{}
+	chat := &chatProvisionerMock{}
+	svc := newClassService(repo, nil, nil, chat)
+
+	teacherID := uuid.New()
+	orgID := uuid.New()
+	classID := uuid.New()
+	// Free tier lacks the chat feature.
+	ctx := domain.WithCaller(context.Background(), domain.Caller{
+		UserID: teacherID, OrgID: &orgID,
+		Ent: domain.PlanCatalog[domain.PlanKey(domain.TierFree, 50)],
+	})
+
+	repo.On("FindByID", ctx, classID).Return(&domain.Class{
+		ID: classID, OrganizationID: orgID, UserID: teacherID, Name: "Algebra",
+	}, nil)
+
+	_, err := svc.ProvisionConversation(ctx, classID, domain.ProvisionClassConversationDTO{Type: domain.ConversationTypeGroup})
+	assert.Error(t, err)
+	assert.NotErrorIs(t, err, domain.ErrForbidden)
+	chat.AssertNotCalled(t, "CreateForClass", mock.Anything, mock.Anything)
 }

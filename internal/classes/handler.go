@@ -68,6 +68,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		authed.GET("/classes/:id/members", perm(domain.PermClassesView), idParam, h.ListMembers)
 		authed.POST("/classes/:id/members", perm(domain.PermClassesJoin), idParam, h.Enroll)
 		authed.DELETE("/classes/:id/members/:userId", perm(domain.PermClassesJoin), idParam, userIDParam, h.Leave)
+
+		authed.POST("/classes/:id/conversation", perm(domain.PermClassesUpdate), idParam, h.ProvisionConversation)
 	}
 }
 
@@ -363,6 +365,36 @@ func (h *Handler) Enroll(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusCreated, m)
+}
+
+// ProvisionConversation creates (or syncs members into) the class's group/channel
+// chat, seeded with the teacher and all enrolled students.
+// @Summary Provision class chat
+// @Description Creates a group or channel for the class and joins the teacher (as admin) plus every enrolled student. If the class already has a linked conversation, re-runs an additive member sync instead of creating a duplicate. Authorized by class ownership (owning teacher, org-wide _any holder, or super-admin), not conversations:manage. Requires the org chat feature.
+// @Tags Classes
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Class UUID"
+// @Param body body domain.ProvisionClassConversationDTO true "Chat type + optional name/color"
+// @Success 201 {object} domain.Response{data=domain.Conversation}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /classes/{id}/conversation [post]
+func (h *Handler) ProvisionConversation(c *gin.Context) {
+	var dto domain.ProvisionClassConversationDTO
+	if err := httpx.Bind(c, &dto); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	conv, err := h.svc.ProvisionConversation(c.Request.Context(), httpx.UUIDParam(c, "id"), dto)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusCreated, conv)
 }
 
 // Leave removes a user from a class. Users may self-leave; managers may remove anyone.

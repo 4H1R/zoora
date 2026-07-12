@@ -1922,6 +1922,27 @@
       "instructor": "Instructor",
       "unknownTeacher": "Unassigned",
       "backToClasses": "Back to classes",
+      "chat": {
+        "create": "Create class chat",
+        "open": "Open class chat",
+        "sync": "Sync members",
+        "title": "Create class chat",
+        "description": "Start a group or channel and add the teacher plus every enrolled student.",
+        "submit": "Create chat",
+        "created": "Class chat created",
+        "synced": "Class members synced to the chat",
+        "error": "Couldn't provision the class chat. Please try again.",
+        "type": {
+          "group": "Group",
+          "channel": "Channel",
+          "groupHint": "Everyone can post and reply — best for class discussion.",
+          "channelHint": "Only admins post; students read along — best for announcements."
+        },
+        "fields": {
+          "name": "Name",
+          "namePlaceholder": "Class chat name"
+        }
+      },
       "stats": {
         "total": "Sessions",
         "live": "Live now",

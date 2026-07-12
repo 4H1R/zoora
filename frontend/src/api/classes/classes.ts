@@ -60,6 +60,7 @@ import type {
   GithubCom4H1RZooraInternalDomainCreateClassDTO,
   GithubCom4H1RZooraInternalDomainCreateClassSessionDTO,
   GithubCom4H1RZooraInternalDomainEnrollClassMemberDTO,
+  GithubCom4H1RZooraInternalDomainProvisionClassConversationDTO,
   GithubCom4H1RZooraInternalDomainResponse,
   GithubCom4H1RZooraInternalDomainUpdateClassDTO,
   GithubCom4H1RZooraInternalDomainUpdateClassSessionDTO,
@@ -67,6 +68,11 @@ import type {
   PostClasses400,
   PostClasses401,
   PostClasses403,
+  PostClassesIdConversation201,
+  PostClassesIdConversation400,
+  PostClassesIdConversation401,
+  PostClassesIdConversation403,
+  PostClassesIdConversation404,
   PostClassesIdMembers201,
   PostClassesIdMembers400,
   PostClassesIdMembers401,
@@ -1014,6 +1020,112 @@ export const useDeleteClassesId = <TError = ErrorType<DeleteClassesId401 | Delet
         TContext
       > => {
       return useMutation(getDeleteClassesIdMutationOptions(options), queryClient);
+    }
+    export type postClassesIdConversationResponse201 = {
+  data: PostClassesIdConversation201
+  status: 201
+}
+
+export type postClassesIdConversationResponse400 = {
+  data: PostClassesIdConversation400
+  status: 400
+}
+
+export type postClassesIdConversationResponse401 = {
+  data: PostClassesIdConversation401
+  status: 401
+}
+
+export type postClassesIdConversationResponse403 = {
+  data: PostClassesIdConversation403
+  status: 403
+}
+
+export type postClassesIdConversationResponse404 = {
+  data: PostClassesIdConversation404
+  status: 404
+}
+
+export type postClassesIdConversationResponseSuccess = (postClassesIdConversationResponse201) & {
+  headers: Headers;
+};
+export type postClassesIdConversationResponseError = (postClassesIdConversationResponse400 | postClassesIdConversationResponse401 | postClassesIdConversationResponse403 | postClassesIdConversationResponse404) & {
+  headers: Headers;
+};
+
+export type postClassesIdConversationResponse = (postClassesIdConversationResponseSuccess | postClassesIdConversationResponseError)
+
+export const getPostClassesIdConversationUrl = (id: string,) => {
+
+
+
+
+  return `/classes/${id}/conversation`
+}
+
+/**
+ * Creates a group or channel for the class and joins the teacher (as admin) plus every enrolled student. If the class already has a linked conversation, re-runs an additive member sync instead of creating a duplicate. Authorized by class ownership (owning teacher, org-wide _any holder, or super-admin), not conversations:manage. Requires the org chat feature.
+ * @summary Provision class chat
+ */
+export const postClassesIdConversation = async (id: string,
+    githubCom4H1RZooraInternalDomainProvisionClassConversationDTO: GithubCom4H1RZooraInternalDomainProvisionClassConversationDTO, options?: RequestInit): Promise<postClassesIdConversationResponse> => {
+
+  return customInstance<postClassesIdConversationResponse>(getPostClassesIdConversationUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(githubCom4H1RZooraInternalDomainProvisionClassConversationDTO)
+  }
+);}
+
+
+
+
+
+export const getPostClassesIdConversationMutationOptions = <TError = ErrorType<PostClassesIdConversation400 | PostClassesIdConversation401 | PostClassesIdConversation403 | PostClassesIdConversation404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postClassesIdConversation>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainProvisionClassConversationDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postClassesIdConversation>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainProvisionClassConversationDTO}, TContext> => {
+
+const mutationKey = ['postClassesIdConversation'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postClassesIdConversation>>, {id: string;data: GithubCom4H1RZooraInternalDomainProvisionClassConversationDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postClassesIdConversation(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostClassesIdConversationMutationResult = NonNullable<Awaited<ReturnType<typeof postClassesIdConversation>>>
+    export type PostClassesIdConversationMutationBody = GithubCom4H1RZooraInternalDomainProvisionClassConversationDTO
+    export type PostClassesIdConversationMutationError = ErrorType<PostClassesIdConversation400 | PostClassesIdConversation401 | PostClassesIdConversation403 | PostClassesIdConversation404>
+
+    /**
+ * @summary Provision class chat
+ */
+export const usePostClassesIdConversation = <TError = ErrorType<PostClassesIdConversation400 | PostClassesIdConversation401 | PostClassesIdConversation403 | PostClassesIdConversation404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postClassesIdConversation>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainProvisionClassConversationDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postClassesIdConversation>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainProvisionClassConversationDTO},
+        TContext
+      > => {
+      return useMutation(getPostClassesIdConversationMutationOptions(options), queryClient);
     }
     export type getClassesIdMembersResponse200 = {
   data: GetClassesIdMembers200

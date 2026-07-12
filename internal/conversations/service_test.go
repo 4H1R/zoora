@@ -2104,3 +2104,77 @@ func TestListForCaller_DecoratesMembers(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, got.Members, 2, "Get on a DM includes the pair")
 }
+
+// membersOf returns the store's members for a conversation, split by role.
+func membersOf(store *fakeStore, convID uuid.UUID) (admins, members []uuid.UUID) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	for _, m := range store.members[convID] {
+		if m.Role == domain.ConversationMemberRoleAdmin {
+			admins = append(admins, m.UserID)
+		} else {
+			members = append(members, m.UserID)
+		}
+	}
+	return admins, members
+}
+
+func TestCreateForClass_SeedsCreatorAsAdminAndMembers(t *testing.T) {
+	orgA := uuid.New()
+	teacher, s1, s2 := uuid.New(), uuid.New(), uuid.New()
+	svc, store := newTestService(t)
+
+	conv, err := svc.CreateForClass(context.Background(), domain.ProvisionClassChatDTO{
+		OrganizationID: orgA,
+		CreatorID:      teacher,
+		Type:           domain.ConversationTypeGroup,
+		Name:           "Algebra",
+		// teacher intentionally also present in MemberIDs — must be deduped to admin only.
+		MemberIDs: []uuid.UUID{teacher, s1, s2},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, domain.ConversationTypeGroup, conv.Type)
+	assert.Equal(t, "Algebra", conv.Name)
+	assert.Equal(t, orgA, conv.OrganizationID)
+
+	admins, members := membersOf(store, conv.ID)
+	assert.Equal(t, []uuid.UUID{teacher}, admins, "creator is the sole admin")
+	assert.ElementsMatch(t, []uuid.UUID{s1, s2}, members, "students are members, creator not duplicated")
+}
+
+func TestCreateForClass_RejectsBadType(t *testing.T) {
+	svc, _ := newTestService(t)
+	_, err := svc.CreateForClass(context.Background(), domain.ProvisionClassChatDTO{
+		OrganizationID: uuid.New(), CreatorID: uuid.New(),
+		Type: domain.ConversationTypeDirect, Name: "x",
+	})
+	assert.ErrorIs(t, err, domain.ErrValidation)
+}
+
+func TestSyncClassMembers_AddsOnlyMissingAndIsIdempotent(t *testing.T) {
+	orgA := uuid.New()
+	teacher, s1, s2 := uuid.New(), uuid.New(), uuid.New()
+	svc, store := newTestService(t)
+
+	conv, err := svc.CreateForClass(context.Background(), domain.ProvisionClassChatDTO{
+		OrganizationID: orgA, CreatorID: teacher,
+		Type: domain.ConversationTypeGroup, Name: "Algebra",
+		MemberIDs: []uuid.UUID{s1},
+	})
+	require.NoError(t, err)
+
+	// Sync a roster that includes an already-present member (s1) and a new one (s2).
+	got, err := svc.SyncClassMembers(context.Background(), conv.ID, []uuid.UUID{s1, s2})
+	require.NoError(t, err)
+	assert.Equal(t, conv.ID, got.ID)
+
+	admins, members := membersOf(store, conv.ID)
+	assert.Equal(t, []uuid.UUID{teacher}, admins)
+	assert.ElementsMatch(t, []uuid.UUID{s1, s2}, members, "only the missing student is added")
+
+	// Second identical sync is a no-op.
+	_, err = svc.SyncClassMembers(context.Background(), conv.ID, []uuid.UUID{s1, s2})
+	require.NoError(t, err)
+	_, members2 := membersOf(store, conv.ID)
+	assert.ElementsMatch(t, []uuid.UUID{s1, s2}, members2, "re-sync must not duplicate members")
+}

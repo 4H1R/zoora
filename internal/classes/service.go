@@ -2,6 +2,7 @@ package classes
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	"github.com/google/uuid"
@@ -22,6 +23,7 @@ type service struct {
 	repo     domain.ClassRepository
 	sessions domain.ClassSessionRepository
 	members  domain.ClassMemberRepository
+	chat     domain.ClassChatProvisioner // may be nil (chat provisioning disabled)
 	logger   *slog.Logger
 }
 
@@ -29,9 +31,10 @@ func NewService(
 	repo domain.ClassRepository,
 	sessions domain.ClassSessionRepository,
 	members domain.ClassMemberRepository,
+	chat domain.ClassChatProvisioner,
 	logger *slog.Logger,
 ) domain.ClassService {
-	return &service{repo: repo, sessions: sessions, members: members, logger: logger}
+	return &service{repo: repo, sessions: sessions, members: members, chat: chat, logger: logger}
 }
 
 // canManageClass returns true if caller can mutate the given class (update,
@@ -367,4 +370,79 @@ func (s *service) ListMembers(ctx context.Context, classID uuid.UUID, q domain.L
 		return nil, 0, domain.ErrForbidden
 	}
 	return s.members.ListByClass(ctx, classID, q.ListParams)
+}
+
+// ProvisionConversation creates or syncs the class's group/channel chat. Only a
+// class manager (owning teacher, org-wide _any holder, or super-admin) may do
+// this — class ownership stands in for conversations:manage. The org must have
+// the chat feature. Members are seeded/synced from the current roster: the
+// teacher (Class.UserID) as admin and every enrolled student as member.
+func (s *service) ProvisionConversation(ctx context.Context, classID uuid.UUID, dto domain.ProvisionClassConversationDTO) (*domain.Conversation, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	if s.chat == nil {
+		return nil, domain.NewFeatureError(caller.Ent.Plan, domain.FeatureChat)
+	}
+	class, err := s.repo.FindByID(ctx, classID)
+	if err != nil {
+		return nil, err
+	}
+	if !canManageClass(caller, class) {
+		return nil, domain.ErrForbidden
+	}
+	if !caller.IsAdmin && !caller.HasFeature(domain.FeatureChat) {
+		return nil, domain.NewFeatureError(caller.Ent.Plan, domain.FeatureChat)
+	}
+
+	// Roster = every enrolled student. The teacher is added separately as admin
+	// by the provisioner (CreatorID), so it is not part of the member list here.
+	roster, err := s.members.ListAllByClass(ctx, classID)
+	if err != nil {
+		return nil, err
+	}
+	memberIDs := make([]uuid.UUID, 0, len(roster))
+	for _, m := range roster {
+		memberIDs = append(memberIDs, m.UserID)
+	}
+
+	// Existing link → additive member sync. If the linked conversation no longer
+	// exists (there is no FK to null a stale link), fall through to recreate it.
+	if class.ConversationID != nil {
+		conv, err := s.chat.SyncClassMembers(ctx, *class.ConversationID, memberIDs)
+		if err == nil {
+			return conv, nil
+		}
+		if !errors.Is(err, domain.ErrNotFound) {
+			return nil, err
+		}
+		class.ConversationID = nil
+	}
+
+	name := dto.Name
+	if name == "" {
+		name = class.Name
+	}
+	conv, err := s.chat.CreateForClass(ctx, domain.ProvisionClassChatDTO{
+		OrganizationID: class.OrganizationID,
+		CreatorID:      class.UserID,
+		Type:           dto.Type,
+		Name:           name,
+		ColorIndex:     dto.ColorIndex,
+		MemberIDs:      memberIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+	class.ConversationID = &conv.ID
+	if err := s.repo.Update(ctx, class); err != nil {
+		return nil, err
+	}
+	s.logger.Info("class conversation provisioned",
+		"class_id", classID.String(),
+		"conversation_id", conv.ID.String(),
+		"by", caller.UserID.String(),
+	)
+	return conv, nil
 }

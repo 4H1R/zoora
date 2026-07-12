@@ -123,6 +123,28 @@ type CreateDirectDTO struct {
 	UserID string `json:"user_id" binding:"required,uuid"`
 }
 
+// ProvisionClassChatDTO is the pre-resolved input the classes feature passes to
+// ClassChatProvisioner.CreateForClass. IDs are already-parsed uuids (the classes
+// service owns the roster lookup); the conversations service org-filters them.
+type ProvisionClassChatDTO struct {
+	OrganizationID uuid.UUID
+	CreatorID      uuid.UUID        // the teacher — becomes conversation admin
+	Type           ConversationType // group | channel
+	Name           string
+	ColorIndex     int16
+	MemberIDs      []uuid.UUID // students — become members (deduped, org-filtered)
+}
+
+// ClassChatProvisioner lets the classes feature create/sync a conversation for a
+// class WITHOUT a conversations:manage check — the caller is already authorized
+// at the class level. Implemented by the conversations service.
+type ClassChatProvisioner interface {
+	CreateForClass(ctx context.Context, in ProvisionClassChatDTO) (*Conversation, error)
+	// SyncClassMembers adds any memberIDs not already in the conversation
+	// (additive, idempotent) and returns the refreshed conversation.
+	SyncClassMembers(ctx context.Context, convID uuid.UUID, memberIDs []uuid.UUID) (*Conversation, error)
+}
+
 // DirectoryUser is the member-safe public projection of a user for chat
 // discovery (people search + @mention resolve). It deliberately excludes
 // admin-only fields (org id, role, disabled/audit columns).
@@ -245,6 +267,8 @@ type ConversationMentionRepository interface { // Phase 3
 }
 
 type ConversationService interface {
+	ClassChatProvisioner
+
 	CreateGroupOrChannel(ctx context.Context, dto CreateConversationDTO) (*Conversation, error)
 	CreateOrGetDirect(ctx context.Context, dto CreateDirectDTO) (*Conversation, error)
 	Get(ctx context.Context, id uuid.UUID) (*Conversation, error)

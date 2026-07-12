@@ -8,6 +8,11 @@
 import type { GithubCom4H1RZooraInternalDomainUser } from './githubCom4H1RZooraInternalDomainUser';
 
 export interface GithubCom4H1RZooraInternalDomainClass {
+  /**
+     * ConversationID links the class to its provisioned group/channel chat. NULL
+     * until a teacher/manager provisions it; drives the create-vs-open UI.
+     */
+  conversation_id?: string;
   created_at?: string;
   description?: string;
   id?: string;

@@ -189,7 +189,6 @@ func main() {
 	sessionManager := auth.NewSessionManager(jwtService, redisClient)
 	userService := users.NewService(userRepo, roleRepo, entitlementService, redisClient, sessionManager, log)
 	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, queueClient, log)
-	classService := classes.NewService(classRepo, classSessionRepo, classMemberRepo, log)
 	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, log)
 	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, log)
 	transactor := database.NewTransactor(db)
@@ -308,9 +307,6 @@ func main() {
 	roleHandler := roles.NewHandler(roleService, permRepo)
 	roleHandler.RegisterRoutes(v1, authMiddleware, perm)
 
-	classHandler := classes.NewHandler(classService)
-	classHandler.RegisterRoutes(v1, authMiddleware, perm)
-
 	importHandler := imports.NewHandler(importService)
 	importHandler.RegisterRoutes(v1, authMiddleware, perm)
 
@@ -370,6 +366,12 @@ func main() {
 		presenceReaderAdapter{p: convPresence},          // presenceReader (batch online/last-seen)
 		queueClient,                                     // enqueuer (attachment cleanup on delete)
 	)
+
+	// classService depends on the conversations service (ClassChatProvisioner) to
+	// provision a class's group/channel chat, so it is constructed after it.
+	classService := classes.NewService(classRepo, classSessionRepo, classMemberRepo, conversationService, log)
+	classHandler := classes.NewHandler(classService)
+	classHandler.RegisterRoutes(v1, authMiddleware, perm)
 
 	// --- billing ---
 	zpBase := "https://payment.zarinpal.com"

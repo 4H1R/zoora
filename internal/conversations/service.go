@@ -366,6 +366,111 @@ func (s *service) CreateGroupOrChannel(ctx context.Context, dto domain.CreateCon
 	return conv, nil
 }
 
+// CreateForClass creates a group/channel seeded with the given members WITHOUT a
+// conversations:manage check — the caller was already authorized at the class
+// level (class ownership). CreatorID becomes admin; MemberIDs become members.
+// Member ids are still org-filtered and deduped against the creator, so a stray
+// roster id can never leak a cross-org user into the conversation.
+func (s *service) CreateForClass(ctx context.Context, in domain.ProvisionClassChatDTO) (*domain.Conversation, error) {
+	if in.Type != domain.ConversationTypeGroup && in.Type != domain.ConversationTypeChannel {
+		return nil, domain.NewValidationError(map[string]string{"type": "must be group or channel"})
+	}
+	if in.Name == "" {
+		return nil, domain.NewValidationError(map[string]string{"name": "required for group/channel"})
+	}
+
+	requested := make([]uuid.UUID, 0, len(in.MemberIDs))
+	seen := map[uuid.UUID]bool{in.CreatorID: true}
+	for _, uid := range in.MemberIDs {
+		if seen[uid] {
+			continue
+		}
+		seen[uid] = true
+		requested = append(requested, uid)
+	}
+	allowed, err := s.users.FilterSameOrg(ctx, in.OrganizationID, requested)
+	if err != nil {
+		return nil, err
+	}
+
+	var conv *domain.Conversation
+	err = s.transactor.RunInTx(ctx, func(txCtx context.Context) error {
+		conv = &domain.Conversation{
+			OrganizationID: in.OrganizationID,
+			Type:           in.Type,
+			Name:           in.Name,
+			ColorIndex:     in.ColorIndex,
+			CreatedBy:      &in.CreatorID,
+		}
+		if cerr := s.convRepo.Create(txCtx, conv); cerr != nil {
+			return cerr
+		}
+		now := time.Now()
+		members := make([]domain.ConversationMember, 0, len(allowed)+1)
+		members = append(members, domain.ConversationMember{
+			ConversationID: conv.ID, UserID: in.CreatorID, Role: domain.ConversationMemberRoleAdmin, JoinedAt: now,
+		})
+		for _, uid := range allowed {
+			members = append(members, domain.ConversationMember{
+				ConversationID: conv.ID, UserID: uid, Role: domain.ConversationMemberRoleMember, JoinedAt: now,
+			})
+		}
+		return s.memberRepo.CreateMany(txCtx, members)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return conv, nil
+}
+
+// SyncClassMembers adds every memberID that is not already in the conversation
+// (additive, idempotent) and returns the refreshed conversation. New members are
+// org-filtered against the conversation's org before insert.
+func (s *service) SyncClassMembers(ctx context.Context, convID uuid.UUID, memberIDs []uuid.UUID) (*domain.Conversation, error) {
+	conv, err := s.convRepo.FindByID(ctx, convID)
+	if err != nil {
+		return nil, err
+	}
+	existing, err := s.memberRepo.ListUserIDs(ctx, convID)
+	if err != nil {
+		return nil, err
+	}
+	have := make(map[uuid.UUID]bool, len(existing))
+	for _, id := range existing {
+		have[id] = true
+	}
+	missing := make([]uuid.UUID, 0, len(memberIDs))
+	seen := map[uuid.UUID]bool{}
+	for _, id := range memberIDs {
+		if have[id] || seen[id] {
+			continue
+		}
+		seen[id] = true
+		missing = append(missing, id)
+	}
+	if len(missing) == 0 {
+		return conv, nil
+	}
+	allowed, err := s.users.FilterSameOrg(ctx, conv.OrganizationID, missing)
+	if err != nil {
+		return nil, err
+	}
+	if len(allowed) == 0 {
+		return conv, nil
+	}
+	now := time.Now()
+	rows := make([]domain.ConversationMember, 0, len(allowed))
+	for _, uid := range allowed {
+		rows = append(rows, domain.ConversationMember{
+			ConversationID: convID, UserID: uid, Role: domain.ConversationMemberRoleMember, JoinedAt: now,
+		})
+	}
+	if err := s.memberRepo.CreateMany(ctx, rows); err != nil {
+		return nil, err
+	}
+	return conv, nil
+}
+
 // convForManage is the shared preamble of the manage-authz tier
 // (Update/Delete/AddMember/RemoveMember): resolve caller, load the
 // conversation, and enforce canManageConversation.

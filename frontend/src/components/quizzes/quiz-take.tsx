@@ -6,7 +6,8 @@ import {
   useGetQuizzesIdRooms,
   useGetQuizzesIdSubmissions,
 } from "@/api/quizzes/quizzes"
-import { useQuizPermissions } from "@/components/org/quizzes/use-quiz-permissions"
+import { useGetUsersMe } from "@/api/users/users"
+import { userHasAny } from "@/lib/access"
 import { CenterMessage, LoadingScreen } from "@/components/quizzes/take/messages"
 import { QuizRunner } from "@/components/quizzes/take/quiz-runner"
 import { ResultScreen } from "@/components/quizzes/take/result-screen"
@@ -24,7 +25,12 @@ export function QuizTake({
   classSessionId?: string
 }) {
   const { t } = useTranslation()
-  const { canView } = useQuizPermissions()
+  // This component renders on the standalone /quiz route, which is OUTSIDE the
+  // org <AccessProvider>, so the useAccess* hooks would throw. Read perms from
+  // the fetched /users/me object with the hook-free helper instead.
+  const meQ = useGetUsersMe()
+  const me = (meQ.data?.status === 200 && meQ.data.data.data) || undefined
+  const canView = userHasAny(me, ["quizzes:view", "quizzes:view_any"])
 
   const backHref = classSessionId
     ? `/org/classes/class-sessions/${classSessionId}`
@@ -49,6 +55,10 @@ export function QuizTake({
   const submissions = (submissionsQ.data?.status === 200 && submissionsQ.data.data.data?.items) || []
   const inProgress = submissions.find((s) => s.status === "in_progress")
   const finalSubmission = submissions.find((s) => s.status !== "in_progress")
+
+  if (meQ.isPending) {
+    return <LoadingScreen />
+  }
 
   if (!canView) {
     return (

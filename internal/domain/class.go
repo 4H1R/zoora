@@ -19,6 +19,9 @@ type Class struct {
 	Name           string         `gorm:"not null" json:"name"`
 	Description    string         `json:"description"`
 	TotalUsers     int            `gorm:"not null;default:0" json:"total_users"` // capacity; 0 = unlimited
+	// ConversationID links the class to its provisioned group/channel chat. NULL
+	// until a teacher/manager provisions it; drives the create-vs-open UI.
+	ConversationID *uuid.UUID     `gorm:"type:uuid" json:"conversation_id"`
 	CreatedAt      time.Time      `json:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at"`
 	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`
@@ -83,6 +86,14 @@ type UpdateClassSessionDTO struct {
 
 type EnrollClassMemberDTO struct {
 	UserID uuid.UUID `json:"user_id" binding:"required"`
+}
+
+// ProvisionClassConversationDTO is the request to create-or-sync a class's group
+// or channel chat. Name defaults to the class name when empty.
+type ProvisionClassConversationDTO struct {
+	Type       ConversationType `json:"type" binding:"required,oneof=group channel"`
+	Name       string           `json:"name" binding:"omitempty,max=255"`
+	ColorIndex int16            `json:"color_index" binding:"omitempty,min=0,max=6"`
 }
 
 type ClassListScope struct {
@@ -190,6 +201,12 @@ type ClassService interface {
 	Enroll(ctx context.Context, classID uuid.UUID, dto EnrollClassMemberDTO) (*ClassMember, error)
 	Leave(ctx context.Context, classID, userID uuid.UUID) error
 	ListMembers(ctx context.Context, classID uuid.UUID, q ListClassMembersQuery) ([]ClassMember, int64, error)
+
+	// ProvisionConversation creates (or, if one already exists, syncs members
+	// into) the class's group/channel chat, seeding it with the teacher (admin)
+	// and every enrolled student. Authorized by class ownership, not
+	// conversations:manage. Requires the org's chat feature.
+	ProvisionConversation(ctx context.Context, classID uuid.UUID, dto ProvisionClassConversationDTO) (*Conversation, error)
 
 	// Admin surface. Require caller.IsAdmin.
 	AdminList(ctx context.Context, q AdminListClassesQuery) ([]Class, int64, error)

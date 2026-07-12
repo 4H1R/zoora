@@ -5,7 +5,15 @@ import type {
 
 import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { CalendarClockIcon, PlusIcon, TrophyIcon, UserIcon, UsersIcon } from "lucide-react"
+import {
+  CalendarClockIcon,
+  MessagesSquareIcon,
+  PlusIcon,
+  RefreshCwIcon,
+  TrophyIcon,
+  UserIcon,
+  UsersIcon,
+} from "lucide-react"
 import { useState } from "react"
 import { useAccess } from "react-access-engine"
 import { useTranslation } from "react-i18next"
@@ -18,6 +26,7 @@ import {
   useGetClassesId,
   useGetClassesIdMembers,
   useGetClassesIdSessions,
+  usePostClassesIdConversation,
 } from "@/api/classes/classes"
 import { SessionCreateModal } from "@/components/admin/sessions/SessionCreateModal"
 import { DataTable } from "@/components/data-table/data-table"
@@ -29,6 +38,7 @@ import { useBreadcrumb } from "@/components/layout/breadcrumb-context"
 import { AttendanceMatrixView } from "@/components/org/classes/AttendanceMatrixView"
 import { EnrollMemberModal } from "@/components/org/classes/EnrollMemberModal"
 import { useClassPermissions } from "@/components/org/classes/use-class-permissions"
+import { CreateClassChatDialog } from "@/components/org/classes/create-class-chat-dialog"
 import { useAttendancePermissions } from "@/components/org/livesessions/use-attendance-permissions"
 import { SessionStatusPill } from "@/components/session/status-pill"
 import { Button } from "@/components/ui/button"
@@ -40,6 +50,7 @@ import { UserAvatar } from "@/components/user-avatar"
 import { ViewModeToggle, useViewMode } from "@/components/view-mode-toggle"
 import { useOrgGuard } from "@/lib/access"
 import { useAdminTable } from "@/lib/data-table"
+import { FEATURE, useHasFeature } from "@/lib/entitlements"
 import { orgHead } from "@/lib/org-head"
 import { formatRelativeTime, formatSessionDate, getSessionStatus, useNow } from "@/lib/session-status"
 import { cn } from "@/lib/utils"
@@ -209,7 +220,22 @@ function RouteComponent() {
 
   const [formOpen, setFormOpen] = useState(false)
   const [enrollOpen, setEnrollOpen] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
   const [removeTarget, setRemoveTarget] = useState<ClassMember | null>(null)
+
+  const { enabled: chatEnabled } = useHasFeature(FEATURE.chat)
+
+  // Re-provisioning an already-linked class is an additive member sync (adds
+  // students enrolled since creation). Same endpoint, no navigation.
+  const syncChatMutation = usePostClassesIdConversation({
+    mutation: {
+      onSuccess: (res) => {
+        if (res.status === 201) toast.success(t("org.class.chat.synced"))
+        else toast.error(t("org.class.chat.error"))
+      },
+      onError: () => toast.error(t("org.class.chat.error")),
+    },
+  })
 
   const removeMutation = useDeleteClassesIdMembersUserId({
     mutation: {
@@ -340,6 +366,11 @@ function RouteComponent() {
 
   const teacherName = cls?.user?.name ?? ""
 
+  // Chat provisioning is a manager action gated by the org's chat feature.
+  // conversation_id present ⇒ already provisioned (offer open + member sync).
+  const canManageChat = !!cls && canCreateSession && chatEnabled
+  const conversationId = cls?.conversation_id
+
   return (
     <div className="relative isolate flex flex-col gap-6 pb-10">
       <DecorativeBackground />
@@ -371,15 +402,46 @@ function RouteComponent() {
           )}
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="shrink-0 max-md:self-start"
-          render={<Link to="/org/classes/$classId/gradebook" params={{ classId }} />}
-        >
-          <TrophyIcon className="size-4" />
-          {t("org.class.gradebook.open")}
-        </Button>
+        <div className="flex shrink-0 flex-wrap items-center gap-2 max-md:self-start">
+          {canManageChat &&
+            (conversationId ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  render={
+                    <Link to="/org/conversations/$conversationId" params={{ conversationId }} />
+                  }
+                >
+                  <MessagesSquareIcon className="size-4" />
+                  {t("org.class.chat.open")}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={syncChatMutation.isPending}
+                  onClick={() => syncChatMutation.mutate({ id: classId, data: { type: "group" } })}
+                >
+                  <RefreshCwIcon className={cn("size-4", syncChatMutation.isPending && "animate-spin")} />
+                  {t("org.class.chat.sync")}
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" size="sm" onClick={() => setChatOpen(true)}>
+                <MessagesSquareIcon className="size-4" />
+                {t("org.class.chat.create")}
+              </Button>
+            ))}
+
+          <Button
+            variant="outline"
+            size="sm"
+            render={<Link to="/org/classes/$classId/gradebook" params={{ classId }} />}
+          >
+            <TrophyIcon className="size-4" />
+            {t("org.class.gradebook.open")}
+          </Button>
+        </div>
       </header>
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
@@ -534,6 +596,15 @@ function RouteComponent() {
 
       {canCreateSession && (
         <SessionCreateModal open={formOpen} onOpenChange={setFormOpen} classId={classId} session={null} />
+      )}
+
+      {canManageChat && (
+        <CreateClassChatDialog
+          open={chatOpen}
+          onOpenChange={setChatOpen}
+          classId={classId}
+          className={cls?.name ?? ""}
+        />
       )}
 
       {canViewRoster && (
