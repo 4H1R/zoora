@@ -10,8 +10,9 @@ import (
 type ImportType string
 
 const (
-	ImportTypeUsers   ImportType = "users"
-	ImportTypeClasses ImportType = "classes"
+	ImportTypeUsers        ImportType = "users"
+	ImportTypeClasses      ImportType = "classes"
+	ImportTypeClassMembers ImportType = "class_members"
 )
 
 type ImportStatus string
@@ -44,7 +45,7 @@ type ImportJob struct {
 }
 
 type CreateImportJobDTO struct {
-	Type    ImportType `json:"type" binding:"required,oneof=users classes"`
+	Type    ImportType `json:"type" binding:"required,oneof=users classes class_members"`
 	MediaID uuid.UUID  `json:"media_id" binding:"required"`
 }
 

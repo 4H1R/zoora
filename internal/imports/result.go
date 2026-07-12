@@ -76,6 +76,25 @@ func BuildClassesResult(classRows []ClassRow, classResults map[int]RowResult, me
 	return save(f)
 }
 
+func BuildClassMembersResult(rows []MemberRow, results map[int]RowResult) ([]byte, error) {
+	f := excelize.NewFile()
+	defer f.Close()
+	if err := f.SetSheetName(f.GetSheetList()[0], "Members"); err != nil {
+		return nil, fmt.Errorf("imports.BuildClassMembersResult: %w", err)
+	}
+
+	if err := writeRow(f, "Members", 1, []string{"class_name", "member_username", "status", "message"}); err != nil {
+		return nil, err
+	}
+	for i, r := range rows {
+		res := results[r.RowNum]
+		if err := writeRow(f, "Members", i+2, []string{r.ClassName, r.MemberUsername, string(res.Status), res.Message}); err != nil {
+			return nil, err
+		}
+	}
+	return save(f)
+}
+
 func writeRow(f *excelize.File, sheet string, rowNum int, values []string) error {
 	cell, err := excelize.CoordinatesToCellName(1, rowNum)
 	if err != nil {

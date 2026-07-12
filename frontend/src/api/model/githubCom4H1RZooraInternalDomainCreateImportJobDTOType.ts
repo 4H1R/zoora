@@ -12,4 +12,5 @@ export type GithubCom4H1RZooraInternalDomainCreateImportJobDTOType = typeof Gith
 export const GithubCom4H1RZooraInternalDomainCreateImportJobDTOType = {
   users: 'users',
   classes: 'classes',
+  class_members: 'class_members',
 } as const;

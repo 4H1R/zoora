@@ -82,7 +82,9 @@ func NewService(
 
 // requireImportPermission gates both job creation and visibility: user
 // imports need users:create, class imports need classes:create_any (they
-// assign arbitrary owners — the exact capability create_any exists for).
+// assign arbitrary owners — the exact capability create_any exists for),
+// and class-member imports need classes:update_any (they enroll members
+// into arbitrary existing classes).
 func requireImportPermission(caller domain.Caller, t domain.ImportType) error {
 	if caller.IsAdmin {
 		return nil
@@ -94,6 +96,10 @@ func requireImportPermission(caller domain.Caller, t domain.ImportType) error {
 		}
 	case domain.ImportTypeClasses:
 		if caller.HasPermission(domain.PermClassesCreateAny) {
+			return nil
+		}
+	case domain.ImportTypeClassMembers:
+		if caller.HasPermission(domain.PermClassesUpdateAny) {
 			return nil
 		}
 	}
@@ -284,6 +290,8 @@ func (s *service) ProcessJob(ctx context.Context, p domain.ImportProcessPayload)
 		return s.processUsers(ctx, job, data)
 	case domain.ImportTypeClasses:
 		return s.processClasses(ctx, job, data)
+	case domain.ImportTypeClassMembers:
+		return s.processClassMembers(ctx, job, data)
 	default:
 		return s.fail(ctx, job, "unknown import type")
 	}

@@ -1625,8 +1625,10 @@
     "panel": "سازمان",
     "import": {
       "button": "وارد کردن",
+      "membersButton": "وارد کردن اعضا",
       "usersTitle": "وارد کردن کاربران",
       "classesTitle": "وارد کردن کلاس‌ها",
+      "classMembersTitle": "وارد کردن اعضای کلاس",
       "dropHint": "فایل .xlsx را اینجا رها کنید یا برای انتخاب کلیک کنید",
       "template": "دانلود فایل نمونه",
       "fileTooLarge": "حجم فایل بیشتر از ۱۰ مگابایت است",
@@ -1645,7 +1647,8 @@
       "resultExpired": "فایل نتیجه منقضی شده است",
       "newImport": "شروع وارد کردن جدید",
       "columnsUsers": "ستون‌ها: name، username، password (اختیاری)، role (برای بدون نقش «-» بگذارید)",
-      "columnsClasses": "برگه «Classes»: class_name، owner_username، description، capacity — برگه «Members»: class_name، member_username"
+      "columnsClasses": "برگه «Classes»: class_name، owner_username، description، capacity — برگه «Members»: class_name، member_username",
+      "columnsClassMembers": "ستون‌ها: class_name، member_username — اعضا در کلاس‌های موجود عضو می‌شوند"
     },
     "nav": {
       "dashboard": "داشبورد",

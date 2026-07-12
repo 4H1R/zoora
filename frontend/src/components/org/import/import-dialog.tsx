@@ -21,7 +21,7 @@ import { Progress } from "@/components/ui/progress"
 import { Spinner } from "@/components/ui/spinner"
 import { clientEnv } from "@/config/env"
 
-type ImportType = "users" | "classes"
+type ImportType = "users" | "classes" | "class_members"
 
 interface ImportDialogProps {
   open: boolean
@@ -32,6 +32,19 @@ interface ImportDialogProps {
 const TEMPLATE_PATHS: Record<ImportType, string> = {
   users: "/templates/users-import-template.xlsx",
   classes: "/templates/classes-import-template.xlsx",
+  class_members: "/templates/class-members-import-template.xlsx",
+}
+
+const TITLE_KEYS: Record<ImportType, string> = {
+  users: "org.import.usersTitle",
+  classes: "org.import.classesTitle",
+  class_members: "org.import.classMembersTitle",
+}
+
+const COLUMNS_KEYS: Record<ImportType, string> = {
+  users: "org.import.columnsUsers",
+  classes: "org.import.columnsClasses",
+  class_members: "org.import.columnsClassMembers",
 }
 const MAX_SIZE = 10 * 1024 * 1024
 
@@ -154,10 +167,8 @@ export function ImportDialog({ open, onOpenChange, type }: ImportDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{type === "users" ? t("org.import.usersTitle") : t("org.import.classesTitle")}</DialogTitle>
-          <DialogDescription>
-            {type === "users" ? t("org.import.columnsUsers") : t("org.import.columnsClasses")}
-          </DialogDescription>
+          <DialogTitle>{t(TITLE_KEYS[type])}</DialogTitle>
+          <DialogDescription>{t(COLUMNS_KEYS[type])}</DialogDescription>
         </DialogHeader>
 
         {!showJob ? (

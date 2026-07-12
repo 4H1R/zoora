@@ -22,8 +22,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 
 	authed := rg.Group("", authMiddleware)
 	{
-		// permission is type-dependent (users:create vs classes:create_any),
-		// enforced in the service
+		// permission is type-dependent (users:create vs classes:create_any
+		// vs classes:update_any), enforced in the service
 		authed.POST("/imports", h.Create)
 		authed.GET("/imports/latest", h.Latest)
 		authed.GET("/imports/:id", idParam, h.Get)
@@ -61,7 +61,7 @@ func (h *Handler) Create(c *gin.Context) {
 // @Tags Imports
 // @Produce json
 // @Security BearerAuth
-// @Param type query string true "Import type" Enums(users, classes)
+// @Param type query string true "Import type" Enums(users, classes, class_members)
 // @Success 200 {object} domain.Response{data=domain.ImportJob}
 // @Failure 400 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
@@ -69,8 +69,8 @@ func (h *Handler) Create(c *gin.Context) {
 // @Router /imports/latest [get]
 func (h *Handler) Latest(c *gin.Context) {
 	t := domain.ImportType(c.Query("type"))
-	if t != domain.ImportTypeUsers && t != domain.ImportTypeClasses {
-		_ = c.Error(domain.NewValidationError(map[string]string{"type": "must be users or classes"}))
+	if t != domain.ImportTypeUsers && t != domain.ImportTypeClasses && t != domain.ImportTypeClassMembers {
+		_ = c.Error(domain.NewValidationError(map[string]string{"type": "must be users, classes or class_members"}))
 		return
 	}
 	job, err := h.svc.Latest(c.Request.Context(), t)

@@ -1563,8 +1563,10 @@
     "panel": "Organization",
     "import": {
       "button": "Import",
+      "membersButton": "Import members",
       "usersTitle": "Import users",
       "classesTitle": "Import classes",
+      "classMembersTitle": "Import class members",
       "dropHint": "Drop an .xlsx file here or click to choose",
       "template": "Download template",
       "fileTooLarge": "File exceeds 10MB",
@@ -1583,7 +1585,8 @@
       "resultExpired": "The result file has expired",
       "newImport": "Start a new import",
       "columnsUsers": "Columns: name, username, password (optional), role (use \"-\" for no role)",
-      "columnsClasses": "Sheet \"Classes\": class_name, owner_username, description, capacity — Sheet \"Members\": class_name, member_username"
+      "columnsClasses": "Sheet \"Classes\": class_name, owner_username, description, capacity — Sheet \"Members\": class_name, member_username",
+      "columnsClassMembers": "Columns: class_name, member_username — members are enrolled into existing classes"
     },
     "nav": {
       "dashboard": "Dashboard",

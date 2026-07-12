@@ -143,6 +143,46 @@ func ParseClassesFile(data []byte) ([]ClassRow, []MemberRow, error) {
 	return classes, members, nil
 }
 
+// ParseClassMembersFile reads a members-only import: a single sheet
+// (named "Members" when present, otherwise the first sheet) with
+// class_name + member_username columns targeting existing classes.
+func ParseClassMembersFile(data []byte) ([]MemberRow, error) {
+	f, err := excelize.OpenReader(bytes.NewReader(data), parseOptions)
+	if err != nil {
+		return nil, fmt.Errorf("could not read xlsx file: %w", err)
+	}
+	defer f.Close()
+
+	rows, err := sheetRows(f, "Members", 0)
+	if err != nil {
+		return nil, err
+	}
+	cols, err := headerIndex(rows[0], []string{"class_name", "member_username"})
+	if err != nil {
+		return nil, err
+	}
+
+	var out []MemberRow
+	for i, row := range rows[1:] {
+		r := MemberRow{
+			RowNum:         i + 2,
+			ClassName:      cell(row, cols, "class_name"),
+			MemberUsername: cell(row, cols, "member_username"),
+		}
+		if r.ClassName == "" && r.MemberUsername == "" {
+			continue
+		}
+		out = append(out, r)
+	}
+	if len(out) == 0 {
+		return nil, fmt.Errorf("file has no data rows")
+	}
+	if len(out) > MaxRows {
+		return nil, fmt.Errorf("file exceeds %d data rows", MaxRows)
+	}
+	return out, nil
+}
+
 // sheetRows finds a sheet by name (case-insensitive), falling back to index,
 // and returns its rows. Errors when the sheet is missing or has no header row.
 func sheetRows(f *excelize.File, name string, index int) ([][]string, error) {

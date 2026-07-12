@@ -7,6 +7,7 @@ export function useClassPermissions() {
     canCreate: can("classes:create") || can("classes:create_any"),
     canCreateAny: can("classes:create_any"),
     canEdit: can("classes:update") || can("classes:update_any"),
+    canEditAny: can("classes:update_any"),
     canDelete: can("classes:delete") || can("classes:delete_any"),
     canJoin: can("classes:join"),
   }

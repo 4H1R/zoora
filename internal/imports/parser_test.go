@@ -121,3 +121,51 @@ func TestParseClassesFile(t *testing.T) {
 		assert.Empty(t, members)
 	})
 }
+
+// membersXLSX builds a single-sheet class-members import file. The sheet is
+// left as the default "Sheet1" to exercise the first-sheet fallback.
+func membersXLSX(t *testing.T, rows [][]string) []byte {
+	t.Helper()
+	f := excelize.NewFile()
+	for i, row := range rows {
+		cell, err := excelize.CoordinatesToCellName(1, i+1)
+		require.NoError(t, err)
+		require.NoError(t, f.SetSheetRow("Sheet1", cell, &row))
+	}
+	var buf bytes.Buffer
+	require.NoError(t, f.Write(&buf))
+	return buf.Bytes()
+}
+
+func TestParseClassMembersFile(t *testing.T) {
+	t.Run("happy path with extra column and blank row", func(t *testing.T) {
+		data := membersXLSX(t, [][]string{
+			{"CLASS_NAME", "extra", "member_username"},
+			{"Math-A", "x", "sara.k"},
+			{"", "", ""},
+			{"Math-B", "", "ali.r"},
+		})
+		rows, err := imports.ParseClassMembersFile(data)
+		require.NoError(t, err)
+		require.Len(t, rows, 2)
+		assert.Equal(t, imports.MemberRow{RowNum: 2, ClassName: "Math-A", MemberUsername: "sara.k"}, rows[0])
+		assert.Equal(t, imports.MemberRow{RowNum: 4, ClassName: "Math-B", MemberUsername: "ali.r"}, rows[1])
+	})
+
+	t.Run("missing required column", func(t *testing.T) {
+		data := membersXLSX(t, [][]string{
+			{"class_name"},
+			{"Math-A"},
+		})
+		_, err := imports.ParseClassMembersFile(data)
+		require.ErrorContains(t, err, "member_username")
+	})
+
+	t.Run("no data rows", func(t *testing.T) {
+		data := membersXLSX(t, [][]string{
+			{"class_name", "member_username"},
+		})
+		_, err := imports.ParseClassMembersFile(data)
+		require.ErrorContains(t, err, "no data rows")
+	})
+}

@@ -28,6 +28,12 @@ func main() {
 	must(classes.SetSheetRow("Members", "A2", &[]string{"Math-A", "sara.k"}))
 	must(classes.SaveAs("frontend/public/templates/classes-import-template.xlsx"))
 
+	members := excelize.NewFile()
+	must(members.SetSheetName(members.GetSheetList()[0], "Members"))
+	must(members.SetSheetRow("Members", "A1", &[]string{"class_name", "member_username"}))
+	must(members.SetSheetRow("Members", "A2", &[]string{"Math-A", "sara.k"}))
+	must(members.SaveAs("frontend/public/templates/class-members-import-template.xlsx"))
+
 	log.Println("templates written to frontend/public/templates/")
 }
 

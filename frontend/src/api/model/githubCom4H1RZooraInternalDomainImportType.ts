@@ -12,4 +12,5 @@ export type GithubCom4H1RZooraInternalDomainImportType = typeof GithubCom4H1RZoo
 export const GithubCom4H1RZooraInternalDomainImportType = {
   ImportTypeUsers: 'users',
   ImportTypeClasses: 'classes',
+  ImportTypeClassMembers: 'class_members',
 } as const;

@@ -12,4 +12,5 @@ export type GetImportsLatestType = typeof GetImportsLatestType[keyof typeof GetI
 export const GetImportsLatestType = {
   users: 'users',
   classes: 'classes',
+  class_members: 'class_members',
 } as const;

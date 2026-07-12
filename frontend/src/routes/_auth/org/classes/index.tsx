@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { LayoutGrid, PlusIcon, UploadIcon } from "lucide-react"
+import { LayoutGrid, PlusIcon, UploadIcon, UsersIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
@@ -40,7 +40,7 @@ export const Route = createFileRoute("/_auth/org/classes/")({
 function RouteComponent() {
   const { t } = useTranslation()
   const { search, order_by, order_dir, page } = Route.useSearch()
-  const { canView, canCreate, canCreateAny } = useClassPermissions()
+  const { canView, canCreate, canCreateAny, canEditAny } = useClassPermissions()
   const allowed = useOrgGuard(["classes:view", "classes:view_any"])
 
   const currentPage = page ?? 1
@@ -60,7 +60,7 @@ function RouteComponent() {
   const total = classesData?.total ?? 0
 
   const [formOpen, setFormOpen] = useState(false)
-  const [importOpen, setImportOpen] = useState(false)
+  const [importType, setImportType] = useState<"classes" | "class_members" | null>(null)
   const { viewMode, setViewMode, isTable } = useViewMode()
 
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
@@ -120,18 +120,26 @@ function RouteComponent() {
       <PageHeader
         title={t("classesPage.title")}
         actions={
-          canCreate && (
+          (canCreate || canEditAny) && (
             <div className="flex items-center gap-2">
               {canCreateAny && (
-                <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+                <Button size="sm" variant="outline" onClick={() => setImportType("classes")}>
                   <UploadIcon data-icon="inline-start" />
                   {t("org.import.button")}
                 </Button>
               )}
-              <Button size="sm" onClick={() => setFormOpen(true)}>
-                <PlusIcon data-icon="inline-start" />
-                {t("classesPage.newClass")}
-              </Button>
+              {canEditAny && (
+                <Button size="sm" variant="outline" onClick={() => setImportType("class_members")}>
+                  <UsersIcon data-icon="inline-start" />
+                  {t("org.import.membersButton")}
+                </Button>
+              )}
+              {canCreate && (
+                <Button size="sm" onClick={() => setFormOpen(true)}>
+                  <PlusIcon data-icon="inline-start" />
+                  {t("classesPage.newClass")}
+                </Button>
+              )}
             </div>
           )
         }
@@ -155,7 +163,20 @@ function RouteComponent() {
 
       <CreateClassDialog open={formOpen} onOpenChange={setFormOpen} />
 
-      {canCreateAny && <ImportDialog open={importOpen} onOpenChange={setImportOpen} type="classes" />}
+      {canCreateAny && (
+        <ImportDialog
+          open={importType === "classes"}
+          onOpenChange={(o) => setImportType(o ? "classes" : null)}
+          type="classes"
+        />
+      )}
+      {canEditAny && (
+        <ImportDialog
+          open={importType === "class_members"}
+          onOpenChange={(o) => setImportType(o ? "class_members" : null)}
+          type="class_members"
+        />
+      )}
     </div>
   )
 }

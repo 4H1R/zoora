@@ -1502,6 +1502,108 @@ func TestProcessClasses_DuplicateMemberConflictSkips(t *testing.T) {
 	assert.Equal(t, "already a member", rows.members[1][3])
 }
 
+// --- processClassMembers tests --------------------------------------------
+
+func TestCreateImport_ClassMembersTypeNeedsUpdateAny(t *testing.T) {
+	orgID := uuid.New()
+	svc := newTestService(t, testDeps{})
+	_, err := svc.Create(callerCtx(orgID, string(domain.PermClassesCreateAny), string(domain.PermClassesUpdate)), domain.CreateImportJobDTO{
+		Type: domain.ImportTypeClassMembers, MediaID: uuid.New(),
+	})
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+func classMembersJobAndPayload(orgID uuid.UUID, perms []string) (*domain.ImportJob, domain.ImportProcessPayload) {
+	jobID, userID, mediaID := uuid.New(), uuid.New(), uuid.New()
+	job := &domain.ImportJob{ID: jobID, OrganizationID: orgID, UserID: userID,
+		MediaID: mediaID, Type: domain.ImportTypeClassMembers, Status: domain.ImportStatusPending}
+	payload := domain.ImportProcessPayload{JobID: jobID, UserID: userID, OrgID: orgID,
+		Permissions: perms, Plan: domain.PlanFree}
+	return job, payload
+}
+
+// TestProcessClassMembers_MixedOutcomes covers the members-only import: rows
+// enroll into existing classes resolved by name; unknown class, ambiguous
+// class name, unknown member, capacity-full and duplicate-membership rows
+// each get their own outcome without stopping the batch. Classes are never
+// created by this import type.
+func TestProcessClassMembers_MixedOutcomes(t *testing.T) {
+	orgID := uuid.New()
+	ali, sara := uuid.New(), uuid.New()
+	mathA := domain.Class{ID: uuid.New(), OrganizationID: orgID, UserID: ali, Name: "Math-A", TotalUsers: 0}
+	fullClass := domain.Class{ID: uuid.New(), OrganizationID: orgID, UserID: ali, Name: "Full-Class", TotalUsers: 1}
+	dupA := domain.Class{ID: uuid.New(), OrganizationID: orgID, UserID: ali, Name: "Dup", TotalUsers: 0}
+	dupB := domain.Class{ID: uuid.New(), OrganizationID: orgID, UserID: ali, Name: "Dup", TotalUsers: 0}
+
+	file := membersXLSX(t, [][]string{
+		{"class_name", "member_username"},
+		{"Math-A", "SARA.K "},    // enrolled (username normalized)
+		{"Math-A", "ali.r"},      // already a member -> conflict -> skipped
+		{"Ghost", "sara.k"},      // error: class not found
+		{"Dup", "sara.k"},        // error: ambiguous class name
+		{"Math-A", "no.body"},    // error: member not found
+		{"Full-Class", "sara.k"}, // error: class is full
+		{"", "sara.k"},           // error: class_name required
+	})
+
+	deps := newClassesProcessDeps(t)
+	deps.storage.On("GetObject", mock.Anything, mock.Anything, mock.Anything).Return(file, nil)
+	deps.users.On("FindByUsernames", mock.Anything, orgID, mock.Anything).
+		Return([]domain.User{{ID: ali, Username: "ali.r"}, {ID: sara, Username: "sara.k"}}, nil)
+	deps.classes.On("ListByNames", mock.Anything, orgID, mock.Anything).
+		Return([]domain.Class{mathA, fullClass, dupA, dupB}, nil)
+	deps.members.On("CountByClass", mock.Anything, fullClass.ID).Return(int64(1), nil)
+	deps.members.On("Create", mock.Anything, mock.MatchedBy(func(cm *domain.ClassMember) bool {
+		return cm.ClassID == mathA.ID && cm.UserID == sara
+	})).Return(nil)
+	deps.members.On("Create", mock.Anything, mock.MatchedBy(func(cm *domain.ClassMember) bool {
+		return cm.ClassID == mathA.ID && cm.UserID == ali
+	})).Return(domain.ErrConflict)
+	deps.repo.On("Update", mock.Anything, mock.Anything).Return(nil)
+	deps.repo.On("UpdateProgress", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+	deps.results.On("Set", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	job, payload := classMembersJobAndPayload(orgID, []string{string(domain.PermClassesUpdateAny)})
+	deps.repo.On("FindByID", mock.Anything, job.ID).Return(job, nil)
+
+	svc := newTestService(t, deps.testDeps)
+	require.NoError(t, svc.ProcessJob(context.Background(), payload))
+
+	assert.Equal(t, domain.ImportStatusCompleted, job.Status)
+	assert.Equal(t, 7, job.TotalRows)
+	assert.Equal(t, 1, job.CreatedCount) // sara.k into Math-A
+	assert.Equal(t, 1, job.SkippedCount) // ali.r already a member
+	assert.Equal(t, 5, job.FailedCount)
+	deps.classes.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+	deps.members.AssertNumberOfCalls(t, "Create", 2)
+
+	// per-row messages from the single-sheet result file
+	data := resultBytesFromSet(t, deps.results)
+	require.NotNil(t, data)
+	f, err := excelize.OpenReader(bytes.NewReader(data))
+	require.NoError(t, err)
+	defer f.Close()
+	rows, err := f.GetRows("Members")
+	require.NoError(t, err)
+	require.Len(t, rows, 8) // header + 7 data rows
+
+	// columns: class_name(0) member_username(1) status(2) message(3)
+	assert.Equal(t, "created", rows[1][2])
+	assert.Equal(t, "sara.k", rows[1][1], "result file must reflect the normalized username")
+	assert.Equal(t, "skipped", rows[2][2])
+	assert.Equal(t, "already a member", rows[2][3])
+	assert.Equal(t, "error", rows[3][2])
+	assert.Equal(t, "class not found", rows[3][3])
+	assert.Equal(t, "error", rows[4][2])
+	assert.Equal(t, "multiple classes with this name exist", rows[4][3])
+	assert.Equal(t, "error", rows[5][2])
+	assert.Equal(t, "member username not found", rows[5][3])
+	assert.Equal(t, "error", rows[6][2])
+	assert.Equal(t, "class is full", rows[6][3])
+	assert.Equal(t, "error", rows[7][2])
+	assert.Equal(t, "class_name and member_username are required", rows[7][3])
+}
+
 // --- shared result-file readback helpers for processClasses tests --------
 
 // resultBytesFromSet extracts the []byte payload from the mockResultStore's
