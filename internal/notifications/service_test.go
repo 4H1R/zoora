@@ -3,6 +3,7 @@ package notifications
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -114,14 +115,51 @@ func (m mockOrgSettings) GetByOrgID(context.Context, uuid.UUID) (*domain.Organiz
 	return &domain.OrganizationSettings{SMSEnabled: m.smsEnabled}, nil
 }
 
-type fakeBotSender struct{ sent int }
+type fakeBotSender struct {
+	sent    int
+	lastMsg string
+}
 
-func (f *fakeBotSender) SendMessage(context.Context, string, string) error { f.sent++; return nil }
+func (f *fakeBotSender) SendMessage(_ context.Context, _, msg string) error {
+	f.sent++
+	f.lastMsg = msg
+	return nil
+}
 
-type fakePushSender struct{ invalid []string }
+type fakePushSender struct {
+	invalid   []string
+	lastTitle string
+}
 
-func (f *fakePushSender) SendMulticast(_ context.Context, _ []string, _, _, _ string) ([]string, error) {
+func (f *fakePushSender) SendMulticast(_ context.Context, _ []string, title, _, _ string) ([]string, error) {
+	f.lastTitle = title
 	return f.invalid, nil
+}
+
+// mockOrgRepo resolves an org name for delivery-message tests. Only FindByID is
+// exercised; the rest satisfy domain.OrganizationRepository.
+type mockOrgRepo struct{ org *domain.Organization }
+
+func (m mockOrgRepo) FindByID(context.Context, uuid.UUID) (*domain.Organization, error) {
+	return m.org, nil
+}
+func (mockOrgRepo) Create(context.Context, *domain.Organization) error { return nil }
+func (mockOrgRepo) FindBySlug(context.Context, string) (*domain.Organization, error) {
+	return nil, nil
+}
+func (mockOrgRepo) Update(context.Context, *domain.Organization) error { return nil }
+func (mockOrgRepo) Delete(context.Context, uuid.UUID) error            { return nil }
+func (mockOrgRepo) List(context.Context, domain.OrganizationFilter) ([]domain.Organization, int64, error) {
+	return nil, 0, nil
+}
+func (mockOrgRepo) GetStats(context.Context) (*domain.OrganizationStats, error) { return nil, nil }
+func (mockOrgRepo) AdminList(context.Context, domain.AdminListOrganizationsQuery) ([]domain.Organization, int64, error) {
+	return nil, 0, nil
+}
+func (mockOrgRepo) HardDelete(context.Context, uuid.UUID) error { return nil }
+func (mockOrgRepo) Restore(context.Context, uuid.UUID) error    { return nil }
+func (mockOrgRepo) UpdatePlan(context.Context, uuid.UUID, domain.Plan, *time.Time) error {
+	return nil
 }
 
 func (m *mockRepo) Create(_ context.Context, n *domain.Notification) error {
@@ -204,7 +242,7 @@ func dto(a domain.NotificationAudienceDTO) domain.SendNotificationDTO {
 
 func TestSendAdminAllDerivesSystemCategory(t *testing.T) {
 	repo := &mockRepo{}
-	svc := NewService(repo, &mockClassRepo{}, nil, nil, nil, Senders{}, 10, nil, nil)
+	svc := NewService(repo, &mockClassRepo{}, nil, nil, nil, nil, Senders{}, 10, nil, nil)
 	n, err := svc.Send(adminCtx(), dto(domain.NotificationAudienceDTO{Type: "all"}))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -216,7 +254,7 @@ func TestSendAdminAllDerivesSystemCategory(t *testing.T) {
 
 func TestSendManagerAllForbidden(t *testing.T) {
 	orgID := uuid.New()
-	svc := NewService(&mockRepo{}, &mockClassRepo{}, nil, nil, nil, Senders{}, 10, nil, nil)
+	svc := NewService(&mockRepo{}, &mockClassRepo{}, nil, nil, nil, nil, Senders{}, 10, nil, nil)
 	_, err := svc.Send(managerCtx(orgID), dto(domain.NotificationAudienceDTO{Type: "all"}))
 	if !errors.Is(err, domain.ErrForbidden) {
 		t.Fatalf("err = %v, want ErrForbidden", err)
@@ -226,7 +264,7 @@ func TestSendManagerAllForbidden(t *testing.T) {
 func TestSendManagerOrgForcedToOwnOrg(t *testing.T) {
 	orgID, otherOrg := uuid.New(), uuid.New()
 	repo := &mockRepo{}
-	svc := NewService(repo, &mockClassRepo{}, nil, nil, nil, Senders{}, 10, nil, nil)
+	svc := NewService(repo, &mockClassRepo{}, nil, nil, nil, nil, Senders{}, 10, nil, nil)
 	n, err := svc.Send(managerCtx(orgID), dto(domain.NotificationAudienceDTO{Type: "org", OrgID: &otherOrg}))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -243,7 +281,7 @@ func TestSendManagerClassOutsideOrgForbidden(t *testing.T) {
 	orgID := uuid.New()
 	classID := uuid.New()
 	classRepo := &mockClassRepo{class: &domain.Class{ID: classID, OrganizationID: uuid.New(), UserID: uuid.New()}}
-	svc := NewService(&mockRepo{}, classRepo, nil, nil, nil, Senders{}, 10, nil, nil)
+	svc := NewService(&mockRepo{}, classRepo, nil, nil, nil, nil, Senders{}, 10, nil, nil)
 	_, err := svc.Send(managerCtx(orgID), dto(domain.NotificationAudienceDTO{Type: "class", ClassID: &classID}))
 	if !errors.Is(err, domain.ErrForbidden) {
 		t.Fatalf("err = %v, want ErrForbidden", err)
@@ -256,7 +294,7 @@ func TestSendTeacherOwnClassAllowed(t *testing.T) {
 	classID := uuid.New()
 	classRepo := &mockClassRepo{class: &domain.Class{ID: classID, OrganizationID: orgID, UserID: teacherID}}
 	repo := &mockRepo{}
-	svc := NewService(repo, classRepo, nil, nil, nil, Senders{}, 10, nil, nil)
+	svc := NewService(repo, classRepo, nil, nil, nil, nil, Senders{}, 10, nil, nil)
 	n, err := svc.Send(ctx, dto(domain.NotificationAudienceDTO{Type: "class", ClassID: &classID}))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -271,7 +309,7 @@ func TestSendTeacherForeignClassForbidden(t *testing.T) {
 	ctx, _ := teacherCtx(orgID)
 	classID := uuid.New()
 	classRepo := &mockClassRepo{class: &domain.Class{ID: classID, OrganizationID: orgID, UserID: uuid.New()}}
-	svc := NewService(&mockRepo{}, classRepo, nil, nil, nil, Senders{}, 10, nil, nil)
+	svc := NewService(&mockRepo{}, classRepo, nil, nil, nil, nil, Senders{}, 10, nil, nil)
 	_, err := svc.Send(ctx, dto(domain.NotificationAudienceDTO{Type: "class", ClassID: &classID}))
 	if !errors.Is(err, domain.ErrForbidden) {
 		t.Fatalf("err = %v, want ErrForbidden", err)
@@ -283,7 +321,7 @@ func TestSendTeacherUsersMustBeInOwnedClasses(t *testing.T) {
 	ctx, _ := teacherCtx(orgID)
 	ids := []uuid.UUID{uuid.New(), uuid.New()}
 	// Only 1 of 2 ids is in an owned class → forbidden.
-	svc := NewService(&mockRepo{usersInClasses: 1}, &mockClassRepo{}, nil, nil, nil, Senders{}, 10, nil, nil)
+	svc := NewService(&mockRepo{usersInClasses: 1}, &mockClassRepo{}, nil, nil, nil, nil, Senders{}, 10, nil, nil)
 	_, err := svc.Send(ctx, dto(domain.NotificationAudienceDTO{Type: "users", UserIDs: ids}))
 	if !errors.Is(err, domain.ErrForbidden) {
 		t.Fatalf("err = %v, want ErrForbidden", err)
@@ -293,7 +331,7 @@ func TestSendTeacherUsersMustBeInOwnedClasses(t *testing.T) {
 func TestSendManagerRoleOutsideOrgForbidden(t *testing.T) {
 	orgID := uuid.New()
 	roleID := uuid.New()
-	svc := NewService(&mockRepo{roleInScope: false}, &mockClassRepo{}, nil, nil, nil, Senders{}, 10, nil, nil)
+	svc := NewService(&mockRepo{roleInScope: false}, &mockClassRepo{}, nil, nil, nil, nil, Senders{}, 10, nil, nil)
 	_, err := svc.Send(managerCtx(orgID), dto(domain.NotificationAudienceDTO{Type: "role", RoleID: &roleID}))
 	if !errors.Is(err, domain.ErrForbidden) {
 		t.Fatalf("err = %v, want ErrForbidden", err)
@@ -303,7 +341,7 @@ func TestSendManagerRoleOutsideOrgForbidden(t *testing.T) {
 func TestSendRateLimited(t *testing.T) {
 	orgID := uuid.New()
 	repo := &mockRepo{senderCount: 10}
-	svc := NewService(repo, &mockClassRepo{}, nil, nil, nil, Senders{}, 10, nil, nil)
+	svc := NewService(repo, &mockClassRepo{}, nil, nil, nil, nil, Senders{}, 10, nil, nil)
 	_, err := svc.Send(managerCtx(orgID), dto(domain.NotificationAudienceDTO{Type: "org"}))
 	if !errors.Is(err, domain.ErrRateLimited) {
 		t.Fatalf("err = %v, want ErrRateLimited", err)
@@ -313,7 +351,7 @@ func TestSendRateLimited(t *testing.T) {
 func TestSendWithoutPermissionForbidden(t *testing.T) {
 	orgID := uuid.New()
 	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New(), OrgID: &orgID})
-	svc := NewService(&mockRepo{}, &mockClassRepo{}, nil, nil, nil, Senders{}, 10, nil, nil)
+	svc := NewService(&mockRepo{}, &mockClassRepo{}, nil, nil, nil, nil, Senders{}, 10, nil, nil)
 	_, err := svc.Send(ctx, dto(domain.NotificationAudienceDTO{Type: "org"}))
 	if !errors.Is(err, domain.ErrForbidden) {
 		t.Fatalf("err = %v, want ErrForbidden", err)
@@ -330,7 +368,7 @@ func TestFanoutOrgAudienceExcludesSender(t *testing.T) {
 		Audience: domain.NotificationAudience{Type: domain.AudienceOrg, OrgID: &orgID},
 	}
 	repo := &mockRepo{found: n, orgUserIDs: []uuid.UUID{u1, u2, senderID}}
-	svc := NewService(repo, &mockClassRepo{}, nil, nil, nil, Senders{}, 10, nil, nil)
+	svc := NewService(repo, &mockClassRepo{}, nil, nil, nil, nil, Senders{}, 10, nil, nil)
 
 	if err := svc.Fanout(context.Background(), n.ID); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -347,7 +385,7 @@ func TestFanoutOrgAudienceExcludesSender(t *testing.T) {
 
 func TestStatusReturnsUnread(t *testing.T) {
 	repo := &mockRepo{unread: 7}
-	svc := NewService(repo, &mockClassRepo{}, nil, nil, nil, Senders{}, 10, nil, nil)
+	svc := NewService(repo, &mockClassRepo{}, nil, nil, nil, nil, Senders{}, 10, nil, nil)
 	st, err := svc.Status(ctxWithCaller())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -358,7 +396,7 @@ func TestStatusReturnsUnread(t *testing.T) {
 }
 
 func TestStatusRequiresCaller(t *testing.T) {
-	svc := NewService(&mockRepo{}, &mockClassRepo{}, nil, nil, nil, Senders{}, 10, nil, nil)
+	svc := NewService(&mockRepo{}, &mockClassRepo{}, nil, nil, nil, nil, Senders{}, 10, nil, nil)
 	if _, err := svc.Status(context.Background()); !errors.Is(err, domain.ErrForbidden) {
 		t.Fatalf("err = %v, want ErrForbidden", err)
 	}
@@ -377,7 +415,7 @@ func TestFanoutCreatesDeliveriesPerConnector(t *testing.T) {
 		{UserID: u1, Type: domain.ConnectorTelegram, Target: "111"},
 		{UserID: u1, Type: domain.ConnectorPush, Target: "tok"},
 	}}
-	svc := NewService(repo, &mockClassRepo{}, connRepo, mockOrgSettings{smsEnabled: false}, nil, Senders{}, 10, nil, nil)
+	svc := NewService(repo, &mockClassRepo{}, connRepo, mockOrgSettings{smsEnabled: false}, nil, nil, Senders{}, 10, nil, nil)
 	if err := svc.Fanout(context.Background(), n.ID); err != nil {
 		t.Fatalf("Fanout: %v", err)
 	}
@@ -403,7 +441,7 @@ func TestFanoutSMSGatedByOrgSetting(t *testing.T) {
 	connRepo := &mockConnectorRepo{conns: []domain.UserConnector{
 		{UserID: u1, Type: domain.ConnectorSMS, Target: "09120000001"},
 	}}
-	svc := NewService(repo, &mockClassRepo{}, connRepo, mockOrgSettings{smsEnabled: false}, nil, Senders{}, 10, nil, nil)
+	svc := NewService(repo, &mockClassRepo{}, connRepo, mockOrgSettings{smsEnabled: false}, nil, nil, Senders{}, 10, nil, nil)
 	if err := svc.Fanout(context.Background(), n.ID); err != nil {
 		t.Fatalf("Fanout: %v", err)
 	}
@@ -423,7 +461,7 @@ func TestFanoutSystemNotificationAllowsSMS(t *testing.T) {
 	connRepo := &mockConnectorRepo{conns: []domain.UserConnector{
 		{UserID: u1, Type: domain.ConnectorSMS, Target: "09120000001"},
 	}}
-	svc := NewService(repo, &mockClassRepo{}, connRepo, mockOrgSettings{smsEnabled: false}, nil, Senders{}, 10, nil, nil)
+	svc := NewService(repo, &mockClassRepo{}, connRepo, mockOrgSettings{smsEnabled: false}, nil, nil, Senders{}, 10, nil, nil)
 	if err := svc.Fanout(context.Background(), n.ID); err != nil {
 		t.Fatalf("Fanout: %v", err)
 	}
@@ -438,7 +476,7 @@ func TestDeliverBotMarksSent(t *testing.T) {
 	d := domain.NotificationDelivery{ID: uuid.New(), NotificationID: nID, Channel: domain.ConnectorTelegram, Target: "111"}
 	repo := &mockRepo{found: n, deliveriesByID: []domain.NotificationDelivery{d}}
 	bot := &fakeBotSender{}
-	svc := NewService(repo, &mockClassRepo{}, &mockConnectorRepo{}, mockOrgSettings{}, nil, Senders{Telegram: bot}, 10, nil, nil)
+	svc := NewService(repo, &mockClassRepo{}, &mockConnectorRepo{}, mockOrgSettings{}, nil, nil, Senders{Telegram: bot}, 10, nil, nil)
 	if err := svc.DeliverBot(context.Background(), d.ID); err != nil {
 		t.Fatalf("DeliverBot: %v", err)
 	}
@@ -450,6 +488,38 @@ func TestDeliverBotMarksSent(t *testing.T) {
 	}
 }
 
+// TestDeliverIncludesOrgTitle guards that the sending organization's name is
+// prefixed onto the delivered bot message and push title so recipients can tell
+// which org a notification came from.
+func TestDeliverIncludesOrgTitle(t *testing.T) {
+	orgID := uuid.New()
+	nID := uuid.New()
+	n := &domain.Notification{ID: nID, OrganizationID: &orgID, Title: "Exam tomorrow", Body: "b"}
+	orgRepo := mockOrgRepo{org: &domain.Organization{ID: orgID, Name: "Acme School"}}
+
+	botD := domain.NotificationDelivery{ID: uuid.New(), NotificationID: nID, Channel: domain.ConnectorTelegram, Target: "111"}
+	botRepo := &mockRepo{found: n, deliveriesByID: []domain.NotificationDelivery{botD}}
+	bot := &fakeBotSender{}
+	botSvc := NewService(botRepo, &mockClassRepo{}, &mockConnectorRepo{}, mockOrgSettings{}, orgRepo, nil, Senders{Telegram: bot}, 10, nil, nil)
+	if err := botSvc.DeliverBot(context.Background(), botD.ID); err != nil {
+		t.Fatalf("DeliverBot: %v", err)
+	}
+	if want := "Acme School · Exam tomorrow"; !strings.HasPrefix(bot.lastMsg, want) {
+		t.Fatalf("bot message = %q, want prefix %q", bot.lastMsg, want)
+	}
+
+	pushD := domain.NotificationDelivery{ID: uuid.New(), NotificationID: nID, Channel: domain.ConnectorPush, Target: "tok"}
+	pushRepo := &mockRepo{found: n, deliveriesByID: []domain.NotificationDelivery{pushD}}
+	push := &fakePushSender{}
+	pushSvc := NewService(pushRepo, &mockClassRepo{}, &mockConnectorRepo{}, mockOrgSettings{}, orgRepo, nil, Senders{Push: push}, 10, nil, nil)
+	if err := pushSvc.DeliverPush(context.Background(), nID, []uuid.UUID{pushD.ID}); err != nil {
+		t.Fatalf("DeliverPush: %v", err)
+	}
+	if want := "Acme School · Exam tomorrow"; push.lastTitle != want {
+		t.Fatalf("push title = %q, want %q", push.lastTitle, want)
+	}
+}
+
 func TestDeliverPushPrunesInvalidTokens(t *testing.T) {
 	nID := uuid.New()
 	n := &domain.Notification{ID: nID, Title: "t", Body: "b"}
@@ -458,7 +528,7 @@ func TestDeliverPushPrunesInvalidTokens(t *testing.T) {
 	repo := &mockRepo{found: n, deliveriesByID: []domain.NotificationDelivery{d1, d2}}
 	connRepo := &mockConnectorRepo{}
 	push := &fakePushSender{invalid: []string{"bad"}}
-	svc := NewService(repo, &mockClassRepo{}, connRepo, mockOrgSettings{}, nil, Senders{Push: push}, 10, nil, nil)
+	svc := NewService(repo, &mockClassRepo{}, connRepo, mockOrgSettings{}, nil, nil, Senders{Push: push}, 10, nil, nil)
 	if err := svc.DeliverPush(context.Background(), nID, []uuid.UUID{d1.ID, d2.ID}); err != nil {
 		t.Fatalf("DeliverPush: %v", err)
 	}
@@ -505,7 +575,7 @@ func TestFanoutEnqueuesSendTasks(t *testing.T) {
 		{UserID: u2, Type: domain.ConnectorSMS, Target: "09120000001"},
 	}}
 	q := &fakeQueue{}
-	svc := NewService(repo, &mockClassRepo{}, connRepo, mockOrgSettings{smsEnabled: false}, q, Senders{}, 10, nil, nil)
+	svc := NewService(repo, &mockClassRepo{}, connRepo, mockOrgSettings{smsEnabled: false}, nil, q, Senders{}, 10, nil, nil)
 
 	if err := svc.Fanout(context.Background(), n.ID); err != nil {
 		t.Fatalf("Fanout: %v", err)
@@ -536,7 +606,7 @@ func TestFanoutNilQueueCreatesRowsButEnqueuesNothing(t *testing.T) {
 	connRepo := &mockConnectorRepo{conns: []domain.UserConnector{
 		{UserID: u1, Type: domain.ConnectorTelegram, Target: "111"},
 	}}
-	svc := NewService(repo, &mockClassRepo{}, connRepo, mockOrgSettings{}, nil, Senders{}, 10, nil, nil)
+	svc := NewService(repo, &mockClassRepo{}, connRepo, mockOrgSettings{}, nil, nil, Senders{}, 10, nil, nil)
 
 	if err := svc.Fanout(context.Background(), n.ID); err != nil {
 		t.Fatalf("Fanout: %v", err)
@@ -551,7 +621,7 @@ func TestReportRequiresSenderOrAdmin(t *testing.T) {
 	senderID := uuid.New()
 	n := &domain.Notification{ID: nID, SenderID: &senderID}
 	repo := &mockRepo{found: n}
-	svc := NewService(repo, &mockClassRepo{}, nil, nil, nil, Senders{}, 10, nil, nil)
+	svc := NewService(repo, &mockClassRepo{}, nil, nil, nil, nil, Senders{}, 10, nil, nil)
 
 	strangerCtx := domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New()})
 	if _, err := svc.Report(strangerCtx, nID); !errors.Is(err, domain.ErrForbidden) {

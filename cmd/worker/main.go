@@ -160,9 +160,10 @@ func main() {
 	}
 
 	connectorRepo := connectors.NewRepository(db)
+	orgRepo := organizations.NewRepository(db)
 	notificationRepo := notifications.NewRepository(db)
 	notificationService := notifications.NewService(
-		notificationRepo, classRepo, connectorRepo, orgSettingsService,
+		notificationRepo, classRepo, connectorRepo, orgSettingsService, orgRepo,
 		queueClient, senders, 0, redisClient, log,
 	)
 	queueServer.HandleFunc(domain.TypeNotificationFanout, notifications.NewFanoutHandler(notificationService))
@@ -171,7 +172,6 @@ func main() {
 	queueServer.HandleFunc(domain.TypeNotificationDeliverPush, notifications.NewDeliverPushHandler(notificationService))
 
 	userRepo := users.NewRepository(db)
-	orgRepo := organizations.NewRepository(db)
 	connectorService := connectors.NewService(connectorRepo, userRepo, orgRepo, redisClient, smsSender, connectors.BotLinkConfig{
 		TelegramBotUsername: cfg.TelegramBotUsername,
 		BaleBotUsername:     cfg.BaleBotUsername,

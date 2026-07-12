@@ -46,6 +46,7 @@ type service struct {
 	classRepo     domain.ClassRepository
 	connectorRepo domain.UserConnectorRepository
 	orgSettings   domain.OrganizationSettingsProvider
+	orgRepo       domain.OrganizationRepository
 	queue         Enqueuer
 	senders       Senders
 	ratePerHour   int
@@ -58,6 +59,7 @@ func NewService(
 	classRepo domain.ClassRepository,
 	connectorRepo domain.UserConnectorRepository, // nil ok: fan-out skips external channels
 	orgSettings domain.OrganizationSettingsProvider, // nil ok: SMS gate treated as disabled
+	orgRepo domain.OrganizationRepository, // nil ok: org title omitted from delivered messages
 	queueClient Enqueuer,
 	senders Senders,
 	ratePerHour int,
@@ -72,6 +74,7 @@ func NewService(
 		classRepo:     classRepo,
 		connectorRepo: connectorRepo,
 		orgSettings:   orgSettings,
+		orgRepo:       orgRepo,
 		queue:         queueClient,
 		senders:       senders,
 		ratePerHour:   ratePerHour,
@@ -574,7 +577,7 @@ func (s *service) DeliverBot(ctx context.Context, deliveryID uuid.UUID) error {
 	if sender == nil {
 		return s.markFailed(ctx, []uuid.UUID{d.ID}, "channel disabled")
 	}
-	if err := sender.SendMessage(ctx, d.Target, botMessage(n)); err != nil {
+	if err := sender.SendMessage(ctx, d.Target, botMessage(n, s.orgTitle(ctx, n))); err != nil {
 		// Return the error so Asynq retries; row stays pending until success or
 		// retry exhaustion (visible in the report).
 		return fmt.Errorf("notifications.service.DeliverBot: %w", err)
@@ -604,7 +607,7 @@ func (s *service) DeliverSMS(ctx context.Context, notificationID uuid.UUID, deli
 	if s.senders.SMS == nil {
 		return s.markFailed(ctx, ids, "channel disabled")
 	}
-	if err := s.senders.SMS.SendBulk(ctx, phones, smsMessage(n)); err != nil {
+	if err := s.senders.SMS.SendBulk(ctx, phones, smsMessage(n, s.orgTitle(ctx, n))); err != nil {
 		return fmt.Errorf("notifications.service.DeliverSMS: %w", err)
 	}
 	return s.repo.MarkDeliveries(ctx, ids, domain.DeliverySent, nil, time.Now())
@@ -639,7 +642,7 @@ func (s *service) DeliverPush(ctx context.Context, notificationID uuid.UUID, del
 	if n.ActionURL != nil && *n.ActionURL != "" {
 		link = *n.ActionURL
 	}
-	invalidTokens, err := s.senders.Push.SendMulticast(ctx, tokens, n.Title, n.Body, link)
+	invalidTokens, err := s.senders.Push.SendMulticast(ctx, tokens, displayTitle(s.orgTitle(ctx, n), n.Title), n.Body, link)
 	if err != nil {
 		return fmt.Errorf("notifications.service.DeliverPush: %w", err)
 	}
@@ -674,16 +677,43 @@ func (s *service) markFailed(ctx context.Context, ids []uuid.UUID, reason string
 	return s.repo.MarkDeliveries(ctx, ids, domain.DeliveryFailed, &msg, time.Time{})
 }
 
-func botMessage(n *domain.Notification) string {
-	msg := n.Title + "\n\n" + n.Body
+// orgTitle resolves the sending organization's name for the given notification,
+// so recipients can tell which org a delivered message is from. Returns "" for
+// system notifications (no org) or when the org repo isn't wired / lookup fails
+// — delivery must never be blocked just because the title couldn't be resolved.
+func (s *service) orgTitle(ctx context.Context, n *domain.Notification) string {
+	if s.orgRepo == nil || n.OrganizationID == nil {
+		return ""
+	}
+	org, err := s.orgRepo.FindByID(ctx, *n.OrganizationID)
+	if err != nil || org == nil {
+		s.logger.WarnContext(ctx, "resolving org title for notification delivery",
+			"error", err, "notification_id", n.ID, "org_id", *n.OrganizationID)
+		return ""
+	}
+	return org.Name
+}
+
+// displayTitle prefixes the notification title with the organization name so the
+// org is visible in the recipient's push/connector message. No-op when orgName
+// is empty (system notifications).
+func displayTitle(orgName, title string) string {
+	if orgName == "" {
+		return title
+	}
+	return orgName + " · " + title
+}
+
+func botMessage(n *domain.Notification, orgName string) string {
+	msg := displayTitle(orgName, n.Title) + "\n\n" + n.Body
 	if n.ActionURL != nil && *n.ActionURL != "" {
 		msg += "\n" + *n.ActionURL
 	}
 	return msg
 }
 
-func smsMessage(n *domain.Notification) string {
-	msg := n.Title + "\n" + n.Body
+func smsMessage(n *domain.Notification, orgName string) string {
+	msg := displayTitle(orgName, n.Title) + "\n" + n.Body
 	// Rune-aware truncation: SMS bodies are often Persian (multibyte), so
 	// slicing by byte could split a character.
 	if r := []rune(msg); len(r) > smsMaxLen {

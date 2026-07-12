@@ -352,7 +352,7 @@ func main() {
 	// here too so a manual re-enqueue path could use it, but delivery runs
 	// worker-side.
 	notificationService := notifications.NewService(
-		notificationRepo, classRepo, connectorRepo, orgSettingsService,
+		notificationRepo, classRepo, connectorRepo, orgSettingsService, orgRepo,
 		queueClient, notifications.Senders{SMS: smsSender}, cfg.NotificationSendRatePerHour, redisClient, log,
 	)
 	notificationHandler := notifications.NewHandler(notificationService)
