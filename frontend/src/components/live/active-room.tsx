@@ -50,6 +50,7 @@ import { Stage } from "./stage"
 import { usePublishPresence } from "./use-publish-presence"
 import { useRoomChat } from "./use-room-chat"
 import { useRoomPolls } from "./use-room-polls"
+import { useRoomQa } from "./use-room-qa"
 import { useRoomRoles } from "./use-room-roles"
 import { useStage } from "./use-stage"
 import { WebcamRail } from "./webcam-rail"
@@ -66,6 +67,7 @@ interface ActiveRoomProps {
   liveId: string
   chatId?: string
   role: RoomRole
+  actualStartTime?: string
   onDisconnect: () => void
   onEnded: () => void
 }
@@ -78,6 +80,7 @@ export function ActiveRoom({
   liveId,
   chatId,
   role,
+  actualStartTime,
   onDisconnect,
   onEnded,
 }: ActiveRoomProps) {
@@ -123,6 +126,7 @@ export function ActiveRoom({
           endPending={endMutation.isPending}
           liveId={liveId}
           chatId={chatId}
+          actualStartTime={actualStartTime}
         />
         <ReconnectOverlay />
         <RoomAudioRenderer />
@@ -140,6 +144,7 @@ function RoomShell({
   endPending,
   liveId,
   chatId,
+  actualStartTime,
 }: {
   sessionName: string
   className?: string
@@ -149,6 +154,7 @@ function RoomShell({
   endPending: boolean
   liveId: string
   chatId?: string
+  actualStartTime?: string
 }) {
   const { t } = useTranslation()
   const layoutContext = useCreateLayoutContext()
@@ -173,6 +179,9 @@ function RoomShell({
   // Poll session lives at room level so its data-channel listener stays mounted
   // regardless of which tab/panel is open. Viewers get a modal popup to vote.
   const polls = useRoomPolls(isHost)
+  // Q&A session lives at room level so its data-channel listener stays mounted
+  // regardless of which tab is open (same rule as chat/polls).
+  const qa = useRoomQa(liveId)
   const answerMutation = usePostPollsIdAnswer()
   const onVote = (value: string) => {
     if (!polls.activePoll) return
@@ -363,7 +372,7 @@ function RoomShell({
 
   return (
     <LayoutContextProvider value={layoutContext}>
-      <RoomHeader sessionName={sessionName} className={className} onOpenPeople={() => setTab("people")} />
+      <RoomHeader sessionName={sessionName} className={className} actualStartTime={actualStartTime} onOpenPeople={() => setTab("people")} />
 
       <div className="flex min-h-0 flex-1">
         <div className="relative flex min-w-0 flex-1 flex-col">
@@ -411,6 +420,7 @@ function RoomShell({
             isRecording={isRecording}
             recordingPending={recordingPending}
             onToggleRecording={onToggleRecording}
+            qaOpenCount={qa.openCount}
           />
 
           {hasCameras && (
@@ -453,6 +463,8 @@ function RoomShell({
           polls={polls}
           onVote={onVote}
           answerPending={answerMutation.isPending}
+          qa={qa}
+          myId={myIdentity}
         />
       </div>
 

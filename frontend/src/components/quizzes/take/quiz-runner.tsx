@@ -6,6 +6,7 @@ import type {
 } from "@/api/model"
 
 import { useQueryClient } from "@tanstack/react-query"
+import { DoorClosedIcon, LockKeyholeIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -67,6 +68,7 @@ export function QuizRunner({
         title={t("org.session.quizzes.take.noRoom.title")}
         description={t("org.session.quizzes.take.noRoom.description")}
         backHref={backHref}
+        icon={<DoorClosedIcon />}
       />
     )
   }
@@ -77,6 +79,7 @@ export function QuizRunner({
         title={t("org.session.quizzes.take.closed.title")}
         description={t("org.session.quizzes.take.closed.description")}
         backHref={backHref}
+        icon={<LockKeyholeIcon />}
       />
     )
   }

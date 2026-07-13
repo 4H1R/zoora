@@ -1,3 +1,4 @@
+import { SearchXIcon, ShieldXIcon, TriangleAlertIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import {
@@ -31,6 +32,10 @@ export function QuizTake({
   const meQ = useGetUsersMe()
   const me = (meQ.data?.status === 200 && meQ.data.data.data) || undefined
   const canView = userHasAny(me, ["quizzes:view", "quizzes:view_any"])
+  // Taking a quiz requires enrollment in its class; the backend enforces this
+  // and only the Student preset carries quizzes:take. A viewer (e.g. Manager)
+  // can open the quiz but must not see the start flow — starting would 403.
+  const canTake = userHasAny(me, ["quizzes:take"])
 
   const backHref = classSessionId
     ? `/org/classes/class-sessions/${classSessionId}`
@@ -66,6 +71,8 @@ export function QuizTake({
         title={t("org.session.quizzes.take.noAccess.title")}
         description={t("org.session.quizzes.take.noAccess.description")}
         backHref={backHref}
+        icon={<ShieldXIcon />}
+        tone="destructive"
       />
     )
   }
@@ -80,6 +87,8 @@ export function QuizTake({
         title={t("org.session.quizzes.take.noAccess.title")}
         description={t("org.session.quizzes.take.noAccess.description")}
         backHref={backHref}
+        icon={<ShieldXIcon />}
+        tone="destructive"
       />
     )
   }
@@ -90,6 +99,7 @@ export function QuizTake({
         title={t("org.session.quizzes.take.notFound.title")}
         description={t("org.session.quizzes.take.notFound.description")}
         backHref={backHref}
+        icon={<SearchXIcon />}
       />
     )
   }
@@ -100,6 +110,8 @@ export function QuizTake({
         title={t("org.session.quizzes.take.bankError.title")}
         description={t("org.session.quizzes.take.bankError.description")}
         backHref={backHref}
+        icon={<TriangleAlertIcon />}
+        tone="destructive"
       />
     )
   }
@@ -111,6 +123,19 @@ export function QuizTake({
         submission={finalSubmission}
         questions={questions}
         backHref={backHref}
+      />
+    )
+  }
+
+  // Viewers without take permission (e.g. Manager) can reach this screen but
+  // cannot start the quiz — show a view-only notice instead of the start flow.
+  if (!canTake) {
+    return (
+      <CenterMessage
+        title={t("org.session.quizzes.take.viewOnly.title")}
+        description={t("org.session.quizzes.take.viewOnly.description")}
+        backHref={backHref}
+        icon={<ShieldXIcon />}
       />
     )
   }

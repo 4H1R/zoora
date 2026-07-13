@@ -20,6 +20,10 @@ CREATE TABLE live_rooms (
 CREATE INDEX idx_live_rooms_class_session_id ON live_rooms (class_session_id);
 CREATE INDEX idx_live_rooms_status ON live_rooms (status);
 CREATE INDEX idx_live_rooms_deleted_at ON live_rooms (deleted_at);
+CREATE INDEX idx_live_rooms_scheduled_start_time ON live_rooms (scheduled_start_time)
+    WHERE deleted_at IS NULL AND scheduled_start_time IS NOT NULL;
+CREATE INDEX idx_live_rooms_active_host_last_seen ON live_rooms (host_last_seen_at)
+    WHERE status = 'active' AND deleted_at IS NULL;
 
 CREATE TABLE live_participants (
     id                     UUID PRIMARY KEY DEFAULT uuidv7(),
@@ -40,6 +44,7 @@ CREATE TABLE live_participants (
 CREATE INDEX idx_live_participants_room_id ON live_participants (live_room_id);
 CREATE INDEX idx_live_participants_user_id ON live_participants (user_id);
 CREATE INDEX idx_live_participants_active ON live_participants (live_room_id, user_id) WHERE left_at IS NULL;
+CREATE INDEX idx_live_participants_room_identity_active ON live_participants (live_room_id, identity) WHERE left_at IS NULL;
 CREATE INDEX idx_live_participants_role ON live_participants (live_room_id, role);
 
 CREATE TABLE live_recordings (
@@ -60,3 +65,4 @@ CREATE TABLE live_recordings (
 
 CREATE INDEX idx_live_recordings_room_id ON live_recordings (live_room_id);
 CREATE INDEX idx_live_recordings_status ON live_recordings (status);
+CREATE UNIQUE INDEX idx_live_recordings_egress_id ON live_recordings (egress_id);

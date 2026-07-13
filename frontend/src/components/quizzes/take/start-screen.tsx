@@ -3,6 +3,7 @@ import type {
   GithubCom4H1RZooraInternalDomainQuiz as Quiz,
   GithubCom4H1RZooraInternalDomainQuizRoom as QuizRoom,
 } from "@/api/model"
+import type { ReactNode } from "react"
 
 import { Link } from "@tanstack/react-router"
 import {
@@ -23,10 +24,44 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { useFormatDate } from "@/lib/format-date"
 import { formatScore } from "@/lib/score"
+import { cn } from "@/lib/utils"
 
 import { DecorativeBackground } from "./decorations"
 import { MetaCell } from "./meta-cell"
 import { anyNegativeMarking } from "./utils"
+
+// One rule in the pre-flight checklist: an icon chip + line of copy, in a shared
+// row shell so every rule (and the destructive penalty note) lines up.
+function RuleRow({
+  icon,
+  destructive = false,
+  children,
+}: {
+  icon: ReactNode
+  destructive?: boolean
+  children: ReactNode
+}) {
+  return (
+    <li
+      className={cn(
+        "flex items-center gap-3 px-4 py-3 text-sm leading-relaxed",
+        destructive ? "text-destructive" : "text-foreground/80",
+      )}
+    >
+      <span
+        className={cn(
+          "flex size-8 shrink-0 items-center justify-center rounded-lg ring-1 [&_svg]:size-4",
+          destructive
+            ? "bg-destructive/10 text-destructive ring-destructive/20"
+            : "bg-foreground/5 text-muted-foreground ring-foreground/10",
+        )}
+      >
+        {icon}
+      </span>
+      {children}
+    </li>
+  )
+}
 
 interface StartScreenProps {
   quiz: Quiz
@@ -51,7 +86,6 @@ export function StartScreen({
 }: StartScreenProps) {
   const { t } = useTranslation()
   const formatDate = useFormatDate()
-  const shortId = (quiz.id ?? "").slice(0, 8).toUpperCase()
   const closesAt = formatDate(room.ended_at, "datetime")
   const hasNegativeMarking = anyNegativeMarking(questions)
 
@@ -59,7 +93,7 @@ export function StartScreen({
     <div className="relative isolate flex flex-col gap-10 pb-24 pt-8">
       <DecorativeBackground />
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center">
         <Link
           to={backHref}
           className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 font-mono text-xs tracking-[0.25em] uppercase transition-colors"
@@ -67,11 +101,9 @@ export function StartScreen({
           <ArrowLeftIcon className="size-3.5" />
           {t("org.session.quizzes.take.backToSession")}
         </Link>
-        <span className="text-muted-foreground font-mono text-xs tracking-[0.25em]">№ {shortId}</span>
       </div>
 
       <header className="flex flex-col gap-5">
-        <Eyebrow>{t("org.session.quizzes.take.eyebrow")}</Eyebrow>
         <h1 className="max-w-4xl text-4xl leading-tight font-semibold tracking-tight text-balance md:text-5xl lg:text-6xl">
           {quiz.title}
         </h1>
@@ -82,7 +114,7 @@ export function StartScreen({
         )}
       </header>
 
-      <section className="bg-card ring-foreground/10 grid grid-cols-2 gap-0 overflow-hidden rounded-2xl px-4 py-6 ring-1 md:grid-cols-4 md:px-6">
+      <section className="ring-foreground/10 grid grid-cols-2 gap-px overflow-hidden rounded-3xl bg-gradient-to-br from-foreground/[0.08] to-foreground/[0.03] shadow-lg ring-1 md:grid-cols-4">
         <MetaCell
           icon={<ClipboardListIcon className="size-4" />}
           label={t("org.session.quizzes.take.meta.questions")}
@@ -108,38 +140,27 @@ export function StartScreen({
         />
       </section>
 
-      <section className="flex flex-col gap-3">
+      <section className="flex flex-col gap-4">
         <Eyebrow>{t("org.session.quizzes.take.rules.eyebrow")}</Eyebrow>
-        <ul className="text-foreground/80 max-w-2xl space-y-2 text-sm leading-relaxed">
-          <li className="flex items-start gap-2">
-            <ClockIcon className="text-muted-foreground mt-0.5 size-4" />
+        <ul className="ring-foreground/10 divide-foreground/5 flex max-w-2xl flex-col divide-y overflow-hidden rounded-2xl ring-1">
+          <RuleRow icon={<ClockIcon />}>
             {t("org.session.quizzes.take.rules.timer", { minutes: quiz.duration_minutes ?? 0 })}
-          </li>
-          <li className="flex items-start gap-2">
-            {quiz.no_back_navigation ? (
-              <LockKeyholeIcon className="text-muted-foreground mt-0.5 size-4" />
-            ) : (
-              <ArrowLeftIcon className="text-muted-foreground mt-0.5 size-4" />
-            )}
+          </RuleRow>
+          <RuleRow icon={quiz.no_back_navigation ? <LockKeyholeIcon /> : <ArrowLeftIcon />}>
             {quiz.no_back_navigation
               ? t("org.session.quizzes.take.rules.noBack")
               : t("org.session.quizzes.take.rules.backAllowed")}
-          </li>
+          </RuleRow>
           {quiz.shuffle_questions && (
-            <li className="flex items-start gap-2">
-              <ShuffleIcon className="text-muted-foreground mt-0.5 size-4" />
-              {t("org.session.quizzes.take.rules.shuffle")}
-            </li>
+            <RuleRow icon={<ShuffleIcon />}>{t("org.session.quizzes.take.rules.shuffle")}</RuleRow>
           )}
-          <li className="flex items-start gap-2">
-            <AlertTriangleIcon className="text-muted-foreground mt-0.5 size-4" />
+          <RuleRow icon={<AlertTriangleIcon />}>
             {t("org.session.quizzes.take.rules.autoSubmit")}
-          </li>
+          </RuleRow>
           {hasNegativeMarking && (
-            <li className="text-destructive flex items-start gap-2">
-              <AlertTriangleIcon className="mt-0.5 size-4" />
+            <RuleRow icon={<AlertTriangleIcon />} destructive>
               {t("org.session.quizzes.take.penalty.explainer")}
-            </li>
+            </RuleRow>
           )}
         </ul>
       </section>

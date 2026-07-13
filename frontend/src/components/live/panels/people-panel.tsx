@@ -156,8 +156,14 @@ export function PeoplePanel({ states, isHost, onSetRole, onMute, onLowerHand, on
                       aria-label={t("liveRoom.people.handRaised")}
                     />
                   )}
-                  {p.isMicrophoneEnabled ? <Mic className="size-4" /> : <MicOff className="size-4 text-red-400/80" />}
-                  {p.isCameraEnabled ? <Video className="size-4" /> : <VideoOff className="size-4 text-muted-foreground" />}
+                  {/* Mic/cam status only for publishers — viewers can't publish,
+                      so their always-off icons are meaningless noise. */}
+                  {participantRole !== "viewer" && (
+                    <>
+                      {p.isMicrophoneEnabled ? <Mic className="size-4" /> : <MicOff className="size-4 text-red-400/80" />}
+                      {p.isCameraEnabled ? <Video className="size-4" /> : <VideoOff className="size-4 text-muted-foreground" />}
+                    </>
+                  )}
                   {isHost && (
                     <DropdownMenu>
                       <DropdownMenuTrigger

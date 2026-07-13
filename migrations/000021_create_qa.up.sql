@@ -26,5 +26,5 @@ CREATE TABLE qa_votes (
     CONSTRAINT fk_qa_votes_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_qa_votes_question_id ON qa_votes (question_id);
 CREATE UNIQUE INDEX idx_qa_votes_question_user ON qa_votes (question_id, user_id);
+CREATE INDEX idx_qa_votes_user ON qa_votes (user_id);

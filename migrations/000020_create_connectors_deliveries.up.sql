@@ -11,6 +11,7 @@ CREATE TABLE user_connectors (
 );
 
 CREATE INDEX idx_user_connectors_user ON user_connectors (user_id);
+CREATE INDEX idx_user_connectors_type_target ON user_connectors (type, target);
 
 CREATE TABLE notification_deliveries (
     id              UUID PRIMARY KEY DEFAULT uuidv7(),
@@ -28,5 +29,6 @@ CREATE TABLE notification_deliveries (
 
 -- Delivery report aggregation per notification.
 CREATE INDEX idx_notification_deliveries_notification ON notification_deliveries (notification_id, channel, status);
+CREATE INDEX idx_notification_deliveries_user ON notification_deliveries (user_id);
 
 -- NOTE: organization_settings.sms_enabled lives in 000016_create_organization_settings.

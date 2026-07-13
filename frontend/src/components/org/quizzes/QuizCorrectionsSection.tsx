@@ -94,11 +94,7 @@ export function QuizCorrectionsSection({ classSessionId }: QuizCorrectionsSectio
 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1.5">
-          <Eyebrow>{t("org.session.corrections.eyebrow")}</Eyebrow>
           <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.corrections.title")}</h2>
-          <p className="text-muted-foreground max-w-xl text-sm leading-relaxed">
-            {t("org.session.corrections.subtitle")}
-          </p>
         </div>
         <span className="text-muted-foreground hidden font-mono text-[11px] tracking-[0.25em] uppercase md:inline">
           {selectedQuiz ? `// ${selectedQuiz.title}` : `// ${t("org.session.corrections.noQuizSelected")}`}

@@ -13,7 +13,7 @@ CREATE TABLE classes (
     CONSTRAINT fk_classes_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE RESTRICT
 );
 
-CREATE INDEX idx_classes_organization_id ON classes (organization_id);
+CREATE INDEX idx_classes_org_created_at ON classes (organization_id, created_at DESC) WHERE deleted_at IS NULL;
 CREATE INDEX idx_classes_user_id ON classes (user_id);
 CREATE INDEX idx_classes_deleted_at ON classes (deleted_at);
 
@@ -29,8 +29,7 @@ CREATE TABLE class_sessions (
     CONSTRAINT fk_class_sessions_class FOREIGN KEY (class_id) REFERENCES classes (id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_class_sessions_class_id ON class_sessions (class_id);
-CREATE INDEX idx_class_sessions_start_time ON class_sessions (start_time);
+CREATE INDEX idx_class_sessions_class_id_start_time ON class_sessions (class_id, start_time) WHERE deleted_at IS NULL;
 CREATE INDEX idx_class_sessions_deleted_at ON class_sessions (deleted_at);
 
 CREATE TABLE class_members (

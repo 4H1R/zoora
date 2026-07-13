@@ -263,7 +263,6 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
   return (
     <section id="attendance" className="flex scroll-mt-20 flex-col gap-5">
       <div className="flex flex-col gap-1.5">
-        <Eyebrow>{t("org.session.attendance.eyebrow")}</Eyebrow>
         <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.attendance.title")}</h2>
       </div>
 

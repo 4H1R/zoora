@@ -15,6 +15,6 @@ CREATE TABLE media (
     updated_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_media_organization ON media (organization_id);
+CREATE INDEX idx_media_org_model_created ON media (organization_id, model_type, created_at DESC);
 CREATE INDEX idx_media_model ON media (model_type, model_id);
 CREATE INDEX idx_media_collection ON media (model_type, model_id, collection_name);

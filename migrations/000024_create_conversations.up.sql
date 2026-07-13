@@ -79,3 +79,4 @@ CREATE TABLE conversation_message_reactions (
 );
 
 CREATE INDEX idx_conv_reactions_message ON conversation_message_reactions (message_id);
+CREATE INDEX idx_conv_reactions_user ON conversation_message_reactions (user_id);

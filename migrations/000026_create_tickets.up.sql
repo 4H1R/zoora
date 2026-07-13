@@ -29,7 +29,7 @@ CREATE TABLE tickets (
     CONSTRAINT chk_tickets_one_target CHECK (quiz_room_id IS NULL OR gradebook_column_id IS NULL)
 );
 
-CREATE INDEX idx_tickets_org          ON tickets (organization_id);
+CREATE INDEX idx_tickets_org_status_updated ON tickets (organization_id, status, updated_at DESC);
 CREATE INDEX idx_tickets_class        ON tickets (class_id);
 CREATE INDEX idx_tickets_user         ON tickets (user_id);
 CREATE INDEX idx_tickets_class_status ON tickets (class_id, status);
@@ -47,3 +47,4 @@ CREATE TABLE ticket_messages (
 
 -- thread read: oldest-first within a ticket (uuidv7 ids are time-ordered)
 CREATE INDEX idx_ticket_messages_ticket ON ticket_messages (ticket_id, id);
+CREATE INDEX idx_ticket_messages_user ON ticket_messages (user_id);

@@ -17,5 +17,5 @@ CREATE TABLE import_jobs (
     CONSTRAINT fk_import_jobs_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_import_jobs_organization_id ON import_jobs (organization_id);
 CREATE INDEX idx_import_jobs_org_type_created ON import_jobs (organization_id, type, created_at DESC);
+CREATE INDEX idx_import_jobs_user_id ON import_jobs (user_id);

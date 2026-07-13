@@ -92,6 +92,5 @@ CREATE TABLE quiz_submissions (
     CONSTRAINT chk_quiz_submissions_status CHECK (status IN ('in_progress', 'submitted', 'graded'))
 );
 
-CREATE INDEX idx_quiz_submissions_quiz_id ON quiz_submissions (quiz_id);
+CREATE INDEX idx_quiz_submissions_quiz_status ON quiz_submissions (quiz_id, status);
 CREATE INDEX idx_quiz_submissions_user_id ON quiz_submissions (user_id);
-CREATE INDEX idx_quiz_submissions_status ON quiz_submissions (status);

@@ -22,6 +22,8 @@ CREATE INDEX idx_offline_rooms_class_id ON offline_rooms (class_id);
 CREATE INDEX idx_offline_rooms_class_session_id ON offline_rooms (class_session_id);
 CREATE INDEX idx_offline_rooms_creator_id ON offline_rooms (creator_id);
 CREATE INDEX idx_offline_rooms_deleted_at ON offline_rooms (deleted_at);
+CREATE INDEX idx_offline_rooms_published_at ON offline_rooms (published_at)
+    WHERE deleted_at IS NULL AND published_at IS NOT NULL;
 
 CREATE TABLE offline_room_views (
     id UUID PRIMARY KEY DEFAULT uuidv7(),
@@ -31,5 +33,5 @@ CREATE TABLE offline_room_views (
     duration_seconds INT NOT NULL DEFAULT 0
 );
 
-CREATE INDEX idx_offline_room_views_room_id ON offline_room_views(offline_room_id);
+CREATE INDEX idx_offline_room_views_room_user ON offline_room_views(offline_room_id, user_id);
 CREATE INDEX idx_offline_room_views_user_id ON offline_room_views(user_id);

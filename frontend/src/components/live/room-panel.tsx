@@ -1,4 +1,4 @@
-import { BarChart3, MessageSquare, Users, X } from "lucide-react"
+import { BarChart3, MessageCircleQuestion, MessageSquare, Users, X } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
@@ -8,10 +8,12 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { ChatPanel } from "./panels/chat-panel"
 import { PeoplePanel } from "./panels/people-panel"
 import { PollsPanel } from "./panels/polls-panel"
+import { QaPanel } from "./panels/qa-panel"
 import type { RoomRole } from "./room-role"
 import type { RoomTab } from "./types"
 import type { useRoomChat } from "./use-room-chat"
 import type { RoomPolls } from "./use-room-polls"
+import type { RoomQa } from "./use-room-qa"
 
 interface RoomPanelProps {
   tab: RoomTab
@@ -30,9 +32,11 @@ interface RoomPanelProps {
   polls: RoomPolls
   onVote: (value: string) => void
   answerPending: boolean
+  qa: RoomQa
+  myId: string
 }
 
-type TabsInnerProps = Pick<RoomPanelProps, "tab" | "setTab" | "chat" | "unread" | "states" | "isHost" | "liveId" | "onSetRole" | "onMute" | "onLowerHand" | "onRemove" | "polls" | "onVote" | "answerPending">
+type TabsInnerProps = Pick<RoomPanelProps, "tab" | "setTab" | "chat" | "unread" | "states" | "isHost" | "liveId" | "onSetRole" | "onMute" | "onLowerHand" | "onRemove" | "polls" | "onVote" | "answerPending" | "qa" | "myId">
 
 function TabsInner({
   tab,
@@ -49,6 +53,8 @@ function TabsInner({
   polls,
   onVote,
   answerPending,
+  qa,
+  myId,
 }: TabsInnerProps) {
   const { t } = useTranslation()
   return (
@@ -57,8 +63,8 @@ function TabsInner({
       onValueChange={(v) => setTab(v as RoomTab)}
       className="flex min-h-0 flex-1 flex-col"
     >
-      <TabsList className="mx-2.5 mt-2.5 w-auto grid grid-cols-3">
-        <TabsTrigger value="chat" className="gap-1.5">
+      <TabsList className="mx-2.5 mt-2.5 flex w-auto gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <TabsTrigger value="chat" className="flex-1 gap-1.5">
           <MessageSquare className="size-4" />
           <span className="hidden sm:inline">{t("liveRoom.controls.chat")}</span>
           {unread > 0 && tab !== "chat" && (
@@ -67,17 +73,29 @@ function TabsInner({
             </span>
           )}
         </TabsTrigger>
-        <TabsTrigger value="people" className="gap-1.5">
+        <TabsTrigger value="qa" className="flex-1 gap-1.5">
+          <MessageCircleQuestion className="size-4" />
+          <span className="hidden sm:inline">{t("liveRoom.controls.qa")}</span>
+          {qa.openCount > 0 && tab !== "qa" && (
+            <span className="ms-1 flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+              {qa.openCount > 9 ? "9+" : qa.openCount}
+            </span>
+          )}
+        </TabsTrigger>
+        <TabsTrigger value="people" className="flex-1 gap-1.5">
           <Users className="size-4" />
           <span className="hidden sm:inline">{t("liveRoom.controls.people")}</span>
         </TabsTrigger>
-        <TabsTrigger value="polls" className="gap-1.5">
+        <TabsTrigger value="polls" className="flex-1 gap-1.5">
           <BarChart3 className="size-4" />
           <span className="hidden sm:inline">{t("liveRoom.controls.polls")}</span>
         </TabsTrigger>
       </TabsList>
       <TabsContent value="chat" className="flex min-h-0 flex-1 flex-col">
         <ChatPanel chat={chat} canModerate={isHost} />
+      </TabsContent>
+      <TabsContent value="qa" className="flex min-h-0 flex-1 flex-col">
+        <QaPanel qa={qa} isHost={isHost} myId={myId} />
       </TabsContent>
       <TabsContent value="people" className="flex min-h-0 flex-1 flex-col">
         <PeoplePanel
@@ -102,7 +120,7 @@ function TabsInner({
   )
 }
 
-export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, isHost, liveId, onSetRole, onMute, onLowerHand, onRemove, polls, onVote, answerPending }: RoomPanelProps) {
+export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, isHost, liveId, onSetRole, onMute, onLowerHand, onRemove, polls, onVote, answerPending, qa, myId }: RoomPanelProps) {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
   if (!open) return null
@@ -130,6 +148,8 @@ export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, is
             polls={polls}
             onVote={onVote}
             answerPending={answerPending}
+            qa={qa}
+            myId={myId}
           />
         </SheetContent>
       </Sheet>
@@ -137,7 +157,7 @@ export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, is
   }
 
   return (
-    <aside className="flex h-full w-80 shrink-0 flex-col border-s border-border bg-card/70 backdrop-blur-xl">
+    <aside className="flex h-full w-96 shrink-0 flex-col border-s border-border bg-card/70 backdrop-blur-xl">
       <div className="flex items-center justify-between border-b border-border px-3 py-2">
         <span className="text-sm font-medium text-foreground">{t("liveRoom.panel.title")}</span>
         <button
@@ -164,6 +184,8 @@ export function RoomPanel({ tab, setTab, open, onClose, chat, unread, states, is
         polls={polls}
         onVote={onVote}
         answerPending={answerPending}
+        qa={qa}
+        myId={myId}
       />
     </aside>
   )

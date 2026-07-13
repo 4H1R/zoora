@@ -1,7 +1,7 @@
 import { useConnectionState, useParticipants } from "@livekit/components-react"
 import { ConnectionState } from "livekit-client"
 import { MonitorPlay, Users } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -47,23 +47,34 @@ function ConnectionInfo({ stats }: { stats: NetStats }) {
 export function RoomHeader({
   sessionName,
   className,
+  actualStartTime,
   onOpenPeople,
 }: {
   sessionName: string
   className?: string
+  actualStartTime?: string
   onOpenPeople?: () => void
 }) {
   const { t } = useTranslation()
   const participants = useParticipants()
   const state = useConnectionState()
   const stats = useConnectionStats()
-  const [elapsed, setElapsed] = useState(0)
+
+  // Personal session start = when this client mounted (i.e. joined). The class
+  // start comes from the room's authoritative actual_start_time, so the timer
+  // reflects true class duration and survives refresh/reconnect (unlike a
+  // mount-relative counter). Fall back to the join time if it's not set yet.
+  const joinedAtRef = useRef(Date.now())
+  const classStartMs = actualStartTime ? new Date(actualStartTime).getTime() : joinedAtRef.current
+  const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
-    const start = Date.now()
-    const id = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 1000)
+    const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
   }, [])
+
+  const classElapsed = Math.max(0, Math.floor((now - classStartMs) / 1000))
+  const myElapsed = Math.max(0, Math.floor((now - joinedAtRef.current) / 1000))
 
   const connected = state === ConnectionState.Connected
   const reconnecting = state === ConnectionState.Reconnecting || state === ConnectionState.SignalReconnecting
@@ -115,9 +126,30 @@ export function RoomHeader({
           </span>
         </button>
 
-        <span className="hidden rounded-full bg-muted px-2.5 py-1 font-mono text-xs text-muted-foreground sm:inline-block" dir="ltr">
-          {formatElapsed(elapsed)}
-        </span>
+        {/* Tap/click to reveal the breakdown — works on touch (no hover) and
+            stays visible on mobile, unlike a hover-only title tooltip. */}
+        <Popover>
+          <PopoverTrigger
+            aria-label={t("liveRoom.classElapsed", { time: formatElapsed(classElapsed) })}
+            className="rounded-full bg-muted px-2.5 py-1 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/70"
+          >
+            <span dir="ltr">{formatElapsed(classElapsed)}</span>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-56 space-y-2">
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <span className="text-muted-foreground">{t("liveRoom.classDuration")}</span>
+              <span className="font-mono font-medium text-foreground" dir="ltr">
+                {formatElapsed(classElapsed)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <span className="text-muted-foreground">{t("liveRoom.yourTime")}</span>
+              <span className="font-mono font-medium text-foreground" dir="ltr">
+                {formatElapsed(myElapsed)}
+              </span>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
     </header>
   )

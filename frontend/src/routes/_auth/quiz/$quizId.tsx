@@ -17,5 +17,12 @@ export const Route = createFileRoute("/_auth/quiz/$quizId")({
 function RouteComponent() {
   const { quizId } = Route.useParams()
   const { classSessionId } = Route.useSearch()
-  return <QuizTake quizId={quizId} classSessionId={classSessionId} />
+  // The standalone /quiz route renders outside the org layout (bare <Outlet />),
+  // so it has no container. Wrap here to center + constrain like the org content
+  // area — otherwise the take screens bleed edge-to-edge (off-screen in RTL).
+  return (
+    <div className="container py-4">
+      <QuizTake quizId={quizId} classSessionId={classSessionId} />
+    </div>
+  )
 }

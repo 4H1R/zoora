@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useCanAny } from "@/lib/access"
 import { formatSessionDate } from "@/lib/session-status"
 
 export function examStateBadgeVariant(state: MyExamState | undefined) {
@@ -30,9 +31,11 @@ export function examStateBadgeVariant(state: MyExamState | undefined) {
 /** Trailing action for an exam row/card: start button, opens-at hint, or score. */
 export function ExamAction({ exam }: { exam: MyExam }) {
   const { t, i18n } = useTranslation()
+  // Only enrolled takers (Student preset) may start; a viewer would hit a 403.
+  const canTake = useCanAny(["quizzes:take"])
   return (
     <div className="flex shrink-0 items-center gap-3">
-      {exam.state === "open" && (
+      {exam.state === "open" && canTake && (
         <Link to="/quiz/$quizId" params={{ quizId: exam.quiz_id! }}>
           <Button size="sm">{t("org.exams.start")}</Button>
         </Link>

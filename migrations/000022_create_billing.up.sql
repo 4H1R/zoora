@@ -40,6 +40,8 @@ CREATE UNIQUE INDEX idx_invoices_number ON invoices (number) WHERE number IS NOT
 CREATE INDEX idx_invoices_organization_id ON invoices (organization_id);
 CREATE INDEX idx_invoices_status ON invoices (status);
 CREATE INDEX idx_invoices_deleted_at ON invoices (deleted_at);
+CREATE INDEX idx_invoices_pending_issued ON invoices (issued_at) WHERE status = 'pending';
+CREATE INDEX idx_invoices_pending_expires ON invoices (expires_at) WHERE status = 'pending';
 
 CREATE TABLE invoice_items (
     id           UUID PRIMARY KEY DEFAULT uuidv7(),

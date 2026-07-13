@@ -34,7 +34,7 @@ import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useCanSelfOr } from "@/lib/access"
+import { useCanAny, useCanSelfOr } from "@/lib/access"
 import { DEFAULT_PAGE_SIZE } from "@/lib/list"
 import { formatScore } from "@/lib/score"
 import { formatSessionDate } from "@/lib/session-status"
@@ -56,6 +56,8 @@ function QuizCard({ quiz, index, classSessionId, onEdit, onManageQuestions, onDe
   const { t, i18n } = useTranslation()
   const canEdit = useCanSelfOr("quizzes:update", "quizzes:update_any", quiz.user_id)
   const canDelete = useCanSelfOr("quizzes:delete", "quizzes:delete_any", quiz.user_id)
+  // Starting a quiz requires enrollment; a viewer (e.g. Manager) would hit a 403.
+  const canTake = useCanAny(["quizzes:take"])
   const tileNumber = String(index + 1).padStart(2, "0")
   const createdStr = formatSessionDate(quiz.created_at, i18n.language, "short")
 
@@ -162,7 +164,7 @@ function QuizCard({ quiz, index, classSessionId, onEdit, onManageQuestions, onDe
               )}
             </div>
           )}
-          {quiz.id && (
+          {quiz.id && canTake && (
             <Button
               size="sm"
               render={
@@ -258,7 +260,6 @@ export function QuizzesSection({ classId, classSessionId }: QuizzesSectionProps)
     <section id="quizzes" className="flex flex-col gap-5 scroll-mt-20">
       <div className="flex items-end justify-between gap-4">
         <div className="flex flex-col gap-1.5">
-          <Eyebrow>{t("org.session.quizzes.eyebrow")}</Eyebrow>
           <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.quizzes.title")}</h2>
         </div>
         {canCreate && (

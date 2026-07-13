@@ -7,4 +7,4 @@ export interface PreJoinChoices {
   videoDeviceId?: string
 }
 
-export type RoomTab = "chat" | "people" | "polls"
+export type RoomTab = "chat" | "people" | "polls" | "qa"

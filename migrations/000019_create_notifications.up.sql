@@ -13,6 +13,7 @@ CREATE TABLE notifications (
 
 -- Sender history ("my sent notifications"), newest first.
 CREATE INDEX idx_notifications_sender ON notifications (sender_id, created_at DESC);
+CREATE INDEX idx_notifications_org ON notifications (organization_id);
 
 CREATE TABLE notification_recipients (
     notification_id UUID        NOT NULL REFERENCES notifications (id) ON DELETE CASCADE,

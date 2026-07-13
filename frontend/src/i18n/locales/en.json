@@ -1597,7 +1597,7 @@
       "management": "Management",
       "users": "Users",
       "roles": "Roles & Permissions",
-      "settings": "Settings",
+      "settings": "Organization Settings",
       "files": "Files",
       "learning": "Learning",
       "exams": "Exams",
@@ -2232,6 +2232,10 @@
             "title": "No access",
             "description": "You do not have permission to take this quiz."
           },
+          "viewOnly": {
+            "title": "View only",
+            "description": "You can view this quiz but are not enrolled to take it."
+          },
           "notFound": {
             "title": "Quiz not found",
             "description": "This quiz could not be loaded."
@@ -2836,6 +2840,7 @@
       "shareScreen": "Share screen",
       "stopShare": "Stop sharing",
       "chat": "Chat",
+      "qa": "Q&A",
       "people": "People",
       "polls": "Polls",
       "more": "More",
@@ -2901,6 +2906,19 @@
       "placeholder": "Type a message…",
       "delete": "Delete message"
     },
+    "qa": {
+      "empty": "No questions yet",
+      "emptyHint": "Ask the host a question — others can upvote it",
+      "placeholder": "Ask a question…",
+      "askError": "Couldn't post your question",
+      "upvote": "Upvote",
+      "resolve": "Answered",
+      "dismiss": "Dismiss",
+      "reopen": "Reopen",
+      "delete": "Delete",
+      "resolved": "Answered",
+      "dismissed": "Dismissed"
+    },
     "stage": {
       "empty": "Waiting for the presenter to share something",
       "slidesLoading": "Loading slides…",
@@ -2963,7 +2981,11 @@
       "na": "—",
       "downlink": "Download",
       "uplink": "Upload"
-    }
+    },
+    "classElapsed": "Class live for {{time}}",
+    "joinedAgo": "You joined {{time}} ago",
+    "classDuration": "Class duration",
+    "yourTime": "Your time"
   },
   "media": {
     "uploader": {

@@ -219,7 +219,6 @@ export function PracticesSection({ classSessionId }: PracticesSectionProps) {
     <section id="practices" className="flex flex-col gap-5 scroll-mt-20">
       <div className="flex items-end justify-between gap-4">
         <div className="flex flex-col gap-1.5">
-          <Eyebrow>{t("org.session.practices.eyebrow")}</Eyebrow>
           <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.practices.title")}</h2>
         </div>
         {canCreate && (

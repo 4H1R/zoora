@@ -21,7 +21,7 @@ CREATE TABLE practice_rooms (
 );
 
 CREATE INDEX idx_practice_rooms_organization_id ON practice_rooms (organization_id);
-CREATE INDEX idx_practice_rooms_class_id ON practice_rooms (class_id);
+CREATE INDEX idx_practice_rooms_class_start ON practice_rooms (class_id, start_time) WHERE deleted_at IS NULL;
 CREATE INDEX idx_practice_rooms_class_session_id ON practice_rooms (class_session_id);
 CREATE INDEX idx_practice_rooms_user_id ON practice_rooms (user_id);
 CREATE INDEX idx_practice_rooms_deleted_at ON practice_rooms (deleted_at);
@@ -43,6 +43,5 @@ CREATE TABLE practice_submissions (
     CONSTRAINT uq_practice_submissions_room_user UNIQUE (practice_room_id, user_id)
 );
 
-CREATE INDEX idx_practice_submissions_practice_room_id ON practice_submissions (practice_room_id);
 CREATE INDEX idx_practice_submissions_user_id ON practice_submissions (user_id);
 CREATE INDEX idx_practice_submissions_deleted_at ON practice_submissions (deleted_at);

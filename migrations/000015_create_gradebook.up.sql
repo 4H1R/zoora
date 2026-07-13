@@ -20,5 +20,4 @@ CREATE TABLE gradebook_cells (
     UNIQUE(column_id, student_id)
 );
 
-CREATE INDEX idx_gradebook_cells_column_id ON gradebook_cells(column_id);
 CREATE INDEX idx_gradebook_cells_student_id ON gradebook_cells(student_id);

@@ -5,6 +5,7 @@ import {
   Hand,
   LogOut,
   type LucideIcon,
+  MessageCircleQuestion,
   MessageSquare,
   Mic,
   MicOff,
@@ -56,9 +57,10 @@ interface ControlBarProps {
   isRecording: boolean
   recordingPending: boolean
   onToggleRecording: () => void
+  qaOpenCount: number
 }
 
-export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, onEndRoom, endPending, unread, raisedHandCount, handRaised, onToggleHand, canShareStage, stageKind, onShareSlides, onStopStage, onStartWhiteboard, isRecording, recordingPending, onToggleRecording }: ControlBarProps) {
+export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, onEndRoom, endPending, unread, raisedHandCount, handRaised, onToggleHand, canShareStage, stageKind, onShareSlides, onStopStage, onStartWhiteboard, isRecording, recordingPending, onToggleRecording, qaOpenCount }: ControlBarProps) {
   const { t } = useTranslation()
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled, isScreenShareEnabled } = useLocalParticipant()
   const role = useRoomRole()
@@ -232,6 +234,16 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
           badge={tab !== "chat" ? unread : 0}
           label={t("liveRoom.controls.chat")}
           onClick={() => togglePanel("chat")}
+        />
+
+        {/* Q&A — always visible */}
+        <CtrlButton
+          icon={MessageCircleQuestion}
+          on
+          active={tab === "qa"}
+          badge={tab !== "qa" ? qaOpenCount : 0}
+          label={t("liveRoom.controls.qa")}
+          onClick={() => togglePanel("qa")}
         />
 
         {/* People — desktop only */}

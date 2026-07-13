@@ -28,5 +28,5 @@ CREATE TABLE poll_answers (
 );
 
 CREATE INDEX idx_poll_answers_user_id ON poll_answers (user_id);
-CREATE INDEX idx_poll_answers_poll_id ON poll_answers (poll_id);
+CREATE INDEX idx_poll_answers_poll_option ON poll_answers (poll_id, option);
 CREATE UNIQUE INDEX idx_poll_answers_poll_user_option ON poll_answers (poll_id, user_id, option);

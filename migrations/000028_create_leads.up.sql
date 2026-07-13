@@ -19,3 +19,4 @@ CREATE INDEX idx_leads_status_created_at ON leads (status, created_at DESC);
 
 -- Backs submit-time dedupe: look up an open (new/contacted) lead by phone.
 CREATE INDEX idx_leads_phone ON leads (phone);
+CREATE INDEX idx_leads_organization_id ON leads (organization_id);

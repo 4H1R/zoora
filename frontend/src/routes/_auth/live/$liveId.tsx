@@ -88,6 +88,7 @@ function RouteComponent() {
         liveId={liveId}
         chatId={connection.data.chat_id}
         role={role}
+        actualStartTime={connection.data.room?.actual_start_time ?? room?.actual_start_time}
         onDisconnect={returnToLobby}
         onEnded={handleEnded}
       />

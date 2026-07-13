@@ -22,6 +22,20 @@ export type RoomEvent =
       }
     }
   | { type: "chat_message_deleted"; data: { id: string } }
+  | {
+      type: "qa_question_created"
+      data: {
+        id: string
+        user_id: string
+        author_name: string
+        text: string
+        status: string
+        vote_count: number
+        created_at: string
+      }
+    }
+  | { type: "qa_question_voted"; data: { id: string; vote_count: number } }
+  | { type: "qa_status_changed"; data: { id: string; status: string } }
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()

@@ -24,8 +24,9 @@ CREATE INDEX idx_users_deleted_at ON users (deleted_at);
 -- Single role per user via FK.
 CREATE INDEX idx_users_role_id ON users (role_id);
 
--- Backs per-org member counts: COUNT(*) WHERE organization_id = ? AND deleted_at IS NULL.
-CREATE INDEX idx_users_organization_id ON users (organization_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_users_org_id_username ON users (organization_id, username) WHERE deleted_at IS NULL;
+CREATE INDEX idx_users_admin_username ON users (username)
+    WHERE organization_id IS NULL AND is_admin = TRUE AND deleted_at IS NULL;
 
 -- Backs the disabled filter on user lists.
 CREATE INDEX idx_users_disabled_at ON users (disabled_at) WHERE deleted_at IS NULL;
