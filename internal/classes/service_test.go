@@ -513,6 +513,38 @@ func TestProvisionConversationCreatesAndLinksForOwningTeacher(t *testing.T) {
 	repo.AssertExpectations(t)
 }
 
+func TestProvisionConversationAddsNonTeacherManagerAsMember(t *testing.T) {
+	repo := &classRepoSvcMock{}
+	members := &classMemberRepoSvcMock{}
+	chat := &chatProvisionerMock{}
+	svc := newClassService(repo, nil, members, chat)
+
+	teacherID := uuid.New()
+	managerID := uuid.New() // neither the class teacher nor an enrolled student
+	orgID := uuid.New()
+	classID := uuid.New()
+	student := uuid.New()
+	newConvID := uuid.New()
+	// Manager authorized by an org-wide manage perm, not ownership.
+	ctx := chatCtx(managerID, orgID, domain.PermClassesUpdateAny)
+
+	repo.On("FindByID", ctx, classID).Return(&domain.Class{
+		ID: classID, OrganizationID: orgID, UserID: teacherID, Name: "Algebra",
+	}, nil)
+	members.On("ListAllByClass", ctx, classID).Return([]domain.ClassMember{{UserID: student}}, nil)
+	chat.On("CreateForClass", ctx, mock.MatchedBy(func(in domain.ProvisionClassChatDTO) bool {
+		// Teacher stays the creator/admin; the manager rides along in MemberIDs.
+		return in.CreatorID == teacherID &&
+			len(in.MemberIDs) == 2 &&
+			in.MemberIDs[0] == student && in.MemberIDs[1] == managerID
+	})).Return(&domain.Conversation{ID: newConvID, Type: domain.ConversationTypeGroup}, nil)
+	repo.On("Update", ctx, mock.Anything).Return(nil)
+
+	_, err := svc.ProvisionConversation(ctx, classID, domain.ProvisionClassConversationDTO{Type: domain.ConversationTypeGroup})
+	assert.NoError(t, err)
+	chat.AssertExpectations(t)
+}
+
 func TestProvisionConversationSyncsWhenAlreadyLinked(t *testing.T) {
 	repo := &classRepoSvcMock{}
 	members := &classMemberRepoSvcMock{}

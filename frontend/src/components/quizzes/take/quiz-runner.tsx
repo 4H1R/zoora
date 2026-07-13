@@ -26,6 +26,11 @@ interface QuizRunnerProps {
   quiz: Quiz
   room: QuizRoom | undefined
   questions: Question[]
+  // Pre-start metadata from /preview: the real questions are only fetched once a
+  // submission exists (the backend freezes them on start), so the StartScreen is
+  // driven by these instead of the (empty, pre-start) questions array.
+  previewCount: number
+  previewHasNegative: boolean
   existingSubmission: QuizSubmission | undefined
   backHref: string
 }
@@ -34,6 +39,8 @@ export function QuizRunner({
   quiz,
   room,
   questions,
+  previewCount,
+  previewHasNegative,
   existingSubmission,
   backHref,
 }: QuizRunnerProps) {
@@ -52,7 +59,11 @@ export function QuizRunner({
     },
   })
 
-  if (questions.length === 0) {
+  // Pre-start the questions array is empty (fetched only after starting), so the
+  // "no questions" guard uses the preview count instead; once playing, it uses
+  // the frozen set.
+  const questionCount = existingSubmission ? questions.length : previewCount
+  if (questionCount === 0) {
     return (
       <CenterMessage
         title={t("org.session.quizzes.take.empty.title")}
@@ -104,8 +115,8 @@ export function QuizRunner({
       <StartScreen
         quiz={quiz}
         room={room}
-        questions={questions}
-        totalQuestions={questions.length}
+        totalQuestions={previewCount}
+        hasNegativeMarking={previewHasNegative}
         backHref={backHref}
         starting={startMutation.isPending}
         locating={locating}

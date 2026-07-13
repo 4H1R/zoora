@@ -42,6 +42,10 @@ import type {
   GetQuizzesIdAntiCheat200,
   GetQuizzesIdAntiCheat401,
   GetQuizzesIdAntiCheat403,
+  GetQuizzesIdPreview200,
+  GetQuizzesIdPreview401,
+  GetQuizzesIdPreview403,
+  GetQuizzesIdPreview404,
   GetQuizzesIdQuestions200,
   GetQuizzesIdQuestions401,
   GetQuizzesIdQuestions403,
@@ -2085,6 +2089,136 @@ export function useGetQuizzesIdAntiCheat<TData = Awaited<ReturnType<typeof getQu
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetQuizzesIdAntiCheatQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type getQuizzesIdPreviewResponse200 = {
+  data: GetQuizzesIdPreview200
+  status: 200
+}
+
+export type getQuizzesIdPreviewResponse401 = {
+  data: GetQuizzesIdPreview401
+  status: 401
+}
+
+export type getQuizzesIdPreviewResponse403 = {
+  data: GetQuizzesIdPreview403
+  status: 403
+}
+
+export type getQuizzesIdPreviewResponse404 = {
+  data: GetQuizzesIdPreview404
+  status: 404
+}
+
+export type getQuizzesIdPreviewResponseSuccess = (getQuizzesIdPreviewResponse200) & {
+  headers: Headers;
+};
+export type getQuizzesIdPreviewResponseError = (getQuizzesIdPreviewResponse401 | getQuizzesIdPreviewResponse403 | getQuizzesIdPreviewResponse404) & {
+  headers: Headers;
+};
+
+export type getQuizzesIdPreviewResponse = (getQuizzesIdPreviewResponseSuccess | getQuizzesIdPreviewResponseError)
+
+export const getGetQuizzesIdPreviewUrl = (id: string,) => {
+
+
+
+
+  return `/quizzes/${id}/preview`
+}
+
+/**
+ * Returns pre-start metadata (question_count, has_negative_marking) for the start screen. Requires viewing the quiz (enrollment or manage permission). Returns no question bodies — the set stays hidden until the student starts.
+ * @summary Get quiz take preview
+ */
+export const getQuizzesIdPreview = async (id: string, options?: RequestInit): Promise<getQuizzesIdPreviewResponse> => {
+
+  return customInstance<getQuizzesIdPreviewResponse>(getGetQuizzesIdPreviewUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetQuizzesIdPreviewQueryKey = (id: string,) => {
+    return [
+    `/quizzes/${id}/preview`
+    ] as const;
+    }
+
+
+export const getGetQuizzesIdPreviewQueryOptions = <TData = Awaited<ReturnType<typeof getQuizzesIdPreview>>, TError = ErrorType<GetQuizzesIdPreview401 | GetQuizzesIdPreview403 | GetQuizzesIdPreview404>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdPreview>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetQuizzesIdPreviewQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzesIdPreview>>> = ({ signal }) => getQuizzesIdPreview(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdPreview>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetQuizzesIdPreviewQueryResult = NonNullable<Awaited<ReturnType<typeof getQuizzesIdPreview>>>
+export type GetQuizzesIdPreviewQueryError = ErrorType<GetQuizzesIdPreview401 | GetQuizzesIdPreview403 | GetQuizzesIdPreview404>
+
+
+export function useGetQuizzesIdPreview<TData = Awaited<ReturnType<typeof getQuizzesIdPreview>>, TError = ErrorType<GetQuizzesIdPreview401 | GetQuizzesIdPreview403 | GetQuizzesIdPreview404>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdPreview>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getQuizzesIdPreview>>,
+          TError,
+          Awaited<ReturnType<typeof getQuizzesIdPreview>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesIdPreview<TData = Awaited<ReturnType<typeof getQuizzesIdPreview>>, TError = ErrorType<GetQuizzesIdPreview401 | GetQuizzesIdPreview403 | GetQuizzesIdPreview404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdPreview>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getQuizzesIdPreview>>,
+          TError,
+          Awaited<ReturnType<typeof getQuizzesIdPreview>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesIdPreview<TData = Awaited<ReturnType<typeof getQuizzesIdPreview>>, TError = ErrorType<GetQuizzesIdPreview401 | GetQuizzesIdPreview403 | GetQuizzesIdPreview404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdPreview>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get quiz take preview
+ */
+
+export function useGetQuizzesIdPreview<TData = Awaited<ReturnType<typeof getQuizzesIdPreview>>, TError = ErrorType<GetQuizzesIdPreview401 | GetQuizzesIdPreview403 | GetQuizzesIdPreview404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesIdPreview>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetQuizzesIdPreviewQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

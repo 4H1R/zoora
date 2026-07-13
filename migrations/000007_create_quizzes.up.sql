@@ -14,6 +14,7 @@ CREATE TABLE quizzes (
     require_gps BOOLEAN NOT NULL DEFAULT FALSE,
     disable_copy_paste BOOLEAN NOT NULL DEFAULT FALSE,
     disable_right_click_shortcuts BOOLEAN NOT NULL DEFAULT FALSE,
+    show_results BOOLEAN NOT NULL DEFAULT FALSE,
     negative_mark_mode VARCHAR(20) NOT NULL DEFAULT 'none',
     negative_value DOUBLE PRECISION NOT NULL DEFAULT 0,
     wrongs_per_point INTEGER NOT NULL DEFAULT 0,

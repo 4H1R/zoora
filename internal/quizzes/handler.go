@@ -78,6 +78,7 @@ func (h *Handler) RegisterRoutes(
 		authed.POST("/quizzes/rooms/:roomId/start", perm(domain.PermQuizzesUpdate), roomIDParam, h.StartRoom)
 		authed.POST("/quizzes/rooms/:roomId/end", perm(domain.PermQuizzesUpdate), roomIDParam, h.EndRoom)
 
+		authed.GET("/quizzes/:id/preview", permAny(domain.PermQuizzesView, domain.PermQuizzesTake), idParam, h.TakePreview)
 		authed.GET("/quizzes/:id/questions", permAny(domain.PermQuizzesView, domain.PermQuizzesTake), idParam, h.ListQuestionsForTaking)
 		authed.POST("/quizzes/:id/submissions", permAny(domain.PermQuizzesView, domain.PermQuizzesTake), idParam, h.StartSubmission)
 		authed.GET("/quizzes/:id/submissions", perm(domain.PermQuizzesView), idParam, h.ListSubmissions)
@@ -487,6 +488,29 @@ func (h *Handler) ListQuestionsForTaking(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(questions, int64(len(questions)), domain.ListParams{Page: 1, PageSize: len(questions)}))
+}
+
+// TakePreview returns pre-start metadata for the quiz start screen (question
+// count + whether any question uses negative marking) without revealing the
+// question set. Available to managers and enrolled students, no submission needed.
+// @Summary Get quiz take preview
+// @Description Returns pre-start metadata (question_count, has_negative_marking) for the start screen. Requires viewing the quiz (enrollment or manage permission). Returns no question bodies — the set stays hidden until the student starts.
+// @Tags Quizzes
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Quiz UUID"
+// @Success 200 {object} domain.Response{data=domain.QuizTakePreview}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /quizzes/{id}/preview [get]
+func (h *Handler) TakePreview(c *gin.Context) {
+	preview, err := h.svc.TakePreview(c.Request.Context(), httpx.UUIDParam(c, "id"))
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, preview)
 }
 
 // @Summary Start quiz submission

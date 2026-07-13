@@ -1,5 +1,4 @@
 import type {
-  GithubCom4H1RZooraInternalDomainQuestion as Question,
   GithubCom4H1RZooraInternalDomainQuiz as Quiz,
   GithubCom4H1RZooraInternalDomainQuizRoom as QuizRoom,
 } from "@/api/model"
@@ -28,7 +27,6 @@ import { cn } from "@/lib/utils"
 
 import { DecorativeBackground } from "./decorations"
 import { MetaCell } from "./meta-cell"
-import { anyNegativeMarking } from "./utils"
 
 // One rule in the pre-flight checklist: an icon chip + line of copy, in a shared
 // row shell so every rule (and the destructive penalty note) lines up.
@@ -66,8 +64,8 @@ function RuleRow({
 interface StartScreenProps {
   quiz: Quiz
   room: QuizRoom
-  questions: Question[]
   totalQuestions: number
+  hasNegativeMarking: boolean
   backHref: string
   starting: boolean
   locating?: boolean
@@ -77,8 +75,8 @@ interface StartScreenProps {
 export function StartScreen({
   quiz,
   room,
-  questions,
   totalQuestions,
+  hasNegativeMarking,
   backHref,
   starting,
   locating = false,
@@ -87,7 +85,6 @@ export function StartScreen({
   const { t } = useTranslation()
   const formatDate = useFormatDate()
   const closesAt = formatDate(room.ended_at, "datetime")
-  const hasNegativeMarking = anyNegativeMarking(questions)
 
   return (
     <div className="relative isolate flex flex-col gap-10 pb-24 pt-8">

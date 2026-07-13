@@ -28,6 +28,13 @@ export interface GithubCom4H1RZooraInternalDomainQuiz {
   organization_id?: string;
   require_gps?: boolean;
   /**
+     * ShowResults opts the quiz into revealing each student's score and earned
+     * marks back to them. Reveal is deferred until the student's room window has
+     * closed (see resultsRevealed) so early finishers cannot leak answers to
+     * friends still taking it. When false, only managers ever see the scores.
+     */
+  show_results?: boolean;
+  /**
      * Anti-cheat config toggles. Class A (enforced): ShuffleOptions. Class B
      * (advisory signals): TrackTabSwitches, RequireGPS. Class C (frontend-only
      * deterrents): DisableCopyPaste, DisableRightClickShortcuts.

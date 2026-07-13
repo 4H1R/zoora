@@ -402,9 +402,16 @@ func (s *service) ProvisionConversation(ctx context.Context, classID uuid.UUID, 
 	if err != nil {
 		return nil, err
 	}
-	memberIDs := make([]uuid.UUID, 0, len(roster))
+	memberIDs := make([]uuid.UUID, 0, len(roster)+1)
 	for _, m := range roster {
 		memberIDs = append(memberIDs, m.UserID)
+	}
+	// A manager who is not the class's teacher would otherwise not belong to the
+	// conversation they just provisioned. Add them as a member so they can see and
+	// moderate it. The teacher is skipped here because CreatorID already seats them
+	// as admin; an enrolled-student caller is deduped by the create/sync paths.
+	if caller.UserID != class.UserID {
+		memberIDs = append(memberIDs, caller.UserID)
 	}
 
 	// Existing link → additive member sync. If the linked conversation no longer

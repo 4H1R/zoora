@@ -15,6 +15,7 @@ import {
   MousePointerClick,
   Shuffle,
   ShieldCheck,
+  Trophy,
 } from "lucide-react"
 import { Controller } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -131,6 +132,7 @@ export interface AntiCheatValues {
   require_gps: boolean
   disable_copy_paste: boolean
   disable_right_click_shortcuts: boolean
+  show_results: boolean
 }
 
 export type AntiCheatKey = keyof AntiCheatValues
@@ -144,6 +146,7 @@ export const antiCheatSchemaShape = {
   require_gps: z.boolean(),
   disable_copy_paste: z.boolean(),
   disable_right_click_shortcuts: z.boolean(),
+  show_results: z.boolean(),
 }
 
 /** All anti-cheat toggles off — the default state for a new quiz. */
@@ -155,6 +158,7 @@ export const antiCheatDefaults: AntiCheatValues = {
   require_gps: false,
   disable_copy_paste: false,
   disable_right_click_shortcuts: false,
+  show_results: false,
 }
 
 /** Pulls the anti-cheat subset out of a quiz object, defaulting missing flags to false. */
@@ -169,6 +173,7 @@ export function antiCheatFromQuiz(
     require_gps: quiz.require_gps ?? false,
     disable_copy_paste: quiz.disable_copy_paste ?? false,
     disable_right_click_shortcuts: quiz.disable_right_click_shortcuts ?? false,
+    show_results: quiz.show_results ?? false,
   }
 }
 
@@ -202,6 +207,10 @@ const ANTI_CHEAT_GROUPS: { id: string; toggles: AntiCheatToggle[] }[] = [
       { key: "disable_right_click_shortcuts", icon: <MousePointerClick /> },
     ],
   },
+  {
+    id: "results",
+    toggles: [{ key: "show_results", icon: <Trophy /> }],
+  },
 ]
 
 // Maps snake_case DTO keys to camelCase i18n suffixes under `quizAntiCheat.toggles`.
@@ -213,6 +222,7 @@ const TOGGLE_I18N: Record<AntiCheatKey, string> = {
   require_gps: "requireGps",
   disable_copy_paste: "disableCopyPaste",
   disable_right_click_shortcuts: "disableRightClickShortcuts",
+  show_results: "showResults",
 }
 
 interface QuizFlagsFieldsProps {

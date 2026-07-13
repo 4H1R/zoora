@@ -2287,7 +2287,12 @@
             "outOf": "Out of",
             "percent": "Percent",
             "totalTime": "Total time",
-            "perQuestionEyebrow": "Per-question time & score"
+            "perQuestionEyebrow": "Per-question time & score",
+            "hidden": {
+              "title": "Your answers are in",
+              "deferred": "Results unlock once the exam window closes. Come back after it ends to see your score and answers.",
+              "notPublished": "Results aren't published for this exam. Your teacher can see your submission."
+            }
           },
           "penalty": {
             "explainer": "This quiz uses negative marking — wrong selections deduct points.",
@@ -3001,7 +3006,8 @@
     "groups": {
       "enforced": "Enforced automatically",
       "monitoring": "Monitoring & logging",
-      "restrictions": "Browser restrictions"
+      "restrictions": "Browser restrictions",
+      "results": "Results visibility"
     },
     "toggles": {
       "shuffleQuestions": {
@@ -3031,6 +3037,10 @@
       "disableRightClickShortcuts": {
         "label": "Block right-click & shortcuts",
         "hint": "Disables the context menu and common keyboard shortcuts in the exam view."
+      },
+      "showResults": {
+        "label": "Show final score to students",
+        "hint": "Students see their score and answers only after the exam window closes — so early finishers can't leak them to others still taking it."
       }
     }
   },

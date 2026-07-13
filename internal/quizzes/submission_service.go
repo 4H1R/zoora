@@ -94,6 +94,40 @@ func (s *service) ListQuestionsForTaking(ctx context.Context, quizID uuid.UUID) 
 	return out, nil
 }
 
+// TakePreview returns pre-start metadata (question count + whether any question
+// carries negative marking) for the quiz start screen. Available to managers and
+// enrolled students without a submission — it composes the rule set to derive the
+// numbers but returns no question bodies, so the bank stays hidden until "Begin".
+func (s *service) TakePreview(ctx context.Context, quizID uuid.UUID) (*domain.QuizTakePreview, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	quiz, err := s.repo.FindByID(ctx, quizID)
+	if err != nil {
+		return nil, err
+	}
+	visible, err := s.canViewQuiz(ctx, caller, quiz)
+	if err != nil {
+		return nil, err
+	}
+	if !visible {
+		return nil, domain.ErrForbidden
+	}
+	composed, err := s.listQuestionsComposed(ctx, quiz)
+	if err != nil {
+		return nil, err
+	}
+	preview := &domain.QuizTakePreview{QuestionCount: len(composed)}
+	for i := range composed {
+		if composed[i].NegativeConfig != nil {
+			preview.HasNegativeMarking = true
+			break
+		}
+	}
+	return preview, nil
+}
+
 // listQuestionsComposed is the manager preview path: compose rules + bank
 // questions server-side, strip answer keys, attach negative-mark config.
 func (s *service) listQuestionsComposed(ctx context.Context, quiz *domain.Quiz) ([]domain.Question, error) {
@@ -477,7 +511,11 @@ func (s *service) SubmitQuiz(ctx context.Context, submissionID uuid.UUID, dto do
 		return nil, err
 	}
 	if finalized {
-		stripSuggestions(sub)
+		quiz, err := s.repo.FindByID(ctx, sub.QuizID)
+		if err != nil {
+			return nil, err
+		}
+		s.redactForStudent(ctx, quiz, sub, time.Now())
 		return sub, nil
 	}
 	if sub.Status != domain.SubmissionStatusInProgress {
@@ -549,8 +587,9 @@ func (s *service) SubmitQuiz(ctx context.Context, submissionID uuid.UUID, dto do
 		"user_id", caller.UserID.String(),
 		"total_score", sub.TotalScore,
 	)
-	// Students never see the advisory grading signals on their own submission.
-	stripSuggestions(sub)
+	// Students never see the advisory grading signals on their own submission,
+	// and the score itself stays hidden until the room window closes.
+	s.redactForStudent(ctx, quiz, sub, time.Now())
 	return sub, nil
 }
 
@@ -625,6 +664,43 @@ func (s *service) finalizeIfExpired(ctx context.Context, sub *domain.QuizSubmiss
 	return sub, true, nil
 }
 
+// resultsRevealed reports whether a student may see their score/earned marks
+// for this submission. It requires the quiz to opt in (ShowResults) and the
+// room the submission was taken in to have closed — so a student who finishes
+// early sees nothing until everyone's window is over and cannot leak answers.
+// A room with no EndedAt (open-ended manual close) never counts as closed.
+func (s *service) resultsRevealed(ctx context.Context, quiz *domain.Quiz, sub *domain.QuizSubmission, now time.Time) bool {
+	if !quiz.ShowResults || sub.QuizRoomID == nil {
+		return false
+	}
+	room, err := s.rooms.FindByID(ctx, *sub.QuizRoomID)
+	if err != nil {
+		return false
+	}
+	return room.EndedAt != nil && !now.Before(*room.EndedAt)
+}
+
+// redactForStudent prepares a submission for return to its owner: it removes the
+// advisory grading suggestions and, until results are revealed, masks the score.
+// This is the single transform every student-facing read of an own submission
+// must apply so the reveal rule can never be bypassed by one path forgetting it.
+func (s *service) redactForStudent(ctx context.Context, quiz *domain.Quiz, sub *domain.QuizSubmission, now time.Time) {
+	stripSuggestions(sub)
+	sub.ResultsRevealed = s.resultsRevealed(ctx, quiz, sub, now)
+	if !sub.ResultsRevealed {
+		stripResults(sub)
+	}
+}
+
+// stripResults zeros the score-bearing fields on a submission so a student
+// cannot read their result off the payload before it is revealed.
+func stripResults(sub *domain.QuizSubmission) {
+	sub.TotalScore = 0
+	for i := range sub.Answers {
+		sub.Answers[i].EarnedScore = 0
+	}
+}
+
 func (s *service) GetSubmission(ctx context.Context, id uuid.UUID) (*domain.QuizSubmission, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
@@ -643,18 +719,20 @@ func (s *service) GetSubmission(ctx context.Context, id uuid.UUID) (*domain.Quiz
 		return nil, err
 	}
 
-	if sub.UserID == caller.UserID {
-		stripSuggestions(sub)
-		return sub, nil
-	}
-
 	quiz, err := s.repo.FindByID(ctx, sub.QuizID)
 	if err != nil {
 		return nil, err
 	}
+
+	if sub.UserID == caller.UserID {
+		s.redactForStudent(ctx, quiz, sub, time.Now())
+		return sub, nil
+	}
+
 	if !canManageQuiz(caller, quiz) {
 		return nil, domain.ErrForbidden
 	}
+	sub.ResultsRevealed = true
 	return sub, nil
 }
 
@@ -679,9 +757,14 @@ func (s *service) ListSubmissions(ctx context.Context, quizID uuid.UUID, q domai
 	if err != nil {
 		return nil, 0, err
 	}
-	if !manager {
+	if manager {
 		for i := range subs {
-			stripSuggestions(&subs[i])
+			subs[i].ResultsRevealed = true
+		}
+	} else {
+		now := time.Now()
+		for i := range subs {
+			s.redactForStudent(ctx, quiz, &subs[i], now)
 		}
 	}
 	return subs, total, nil

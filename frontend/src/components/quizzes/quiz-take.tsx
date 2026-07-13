@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 
 import {
   useGetQuizzesId,
+  useGetQuizzesIdPreview,
   useGetQuizzesIdQuestions,
   useGetQuizzesIdRooms,
   useGetQuizzesIdSubmissions,
@@ -49,17 +50,30 @@ export function QuizTake({
   })
   const rooms = (roomsQ.data?.status === 200 && roomsQ.data.data.data?.items) || []
 
-  const questionsQ = useGetQuizzesIdQuestions(quizId, {
-    query: { enabled: canView && !!quiz },
-  })
-  const questions = (questionsQ.data?.status === 200 && questionsQ.data.data.data?.items) || []
-
   const submissionsQ = useGetQuizzesIdSubmissions(quizId, undefined, {
     query: { enabled: canView && !!quiz },
   })
   const submissions = (submissionsQ.data?.status === 200 && submissionsQ.data.data.data?.items) || []
   const inProgress = submissions.find((s) => s.status === "in_progress")
   const finalSubmission = submissions.find((s) => s.status !== "in_progress")
+  const hasSubmission = Boolean(inProgress || finalSubmission)
+
+  // The backend freezes the question set on submission start and 404s
+  // /questions until then, so only fetch the real questions once a submission
+  // exists (in-progress → PlayArea, final → ResultScreen). Before starting, the
+  // StartScreen is driven by /preview (count + negative-marking flag) instead —
+  // no question bodies leak and there's no pre-start 404.
+  const questionsEnabled = canView && !!quiz && submissionsQ.data?.status === 200 && hasSubmission
+  const questionsQ = useGetQuizzesIdQuestions(quizId, {
+    query: { enabled: questionsEnabled },
+  })
+  const questions = (questionsQ.data?.status === 200 && questionsQ.data.data.data?.items) || []
+
+  const previewEnabled = canView && !!quiz && submissionsQ.data?.status === 200 && !hasSubmission
+  const previewQ = useGetQuizzesIdPreview(quizId, {
+    query: { enabled: previewEnabled },
+  })
+  const preview = (previewQ.data?.status === 200 && previewQ.data.data.data) || undefined
 
   if (meQ.isPending) {
     return <LoadingScreen />
@@ -77,11 +91,21 @@ export function QuizTake({
     )
   }
 
-  if (quizQ.isPending || roomsQ.isPending || questionsQ.isPending || submissionsQ.isPending) {
+  if (
+    quizQ.isPending ||
+    roomsQ.isPending ||
+    submissionsQ.isPending ||
+    (questionsEnabled && questionsQ.isLoading) ||
+    (previewEnabled && previewQ.isLoading)
+  ) {
     return <LoadingScreen />
   }
 
-  if (quizQ.data?.status === 403 || questionsQ.data?.status === 403) {
+  if (
+    quizQ.data?.status === 403 ||
+    questionsQ.data?.status === 403 ||
+    previewQ.data?.status === 403
+  ) {
     return (
       <CenterMessage
         title={t("org.session.quizzes.take.noAccess.title")}
@@ -104,7 +128,7 @@ export function QuizTake({
     )
   }
 
-  if (questionsQ.isError) {
+  if (questionsQ.isError || previewQ.isError) {
     return (
       <CenterMessage
         title={t("org.session.quizzes.take.bankError.title")}
@@ -145,6 +169,8 @@ export function QuizTake({
       quiz={quiz}
       room={pickRoomForSession(rooms, classSessionId ?? "")}
       questions={questions}
+      previewCount={preview?.question_count ?? 0}
+      previewHasNegative={preview?.has_negative_marking ?? false}
       existingSubmission={inProgress}
       backHref={backHref}
     />

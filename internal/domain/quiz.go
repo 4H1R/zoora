@@ -46,6 +46,12 @@ type Quiz struct {
 	DisableCopyPaste           bool `gorm:"not null;default:false" json:"disable_copy_paste"`
 	DisableRightClickShortcuts bool `gorm:"not null;default:false" json:"disable_right_click_shortcuts"`
 
+	// ShowResults opts the quiz into revealing each student's score and earned
+	// marks back to them. Reveal is deferred until the student's room window has
+	// closed (see resultsRevealed) so early finishers cannot leak answers to
+	// friends still taking it. When false, only managers ever see the scores.
+	ShowResults bool `gorm:"not null;default:false" json:"show_results"`
+
 	// Quiz-wide negative-marking override (Layer 2b). Fills gaps for questions
 	// (manual and random) lacking their own setting.
 	NegativeMarkMode NegativeMarkMode `gorm:"type:varchar(20);not null;default:'none'" json:"negative_mark_mode"`
@@ -138,6 +144,7 @@ type CreateQuizDTO struct {
 	RequireGPS                 bool `json:"require_gps"`
 	DisableCopyPaste           bool `json:"disable_copy_paste"`
 	DisableRightClickShortcuts bool `json:"disable_right_click_shortcuts"`
+	ShowResults                bool `json:"show_results"`
 
 	NegativeMarkMode NegativeMarkMode `json:"negative_mark_mode"`
 	NegativeValue    float64          `json:"negative_value"`
@@ -156,6 +163,7 @@ type UpdateQuizDTO struct {
 	RequireGPS                 *bool `json:"require_gps"`
 	DisableCopyPaste           *bool `json:"disable_copy_paste"`
 	DisableRightClickShortcuts *bool `json:"disable_right_click_shortcuts"`
+	ShowResults                *bool `json:"show_results"`
 
 	NegativeMarkMode *NegativeMarkMode `json:"negative_mark_mode"`
 	NegativeValue    *float64          `json:"negative_value"`
@@ -297,6 +305,12 @@ type QuizSubmission struct {
 	SubmittedAt *time.Time `json:"submitted_at"`
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`
+
+	// ResultsRevealed reports whether the student may see the score/earned-mark
+	// fields on this payload. Non-persisted; computed per request. Always true for
+	// managers. For the student it is true only once the quiz opts in (ShowResults)
+	// and their room window has closed; when false the score fields are stripped.
+	ResultsRevealed bool `gorm:"-" json:"results_revealed"`
 }
 
 // IsRoomOpen returns true when the quiz room window contains now.
@@ -492,6 +506,14 @@ type SubmissionAntiCheatReport struct {
 	SameLocationUserIDs []uuid.UUID `json:"same_location_user_ids"`
 }
 
+// QuizTakePreview is the pre-start metadata a student sees on the quiz start
+// screen. It carries no question bodies — the frozen question set is only
+// revealed after StartSubmission — so it never leaks the bank before "Begin".
+type QuizTakePreview struct {
+	QuestionCount      int  `json:"question_count"`
+	HasNegativeMarking bool `json:"has_negative_marking"`
+}
+
 type QuizService interface {
 	Create(ctx context.Context, dto CreateQuizDTO) (*Quiz, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*Quiz, error)
@@ -513,6 +535,7 @@ type QuizService interface {
 	ListRooms(ctx context.Context, quizID uuid.UUID, q ListQuizRoomsQuery) ([]QuizRoom, int64, error)
 
 	ListQuestionsForTaking(ctx context.Context, quizID uuid.UUID) ([]Question, error)
+	TakePreview(ctx context.Context, quizID uuid.UUID) (*QuizTakePreview, error)
 	StartSubmission(ctx context.Context, quizID uuid.UUID, dto StartQuizSubmissionDTO) (*QuizSubmission, error)
 	SaveAnswer(ctx context.Context, submissionID uuid.UUID, dto SaveAnswerDTO) error
 	SubmitQuiz(ctx context.Context, submissionID uuid.UUID, dto SubmitQuizDTO) (*QuizSubmission, error)

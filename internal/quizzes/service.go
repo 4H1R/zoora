@@ -101,6 +101,7 @@ func (s *service) Create(ctx context.Context, dto domain.CreateQuizDTO) (*domain
 		RequireGPS:                 dto.RequireGPS,
 		DisableCopyPaste:           dto.DisableCopyPaste,
 		DisableRightClickShortcuts: dto.DisableRightClickShortcuts,
+		ShowResults:                dto.ShowResults,
 		NegativeMarkMode:           mode,
 		NegativeValue:              val,
 		WrongsPerPoint:             wpp,
@@ -181,6 +182,9 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateQui
 	}
 	if dto.DisableRightClickShortcuts != nil {
 		quiz.DisableRightClickShortcuts = *dto.DisableRightClickShortcuts
+	}
+	if dto.ShowResults != nil {
+		quiz.ShowResults = *dto.ShowResults
 	}
 	if dto.NegativeMarkMode != nil {
 		quiz.NegativeMarkMode = *dto.NegativeMarkMode
@@ -306,9 +310,11 @@ func (s *service) ListMine(ctx context.Context, p domain.ListParams) ([]domain.M
 		case err == nil && sub != nil:
 			switch sub.Status {
 			case domain.SubmissionStatusGraded:
-				score := sub.TotalScore
 				ex.State = domain.MyExamStateGraded
-				ex.Score = &score
+				if s.resultsRevealed(ctx, &q, sub, now) {
+					score := sub.TotalScore
+					ex.Score = &score
+				}
 			default:
 				ex.State = domain.MyExamStateSubmitted
 			}

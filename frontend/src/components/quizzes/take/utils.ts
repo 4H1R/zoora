@@ -100,10 +100,3 @@ export function penaltyText(
   }
   return null
 }
-
-// anyNegativeMarking reports whether any question carries active negative marking.
-export function anyNegativeMarking(questions: Question[]): boolean {
-  return questions.some(
-    (q) => q.negative_config?.mode && q.negative_config.mode !== "none",
-  )
-}

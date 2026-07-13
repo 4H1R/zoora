@@ -29,6 +29,13 @@ export interface GithubCom4H1RZooraInternalDomainQuizSubmission {
   quiz?: GithubCom4H1RZooraInternalDomainQuiz;
   quiz_id?: string;
   quiz_room_id?: string;
+  /**
+     * ResultsRevealed reports whether the student may see the score/earned-mark
+     * fields on this payload. Non-persisted; computed per request. Always true for
+     * managers. For the student it is true only once the quiz opts in (ShowResults)
+     * and their room window has closed; when false the score fields are stripped.
+     */
+  results_revealed?: boolean;
   started_at?: string;
   status?: GithubCom4H1RZooraInternalDomainSubmissionStatus;
   submitted_at?: string;

@@ -17,6 +17,7 @@ export interface GithubCom4H1RZooraInternalDomainCreateQuizDTO {
   negative_value?: number;
   no_back_navigation?: boolean;
   require_gps?: boolean;
+  show_results?: boolean;
   shuffle_options?: boolean;
   shuffle_questions?: boolean;
   /** @minLength 2 */

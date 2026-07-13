@@ -522,7 +522,7 @@ func TestQuizService_SubmitQuiz_AutoGrading(t *testing.T) {
 		},
 	}
 	d.questionRepo.On("FindByIDs", ctx, mock.Anything).Return(questions, nil)
-	d.subRepo.On("Update", ctx, mock.AnythingOfType("*domain.QuizSubmission")).Return(nil)
+	graded := captureGraded(d, ctx)
 
 	svc := d.service()
 	result, err := svc.SubmitQuiz(ctx, subID, domain.SubmitQuizDTO{
@@ -537,14 +537,21 @@ func TestQuizService_SubmitQuiz_AutoGrading(t *testing.T) {
 	assert.Equal(t, domain.SubmissionStatusSubmitted, result.Status)
 	assert.NotNil(t, result.SubmittedAt)
 
+	// Grading runs on the persisted record; the quiz does not opt into
+	// ShowResults, so the response back to the student is masked.
 	// choice: selected "a" → score 2
-	assert.Equal(t, 2.0, result.Answers[0].EarnedScore)
+	assert.Equal(t, 2.0, graded.Answers[0].EarnedScore)
 	// short_answer: "  paris  " matches "Paris" → score 3
-	assert.Equal(t, 3.0, result.Answers[1].EarnedScore)
+	assert.Equal(t, 3.0, graded.Answers[1].EarnedScore)
 	// descriptive: always 0
-	assert.Equal(t, 0.0, result.Answers[2].EarnedScore)
+	assert.Equal(t, 0.0, graded.Answers[2].EarnedScore)
 	// total = 2 + 3 + 0 = 5
-	assert.Equal(t, 5.0, result.TotalScore)
+	assert.Equal(t, 5.0, graded.TotalScore)
+
+	// Student's own response is stripped until results are revealed.
+	assert.False(t, result.ResultsRevealed)
+	assert.Equal(t, 0.0, result.TotalScore)
+	assert.Equal(t, 0.0, result.Answers[0].EarnedScore)
 }
 
 func TestQuizService_SubmitQuiz_WrongUser_Forbidden(t *testing.T) {
@@ -685,10 +692,10 @@ func TestQuizService_SubmitQuiz_MultipleChoiceScoring(t *testing.T) {
 		},
 	}
 	d.questionRepo.On("FindByIDs", ctx, mock.Anything).Return(questions, nil)
-	d.subRepo.On("Update", ctx, mock.AnythingOfType("*domain.QuizSubmission")).Return(nil)
+	graded := captureGraded(d, ctx)
 
 	svc := d.service()
-	result, err := svc.SubmitQuiz(ctx, subID, domain.SubmitQuizDTO{
+	_, err := svc.SubmitQuiz(ctx, subID, domain.SubmitQuizDTO{
 		Answers: []domain.SubmitAnswerDTO{
 			{QuestionID: qID, SelectedOptionIDs: []string{"a", "b", "c"}, SpentSeconds: 45},
 		},
@@ -697,8 +704,8 @@ func TestQuizService_SubmitQuiz_MultipleChoiceScoring(t *testing.T) {
 	assert.NoError(t, err)
 	// Sign-only correctness with mode=none: positives 1 + 1.5, the -0.5 option
 	// is a distractor contributing 0 (no penalty). 1 + 1.5 + 0 = 2.5
-	assert.Equal(t, 2.5, result.Answers[0].EarnedScore)
-	assert.Equal(t, 2.5, result.TotalScore)
+	assert.Equal(t, 2.5, graded.Answers[0].EarnedScore)
+	assert.Equal(t, 2.5, graded.TotalScore)
 }
 
 func TestQuizService_SubmitQuiz_AppliesResolvedNegativeMarking(t *testing.T) {
@@ -736,18 +743,18 @@ func TestQuizService_SubmitQuiz_AppliesResolvedNegativeMarking(t *testing.T) {
 		},
 	}
 	d.questionRepo.On("FindByIDs", ctx, mock.Anything).Return(questions, nil)
-	d.subRepo.On("Update", ctx, mock.AnythingOfType("*domain.QuizSubmission")).Return(nil)
+	graded := captureGraded(d, ctx)
 
 	svc := d.service()
-	result, err := svc.SubmitQuiz(ctx, subID, domain.SubmitQuizDTO{
+	_, err := svc.SubmitQuiz(ctx, subID, domain.SubmitQuizDTO{
 		Answers: []domain.SubmitAnswerDTO{
 			{QuestionID: qID, SelectedOptionIDs: []string{"a", "b"}, SpentSeconds: 30},
 		},
 	})
 	assert.NoError(t, err)
 	// positive 1 - per_wrong penalty 0.5*1 = 0.5
-	assert.Equal(t, 0.5, result.Answers[0].EarnedScore)
-	assert.Equal(t, 0.5, result.TotalScore)
+	assert.Equal(t, 0.5, graded.Answers[0].EarnedScore)
+	assert.Equal(t, 0.5, graded.TotalScore)
 }
 
 func TestQuizService_ListQuestionsForTaking_AttachesNegativeConfig(t *testing.T) {
@@ -792,6 +799,95 @@ func TestQuizService_ListQuestionsForTaking_AttachesNegativeConfig(t *testing.T)
 	}
 	// answer key still stripped
 	assert.Equal(t, 0.0, questions[0].Options[0].Score)
+}
+
+func TestQuizService_TakePreview_EnrolledStudentGetsCountAndNegativeFlag(t *testing.T) {
+	studentID := uuid.New()
+	quizID := uuid.New()
+	classID := uuid.New()
+	qID := uuid.New()
+	shortQID := uuid.New()
+	// Enrolled student (no manage/view_any) — must resolve preview without a
+	// submission and without leaking question bodies.
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	d.quizRepo.On("FindByID", ctx, quizID).
+		Return(&domain.Quiz{ID: quizID, ClassID: classID, UserID: uuid.New()}, nil)
+	d.memberRepo.On("Exists", ctx, classID, studentID).Return(true, nil)
+	d.ruleRepo.On("ListByQuiz", ctx, quizID, domain.ListParams{Page: 1, PageSize: 10000}).
+		Return([]domain.QuizRule{
+			{
+				ID: uuid.New(), QuizID: quizID, Type: domain.QuizRuleTypeManual, QuestionIDs: []uuid.UUID{qID, shortQID},
+				NegativeOverrides: []domain.QuizQuestionNegativeOverride{
+					{QuestionID: qID, Mode: domain.NegativeMarkPerWrong, NegativeValue: 0.5},
+				},
+			},
+		}, int64(1), nil)
+	d.questionRepo.On("FindByIDs", ctx, []uuid.UUID{qID, shortQID}).
+		Return([]domain.Question{
+			{
+				ID: qID, Type: domain.QuestionTypeChoice,
+				Options: []domain.QuestionOption{
+					{ID: "a", Value: "A", Score: 1},
+					{ID: "b", Value: "B", Score: 0},
+				},
+			},
+			{ID: shortQID, Type: domain.QuestionTypeShortAnswer, Options: []domain.QuestionOption{{ID: "answer", Value: "secret", Score: 5}}},
+		}, nil)
+
+	svc := d.service()
+	preview, err := svc.TakePreview(ctx, quizID)
+	assert.NoError(t, err)
+	if assert.NotNil(t, preview) {
+		assert.Equal(t, 2, preview.QuestionCount)
+		assert.True(t, preview.HasNegativeMarking)
+	}
+}
+
+func TestQuizService_TakePreview_NoNegativeMarking(t *testing.T) {
+	studentID := uuid.New()
+	quizID := uuid.New()
+	classID := uuid.New()
+	qID := uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	d.quizRepo.On("FindByID", ctx, quizID).
+		Return(&domain.Quiz{ID: quizID, ClassID: classID, UserID: uuid.New()}, nil)
+	d.memberRepo.On("Exists", ctx, classID, studentID).Return(true, nil)
+	d.ruleRepo.On("ListByQuiz", ctx, quizID, domain.ListParams{Page: 1, PageSize: 10000}).
+		Return([]domain.QuizRule{
+			{ID: uuid.New(), QuizID: quizID, Type: domain.QuizRuleTypeManual, QuestionIDs: []uuid.UUID{qID}},
+		}, int64(1), nil)
+	d.questionRepo.On("FindByIDs", ctx, []uuid.UUID{qID}).
+		Return([]domain.Question{
+			{ID: qID, Type: domain.QuestionTypeChoice, Options: []domain.QuestionOption{{ID: "a", Value: "A", Score: 1}, {ID: "b", Value: "B", Score: 0}}},
+		}, nil)
+
+	svc := d.service()
+	preview, err := svc.TakePreview(ctx, quizID)
+	assert.NoError(t, err)
+	if assert.NotNil(t, preview) {
+		assert.Equal(t, 1, preview.QuestionCount)
+		assert.False(t, preview.HasNegativeMarking)
+	}
+}
+
+func TestQuizService_TakePreview_NotEnrolledForbidden(t *testing.T) {
+	studentID := uuid.New()
+	quizID := uuid.New()
+	classID := uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	d.quizRepo.On("FindByID", ctx, quizID).
+		Return(&domain.Quiz{ID: quizID, ClassID: classID, UserID: uuid.New()}, nil)
+	d.memberRepo.On("Exists", ctx, classID, studentID).Return(false, nil)
+
+	svc := d.service()
+	_, err := svc.TakePreview(ctx, quizID)
+	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 
 func TestQuizService_ListQuestionsForTaking_SanitizesAnswersAndDeduplicates(t *testing.T) {
@@ -860,7 +956,9 @@ func TestQuizService_ListMine_DerivesStates(t *testing.T) {
 	d := newDeps()
 
 	openQuiz := domain.Quiz{ID: q1, Title: "Open", ClassID: c1, Class: &domain.Class{Name: "Math"}, DurationMinutes: 30, TotalScore: 20}
-	gradedQuiz := domain.Quiz{ID: q2, Title: "Done", ClassID: c1, Class: &domain.Class{Name: "Math"}, DurationMinutes: 30, TotalScore: 20}
+	// gradedQuiz opts into showing results; its room has already closed so the
+	// score is revealed to the student.
+	gradedQuiz := domain.Quiz{ID: q2, Title: "Done", ClassID: c1, Class: &domain.Class{Name: "Math"}, DurationMinutes: 30, TotalScore: 20, ShowResults: true}
 
 	d.quizRepo.On("ListByMemberWithRooms", mock.Anything, studentID, mock.Anything).
 		Return([]domain.Quiz{openQuiz, gradedQuiz}, int64(2), nil)
@@ -872,11 +970,16 @@ func TestQuizService_ListMine_DerivesStates(t *testing.T) {
 	d.roomRepo.On("ListByQuiz", mock.Anything, q2, mock.Anything).
 		Return([]domain.QuizRoom{}, int64(0), nil)
 
+	q2RoomID := uuid.New()
+	pastEnd := time.Now().Add(-time.Minute)
+	d.roomRepo.On("FindByID", mock.Anything, q2RoomID).
+		Return(&domain.QuizRoom{ID: q2RoomID, QuizID: q2, EndedAt: &pastEnd}, nil)
+
 	submittedAt := time.Now()
 	d.subRepo.On("FindByQuizAndUser", mock.Anything, q1, studentID).
 		Return(nil, domain.ErrNotFound)
 	d.subRepo.On("FindByQuizAndUser", mock.Anything, q2, studentID).
-		Return(&domain.QuizSubmission{Status: domain.SubmissionStatusGraded, TotalScore: 18, SubmittedAt: &submittedAt}, nil)
+		Return(&domain.QuizSubmission{Status: domain.SubmissionStatusGraded, TotalScore: 18, SubmittedAt: &submittedAt, QuizRoomID: &q2RoomID}, nil)
 
 	svc := d.service()
 	exams, total, err := svc.ListMine(ctx, domain.ListParams{Page: 1, PageSize: 20})
@@ -899,6 +1002,20 @@ func TestQuizService_ListMine_NoCaller_Forbidden(t *testing.T) {
 	svc := d.service()
 	_, _, err := svc.ListMine(context.Background(), domain.ListParams{Page: 1, PageSize: 20})
 	assert.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+// captureGraded records the submission as persisted by SubmitQuiz's grading,
+// before the response-time score masking mutates the same pointer. Assert on
+// the returned value to verify grading math independent of result visibility.
+func captureGraded(d testDeps, ctx context.Context) *domain.QuizSubmission {
+	graded := &domain.QuizSubmission{}
+	d.subRepo.On("Update", ctx, mock.AnythingOfType("*domain.QuizSubmission")).
+		Run(func(args mock.Arguments) {
+			s := args.Get(1).(*domain.QuizSubmission)
+			*graded = *s
+			graded.Answers = append([]domain.SubmissionAnswer(nil), s.Answers...)
+		}).Return(nil)
+	return graded
 }
 
 func optionIDs(opts []domain.QuestionOption) []string {
@@ -1364,6 +1481,7 @@ func TestQuizService_GetSubmission_SuggestionsVisibilityByRole(t *testing.T) {
 		ctx := studentCtx(studentID)
 		d := newDeps()
 		d.subRepo.On("FindByID", ctx, subID).Return(makeSub(), nil)
+		d.quizRepo.On("FindByID", ctx, quizID).Return(&domain.Quiz{ID: quizID}, nil)
 		svc := d.service()
 		got, err := svc.GetSubmission(ctx, subID)
 		assert.NoError(t, err)
