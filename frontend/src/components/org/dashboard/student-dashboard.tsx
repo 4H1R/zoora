@@ -42,6 +42,7 @@ type LatestGrade = {
   className: string
   columnTitle: string
   value: string
+  maxScore?: number
 }
 
 export function StudentDashboard() {
@@ -71,6 +72,7 @@ export function StudentDashboard() {
           className: cls.class_name ?? "—",
           columnTitle: col.title ?? "—",
           value,
+          maxScore: col.max_score,
         })
       }
       if (latestGrades.length >= 5) break
@@ -179,7 +181,12 @@ export function StudentDashboard() {
                     <p className="truncate text-sm font-medium">{g.columnTitle}</p>
                     <p className="text-muted-foreground truncate text-xs">{g.className}</p>
                   </div>
-                  <span className="text-sm font-semibold tabular-nums">{g.value}</span>
+                  <span dir={g.maxScore != null ? "ltr" : undefined} className="text-sm font-semibold tabular-nums">
+                    {g.value}
+                    {g.maxScore != null && (
+                      <span className="text-muted-foreground font-normal"> / {g.maxScore}</span>
+                    )}
+                  </span>
                 </div>
               ))}
             </div>

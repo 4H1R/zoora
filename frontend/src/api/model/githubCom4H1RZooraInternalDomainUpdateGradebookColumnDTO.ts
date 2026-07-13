@@ -7,6 +7,7 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainUpdateGradebookColumnDTO {
+  max_score?: number;
   /** @minimum 0 */
   order_index?: number;
   /** @minLength 1 */

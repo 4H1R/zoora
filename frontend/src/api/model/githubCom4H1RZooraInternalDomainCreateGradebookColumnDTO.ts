@@ -8,6 +8,7 @@
 import type { GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTOType } from './githubCom4H1RZooraInternalDomainCreateGradebookColumnDTOType';
 
 export interface GithubCom4H1RZooraInternalDomainCreateGradebookColumnDTO {
+  max_score?: number;
   /** @minimum 0 */
   order_index?: number;
   source_id?: string;

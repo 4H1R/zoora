@@ -700,19 +700,22 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 			}
 
 			// 21. Gradebook columns + cells
+			midtermMax := 100.0
 			colDefs := []struct {
-				Title string
-				Type  domain.GradebookColumnType
+				Title    string
+				Type     domain.GradebookColumnType
+				MaxScore *float64
 			}{
-				{factory.T("Attendance", "حضور و غیاب"), domain.GradebookColumnAutoAttendance},
-				{factory.T("Quiz Score", "نمره آزمون"), domain.GradebookColumnAutoQuiz},
-				{factory.T("Midterm", "میان‌ترم"), domain.GradebookColumnManualGrade},
-				{factory.T("Notes", "یادداشت‌ها"), domain.GradebookColumnManualText},
+				{factory.T("Attendance", "حضور و غیاب"), domain.GradebookColumnAutoAttendance, nil},
+				{factory.T("Quiz Score", "نمره آزمون"), domain.GradebookColumnAutoQuiz, nil},
+				{factory.T("Midterm", "میان‌ترم"), domain.GradebookColumnManualGrade, &midtermMax},
+				{factory.T("Notes", "یادداشت‌ها"), domain.GradebookColumnManualText, nil},
 			}
 			for idx, cd := range colDefs {
 				col := factory.NewGradebookColumn(class.ID, cd.Type, func(c *domain.GradebookColumn) {
 					c.Title = cd.Title
 					c.OrderIndex = idx
+					c.MaxScore = cd.MaxScore
 					if cd.Type == domain.GradebookColumnAutoQuiz {
 						qid := quiz.ID
 						c.SourceID = &qid

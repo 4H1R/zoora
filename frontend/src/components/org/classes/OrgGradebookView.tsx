@@ -188,7 +188,15 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
                     <TableHead key={col.id} className="min-w-40">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex min-w-0 flex-col gap-1">
-                          <span className="truncate text-sm font-medium">{col.title}</span>
+                          <span className="truncate text-sm font-medium">
+                            {col.title}
+                            {col.max_score != null && (
+                              <span dir="ltr" className="text-muted-foreground font-normal tabular-nums">
+                                {" "}
+                                / {col.max_score}
+                              </span>
+                            )}
+                          </span>
                           <Badge variant={TYPE_BADGE[col.type ?? ""] ?? "outline"} className="w-fit text-[10px]">
                             {t(`org.class.gradebook.types.${col.type}`)}
                           </Badge>

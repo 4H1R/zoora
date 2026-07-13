@@ -1095,6 +1095,7 @@
         "title": "Title",
         "titlePlaceholder": "e.g. Midterm exam",
         "type": "Type",
+        "maxScore": "Max score (optional)",
         "orderIndex": "Order index",
         "sourcePlaceholder": "Select source…",
         "source": {
@@ -1999,16 +2000,25 @@
         }
       },
       "enrollMember": {
-        "title": "Enroll a member",
-        "description": "Pick a user to add to this class roster.",
-        "userLabel": "User",
-        "userPlaceholder": "Select a user",
+        "title": "Enroll members",
+        "description": "Pick users to add to this class roster.",
+        "userLabel": "Users",
+        "userPlaceholder": "Select users",
+        "selectedCount_one": "{{count}} user selected",
+        "selectedCount_other": "{{count}} users selected",
+        "required": "Select at least one user.",
+        "removeUser": "Remove {{name}}",
         "searchPlaceholder": "Search by name or username…",
         "noResults": "No users found.",
         "submit": "Enroll",
-        "success": "Member enrolled.",
+        "submitCount_one": "Enroll {{count}} user",
+        "submitCount_other": "Enroll {{count}} users",
+        "successCount_one": "Member enrolled.",
+        "successCount_other": "{{count}} members enrolled.",
         "errorConflict": "User already enrolled or class is full.",
         "errorForbidden": "You don't have permission to enroll members.",
+        "errorPartial_one": "{{count}} member could not be enrolled.",
+        "errorPartial_other": "{{count}} members could not be enrolled.",
         "errorGeneric": "Could not enroll member."
       },
       "removeMember": {

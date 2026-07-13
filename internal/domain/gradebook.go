@@ -41,6 +41,7 @@ type GradebookColumn struct {
 	Title      string              `gorm:"not null" json:"title"`
 	Type       GradebookColumnType `gorm:"type:varchar(30);not null" json:"type"`
 	SourceID   *uuid.UUID          `gorm:"type:uuid" json:"source_id,omitempty"`
+	MaxScore   *float64            `gorm:"type:numeric(8,2)" json:"max_score,omitempty"`
 	OrderIndex int                 `gorm:"not null;default:0" json:"order_index"`
 	CreatedAt  time.Time           `json:"created_at"`
 	UpdatedAt  time.Time           `json:"updated_at"`
@@ -58,12 +59,14 @@ type CreateGradebookColumnDTO struct {
 	Title      string              `json:"title" binding:"required,min=1"`
 	Type       GradebookColumnType `json:"type" binding:"required,oneof=auto_attendance auto_practice auto_quiz manual_grade manual_attendance manual_text"`
 	SourceID   *uuid.UUID          `json:"source_id"`
+	MaxScore   *float64            `json:"max_score" binding:"omitempty,gt=0"`
 	OrderIndex int                 `json:"order_index" binding:"gte=0"`
 }
 
 type UpdateGradebookColumnDTO struct {
-	Title      *string `json:"title" binding:"omitempty,min=1"`
-	OrderIndex *int    `json:"order_index" binding:"omitempty,gte=0"`
+	Title      *string  `json:"title" binding:"omitempty,min=1"`
+	MaxScore   *float64 `json:"max_score" binding:"omitempty,gt=0"`
+	OrderIndex *int     `json:"order_index" binding:"omitempty,gte=0"`
 }
 
 type UpsertGradebookCellDTO struct {

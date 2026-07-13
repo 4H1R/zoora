@@ -40,6 +40,7 @@ function RouteComponent() {
       className: cls.class_name ?? "",
       item: col.title ?? "",
       value: (col.id ? cls.cells?.[col.id] : undefined) ?? "",
+      maxScore: col.max_score,
     }))
   )
 
@@ -123,7 +124,16 @@ function RouteComponent() {
                         <tr key={col.id}>
                           <td className="text-muted-foreground px-4 py-2.5 text-start">{col.title || "—"}</td>
                           <td className="px-4 py-2.5 text-end font-medium tabular-nums">
-                            {value && value.trim() ? value : "—"}
+                            {value && value.trim() ? (
+                              <span dir={col.max_score != null ? "ltr" : undefined}>
+                                {value}
+                                {col.max_score != null && (
+                                  <span className="text-muted-foreground font-normal"> / {col.max_score}</span>
+                                )}
+                              </span>
+                            ) : (
+                              "—"
+                            )}
                           </td>
                         </tr>
                       )

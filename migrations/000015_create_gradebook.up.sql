@@ -4,6 +4,7 @@ CREATE TABLE gradebook_columns (
     title VARCHAR(255) NOT NULL,
     type VARCHAR(30) NOT NULL CHECK (type IN ('auto_attendance', 'auto_practice', 'auto_quiz', 'manual_grade', 'manual_attendance', 'manual_text')),
     source_id UUID,
+    max_score NUMERIC(8,2) CHECK (max_score > 0),
     order_index INT NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

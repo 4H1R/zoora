@@ -9,6 +9,7 @@ export interface GradeRow {
   className: string
   item: string
   value: string
+  maxScore?: number
 }
 
 export function useGradeColumns(): ColumnDef<GradeRow>[] {
@@ -38,9 +39,16 @@ export function useGradeColumns(): ColumnDef<GradeRow>[] {
       id: "value",
       accessorFn: (r) => r.value,
       header: t("org.grades.table.score"),
-      cell: ({ getValue }) => {
+      cell: ({ getValue, row }) => {
         const v = getValue() as string
-        return <span className="font-medium tabular-nums">{v && v.trim() ? v : "—"}</span>
+        const max = row.original.maxScore
+        if (!v || !v.trim()) return <span className="font-medium tabular-nums">—</span>
+        return (
+          <span dir={max != null ? "ltr" : undefined} className="font-medium tabular-nums">
+            {v}
+            {max != null && <span className="text-muted-foreground font-normal"> / {max}</span>}
+          </span>
+        )
       },
     },
   ]

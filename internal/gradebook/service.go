@@ -94,6 +94,7 @@ func (s *service) CreateColumn(ctx context.Context, classID uuid.UUID, dto domai
 		Title:      dto.Title,
 		Type:       dto.Type,
 		SourceID:   dto.SourceID,
+		MaxScore:   dto.MaxScore,
 		OrderIndex: dto.OrderIndex,
 	}
 	if err := s.columns.Create(ctx, col); err != nil {
@@ -125,6 +126,9 @@ func (s *service) UpdateColumn(ctx context.Context, columnID uuid.UUID, dto doma
 	}
 	if dto.Title != nil {
 		col.Title = *dto.Title
+	}
+	if dto.MaxScore != nil {
+		col.MaxScore = dto.MaxScore
 	}
 	if dto.OrderIndex != nil {
 		col.OrderIndex = *dto.OrderIndex

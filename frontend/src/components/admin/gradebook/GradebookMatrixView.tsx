@@ -148,14 +148,22 @@ export function GradebookMatrixView({ classId }: GradebookMatrixViewProps) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="bg-card sticky start-0 z-10 min-w-56">
+                  <TableHead className="bg-card sticky start-0 z-10 min-w-36 border-e sm:min-w-56">
                     {t("admin.gradebook.student")}
                   </TableHead>
                   {columns.map((col) => (
-                    <TableHead key={col.id} className="min-w-40">
+                    <TableHead key={col.id} className="min-w-28 sm:min-w-36">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex min-w-0 flex-col gap-1">
-                          <span className="truncate text-sm font-medium">{col.title}</span>
+                          <span className="truncate text-sm font-medium">
+                            {col.title}
+                            {col.max_score != null && (
+                              <span dir="ltr" className="text-muted-foreground font-normal tabular-nums">
+                                {" "}
+                                / {col.max_score}
+                              </span>
+                            )}
+                          </span>
                           <Badge
                             variant={TYPE_BADGE[col.type ?? ""] ?? "outline"}
                             className="w-fit text-[10px]"
@@ -203,17 +211,17 @@ export function GradebookMatrixView({ classId }: GradebookMatrixViewProps) {
               <TableBody>
                 {rows.map((row) => (
                   <TableRow key={row.student_id}>
-                    <TableCell className="bg-card sticky start-0 z-10">
-                      <div className="flex items-center gap-3">
+                    <TableCell className="bg-card sticky start-0 z-10 border-e">
+                      <div className="flex items-center gap-2 sm:gap-3">
                         <div
                           className={cn(
-                            "flex size-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold text-white",
+                            "hidden size-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold text-white sm:flex",
                             getEntityColor(row.student?.name ?? row.student_id ?? "")
                           )}
                         >
                           {getInitials(row.student?.name ?? row.student_id ?? "")}
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 max-w-28 sm:max-w-44">
                           <div className="truncate text-sm font-medium">
                             {row.student?.name ?? "—"}
                           </div>
@@ -234,7 +242,7 @@ export function GradebookMatrixView({ classId }: GradebookMatrixViewProps) {
                           className={cn(
                             "text-sm",
                             !isAuto &&
-                              "hover:bg-muted/50 cursor-pointer transition-colors"
+                              "hover:bg-muted/50 active:bg-muted/50 cursor-pointer transition-colors"
                           )}
                           onClick={() => handleCellClick(col, row)}
                         >
@@ -246,6 +254,10 @@ export function GradebookMatrixView({ classId }: GradebookMatrixViewProps) {
                             ) : (
                               <span className="font-medium">{value}</span>
                             )
+                          ) : !isAuto ? (
+                            <span className="text-muted-foreground border-muted-foreground/40 border-b border-dashed pb-0.5">
+                              —
+                            </span>
                           ) : (
                             <span className="text-muted-foreground">—</span>
                           )}

@@ -56,11 +56,14 @@ const AUTO_TYPES = new Set<string>([
   ColumnType.GradebookColumnAutoQuiz,
 ])
 
+const maxScoreSchema = z.union([z.literal(""), z.coerce.number().positive()]).optional()
+
 const createSchema = z
   .object({
     title: z.string().min(1),
     type: z.enum(TYPES),
     source_id: z.string().uuid().optional().or(z.literal("")),
+    max_score: maxScoreSchema,
     order_index: z.coerce.number().int().min(0).default(0),
   })
   .refine(
@@ -73,6 +76,7 @@ const createSchema = z
 
 const editSchema = z.object({
   title: z.string().min(1),
+  max_score: maxScoreSchema,
   order_index: z.coerce.number().int().min(0).default(0),
 })
 
@@ -102,24 +106,30 @@ export function GradebookColumnDialog({
       title: "",
       type: ColumnType.GradebookColumnManualGrade,
       source_id: "",
+      max_score: "",
       order_index: 0,
     },
   })
 
   const editForm = useForm<EditValues>({
     resolver: zodResolver(editSchema),
-    defaultValues: { title: "", order_index: 0 },
+    defaultValues: { title: "", max_score: "", order_index: 0 },
   })
 
   useEffect(() => {
     if (!open) return
     if (isEdit && column) {
-      editForm.reset({ title: column.title ?? "", order_index: column.order_index ?? 0 })
+      editForm.reset({
+        title: column.title ?? "",
+        max_score: column.max_score ?? "",
+        order_index: column.order_index ?? 0,
+      })
     } else {
       createForm.reset({
         title: "",
         type: ColumnType.GradebookColumnManualGrade,
         source_id: "",
+        max_score: "",
         order_index: 0,
       })
     }
@@ -162,6 +172,7 @@ export function GradebookColumnDialog({
         title: values.title,
         type: values.type,
         source_id: values.source_id || undefined,
+        max_score: values.max_score ? Number(values.max_score) : undefined,
         order_index: Number(values.order_index ?? 0),
       },
     })
@@ -172,7 +183,11 @@ export function GradebookColumnDialog({
     updateMutation.mutate({
       id: classId,
       columnId: column.id,
-      data: { title: values.title, order_index: Number(values.order_index ?? 0) },
+      data: {
+        title: values.title,
+        max_score: values.max_score ? Number(values.max_score) : undefined,
+        order_index: Number(values.order_index ?? 0),
+      },
     })
   })
 
@@ -208,6 +223,11 @@ export function GradebookColumnDialog({
               />
               <FieldError errors={[editErrors.title]} />
             </Field>
+            <Field data-invalid={!!editErrors.max_score || undefined}>
+              <FieldLabel>{t("admin.gradebook.form.maxScore")}</FieldLabel>
+              <Input {...editForm.register("max_score")} type="number" min={0} step="any" />
+              <FieldError errors={[editErrors.max_score]} />
+            </Field>
             <Field data-invalid={!!editErrors.order_index || undefined}>
               <FieldLabel>{t("admin.gradebook.form.orderIndex")}</FieldLabel>
               <Input {...editForm.register("order_index")} type="number" min={0} />
@@ -233,6 +253,7 @@ export function GradebookColumnDialog({
                     shouldValidate: true,
                   })
                   createForm.setValue("source_id", "", { shouldValidate: true })
+                  createForm.setValue("max_score", "", { shouldValidate: true })
                 }}
               >
                 <SelectTrigger>
@@ -255,13 +276,22 @@ export function GradebookColumnDialog({
                   classId={classId}
                   type={selectedType}
                   value={selectedSource || undefined}
-                  onChange={(id) =>
+                  onChange={(id, maxScore) => {
                     createForm.setValue("source_id", id, { shouldValidate: true })
-                  }
+                    // Pre-fill max score from the quiz total / practice room max.
+                    createForm.setValue("max_score", maxScore && maxScore > 0 ? maxScore : "", {
+                      shouldValidate: true,
+                    })
+                  }}
                 />
                 <FieldError errors={[createErrors.source_id]} />
               </Field>
             )}
+            <Field data-invalid={!!createErrors.max_score || undefined}>
+              <FieldLabel>{t("admin.gradebook.form.maxScore")}</FieldLabel>
+              <Input {...createForm.register("max_score")} type="number" min={0} step="any" />
+              <FieldError errors={[createErrors.max_score]} />
+            </Field>
             <Field data-invalid={!!createErrors.order_index || undefined}>
               <FieldLabel>{t("admin.gradebook.form.orderIndex")}</FieldLabel>
               <Input {...createForm.register("order_index")} type="number" min={0} />
@@ -278,7 +308,7 @@ interface SourcePickerProps {
   classId: string
   type: (typeof TYPES)[number]
   value?: string
-  onChange: (id: string) => void
+  onChange: (id: string, maxScore?: number) => void
 }
 
 function SourcePicker({ classId, type, value, onChange }: SourcePickerProps) {
@@ -301,7 +331,7 @@ function SourcePicker({ classId, type, value, onChange }: SourcePickerProps) {
     { query: { enabled: type === ColumnType.GradebookColumnAutoQuiz } }
   )
 
-  let items: { id: string; label: string }[] = []
+  let items: { id: string; label: string; maxScore?: number }[] = []
   let selectedLabel: string | undefined
 
   if (type === ColumnType.GradebookColumnAutoAttendance) {
@@ -313,12 +343,12 @@ function SourcePicker({ classId, type, value, onChange }: SourcePickerProps) {
     const list = (practicesQuery.data?.status === 200 && practicesQuery.data.data.data?.items) || []
     items = list
       .filter((p): p is typeof p & { id: string } => !!p.id)
-      .map((p) => ({ id: p.id, label: p.title ?? p.id }))
+      .map((p) => ({ id: p.id, label: p.title ?? p.id, maxScore: p.max_score }))
   } else if (type === ColumnType.GradebookColumnAutoQuiz) {
     const list = (quizzesQuery.data?.status === 200 && quizzesQuery.data.data.data?.items) || []
     items = list
       .filter((q): q is typeof q & { id: string } => !!q.id)
-      .map((q) => ({ id: q.id, label: q.title ?? q.id }))
+      .map((q) => ({ id: q.id, label: q.title ?? q.id, maxScore: q.total_score }))
   }
 
   selectedLabel = items.find((i) => i.id === value)?.label
@@ -358,7 +388,7 @@ function SourcePicker({ classId, type, value, onChange }: SourcePickerProps) {
                   key={item.id}
                   value={item.label}
                   onSelect={() => {
-                    onChange(item.id)
+                    onChange(item.id, item.maxScore)
                     setOpen(false)
                   }}
                 >

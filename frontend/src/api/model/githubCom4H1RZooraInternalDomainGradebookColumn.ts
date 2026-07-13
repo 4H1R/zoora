@@ -11,6 +11,7 @@ export interface GithubCom4H1RZooraInternalDomainGradebookColumn {
   class_id?: string;
   created_at?: string;
   id?: string;
+  max_score?: number;
   order_index?: number;
   source_id?: string;
   title?: string;
