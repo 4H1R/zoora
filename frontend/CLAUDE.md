@@ -4,7 +4,7 @@ React SPA for Zoora virtual classroom platform.
 
 ## Stack
 
-- **Framework**: React 19 + Vite + TanStack Router (file-based) + TanStack React Query
+- **Framework**: React 19 + Vite + **TanStack Start** (file-based routing) + TanStack React Query
 - **Styling**: Tailwind CSS 4 + shadcn/ui components + `cn()` utility from `src/lib/utils.ts`
 - **Forms**: React Hook Form + Zod (prefer Zod over Yup for new forms)
 - **State**: Zustand for client state, React Query for server state
@@ -14,12 +14,25 @@ React SPA for Zoora virtual classroom platform.
 
 ## Commands
 
+Package manager is **bun** (not pnpm). The repo root is a bun workspace — run `bun install` from the root. `bunfig.toml` carries the `minimumReleaseAge` supply-chain guard.
+
 ```bash
-pnpm build      # Production build + type check
-pnpm typecheck  # Type check only (no build)
+bun run build      # Production build (Vite → Nitro .output/) + prerenders the landing
+bun run typecheck  # Type check only (no build)
+bun run start      # Run the built Nitro server (.output/server/index.mjs) — prod
 ```
 
-> Never run `pnpm dev` — do not start the dev server.
+> Never run `bun run dev` — do not start the dev server.
+
+## Rendering & deploy
+
+- **TanStack Start**, not plain Router. Vite drives dev; `bun run build` emits a self-contained **bun-preset Nitro** server at `frontend/.output/` (`nitro({ preset: 'bun' })` in `vite.config.js`).
+- **Selective SSG/SPA**: only the marketing landing `/` is prerendered *with content* (SEO-ready HTML that hydrates the SPA) — see the `prerender` filter in `vite.config.js`. The app layout routes (`_admin`, `_auth`, `_guest`) set **`ssr: false`** so Nitro serves them as client-rendered shells and never SSRs the client-only libs (LiveKit, tldraw, pdfjs, Firebase).
+- `src/routes/__root.tsx` is the **document shell** (`shellComponent` + `head()`); there is no `index.html` or `main.tsx`. The router factory lives in `src/router.tsx` (`getRouter()` + `setupRouterSsrQueryIntegration`).
+- **Prerender-safety**: anything `/` (the landing) touches must be SSR-safe — no bare `window`/`navigator`/`localStorage` at module or render time (see the guards in `src/lib/tenant.ts` and `src/i18n/index.ts`).
+- **PWA offline was dropped** during the Start migration (vite-plugin-pwa's `generateSW` doesn't emit under Nitro). Manifest is a static `public/manifest.webmanifest`; `PWAUpdater` only unregisters the stale Workbox SW. FCM's `firebase-messaging-sw.js` is untouched. Re-add offline later via a post-build Workbox step.
+- **Prod**: the frontend container runs the bun Nitro server on `:3000`; **Caddy** (the edge) terminates TLS, proxies `/api/*` → `api:8080` (WS included), and reverse-proxies everything else → `frontend:3000`. See `docker-compose.prod.yml` + `frontend/Dockerfile`.
+- `tldraw` is pinned to exact `5.1.1` (license patch in `frontend/patches/`, declared via `patchedDependencies` in the **root** `package.json`) — don't loosen the range or the patch stops applying.
 
 ## Performance
 
@@ -29,7 +42,7 @@ pnpm typecheck  # Type check only (no build)
 
 ### UI Components
 
-- Always use shadcn/ui components — install via `pnpm dlx shadcn@latest add <component>` before building custom ones
+- Always use shadcn/ui components — install via `bunx shadcn@latest add <component>` before building custom ones
 - Use `cn()` from `src/lib/utils.ts` for all className merging — never raw string concatenation or `clsx` directly
 - shadcn components live in `src/components/ui/`; app-level components in `src/components/`
 - Never use arbitrary px values (`w-[32px]`, `mt-[12px]`) — always use Tailwind spacing/sizing scale (`w-8`, `mt-3`). Use arbitrary values only for non-standard design tokens with no Tailwind equivalent

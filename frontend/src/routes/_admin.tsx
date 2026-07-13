@@ -12,6 +12,9 @@ import { useDirection } from "@/components/ui/direction"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 
 export const Route = createFileRoute("/_admin")({
+  // Client-only: Nitro serves a shell and the browser renders this subtree, so
+  // its client-only deps are never SSR'd. Only '/' is prerendered with content.
+  ssr: false,
   component: RouteComponent,
 })
 

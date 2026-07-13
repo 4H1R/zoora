@@ -1,11 +1,18 @@
 {
     "name": "zoora",
     "version": "1.0.0",
+    "workspaces": [
+        "frontend"
+    ],
+    "patchedDependencies": {
+        "@tldraw/editor@5.1.1": "frontend/patches/@tldraw__editor@5.1.1.patch"
+    },
     "scripts": {
-        "front:dev": "cd frontend && pnpm dev",
-        "front:typecheck": "cd frontend && pnpm typecheck",
-        "front:generate": "cd frontend && pnpm generate",
-        "front:format": "cd frontend && pnpm generate",
+        "front:dev": "bun --filter frontend dev",
+        "front:build": "bun --filter frontend build",
+        "front:typecheck": "bun --filter frontend typecheck",
+        "front:generate": "bun --filter frontend generate",
+        "front:format": "bun --filter frontend format",
         "prepare": "husky"
     },
     "repository": {

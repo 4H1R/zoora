@@ -31,13 +31,14 @@
 }
 
 (static_cache) {
-	# Hashed build assets are immutable — cache hard. Service workers
-	# (sw.js, firebase-messaging-sw.js) match *.js but MUST revalidate every
-	# load, else browsers never pick up new deploys; exclude them so the
-	# backend's Cache-Control: no-cache survives.
+	# Hashed build assets are immutable — cache hard. The FCM service worker
+	# (firebase-messaging-sw.js) matches *.js but MUST revalidate every load,
+	# else browsers never pick up new deploys; exclude it so its
+	# Cache-Control: no-cache survives. (The Workbox app SW was removed in the
+	# TanStack Start migration; the Nitro server now serves the frontend.)
 	@static {
 		path /assets/* *.js *.css *.woff2 *.woff *.ttf
-		not path /sw.js /firebase-messaging-sw.js
+		not path /firebase-messaging-sw.js
 	}
 	header @static Cache-Control "public, max-age=31536000, immutable"
 }

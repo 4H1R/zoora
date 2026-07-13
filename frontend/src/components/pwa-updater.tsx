@@ -1,37 +1,28 @@
-import { useEffect, useRef } from "react"
-import { useTranslation } from "react-i18next"
-import { registerSW } from "virtual:pwa-register"
-import { toast } from "sonner"
+import { useEffect } from "react"
 
 /**
- * Registers the service worker and surfaces update / offline-ready state as
- * sonner toasts. We use registerType 'prompt' (see vite.config.js) so a new
- * build never hard-reloads the page underneath a live meeting — the user opts
- * in via the toast action instead.
+ * Offline/precache PWA was dropped during the TanStack Start migration:
+ * vite-plugin-pwa's generateSW does not emit a service worker under Start's
+ * Nitro build pipeline. This component now only cleans up: it unregisters the
+ * stale Workbox service worker left on returning users' devices so they aren't
+ * pinned to a cached old app shell. The Firebase Cloud Messaging worker
+ * (firebase-messaging-sw.js) is intentionally left untouched.
+ *
+ * Re-introduce offline support later via a post-build Workbox step.
  */
 export function PWAUpdater() {
-  const { t } = useTranslation()
-  const registered = useRef(false)
-
   useEffect(() => {
-    if (registered.current) return
-    registered.current = true
+    if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return
 
-    const updateSW = registerSW({
-      onNeedRefresh() {
-        toast.info(t("pwa.updateTitle"), {
-          duration: Infinity,
-          action: {
-            label: t("pwa.updateAction"),
-            onClick: () => updateSW(true),
-          },
-        })
-      },
-      onOfflineReady() {
-        toast.success(t("pwa.offlineReady"))
-      },
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) {
+        const scriptURL = registration.active?.scriptURL ?? ""
+        // Keep the FCM push worker; drop the old Workbox app-shell worker.
+        if (scriptURL.includes("firebase-messaging-sw")) continue
+        registration.unregister()
+      }
     })
-  }, [t])
+  }, [])
 
   return null
 }

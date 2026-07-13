@@ -49,26 +49,40 @@ services:
     #     - "./traefik/certs:/certs:ro"
     #   networks: [zoora]
 
+    # Bun-served TanStack Start (Nitro) server. It serves the SSG'd landing,
+    # per-route SPA shells, and the static client bundle on :3000 — no nginx.
+    # The edge (Caddy) terminates TLS, proxies /api/* to the api service (Caddy
+    # handles WebSocket upgrades for the conversations hub natively), and reverse-
+    # proxies everything else here. Example Caddyfile:
+    #
+    #   *.${DOMAIN} {
+    #       @api path /api/*
+    #       reverse_proxy @api api:8080
+    #       reverse_proxy frontend:3000
+    #   }
     frontend:
         build:
-            context: ./frontend
+            context: .
+            dockerfile: frontend/Dockerfile
             args:
                 VITE_BASE_DOMAIN: ${DOMAIN}
                 VITE_ADMIN_SUBDOMAIN: admin
         image: zoora-frontend:latest
         restart: unless-stopped
         networks: [zoora]
-        # Caddy proxies every <slug>.<domain> here; nginx serves the SPA.
+        # Caddy proxies every <slug>.<domain> here (and /api/* to the api service).
         ports:
-            - "127.0.0.1:8081:80"
+            - "127.0.0.1:8081:3000"
         # Traefik routing (re-enable with the traefik service; drop the ports above).
+        # NOTE: Traefik must also route /api/* to the api service (see the Caddy
+        # example above) — the frontend no longer proxies the API.
         # labels:
         #   - traefik.enable=true
         #   # Wildcard host: every tenant subdomain + admin + the canonical www serve the SPA.
         #   - traefik.http.routers.frontend.rule=HostRegexp(`^[a-z0-9-]+\.${DOMAIN}$`)
         #   - traefik.http.routers.frontend.entrypoints=websecure
         #   - traefik.http.routers.frontend.tls=true
-        #   - traefik.http.services.frontend.loadbalancer.server.port=80
+        #   - traefik.http.services.frontend.loadbalancer.server.port=3000
         #   # Apex (root domain) → www canonical 301. Keeps cookies off the apex,
         #   # which would otherwise leak to every tenant subdomain.
         #   - traefik.http.routers.apex-redirect.rule=Host(`${DOMAIN}`)
@@ -315,33 +329,34 @@ services:
         #   - traefik.http.routers.livekit.tls.certresolver=le
         #   - traefik.http.services.livekit.loadbalancer.server.port=7880
 
-    egress:
-        image: livekit/egress:latest
-        restart: unless-stopped
-        cap_add:
-            - CAP_SYS_ADMIN
-        security_opt:
-            - seccomp:unconfined
-        shm_size: "1gb"
-        environment:
-            EGRESS_CONFIG_BODY: |
-                redis:
-                  address: redis:6379
-                api_key: "${LIVEKIT_API_KEY}"
-                api_secret: "${LIVEKIT_API_SECRET}"
-                ws_url: ws://livekit:7880
-                insecure: true
-                s3:
-                  access_key: "${S3_ACCESS_KEY}"
-                  secret: "${S3_SECRET_KEY}"
-                  region: "${S3_REGION:-us-east-1}"
-                  endpoint: http://rustfs:9000
-                  bucket: "${S3_BUCKET}"
-                  force_path_style: true
-        depends_on:
-            redis: { condition: service_healthy }
-            livekit: { condition: service_started }
-        networks: [zoora]
+    # Egress (recording) disabled for now — live-room recording is turned off.
+    # egress:
+    #     image: livekit/egress:latest
+    #     restart: unless-stopped
+    #     cap_add:
+    #         - CAP_SYS_ADMIN
+    #     security_opt:
+    #         - seccomp:unconfined
+    #     shm_size: "1gb"
+    #     environment:
+    #         EGRESS_CONFIG_BODY: |
+    #             redis:
+    #               address: redis:6379
+    #             api_key: "${LIVEKIT_API_KEY}"
+    #             api_secret: "${LIVEKIT_API_SECRET}"
+    #             ws_url: ws://livekit:7880
+    #             insecure: true
+    #             s3:
+    #               access_key: "${S3_ACCESS_KEY}"
+    #               secret: "${S3_SECRET_KEY}"
+    #               region: "${S3_REGION:-us-east-1}"
+    #               endpoint: http://rustfs:9000
+    #               bucket: "${S3_BUCKET}"
+    #               force_path_style: true
+    #     depends_on:
+    #         redis: { condition: service_healthy }
+    #         livekit: { condition: service_started }
+    #     networks: [zoora]
 
 networks:
     zoora:

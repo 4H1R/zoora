@@ -1,0 +1,17 @@
+# Per-Dockerfile ignore for the frontend image, whose build context is the REPO
+# ROOT (so it can read bun.lock / bunfig.toml / root package.json). The root
+# .dockerignore excludes `frontend`, which is exactly what this build needs — so
+# this file overrides it: ignore everything, then allow only the workspace
+# manifests, lockfile, and the frontend app (minus its build artifacts).
+*
+
+!package.json
+!bun.lock
+!bunfig.toml
+!frontend
+
+# Never ship installed modules or prior build output into the context.
+frontend/node_modules
+frontend/dist
+frontend/.output
+frontend/tmp

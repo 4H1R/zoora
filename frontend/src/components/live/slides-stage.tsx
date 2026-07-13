@@ -1,3 +1,4 @@
+import { useHotkeys } from "@tanstack/react-hotkeys"
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { Document, Page, pdfjs } from "react-pdf"
@@ -102,42 +103,47 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
 
   // Host keyboard nav: PageDown/Down/Right/Space go forward, PageUp/Up/Left go
   // back. Up/Down/PageUp/PageDown scroll a tall page first and only flip at the
-  // edge; Left/Right always flip. Ignored while typing in a field (e.g. chat).
-  useEffect(() => {
-    if (!isHost) return
-    const FORWARD = ["PageDown", "ArrowDown", "ArrowRight", " ", "Spacebar"]
-    const BACKWARD = ["PageUp", "ArrowUp", "ArrowLeft"]
-    const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null
-      // Don't hijack Space/arrows away from an interactive element: a focused
-      // button/select/link/menu item needs those keys for its own activation or
-      // option navigation (Space "clicks" a button, arrows move select options).
-      if (
-        target?.isContentEditable ||
-        target?.closest(
-          "input, textarea, select, button, a[href], [role='button'], [role='menuitem'], [role='menuitemradio'], [role='option'], [role='tab'], [role='slider'], [contenteditable='true']",
-        )
+  // edge; Left/Right always flip. Ignored while typing in a field (e.g. chat) or
+  // when a focused control needs the key itself. preventDefault/stopPropagation
+  // are left off so the guard can bail without swallowing the key — we
+  // preventDefault by hand only once we commit to navigating. The callbacks are
+  // synced each render, so they always read the latest page/navigate.
+  const navByKey = (e: KeyboardEvent, forward: boolean, flipOnly: boolean) => {
+    const target = e.target as HTMLElement | null
+    // Don't hijack Space/arrows away from an interactive element: a focused
+    // button/select/link/menu item needs those keys for its own activation or
+    // option navigation (Space "clicks" a button, arrows move select options).
+    if (
+      target?.isContentEditable ||
+      target?.closest(
+        "input, textarea, select, button, a[href], [role='button'], [role='menuitem'], [role='menuitemradio'], [role='option'], [role='tab'], [role='slider'], [contenteditable='true']",
       )
-        return
-      const forward = FORWARD.includes(e.key)
-      const backward = BACKWARD.includes(e.key)
-      if (!forward && !backward) return
-      e.preventDefault()
-      const el = scrollRef.current
-      const flipOnly = e.key === "ArrowLeft" || e.key === "ArrowRight"
-      if (el && !flipOnly) {
-        const canScroll = el.scrollHeight > el.clientHeight + 1
-        const atTop = el.scrollTop <= 0
-        const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1
-        const step = el.clientHeight * 0.9
-        if (canScroll && forward && !atBottom) return void (el.scrollTop += step)
-        if (canScroll && backward && !atTop) return void (el.scrollTop -= step)
-      }
-      navigate(forward ? page + 1 : page - 1)
+    )
+      return
+    e.preventDefault()
+    const el = scrollRef.current
+    if (el && !flipOnly) {
+      const canScroll = el.scrollHeight > el.clientHeight + 1
+      const atTop = el.scrollTop <= 0
+      const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1
+      const step = el.clientHeight * 0.9
+      if (canScroll && forward && !atBottom) return void (el.scrollTop += step)
+      if (canScroll && !forward && !atTop) return void (el.scrollTop -= step)
     }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [isHost, page, numPages, onPageChange])
+    navigate(forward ? page + 1 : page - 1)
+  }
+  useHotkeys(
+    [
+      { hotkey: "PageDown", callback: (e) => navByKey(e, true, false) },
+      { hotkey: "ArrowDown", callback: (e) => navByKey(e, true, false) },
+      { hotkey: "ArrowRight", callback: (e) => navByKey(e, true, true) },
+      { hotkey: "Space", callback: (e) => navByKey(e, true, false) },
+      { hotkey: "PageUp", callback: (e) => navByKey(e, false, false) },
+      { hotkey: "ArrowUp", callback: (e) => navByKey(e, false, false) },
+      { hotkey: "ArrowLeft", callback: (e) => navByKey(e, false, true) },
+    ],
+    { enabled: isHost, preventDefault: false, stopPropagation: false, ignoreInputs: false },
+  )
 
   return (
     <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-2xl bg-black">

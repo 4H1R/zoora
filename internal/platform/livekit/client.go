@@ -139,23 +139,26 @@ func (c *Client) GenerateToken(roomName, identity, name, metadata string, source
 }
 
 func (c *Client) StartRecording(ctx context.Context, roomName, s3Path string) (string, error) {
-	egressClient := lksdk.NewEgressClient(c.host, c.apiKey, c.apiSecret)
-
-	info, err := egressClient.StartRoomCompositeEgress(ctx, &livekit.RoomCompositeEgressRequest{
-		RoomName: roomName,
-		Output: &livekit.RoomCompositeEgressRequest_File{
-			File: &livekit.EncodedFileOutput{
-				FileType: livekit.EncodedFileType_MP4,
-				Filepath: s3Path,
-			},
-		},
-	})
-	if err != nil {
-		return "", fmt.Errorf("starting recording: %w", err)
-	}
-
-	c.logger.Info("recording started", "room", roomName, "egress_id", info.EgressId)
-	return info.EgressId, nil
+	// LiveKit egress recording is disabled for now — the call site (service layer)
+	// returns Forbidden before reaching here.
+	// egressClient := lksdk.NewEgressClient(c.host, c.apiKey, c.apiSecret)
+	//
+	// info, err := egressClient.StartRoomCompositeEgress(ctx, &livekit.RoomCompositeEgressRequest{
+	// 	RoomName: roomName,
+	// 	Output: &livekit.RoomCompositeEgressRequest_File{
+	// 		File: &livekit.EncodedFileOutput{
+	// 			FileType: livekit.EncodedFileType_MP4,
+	// 			Filepath: s3Path,
+	// 		},
+	// 	},
+	// })
+	// if err != nil {
+	// 	return "", fmt.Errorf("starting recording: %w", err)
+	// }
+	//
+	// c.logger.Info("recording started", "room", roomName, "egress_id", info.EgressId)
+	// return info.EgressId, nil
+	return "", fmt.Errorf("live-room recording is disabled")
 }
 
 func (c *Client) StopRecording(ctx context.Context, egressID string) error {

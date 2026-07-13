@@ -665,57 +665,61 @@ func (s *service) List(ctx context.Context, q domain.ListLiveRoomsQuery) ([]doma
 }
 
 func (s *service) StartRecording(ctx context.Context, roomID uuid.UUID) (*domain.LiveRecording, error) {
-	caller, ok := domain.CallerFromCtx(ctx)
-	if !ok {
-		return nil, domain.ErrForbidden
-	}
-	room, _, class, err := s.loadRoomWithClass(ctx, roomID)
-	if err != nil {
-		return nil, err
-	}
-	if !s.canManageRoom(caller, class) {
-		return nil, domain.ErrForbidden
-	}
-	if !caller.HasFeature(domain.FeatureRecording) {
-		return nil, domain.NewFeatureError(caller.Ent.Plan, domain.FeatureRecording)
-	}
-	if room.Status != domain.LiveRoomStatusActive {
-		return nil, domain.NewValidationError(map[string]string{"status": "room must be active to record"})
-	}
+	// Live-room recording (LiveKit egress) is disabled for now — return Forbidden.
+	// The original flow is preserved below (commented) for easy re-enable.
+	return nil, domain.ErrForbidden
 
-	// One active egress per room: a double-start would record (and bill) twice
-	// and orphan the loser, since teardown only stops one active recording.
-	if _, err := s.recordings.FindActiveByRoom(ctx, room.ID); err == nil {
-		return nil, domain.ErrConflict
-	} else if !errors.Is(err, domain.ErrNotFound) {
-		return nil, err
-	}
-
-	// Namespace recording objects per tenant (orgs/{org_id}/…) so a single
-	// bucket isolates each organization's files by key prefix, matching the
-	// media object layout.
-	s3Path := fmt.Sprintf("orgs/%s/recordings/%s/%s.mp4", class.OrganizationID.String(), room.ID.String(), uuid.New().String())
-	// Bound the egress start: if no egress worker is available the LiveKit RPC
-	// blocks until the client gives up, which surfaces to the browser as a 502.
-	// A deadline turns that into a clean, fast error instead.
-	startCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-	defer cancel()
-	egressID, err := s.livekit.StartRecording(startCtx, room.LiveKitRoomName, s3Path)
-	if err != nil {
-		return nil, fmt.Errorf("livesessions.service.StartRecording: %w", err)
-	}
-
-	rec := &domain.LiveRecording{
-		LiveRoomID: room.ID,
-		EgressID:   egressID,
-		Status:     domain.LiveRecordingStatusStarted,
-		FileURL:    s3Path,
-		StartedAt:  time.Now(),
-	}
-	if err := s.recordings.Create(ctx, rec); err != nil {
-		return nil, err
-	}
-	return rec, nil
+	// caller, ok := domain.CallerFromCtx(ctx)
+	// if !ok {
+	// 	return nil, domain.ErrForbidden
+	// }
+	// room, _, class, err := s.loadRoomWithClass(ctx, roomID)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if !s.canManageRoom(caller, class) {
+	// 	return nil, domain.ErrForbidden
+	// }
+	// if !caller.HasFeature(domain.FeatureRecording) {
+	// 	return nil, domain.NewFeatureError(caller.Ent.Plan, domain.FeatureRecording)
+	// }
+	// if room.Status != domain.LiveRoomStatusActive {
+	// 	return nil, domain.NewValidationError(map[string]string{"status": "room must be active to record"})
+	// }
+	//
+	// // One active egress per room: a double-start would record (and bill) twice
+	// // and orphan the loser, since teardown only stops one active recording.
+	// if _, err := s.recordings.FindActiveByRoom(ctx, room.ID); err == nil {
+	// 	return nil, domain.ErrConflict
+	// } else if !errors.Is(err, domain.ErrNotFound) {
+	// 	return nil, err
+	// }
+	//
+	// // Namespace recording objects per tenant (orgs/{org_id}/…) so a single
+	// // bucket isolates each organization's files by key prefix, matching the
+	// // media object layout.
+	// s3Path := fmt.Sprintf("orgs/%s/recordings/%s/%s.mp4", class.OrganizationID.String(), room.ID.String(), uuid.New().String())
+	// // Bound the egress start: if no egress worker is available the LiveKit RPC
+	// // blocks until the client gives up, which surfaces to the browser as a 502.
+	// // A deadline turns that into a clean, fast error instead.
+	// startCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	// defer cancel()
+	// egressID, err := s.livekit.StartRecording(startCtx, room.LiveKitRoomName, s3Path)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("livesessions.service.StartRecording: %w", err)
+	// }
+	//
+	// rec := &domain.LiveRecording{
+	// 	LiveRoomID: room.ID,
+	// 	EgressID:   egressID,
+	// 	Status:     domain.LiveRecordingStatusStarted,
+	// 	FileURL:    s3Path,
+	// 	StartedAt:  time.Now(),
+	// }
+	// if err := s.recordings.Create(ctx, rec); err != nil {
+	// 	return nil, err
+	// }
+	// return rec, nil
 }
 
 func (s *service) StopRecording(ctx context.Context, recordingID uuid.UUID) (*domain.LiveRecording, error) {

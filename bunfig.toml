@@ -1,0 +1,5 @@
+# Supply-chain guard: only install package versions published at least
+# 3 days (259200 seconds) ago. Applies to all deps, including transitive.
+# Mirrors the former pnpm `minimumReleaseAge: 4320` (minutes) setting.
+[install]
+minimumReleaseAge = 259200
