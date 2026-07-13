@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { createFileRoute, Link, redirect } from "@tanstack/react-router"
 import { ArrowRight, CheckCircle2 } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -9,6 +9,7 @@ import { z } from "zod"
 import i18n from "@/i18n"
 
 import { usePostLeads } from "@/api/leads/leads"
+import { currentSlug } from "@/lib/tenant"
 import GridBackground from "@/components/auth/gradient-background"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { Logo } from "@/components/logo"
@@ -30,7 +31,10 @@ const searchSchema = z.object({
     .catch(undefined),
 })
 
-export const Route = createFileRoute("/_guest/get-started")({
+export const Route = createFileRoute("/get-started")({
+  beforeLoad: () => {
+    if (currentSlug() !== "") throw redirect({ to: "/login" })
+  },
   head: () => {
     const title = `${i18n.t("landing.getStarted.title")} — ${i18n.t("common.brandName")}`
     return { meta: [{ title }, { name: "description", content: title }] }
@@ -155,7 +159,7 @@ function GetStartedComponent() {
                   </Field>
 
                   {/* Honeypot — visually removed, off the tab order, hidden from AT. */}
-                  <div aria-hidden className="pointer-events-none absolute -left-[9999px] opacity-0">
+                  <div aria-hidden className="pointer-events-none absolute size-0 overflow-hidden opacity-0">
                     <label>
                       Website
                       <input {...register("website")} type="text" tabIndex={-1} autoComplete="off" />

@@ -9,12 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as GetStartedRouteImport } from './routes/get-started'
 import { Route as GuestRouteImport } from './routes/_guest'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GuestLoginRouteImport } from './routes/_guest/login'
-import { Route as GuestGetStartedRouteImport } from './routes/_guest/get-started'
 import { Route as AuthOrgRouteImport } from './routes/_auth/org'
 import { Route as AuthOrgIndexRouteImport } from './routes/_auth/org/index'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin/index'
@@ -84,6 +84,11 @@ import { Route as AdminAdminClassesClassIdMembersRouteImport } from './routes/_a
 import { Route as AdminAdminClassesClassIdLiveRoomsRouteImport } from './routes/_admin/admin/classes/$classId/live-rooms'
 import { Route as AdminAdminClassesClassIdGradebookRouteImport } from './routes/_admin/admin/classes/$classId/gradebook'
 
+const GetStartedRoute = GetStartedRouteImport.update({
+  id: '/get-started',
+  path: '/get-started',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GuestRoute = GuestRouteImport.update({
   id: '/_guest',
   getParentRoute: () => rootRouteImport,
@@ -104,11 +109,6 @@ const IndexRoute = IndexRouteImport.update({
 const GuestLoginRoute = GuestLoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => GuestRoute,
-} as any)
-const GuestGetStartedRoute = GuestGetStartedRouteImport.update({
-  id: '/get-started',
-  path: '/get-started',
   getParentRoute: () => GuestRoute,
 } as any)
 const AuthOrgRoute = AuthOrgRouteImport.update({
@@ -483,8 +483,8 @@ const AdminAdminClassesClassIdGradebookRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/get-started': typeof GetStartedRoute
   '/org': typeof AuthOrgRouteWithChildren
-  '/get-started': typeof GuestGetStartedRoute
   '/login': typeof GuestLoginRoute
   '/org/conversations': typeof AuthOrgConversationsRouteRouteWithChildren
   '/admin/account': typeof AdminAdminAccountRoute
@@ -556,7 +556,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/get-started': typeof GuestGetStartedRoute
+  '/get-started': typeof GetStartedRoute
   '/login': typeof GuestLoginRoute
   '/admin/account': typeof AdminAdminAccountRoute
   '/admin/dashboard': typeof AdminAdminDashboardRoute
@@ -631,8 +631,8 @@ export interface FileRoutesById {
   '/_admin': typeof AdminRouteWithChildren
   '/_auth': typeof AuthRouteWithChildren
   '/_guest': typeof GuestRouteWithChildren
+  '/get-started': typeof GetStartedRoute
   '/_auth/org': typeof AuthOrgRouteWithChildren
-  '/_guest/get-started': typeof GuestGetStartedRoute
   '/_guest/login': typeof GuestLoginRoute
   '/_auth/org/conversations': typeof AuthOrgConversationsRouteRouteWithChildren
   '/_admin/admin/account': typeof AdminAdminAccountRoute
@@ -706,8 +706,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/org'
     | '/get-started'
+    | '/org'
     | '/login'
     | '/org/conversations'
     | '/admin/account'
@@ -853,8 +853,8 @@ export interface FileRouteTypes {
     | '/_admin'
     | '/_auth'
     | '/_guest'
+    | '/get-started'
     | '/_auth/org'
-    | '/_guest/get-started'
     | '/_guest/login'
     | '/_auth/org/conversations'
     | '/_admin/admin/account'
@@ -930,10 +930,18 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
   GuestRoute: typeof GuestRouteWithChildren
+  GetStartedRoute: typeof GetStartedRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/get-started': {
+      id: '/get-started'
+      path: '/get-started'
+      fullPath: '/get-started'
+      preLoaderRoute: typeof GetStartedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_guest': {
       id: '/_guest'
       path: ''
@@ -967,13 +975,6 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof GuestLoginRouteImport
-      parentRoute: typeof GuestRoute
-    }
-    '/_guest/get-started': {
-      id: '/_guest/get-started'
-      path: '/get-started'
-      fullPath: '/get-started'
-      preLoaderRoute: typeof GuestGetStartedRouteImport
       parentRoute: typeof GuestRoute
     }
     '/_auth/org': {
@@ -1635,12 +1636,10 @@ const AuthRouteChildren: AuthRouteChildren = {
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 interface GuestRouteChildren {
-  GuestGetStartedRoute: typeof GuestGetStartedRoute
   GuestLoginRoute: typeof GuestLoginRoute
 }
 
 const GuestRouteChildren: GuestRouteChildren = {
-  GuestGetStartedRoute: GuestGetStartedRoute,
   GuestLoginRoute: GuestLoginRoute,
 }
 
@@ -1651,6 +1650,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   GuestRoute: GuestRouteWithChildren,
+  GetStartedRoute: GetStartedRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
