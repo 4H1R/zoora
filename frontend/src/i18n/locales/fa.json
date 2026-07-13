@@ -1030,6 +1030,22 @@
         "rubric": "معیارهای تصحیح",
         "modelAnswer": "پاسخ نمونه",
         "suggestionHint": "صرفاً پیشنهادی — بر اساس تطبیق کلیدواژه‌های معیار؛ هرگز به دانش‌آموز نمایش داده نمی‌شود."
+      },
+      "integrity": {
+        "column": "سلامت آزمون",
+        "title": "سلامت آزمون",
+        "advisory": "صرفاً هشدار — پیش از نتیجه‌گیری بررسی کنید.",
+        "clean": "نشانه‌ای ثبت نشد",
+        "tab": "خروج از تب",
+        "tabValue": "{{count}}× · {{seconds}} ثانیه دور",
+        "tabDetail": "‌{{count}} بار از تب آزمون خارج شد، {{seconds}} ثانیه دور بود",
+        "location": "موقعیت",
+        "locationDenied": "اشتراک موقعیت رد شد",
+        "sameLocation": "{{count}} نفر در موقعیت یکسان",
+        "fast": "پاسخ‌های سریع",
+        "fastValue": "{{count}}",
+        "fastDetail": "{{count}} پاسخ سریع‌تر از حد مجاز",
+        "fastAnswer": "خیلی سریع"
       }
     },
     "questionBanks": {

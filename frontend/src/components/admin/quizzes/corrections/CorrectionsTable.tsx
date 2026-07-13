@@ -1,4 +1,7 @@
-import type { GithubCom4H1RZooraInternalDomainQuizSubmission as QuizSubmission } from "@/api/model"
+import type {
+  GithubCom4H1RZooraInternalDomainSubmissionAntiCheatReport as AntiCheatReport,
+  GithubCom4H1RZooraInternalDomainQuizSubmission as QuizSubmission,
+} from "@/api/model"
 import type { ColumnDef, SortingState } from "@tanstack/react-table"
 import type { VariantProps } from "class-variance-authority"
 
@@ -11,9 +14,12 @@ import { TableFilter } from "@/components/data-table/table-filter"
 import { Badge, badgeVariants } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { getEntityColor, getInitials, useAdminTable, useFormatDate } from "@/lib/data-table"
 import { formatScore } from "@/lib/score"
 import { cn } from "@/lib/utils"
+
+import { IntegrityCell } from "./exam-integrity"
 
 function getBadgeVariant(status: string): VariantProps<typeof badgeVariants>["variant"] {
   if (status === "graded") return "default"
@@ -28,6 +34,7 @@ interface CorrectionsTableProps {
   sorting: SortingState
   onGrade: (s: QuizSubmission) => void
   quizMaxScore?: number
+  reports?: Map<string, AntiCheatReport>
 }
 
 export function CorrectionsTable({
@@ -37,6 +44,7 @@ export function CorrectionsTable({
   sorting,
   onGrade,
   quizMaxScore,
+  reports,
 }: CorrectionsTableProps) {
   const { t } = useTranslation()
   const formatDate = useFormatDate()
@@ -95,6 +103,13 @@ export function CorrectionsTable({
       enableSorting: true,
     },
     {
+      id: "integrity",
+      header: t("admin.corrections.integrity.column"),
+      cell: ({ row }) => <IntegrityCell report={reports?.get(row.original.id ?? "")} submission={row.original} />,
+      enableSorting: false,
+      enableHiding: true,
+    },
+    {
       accessorKey: "submitted_at",
       header: t("admin.corrections.submittedAt"),
       cell: ({ row }) => <span className="text-muted-foreground text-xs">{formatDate(row.original.submitted_at)}</span>,
@@ -144,13 +159,15 @@ export function CorrectionsTable({
       />
       <Card className="gap-0 overflow-hidden p-0">
         <div className="overflow-x-auto">
-          <DataTable
-            table={table}
-            isLoading={isLoading}
-            emptyIcon={<CheckSquareIcon className="size-8 opacity-40" />}
-            emptyTitle={t("admin.corrections.noResults")}
-            emptyHint={t("admin.corrections.noResultsHint")}
-          />
+          <TooltipProvider>
+            <DataTable
+              table={table}
+              isLoading={isLoading}
+              emptyIcon={<CheckSquareIcon className="size-8 opacity-40" />}
+              emptyTitle={t("admin.corrections.noResults")}
+              emptyHint={t("admin.corrections.noResultsHint")}
+            />
+          </TooltipProvider>
         </div>
         <DataTablePagination table={table} />
       </Card>

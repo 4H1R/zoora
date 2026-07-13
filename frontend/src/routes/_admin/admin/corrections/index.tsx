@@ -1,4 +1,5 @@
 import type {
+  GithubCom4H1RZooraInternalDomainSubmissionAntiCheatReport as AntiCheatReport,
   GithubCom4H1RZooraInternalDomainQuiz as Quiz,
   GithubCom4H1RZooraInternalDomainQuizSubmission as QuizSubmission,
 } from "@/api/model"
@@ -9,7 +10,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { useGetAdminQuizzes } from "@/api/admin-quizzes/admin-quizzes"
-import { useGetQuizzesIdSubmissions } from "@/api/quizzes/quizzes"
+import { useGetQuizzesIdAntiCheat, useGetQuizzesIdSubmissions } from "@/api/quizzes/quizzes"
 import { ClassPicker } from "@/components/admin/forms/ClassSessionPicker"
 import { CorrectionsTable } from "@/components/admin/quizzes/corrections/CorrectionsTable"
 import { GradeSubmissionDialog } from "@/components/admin/quizzes/corrections/GradeSubmissionDialog"
@@ -17,13 +18,7 @@ import { StatCards } from "@/components/data-table/stat-cards"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { adminHead } from "@/lib/admin-head"
 import { adminSearchSchema } from "@/lib/data-table"
 
@@ -65,6 +60,16 @@ function CorrectionsPage() {
   const subsData = (subsResp?.status === 200 && subsResp.data.data) || undefined
   const submissions = subsData?.items ?? []
   const total = subsData?.total ?? 0
+
+  // Advisory anti-cheat report is per-quiz (all submissions in one call); index
+  // it by submission id so the table and grade dialog can look up their row.
+  const { data: antiCheatResp } = useGetQuizzesIdAntiCheat(quizId ?? "", {
+    query: { enabled: !!quizId },
+  })
+  const antiCheatReports = (antiCheatResp?.status === 200 && antiCheatResp.data.data) || undefined
+  const reportsBySubmission = new Map<string, AntiCheatReport>(
+    (antiCheatReports ?? []).flatMap((r) => (r.submission_id ? [[r.submission_id, r]] : []))
+  )
 
   const selectedQuiz = quizzes.find((q) => q.id === quizId)
   const quizMaxScore = selectedQuiz?.total_score
@@ -129,15 +134,11 @@ function CorrectionsPage() {
       <StatCards stats={statCards} />
       <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.corrections.filter.class")}
-          </label>
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.corrections.filter.class")}</label>
           <ClassPicker value={classId} onChange={handleClassChange} />
         </div>
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.corrections.filter.quiz")}
-          </label>
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.corrections.filter.quiz")}</label>
           <Select
             value={quizId ?? ""}
             onValueChange={(v) => setQuizId(v || undefined)}
@@ -164,9 +165,7 @@ function CorrectionsPage() {
           </Select>
         </div>
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.corrections.filter.status")}
-          </label>
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.corrections.filter.status")}</label>
           <Select value={status ?? "all"} onValueChange={handleStatusChange}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder={t("admin.corrections.filter.allStatuses")}>
@@ -201,13 +200,12 @@ function CorrectionsPage() {
           sorting={sorting}
           onGrade={handleGrade}
           quizMaxScore={quizMaxScore}
+          reports={reportsBySubmission}
         />
       ) : (
         <Card className="text-muted-foreground flex flex-col items-center gap-3 p-8 text-center text-sm">
           <CheckSquareIcon className="size-8 opacity-40" />
-          {classId
-            ? t("admin.corrections.filter.selectQuizFirst")
-            : t("admin.corrections.filter.selectClassFirst")}
+          {classId ? t("admin.corrections.filter.selectQuizFirst") : t("admin.corrections.filter.selectClassFirst")}
         </Card>
       )}
 
@@ -220,6 +218,7 @@ function CorrectionsPage() {
         submission={activeSubmission}
         quizId={quizId}
         quizMaxScore={quizMaxScore}
+        report={activeSubmission?.id ? reportsBySubmission.get(activeSubmission.id) : undefined}
       />
     </div>
   )

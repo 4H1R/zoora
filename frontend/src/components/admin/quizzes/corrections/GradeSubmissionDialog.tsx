@@ -1,4 +1,5 @@
 import type {
+  GithubCom4H1RZooraInternalDomainSubmissionAntiCheatReport as AntiCheatReport,
   GithubCom4H1RZooraInternalDomainGradeAnswerDTO as GradeAnswerDTO,
   GithubCom4H1RZooraInternalDomainQuestion as Question,
   GithubCom4H1RZooraInternalDomainQuestionOption as QuestionOption,
@@ -7,7 +8,7 @@ import type {
 } from "@/api/model"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { CheckCircle2, Circle, Lightbulb, Minus, PenLine, Quote, XCircle } from "lucide-react"
+import { CheckCircle2, Circle, Lightbulb, Minus, PenLine, Quote, XCircle, Zap } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -32,12 +33,15 @@ import { Input } from "@/components/ui/input"
 import { formatScore } from "@/lib/score"
 import { cn } from "@/lib/utils"
 
+import { ExamIntegrityPanel, fastQuestionIds } from "./exam-integrity"
+
 interface GradeSubmissionDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   submission: QuizSubmission | null
   quizId?: string
   quizMaxScore?: number
+  report?: AntiCheatReport
 }
 
 export function GradeSubmissionDialog({
@@ -46,6 +50,7 @@ export function GradeSubmissionDialog({
   submission,
   quizId,
   quizMaxScore,
+  report,
 }: GradeSubmissionDialogProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -98,6 +103,7 @@ export function GradeSubmissionDialog({
   const totalScore = Object.values(scores).reduce((sum, v) => sum + (Number.isFinite(v) ? v : 0), 0)
 
   const answers = submission?.answers ?? []
+  const fastIds = fastQuestionIds(report)
   const gradedCount = answers.filter(
     (a) => a.earned_score != null || (a.question_id ? touched.has(a.question_id) : false)
   ).length
@@ -106,7 +112,7 @@ export function GradeSubmissionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100%-2rem)] gap-0 !max-w-6xl p-0">
+      <DialogContent className="w-[calc(100%-2rem)] !max-w-6xl gap-0 p-0">
         <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle className="flex flex-wrap items-center gap-2">
             <span>{t("admin.corrections.dialog.title")}</span>
@@ -122,7 +128,7 @@ export function GradeSubmissionDialog({
         {/* Always-visible metric bar: running total + grading progress */}
         <div className="bg-muted/40 flex flex-wrap items-end justify-between gap-4 border-y px-6 py-3">
           <div>
-            <div className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+            <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
               {t("admin.corrections.dialog.totalScore")}
             </div>
             <div className="flex items-baseline gap-1">
@@ -136,9 +142,7 @@ export function GradeSubmissionDialog({
           </div>
           <div className="min-w-[12rem] flex-1">
             <div className="mb-1 flex items-center justify-between gap-2 text-xs">
-              <span className="text-muted-foreground font-medium">
-                {t("admin.corrections.dialog.gradingProgress")}
-              </span>
+              <span className="text-muted-foreground font-medium">{t("admin.corrections.dialog.gradingProgress")}</span>
               <span
                 className={cn(
                   "font-medium tabular-nums",
@@ -153,15 +157,14 @@ export function GradeSubmissionDialog({
             </div>
             <div className="bg-border h-2 overflow-hidden rounded-full">
               <div
-                className={cn(
-                  "h-full rounded-full transition-all",
-                  allGraded ? "bg-emerald-500" : "bg-primary"
-                )}
+                className={cn("h-full rounded-full transition-all", allGraded ? "bg-emerald-500" : "bg-primary")}
                 style={{ width: `${progressPct}%` }}
               />
             </div>
           </div>
         </div>
+
+        <ExamIntegrityPanel report={report} submission={submission ?? undefined} />
 
         <div className="max-h-[65vh] space-y-4 overflow-y-auto px-6 py-4">
           {answers.map((answer, idx) => (
@@ -169,6 +172,7 @@ export function GradeSubmissionDialog({
               key={answer.question_id ?? idx}
               index={idx}
               answer={answer}
+              fast={!!answer.question_id && fastIds.has(answer.question_id)}
               score={scores[answer.question_id ?? ""] ?? 0}
               onScoreChange={(v) => {
                 if (!answer.question_id) return
@@ -204,9 +208,10 @@ interface AnswerRowProps {
   answer: SubmissionAnswer
   score: number
   onScoreChange: (v: number) => void
+  fast?: boolean
 }
 
-function AnswerRow({ index, answer, score, onScoreChange }: AnswerRowProps) {
+function AnswerRow({ index, answer, score, onScoreChange, fast }: AnswerRowProps) {
   const { t } = useTranslation()
   const { data, isLoading } = useGetQuestionBanksQuestionsQuestionId(answer.question_id ?? "", {
     query: { enabled: !!answer.question_id },
@@ -224,14 +229,7 @@ function AnswerRow({ index, answer, score, onScoreChange }: AnswerRowProps) {
   const expectedAnswers = options.filter((o) => (o.score ?? 0) > 0)
 
   // Verdict tint for the per-question score input.
-  const scoreState =
-    maxScore <= 0
-      ? "neutral"
-      : score >= maxScore
-        ? "full"
-        : score > 0
-          ? "partial"
-          : "empty"
+  const scoreState = maxScore <= 0 ? "neutral" : score >= maxScore ? "full" : score > 0 ? "partial" : "empty"
 
   return (
     <div className="bg-card rounded-lg border shadow-sm">
@@ -251,18 +249,20 @@ function AnswerRow({ index, answer, score, onScoreChange }: AnswerRowProps) {
               {t("admin.corrections.dialog.secondsShort")}
             </span>
           )}
+          {fast && (
+            <Badge variant="outline" className="border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-300">
+              <Zap className="me-1 size-3" />
+              {t("admin.corrections.integrity.fastAnswer")}
+            </Badge>
+          )}
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-muted-foreground text-xs font-medium">
-            {t("admin.corrections.dialog.score")}
-          </label>
+          <label className="text-muted-foreground text-xs font-medium">{t("admin.corrections.dialog.score")}</label>
           <div
             className={cn(
               "flex items-center gap-1 rounded-md border px-1 ps-2 transition-colors",
-              scoreState === "full" &&
-                "border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-              scoreState === "partial" &&
-                "border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+              scoreState === "full" && "border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+              scoreState === "partial" && "border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-300"
             )}
           >
             <Input
@@ -274,9 +274,7 @@ function AnswerRow({ index, answer, score, onScoreChange }: AnswerRowProps) {
               className="h-8 w-16 border-0 bg-transparent px-0 text-end text-sm font-semibold tabular-nums shadow-none focus-visible:ring-0"
             />
             {maxScore > 0 && (
-              <span className="text-muted-foreground text-xs tabular-nums">
-                / {formatScore(maxScore)}
-              </span>
+              <span className="text-muted-foreground text-xs tabular-nums">/ {formatScore(maxScore)}</span>
             )}
           </div>
         </div>
@@ -284,7 +282,7 @@ function AnswerRow({ index, answer, score, onScoreChange }: AnswerRowProps) {
 
       <div className="space-y-4 p-4">
         <section>
-          <div className="text-muted-foreground mb-1.5 text-xs font-medium uppercase tracking-wide">
+          <div className="text-muted-foreground mb-1.5 text-xs font-medium tracking-wide uppercase">
             {t("admin.questions.title")}
           </div>
           <div className="text-sm break-words whitespace-pre-wrap">
@@ -293,9 +291,7 @@ function AnswerRow({ index, answer, score, onScoreChange }: AnswerRowProps) {
             ) : question?.text ? (
               question.text
             ) : (
-              <span className="text-muted-foreground">
-                {t("admin.corrections.dialog.questionMissing")}
-              </span>
+              <span className="text-muted-foreground">{t("admin.corrections.dialog.questionMissing")}</span>
             )}
           </div>
         </section>
@@ -303,7 +299,7 @@ function AnswerRow({ index, answer, score, onScoreChange }: AnswerRowProps) {
         {isChoice ? (
           <section>
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <div className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 {t("admin.corrections.dialog.options")}
               </div>
               <OptionLegend />
@@ -316,11 +312,7 @@ function AnswerRow({ index, answer, score, onScoreChange }: AnswerRowProps) {
           </section>
         ) : (
           <>
-            <StudentAnswer
-              value={answer.value}
-              type={questionType}
-              expected={expectedAnswers}
-            />
+            <StudentAnswer value={answer.value} type={questionType} expected={expectedAnswers} />
             {questionType === "descriptive" && (
               <DescriptiveInsights
                 answer={answer}
@@ -361,7 +353,7 @@ function DescriptiveInsights({
     <section className="space-y-3">
       {rubric.length > 0 && (
         <div>
-          <div className="text-muted-foreground mb-1.5 text-xs font-medium uppercase tracking-wide">
+          <div className="text-muted-foreground mb-1.5 text-xs font-medium tracking-wide uppercase">
             {t("admin.corrections.dialog.rubric")}
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -389,7 +381,7 @@ function DescriptiveInsights({
 
       {!!modelAnswer && (
         <div>
-          <div className="text-muted-foreground mb-1.5 text-xs font-medium uppercase tracking-wide">
+          <div className="text-muted-foreground mb-1.5 text-xs font-medium tracking-wide uppercase">
             {t("admin.corrections.dialog.modelAnswer")}
           </div>
           <div className="text-muted-foreground bg-muted/30 max-h-40 overflow-y-auto rounded-md border px-3.5 py-2.5 text-sm leading-relaxed break-words whitespace-pre-wrap">
@@ -417,34 +409,19 @@ function DescriptiveInsights({
               )}
             </div>
             {hasSuggestion && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => onApply(answer.suggested_score ?? 0)}
-              >
+              <Button type="button" variant="outline" size="sm" onClick={() => onApply(answer.suggested_score ?? 0)}>
                 {t("admin.corrections.dialog.applySuggestion")}
               </Button>
             )}
           </div>
-          <p className="text-muted-foreground mt-1 text-xs">
-            {t("admin.corrections.dialog.suggestionHint")}
-          </p>
+          <p className="text-muted-foreground mt-1 text-xs">{t("admin.corrections.dialog.suggestionHint")}</p>
         </div>
       )}
     </section>
   )
 }
 
-function StudentAnswer({
-  value,
-  type,
-  expected,
-}: {
-  value?: string
-  type?: string
-  expected: QuestionOption[]
-}) {
+function StudentAnswer({ value, type, expected }: { value?: string; type?: string; expected: QuestionOption[] }) {
   const { t } = useTranslation()
   const hasAnswer = !!value && value.trim().length > 0
   const isDescriptive = type === "descriptive"
@@ -453,14 +430,14 @@ function StudentAnswer({
   return (
     <section className="space-y-3">
       <div>
-        <div className="text-muted-foreground mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide">
+        <div className="text-muted-foreground mb-1.5 flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase">
           <Icon className="size-3.5" />
           {t("admin.corrections.dialog.answer")}
         </div>
         {hasAnswer ? (
           <div
             className={cn(
-              "border-s-4 border-s-primary/50 bg-muted/40 rounded-md border px-3.5 py-2.5 break-words whitespace-pre-wrap",
+              "border-s-primary/50 bg-muted/40 rounded-md border border-s-4 px-3.5 py-2.5 break-words whitespace-pre-wrap",
               isDescriptive ? "max-h-72 overflow-y-auto text-sm leading-relaxed" : "text-base font-medium"
             )}
           >
@@ -476,7 +453,7 @@ function StudentAnswer({
       {/* Reference for the grader — accepted answers set on the question (short answer only). */}
       {!isDescriptive && expected.length > 0 && (
         <div>
-          <div className="text-muted-foreground mb-1.5 text-xs font-medium uppercase tracking-wide">
+          <div className="text-muted-foreground mb-1.5 text-xs font-medium tracking-wide uppercase">
             {t("admin.corrections.dialog.expectedAnswer")}
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -513,10 +490,10 @@ function OptionRow({ option, chosen }: { option: QuestionOption; chosen: boolean
         "flex items-start gap-2.5 rounded-md border px-2.5 py-2 text-sm transition-colors",
         // Signal A — correctness (answer key): green start-accent + tint on every correct option.
         isCorrect
-          ? "border-s-4 border-s-emerald-500 border-emerald-500/30 bg-emerald-500/5"
+          ? "border-s-4 border-emerald-500/30 border-s-emerald-500 bg-emerald-500/5"
           : chosen
             ? // wrong + chosen: flag the mistake in red.
-              "border-s-4 border-s-destructive border-destructive/30 bg-destructive/5"
+              "border-s-destructive border-destructive/30 bg-destructive/5 border-s-4"
             : "border-border"
       )}
     >
@@ -534,11 +511,7 @@ function OptionRow({ option, chosen }: { option: QuestionOption; chosen: boolean
         <span
           className={cn(
             "break-words",
-            isCorrect
-              ? "text-emerald-800 dark:text-emerald-200"
-              : chosen
-                ? "text-destructive"
-                : "text-foreground"
+            isCorrect ? "text-emerald-800 dark:text-emerald-200" : chosen ? "text-destructive" : "text-foreground"
           )}
         >
           {option.value}
@@ -551,9 +524,7 @@ function OptionRow({ option, chosen }: { option: QuestionOption; chosen: boolean
             className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
           >
             {t("admin.corrections.dialog.correctAnswer")}
-            {(option.score ?? 0) !== 0 && (
-              <span className="ms-1 tabular-nums opacity-80">+{option.score}</span>
-            )}
+            {(option.score ?? 0) !== 0 && <span className="ms-1 tabular-nums opacity-80">+{option.score}</span>}
           </Badge>
         )}
 

@@ -1030,6 +1030,22 @@
         "rubric": "Rubric",
         "modelAnswer": "Model answer",
         "suggestionHint": "Advisory only — computed from rubric keyword matching, never shown to students."
+      },
+      "integrity": {
+        "column": "Integrity",
+        "title": "Exam integrity",
+        "advisory": "Advisory only — review before drawing conclusions.",
+        "clean": "No integrity signals",
+        "tab": "Tab focus",
+        "tabValue": "{{count}}× · {{seconds}}s away",
+        "tabDetail": "Left the exam tab {{count}}×, {{seconds}}s away",
+        "location": "Location",
+        "locationDenied": "Location sharing denied",
+        "sameLocation": "{{count}} at same location",
+        "fast": "Fast answers",
+        "fastValue": "{{count}}",
+        "fastDetail": "{{count}} answered faster than allowed",
+        "fastAnswer": "Too fast"
       }
     },
     "questionBanks": {
