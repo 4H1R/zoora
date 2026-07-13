@@ -139,18 +139,14 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
 
   return (
     <section className="flex flex-col gap-5">
-      <div className="flex items-end justify-between gap-4">
-        <div className="flex flex-col gap-1.5">
-          <Eyebrow>{t("org.class.gradebook.eyebrow")}</Eyebrow>
-          <h2 className="text-2xl font-semibold tracking-tight">{t("org.class.gradebook.title")}</h2>
-        </div>
-        {canManage && (
+      {canManage && (
+        <div className="flex justify-end">
           <Button onClick={openCreate}>
             <PlusIcon className="size-4" />
             {t("org.class.gradebook.newColumn")}
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       <section className="bg-card ring-foreground/10 grid grid-cols-2 divide-x divide-dashed overflow-hidden rounded-2xl ring-1 rtl:divide-x-reverse">
         <div className="flex flex-col gap-2 px-5 py-5">
@@ -181,18 +177,17 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="bg-card sticky start-0 z-10 min-w-56">
+                  <TableHead className="bg-card sticky start-0 z-10 min-w-36 border-e sm:min-w-56">
                     {t("org.class.gradebook.student")}
                   </TableHead>
                   {columns.map((col) => (
-                    <TableHead key={col.id} className="min-w-40">
+                    <TableHead key={col.id} className="min-w-28 sm:min-w-36">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex min-w-0 flex-col gap-1">
-                          <span className="truncate text-sm font-medium">
-                            {col.title}
+                          <span className="flex items-baseline gap-1 text-sm font-medium">
+                            <span className="truncate">{col.title}</span>
                             {col.max_score != null && (
-                              <span dir="ltr" className="text-muted-foreground font-normal tabular-nums">
-                                {" "}
+                              <span dir="ltr" className="text-muted-foreground shrink-0 font-normal tabular-nums">
                                 / {col.max_score}
                               </span>
                             )}
@@ -249,17 +244,17 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
               <TableBody>
                 {rows.map((row) => (
                   <TableRow key={row.student_id}>
-                    <TableCell className="bg-card sticky start-0 z-10">
-                      <div className="flex items-center gap-3">
+                    <TableCell className="bg-card sticky start-0 z-10 border-e">
+                      <div className="flex items-center gap-2 sm:gap-3">
                         <div
                           className={cn(
-                            "flex size-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold text-white",
+                            "hidden size-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold text-white sm:flex",
                             getEntityColor(row.student?.name ?? row.student_id ?? "")
                           )}
                         >
                           {getInitials(row.student?.name ?? row.student_id ?? "")}
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 max-w-28 sm:max-w-44">
                           <div className="truncate text-sm font-medium">{row.student?.name ?? "—"}</div>
                           {row.student?.username && (
                             <div className="text-muted-foreground truncate text-xs">
@@ -278,7 +273,7 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
                           key={col.id}
                           className={cn(
                             "text-sm",
-                            editable && "hover:bg-muted/50 cursor-pointer transition-colors"
+                            editable && "hover:bg-muted/50 active:bg-muted/50 cursor-pointer transition-colors"
                           )}
                           onClick={() => handleCellClick(col, row)}
                         >
@@ -290,6 +285,10 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
                             ) : (
                               <span className="font-medium">{value}</span>
                             )
+                          ) : editable ? (
+                            <span className="text-muted-foreground border-muted-foreground/40 border-b border-dashed pb-0.5">
+                              —
+                            </span>
                           ) : (
                             <span className="text-muted-foreground">—</span>
                           )}

@@ -25,11 +25,9 @@ function RouteComponent() {
 
   if (!allowed) return null
 
-  const shortId = (cls?.id ?? "").slice(0, 8).toUpperCase()
-
   return (
     <div className="relative isolate flex flex-col gap-8 pb-16">
-      <div className="flex items-center justify-between pt-6">
+      <div className="flex items-center pt-6">
         <Link
           to="/org/classes/$classId"
           params={{ classId }}
@@ -38,19 +36,13 @@ function RouteComponent() {
           <ArrowLeftIcon className="size-3.5" />
           {t("org.class.gradebook.backToClass")}
         </Link>
-        <span className="text-muted-foreground font-mono text-xs tracking-[0.25em]">
-          № {shortId || "—"}
-        </span>
       </div>
 
       <header className="flex flex-col gap-3">
-        <Eyebrow>{cls?.name ?? t("org.class.gradebook.eyebrow")}</Eyebrow>
+        <Eyebrow>{t("org.class.gradebook.title")}</Eyebrow>
         <h1 className="max-w-4xl text-3xl leading-tight font-semibold tracking-tight text-balance md:text-4xl">
-          {t("org.class.gradebook.title")}
+          {cls?.name ?? "—"}
         </h1>
-        <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed">
-          {t("org.class.gradebook.subtitle")}
-        </p>
       </header>
 
       <OrgGradebookView classId={classId} cls={cls} />

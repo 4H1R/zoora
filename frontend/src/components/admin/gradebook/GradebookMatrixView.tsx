@@ -155,11 +155,10 @@ export function GradebookMatrixView({ classId }: GradebookMatrixViewProps) {
                     <TableHead key={col.id} className="min-w-28 sm:min-w-36">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex min-w-0 flex-col gap-1">
-                          <span className="truncate text-sm font-medium">
-                            {col.title}
+                          <span className="flex items-baseline gap-1 text-sm font-medium">
+                            <span className="truncate">{col.title}</span>
                             {col.max_score != null && (
-                              <span dir="ltr" className="text-muted-foreground font-normal tabular-nums">
-                                {" "}
+                              <span dir="ltr" className="text-muted-foreground shrink-0 font-normal tabular-nums">
                                 / {col.max_score}
                               </span>
                             )}

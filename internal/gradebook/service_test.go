@@ -279,6 +279,7 @@ func (d deps) service() domain.GradebookService {
 	return gradebook.NewService(
 		d.colRepo, d.cellRepo, d.classRepo, d.memberRepo,
 		d.attendanceRepo, d.practiceRepo, d.quizSubRepo,
+		nil, nil,
 		authz.NewResolver(d.memberRepo),
 		slog.Default(),
 	)

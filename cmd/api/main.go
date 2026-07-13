@@ -450,6 +450,7 @@ func main() {
 		gradebookColRepo, gradebookCellRepo,
 		classRepo, classMemberRepo,
 		attendanceRepo, practiceSubRepo, quizSubmissionRepo,
+		quizRepo, practiceRoomRepo,
 		authzResolver, log,
 	)
 	gradebookHandler := gradebook.NewHandler(gradebookService)

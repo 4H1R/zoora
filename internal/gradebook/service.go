@@ -25,11 +25,13 @@ type service struct {
 	cells        domain.GradebookCellRepository
 	classes      domain.ClassRepository
 	members      domain.ClassMemberRepository
-	attendance   domain.AttendanceRepository
-	practiceSubs domain.PracticeSubmissionRepository
-	quizSubs     domain.QuizSubmissionRepository
-	resolver     *authz.Resolver
-	logger       *slog.Logger
+	attendance    domain.AttendanceRepository
+	practiceSubs  domain.PracticeSubmissionRepository
+	quizSubs      domain.QuizSubmissionRepository
+	quizzes       domain.QuizRepository
+	practiceRooms domain.PracticeRoomRepository
+	resolver      *authz.Resolver
+	logger        *slog.Logger
 }
 
 func NewService(
@@ -40,19 +42,23 @@ func NewService(
 	attendance domain.AttendanceRepository,
 	practiceSubs domain.PracticeSubmissionRepository,
 	quizSubs domain.QuizSubmissionRepository,
+	quizzes domain.QuizRepository,
+	practiceRooms domain.PracticeRoomRepository,
 	resolver *authz.Resolver,
 	logger *slog.Logger,
 ) domain.GradebookService {
 	return &service{
-		columns:      columns,
-		cells:        cells,
-		classes:      classes,
-		members:      members,
-		attendance:   attendance,
-		practiceSubs: practiceSubs,
-		quizSubs:     quizSubs,
-		resolver:     resolver,
-		logger:       logger,
+		columns:       columns,
+		cells:         cells,
+		classes:       classes,
+		members:       members,
+		attendance:    attendance,
+		practiceSubs:  practiceSubs,
+		quizSubs:      quizSubs,
+		quizzes:       quizzes,
+		practiceRooms: practiceRooms,
+		resolver:      resolver,
+		logger:        logger,
 	}
 }
 
@@ -249,6 +255,12 @@ func (s *service) buildMatrix(ctx context.Context, caller domain.Caller, class *
 		return nil, err
 	}
 
+	// Auto columns without an explicit max inherit it from their source: the
+	// quiz's total possible score or the practice room's max score.
+	for i := range columns {
+		s.deriveMaxScore(ctx, &columns[i])
+	}
+
 	members, err := s.members.ListAllByClass(ctx, classID)
 	if err != nil {
 		return nil, err
@@ -384,6 +396,45 @@ func (s *service) GetMine(ctx context.Context) (*domain.MyGradebook, error) {
 		})
 	}
 	return out, nil
+}
+
+// deriveMaxScore fills in MaxScore for auto columns that lack an explicit one,
+// using the source quiz's total score or practice room's max score. Lookup
+// failures are logged and skipped so a broken source never hides the grades.
+func (s *service) deriveMaxScore(ctx context.Context, col *domain.GradebookColumn) {
+	if col.MaxScore != nil || col.SourceID == nil {
+		return
+	}
+	switch col.Type {
+	case domain.GradebookColumnAutoQuiz:
+		if s.quizzes == nil {
+			return
+		}
+		quiz, err := s.quizzes.FindByID(ctx, *col.SourceID)
+		if err != nil {
+			s.logger.Warn("failed to fetch quiz for gradebook column max score",
+				"column_id", col.ID.String(), "quiz_id", col.SourceID.String(), "error", err)
+			return
+		}
+		if quiz.TotalScore > 0 {
+			max := quiz.TotalScore
+			col.MaxScore = &max
+		}
+	case domain.GradebookColumnAutoPractice:
+		if s.practiceRooms == nil {
+			return
+		}
+		room, err := s.practiceRooms.FindByID(ctx, *col.SourceID)
+		if err != nil {
+			s.logger.Warn("failed to fetch practice room for gradebook column max score",
+				"column_id", col.ID.String(), "room_id", col.SourceID.String(), "error", err)
+			return
+		}
+		if room.MaxScore > 0 {
+			max := room.MaxScore
+			col.MaxScore = &max
+		}
+	}
 }
 
 func (s *service) fetchAutoData(ctx context.Context, col domain.GradebookColumn) (map[uuid.UUID]string, error) {
