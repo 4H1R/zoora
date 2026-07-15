@@ -16,6 +16,7 @@ export interface GithubCom4H1RZooraInternalDomainCreateQuizDTO {
   negative_mark_mode?: GithubCom4H1RZooraInternalDomainNegativeMarkMode;
   negative_value?: number;
   no_back_navigation?: boolean;
+  render_as_image?: boolean;
   require_gps?: boolean;
   show_results?: boolean;
   shuffle_options?: boolean;

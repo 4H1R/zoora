@@ -80,7 +80,7 @@ func (s *service) ListQuestionsForTaking(ctx context.Context, quizID uuid.UUID) 
 		if _, done := answered[sq.QuestionID]; done {
 			continue
 		}
-		sanitized := sanitizeQuestionForTaking(q)
+		sanitized := sanitizeQuestionForTaking(q, quiz.RenderAsImage)
 		if sanitized.Type == domain.QuestionTypeChoice {
 			if cfg := cfgFor(&q); cfg.Mode != domain.NegativeMarkNone {
 				sanitized.NegativeConfig = &cfg
@@ -154,7 +154,7 @@ func (s *service) listQuestionsComposed(ctx context.Context, quiz *domain.Quiz) 
 				continue
 			}
 			seen[picked[i].ID] = struct{}{}
-			sanitized := sanitizeQuestionForTaking(picked[i])
+			sanitized := sanitizeQuestionForTaking(picked[i], quiz.RenderAsImage)
 			if sanitized.Type == domain.QuestionTypeChoice {
 				var ovPtr *domain.QuizQuestionNegativeOverride
 				if ov, ok := ovByQ[picked[i].ID]; ok {
@@ -242,10 +242,16 @@ func (s *service) buildQuestionSet(ctx context.Context, quiz *domain.Quiz, submi
 				continue
 			}
 			seen[q.ID] = struct{}{}
-			// Anti-cheat image questions must be fully rendered before an exam can
-			// start, else a student could be served a question with no readable
-			// content. Renders complete in seconds; the client should retry.
-			if q.RenderAsImage && q.ImageRenderStatus != domain.ImageRenderStatusReady {
+			// When the quiz renders as image, every question it draws must be fully
+			// rendered before an exam can start, else a student could be served a
+			// question with no readable content. Renders complete in seconds; the
+			// client should retry. Safety net: a question added to a bank after the
+			// quiz was saved may still be 'none' — enqueue it here so the retry
+			// succeeds without the teacher re-saving.
+			if quiz.RenderAsImage && q.ImageRenderStatus != domain.ImageRenderStatusReady {
+				if q.ImageRenderStatus == domain.ImageRenderStatusNone {
+					s.enqueueQuestionRender(ctx, q.ID)
+				}
 				return nil, domain.NewValidationError(map[string]string{
 					"images": "exam images are still being prepared, please try again in a moment",
 				})
@@ -330,20 +336,24 @@ func (s *service) pickQuestionsForRule(ctx context.Context, r domain.QuizRule) (
 // options keep id+value but lose score; short_answer/descriptive lose options
 // entirely because their options hold correct answers.
 //
-// When the question is in anti-cheat image mode (RenderAsImage), the raw body
-// text and every option value are blanked so they never reach the client — the
-// caller renders the SystemImageMediaID images instead. Option ids are kept so
+// When imageMode is on (the quiz's RenderAsImage flag), the raw body text and
+// every option value are blanked so they never reach the client — the caller
+// renders the SystemImageMediaID images instead. Option ids are kept so
 // answering and grading are unaffected.
-func sanitizeQuestionForTaking(q domain.Question) domain.Question {
-	imageMode := q.RenderAsImage
+//
+// When imageMode is off, the server-rendered image ids are stripped: a question
+// may carry cached system images from another (image-mode) quiz, but this quiz
+// shows text, so the ids must not leak to the client.
+func sanitizeQuestionForTaking(q domain.Question, imageMode bool) domain.Question {
 	switch q.Type {
 	case domain.QuestionTypeChoice:
 		multi := q.IsMultiSelect()
 		opts := make([]domain.QuestionOption, len(q.Options))
 		for i, o := range q.Options {
-			no := domain.QuestionOption{ID: o.ID, Value: o.Value, ImageMediaID: o.ImageMediaID, SystemImageMediaID: o.SystemImageMediaID}
+			no := domain.QuestionOption{ID: o.ID, Value: o.Value, ImageMediaID: o.ImageMediaID}
 			if imageMode {
 				no.Value = ""
+				no.SystemImageMediaID = o.SystemImageMediaID
 			}
 			opts[i] = no
 		}
@@ -352,7 +362,9 @@ func sanitizeQuestionForTaking(q domain.Question) domain.Question {
 	case domain.QuestionTypeShortAnswer, domain.QuestionTypeDescriptive:
 		q.Options = []domain.QuestionOption{}
 	}
-	if imageMode {
+	if !imageMode {
+		q.SystemImageMediaID = nil
+	} else {
 		q.Text = ""
 	}
 	q.ModelAnswer = ""

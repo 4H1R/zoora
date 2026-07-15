@@ -10,6 +10,7 @@ import {
   ClipboardX,
   Dices,
   Eye,
+  ImageIcon,
   Lock,
   MapPin,
   MousePointerClick,
@@ -133,6 +134,7 @@ export interface AntiCheatValues {
   disable_copy_paste: boolean
   disable_right_click_shortcuts: boolean
   show_results: boolean
+  render_as_image: boolean
 }
 
 export type AntiCheatKey = keyof AntiCheatValues
@@ -147,6 +149,7 @@ export const antiCheatSchemaShape = {
   disable_copy_paste: z.boolean(),
   disable_right_click_shortcuts: z.boolean(),
   show_results: z.boolean(),
+  render_as_image: z.boolean(),
 }
 
 /** All anti-cheat toggles off — the default state for a new quiz. */
@@ -159,6 +162,7 @@ export const antiCheatDefaults: AntiCheatValues = {
   disable_copy_paste: false,
   disable_right_click_shortcuts: false,
   show_results: false,
+  render_as_image: false,
 }
 
 /** Pulls the anti-cheat subset out of a quiz object, defaulting missing flags to false. */
@@ -174,6 +178,7 @@ export function antiCheatFromQuiz(
     disable_copy_paste: quiz.disable_copy_paste ?? false,
     disable_right_click_shortcuts: quiz.disable_right_click_shortcuts ?? false,
     show_results: quiz.show_results ?? false,
+    render_as_image: quiz.render_as_image ?? false,
   }
 }
 
@@ -208,6 +213,10 @@ const ANTI_CHEAT_GROUPS: { id: string; toggles: AntiCheatToggle[] }[] = [
     ],
   },
   {
+    id: "contentProtection",
+    toggles: [{ key: "render_as_image", icon: <ImageIcon /> }],
+  },
+  {
     id: "results",
     toggles: [{ key: "show_results", icon: <Trophy /> }],
   },
@@ -223,6 +232,7 @@ const TOGGLE_I18N: Record<AntiCheatKey, string> = {
   disable_copy_paste: "disableCopyPaste",
   disable_right_click_shortcuts: "disableRightClickShortcuts",
   show_results: "showResults",
+  render_as_image: "renderAsImage",
 }
 
 interface QuizFlagsFieldsProps {

@@ -190,7 +190,7 @@ func main() {
 	userService := users.NewService(userRepo, roleRepo, entitlementService, redisClient, sessionManager, log)
 	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, queueClient, log)
 	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, queueClient, log)
-	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, log)
+	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, queueClient, log)
 	transactor := database.NewTransactor(db)
 
 	leadRepo := leads.NewRepository(db)

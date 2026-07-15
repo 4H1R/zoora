@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { GithubCom4H1RZooraInternalDomainClass } from './githubCom4H1RZooraInternalDomainClass';
+import type { GithubCom4H1RZooraInternalDomainImageRenderStatus } from './githubCom4H1RZooraInternalDomainImageRenderStatus';
 import type { GithubCom4H1RZooraInternalDomainNegativeMarkMode } from './githubCom4H1RZooraInternalDomainNegativeMarkMode';
 import type { GithubCom4H1RZooraInternalDomainUser } from './githubCom4H1RZooraInternalDomainUser';
 
@@ -19,6 +20,13 @@ export interface GithubCom4H1RZooraInternalDomainQuiz {
   duration_minutes?: number;
   id?: string;
   /**
+     * ImageRenderStatus is a transient, computed aggregate of the render status
+     * across the quiz's candidate questions (none/pending/ready/failed). Never
+     * persisted — the take gate and authoring UI use it to know when images are
+     * ready. Only populated on reads that resolve the question set.
+     */
+  image_render_status?: GithubCom4H1RZooraInternalDomainImageRenderStatus;
+  /**
      * Quiz-wide negative-marking override (Layer 2b). Fills gaps for questions
      * (manual and random) lacking their own setting.
      */
@@ -26,6 +34,15 @@ export interface GithubCom4H1RZooraInternalDomainQuiz {
   negative_value?: number;
   no_back_navigation?: boolean;
   organization_id?: string;
+  /**
+     * RenderAsImage turns on anti-cheat image rendering for the whole quiz: every
+     * question the quiz can draw (manual rules' explicit questions plus every
+     * question in a random rule's bank) is rendered to distorted PNGs by the
+     * worker, and the take endpoint withholds the raw text so students see only
+     * the images. Rendered images are cached per-question (Question
+     * .ImageRenderStatus / .SystemImageMediaID) and reused across quizzes.
+     */
+  render_as_image?: boolean;
   require_gps?: boolean;
   /**
      * ShowResults opts the quiz into revealing each student's score and earned

@@ -3,6 +3,7 @@ package questionbanks
 import (
 	"context"
 	"log/slog"
+	"sync"
 	"testing"
 
 	"github.com/google/uuid"
@@ -14,14 +15,21 @@ import (
 // --- fakes (internal test package: define our own, service_test.go's mocks live
 // in the external questionbanks_test package and aren't visible here) ---
 
-type fakeStorage struct{ puts, deletes int }
+type fakeStorage struct {
+	mu            sync.Mutex
+	puts, deletes int
+}
 
 func (f *fakeStorage) PutObject(_ context.Context, _ string, _ []byte, _ string) error {
+	f.mu.Lock()
 	f.puts++
+	f.mu.Unlock()
 	return nil
 }
 func (f *fakeStorage) DeleteObject(_ context.Context, _ string) error {
+	f.mu.Lock()
 	f.deletes++
+	f.mu.Unlock()
 	return nil
 }
 
@@ -58,6 +66,7 @@ func (f *fakeQuestions) AdminList(_ context.Context, _ domain.AdminListQuestions
 }
 
 type fakeMedia struct {
+	mu           sync.Mutex
 	byCollection map[string][]domain.Media
 	deleted      []uuid.UUID
 }
@@ -70,7 +79,9 @@ func (f *fakeMedia) FindByID(_ context.Context, _ uuid.UUID) (*domain.Media, err
 	return nil, domain.ErrNotFound
 }
 func (f *fakeMedia) Delete(_ context.Context, id uuid.UUID) error {
+	f.mu.Lock()
 	f.deleted = append(f.deleted, id)
+	f.mu.Unlock()
 	return nil
 }
 func (f *fakeMedia) ListByModel(_ context.Context, _ string, _ uuid.UUID, collection string) ([]domain.Media, error) {
@@ -89,7 +100,6 @@ func TestImageRenderer_RendersBodyAndChoiceOptions(t *testing.T) {
 		OrganizationID:    uuid.New(),
 		Type:              domain.QuestionTypeChoice,
 		Text:              "پایتخت ایران کجاست؟",
-		RenderAsImage:     true,
 		ImageRenderStatus: domain.ImageRenderStatusPending,
 		Options: []domain.QuestionOption{
 			{ID: "a", Value: "تهران", Score: 1},
@@ -110,13 +120,50 @@ func TestImageRenderer_RendersBodyAndChoiceOptions(t *testing.T) {
 	assert.Equal(t, 3, st.puts, "body + two non-empty options")
 }
 
-func TestImageRenderer_DisabledPurgesAndClears(t *testing.T) {
+// TestImageRenderer_SkipsWhenContentUnchanged verifies a re-enqueue for a
+// question that is already 'ready' with matching content hash does no work.
+func TestImageRenderer_SkipsWhenContentUnchanged(t *testing.T) {
+	existing := uuid.New()
+	q := &domain.Question{
+		ID:                 uuid.New(),
+		OrganizationID:     uuid.New(),
+		Type:               domain.QuestionTypeChoice,
+		Text:               "پایتخت ایران کجاست؟",
+		ImageRenderStatus:  domain.ImageRenderStatusReady,
+		SystemImageMediaID: &existing,
+		Options: []domain.QuestionOption{
+			{ID: "a", Value: "تهران", Score: 1},
+		},
+	}
+	q.SystemImageContentHash = renderContentHash(q)
+	st := &fakeStorage{}
+	media := &fakeMedia{}
+	r := &ImageRenderer{questions: &fakeQuestions{q: q}, media: media, storage: st, logger: slog.Default()}
+
+	assert.NoError(t, r.Render(context.Background(), q.ID))
+	assert.Equal(t, 0, st.puts, "unchanged content should not re-render")
+	assert.Equal(t, 0, st.deletes, "unchanged content should not purge")
+	assert.Empty(t, media.deleted)
+	assert.Equal(t, domain.ImageRenderStatusReady, q.ImageRenderStatus)
+
+	// Editing the text changes the hash → a render happens.
+	q.Text = "changed"
+	assert.NoError(t, r.Render(context.Background(), q.ID))
+	assert.Greater(t, st.puts, 0, "changed content must re-render")
+}
+
+// TestImageRenderer_PurgesStaleBeforeRerender verifies the renderer drops any
+// previously generated media before re-rendering (idempotency on re-save).
+func TestImageRenderer_PurgesStaleBeforeRerender(t *testing.T) {
 	q := &domain.Question{
 		ID:                uuid.New(),
 		OrganizationID:    uuid.New(),
 		Type:              domain.QuestionTypeChoice,
-		RenderAsImage:     false, // toggled off
-		ImageRenderStatus: domain.ImageRenderStatusReady,
+		Text:              "پایتخت ایران کجاست؟",
+		ImageRenderStatus: domain.ImageRenderStatusPending,
+		Options: []domain.QuestionOption{
+			{ID: "a", Value: "تهران", Score: 1},
+		},
 	}
 	stale := domain.Media{ID: uuid.New(), ModelType: domain.QuestionMediaModelType, ModelID: q.ID, CollectionName: domain.QuestionSystemPhotosCollection, FileName: "body.png"}
 	media := &fakeMedia{byCollection: map[string][]domain.Media{
@@ -126,9 +173,7 @@ func TestImageRenderer_DisabledPurgesAndClears(t *testing.T) {
 	r := &ImageRenderer{questions: &fakeQuestions{q: q}, media: media, storage: st, logger: slog.Default()}
 
 	assert.NoError(t, r.Render(context.Background(), q.ID))
-	assert.Equal(t, domain.ImageRenderStatusNone, q.ImageRenderStatus)
-	assert.Nil(t, q.SystemImageMediaID)
-	assert.Equal(t, []uuid.UUID{stale.ID}, media.deleted, "stale row purged")
+	assert.Equal(t, domain.ImageRenderStatusReady, q.ImageRenderStatus)
+	assert.Equal(t, []uuid.UUID{stale.ID}, media.deleted, "stale row purged before re-render")
 	assert.Equal(t, 1, st.deletes, "stale object purged from storage")
-	assert.Equal(t, 0, st.puts, "nothing rendered when disabled")
 }

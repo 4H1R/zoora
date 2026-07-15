@@ -2,6 +2,7 @@ package quizzes
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -9,8 +10,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 
 	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/platform/queue"
 )
 
 type service struct {
@@ -21,6 +24,7 @@ type service struct {
 	questions   domain.QuestionRepository
 	classes     domain.ClassRepository
 	members     domain.ClassMemberRepository
+	queue       *queue.Client
 	logger      *slog.Logger
 }
 
@@ -32,6 +36,7 @@ func NewService(
 	questions domain.QuestionRepository,
 	classes domain.ClassRepository,
 	members domain.ClassMemberRepository,
+	queueClient *queue.Client,
 	logger *slog.Logger,
 ) domain.QuizService {
 	return &service{
@@ -42,8 +47,134 @@ func NewService(
 		questions:   questions,
 		classes:     classes,
 		members:     members,
+		queue:       queueClient,
 		logger:      logger,
 	}
+}
+
+// enqueueQuestionRender schedules anti-cheat image rendering for a single
+// question, mirroring questionbanks' enqueue: media queue, question-scoped
+// TaskID so repeat enqueues coalesce onto one pending task. Best-effort — a
+// failure is logged, not surfaced; the take gate catches not-ready questions.
+func (s *service) enqueueQuestionRender(ctx context.Context, questionID uuid.UUID) {
+	if s.queue == nil {
+		return
+	}
+	payload, err := json.Marshal(domain.QuestionRenderImagesPayload{QuestionID: questionID})
+	if err != nil {
+		s.logger.Error("marshal render-images payload", "question_id", questionID.String(), "error", err)
+		return
+	}
+	task := asynq.NewTask(domain.TypeQuestionRenderImages, payload)
+	_, err = s.queue.Enqueue(task,
+		asynq.Queue(domain.QueueMedia),
+		asynq.TaskID("question-render-"+questionID.String()),
+	)
+	if err != nil && !errors.Is(err, asynq.ErrTaskIDConflict) {
+		s.logger.Error("enqueue render-images", "question_id", questionID.String(), "error", err)
+	}
+}
+
+// enqueueQuizImageRenders resolves every question the quiz can draw (manual
+// rules' explicit questions plus every question in each random rule's bank) and
+// enqueues a render for any that has not been rendered yet (status 'none'). It
+// marks those questions pending first so the take gate blocks until they are
+// ready. Called after a render-as-image quiz's rules or flag change. No-op when
+// the quiz does not render as image.
+func (s *service) enqueueQuizImageRenders(ctx context.Context, quiz *domain.Quiz) {
+	if !quiz.RenderAsImage {
+		return
+	}
+	ids, err := s.candidateQuestionIDs(ctx, quiz.ID)
+	if err != nil {
+		s.logger.Error("resolve quiz image candidates", "quiz_id", quiz.ID.String(), "error", err)
+		return
+	}
+	for _, id := range ids {
+		q, err := s.questions.FindByID(ctx, id)
+		if err != nil {
+			s.logger.Error("load candidate question", "question_id", id.String(), "error", err)
+			continue
+		}
+		if q.ImageRenderStatus != domain.ImageRenderStatusNone {
+			continue // already pending/ready/failed — leave its cache alone
+		}
+		q.ImageRenderStatus = domain.ImageRenderStatusPending
+		if err := s.questions.Update(ctx, q); err != nil {
+			s.logger.Error("mark question pending", "question_id", id.String(), "error", err)
+			continue
+		}
+		s.enqueueQuestionRender(ctx, id)
+	}
+}
+
+// candidateQuestionIDs returns the de-duplicated set of question ids a quiz can
+// draw: manual rules contribute their explicit ids; random rules contribute
+// every question in the referenced bank (any of them may be drawn per student).
+func (s *service) candidateQuestionIDs(ctx context.Context, quizID uuid.UUID) ([]uuid.UUID, error) {
+	rules, _, err := s.rules.ListByQuiz(ctx, quizID, domain.ListParams{Page: 1, PageSize: 10000})
+	if err != nil {
+		return nil, err
+	}
+	seen := make(map[uuid.UUID]struct{})
+	out := make([]uuid.UUID, 0)
+	add := func(id uuid.UUID) {
+		if _, dup := seen[id]; dup {
+			return
+		}
+		seen[id] = struct{}{}
+		out = append(out, id)
+	}
+	for _, r := range rules {
+		switch r.Type {
+		case domain.QuizRuleTypeManual:
+			for _, id := range r.QuestionIDs {
+				add(id)
+			}
+		case domain.QuizRuleTypeRandom:
+			if r.BankID == nil {
+				continue
+			}
+			qs, err := s.questions.ListAllByBank(ctx, *r.BankID)
+			if err != nil {
+				return nil, err
+			}
+			for i := range qs {
+				add(qs[i].ID)
+			}
+		}
+	}
+	return out, nil
+}
+
+// quizImageRenderStatus aggregates the render status of a quiz's candidate
+// questions into one quiz-level status for the authoring UI and take gate:
+// failed if any failed, pending if any not-yet-ready, else ready. Returns
+// 'none' when the quiz does not render as image or draws no questions.
+func (s *service) quizImageRenderStatus(ctx context.Context, quiz *domain.Quiz) domain.ImageRenderStatus {
+	if !quiz.RenderAsImage {
+		return domain.ImageRenderStatusNone
+	}
+	ids, err := s.candidateQuestionIDs(ctx, quiz.ID)
+	if err != nil || len(ids) == 0 {
+		return domain.ImageRenderStatusNone
+	}
+	status := domain.ImageRenderStatusReady
+	for _, id := range ids {
+		q, err := s.questions.FindByID(ctx, id)
+		if err != nil {
+			return domain.ImageRenderStatusPending
+		}
+		switch q.ImageRenderStatus {
+		case domain.ImageRenderStatusFailed:
+			return domain.ImageRenderStatusFailed
+		case domain.ImageRenderStatusReady:
+			// keep scanning
+		default: // none or pending
+			status = domain.ImageRenderStatusPending
+		}
+	}
+	return status
 }
 
 func canManageQuiz(caller domain.Caller, quiz *domain.Quiz) bool {
@@ -102,6 +233,7 @@ func (s *service) Create(ctx context.Context, dto domain.CreateQuizDTO) (*domain
 		DisableCopyPaste:           dto.DisableCopyPaste,
 		DisableRightClickShortcuts: dto.DisableRightClickShortcuts,
 		ShowResults:                dto.ShowResults,
+		RenderAsImage:              dto.RenderAsImage,
 		NegativeMarkMode:           mode,
 		NegativeValue:              val,
 		WrongsPerPoint:             wpp,
@@ -114,6 +246,9 @@ func (s *service) Create(ctx context.Context, dto domain.CreateQuizDTO) (*domain
 		"class_id", quiz.ClassID.String(),
 		"created_by", caller.UserID.String(),
 	)
+	// A quiz has no rules at creation, so there is usually nothing to render yet;
+	// harmless no-op unless rules were somehow already present.
+	s.enqueueQuizImageRenders(ctx, quiz)
 	return quiz, nil
 }
 
@@ -133,6 +268,7 @@ func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*domain.Quiz, erro
 	if !visible {
 		return nil, domain.ErrForbidden
 	}
+	quiz.ImageRenderStatus = s.quizImageRenderStatus(ctx, quiz)
 	return quiz, nil
 }
 
@@ -186,6 +322,9 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateQui
 	if dto.ShowResults != nil {
 		quiz.ShowResults = *dto.ShowResults
 	}
+	if dto.RenderAsImage != nil {
+		quiz.RenderAsImage = *dto.RenderAsImage
+	}
 	if dto.NegativeMarkMode != nil {
 		quiz.NegativeMarkMode = *dto.NegativeMarkMode
 	}
@@ -203,6 +342,9 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateQui
 	if err := s.repo.Update(ctx, quiz); err != nil {
 		return nil, err
 	}
+	// If the quiz renders as image (newly turned on, or already on), make sure
+	// every candidate question is queued for rendering.
+	s.enqueueQuizImageRenders(ctx, quiz)
 	return quiz, nil
 }
 
@@ -399,6 +541,8 @@ func (s *service) CreateRule(ctx context.Context, quizID uuid.UUID, dto domain.C
 	if err := s.recomputeQuizTotal(ctx, quizID); err != nil {
 		s.logger.Warn("failed to recompute quiz total", "quiz_id", quizID.String(), "err", err)
 	}
+	// New questions entered the candidate set — render them if the quiz is image.
+	s.enqueueQuizImageRenders(ctx, quiz)
 	return rule, nil
 }
 
@@ -476,6 +620,8 @@ func (s *service) UpdateRule(ctx context.Context, id uuid.UUID, dto domain.Updat
 	if err := s.recomputeQuizTotal(ctx, rule.QuizID); err != nil {
 		s.logger.Warn("failed to recompute quiz total", "quiz_id", rule.QuizID.String(), "err", err)
 	}
+	// Rule bank/questions may have changed the candidate set — render if image.
+	s.enqueueQuizImageRenders(ctx, quiz)
 	return rule, nil
 }
 

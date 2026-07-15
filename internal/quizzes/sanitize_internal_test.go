@@ -16,14 +16,13 @@ func TestSanitizeQuestionForTaking_ImageModeWithholdsText(t *testing.T) {
 		Type:               domain.QuestionTypeChoice,
 		Text:               "secret question text",
 		ModelAnswer:        "the answer",
-		RenderAsImage:      true,
 		SystemImageMediaID: &bodyImg,
 		Options: []domain.QuestionOption{
 			{ID: "a", Value: "correct answer", Score: 5, SystemImageMediaID: &optImg},
 		},
 	}
 
-	got := sanitizeQuestionForTaking(q)
+	got := sanitizeQuestionForTaking(q, true)
 
 	assert.Empty(t, got.Text, "body text must be withheld in image mode")
 	assert.Empty(t, got.Options[0].Value, "option value must be withheld in image mode")
@@ -35,18 +34,24 @@ func TestSanitizeQuestionForTaking_ImageModeWithholdsText(t *testing.T) {
 	assert.Equal(t, "a", got.Options[0].ID, "option id kept for answering/grading")
 }
 
-func TestSanitizeQuestionForTaking_NonImageKeepsText(t *testing.T) {
+func TestSanitizeQuestionForTaking_NonImageKeepsTextAndStripsCachedImages(t *testing.T) {
+	bodyImg := uuid.New()
+	optImg := uuid.New()
 	q := domain.Question{
 		Type: domain.QuestionTypeChoice,
 		Text: "visible question",
+		// Cached system images from another (image-mode) quiz — must not leak here.
+		SystemImageMediaID: &bodyImg,
 		Options: []domain.QuestionOption{
-			{ID: "a", Value: "visible option", Score: 5},
+			{ID: "a", Value: "visible option", Score: 5, SystemImageMediaID: &optImg},
 		},
 	}
 
-	got := sanitizeQuestionForTaking(q)
+	got := sanitizeQuestionForTaking(q, false)
 
 	assert.Equal(t, "visible question", got.Text)
 	assert.Equal(t, "visible option", got.Options[0].Value)
 	assert.Zero(t, got.Options[0].Score, "score still stripped")
+	assert.Nil(t, got.SystemImageMediaID, "cached body image stripped in text mode")
+	assert.Nil(t, got.Options[0].SystemImageMediaID, "cached option image stripped in text mode")
 }

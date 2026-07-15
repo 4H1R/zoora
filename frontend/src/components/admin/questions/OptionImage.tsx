@@ -3,15 +3,14 @@ import { Loader2Icon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { usePostMediaPresign } from "@/api/media/media"
-import { apiClient } from "@/api/mutator/custom-instance"
+import { getMediaIdDownloadUrl, usePostMediaPresign } from "@/api/media/media"
 
 export function OptionImageThumb({ mediaID }: { mediaID: string }) {
   const { data: url } = useQuery({
     queryKey: ["media", "download-url", mediaID],
     queryFn: async () => {
-      const res = await apiClient(`/media/${mediaID}/download-url`, { method: "GET" })
-      return (res.data as { data?: { url?: string } }).data?.url ?? null
+      const res = await getMediaIdDownloadUrl(mediaID)
+      return res.status === 200 ? (res.data.data?.url ?? null) : null
     },
     staleTime: 30 * 60 * 1000,
   })

@@ -16,12 +16,10 @@ import {
 } from "@/api/question-banks/question-banks"
 import { BankPicker } from "@/components/admin/forms/BankPicker"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 
 import { OptionImageControl } from "./OptionImage"
@@ -51,14 +49,7 @@ const baseSchema = z.object({
   options: z.array(optionSchema),
   model_answer: z.string().optional(),
   metadata: z.array(metadataSchema),
-  render_as_image: z.boolean(),
 })
-
-function statusVariant(status: string): "default" | "secondary" | "destructive" {
-  if (status === "ready") return "default"
-  if (status === "failed") return "destructive"
-  return "secondary"
-}
 
 function parseSynonyms(raw?: string): string[] | undefined {
   const list = (raw ?? "")
@@ -130,7 +121,6 @@ export function QuestionCreateModal({ open, onOpenChange, question, defaultBankI
       options: defaultOptionsFor("descriptive"),
       model_answer: "",
       metadata: [],
-      render_as_image: false,
     },
   })
 
@@ -159,7 +149,6 @@ export function QuestionCreateModal({ open, onOpenChange, question, defaultBankI
           type: "photo" as const,
           media_id: m.media_id ?? "",
         })),
-        render_as_image: question.render_as_image ?? false,
       })
     } else {
       form.reset({
@@ -169,7 +158,6 @@ export function QuestionCreateModal({ open, onOpenChange, question, defaultBankI
         options: defaultOptionsFor("descriptive"),
         model_answer: "",
         metadata: [],
-        render_as_image: false,
       })
     }
   }, [open, question, isEdit, defaultBankId])
@@ -250,7 +238,6 @@ export function QuestionCreateModal({ open, onOpenChange, question, defaultBankI
           options,
           model_answer: modelAnswer,
           metadata: values.metadata,
-          render_as_image: values.render_as_image,
           negative_mark_mode: "none",
           negative_value: 0,
           wrongs_per_point: 0,
@@ -271,7 +258,6 @@ export function QuestionCreateModal({ open, onOpenChange, question, defaultBankI
           options,
           model_answer: modelAnswer,
           metadata: values.metadata,
-          render_as_image: values.render_as_image,
           negative_mark_mode: "none",
           negative_value: 0,
           wrongs_per_point: 0,
@@ -328,27 +314,6 @@ export function QuestionCreateModal({ open, onOpenChange, question, defaultBankI
             </SelectContent>
           </Select>
           <FieldError errors={[errors.type]} />
-        </Field>
-
-        <Field>
-          <div className="flex items-center justify-between gap-4">
-            <div className="space-y-0.5">
-              <FieldLabel>{t("admin.questions.form.renderAsImage.label")}</FieldLabel>
-              <p className="text-muted-foreground text-xs">{t("admin.questions.form.renderAsImage.description")}</p>
-            </div>
-            <Switch
-              checked={form.watch("render_as_image")}
-              onCheckedChange={(v) => form.setValue("render_as_image", v, { shouldDirty: true })}
-            />
-          </div>
-          {isEdit &&
-            question?.render_as_image &&
-            question.image_render_status &&
-            question.image_render_status !== "none" && (
-              <Badge variant={statusVariant(question.image_render_status)} className="mt-2 w-fit">
-                {t(`admin.questions.form.imageStatus.${question.image_render_status}`)}
-              </Badge>
-            )}
         </Field>
 
         <Field>

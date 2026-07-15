@@ -5,7 +5,15 @@ import type {
 } from "@/api/model"
 
 import { Link } from "@tanstack/react-router"
-import { ArrowLeftIcon, CheckCircle2Icon, ClockIcon, FlagIcon, TrophyIcon } from "lucide-react"
+import {
+  ArrowLeftIcon,
+  CheckCircle2Icon,
+  ClockIcon,
+  FlagIcon,
+  LockKeyholeIcon,
+  ShieldCheckIcon,
+  TrophyIcon,
+} from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { OptionImageThumb } from "@/components/admin/questions/OptionImage"
@@ -63,22 +71,56 @@ export function ResultScreen({ quiz, submission, questions = [], backHref }: Res
       </header>
 
       {!revealed && (
-        <section className="bg-card ring-foreground/10 flex flex-col items-center gap-3 rounded-3xl px-6 py-10 text-center ring-1">
-          <span className="bg-primary/10 text-primary flex size-12 items-center justify-center rounded-full [&_svg]:size-6">
-            <TrophyIcon />
-          </span>
-          <h2 className="text-xl font-semibold tracking-tight">{t("org.session.quizzes.take.result.hidden.title")}</h2>
-          <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
-            {quiz.show_results
-              ? t("org.session.quizzes.take.result.hidden.deferred")
-              : t("org.session.quizzes.take.result.hidden.notPublished")}
-          </p>
-          <MetaCell
-            icon={<ClockIcon className="size-4" />}
-            label={t("org.session.quizzes.take.result.totalTime")}
-            value={formatClock(totalSpent)}
-            mono
+        <section className="animate-reveal relative isolate overflow-hidden rounded-3xl px-6 py-14 text-center md:py-16">
+          {/* Layered surface so the brand glow reads as depth, not a flat fill. */}
+          <div aria-hidden className="bg-card ring-foreground/10 absolute inset-0 -z-10 rounded-3xl ring-1" />
+          <div
+            aria-hidden
+            className="animate-aurora pointer-events-none absolute -top-24 start-1/2 -z-10 size-72 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,var(--color-primary)/22%,transparent_70%)] blur-2xl rtl:translate-x-1/2"
           />
+
+          <div className="mx-auto flex max-w-md flex-col items-center gap-6">
+            {/* Sealed-envelope motif: a settled check under an outward confirmation pulse. */}
+            <span className="relative flex size-20 items-center justify-center">
+              <span className="border-primary/30 absolute inset-0 animate-ping rounded-full border [animation-duration:2.4s]" />
+              <span className="bg-primary/10 absolute inset-2 rounded-full" />
+              <span className="bg-primary/15 text-primary ring-primary/25 relative flex size-14 items-center justify-center rounded-full ring-1 [&_svg]:size-7">
+                <CheckCircle2Icon strokeWidth={2.25} />
+              </span>
+            </span>
+
+            <div className="flex flex-col items-center gap-3">
+              <span className="border-primary/25 bg-primary/5 text-primary inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[0.65rem] tracking-[0.2em] uppercase rtl:font-sans rtl:tracking-normal">
+                <ShieldCheckIcon className="size-3.5" />
+                {t("org.session.quizzes.take.result.hidden.sealed")}
+              </span>
+              <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+                {t("org.session.quizzes.take.result.hidden.title")}
+              </h2>
+              <p className="text-muted-foreground max-w-sm text-sm leading-relaxed text-balance">
+                {quiz.show_results
+                  ? t("org.session.quizzes.take.result.hidden.deferred")
+                  : t("org.session.quizzes.take.result.hidden.notPublished")}
+              </p>
+            </div>
+
+            <div aria-hidden className="border-foreground/15 h-px w-full max-w-xs border-t border-dashed" />
+
+            {/* Total time as the hero stat — the one number worth keeping while results wait. */}
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-muted-foreground inline-flex items-center gap-2 font-mono text-[0.7rem] tracking-[0.25em] uppercase rtl:font-sans rtl:tracking-normal">
+                <ClockIcon className="size-3.5" />
+                {t("org.session.quizzes.take.result.totalTime")}
+              </span>
+              <span className="text-foreground font-mono text-4xl font-semibold tabular-nums md:text-5xl">
+                {formatClock(totalSpent)}
+              </span>
+              <span className="text-muted-foreground/70 inline-flex items-center gap-1.5 text-xs">
+                <LockKeyholeIcon className="size-3" />
+                {t("org.session.quizzes.take.result.hidden.awaiting")}
+              </span>
+            </div>
+          </div>
         </section>
       )}
 
@@ -131,7 +173,7 @@ export function ResultScreen({ quiz, submission, questions = [], backHref }: Res
                     <span className="text-muted-foreground font-mono text-xs tracking-[0.2em]">
                       Q{String(i + 1).padStart(2, "0")}
                     </span>
-                    {q?.render_as_image && q.system_image_media_id ? (
+                    {q?.system_image_media_id ? (
                       <span className="ms-2 grow">
                         <SystemImage mediaID={q.system_image_media_id} className="max-h-8 w-auto" />
                       </span>

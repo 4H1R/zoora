@@ -13,7 +13,11 @@ import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { getGetQuizzesIdSubmissionsQueryKey, usePostQuizzesSubmissionsSubmissionIdSubmit } from "@/api/quizzes/quizzes"
+import {
+  getGetQuizzesIdSubmissionsQueryKey,
+  usePostQuizzesSubmissionsSubmissionIdAnswers,
+  usePostQuizzesSubmissionsSubmissionIdSubmit,
+} from "@/api/quizzes/quizzes"
 import { Eyebrow } from "@/components/eyebrow"
 import { Button } from "@/components/ui/button"
 import {
@@ -29,7 +33,7 @@ import { useNow } from "@/lib/session-status"
 
 import { DecorativeBackground } from "./decorations"
 import { CenterMessage } from "./messages"
-import { ProgressDots } from "./progress-dots"
+import { ProgressRail } from "./progress-dots"
 import { QuestionInput } from "./question-input"
 import { clearPersistedState, loadPersistedState, savePersistedState } from "./storage"
 import { SystemImage } from "./system-image"
@@ -54,6 +58,8 @@ export function PlayArea({ quiz, room, submission, questions, backHref }: PlayAr
 
   const submissionId = submission.id!
   const deadline = computeDeadline(submission.started_at, quiz.duration_minutes ?? 0, room)
+  const startedMs = submission.started_at ? Date.parse(submission.started_at) : deadline
+  const totalSeconds = Math.max(1, Math.round((deadline - startedMs) / 1000))
   const remainingSeconds = Math.max(0, Math.floor((deadline - nowMs) / 1000))
   const isExpired = remainingSeconds <= 0
 
@@ -63,6 +69,7 @@ export function PlayArea({ quiz, room, submission, questions, backHref }: PlayAr
     return quiz.shuffle_questions ? shuffleSeeded(ids, submissionId) : ids
   })
 
+  const [persistedTabHidden] = useState(() => loadPersistedState(submissionId)?.tabHidden)
   const [answers, setAnswers] = useState<Record<string, AnswerState>>(() => {
     const saved = loadPersistedState(submissionId)
     return saved?.answers ?? {}
@@ -77,19 +84,72 @@ export function PlayArea({ quiz, room, submission, questions, backHref }: PlayAr
   const submittedRef = useRef(false)
   const lastBlockToastRef = useRef(0)
 
-  useEffect(() => {
-    savePersistedState(submissionId, { answers, order: orderedQuestionIds, index })
-  }, [answers, index, orderedQuestionIds, submissionId])
-
   const currentQuestionId = orderedQuestionIds[index]
 
   usePerQuestionTimer(currentQuestionId, setAnswers)
 
   // track_tab_switches: count hidden-tab events + accumulated hidden seconds,
-  // warn (non-blocking) on return, and send the totals on final submit.
-  const tabVisibility = useTabVisibility(Boolean(quiz.track_tab_switches), (count) => {
-    toast.warning(t("org.session.quizzes.take.antiCheat.tabWarning", { count }))
+  // warn (non-blocking) on return, and send the totals on final submit. Seeded
+  // from and persisted to localStorage so a mid-quiz refresh resumes the
+  // counters instead of resetting them to zero.
+  const tabVisibility = useTabVisibility(Boolean(quiz.track_tab_switches), {
+    initial: persistedTabHidden,
+    onReturn: (count) => toast.warning(t("org.session.quizzes.take.antiCheat.tabWarning", { count })),
+    onChange: (stats) =>
+      savePersistedState(submissionId, { answers, order: orderedQuestionIds, index, tabHidden: stats }),
   })
+
+  useEffect(() => {
+    savePersistedState(submissionId, {
+      answers,
+      order: orderedQuestionIds,
+      index,
+      tabHidden: quiz.track_tab_switches ? tabVisibility.read() : undefined,
+    })
+  }, [answers, index, orderedQuestionIds, submissionId, quiz.track_tab_switches, tabVisibility])
+
+  // Incremental server-side save: commit each answer as the student advances so
+  // progress survives a crash/late submit, no_back_navigation is enforced
+  // server-side (an answered question locks), and tab-hidden totals accumulate
+  // via the backend's monotonic max-merge instead of arriving only once at
+  // final submit. Best-effort — the final submit is the authoritative backstop,
+  // so failures (network, no-back 409) are swallowed and not retried.
+  const answersRef = useRef(answers)
+  answersRef.current = answers
+  const saveMutation = usePostQuizzesSubmissionsSubmissionIdAnswers()
+  const savedSigRef = useRef<Record<string, string>>({})
+
+  function flushAnswer(questionId: string | undefined) {
+    if (!questionId || submittedRef.current) return
+    const a = answersRef.current[questionId]
+    if (!a || (a.selected_option_ids.length === 0 && a.value.trim().length === 0)) return
+    const tab = quiz.track_tab_switches ? tabVisibility.read() : null
+    const sig = JSON.stringify([a.selected_option_ids, a.value, a.spent_seconds, tab])
+    if (savedSigRef.current[questionId] === sig) return
+    savedSigRef.current[questionId] = sig
+    saveMutation.mutate({
+      submissionId,
+      data: {
+        question_id: questionId,
+        selected_option_ids: a.selected_option_ids,
+        value: a.value,
+        spent_seconds: a.spent_seconds,
+        ...(tab ? { tab_hidden_count: tab.count, tab_hidden_seconds: tab.seconds } : {}),
+      },
+    })
+  }
+
+  // Flush the question the student just left. Reading orderedQuestionIds via ref
+  // isn't needed — order is fixed for the mount.
+  const prevIndexRef = useRef(index)
+  useEffect(() => {
+    if (prevIndexRef.current !== index) {
+      flushAnswer(orderedQuestionIds[prevIndexRef.current])
+      prevIndexRef.current = index
+    }
+    // flushAnswer reads latest state via refs; deps intentionally limited to index.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index])
 
   // disable_copy_paste / disable_right_click_shortcuts: silent preventDefault
   // with a throttled toast so rapid attempts don't spam.
@@ -194,14 +254,26 @@ export function PlayArea({ quiz, room, submission, questions, backHref }: PlayAr
       <DecorativeBackground />
 
       <div className="sticky top-0 z-10 -mx-4 backdrop-blur md:-mx-6">
-        <div className="bg-background/70 border-foreground/10 mx-4 flex items-center justify-between gap-4 rounded-2xl border px-4 py-3 md:mx-6 md:px-6">
-          <div className="flex items-center gap-3">
-            <span className="text-muted-foreground font-mono text-xs tracking-[0.25em] uppercase">
-              {t("org.session.quizzes.take.progress", { current: index + 1, total })}
-            </span>
-            <ProgressDots order={orderedQuestionIds} index={index} answers={answers} />
+        <div className="bg-background/70 supports-[backdrop-filter]:bg-background/55 border-foreground/10 mx-4 flex items-center justify-between gap-4 rounded-2xl border px-3 py-2.5 shadow-sm md:mx-6 md:ps-5 md:pe-4">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="flex flex-col gap-1">
+              <Eyebrow className="text-[0.6rem] tracking-[0.28em]">
+                {t("org.session.quizzes.take.questionLabel")}
+              </Eyebrow>
+              <div className="flex items-baseline gap-1 font-mono leading-none">
+                <span className="text-foreground text-xl font-semibold tabular-nums md:text-2xl">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span className="text-muted-foreground/50 text-sm tabular-nums">
+                  / {String(total).padStart(2, "0")}
+                </span>
+              </div>
+            </div>
+            <div className="bg-foreground/10 hidden h-9 w-px sm:block" />
+            <ProgressRail order={orderedQuestionIds} index={index} answers={answers} />
+            <span className="sr-only">{t("org.session.quizzes.take.progress", { current: index + 1, total })}</span>
           </div>
-          <TimerPill remainingSeconds={remainingSeconds} />
+          <TimerPill remainingSeconds={remainingSeconds} totalSeconds={totalSeconds} />
         </div>
       </div>
 
@@ -220,7 +292,7 @@ export function PlayArea({ quiz, room, submission, questions, backHref }: PlayAr
           </span>
         </div>
 
-        {currentQuestion.render_as_image && currentQuestion.system_image_media_id ? (
+        {quiz.render_as_image && currentQuestion.system_image_media_id ? (
           <SystemImage mediaID={currentQuestion.system_image_media_id} className="max-h-40 w-auto" />
         ) : (
           <h2 className="max-w-3xl text-2xl leading-snug font-semibold tracking-tight text-balance md:text-3xl">

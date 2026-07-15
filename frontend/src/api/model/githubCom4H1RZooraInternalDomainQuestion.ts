@@ -19,8 +19,12 @@ export interface GithubCom4H1RZooraInternalDomainQuestion {
   created_at?: string;
   id?: string;
   /**
-     * ImageRenderStatus reflects whether the generated images are ready. A quiz
-     * cannot be started while any image question is not yet ready.
+     * ImageRenderStatus tracks whether this question's anti-cheat images have
+     * been rendered. The render decision lives on the QUIZ (Quiz.RenderAsImage);
+     * the rendered images are cached here and reused across every quiz that uses
+     * the question. A status other than 'none' also marks the question as
+     * participating in rendering, so an edit to its text re-renders the images.
+     * A quiz cannot start while any of its questions is not yet 'ready'.
      */
   image_render_status?: GithubCom4H1RZooraInternalDomainImageRenderStatus;
   /**
@@ -54,14 +58,8 @@ export interface GithubCom4H1RZooraInternalDomainQuestion {
   options?: GithubCom4H1RZooraInternalDomainQuestionOption[];
   organization_id?: string;
   /**
-     * RenderAsImage turns on anti-cheat image rendering: the worker renders the
-     * body text (and every option value) to distorted PNGs, and the take
-     * endpoint withholds the raw text so students see only the images.
-     */
-  render_as_image?: boolean;
-  /**
-     * SystemImageMediaID references the rendered body image (see RenderAsImage).
-     * Server-owned; nil until the render task completes.
+     * SystemImageMediaID references the rendered body image. Server-owned; nil
+     * until the render task completes.
      */
   system_image_media_id?: string;
   text?: string;

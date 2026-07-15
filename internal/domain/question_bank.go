@@ -33,9 +33,9 @@ type QuestionOption struct {
 	ImageMediaID *uuid.UUID `json:"image_media_id,omitempty"`
 
 	// SystemImageMediaID references the anti-cheat image rendered by the worker
-	// from Value (see RenderAsImage). Server-owned: clients cannot set it, and
-	// the take endpoint blanks Value while keeping this so the student sees only
-	// the image. Nil until the render task completes.
+	// from Value when the owning quiz renders as image. Server-owned: clients
+	// cannot set it, and the take endpoint blanks Value while keeping this so the
+	// student sees only the image. Nil until the render task completes.
 	SystemImageMediaID *uuid.UUID `json:"system_image_media_id,omitempty"`
 
 	// Synonyms are alternative accepted phrasings of Value. For short_answer
@@ -136,16 +136,22 @@ type Question struct {
 	// flagged for review, never rejected.
 	MinSeconds int `gorm:"not null;default:0" json:"min_seconds"`
 
-	// RenderAsImage turns on anti-cheat image rendering: the worker renders the
-	// body text (and every option value) to distorted PNGs, and the take
-	// endpoint withholds the raw text so students see only the images.
-	RenderAsImage bool `gorm:"not null;default:false" json:"render_as_image"`
-	// ImageRenderStatus reflects whether the generated images are ready. A quiz
-	// cannot be started while any image question is not yet ready.
+	// ImageRenderStatus tracks whether this question's anti-cheat images have
+	// been rendered. The render decision lives on the QUIZ (Quiz.RenderAsImage);
+	// the rendered images are cached here and reused across every quiz that uses
+	// the question. A status other than 'none' also marks the question as
+	// participating in rendering, so an edit to its text re-renders the images.
+	// A quiz cannot start while any of its questions is not yet 'ready'.
 	ImageRenderStatus ImageRenderStatus `gorm:"type:varchar(20);not null;default:'none'" json:"image_render_status"`
-	// SystemImageMediaID references the rendered body image (see RenderAsImage).
-	// Server-owned; nil until the render task completes.
+	// SystemImageMediaID references the rendered body image. Server-owned; nil
+	// until the render task completes.
 	SystemImageMediaID *uuid.UUID `gorm:"type:uuid" json:"system_image_media_id,omitempty"`
+	// SystemImageContentHash fingerprints the text last rendered into the
+	// anti-cheat images. The worker skips re-rendering when the current content
+	// still hashes to this value and the images are already 'ready', avoiding
+	// redundant CPU and S3 writes on re-enqueues. Server-owned; not sent to
+	// clients.
+	SystemImageContentHash string `gorm:"type:varchar(64);not null;default:''" json:"-"`
 
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
@@ -182,7 +188,6 @@ type CreateQuestionDTO struct {
 	NegativeValue    float64            `json:"negative_value"`
 	WrongsPerPoint   int                `json:"wrongs_per_point"`
 	MinSeconds       int                `json:"min_seconds" binding:"omitempty,gte=0"`
-	RenderAsImage    bool               `json:"render_as_image"`
 }
 
 type UpdateQuestionDTO struct {
@@ -195,7 +200,6 @@ type UpdateQuestionDTO struct {
 	NegativeValue    *float64           `json:"negative_value"`
 	WrongsPerPoint   *int               `json:"wrongs_per_point"`
 	MinSeconds       *int               `json:"min_seconds" binding:"omitempty,gte=0"`
-	RenderAsImage    *bool              `json:"render_as_image"`
 }
 
 // IsMultiSelect reports whether a choice question has more than one

@@ -1203,16 +1203,7 @@
         "conceptPlaceholder": "Concept the answer should mention",
         "synonymsPlaceholder": "Synonyms (comma-separated)",
         "modelAnswer": "Model answer",
-        "modelAnswerPlaceholder": "Reference answer used to compute the similarity signal…",
-        "renderAsImage": {
-          "label": "Render as image (anti-cheat)",
-          "description": "The question and options are shown to students as images, not text — harder to copy, scrape, or feed to AI. Images are generated in the background after saving."
-        },
-        "imageStatus": {
-          "pending": "Preparing images…",
-          "ready": "Images ready",
-          "failed": "Image generation failed — re-save to retry"
-        }
+        "modelAnswerPlaceholder": "Reference answer used to compute the similarity signal…"
       }
     },
     "roles": {
@@ -2242,6 +2233,7 @@
           "finishConfirm": "Submit answers",
           "progress": "Question {{current}} of {{total}}",
           "questionN": "Question {{n}}",
+          "questionLabel": "Question",
           "submitting": "Submitting answers…",
           "submitted": "Quiz submitted",
           "submitFailed": "Could not submit. Retrying may help.",
@@ -2312,6 +2304,8 @@
             "perQuestionEyebrow": "Per-question time & score",
             "hidden": {
               "title": "Your answers are in",
+              "sealed": "Submission received",
+              "awaiting": "Awaiting results",
               "deferred": "Results unlock once the exam window closes. Come back after it ends to see your score and answers.",
               "notPublished": "Results aren't published for this exam. Your teacher can see your submission."
             }
@@ -3029,6 +3023,7 @@
       "enforced": "Enforced automatically",
       "monitoring": "Monitoring & logging",
       "restrictions": "Browser restrictions",
+      "contentProtection": "Content protection",
       "results": "Results visibility"
     },
     "toggles": {
@@ -3063,6 +3058,10 @@
       "showResults": {
         "label": "Show final score to students",
         "hint": "Students see their score and answers only after the exam window closes — so early finishers can't leak them to others still taking it."
+      },
+      "renderAsImage": {
+        "label": "Render questions as images",
+        "hint": "Every question and option in this quiz is shown as an image instead of text, making copy, scraping, or feeding to an AI much harder. Images are generated in the background after saving; the exam won't start until they're ready."
       }
     }
   },

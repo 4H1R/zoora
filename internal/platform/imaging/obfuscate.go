@@ -14,10 +14,57 @@ func obfuscate(img *image.RGBA, strength int, rng *rand.Rand) {
 	if strength <= 0 {
 		return
 	}
-	waveWarp(img, strength, rng)
+	if strength >= int(NoiseHigh) {
+		// A smooth 2D displacement field bends letters non-uniformly in both
+		// axes — far harder for OCR segmentation than a single column sine,
+		// while staying legible. Replaces the plain wave at this strength.
+		localWarp(img, strength, rng)
+	} else {
+		waveWarp(img, strength, rng)
+	}
 	speckle(img, strength, rng)
 	if strength >= int(NoiseMedium) {
 		strokes(img, rng)
+	}
+}
+
+// localWarp resamples the image through a smooth low-frequency displacement
+// field built from a handful of superposed sines with random phases. Each pixel
+// is pulled from a nearby source, so straight baselines and consistent glyph
+// shapes are broken locally without shredding legibility.
+func localWarp(img *image.RGBA, strength int, rng *rand.Rand) {
+	b := img.Bounds()
+	src := cloneRGBA(img)
+	fill(img, color.RGBA{0xff, 0xff, 0xff, 0xff})
+	amp := 2.0 + float64(strength)
+	// Two independent wave sets per axis for a non-repeating field.
+	type wave struct{ fx, fy, phase, weight float64 }
+	mk := func() wave {
+		return wave{
+			fx:     (0.4 + rng.Float64()) / 90.0,
+			fy:     (0.4 + rng.Float64()) / 90.0,
+			phase:  rng.Float64() * 2 * math.Pi,
+			weight: 0.5 + rng.Float64(),
+		}
+	}
+	dxW := []wave{mk(), mk()}
+	dyW := []wave{mk(), mk()}
+	disp := func(ws []wave, x, y int) float64 {
+		var v float64
+		for _, w := range ws {
+			v += w.weight * math.Sin(2*math.Pi*(float64(x)*w.fx+float64(y)*w.fy)+w.phase)
+		}
+		return v / float64(len(ws)) * amp
+	}
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			sx := x + int(disp(dxW, x, y))
+			sy := y + int(disp(dyW, x, y))
+			if sx < b.Min.X || sx >= b.Max.X || sy < b.Min.Y || sy >= b.Max.Y {
+				continue
+			}
+			img.SetRGBA(x, y, src.RGBAAt(sx, sy))
+		}
 	}
 }
 

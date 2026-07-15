@@ -313,10 +313,6 @@ func (s *service) CreateQuestion(ctx context.Context, bankID uuid.UUID, dto doma
 	if metadata == nil {
 		metadata = []domain.QuestionMetadata{}
 	}
-	renderStatus := domain.ImageRenderStatusNone
-	if dto.RenderAsImage {
-		renderStatus = domain.ImageRenderStatusPending
-	}
 	question := &domain.Question{
 		BankID:            bankID,
 		OrganizationID:    bank.OrganizationID,
@@ -329,14 +325,14 @@ func (s *service) CreateQuestion(ctx context.Context, bankID uuid.UUID, dto doma
 		NegativeValue:     val,
 		WrongsPerPoint:    wpp,
 		MinSeconds:        dto.MinSeconds,
-		RenderAsImage:     dto.RenderAsImage,
-		ImageRenderStatus: renderStatus,
+		ImageRenderStatus: domain.ImageRenderStatusNone,
 	}
+	// Rendering is not decided here — the quiz owns the render_as_image switch.
+	// A new question starts as 'none'; when a quiz that renders as image uses it
+	// (or is saved), the quiz service enqueues the render. The take gate is the
+	// safety net for questions added to a bank after the quiz was saved.
 	if err := s.questions.Create(ctx, question); err != nil {
 		return nil, err
-	}
-	if question.RenderAsImage {
-		s.enqueueRenderImages(ctx, question.ID)
 	}
 	return question, nil
 }
@@ -376,7 +372,9 @@ func (s *service) UpdateQuestion(ctx context.Context, id uuid.UUID, dto domain.U
 	if !canManageBank(caller, bank) {
 		return nil, domain.ErrForbidden
 	}
-	wasImage := question.RenderAsImage
+	// A question "participates" in image rendering once it has been rendered for
+	// some quiz (status != none). Editing its content then re-renders the cache.
+	participates := question.ImageRenderStatus != domain.ImageRenderStatusNone
 	if dto.Text != nil {
 		question.Text = *dto.Text
 	}
@@ -388,9 +386,6 @@ func (s *service) UpdateQuestion(ctx context.Context, id uuid.UUID, dto domain.U
 	}
 	if dto.ModelAnswer != nil {
 		question.ModelAnswer = *dto.ModelAnswer
-	}
-	if dto.RenderAsImage != nil {
-		question.RenderAsImage = *dto.RenderAsImage
 	}
 	question.Options = clearOptionImagesForNonChoice(question.Type, question.Options)
 	if dto.Options != nil || dto.Type != nil {
@@ -425,23 +420,15 @@ func (s *service) UpdateQuestion(ctx context.Context, id uuid.UUID, dto domain.U
 		question.Metadata = dto.Metadata
 	}
 
-	// Decide whether anti-cheat images need (re)generating or purging. Rendered
-	// content is the body text, option values, and type; a change to any while
-	// image mode is on invalidates the existing images.
+	// If this question already participates in rendering and its rendered content
+	// (body text, option values, or type) changed, the cached images are stale.
+	// Mark not-ready and clear the stale ids so a mid-render take can't be served
+	// old images; the worker refills them.
 	contentChanged := dto.Text != nil || dto.Options != nil || dto.Type != nil
-	enqueueRender := false
-	switch {
-	case question.RenderAsImage && (!wasImage || contentChanged):
-		// Turned on, or edited while on: mark not-ready and clear stale ids so a
-		// mid-render take can't be served old images. Worker refills them.
+	enqueueRender := participates && contentChanged
+	if enqueueRender {
 		question.ImageRenderStatus = domain.ImageRenderStatusPending
 		clearSystemImages(question)
-		enqueueRender = true
-	case !question.RenderAsImage && wasImage:
-		// Turned off: drop back to plain text; worker purges the generated media.
-		question.ImageRenderStatus = domain.ImageRenderStatusNone
-		clearSystemImages(question)
-		enqueueRender = true
 	}
 
 	if err := s.questions.Update(ctx, question); err != nil {

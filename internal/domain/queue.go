@@ -35,10 +35,11 @@ const (
 
 // QuestionRenderImagesPayload drives anti-cheat image generation for one
 // question: the worker (re)renders the body text and every option value to
-// PNGs, stores them as media, and flips the question's ImageRenderStatus. Also
-// runs when RenderAsImage was just turned off, in which case it only purges the
-// previously generated media. Idempotent: it deletes the prior system media
-// before regenerating, so a retry or re-enqueue is safe.
+// PNGs, stores them as media, and flips the question's ImageRenderStatus. The
+// task is enqueued by the quiz service when a render-as-image quiz uses the
+// question, or by a content edit to an already-rendered question. Idempotent:
+// it deletes the prior system media before regenerating, so a retry or
+// re-enqueue is safe.
 type QuestionRenderImagesPayload struct {
 	QuestionID uuid.UUID `json:"question_id"`
 }

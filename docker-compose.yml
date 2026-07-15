@@ -3,6 +3,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.dev
+        image: zoora-app:latest
         ports:
             - "${FORWARD_APP_PORT:-8080}:8080"
         env_file:
@@ -12,6 +13,37 @@ services:
             REDIS_URL: "redis://redis:6379"
             LIVEKIT_HOST: "http://livekit:7880"
             # LIVEKIT_PUBLIC_URL inherited from .env (browser-facing, same on host & container)
+            S3_ENDPOINT: "http://rustfs:9000"
+            CHROME_REMOTE_URL: "http://chrome:9222"
+        volumes:
+            - ".:/app"
+            - "go-modules:/go/pkg/mod"
+            - "go-build-cache:/root/.cache/go-build"
+        working_dir: /app
+        networks:
+            - zoora
+        depends_on:
+            pgsql:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+            chrome:
+                condition: service_started
+    # Asynq background worker — processes queued tasks (question image renders,
+    # recordings, meeting jobs). Same image/source as app; runs cmd/worker with a
+    # dedicated air config for hot reload. No HTTP port.
+    worker:
+        build:
+            context: .
+            dockerfile: Dockerfile.dev
+        image: zoora-app:latest
+        command: ["air", "-c", ".air.worker.toml"]
+        env_file:
+            - .env
+        environment:
+            DATABASE_URL: "postgres://${DB_USERNAME:-dev}:${DB_PASSWORD:-dev}@pgsql:5432/${DB_DATABASE:-zoora}?sslmode=disable"
+            REDIS_URL: "redis://redis:6379"
+            LIVEKIT_HOST: "http://livekit:7880"
             S3_ENDPOINT: "http://rustfs:9000"
             CHROME_REMOTE_URL: "http://chrome:9222"
         volumes:

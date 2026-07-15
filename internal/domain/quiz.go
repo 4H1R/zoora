@@ -46,6 +46,20 @@ type Quiz struct {
 	DisableCopyPaste           bool `gorm:"not null;default:false" json:"disable_copy_paste"`
 	DisableRightClickShortcuts bool `gorm:"not null;default:false" json:"disable_right_click_shortcuts"`
 
+	// RenderAsImage turns on anti-cheat image rendering for the whole quiz: every
+	// question the quiz can draw (manual rules' explicit questions plus every
+	// question in a random rule's bank) is rendered to distorted PNGs by the
+	// worker, and the take endpoint withholds the raw text so students see only
+	// the images. Rendered images are cached per-question (Question
+	// .ImageRenderStatus / .SystemImageMediaID) and reused across quizzes.
+	RenderAsImage bool `gorm:"not null;default:false" json:"render_as_image"`
+
+	// ImageRenderStatus is a transient, computed aggregate of the render status
+	// across the quiz's candidate questions (none/pending/ready/failed). Never
+	// persisted — the take gate and authoring UI use it to know when images are
+	// ready. Only populated on reads that resolve the question set.
+	ImageRenderStatus ImageRenderStatus `gorm:"-" json:"image_render_status,omitempty"`
+
 	// ShowResults opts the quiz into revealing each student's score and earned
 	// marks back to them. Reveal is deferred until the student's room window has
 	// closed (see resultsRevealed) so early finishers cannot leak answers to
@@ -145,6 +159,7 @@ type CreateQuizDTO struct {
 	DisableCopyPaste           bool `json:"disable_copy_paste"`
 	DisableRightClickShortcuts bool `json:"disable_right_click_shortcuts"`
 	ShowResults                bool `json:"show_results"`
+	RenderAsImage              bool `json:"render_as_image"`
 
 	NegativeMarkMode NegativeMarkMode `json:"negative_mark_mode"`
 	NegativeValue    float64          `json:"negative_value"`
@@ -164,6 +179,7 @@ type UpdateQuizDTO struct {
 	DisableCopyPaste           *bool `json:"disable_copy_paste"`
 	DisableRightClickShortcuts *bool `json:"disable_right_click_shortcuts"`
 	ShowResults                *bool `json:"show_results"`
+	RenderAsImage              *bool `json:"render_as_image"`
 
 	NegativeMarkMode *NegativeMarkMode `json:"negative_mark_mode"`
 	NegativeValue    *float64          `json:"negative_value"`

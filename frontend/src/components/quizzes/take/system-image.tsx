@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { Loader2Icon } from "lucide-react"
 
-import { apiClient } from "@/api/mutator/custom-instance"
+import { getMediaIdDownloadUrl } from "@/api/media/media"
 import { cn } from "@/lib/utils"
 
 /**
@@ -15,8 +15,8 @@ export function SystemImage({ mediaID, className }: { mediaID: string; className
   const { data: url } = useQuery({
     queryKey: ["media", "download-url", mediaID],
     queryFn: async () => {
-      const res = await apiClient(`/media/${mediaID}/download-url`, { method: "GET" })
-      return (res.data as { data?: { url?: string } }).data?.url ?? null
+      const res = await getMediaIdDownloadUrl(mediaID)
+      return res.status === 200 ? (res.data.data?.url ?? null) : null
     },
     staleTime: 30 * 60 * 1000,
   })

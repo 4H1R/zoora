@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 
-import { apiClient } from "@/api/mutator/custom-instance"
+import { getMediaId, getMediaIdDownloadUrl } from "@/api/media/media"
 
 export const MEDIA_MODEL_PRACTICE = "practice"
 export const MEDIA_MODEL_PRACTICE_SUBMISSION = "practice_submission"
@@ -21,10 +21,10 @@ export function useMediaInfo(mediaID: string, enabled = true) {
     enabled: enabled && !!mediaID,
     staleTime: 25 * 60 * 1000,
     queryFn: async () => {
-      const metaRes = await apiClient(`/media/${mediaID}`, { method: "GET" })
-      const meta = (metaRes.data as { data?: { file_name?: string; name?: string } }).data ?? {}
-      const urlRes = await apiClient(`/media/${mediaID}/download-url`, { method: "GET" })
-      const url = (urlRes.data as { data?: { url?: string } }).data?.url ?? null
+      const metaRes = await getMediaId(mediaID)
+      const meta = metaRes.status === 200 ? (metaRes.data.data ?? {}) : {}
+      const urlRes = await getMediaIdDownloadUrl(mediaID)
+      const url = urlRes.status === 200 ? (urlRes.data.data?.url ?? null) : null
       return { name: meta.file_name || meta.name || mediaID, url }
     },
   })

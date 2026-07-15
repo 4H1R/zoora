@@ -1,28 +1,52 @@
-import { ClockIcon } from "lucide-react"
-
 import { cn } from "@/lib/utils"
 
 import { formatClock } from "./utils"
 
 interface TimerPillProps {
   remainingSeconds: number
+  /** Full exam window in seconds — drives the depletion gauge. */
+  totalSeconds: number
 }
 
-export function TimerPill({ remainingSeconds }: TimerPillProps) {
+// Geometry for the circular depletion gauge. r chosen so the 24px viewBox has a
+// comfortable 2.5px stroke without clipping.
+const GAUGE_R = 9
+const GAUGE_C = 2 * Math.PI * GAUGE_R
+
+export function TimerPill({ remainingSeconds, totalSeconds }: TimerPillProps) {
   const danger = remainingSeconds <= 30
   const warn = remainingSeconds <= 60 && !danger
+  const fraction = Math.max(0, Math.min(1, totalSeconds > 0 ? remainingSeconds / totalSeconds : 0))
+
   return (
     <div
       role="timer"
       aria-live="off"
       className={cn(
-        "ring-foreground/15 inline-flex items-center gap-2 rounded-xl px-3 py-1.5 font-mono text-base tabular-nums ring-1 transition-colors md:text-lg",
-        warn && "ring-amber-500/50 text-amber-600 dark:text-amber-400",
-        danger && "ring-destructive/60 text-destructive animate-pulse",
+        "text-foreground ring-foreground/12 bg-foreground/[0.03] inline-flex items-center gap-2.5 rounded-2xl py-1.5 ps-2 pe-3.5 ring-1 transition-colors",
+        warn && "text-amber-600 ring-amber-500/40 bg-amber-500/[0.06] dark:text-amber-400",
+        danger && "text-destructive ring-destructive/50 bg-destructive/[0.07] animate-pulse",
       )}
     >
-      <ClockIcon className="size-4" />
-      {formatClock(remainingSeconds)}
+      <span className="relative inline-flex size-6 items-center justify-center">
+        <svg viewBox="0 0 24 24" className="size-6 -rotate-90" aria-hidden>
+          <circle cx="12" cy="12" r={GAUGE_R} fill="none" stroke="currentColor" strokeOpacity={0.15} strokeWidth={2.5} />
+          <circle
+            cx="12"
+            cy="12"
+            r={GAUGE_R}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            strokeDasharray={GAUGE_C}
+            strokeDashoffset={GAUGE_C * (1 - fraction)}
+            className="transition-[stroke-dashoffset] duration-1000 ease-linear"
+          />
+        </svg>
+        <span className="bg-current absolute size-1 rounded-full" />
+      </span>
+      <span className="font-mono text-base font-semibold tabular-nums md:text-lg">{formatClock(remainingSeconds)}</span>
     </div>
   )
 }

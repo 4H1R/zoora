@@ -316,7 +316,7 @@ func newDeps() testDeps {
 func (d testDeps) service() domain.QuizService {
 	return quizzes.NewService(
 		d.quizRepo, d.ruleRepo, d.roomRepo, d.subRepo,
-		d.questionRepo, d.classRepo, d.memberRepo, slog.Default(),
+		d.questionRepo, d.classRepo, d.memberRepo, nil, slog.Default(),
 	)
 }
 
