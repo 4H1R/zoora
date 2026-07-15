@@ -1,12 +1,12 @@
-import { useInfiniteQuery } from "@tanstack/react-query"
-
-import {
-  getConversationsIdMessages,
-  type getConversationsIdMessagesResponse,
-} from "@/api/conversations/conversations"
+import type { ChatMessage } from "./lib/messages"
+import type { getConversationsIdMessagesResponse } from "@/api/conversations/conversations"
 import type { GetConversationsIdMessagesParams } from "@/api/model"
 
-import { type ChatMessage, dedupSortMessages, nextPageParam, prevPageParam } from "./lib/messages"
+import { useInfiniteQuery } from "@tanstack/react-query"
+
+import { getConversationsIdMessages } from "@/api/conversations/conversations"
+
+import { dedupSortMessages, nextPageParam, prevPageParam } from "./lib/messages"
 import { chatKeys } from "./lib/query-keys"
 
 // Backend default page size; also the exhaustion threshold — a page with fewer

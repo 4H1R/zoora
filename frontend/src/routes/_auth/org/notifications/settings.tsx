@@ -13,11 +13,7 @@ export const Route = createFileRoute("/_auth/org/notifications/settings")({
   component: ConnectorSettingsPage,
 })
 
-const CHANNELS = [
-  ConnectorType.ConnectorTelegram,
-  ConnectorType.ConnectorBale,
-  ConnectorType.ConnectorPush,
-] as const
+const CHANNELS = [ConnectorType.ConnectorTelegram, ConnectorType.ConnectorBale, ConnectorType.ConnectorPush] as const
 
 function ConnectorSettingsPage() {
   const { t } = useTranslation()

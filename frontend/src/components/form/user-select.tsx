@@ -43,13 +43,13 @@ export function UserSelect({
       search: debouncedSearch || undefined,
       organization_id: organizationId || undefined,
     },
-    { query: { enabled: isAdmin } },
+    { query: { enabled: isAdmin } }
   )
   const orgQuery = useGetUsers(
     {
       search: debouncedSearch || undefined,
     },
-    { query: { enabled: !isAdmin } },
+    { query: { enabled: !isAdmin } }
   )
 
   const data = isAdmin ? adminQuery.data : orgQuery.data
@@ -95,9 +95,7 @@ export function UserSelect({
                       <div className="text-muted-foreground truncate font-mono text-xs">{user.username}</div>
                     )}
                   </div>
-                  <CheckIcon
-                    className={cn("ms-2 size-4 shrink-0", value === user.id ? "opacity-100" : "opacity-0")}
-                  />
+                  <CheckIcon className={cn("ms-2 size-4 shrink-0", value === user.id ? "opacity-100" : "opacity-0")} />
                 </CommandItem>
               ))}
             </CommandGroup>

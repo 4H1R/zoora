@@ -23,10 +23,7 @@ export interface Presence {
  * unknown), and `live` wins if neither timestamp is comparable (including a
  * true tie).
  */
-export function pickFreshestStatus(
-  live: Presence | undefined,
-  snapshot: Presence | undefined
-): Presence | undefined {
+export function pickFreshestStatus(live: Presence | undefined, snapshot: Presence | undefined): Presence | undefined {
   if (!live) return snapshot
   if (!snapshot) return live
 

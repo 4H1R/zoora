@@ -1,4 +1,6 @@
-import { type PointerEvent as ReactPointerEvent, type ReactNode, useRef, useState } from "react"
+import type { ReactNode, PointerEvent as ReactPointerEvent } from "react"
+
+import { useRef, useState } from "react"
 
 import { cn } from "@/lib/utils"
 

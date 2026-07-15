@@ -1,3 +1,5 @@
+import type { ChatMessage } from "./messages"
+
 import { describe, expect, it } from "vitest"
 
 import {
@@ -10,7 +12,6 @@ import {
   prevPageParam,
   reconcileOptimistic,
 } from "./messages"
-import type { ChatMessage } from "./messages"
 
 // Build a page of `n` ASCENDING messages whose ids sort after `startCode`.
 function page(startCode: number, n: number): ChatMessage[] {

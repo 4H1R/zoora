@@ -21,7 +21,7 @@ export function createWhiteboardAssetStore(liveId: string): TLAssetStore {
           mime_type: file.type || "application/octet-stream",
           size: file.size,
         },
-        { signal: abortSignal },
+        { signal: abortSignal }
       )
       const presign = res.status === 200 ? res.data.data : undefined
       if (!presign?.upload_url || !presign.public_url) {

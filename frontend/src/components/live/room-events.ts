@@ -5,7 +5,10 @@ export type RoomEvent =
   | { type: "hand"; data: { identity: string; raised: boolean; raisedAt?: number } }
   | { type: "stage"; data: { kind: "none" | "slides" | "whiteboard"; url?: string; page?: number; numPages?: number } }
   | { type: "request_stage"; data: Record<string, never> }
-  | { type: "poll_launched"; data: { pollId: string; name: string; options: { label: string; value: string }[]; allowedAnswersCount: number } }
+  | {
+      type: "poll_launched"
+      data: { pollId: string; name: string; options: { label: string; value: string }[]; allowedAnswersCount: number }
+    }
   | { type: "poll_results"; data: { pollId: string; counts: Record<string, number>; total: number } }
   | { type: "poll_closed"; data: { pollId: string } }
   | {

@@ -30,8 +30,7 @@ export function MajorModal() {
 
   const markSeen = usePostChangelogMarkSeen({
     mutation: {
-      onSuccess: () =>
-        queryClient.invalidateQueries({ queryKey: getGetChangelogStatusQueryKey() }),
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetChangelogStatusQueryKey() }),
     },
   })
 
@@ -57,11 +56,7 @@ export function MajorModal() {
         </DialogHeader>
         <ChangelogMarkdown>{body}</ChangelogMarkdown>
         <DialogFooter>
-          <Link
-            to="/org/whats-new"
-            onClick={dismiss}
-            className={buttonVariants({ variant: "outline" })}
-          >
+          <Link to="/org/whats-new" onClick={dismiss} className={buttonVariants({ variant: "outline" })}>
             {t("whatsNew.seeAll")}
           </Link>
           <Button onClick={dismiss}>{t("whatsNew.gotIt")}</Button>

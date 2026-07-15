@@ -6,14 +6,7 @@ import { useDebounce } from "use-debounce"
 import { useGetAdminClasses } from "@/api/admin-classes/admin-classes"
 import { useGetClassesIdSessions } from "@/api/classes/classes"
 import { Button } from "@/components/ui/button"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
@@ -49,19 +42,13 @@ export function ClassPicker({ value, onChange, placeholder, disabled }: ClassPic
         {selected ? (
           <span className="truncate">{selected.name}</span>
         ) : (
-          <span className="text-muted-foreground">
-            {placeholder ?? t("admin.classSessionPicker.classPlaceholder")}
-          </span>
+          <span className="text-muted-foreground">{placeholder ?? t("admin.classSessionPicker.classPlaceholder")}</span>
         )}
         <ChevronsUpDownIcon className="text-muted-foreground ms-2 size-4 shrink-0 opacity-50" />
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0" align="start">
         <Command>
-          <CommandInput
-            value={search}
-            onValueChange={setSearch}
-            placeholder={t("admin.classes.searchPlaceholder")}
-          />
+          <CommandInput value={search} onValueChange={setSearch} placeholder={t("admin.classes.searchPlaceholder")} />
           <CommandList>
             <CommandEmpty>{t("admin.classes.noResults")}</CommandEmpty>
             <CommandGroup>
@@ -76,14 +63,10 @@ export function ClassPicker({ value, onChange, placeholder, disabled }: ClassPic
                     }
                   }}
                 >
-                  <CheckIcon
-                    className={cn("me-2 size-4", value === cls.id ? "opacity-100" : "opacity-0")}
-                  />
+                  <CheckIcon className={cn("me-2 size-4", value === cls.id ? "opacity-100" : "opacity-0")} />
                   <div className="min-w-0">
                     <div className="truncate text-sm">{cls.name}</div>
-                    {cls.user?.name && (
-                      <div className="text-muted-foreground truncate text-xs">{cls.user.name}</div>
-                    )}
+                    {cls.user?.name && <div className="text-muted-foreground truncate text-xs">{cls.user.name}</div>}
                   </div>
                 </CommandItem>
               ))}
@@ -103,13 +86,7 @@ interface SessionPickerProps {
   disabled?: boolean
 }
 
-export function SessionPicker({
-  classId,
-  value,
-  onChange,
-  placeholder,
-  disabled,
-}: SessionPickerProps) {
+export function SessionPicker({ classId, value, onChange, placeholder, disabled }: SessionPickerProps) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState("")
@@ -150,11 +127,7 @@ export function SessionPicker({
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0" align="start">
         <Command>
-          <CommandInput
-            value={search}
-            onValueChange={setSearch}
-            placeholder={t("admin.sessions.searchPlaceholder")}
-          />
+          <CommandInput value={search} onValueChange={setSearch} placeholder={t("admin.sessions.searchPlaceholder")} />
           <CommandList>
             <CommandEmpty>{t("admin.sessions.noResults")}</CommandEmpty>
             <CommandGroup>
@@ -169,9 +142,7 @@ export function SessionPicker({
                     }
                   }}
                 >
-                  <CheckIcon
-                    className={cn("me-2 size-4", value === s.id ? "opacity-100" : "opacity-0")}
-                  />
+                  <CheckIcon className={cn("me-2 size-4", value === s.id ? "opacity-100" : "opacity-0")} />
                   <span className="truncate text-sm">{s.name}</span>
                 </CommandItem>
               ))}

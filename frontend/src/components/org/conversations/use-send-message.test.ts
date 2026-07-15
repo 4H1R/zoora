@@ -1,6 +1,7 @@
+import type { SendMessageInput } from "./use-send-message"
+
 import { describe, expect, it } from "vitest"
 
-import type { SendMessageInput } from "./use-send-message"
 import { resolveRetryInput } from "./use-send-message"
 
 // A failed plain-text bubble never carries `mentions` (the optimistic

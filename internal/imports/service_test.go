@@ -92,6 +92,16 @@ func (m *mockMediaRepo) ListFiles(ctx context.Context, orgID uuid.UUID, modelTyp
 	return items, args.Get(1).(int64), args.Error(2)
 }
 
+func (m *mockMediaRepo) ListOwnerMedia(context.Context, uuid.UUID) ([]domain.MediaOwner, error) {
+	return nil, nil
+}
+func (m *mockMediaRepo) ListOwnerRecordings(context.Context, uuid.UUID) ([]domain.MediaOwner, error) {
+	return nil, nil
+}
+func (m *mockMediaRepo) ListOwnerFiles(context.Context, uuid.UUID, string, *uuid.UUID, domain.ListParams) ([]domain.OwnerFile, int64, error) {
+	return nil, 0, nil
+}
+
 type mockObjectStore struct{ mock.Mock }
 
 func (m *mockObjectStore) GetObject(ctx context.Context, key string, maxSize int64) ([]byte, error) {

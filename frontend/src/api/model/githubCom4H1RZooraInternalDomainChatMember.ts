@@ -5,16 +5,16 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainChat } from './githubCom4H1RZooraInternalDomainChat';
-import type { GithubCom4H1RZooraInternalDomainChatMemberRole } from './githubCom4H1RZooraInternalDomainChatMemberRole';
-import type { GithubCom4H1RZooraInternalDomainUser } from './githubCom4H1RZooraInternalDomainUser';
+import type { GithubCom4H1RZooraInternalDomainChat } from "./githubCom4H1RZooraInternalDomainChat"
+import type { GithubCom4H1RZooraInternalDomainChatMemberRole } from "./githubCom4H1RZooraInternalDomainChatMemberRole"
+import type { GithubCom4H1RZooraInternalDomainUser } from "./githubCom4H1RZooraInternalDomainUser"
 
 export interface GithubCom4H1RZooraInternalDomainChatMember {
-  chat?: GithubCom4H1RZooraInternalDomainChat;
-  chat_id?: string;
-  id?: string;
-  joined_at?: string;
-  role?: GithubCom4H1RZooraInternalDomainChatMemberRole;
-  user?: GithubCom4H1RZooraInternalDomainUser;
-  user_id?: string;
+  chat?: GithubCom4H1RZooraInternalDomainChat
+  chat_id?: string
+  id?: string
+  joined_at?: string
+  role?: GithubCom4H1RZooraInternalDomainChatMemberRole
+  user?: GithubCom4H1RZooraInternalDomainUser
+  user_id?: string
 }

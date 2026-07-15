@@ -21,7 +21,7 @@ export function MetaCell({ icon, label, value, mono = false }: MetaCellProps) {
       <span
         className={cn(
           "text-foreground ps-0.5 text-xl leading-none font-semibold md:text-2xl",
-          mono && "font-mono tabular-nums",
+          mono && "font-mono tabular-nums"
         )}
       >
         {value}

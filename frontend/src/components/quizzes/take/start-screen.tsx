@@ -43,7 +43,7 @@ function RuleRow({
     <li
       className={cn(
         "flex items-center gap-3 px-4 py-3 text-sm leading-relaxed",
-        destructive ? "text-destructive" : "text-foreground/80",
+        destructive ? "text-destructive" : "text-foreground/80"
       )}
     >
       <span
@@ -51,7 +51,7 @@ function RuleRow({
           "flex size-8 shrink-0 items-center justify-center rounded-lg ring-1 [&_svg]:size-4",
           destructive
             ? "bg-destructive/10 text-destructive ring-destructive/20"
-            : "bg-foreground/5 text-muted-foreground ring-foreground/10",
+            : "bg-foreground/5 text-muted-foreground ring-foreground/10"
         )}
       >
         {icon}
@@ -87,7 +87,7 @@ export function StartScreen({
   const closesAt = formatDate(room.ended_at, "datetime")
 
   return (
-    <div className="relative isolate flex flex-col gap-10 pb-24 pt-8">
+    <div className="relative isolate flex flex-col gap-10 pt-8 pb-24">
       <DecorativeBackground />
 
       <div className="flex items-center">
@@ -105,13 +105,11 @@ export function StartScreen({
           {quiz.title}
         </h1>
         {Boolean(quiz.description) && (
-          <p className="text-muted-foreground max-w-2xl text-base leading-relaxed md:text-lg">
-            {quiz.description}
-          </p>
+          <p className="text-muted-foreground max-w-2xl text-base leading-relaxed md:text-lg">{quiz.description}</p>
         )}
       </header>
 
-      <section className="ring-foreground/10 grid grid-cols-2 gap-px overflow-hidden rounded-3xl bg-gradient-to-br from-foreground/[0.08] to-foreground/[0.03] shadow-lg ring-1 md:grid-cols-4">
+      <section className="ring-foreground/10 from-foreground/[0.08] to-foreground/[0.03] grid grid-cols-2 gap-px overflow-hidden rounded-3xl bg-gradient-to-br shadow-lg ring-1 md:grid-cols-4">
         <MetaCell
           icon={<ClipboardListIcon className="size-4" />}
           label={t("org.session.quizzes.take.meta.questions")}
@@ -151,9 +149,7 @@ export function StartScreen({
           {quiz.shuffle_questions && (
             <RuleRow icon={<ShuffleIcon />}>{t("org.session.quizzes.take.rules.shuffle")}</RuleRow>
           )}
-          <RuleRow icon={<AlertTriangleIcon />}>
-            {t("org.session.quizzes.take.rules.autoSubmit")}
-          </RuleRow>
+          <RuleRow icon={<AlertTriangleIcon />}>{t("org.session.quizzes.take.rules.autoSubmit")}</RuleRow>
           {hasNegativeMarking && (
             <RuleRow icon={<AlertTriangleIcon />} destructive>
               {t("org.session.quizzes.take.penalty.explainer")}
@@ -164,14 +160,8 @@ export function StartScreen({
 
       <div className="flex items-center gap-3">
         <Button size="lg" onClick={onBegin} disabled={starting || locating}>
-          {starting || locating ? (
-            <Spinner className="size-4" />
-          ) : (
-            <CheckCircle2Icon className="size-4" />
-          )}
-          {locating
-            ? t("org.session.quizzes.take.requestingLocation")
-            : t("org.session.quizzes.take.begin")}
+          {starting || locating ? <Spinner className="size-4" /> : <CheckCircle2Icon className="size-4" />}
+          {locating ? t("org.session.quizzes.take.requestingLocation") : t("org.session.quizzes.take.begin")}
         </Button>
         <Button variant="outline" render={<Link to={backHref} />}>
           {t("common.cancel")}

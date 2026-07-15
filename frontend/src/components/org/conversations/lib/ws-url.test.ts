@@ -13,9 +13,7 @@ afterEach(() => {
 describe("resolveWsUrl", () => {
   it("passes absolute ws:// through unchanged", () => {
     stubLocation("https:", "acme.zoora.ir")
-    expect(resolveWsUrl("ws://localhost:8080/api/v1/ws")).toBe(
-      "ws://localhost:8080/api/v1/ws"
-    )
+    expect(resolveWsUrl("ws://localhost:8080/api/v1/ws")).toBe("ws://localhost:8080/api/v1/ws")
   })
 
   it("passes absolute wss:// through unchanged", () => {

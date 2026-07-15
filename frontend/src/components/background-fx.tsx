@@ -32,11 +32,11 @@ export function BackgroundFX({ tone = "brand" }: { tone?: Tone }) {
         style={{ background: `radial-gradient(120% 80% at 50% -10%, ${c.wash}, transparent 60%)` }}
       />
       <div
-        className="animate-aurora absolute -top-40 start-[-10%] size-[40rem] rounded-full opacity-50 blur-3xl"
+        className="animate-aurora absolute start-[-10%] -top-40 size-[40rem] rounded-full opacity-50 blur-3xl"
         style={{ background: `radial-gradient(circle, ${c.blobA}, transparent 65%)` }}
       />
       <div
-        className="animate-aurora-slow absolute -bottom-52 end-[-8%] size-[36rem] rounded-full opacity-40 blur-3xl"
+        className="animate-aurora-slow absolute end-[-8%] -bottom-52 size-[36rem] rounded-full opacity-40 blur-3xl"
         style={{ background: `radial-gradient(circle, ${c.blobB}, transparent 65%)` }}
       />
       <div

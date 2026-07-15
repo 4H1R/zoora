@@ -94,9 +94,7 @@ function ClassSessionsPage() {
       <StatCards stats={statCards} />
       <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.sessions.filter.class")}
-          </label>
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.sessions.filter.class")}</label>
           <ClassPicker value={classId} onChange={() => {}} disabled />
         </div>
       </Card>

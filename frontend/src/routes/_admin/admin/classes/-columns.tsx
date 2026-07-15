@@ -73,21 +73,13 @@ function ClassRowActions({ cls, onEdit, onDelete }: ClassRowActionsProps) {
         <DropdownMenuContent align="end" className="min-w-44">
           <DropdownMenuGroup>
             {cls.id && (
-              <DropdownMenuItem
-                render={
-                  <Link to="/admin/classes/$classId/members" params={{ classId: cls.id }} />
-                }
-              >
+              <DropdownMenuItem render={<Link to="/admin/classes/$classId/members" params={{ classId: cls.id }} />}>
                 <UserPlusIcon data-icon="inline-start" />
                 {t("admin.classes.actions.manageMembers")}
               </DropdownMenuItem>
             )}
             {cls.id && (
-              <DropdownMenuItem
-                render={
-                  <Link to="/admin/classes/$classId/sessions" params={{ classId: cls.id }} />
-                }
-              >
+              <DropdownMenuItem render={<Link to="/admin/classes/$classId/sessions" params={{ classId: cls.id }} />}>
                 <CalendarClockIcon data-icon="inline-start" />
                 {t("admin.classes.actions.viewSessions")}
               </DropdownMenuItem>

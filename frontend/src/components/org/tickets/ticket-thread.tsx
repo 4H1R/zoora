@@ -104,7 +104,13 @@ export function TicketThread({
       <div className="flex flex-wrap items-start justify-between gap-2 border-b p-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon-sm" className="md:hidden" onClick={onBack} aria-label={t("tickets.thread.back")}>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="md:hidden"
+              onClick={onBack}
+              aria-label={t("tickets.thread.back")}
+            >
               <ArrowLeftIcon className="size-4 rtl:rotate-180" />
             </Button>
             <h2 className="min-w-0 truncate text-base font-semibold">{ticket.title}</h2>

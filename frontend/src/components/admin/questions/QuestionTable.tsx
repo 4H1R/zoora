@@ -29,11 +29,7 @@ function useTypeLabel() {
   }
 }
 
-function useQuestionColumns({
-  onEdit,
-}: {
-  onEdit: (q: Question) => void
-}): ColumnDef<Question>[] {
+function useQuestionColumns({ onEdit }: { onEdit: (q: Question) => void }): ColumnDef<Question>[] {
   const { t } = useTranslation()
   const formatDate = useFormatDate()
   const typeLabel = useTypeLabel()
@@ -44,13 +40,9 @@ function useQuestionColumns({
       header: t("admin.questions.text"),
       cell: ({ row }) => (
         <div className="min-w-0">
-          <div className="line-clamp-2 text-start text-sm font-medium">
-            {row.original.text}
-          </div>
+          <div className="line-clamp-2 text-start text-sm font-medium">{row.original.text}</div>
           {row.original.bank?.name && (
-            <div className="text-muted-foreground truncate text-start text-xs">
-              {row.original.bank.name}
-            </div>
+            <div className="text-muted-foreground truncate text-start text-xs">{row.original.bank.name}</div>
           )}
         </div>
       ),
@@ -62,9 +54,7 @@ function useQuestionColumns({
       header: t("admin.questions.type"),
       cell: ({ row }) => {
         const type = (row.original.type ?? "descriptive") as QType
-        return (
-          <Badge variant={TYPE_BADGE_VARIANT[type] ?? "outline"}>{typeLabel(type)}</Badge>
-        )
+        return <Badge variant={TYPE_BADGE_VARIANT[type] ?? "outline"}>{typeLabel(type)}</Badge>
       },
       enableSorting: true,
       enableHiding: true,
@@ -72,9 +62,7 @@ function useQuestionColumns({
     {
       accessorKey: "options_count",
       header: t("admin.questions.optionsCount"),
-      cell: ({ row }) => (
-        <span className="text-xs tabular-nums">{row.original.options?.length ?? 0}</span>
-      ),
+      cell: ({ row }) => <span className="text-xs tabular-nums">{row.original.options?.length ?? 0}</span>,
       enableSorting: false,
       enableHiding: true,
     },
@@ -82,10 +70,7 @@ function useQuestionColumns({
       accessorKey: "total_score",
       header: t("admin.questions.totalScore"),
       cell: ({ row }) => {
-        const total = (row.original.options ?? []).reduce(
-          (sum, o) => sum + (o.score ?? 0),
-          0
-        )
+        const total = (row.original.options ?? []).reduce((sum, o) => sum + (o.score ?? 0), 0)
         return <span className="text-xs tabular-nums">{total}</span>
       },
       enableSorting: false,
@@ -94,11 +79,7 @@ function useQuestionColumns({
     {
       accessorKey: "created_at",
       header: t("admin.questions.createdAt"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-xs">
-          {formatDate(row.original.created_at)}
-        </span>
-      ),
+      cell: ({ row }) => <span className="text-muted-foreground text-xs">{formatDate(row.original.created_at)}</span>,
       enableSorting: true,
       enableHiding: true,
     },
@@ -120,13 +101,7 @@ interface QuestionTableProps {
   onEdit: (q: Question) => void
 }
 
-export function QuestionTable({
-  questions,
-  total,
-  isLoading,
-  sorting,
-  onEdit,
-}: QuestionTableProps) {
+export function QuestionTable({ questions, total, isLoading, sorting, onEdit }: QuestionTableProps) {
   const { t } = useTranslation()
   const columns = useQuestionColumns({ onEdit })
 

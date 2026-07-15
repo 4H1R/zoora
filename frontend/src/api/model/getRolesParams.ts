@@ -7,8 +7,8 @@
  */
 
 export type GetRolesParams = {
-/**
- * Filter by organization UUID
- */
-organization_id?: string;
-};
+  /**
+   * Filter by organization UUID
+   */
+  organization_id?: string
+}

@@ -1,3 +1,5 @@
+import type { GithubCom4H1RZooraInternalDomainChangelogEntry as Entry } from "@/api/model"
+
 import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import {
@@ -5,8 +7,8 @@ import {
   FileTextIcon,
   PlusIcon,
   ScrollTextIcon,
-  SparklesIcon,
   SendIcon,
+  SparklesIcon,
   Trash2Icon,
 } from "lucide-react"
 import { useState } from "react"
@@ -19,7 +21,6 @@ import {
   useGetAdminChangelog,
   usePostAdminChangelog,
 } from "@/api/admin-changelog/admin-changelog"
-import type { GithubCom4H1RZooraInternalDomainChangelogEntry as Entry } from "@/api/model"
 import { StatCards } from "@/components/data-table/stat-cards"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { PageHeader } from "@/components/page-header"
@@ -123,9 +124,7 @@ function ChangelogListPage() {
           </div>
           <div className="space-y-1">
             <p className="font-medium">{t("admin.changelog.empty")}</p>
-            <p className="text-muted-foreground mx-auto max-w-sm text-sm">
-              {t("admin.changelog.emptyHint")}
-            </p>
+            <p className="text-muted-foreground mx-auto max-w-sm text-sm">{t("admin.changelog.emptyHint")}</p>
           </div>
           <Button size="sm" className="mt-1" onClick={newDraft} disabled={create.isPending}>
             <PlusIcon data-icon="inline-start" />
@@ -164,9 +163,7 @@ function ChangelogListPage() {
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="truncate font-medium">
-                      {e.title_en || t("admin.changelog.untitled")}
-                    </span>
+                    <span className="truncate font-medium">{e.title_en || t("admin.changelog.untitled")}</span>
                     {e.is_major && (
                       <Badge className="gap-1">
                         <SparklesIcon className="size-3" />
@@ -181,10 +178,7 @@ function ChangelogListPage() {
                   </p>
                 </div>
 
-                <Badge
-                  variant={isPublished ? "default" : "secondary"}
-                  className="shrink-0 gap-1.5"
-                >
+                <Badge variant={isPublished ? "default" : "secondary"} className="shrink-0 gap-1.5">
                   <span
                     className={cn(
                       "size-1.5 rounded-full",

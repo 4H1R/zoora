@@ -79,7 +79,7 @@ export function useRoomPolls(isHost: boolean) {
             allowedAnswersCount: poll.allowedAnswersCount,
           },
         }),
-        { reliable: true },
+        { reliable: true }
       )
       const r = resultsRef.current
       if (r) {
@@ -88,7 +88,7 @@ export function useRoomPolls(isHost: boolean) {
             type: "poll_results",
             data: { pollId: poll.pollId, counts: r.counts, total: r.total },
           }),
-          { reliable: true },
+          { reliable: true }
         )
       }
     }
@@ -112,7 +112,7 @@ export function useRoomPolls(isHost: boolean) {
           allowedAnswersCount: poll.allowedAnswersCount,
         },
       }),
-      { reliable: true },
+      { reliable: true }
     )
   }
 
@@ -124,7 +124,7 @@ export function useRoomPolls(isHost: boolean) {
         type: "poll_results",
         data: { pollId: activePoll.pollId, counts: r.counts, total: r.total },
       }),
-      { reliable: true },
+      { reliable: true }
     )
   }
 

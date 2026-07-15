@@ -1,3 +1,5 @@
+import type { Crumb } from "@/components/layout/breadcrumb-context"
+
 import { Link } from "@tanstack/react-router"
 import { Fragment } from "react"
 
@@ -10,7 +12,6 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { Crumb } from "@/components/layout/breadcrumb-context"
 
 // Renders the `Org` (prefix) crumb followed by each pushed crumb. Shared by the
 // desktop navbar and the mobile bar so both render identically from one trail.

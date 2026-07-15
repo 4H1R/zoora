@@ -1,17 +1,35 @@
 import type { LucideIcon } from "lucide-react"
 
 import {
-  FileQuestionIcon,
-  FolderIcon,
-  FolderHeartIcon,
-  NotebookPenIcon,
   FileCheck2Icon,
-  RadioIcon,
+  FileQuestionIcon,
+  FileWarningIcon,
   FolderClockIcon,
+  FolderHeartIcon,
+  FolderIcon,
+  GraduationCapIcon,
+  LibraryBigIcon,
+  MessagesSquareIcon,
+  NotebookPenIcon,
+  RadioIcon,
   VideoIcon,
 } from "lucide-react"
 
 export const SHARED_FOLDER = "organization"
+
+// Icon + tint per owner kind (files "by owner" view). Mirrors FOLDER_STYLES but
+// keyed on resolved owner kinds rather than raw media model_types.
+export const OWNER_STYLES: Record<string, { icon: LucideIcon; tint: string }> = {
+  class: { icon: GraduationCapIcon, tint: "bg-sky-500/10 text-sky-600 dark:text-sky-400" },
+  question_bank: { icon: LibraryBigIcon, tint: "bg-stone-500/10 text-stone-600 dark:text-stone-400" },
+  conversation: { icon: MessagesSquareIcon, tint: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
+  shared: { icon: FolderHeartIcon, tint: "bg-primary/10 text-primary" },
+  other: { icon: FileWarningIcon, tint: "bg-muted text-muted-foreground" },
+}
+
+export function ownerStyle(kind: string) {
+  return OWNER_STYLES[kind] ?? FALLBACK_FOLDER_STYLE
+}
 
 // Icon + tint per known folder (media model_type). Unknown types fall back to
 // a plain folder so new backend model types never break the page.

@@ -26,13 +26,7 @@ export function LogoMark({ className }: LogoMarkProps) {
         </linearGradient>
       </defs>
       <rect width="48" height="48" rx="13" fill={`url(#${gradientId})`} />
-      <path
-        d="M14 16 H34 L14 32 H34"
-        stroke="#ffffff"
-        strokeWidth="5.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M14 16 H34 L14 32 H34" stroke="#ffffff" strokeWidth="5.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }

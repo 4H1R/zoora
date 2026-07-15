@@ -1,11 +1,13 @@
-import { useTranslation } from "react-i18next"
-import { useAccess } from "react-access-engine"
+import type { OrgRouteKey } from "@/lib/org-routes"
+
 import { Link } from "@tanstack/react-router"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { useAccess } from "react-access-engine"
+import { useTranslation } from "react-i18next"
 
-import { eventDotColor } from "@/lib/calendar"
-import { ORG_ROUTES, type OrgRouteKey } from "@/lib/org-routes"
 import { Card } from "@/components/ui/card"
+import { eventDotColor } from "@/lib/calendar"
+import { ORG_ROUTES } from "@/lib/org-routes"
 import { cn } from "@/lib/utils"
 
 const LEGEND: { type: string; key: string }[] = [
@@ -17,13 +19,7 @@ const LEGEND: { type: string; key: string }[] = [
 
 // Learning shortcuts shown in the aside — Online Classes first, mirroring the
 // sidebar's "Learning" nav group.
-const LEARNING_KEYS: OrgRouteKey[] = [
-  "online-classes",
-  "exams",
-  "practices",
-  "grades",
-  "attendance",
-]
+const LEARNING_KEYS: OrgRouteKey[] = ["online-classes", "exams", "practices", "grades", "attendance"]
 
 export function CalendarLegend({ monthCount }: { monthCount: number }) {
   const { t } = useTranslation()
@@ -31,19 +27,12 @@ export function CalendarLegend({ monthCount }: { monthCount: number }) {
     <Card className="gap-3 p-4">
       <div className="text-muted-foreground flex items-center justify-between text-xs font-semibold">
         <span>{t("org.calendar.legendTitle")}</span>
-        <span className="tabular-nums">
-          {t("org.calendar.monthCount", { count: monthCount })}
-        </span>
+        <span className="tabular-nums">{t("org.calendar.monthCount", { count: monthCount })}</span>
       </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-2">
         {LEGEND.map((l) => (
-          <span
-            key={l.type}
-            className="text-foreground flex items-center gap-2 text-sm"
-          >
-            <span
-              className={cn("h-2.5 w-2.5 rounded-full", eventDotColor(l.type))}
-            />
+          <span key={l.type} className="text-foreground flex items-center gap-2 text-sm">
+            <span className={cn("h-2.5 w-2.5 rounded-full", eventDotColor(l.type))} />
             {t(l.key)}
           </span>
         ))}
@@ -55,23 +44,19 @@ export function CalendarLegend({ monthCount }: { monthCount: number }) {
 export function LearningLinks() {
   const { t, i18n } = useTranslation()
   const { can } = useAccess()
-  const routes = LEARNING_KEYS.map((k) => ORG_ROUTES[k]).filter(
-    (s) => !s.perms || s.perms.some((p) => can(p))
-  )
+  const routes = LEARNING_KEYS.map((k) => ORG_ROUTES[k]).filter((s) => !s.perms || s.perms.some((p) => can(p)))
   if (routes.length === 0) return null
   const Chevron = i18n.language === "fa" ? ChevronLeft : ChevronRight
 
   return (
     <Card className="gap-1 p-2">
-      <p className="text-muted-foreground px-2 pt-1.5 pb-1 text-xs font-semibold">
-        {t("org.nav.learning")}
-      </p>
+      <p className="text-muted-foreground px-2 pt-1.5 pb-1 text-xs font-semibold">{t("org.nav.learning")}</p>
       <nav className="flex flex-col">
         {routes.map((spec) => (
           <Link
             key={spec.segment}
             to={`/org/${spec.segment}` as string}
-            className="group hover:bg-accent flex items-center gap-2.5 rounded-lg px-2 py-2 text-sm font-medium transition-colors [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-muted-foreground group-hover:[&_svg]:text-primary"
+            className="group hover:bg-accent [&_svg]:text-muted-foreground group-hover:[&_svg]:text-primary flex items-center gap-2.5 rounded-lg px-2 py-2 text-sm font-medium transition-colors [&_svg]:size-4 [&_svg]:shrink-0"
           >
             {spec.icon}
             <span className="flex-1 truncate">{t(spec.i18nKey)}</span>

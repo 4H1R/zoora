@@ -5,24 +5,24 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
-import type { GithubCom4H1RZooraInternalDomainChat } from './githubCom4H1RZooraInternalDomainChat';
-import type { GithubCom4H1RZooraInternalDomainMessage as __GithubCom4H1RZooraInternalDomainMessage } from './githubCom4H1RZooraInternalDomainMessage';
-import type { GithubCom4H1RZooraInternalDomainMessageType } from './githubCom4H1RZooraInternalDomainMessageType';
-import type { GithubCom4H1RZooraInternalDomainUser } from './githubCom4H1RZooraInternalDomainUser';
+import type { GithubCom4H1RZooraInternalDomainChat } from "./githubCom4H1RZooraInternalDomainChat"
+import type { GithubCom4H1RZooraInternalDomainMessage as __GithubCom4H1RZooraInternalDomainMessage } from "./githubCom4H1RZooraInternalDomainMessage"
+import type { GithubCom4H1RZooraInternalDomainMessageType } from "./githubCom4H1RZooraInternalDomainMessageType"
+import type { GithubCom4H1RZooraInternalDomainUser } from "./githubCom4H1RZooraInternalDomainUser"
 
 export interface GithubCom4H1RZooraInternalDomainMessage {
-  attachments?: number[];
-  chat?: GithubCom4H1RZooraInternalDomainChat;
-  chat_id?: string;
-  content?: string;
-  created_at?: string;
-  emoji_counts?: number[];
-  id?: string;
-  is_edited?: boolean;
-  message_type?: GithubCom4H1RZooraInternalDomainMessageType;
-  parent_message?: __GithubCom4H1RZooraInternalDomainMessage;
-  parent_message_id?: string;
-  sender?: GithubCom4H1RZooraInternalDomainUser;
-  sender_id?: string;
-  updated_at?: string;
+  attachments?: number[]
+  chat?: GithubCom4H1RZooraInternalDomainChat
+  chat_id?: string
+  content?: string
+  created_at?: string
+  emoji_counts?: number[]
+  id?: string
+  is_edited?: boolean
+  message_type?: GithubCom4H1RZooraInternalDomainMessageType
+  parent_message?: __GithubCom4H1RZooraInternalDomainMessage
+  parent_message_id?: string
+  sender?: GithubCom4H1RZooraInternalDomainUser
+  sender_id?: string
+  updated_at?: string
 }

@@ -1,12 +1,15 @@
+import type { WsEvent } from "./lib/ws-client"
+import type { ReactNode } from "react"
+
 import { useQueryClient } from "@tanstack/react-query"
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useRef, useState } from "react"
 
 import { AUTH_TOKEN_KEY } from "@/api/mutator/custom-instance"
 import { useGetUsersMe } from "@/api/users/users"
 import { clientEnv } from "@/config/env"
 
 import { chatKeys } from "./lib/query-keys"
-import { ChatWsClient, type WsEvent } from "./lib/ws-client"
+import { ChatWsClient } from "./lib/ws-client"
 import { resolveWsUrl } from "./lib/ws-url"
 import { createChatEventHandler } from "./use-chat-ws"
 

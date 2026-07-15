@@ -1,8 +1,9 @@
-import { postMediaPresign } from "@/api/media/media"
 import type { GithubCom4H1RZooraInternalDomainPresignUploadDTO } from "@/api/model"
 
-import { compressImage, isImage } from "./compress"
+import { postMediaPresign } from "@/api/media/media"
+
 import { encodeBlurhash, imageDimensions } from "./blurhash"
+import { compressImage, isImage } from "./compress"
 
 // Polymorphic media identifiers — MUST match the backend constants in
 // internal/domain/media.go (MediaModelConversation / MediaCollectionAttach).
@@ -128,11 +129,7 @@ export function putToPresignedUrl(
  * Full single-file pipeline: compress (images), compute blurhash + dimensions,
  * presign, then upload the bytes with progress + cancellation support.
  */
-export async function uploadFile(
-  file: File,
-  convId: string,
-  opts: UploadOptions = {}
-): Promise<UploadResult> {
+export async function uploadFile(file: File, convId: string, opts: UploadOptions = {}): Promise<UploadResult> {
   const { onProgress, signal, asDocument } = opts
   if (signal?.aborted) throw abortError()
 

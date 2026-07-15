@@ -59,9 +59,7 @@ function useAttendanceColumns(onEdit: (a: Attendance) => void): ColumnDef<Attend
       accessorKey: "class",
       header: t("admin.attendance.class"),
       cell: ({ row }) => (
-        <span className="text-sm">
-          {row.original.class?.name ?? <span className="text-muted-foreground">—</span>}
-        </span>
+        <span className="text-sm">{row.original.class?.name ?? <span className="text-muted-foreground">—</span>}</span>
       ),
       enableSorting: false,
       enableHiding: true,
@@ -96,9 +94,7 @@ function useAttendanceColumns(onEdit: (a: Attendance) => void): ColumnDef<Attend
       header: t("admin.attendance.source"),
       cell: ({ row }) => (
         <Badge variant="outline">
-          {row.original.is_auto_marked
-            ? t("admin.attendance.sources.auto")
-            : t("admin.attendance.sources.manual")}
+          {row.original.is_auto_marked ? t("admin.attendance.sources.auto") : t("admin.attendance.sources.manual")}
         </Badge>
       ),
       enableSorting: false,
@@ -107,9 +103,7 @@ function useAttendanceColumns(onEdit: (a: Attendance) => void): ColumnDef<Attend
     {
       accessorKey: "remarks",
       header: t("admin.attendance.remarks"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground truncate text-xs">{row.original.remarks || "—"}</span>
-      ),
+      cell: ({ row }) => <span className="text-muted-foreground truncate text-xs">{row.original.remarks || "—"}</span>,
       enableSorting: false,
       enableHiding: true,
     },

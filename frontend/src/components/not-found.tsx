@@ -18,15 +18,13 @@ export function NotFound() {
       <StatusGlyph code="404" tone="brand" />
 
       <h1
-        className="animate-reveal mt-6 font-heading font-semibold leading-[1.12] tracking-tight text-balance"
+        className="animate-reveal font-heading mt-6 leading-[1.12] font-semibold tracking-tight text-balance"
         style={{ animationDelay: "340ms", fontSize: "clamp(1.75rem, 5vw, 2.75rem)" }}
       >
         {t("errorPages.notFound.title")}
       </h1>
 
-      <p className="mt-3 max-w-sm text-sm text-muted-foreground">
-        {t("errorPages.notFound.description")}
-      </p>
+      <p className="text-muted-foreground mt-3 max-w-sm text-sm">{t("errorPages.notFound.description")}</p>
 
       <div
         className="animate-reveal mt-9 flex flex-col items-center gap-3 sm:flex-row"

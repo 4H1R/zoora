@@ -1,3 +1,6 @@
+import type { GithubCom4H1RZooraInternalDomainUser as OrgUser } from "@/api/model"
+import type { ErrorType } from "@/api/mutator/custom-instance"
+
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
 import { CheckIcon, ChevronsUpDownIcon, UserPlusIcon, XIcon } from "lucide-react"
@@ -8,26 +11,14 @@ import { toast } from "sonner"
 import { useDebounce } from "use-debounce"
 import { z } from "zod"
 
-import {
-  getGetClassesIdMembersQueryKey,
-  postClassesIdMembers,
-} from "@/api/classes/classes"
+import { getGetClassesIdMembersQueryKey, postClassesIdMembers } from "@/api/classes/classes"
 import { useGetUsers } from "@/api/users/users"
-import type { GithubCom4H1RZooraInternalDomainUser as OrgUser } from "@/api/model"
-import type { ErrorType } from "@/api/mutator/custom-instance"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
-import { UserAvatar } from "@/components/user-avatar"
 import { Button } from "@/components/ui/button"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { UserAvatar } from "@/components/user-avatar"
 import { cn } from "@/lib/utils"
 
 interface EnrollMemberModalProps {
@@ -65,11 +56,7 @@ export function EnrollMemberModal({ open, onOpenChange, classId }: EnrollMemberM
 
   const setSelection = (users: OrgUser[]) => {
     setSelectedUsers(users)
-    form.setValue(
-      "user_ids",
-      users.map((u) => u.id!).filter(Boolean),
-      { shouldValidate: form.formState.isSubmitted }
-    )
+    form.setValue("user_ids", users.map((u) => u.id!).filter(Boolean), { shouldValidate: form.formState.isSubmitted })
   }
 
   const toggleUser = (user: OrgUser) => {
@@ -124,11 +111,7 @@ export function EnrollMemberModal({ open, onOpenChange, classId }: EnrollMemberM
       description={t("org.class.enrollMember.description")}
       onSubmit={onSubmit}
       isLoading={isSubmitting}
-      submitLabel={
-        count > 0
-          ? t("org.class.enrollMember.submitCount", { count })
-          : t("org.class.enrollMember.submit")
-      }
+      submitLabel={count > 0 ? t("org.class.enrollMember.submitCount", { count }) : t("org.class.enrollMember.submit")}
     >
       <FieldGroup>
         <Field data-invalid={!!errors.user_ids || undefined}>
@@ -185,12 +168,7 @@ function OrgUserPicker({ selected, onToggle }: OrgUserPickerProps) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
-          <Button
-            type="button"
-            variant="outline"
-            role="combobox"
-            className="h-11 w-full justify-between font-normal"
-          />
+          <Button type="button" variant="outline" role="combobox" className="h-11 w-full justify-between font-normal" />
         }
       >
         {selected.length > 0 ? (
@@ -222,19 +200,12 @@ function OrgUserPicker({ selected, onToggle }: OrgUserPickerProps) {
                   value={`${user.name ?? ""} ${user.username ?? ""}`}
                   onSelect={() => onToggle(user)}
                 >
-                  <CheckIcon
-                    className={cn(
-                      "me-2 size-4",
-                      selectedIds.has(user.id) ? "opacity-100" : "opacity-0"
-                    )}
-                  />
+                  <CheckIcon className={cn("me-2 size-4", selectedIds.has(user.id) ? "opacity-100" : "opacity-0")} />
                   <UserAvatar name={user.name ?? ""} size="sm" />
                   <div className="ms-2 flex min-w-0 flex-col">
                     <span className="truncate text-sm">{user.name}</span>
                     {user.username && (
-                      <span className="text-muted-foreground truncate font-mono text-xs">
-                        @{user.username}
-                      </span>
+                      <span className="text-muted-foreground truncate font-mono text-xs">@{user.username}</span>
                     )}
                   </div>
                 </CommandItem>

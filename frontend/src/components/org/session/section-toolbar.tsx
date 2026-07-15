@@ -46,12 +46,7 @@ export function SectionToolbar({
       )}
       <div className="flex items-center gap-2">
         {children}
-        <SortPicker
-          options={sortOptions}
-          value={sort}
-          onChange={onSortChange}
-          label={t("org.session.controls.sort")}
-        />
+        <SortPicker options={sortOptions} value={sort} onChange={onSortChange} label={t("org.session.controls.sort")} />
       </div>
     </div>
   )

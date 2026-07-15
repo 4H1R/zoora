@@ -1,3 +1,4 @@
+import type { ConversationCategory } from "@/stores/conversation-filter"
 import type { LucideIcon } from "lucide-react"
 
 import { useParams } from "@tanstack/react-router"
@@ -29,7 +30,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
-import { type ConversationCategory, useConversationFilter } from "@/stores/conversation-filter"
+import { useConversationFilter } from "@/stores/conversation-filter"
 
 import { ConversationItem } from "./conversation-item"
 import { ConversationListSkeleton } from "./conversation-list.skeleton"

@@ -31,13 +31,7 @@ interface CenterMessageProps {
   tone?: "default" | "destructive"
 }
 
-export function CenterMessage({
-  title,
-  description,
-  backHref,
-  icon,
-  tone = "default",
-}: CenterMessageProps) {
+export function CenterMessage({ title, description, backHref, icon, tone = "default" }: CenterMessageProps) {
   const { t } = useTranslation()
   const destructive = tone === "destructive"
   return (
@@ -50,17 +44,14 @@ export function CenterMessage({
       <div className="animate-in fade-in zoom-in-95 relative flex size-40 items-center justify-center duration-700">
         <div
           aria-hidden
-          className={cn(
-            "absolute size-36 rounded-full blur-2xl",
-            destructive ? "bg-destructive/20" : "bg-primary/20",
-          )}
+          className={cn("absolute size-36 rounded-full blur-2xl", destructive ? "bg-destructive/20" : "bg-primary/20")}
         />
         <div aria-hidden className="ring-foreground/5 absolute size-40 rounded-full ring-1" />
         <div aria-hidden className="ring-foreground/10 absolute size-28 rounded-full ring-1" />
         <div
           className={cn(
             "bg-card/80 ring-foreground/10 relative flex size-20 items-center justify-center rounded-2xl shadow-xl ring-1 backdrop-blur-sm [&_svg]:size-8",
-            destructive ? "text-destructive" : "text-primary",
+            destructive ? "text-destructive" : "text-primary"
           )}
         >
           {icon ?? <FileQuestionIcon />}
@@ -69,9 +60,7 @@ export function CenterMessage({
 
       <div className="animate-in fade-in slide-in-from-bottom-2 flex flex-col items-center gap-4 delay-100 duration-500">
         <h1 className="text-3xl font-semibold tracking-tight text-balance md:text-4xl">{title}</h1>
-        <p className="text-muted-foreground max-w-md text-base leading-relaxed text-pretty">
-          {description}
-        </p>
+        <p className="text-muted-foreground max-w-md text-base leading-relaxed text-pretty">{description}</p>
       </div>
 
       <Button

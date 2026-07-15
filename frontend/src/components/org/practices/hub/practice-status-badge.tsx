@@ -13,13 +13,7 @@ const STATUS_STYLES: Record<PracticeStatus, string> = {
   missed: "border-destructive/25 bg-destructive/10 text-destructive",
 }
 
-export function PracticeStatusBadge({
-  status,
-  className,
-}: {
-  status?: string
-  className?: string
-}) {
+export function PracticeStatusBadge({ status, className }: { status?: string; className?: string }) {
   const { t } = useTranslation()
   const key = (status ?? "to_submit") as PracticeStatus
   const style = STATUS_STYLES[key] ?? STATUS_STYLES.to_submit

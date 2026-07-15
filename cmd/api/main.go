@@ -206,7 +206,7 @@ func main() {
 
 	roleService := roles.NewService(roleRepo, permRepo, transactor, redisClient, log)
 	authBusinessService := auth.NewAuthService(userRepo, jwtService, redisClient, log)
-	mediaService := media.NewService(mediaRepo, storageClient, entitlementService, log)
+	mediaService := media.NewService(mediaRepo, storageClient, entitlementService, entitlementRepo, log)
 	changelogService := changelog.NewServiceWithMedia(changelogRepo, mediaRepo, storageClient, redisClient, log)
 	tutorialService := tutorials.NewService(tutorialRepo, log)
 	livekitClient := lk.NewClient(cfg, log)

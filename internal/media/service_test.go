@@ -69,8 +69,25 @@ func (m *mediaRepoMock) ListFiles(ctx context.Context, orgID uuid.UUID, modelTyp
 	return items, total, args.Error(2)
 }
 
+func (m *mediaRepoMock) ListOwnerMedia(ctx context.Context, orgID uuid.UUID) ([]domain.MediaOwner, error) {
+	args := m.Called(ctx, orgID)
+	owners, _ := args.Get(0).([]domain.MediaOwner)
+	return owners, args.Error(1)
+}
+func (m *mediaRepoMock) ListOwnerRecordings(ctx context.Context, orgID uuid.UUID) ([]domain.MediaOwner, error) {
+	args := m.Called(ctx, orgID)
+	owners, _ := args.Get(0).([]domain.MediaOwner)
+	return owners, args.Error(1)
+}
+func (m *mediaRepoMock) ListOwnerFiles(ctx context.Context, orgID uuid.UUID, kind string, ownerID *uuid.UUID, p domain.ListParams) ([]domain.OwnerFile, int64, error) {
+	args := m.Called(ctx, orgID, kind, ownerID, p)
+	files, _ := args.Get(0).([]domain.OwnerFile)
+	total, _ := args.Get(1).(int64)
+	return files, total, args.Error(2)
+}
+
 func newMediaService(repo *mediaRepoMock, store *storageMock) domain.MediaService {
-	return media.NewService(repo, store, nil, slog.Default())
+	return media.NewService(repo, store, nil, nil, slog.Default())
 }
 
 func mediaCtx(isAdmin bool, perms ...string) context.Context {
@@ -446,7 +463,7 @@ func TestMediaPresignUpload_StorageQuotaExceeded(t *testing.T) {
 	repo := &mediaRepoMock{}
 	orgID := uuid.New()
 	ent := fakeEntService{storageErr: domain.NewLimitError(domain.PlanFree, domain.LimitStorageGB, 1, 1)}
-	svc := media.NewService(repo, &storageMock{}, ent, slog.Default())
+	svc := media.NewService(repo, &storageMock{}, ent, nil, slog.Default())
 
 	ctx := domain.WithCaller(context.Background(), domain.Caller{
 		UserID: uuid.New(), OrgID: &orgID, Ent: domain.PlanCatalog[domain.PlanFree],
@@ -457,4 +474,88 @@ func TestMediaPresignUpload_StorageQuotaExceeded(t *testing.T) {
 	})
 	assert.ErrorIs(t, err, domain.ErrPlanLimitReached)
 	repo.AssertNotCalled(t, "Create")
+}
+
+// usageStub satisfies media's storageUsageReader for the quota header.
+type usageStub struct {
+	used int64
+	err  error
+}
+
+func (u usageStub) SumStorageBytes(context.Context, uuid.UUID) (int64, error) {
+	return u.used, u.err
+}
+
+func ownersCtx(orgID uuid.UUID) context.Context {
+	return domain.WithCaller(context.Background(), domain.Caller{
+		UserID: uuid.New(), OrgID: &orgID, IsAdmin: true,
+		Ent: domain.PlanCatalog[domain.PlanFree],
+	})
+}
+
+func TestListOwners_MergesClassMediaAndRecordingsAndSortsBySize(t *testing.T) {
+	repo := &mediaRepoMock{}
+	orgID := uuid.New()
+	classID := uuid.New()
+	bankID := uuid.New()
+
+	// Class has media (slides) AND recordings — they must sum into one row.
+	repo.On("ListOwnerMedia", mock.Anything, orgID).Return([]domain.MediaOwner{
+		{OwnerKind: domain.MediaOwnerClass, OwnerID: &classID, Name: "Math 101", FileCount: 2, TotalSize: 100},
+		{OwnerKind: domain.MediaOwnerQuestionBank, OwnerID: &bankID, Name: "Algebra Bank", FileCount: 5, TotalSize: 500},
+		{OwnerKind: domain.MediaOwnerShared, Name: "", FileCount: 1, TotalSize: 10},
+	}, nil)
+	repo.On("ListOwnerRecordings", mock.Anything, orgID).Return([]domain.MediaOwner{
+		{OwnerKind: domain.MediaOwnerClass, OwnerID: &classID, Name: "Math 101", FileCount: 1, TotalSize: 9000},
+	}, nil)
+
+	svc := media.NewService(repo, &storageMock{}, nil, usageStub{used: 9610}, slog.Default())
+	resp, err := svc.ListOwners(ownersCtx(orgID), domain.ListParams{Page: 1, PageSize: 20})
+	require.NoError(t, err)
+	require.Len(t, resp.Owners, 3)
+
+	// Largest first: merged class (9100) > bank (500) > shared (10).
+	assert.Equal(t, domain.MediaOwnerClass, resp.Owners[0].OwnerKind)
+	assert.Equal(t, int64(9100), resp.Owners[0].TotalSize)
+	assert.Equal(t, int64(3), resp.Owners[0].FileCount)
+	assert.Equal(t, "Algebra Bank", resp.Owners[1].Name)
+	assert.Equal(t, int64(3), resp.Total)
+
+	// Free plan is a finite storage limit → quota header reconciles.
+	assert.False(t, resp.Quota.Unlimited)
+	assert.Equal(t, int64(9610), resp.Quota.UsedBytes)
+	assert.Greater(t, resp.Quota.LimitBytes, int64(0))
+}
+
+// The union/read-only/sort/paginate logic for owner files lives in the repo's
+// SQL now (see the integration test TestIntegration_MediaRepo_OwnerResolution).
+// At the service layer we only verify org-scoped authz + faithful delegation.
+func TestListOwnerFiles_DelegatesToRepoWithCallerOrg(t *testing.T) {
+	repo := &mediaRepoMock{}
+	orgID := uuid.New()
+	classID := uuid.New()
+	p := domain.ListParams{Page: 1, PageSize: 20, OrderBy: "size", OrderDir: "desc"}
+
+	want := []domain.OwnerFile{
+		{ID: uuid.NewString(), Source: "recording", Deletable: false, Size: 9000},
+		{ID: uuid.NewString(), Source: "media", Deletable: true, Size: 100},
+	}
+	repo.On("ListOwnerFiles", mock.Anything, orgID, domain.MediaOwnerClass, &classID, p).Return(want, int64(2), nil)
+
+	svc := media.NewService(repo, &storageMock{}, nil, usageStub{}, slog.Default())
+	files, total, err := svc.ListOwnerFiles(ownersCtx(orgID), domain.MediaOwnerClass, &classID, p)
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), total)
+	assert.Equal(t, want, files)
+	repo.AssertExpectations(t)
+}
+
+func TestListOwnerFiles_RequiresOrgViewAny(t *testing.T) {
+	repo := &mediaRepoMock{}
+	svc := media.NewService(repo, &storageMock{}, nil, usageStub{}, slog.Default())
+
+	// No caller in context → forbidden, repo never touched.
+	_, _, err := svc.ListOwnerFiles(context.Background(), domain.MediaOwnerShared, nil, domain.ListParams{Page: 1, PageSize: 20})
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+	repo.AssertNotCalled(t, "ListOwnerFiles", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }

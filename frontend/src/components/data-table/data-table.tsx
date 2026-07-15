@@ -6,6 +6,7 @@ import { type ReactNode } from "react"
 
 import { Skeleton } from "@/components/ui/skeleton"
 import { TableBody, TableCell, TableHead, TableHeader, Table as TableRoot, TableRow } from "@/components/ui/table"
+import { cn } from "@/lib/utils"
 
 function SortIcon({ direction }: { direction: false | "asc" | "desc" }) {
   if (direction === "asc") return <ArrowUpIcon className="size-3" />
@@ -20,6 +21,9 @@ export interface DataTableProps<TData> {
   emptyTitle?: string
   emptyHint?: string
   skeletonRows?: number
+  // onRowClick makes each row navigable. When set, rows get a pointer cursor
+  // and hover affordance; the callback receives the row's original data.
+  onRowClick?: (row: TData) => void
 }
 
 export function DataTable<TData>({
@@ -29,6 +33,7 @@ export function DataTable<TData>({
   emptyTitle,
   emptyHint,
   skeletonRows = 5,
+  onRowClick,
 }: DataTableProps<TData>) {
   const colCount = table.getVisibleLeafColumns().length
 
@@ -87,7 +92,11 @@ export function DataTable<TData>({
           </TableRow>
         ) : (
           table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id} className="group transition-colors">
+            <TableRow
+              key={row.id}
+              className={cn("group transition-colors", onRowClick && "hover:bg-muted/40 cursor-pointer")}
+              onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+            >
               {row.getVisibleCells().map((cell) => (
                 <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
               ))}

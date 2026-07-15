@@ -1,7 +1,16 @@
-import type { GithubCom4H1RZooraInternalDomainTicketStatus as TicketStatus } from "@/api/model"
-import type { GithubCom4H1RZooraInternalDomainTicketType as TicketType } from "@/api/model"
+import type {
+  GithubCom4H1RZooraInternalDomainTicketStatus as TicketStatus,
+  GithubCom4H1RZooraInternalDomainTicketType as TicketType,
+} from "@/api/model"
 
-import { CircleDotIcon, GraduationCapIcon, HelpCircleIcon, LockIcon, MessageCircleReplyIcon, TagIcon } from "lucide-react"
+import {
+  CircleDotIcon,
+  GraduationCapIcon,
+  HelpCircleIcon,
+  LockIcon,
+  MessageCircleReplyIcon,
+  TagIcon,
+} from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { Badge } from "@/components/ui/badge"

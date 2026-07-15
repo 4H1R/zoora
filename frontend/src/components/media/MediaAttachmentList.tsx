@@ -15,9 +15,7 @@ function AttachmentChip({ mediaID }: { mediaID: string }) {
       tabIndex={data?.url ? undefined : -1}
       className={cn(
         "border-foreground/10 bg-muted/40 text-foreground group inline-flex max-w-full items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs transition-colors",
-        data?.url
-          ? "hover:bg-muted hover:border-foreground/20 cursor-pointer"
-          : "pointer-events-none opacity-60"
+        data?.url ? "hover:bg-muted hover:border-foreground/20 cursor-pointer" : "pointer-events-none opacity-60"
       )}
     >
       {isPending ? (
@@ -33,10 +31,7 @@ function AttachmentChip({ mediaID }: { mediaID: string }) {
         )}
       </span>
       <DownloadIcon
-        className={cn(
-          "size-3 shrink-0 opacity-60 transition-opacity",
-          data?.url && "group-hover:opacity-100"
-        )}
+        className={cn("size-3 shrink-0 opacity-60 transition-opacity", data?.url && "group-hover:opacity-100")}
       />
     </a>
   )

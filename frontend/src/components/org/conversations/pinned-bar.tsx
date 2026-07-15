@@ -54,7 +54,7 @@ export function PinnedBar({ convId }: PinnedBarProps) {
   // Single pin: the whole bar is one jump target with an inline unpin.
   if (pins.length === 1) {
     return (
-      <div className="bg-accent/40 flex items-center gap-1 border-b py-1.5 pe-2 ps-4">
+      <div className="bg-accent/40 flex items-center gap-1 border-b py-1.5 ps-4 pe-2">
         <PinIcon className="text-primary size-3.5 shrink-0" />
         <button
           type="button"
@@ -86,7 +86,7 @@ export function PinnedBar({ convId }: PinnedBarProps) {
   // Several pins: preview the latest, reveal the full list in a popover.
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <div className="bg-accent/40 flex items-center border-b py-1.5 pe-2 ps-4">
+      <div className="bg-accent/40 flex items-center border-b py-1.5 ps-4 pe-2">
         <PinIcon className="text-primary me-1 size-3.5 shrink-0" />
         <PopoverTrigger
           render={

@@ -1,17 +1,15 @@
+import type { ChatMessage } from "./lib/messages"
+import type { postConversationsIdMessagesResponse } from "@/api/conversations/conversations"
+import type { GithubCom4H1RZooraInternalDomainSendConversationMessageDTO as SendMessageDTO } from "@/api/model"
 import type { InfiniteData } from "@tanstack/react-query"
 
 import { useQueryClient } from "@tanstack/react-query"
 import { useAccess } from "react-access-engine"
 import { uuidv7 } from "uuidv7"
 
-import {
-  type postConversationsIdMessagesResponse,
-  usePostConversationsIdMessages,
-} from "@/api/conversations/conversations"
+import { usePostConversationsIdMessages } from "@/api/conversations/conversations"
 import { useGetUsersMe } from "@/api/users/users"
-import type { GithubCom4H1RZooraInternalDomainSendConversationMessageDTO as SendMessageDTO } from "@/api/model"
 
-import type { ChatMessage } from "./lib/messages"
 import { insertOptimistic, markStatus, replaceMessage } from "./lib/optimistic"
 import { chatKeys } from "./lib/query-keys"
 

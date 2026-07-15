@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react"
+import type { RoomRole } from "./room-role"
+
 import { useLocalParticipant, useRoomContext } from "@livekit/components-react"
 import { RoomEvent } from "livekit-client"
+import { useEffect, useRef, useState } from "react"
 
 import { decodeRoomEvent, encodeRoomEvent } from "./room-events"
 import { useRoomChannel } from "./use-room-channel"
-import type { RoomRole } from "./room-role"
 
 export interface ParticipantState {
   role: RoomRole
@@ -67,7 +68,7 @@ export function useRoomRoles(seed: Record<string, ParticipantState>) {
           type: "hand",
           data: { identity: myIdentity, raised: true, raisedAt: h.raisedAt },
         }),
-        { reliable: true },
+        { reliable: true }
       )
     }
     room.on(RoomEvent.ParticipantConnected, onConnected)

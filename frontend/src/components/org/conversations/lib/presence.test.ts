@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest"
-
+import type { Presence } from "./presence"
 import type { GithubCom4H1RZooraInternalDomainConversation as Conversation } from "@/api/model"
 
-import { directPartnerId, pickFreshestStatus, type Presence } from "./presence"
+import { describe, expect, it } from "vitest"
+
+import { directPartnerId, pickFreshestStatus } from "./presence"
 
 function conv(over: Partial<Conversation>): Conversation {
   return { id: "c1", type: "direct", ...over }

@@ -97,20 +97,12 @@ function PracticesPage() {
       <StatCards stats={statCards} />
       <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.practices.filter.class")}
-          </label>
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.practices.filter.class")}</label>
           <ClassPicker value={classId} onChange={handleClassChange} />
         </div>
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.practices.filter.session")}
-          </label>
-          <SessionPicker
-            classId={classId}
-            value={sessionId}
-            onChange={(id) => setSessionId(id || undefined)}
-          />
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.practices.filter.session")}</label>
+          <SessionPicker classId={classId} value={sessionId} onChange={(id) => setSessionId(id || undefined)} />
         </div>
         {(classId || sessionId) && (
           <Button variant="outline" size="sm" onClick={handleClearFilters}>
@@ -119,18 +111,8 @@ function PracticesPage() {
           </Button>
         )}
       </Card>
-      <PracticeTable
-        practices={practices}
-        total={total}
-        isLoading={isLoading}
-        sorting={sorting}
-        onEdit={handleEdit}
-      />
-      <PracticeCreateModal
-        open={formOpen}
-        onOpenChange={handleFormOpenChange}
-        practice={editingPractice}
-      />
+      <PracticeTable practices={practices} total={total} isLoading={isLoading} sorting={sorting} onEdit={handleEdit} />
+      <PracticeCreateModal open={formOpen} onOpenChange={handleFormOpenChange} practice={editingPractice} />
     </div>
   )
 }

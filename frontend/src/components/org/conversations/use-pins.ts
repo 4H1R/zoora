@@ -1,4 +1,5 @@
 import type { ChatMessage } from "./lib/messages"
+import type { getConversationsIdPinsResponse } from "@/api/conversations/conversations"
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
@@ -6,7 +7,6 @@ import { toast } from "sonner"
 
 import {
   getConversationsIdPins,
-  type getConversationsIdPinsResponse,
   usePostConversationsMessagesMessageIdPin,
   usePostConversationsMessagesMessageIdUnpin,
 } from "@/api/conversations/conversations"

@@ -183,9 +183,7 @@ export function StudentDashboard() {
                   </div>
                   <span dir={g.maxScore != null ? "ltr" : undefined} className="text-sm font-semibold tabular-nums">
                     {g.value}
-                    {g.maxScore != null && (
-                      <span className="text-muted-foreground font-normal"> / {g.maxScore}</span>
-                    )}
+                    {g.maxScore != null && <span className="text-muted-foreground font-normal"> / {g.maxScore}</span>}
                   </span>
                 </div>
               ))}

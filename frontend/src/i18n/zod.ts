@@ -1,8 +1,8 @@
+import type { $ZodErrorMap, $ZodRawIssue } from "zod/v4/core"
+
 import i18n from "i18next"
 import { z } from "zod"
 import { en as zodEn, fa as zodFa } from "zod/v4/locales"
-
-import type { $ZodErrorMap, $ZodRawIssue } from "zod/v4/core"
 
 /**
  * Centralized Zod localization — Laravel-style, field-name-aware messages.
@@ -73,9 +73,7 @@ const customError: $ZodErrorMap = (issue: $ZodRawIssue) => {
     }
 
     case "not_multiple_of":
-      return Number(issue.divisor) === 1
-        ? tv("integer", path)
-        : tv("multiple_of", path, { value: issue.divisor })
+      return Number(issue.divisor) === 1 ? tv("integer", path) : tv("multiple_of", path, { value: issue.divisor })
 
     case "invalid_format": {
       const format = issue.format

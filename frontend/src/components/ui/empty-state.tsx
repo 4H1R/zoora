@@ -26,9 +26,7 @@ export function EmptyState({ icon: Icon, title, description, children, className
     >
       <Icon className="text-muted-foreground size-8" />
       <h3 className="text-foreground text-lg font-semibold tracking-tight">{title}</h3>
-      {description && (
-        <p className="text-muted-foreground max-w-md text-sm leading-relaxed">{description}</p>
-      )}
+      {description && <p className="text-muted-foreground max-w-md text-sm leading-relaxed">{description}</p>}
       {Boolean(children) && <div className="mt-2">{children}</div>}
     </div>
   )

@@ -13,8 +13,8 @@ import {
   usePutAdminTutorialsId,
 } from "@/api/admin-tutorials/admin-tutorials"
 import { ChangelogMarkdown } from "@/components/changelog/markdown"
-import { aparatEmbedUrl, aparatWatchUrl, extractAparatHash } from "@/components/tutorials/aparat"
 import { PageHeader } from "@/components/page-header"
+import { aparatEmbedUrl, aparatWatchUrl, extractAparatHash } from "@/components/tutorials/aparat"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -153,11 +153,7 @@ function TutorialEditorPage() {
             dir="ltr"
           />
           <Button variant="outline" onClick={loadFromAparat} disabled={fetching || !linkInput.trim()}>
-            {fetching ? (
-              <Loader2Icon className="size-4 animate-spin" />
-            ) : (
-              <DownloadIcon data-icon="inline-start" />
-            )}
+            {fetching ? <Loader2Icon className="size-4 animate-spin" /> : <DownloadIcon data-icon="inline-start" />}
             {t("admin.tutorials.load")}
           </Button>
         </div>
@@ -196,11 +192,7 @@ function TutorialEditorPage() {
                 dir="ltr"
               />
               {form.thumbnail_url && (
-                <img
-                  src={form.thumbnail_url}
-                  alt=""
-                  className="aspect-video w-full rounded-lg border object-cover"
-                />
+                <img src={form.thumbnail_url} alt="" className="aspect-video w-full rounded-lg border object-cover" />
               )}
             </div>
           </div>

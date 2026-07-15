@@ -8,7 +8,8 @@ import { useTranslation } from "react-i18next"
 // Reconnecting -> descending warning tone; reconnected -> ascending chime.
 function playTone(kind: "warning" | "success") {
   try {
-    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+    const Ctx =
+      window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
     if (!Ctx) return
     const ctx = new Ctx()
     const now = ctx.currentTime
@@ -38,8 +39,7 @@ export function ReconnectOverlay() {
   const state = useConnectionState()
   const wasReconnecting = useRef(false)
 
-  const reconnecting =
-    state === ConnectionState.Reconnecting || state === ConnectionState.SignalReconnecting
+  const reconnecting = state === ConnectionState.Reconnecting || state === ConnectionState.SignalReconnecting
 
   useEffect(() => {
     if (reconnecting && !wasReconnecting.current) {
@@ -57,15 +57,15 @@ export function ReconnectOverlay() {
     <div
       role="alert"
       aria-live="assertive"
-      className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background/85 backdrop-blur-sm"
+      className="bg-background/85 absolute inset-0 z-50 flex flex-col items-center justify-center gap-4 backdrop-blur-sm"
     >
       <div className="relative flex size-16 items-center justify-center rounded-full bg-amber-500/15 text-amber-400">
         <WifiOff className="size-7" />
         <Loader2 className="absolute size-16 animate-spin text-amber-400/40" />
       </div>
       <div className="text-center">
-        <p className="text-base font-semibold text-foreground">{t("liveRoom.reconnecting")}</p>
-        <p className="mt-1 text-sm text-muted-foreground">{t("liveRoom.reconnectHint")}</p>
+        <p className="text-foreground text-base font-semibold">{t("liveRoom.reconnecting")}</p>
+        <p className="text-muted-foreground mt-1 text-sm">{t("liveRoom.reconnectHint")}</p>
       </div>
     </div>
   )

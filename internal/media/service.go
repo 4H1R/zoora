@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -30,15 +31,23 @@ type objectStorage interface {
 	DeleteObject(ctx context.Context, key string) error
 }
 
+// storageUsageReader reports an org's total stored bytes (media + recordings)
+// for the files page quota header. Satisfied by entitlements.Repository; kept
+// narrow so the media service doesn't depend on the whole entitlements repo.
+type storageUsageReader interface {
+	SumStorageBytes(ctx context.Context, orgID uuid.UUID) (int64, error)
+}
+
 type service struct {
 	repo    domain.MediaRepository
 	storage objectStorage
 	ent     entitlements.Service
+	usage   storageUsageReader
 	logger  *slog.Logger
 }
 
-func NewService(repo domain.MediaRepository, storage objectStorage, ent entitlements.Service, logger *slog.Logger) domain.MediaService {
-	return &service{repo: repo, storage: storage, ent: ent, logger: logger}
+func NewService(repo domain.MediaRepository, storage objectStorage, ent entitlements.Service, usage storageUsageReader, logger *slog.Logger) domain.MediaService {
+	return &service{repo: repo, storage: storage, ent: ent, usage: usage, logger: logger}
 }
 
 func (s *service) PresignUpload(ctx context.Context, dto domain.PresignUploadDTO) (*domain.PresignUploadResponse, error) {
@@ -247,6 +256,101 @@ func (s *service) ListFiles(ctx context.Context, modelType string, p domain.List
 		return nil, 0, err
 	}
 	return s.repo.ListFiles(ctx, *caller.OrgID, modelType, p)
+}
+
+func (s *service) ListOwners(ctx context.Context, p domain.ListParams) (*domain.MediaOwnersResponse, error) {
+	caller, err := requireOrgViewAny(ctx)
+	if err != nil {
+		return nil, err
+	}
+	orgID := *caller.OrgID
+
+	mediaOwners, err := s.repo.ListOwnerMedia(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	recOwners, err := s.repo.ListOwnerRecordings(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Merge media + recordings that resolve to the same (kind, id) — a class
+	// row sums its slides, attachments, and recordings into one bucket.
+	type key struct {
+		kind string
+		id   uuid.UUID // uuid.Nil for shared/other
+	}
+	merged := make(map[key]*domain.MediaOwner)
+	order := make([]key, 0, len(mediaOwners)+len(recOwners))
+	add := func(o domain.MediaOwner) {
+		var id uuid.UUID
+		if o.OwnerID != nil {
+			id = *o.OwnerID
+		}
+		k := key{kind: o.OwnerKind, id: id}
+		cur, ok := merged[k]
+		if !ok {
+			cp := o
+			merged[k] = &cp
+			order = append(order, k)
+			return
+		}
+		cur.FileCount += o.FileCount
+		cur.TotalSize += o.TotalSize
+		if cur.Name == "" {
+			cur.Name = o.Name
+		}
+	}
+	for _, o := range mediaOwners {
+		add(o)
+	}
+	for _, o := range recOwners {
+		add(o)
+	}
+
+	owners := make([]domain.MediaOwner, 0, len(order))
+	for _, k := range order {
+		owners = append(owners, *merged[k])
+	}
+	// Size-sorted, largest first — the whole point is "what eats space".
+	sort.SliceStable(owners, func(i, j int) bool { return owners[i].TotalSize > owners[j].TotalSize })
+
+	total := int64(len(owners))
+	start := min(p.Offset(), len(owners))
+	end := min(start+p.Limit(), len(owners))
+	page := owners[start:end]
+
+	quota := domain.StorageQuota{}
+	if s.usage != nil {
+		used, uErr := s.usage.SumStorageBytes(ctx, orgID)
+		if uErr != nil {
+			return nil, uErr
+		}
+		quota.UsedBytes = used
+	}
+	if caller.Ent.Unlimited(domain.LimitStorageGB) {
+		quota.Unlimited = true
+	} else {
+		quota.LimitBytes = caller.Ent.Limit(domain.LimitStorageGB) * 1024 * 1024 * 1024
+	}
+
+	return &domain.MediaOwnersResponse{
+		Owners:   page,
+		Total:    total,
+		Page:     p.Page,
+		PageSize: p.PageSize,
+		Quota:    quota,
+	}, nil
+}
+
+func (s *service) ListOwnerFiles(ctx context.Context, ownerKind string, ownerID *uuid.UUID, p domain.ListParams) ([]domain.OwnerFile, int64, error) {
+	caller, err := requireOrgViewAny(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	// The repo unions media + (for class owners) read-only recordings, filters,
+	// sorts, and pages entirely in SQL.
+	return s.repo.ListOwnerFiles(ctx, *caller.OrgID, ownerKind, ownerID, p)
 }
 
 func (s *service) ListByModel(ctx context.Context, modelType string, modelID uuid.UUID, collection string) ([]domain.Media, error) {

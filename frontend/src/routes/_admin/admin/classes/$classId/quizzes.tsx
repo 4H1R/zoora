@@ -96,9 +96,7 @@ function ClassQuizzesPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title={
-          cls?.name ? `${cls.name} · ${t("admin.quizzes.title")}` : t("admin.quizzes.title")
-        }
+        title={cls?.name ? `${cls.name} · ${t("admin.quizzes.title")}` : t("admin.quizzes.title")}
         actions={
           <div className="flex items-center gap-2">
             <Link to="/admin/classes/$classId/sessions" params={{ classId }}>
@@ -117,21 +115,12 @@ function ClassQuizzesPage() {
       <StatCards stats={statCards} />
       <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.quizzes.filter.class")}
-          </label>
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.quizzes.filter.class")}</label>
           <ClassPicker value={classId} onChange={() => {}} disabled />
         </div>
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.quizzes.filter.session")}
-          </label>
-          <SessionPicker
-            classId={classId}
-            value={sessionId}
-            onChange={() => {}}
-            disabled
-          />
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.quizzes.filter.session")}</label>
+          <SessionPicker classId={classId} value={sessionId} onChange={() => {}} disabled />
         </div>
       </Card>
       {sessionId ? (
@@ -154,11 +143,7 @@ function ClassQuizzesPage() {
         quiz={editingQuiz}
         defaultClassId={classId}
       />
-      <QuizQuestionsDialog
-        open={questionsOpen}
-        onOpenChange={handleQuestionsOpenChange}
-        quiz={activeQuiz}
-      />
+      <QuizQuestionsDialog open={questionsOpen} onOpenChange={handleQuestionsOpenChange} quiz={activeQuiz} />
     </div>
   )
 }

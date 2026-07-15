@@ -9,11 +9,11 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { getGetOfflinesQueryKey, useDeleteOfflinesId, useGetOfflines } from "@/api/offlines/offlines"
+import { Eyebrow } from "@/components/eyebrow"
+import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { SectionNoResults } from "@/components/org/session/section-no-results"
 import { SectionPagination } from "@/components/org/session/section-pagination"
 import { SectionToolbar } from "@/components/org/session/section-toolbar"
-import { Eyebrow } from "@/components/eyebrow"
-import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -89,7 +89,12 @@ function OfflineCard({ room, index, onEdit, onDelete }: OfflineCardProps) {
           {(canEdit || canDelete) && (
             <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover/offline:opacity-100">
               {canEdit && (
-                <Button variant="ghost" size="icon-xs" title={t("org.session.offlines.actions.edit")} onClick={() => onEdit(room)}>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  title={t("org.session.offlines.actions.edit")}
+                  onClick={() => onEdit(room)}
+                >
                   <PencilIcon />
                 </Button>
               )}
@@ -106,10 +111,7 @@ function OfflineCard({ room, index, onEdit, onDelete }: OfflineCardProps) {
               )}
             </div>
           )}
-          <Button
-            size="sm"
-            render={<Link to="/org/offlines/$offlineId" params={{ offlineId: room.id ?? "" }} />}
-          >
+          <Button size="sm" render={<Link to="/org/offlines/$offlineId" params={{ offlineId: room.id ?? "" }} />}>
             {t("org.session.offlines.open")}
           </Button>
         </div>
@@ -188,7 +190,7 @@ export function OfflinesSection({ classSessionId }: OfflinesSectionProps) {
   if (!canView) return null
 
   return (
-    <section id="offlines" className="flex flex-col gap-5 scroll-mt-20">
+    <section id="offlines" className="flex scroll-mt-20 flex-col gap-5">
       <div className="flex items-end justify-between gap-4">
         <div className="flex flex-col gap-1.5">
           <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.offlines.title")}</h2>
@@ -224,11 +226,7 @@ export function OfflinesSection({ classSessionId }: OfflinesSectionProps) {
           <EmptyState
             icon={FilmIcon}
             title={t("org.session.offlines.emptyTitle")}
-            description={
-              canCreate
-                ? t("org.session.offlines.emptyHint")
-                : t("org.session.offlines.emptyHintMember")
-            }
+            description={canCreate ? t("org.session.offlines.emptyHint") : t("org.session.offlines.emptyHintMember")}
           >
             {canCreate && (
               <Button onClick={openCreate}>
@@ -257,12 +255,7 @@ export function OfflinesSection({ classSessionId }: OfflinesSectionProps) {
               />
             ))}
           </div>
-          <SectionPagination
-            page={list.page}
-            pageSize={pageSize}
-            total={total}
-            onPageChange={list.setPage}
-          />
+          <SectionPagination page={list.page} pageSize={pageSize} total={total} onPageChange={list.setPage} />
         </>
       )}
 

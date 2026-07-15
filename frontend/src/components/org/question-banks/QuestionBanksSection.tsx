@@ -2,14 +2,7 @@ import type { GithubCom4H1RZooraInternalDomainQuestionBank as Bank } from "@/api
 import type { SortOption } from "@/components/data-table/sort-picker"
 
 import { useQueryClient } from "@tanstack/react-query"
-import {
-  CalendarClockIcon,
-  LibraryIcon,
-  ListChecksIcon,
-  PencilIcon,
-  PlusIcon,
-  Trash2Icon,
-} from "lucide-react"
+import { CalendarClockIcon, LibraryIcon, ListChecksIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -19,11 +12,11 @@ import {
   useDeleteQuestionBanksId,
   useGetQuestionBanks,
 } from "@/api/question-banks/question-banks"
+import { Eyebrow } from "@/components/eyebrow"
+import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { SectionNoResults } from "@/components/org/session/section-no-results"
 import { SectionPagination } from "@/components/org/session/section-pagination"
 import { SectionToolbar } from "@/components/org/session/section-toolbar"
-import { Eyebrow } from "@/components/eyebrow"
-import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -48,9 +41,7 @@ interface BankCardProps {
 function BankCard({ bank, index, canEdit, canDelete, onEdit, onManage, onDelete }: BankCardProps) {
   const { t, i18n } = useTranslation()
   const tileNumber = String(index + 1).padStart(2, "0")
-  const createdStr = bank.created_at
-    ? formatSessionDate(bank.created_at, i18n.language, "short")
-    : "—"
+  const createdStr = bank.created_at ? formatSessionDate(bank.created_at, i18n.language, "short") : "—"
 
   return (
     <div className="group/bank bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex flex-col gap-5 overflow-hidden rounded-2xl p-5 ring-1 transition-all">
@@ -71,9 +62,7 @@ function BankCard({ bank, index, canEdit, canDelete, onEdit, onManage, onDelete 
           {bank.name ?? "—"}
         </h3>
         {bank.description && (
-          <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">
-            {bank.description}
-          </p>
+          <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">{bank.description}</p>
         )}
       </div>
 
@@ -178,12 +167,10 @@ export function QuestionBanksSection() {
   if (!canView) return null
 
   return (
-    <section id="question-banks" className="flex flex-col gap-5 scroll-mt-20">
+    <section id="question-banks" className="flex scroll-mt-20 flex-col gap-5">
       <div className="flex items-end justify-between gap-4">
         <div className="flex flex-col gap-1.5">
-          <h2 className="text-2xl font-semibold tracking-tight">
-            {t("org.session.questionBanks.title")}
-          </h2>
+          <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.questionBanks.title")}</h2>
         </div>
         {canCreate && (
           <Button onClick={openCreate}>
@@ -251,12 +238,7 @@ export function QuestionBanksSection() {
               />
             ))}
           </div>
-          <SectionPagination
-            page={list.page}
-            pageSize={pageSize}
-            total={total}
-            onPageChange={list.setPage}
-          />
+          <SectionPagination page={list.page} pageSize={pageSize} total={total} onPageChange={list.setPage} />
         </>
       )}
 

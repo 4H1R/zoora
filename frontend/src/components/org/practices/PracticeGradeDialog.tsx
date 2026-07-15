@@ -100,18 +100,20 @@ export function PracticeGradeDialog({
 
         <div className="flex max-h-[60vh] flex-col gap-4 overflow-y-auto pe-1">
           <div>
-            <div className="text-muted-foreground mb-1.5 text-xs font-medium uppercase tracking-wide">
+            <div className="text-muted-foreground mb-1.5 text-xs font-medium tracking-wide uppercase">
               {t("org.session.practiceScores.dialog.answer")}
             </div>
-            <div className="bg-muted/30 min-h-[6rem] rounded-md border px-3 py-2 text-sm whitespace-pre-wrap break-words">
-              {submission?.content?.trim()
-                ? submission.content
-                : <span className="text-muted-foreground italic">{t("org.session.practiceScores.dialog.noAnswer")}</span>}
+            <div className="bg-muted/30 min-h-[6rem] rounded-md border px-3 py-2 text-sm break-words whitespace-pre-wrap">
+              {submission?.content?.trim() ? (
+                submission.content
+              ) : (
+                <span className="text-muted-foreground italic">{t("org.session.practiceScores.dialog.noAnswer")}</span>
+              )}
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+            <label className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
               {t("org.session.practiceScores.dialog.score")}
             </label>
             <div className="flex items-center gap-2">
@@ -126,9 +128,7 @@ export function PracticeGradeDialog({
                 data-invalid={overMax || undefined}
               />
               {maxScore != null && maxScore > 0 && (
-                <span className="text-muted-foreground text-sm tabular-nums">
-                  / {formatScore(maxScore)}
-                </span>
+                <span className="text-muted-foreground text-sm tabular-nums">/ {formatScore(maxScore)}</span>
               )}
             </div>
             {overMax && (
@@ -139,7 +139,7 @@ export function PracticeGradeDialog({
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+            <label className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
               {t("org.session.practiceScores.dialog.comment")}
             </label>
             <Textarea

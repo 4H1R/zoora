@@ -9,11 +9,7 @@ import { toast } from "sonner"
 import { z } from "zod"
 
 import { getGetAdminPracticesQueryKey } from "@/api/admin-practices/admin-practices"
-import {
-  getGetPracticesQueryKey,
-  usePostPractices,
-  usePutPracticesId,
-} from "@/api/practices/practices"
+import { getGetPracticesQueryKey, usePostPractices, usePutPracticesId } from "@/api/practices/practices"
 import { ClassPicker, SessionPicker } from "@/components/admin/forms/ClassSessionPicker"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
 import { DateTimePicker } from "@/components/ui/date-time-picker"
@@ -185,11 +181,7 @@ export function PracticeCreateModal({
       open={open}
       onOpenChange={onOpenChange}
       title={isEdit ? t("admin.practices.form.editTitle") : t("admin.practices.form.createTitle")}
-      description={
-        isEdit
-          ? t("admin.practices.form.editDescription")
-          : t("admin.practices.form.createDescription")
-      }
+      description={isEdit ? t("admin.practices.form.editDescription") : t("admin.practices.form.createDescription")}
       onSubmit={isEdit ? onSubmitEdit : onSubmitCreate}
       isLoading={isLoading}
       submitLabel={isEdit ? t("common.save") : t("common.create")}
@@ -199,10 +191,7 @@ export function PracticeCreateModal({
           <>
             <Field data-invalid={!!editErrors.title || undefined}>
               <FieldLabel>{t("admin.practices.form.title")}</FieldLabel>
-              <Input
-                {...editForm.register("title")}
-                placeholder={t("admin.practices.form.titlePlaceholder")}
-              />
+              <Input {...editForm.register("title")} placeholder={t("admin.practices.form.titlePlaceholder")} />
               <FieldError errors={[editErrors.title]} />
             </Field>
             <Field>
@@ -274,19 +263,14 @@ export function PracticeCreateModal({
               <SessionPicker
                 classId={selectedClassId || undefined}
                 value={selectedSessionId || undefined}
-                onChange={(id) =>
-                  createForm.setValue("class_session_id", id, { shouldValidate: true })
-                }
+                onChange={(id) => createForm.setValue("class_session_id", id, { shouldValidate: true })}
                 placeholder={t("admin.practices.form.sessionPlaceholder")}
               />
               <FieldError errors={[createErrors.class_session_id]} />
             </Field>
             <Field data-invalid={!!createErrors.title || undefined}>
               <FieldLabel>{t("admin.practices.form.title")}</FieldLabel>
-              <Input
-                {...createForm.register("title")}
-                placeholder={t("admin.practices.form.titlePlaceholder")}
-              />
+              <Input {...createForm.register("title")} placeholder={t("admin.practices.form.titlePlaceholder")} />
               <FieldError errors={[createErrors.title]} />
             </Field>
             <Field>

@@ -1,10 +1,6 @@
 import { useEffect, useState } from "react"
 
-import {
-  clearDeferredPrompt,
-  getDeferredPrompt,
-  subscribeInstallPrompt,
-} from "@/components/pwa/install-prompt-store"
+import { clearDeferredPrompt, getDeferredPrompt, subscribeInstallPrompt } from "@/components/pwa/install-prompt-store"
 
 /**
  * Chrome/Edge fire `beforeinstallprompt` when the PWA install criteria are met

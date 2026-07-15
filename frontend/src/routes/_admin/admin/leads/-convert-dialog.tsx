@@ -188,7 +188,11 @@ export function ConvertDialog({ open, onOpenChange, lead }: ConvertDialogProps) 
         </Field>
         <Field data-invalid={!!errors.owner_username || undefined}>
           <FieldLabel>{t("admin.leads.convert.ownerUsername")}</FieldLabel>
-          <Input {...register("owner_username")} dir="ltr" placeholder={t("admin.leads.convert.ownerUsernamePlaceholder")} />
+          <Input
+            {...register("owner_username")}
+            dir="ltr"
+            placeholder={t("admin.leads.convert.ownerUsernamePlaceholder")}
+          />
           <FieldError errors={[errors.owner_username]} />
         </Field>
         <Field data-invalid={!!errors.owner_password || undefined}>

@@ -41,13 +41,7 @@ interface MessageBubbleProps {
  * retry / discard affordance. Reactions arrive in a later phase via the slot
  * below.
  */
-export function MessageBubble({
-  message,
-  convId,
-  isOwn,
-  conversationType,
-  isHighlighted = false,
-}: MessageBubbleProps) {
+export function MessageBubble({ message, convId, isOwn, conversationType, isHighlighted = false }: MessageBubbleProps) {
   const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
   const jumpToMessage = useJumpToMessage()

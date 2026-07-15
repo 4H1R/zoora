@@ -3188,6 +3188,42 @@
       "tooLarge": "File is larger than 200 MB",
       "failed": "Upload failed",
       "success": "Uploaded"
+    },
+    "tabs": {
+      "byType": "By type",
+      "byOwner": "By owner"
+    },
+    "owner": {
+      "description": "Storage grouped by the class, quiz bank, or conversation that owns it",
+      "empty": "Nothing to show here yet",
+      "columns": {
+        "name": "Owner",
+        "kind": "Type",
+        "files": "Files",
+        "size": "Storage"
+      },
+      "kinds": {
+        "class": "Class",
+        "question_bank": "Question bank",
+        "conversation": "Conversation",
+        "shared": "Shared",
+        "other": "Unattached"
+      },
+      "sharedName": "Shared files",
+      "otherName": "Unattached files",
+      "quota": {
+        "used": "{{used}} of {{limit}} used",
+        "usedUnlimited": "{{used}} used",
+        "unlimited": "Unlimited plan"
+      },
+      "recordingBadge": "Recording",
+      "recordingReadOnly": "Recordings are managed in class recordings",
+      "fileColumns": {
+        "name": "File",
+        "kind": "Type",
+        "size": "Size",
+        "createdAt": "Added"
+      }
     }
   },
   "whatsNew": {

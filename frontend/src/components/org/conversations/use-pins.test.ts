@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest"
-
 import type { getConversationsIdPinsResponse } from "@/api/conversations/conversations"
+
+import { describe, expect, it } from "vitest"
 
 import { unwrapPins } from "./use-pins"
 

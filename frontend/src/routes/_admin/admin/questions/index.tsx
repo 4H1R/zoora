@@ -14,13 +14,7 @@ import { StatCards } from "@/components/data-table/stat-cards"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { adminHead } from "@/lib/admin-head"
 import { adminSearchSchema } from "@/lib/data-table"
 
@@ -108,15 +102,11 @@ function QuestionsPage() {
       <StatCards stats={statCards} />
       <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.questions.filter.bank")}
-          </label>
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.questions.filter.bank")}</label>
           <BankPicker value={bankId} onChange={(id) => setBankId(id || undefined)} />
         </div>
         <div className="w-full sm:w-48">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.questions.filter.type")}
-          </label>
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.questions.filter.type")}</label>
           <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v ?? "all")}>
             <SelectTrigger>
               <SelectValue>
@@ -140,24 +130,14 @@ function QuestionsPage() {
           </Button>
         )}
       </Card>
-      <QuestionTable
-        questions={questions}
-        total={total}
-        isLoading={isLoading}
-        sorting={sorting}
-        onEdit={handleEdit}
-      />
+      <QuestionTable questions={questions} total={total} isLoading={isLoading} sorting={sorting} onEdit={handleEdit} />
       <QuestionCreateModal
         open={formOpen}
         onOpenChange={handleFormOpenChange}
         question={editingQuestion}
         defaultBankId={bankId}
       />
-      <BankCreateModal
-        open={bankFormOpen}
-        onOpenChange={setBankFormOpen}
-        onCreated={(id) => setBankId(id)}
-      />
+      <BankCreateModal open={bankFormOpen} onOpenChange={setBankFormOpen} onCreated={(id) => setBankId(id)} />
     </div>
   )
 }

@@ -26,9 +26,7 @@ function GradebookPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title={
-          cls?.name
-            ? `${cls.name} · ${t("admin.classManagement.gradebook")}`
-            : t("admin.classManagement.gradebook")
+          cls?.name ? `${cls.name} · ${t("admin.classManagement.gradebook")}` : t("admin.classManagement.gradebook")
         }
         actions={
           <Link to="/admin/classes/$classId/sessions" params={{ classId }}>
@@ -41,9 +39,7 @@ function GradebookPage() {
       />
       <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.gradebook.filter.class")}
-          </label>
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.gradebook.filter.class")}</label>
           <ClassPicker value={classId} onChange={() => {}} disabled />
         </div>
       </Card>

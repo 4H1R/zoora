@@ -24,9 +24,7 @@ function AdminGradebookPage() {
       <PageHeader title={t("admin.gradebook.title")} />
       <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.gradebook.filter.class")}
-          </label>
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.gradebook.filter.class")}</label>
           <ClassPicker value={classId} onChange={(id) => setClassId(id || undefined)} />
         </div>
         {classId && (

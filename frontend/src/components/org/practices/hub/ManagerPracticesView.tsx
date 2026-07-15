@@ -11,18 +11,12 @@ import { TableFilter } from "@/components/data-table/table-filter"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAdminTable } from "@/lib/data-table"
 import { Route } from "@/routes/_auth/org/practices/index"
 
-import { usePracticeHubColumns } from "./practice-hub-columns"
 import { ManagerSubmissionsDialog } from "./ManagerSubmissionsDialog"
+import { usePracticeHubColumns } from "./practice-hub-columns"
 
 const WINDOW_OPTIONS = ["all", "upcoming", "open", "ended"] as const
 
@@ -57,10 +51,7 @@ export function ManagerPracticesView() {
     navigate({ to: ".", search: (prev) => ({ ...prev, needs_grading: value || undefined, page: 1 }) })
   const windowItems = WINDOW_OPTIONS.map((value) => ({
     value,
-    label:
-      value === "all"
-        ? t("org.practices.filter.windowAll")
-        : t(`org.practices.filter.window.${value}`),
+    label: value === "all" ? t("org.practices.filter.windowAll") : t(`org.practices.filter.window.${value}`),
   }))
   const setWindow = (value: string | null) =>
     navigate({
@@ -86,11 +77,7 @@ export function ManagerPracticesView() {
         columnsLabel={t("common.toolbar.columns")}
         toggleColumnsLabel={t("common.toolbar.toggleColumns")}
       >
-        <Button
-          size="sm"
-          variant={needsGrading ? "default" : "outline"}
-          onClick={() => setNeedsGrading(!needsGrading)}
-        >
+        <Button size="sm" variant={needsGrading ? "default" : "outline"} onClick={() => setNeedsGrading(!needsGrading)}>
           {t("org.practices.filter.needsGrading")}
         </Button>
         <Select items={windowItems} value={windowState ?? "all"} onValueChange={setWindow}>

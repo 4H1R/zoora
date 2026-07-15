@@ -1,15 +1,13 @@
-import { useEffect, useRef, useState } from "react"
-import { createTLStore, getSnapshot, loadSnapshot } from "tldraw"
+import type { GithubCom4H1RZooraInternalDomainSaveWhiteboardDTOSnapshot } from "@/api/model"
 import type { TLRecord, TLStore, TLStoreSnapshot } from "tldraw"
 
-import {
-  useGetLiveRoomsIdWhiteboard,
-  usePutLiveRoomsIdWhiteboard,
-} from "@/api/live-sessions/live-sessions"
-import type { GithubCom4H1RZooraInternalDomainSaveWhiteboardDTOSnapshot } from "@/api/model"
+import { useEffect, useRef, useState } from "react"
+import { createTLStore, getSnapshot, loadSnapshot } from "tldraw"
 
-import { createWhiteboardAssetStore } from "./whiteboard-assets"
+import { useGetLiveRoomsIdWhiteboard, usePutLiveRoomsIdWhiteboard } from "@/api/live-sessions/live-sessions"
+
 import { useRoomChannel } from "./use-room-channel"
+import { createWhiteboardAssetStore } from "./whiteboard-assets"
 
 // ---- diff wire format -------------------------------------------------------
 
@@ -60,9 +58,7 @@ export function useWhiteboard(liveId: string, canDraw: boolean): UseWhiteboardRe
   // useState with an initializer function creates the store exactly once.
   // The asset store uploads inserted images to S3 and stores only their URL,
   // so images sync to peers instead of being dropped as oversized inline blobs.
-  const [store] = useState<TLStore>(() =>
-    createTLStore({ assets: createWhiteboardAssetStore(liveId) }),
-  )
+  const [store] = useState<TLStore>(() => createTLStore({ assets: createWhiteboardAssetStore(liveId) }))
 
   // Incoming diffs on the "tldraw" topic. useRoomChannel keeps the channel and
   // send stable (see its docs for the lazy-observer crash it avoids).
@@ -131,7 +127,7 @@ export function useWhiteboard(liveId: string, canDraw: boolean): UseWhiteboardRe
             }
             send(encodeDiff(changes), { reliable: true })
           },
-          { source: "user", scope: "document" },
+          { source: "user", scope: "document" }
         )
       : undefined
 
@@ -150,7 +146,7 @@ export function useWhiteboard(liveId: string, canDraw: boolean): UseWhiteboardRe
               })
             }, 1500)
           },
-          { source: "user", scope: "document" },
+          { source: "user", scope: "document" }
         )
       : undefined
 

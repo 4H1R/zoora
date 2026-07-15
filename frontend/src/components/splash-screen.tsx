@@ -16,14 +16,23 @@ export function SplashScreen() {
   const scope = useId().replace(/[:]/g, "")
 
   return (
-    <div data-splash={scope} className="splash-root relative flex h-screen w-full items-center justify-center overflow-hidden bg-background">
+    <div
+      data-splash={scope}
+      className="splash-root bg-background relative flex h-screen w-full items-center justify-center overflow-hidden"
+    >
       <div aria-hidden className="splash-glow splash-glow-a" />
       <div aria-hidden className="splash-glow splash-glow-b" />
       <div aria-hidden className="splash-grid" />
 
       <div className="splash-stack relative flex flex-col items-center gap-7">
         <div className="splash-mark">
-          <svg viewBox="0 0 48 48" fill="none" role="img" aria-label={t("common.brandName")} className="size-20 drop-shadow-[0_8px_30px_oklch(0.627_0.194_149.214/0.35)]">
+          <svg
+            viewBox="0 0 48 48"
+            fill="none"
+            role="img"
+            aria-label={t("common.brandName")}
+            className="size-20 drop-shadow-[0_8px_30px_oklch(0.627_0.194_149.214/0.35)]"
+          >
             <defs>
               <linearGradient id={gradientId} x1="6" y1="4" x2="42" y2="46" gradientUnits="userSpaceOnUse">
                 <stop offset="0" stopColor="#2fbd68" />

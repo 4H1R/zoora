@@ -1,3 +1,5 @@
+import type { NetStats } from "./presence"
+
 import { useConnectionState, useParticipants } from "@livekit/components-react"
 import { ConnectionState } from "livekit-client"
 import { MonitorPlay, Users } from "lucide-react"
@@ -7,8 +9,7 @@ import { useTranslation } from "react-i18next"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
-import { NetStatList, QUALITY_COLOR, SignalBars, qualityLabel } from "./connection-quality"
-import type { NetStats } from "./presence"
+import { NetStatList, QUALITY_COLOR, qualityLabel, SignalBars } from "./connection-quality"
 import { useConnectionStats } from "./use-connection-stats"
 
 function formatElapsed(seconds: number): string {
@@ -27,13 +28,13 @@ function ConnectionInfo({ stats }: { stats: NetStats }) {
     <Popover>
       <PopoverTrigger
         aria-label={t("liveRoom.connection.title")}
-        className="inline-flex size-7 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-muted/70"
+        className="bg-muted text-foreground hover:bg-muted/70 inline-flex size-7 items-center justify-center rounded-full transition-colors"
       >
         <SignalBars quality={quality} />
       </PopoverTrigger>
       <PopoverContent align="end" className="w-56 space-y-2.5">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-foreground">{t("liveRoom.connection.title")}</span>
+          <span className="text-foreground text-sm font-semibold">{t("liveRoom.connection.title")}</span>
           <span className={cn("text-xs font-medium", QUALITY_COLOR[quality] ?? "text-muted-foreground")}>
             {qualityLabel(quality, t)}
           </span>
@@ -82,14 +83,14 @@ export function RoomHeader({
   // Solid bg, no backdrop-blur: in landscape this header floats over the <video>
   // stage, and a backdrop-filter pass over a video paints it black on some GPUs.
   return (
-    <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-2.5 sm:px-5">
+    <header className="border-border bg-background/95 flex shrink-0 items-center justify-between gap-3 border-b px-4 py-2.5 sm:px-5">
       <div className="flex min-w-0 items-center gap-3">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+        <div className="bg-primary/15 text-primary flex size-9 shrink-0 items-center justify-center rounded-xl">
           <MonitorPlay className="size-5" />
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-foreground">{sessionName}</p>
-          {className && <p className="truncate text-xs text-muted-foreground">{className}</p>}
+          <p className="text-foreground truncate text-sm font-semibold">{sessionName}</p>
+          {className && <p className="text-muted-foreground truncate text-xs">{className}</p>}
         </div>
       </div>
 
@@ -118,9 +119,9 @@ export function RoomHeader({
           onClick={onOpenPeople}
           aria-label={t("liveRoom.controls.people")}
           title={t("liveRoom.controls.people")}
-          className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted/70"
+          className="bg-muted text-foreground hover:bg-muted/70 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors"
         >
-          <Users className="size-3.5 text-muted-foreground" />
+          <Users className="text-muted-foreground size-3.5" />
           <span className="font-mono" dir="ltr">
             {participants.length}
           </span>
@@ -131,20 +132,20 @@ export function RoomHeader({
         <Popover>
           <PopoverTrigger
             aria-label={t("liveRoom.classElapsed", { time: formatElapsed(classElapsed) })}
-            className="rounded-full bg-muted px-2.5 py-1 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/70"
+            className="bg-muted text-muted-foreground hover:bg-muted/70 rounded-full px-2.5 py-1 font-mono text-xs transition-colors"
           >
             <span dir="ltr">{formatElapsed(classElapsed)}</span>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-56 space-y-2">
             <div className="flex items-center justify-between gap-3 text-sm">
               <span className="text-muted-foreground">{t("liveRoom.classDuration")}</span>
-              <span className="font-mono font-medium text-foreground" dir="ltr">
+              <span className="text-foreground font-mono font-medium" dir="ltr">
                 {formatElapsed(classElapsed)}
               </span>
             </div>
             <div className="flex items-center justify-between gap-3 text-sm">
               <span className="text-muted-foreground">{t("liveRoom.yourTime")}</span>
-              <span className="font-mono font-medium text-foreground" dir="ltr">
+              <span className="text-foreground font-mono font-medium" dir="ltr">
                 {formatElapsed(myElapsed)}
               </span>
             </div>

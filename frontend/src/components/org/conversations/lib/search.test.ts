@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest"
-
 import type { GithubCom4H1RZooraInternalDomainConversationMessage as ConversationMessage } from "@/api/model"
+
+import { describe, expect, it } from "vitest"
 
 import { matchesKey, nextMatchIndex } from "./search"
 

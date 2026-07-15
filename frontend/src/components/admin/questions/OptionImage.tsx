@@ -78,23 +78,11 @@ export function OptionImageControl({ value, questionId, onChange }: OptionImageC
     <div className="flex items-center gap-2">
       {value ? <OptionImageThumb mediaID={value} /> : null}
       <label className="text-muted-foreground hover:text-foreground cursor-pointer text-xs">
-        <input
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFile}
-          disabled={presign.isPending}
-        />
-        {value
-          ? t("admin.questions.form.optionImage.replace")
-          : t("admin.questions.form.optionImage.add")}
+        <input type="file" accept="image/*" className="hidden" onChange={handleFile} disabled={presign.isPending} />
+        {value ? t("admin.questions.form.optionImage.replace") : t("admin.questions.form.optionImage.add")}
       </label>
       {value ? (
-        <button
-          type="button"
-          className="text-destructive text-xs"
-          onClick={() => onChange(null)}
-        >
+        <button type="button" className="text-destructive text-xs" onClick={() => onChange(null)}>
           {t("admin.questions.form.optionImage.remove")}
         </button>
       ) : null}

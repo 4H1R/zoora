@@ -21,7 +21,12 @@ export function ProgressRing({ value, className }: ProgressRingProps) {
   const offset = CIRCUMFERENCE * (1 - clamped)
 
   return (
-    <svg viewBox="0 0 40 40" className={cn("size-10 -rotate-90", className)} role="progressbar" aria-valuenow={Math.round(clamped * 100)}>
+    <svg
+      viewBox="0 0 40 40"
+      className={cn("size-10 -rotate-90", className)}
+      role="progressbar"
+      aria-valuenow={Math.round(clamped * 100)}
+    >
       <circle cx="20" cy="20" r={RADIUS} fill="none" strokeWidth="3" className="stroke-white/25" />
       <circle
         cx="20"

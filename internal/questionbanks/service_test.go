@@ -112,6 +112,15 @@ func (m *mockMediaRepo) ListFiles(ctx context.Context, orgID uuid.UUID, modelTyp
 	total, _ := a.Get(1).(int64)
 	return ms, total, a.Error(2)
 }
+func (m *mockMediaRepo) ListOwnerMedia(context.Context, uuid.UUID) ([]domain.MediaOwner, error) {
+	return nil, nil
+}
+func (m *mockMediaRepo) ListOwnerRecordings(context.Context, uuid.UUID) ([]domain.MediaOwner, error) {
+	return nil, nil
+}
+func (m *mockMediaRepo) ListOwnerFiles(context.Context, uuid.UUID, string, *uuid.UUID, domain.ListParams) ([]domain.OwnerFile, int64, error) {
+	return nil, 0, nil
+}
 func (m *mockQuestionRepo) FindByIDs(ctx context.Context, ids []uuid.UUID) ([]domain.Question, error) {
 	a := m.Called(ctx, ids)
 	qs, _ := a.Get(0).([]domain.Question)

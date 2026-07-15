@@ -5,18 +5,9 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { useDebounce } from "use-debounce"
 
-import {
-  useGetConversationsDirectory,
-  usePostConversationsDirect,
-} from "@/api/conversations/conversations"
+import { useGetConversationsDirectory, usePostConversationsDirect } from "@/api/conversations/conversations"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Spinner } from "@/components/ui/spinner"
@@ -56,8 +47,7 @@ export function NewDirectDialog({ open, onOpenChange }: NewDirectDialogProps) {
     { search: debouncedSearch || undefined },
     { query: { enabled: open, staleTime: 30_000 } }
   )
-  const people =
-    directoryQuery.data?.status === 200 ? (directoryQuery.data.data.data ?? []) : []
+  const people = directoryQuery.data?.status === 200 ? (directoryQuery.data.data.data ?? []) : []
 
   const directMutation = usePostConversationsDirect({
     mutation: {
@@ -111,9 +101,7 @@ export function NewDirectDialog({ open, onOpenChange }: NewDirectDialogProps) {
 
             {isEmpty && (
               <p className="text-muted-foreground py-8 text-center text-sm">
-                {debouncedSearch
-                  ? t("conversations.direct.empty")
-                  : t("conversations.direct.hint")}
+                {debouncedSearch ? t("conversations.direct.empty") : t("conversations.direct.hint")}
               </p>
             )}
 
@@ -137,9 +125,7 @@ export function NewDirectDialog({ open, onOpenChange }: NewDirectDialogProps) {
                   <div className="flex min-w-0 flex-col">
                     <span className="truncate text-sm font-medium">{person.name}</span>
                     {person.username && (
-                      <span className="text-muted-foreground truncate font-mono text-xs">
-                        @{person.username}
-                      </span>
+                      <span className="text-muted-foreground truncate font-mono text-xs">@{person.username}</span>
                     )}
                   </div>
                 </button>

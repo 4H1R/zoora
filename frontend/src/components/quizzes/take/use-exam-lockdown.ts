@@ -12,11 +12,7 @@ interface ExamLockdownOptions {
 // and blocks the context menu plus common dev/copy shortcuts (Ctrl/Cmd+C/V/X/A/P,
 // F12, Ctrl/Cmd+Shift+I/J/C) when `disableShortcuts` is set. All handlers call
 // preventDefault; `onBlocked` is invoked so the caller can surface a toast.
-export function useExamLockdown({
-  disableCopyPaste,
-  disableShortcuts,
-  onBlocked,
-}: ExamLockdownOptions) {
+export function useExamLockdown({ disableCopyPaste, disableShortcuts, onBlocked }: ExamLockdownOptions) {
   const onBlockedRef = useRef(onBlocked)
   onBlockedRef.current = onBlocked
 

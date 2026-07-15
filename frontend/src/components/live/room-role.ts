@@ -1,6 +1,7 @@
+import type { GithubCom4H1RZooraInternalDomainUser } from "@/api/model"
+
 import { createContext, useContext } from "react"
 
-import type { GithubCom4H1RZooraInternalDomainUser } from "@/api/model"
 import { userHasAny } from "@/lib/access"
 
 // Phase 1: role is fixed at join. Host == can manage the live session.
@@ -8,16 +9,10 @@ import { userHasAny } from "@/lib/access"
 // but in Phase 1 only Host and Viewer are ever assigned.
 export type RoomRole = "host" | "presenter" | "viewer"
 
-export function deriveRoomRole(
-  me: GithubCom4H1RZooraInternalDomainUser | undefined
-): RoomRole {
+export function deriveRoomRole(me: GithubCom4H1RZooraInternalDomainUser | undefined): RoomRole {
   // The /live route renders outside the org AccessProvider, so read perms
   // straight off /users/me (same approach the lobby already uses).
-  const isHost = userHasAny(me, [
-    "live_sessions:manage",
-    "live_sessions:manage_any",
-    "live_sessions:create",
-  ])
+  const isHost = userHasAny(me, ["live_sessions:manage", "live_sessions:manage_any", "live_sessions:create"])
   return isHost ? "host" : "viewer"
 }
 

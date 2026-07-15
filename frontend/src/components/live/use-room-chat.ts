@@ -1,3 +1,5 @@
+import type { GithubCom4H1RZooraInternalDomainLiveRoomMessage } from "@/api/model"
+
 import { useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 
@@ -7,7 +9,6 @@ import {
   useGetChatsChatIdMessages,
   usePostChatsChatIdMessages,
 } from "@/api/chat/chat"
-import type { GithubCom4H1RZooraInternalDomainLiveRoomMessage } from "@/api/model"
 
 import { decodeRoomEvent } from "./room-events"
 import { useRoomChannel } from "./use-room-channel"
@@ -57,23 +58,17 @@ export function useRoomChat(chatId: string | undefined) {
     }
   })
 
-  const { data } = useGetChatsChatIdMessages(
-    chatId ?? "",
-    undefined,
-    {
-      query: {
-        enabled: !!chatId,
-        // Realtime arrives via the data channel; this slow poll only backfills
-        // history on mount and recovers packets missed during a reconnect.
-        refetchInterval: 30000,
-      },
+  const { data } = useGetChatsChatIdMessages(chatId ?? "", undefined, {
+    query: {
+      enabled: !!chatId,
+      // Realtime arrives via the data channel; this slow poll only backfills
+      // history on mount and recovers packets missed during a reconnect.
+      refetchInterval: 30000,
     },
-  )
+  })
 
   const rawMessages =
-    data?.status === 200
-      ? ((data.data.data?.items ?? []) as GithubCom4H1RZooraInternalDomainLiveRoomMessage[])
-      : []
+    data?.status === 200 ? ((data.data.data?.items ?? []) as GithubCom4H1RZooraInternalDomainLiveRoomMessage[]) : []
 
   // Merge persisted history with live messages, deduping by id. The persisted
   // copy wins when both exist (authoritative sender, edits, etc.).

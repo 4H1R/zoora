@@ -36,9 +36,9 @@ import { Eyebrow } from "@/components/eyebrow"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { useBreadcrumb } from "@/components/layout/breadcrumb-context"
 import { AttendanceMatrixView } from "@/components/org/classes/AttendanceMatrixView"
+import { CreateClassChatDialog } from "@/components/org/classes/create-class-chat-dialog"
 import { EnrollMemberModal } from "@/components/org/classes/EnrollMemberModal"
 import { useClassPermissions } from "@/components/org/classes/use-class-permissions"
-import { CreateClassChatDialog } from "@/components/org/classes/create-class-chat-dialog"
 import { useAttendancePermissions } from "@/components/org/livesessions/use-attendance-permissions"
 import { SessionStatusPill } from "@/components/session/status-pill"
 import { Button } from "@/components/ui/button"
@@ -47,7 +47,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UserAvatar } from "@/components/user-avatar"
-import { ViewModeToggle, useViewMode } from "@/components/view-mode-toggle"
+import { useViewMode, ViewModeToggle } from "@/components/view-mode-toggle"
 import { useOrgGuard } from "@/lib/access"
 import { useAdminTable } from "@/lib/data-table"
 import { FEATURE, useHasFeature } from "@/lib/entitlements"
@@ -131,7 +131,7 @@ function SessionCard({
       {/* Oversized ordinal as a quiet design anchor — gives the grid a lesson-tile cadence. */}
       <span
         aria-hidden
-        className="text-foreground/[0.05] pointer-events-none absolute -top-3 end-2 font-mono text-6xl leading-none font-bold tabular-nums select-none"
+        className="text-foreground/[0.05] pointer-events-none absolute end-2 -top-3 font-mono text-6xl leading-none font-bold tabular-nums select-none"
       >
         {tileNumber}
       </span>
@@ -409,9 +409,7 @@ function RouteComponent() {
                 <Button
                   variant="outline"
                   size="sm"
-                  render={
-                    <Link to="/org/conversations/$conversationId" params={{ conversationId }} />
-                  }
+                  render={<Link to="/org/conversations/$conversationId" params={{ conversationId }} />}
                 >
                   <MessagesSquareIcon className="size-4" />
                   {t("org.class.chat.open")}

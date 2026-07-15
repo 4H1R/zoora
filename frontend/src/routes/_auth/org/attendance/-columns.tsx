@@ -39,9 +39,7 @@ export function useAttendanceColumns(): ColumnDef<Attendance>[] {
       id: "session",
       accessorFn: (a) => a.class_session?.name ?? a.class_session?.description ?? "",
       header: t("org.attendance.table.session"),
-      cell: ({ getValue }) => (
-        <span className="text-muted-foreground text-sm">{(getValue() as string) || "—"}</span>
-      ),
+      cell: ({ getValue }) => <span className="text-muted-foreground text-sm">{(getValue() as string) || "—"}</span>,
     },
     {
       id: "created_at",
@@ -59,7 +57,9 @@ export function useAttendanceColumns(): ColumnDef<Attendance>[] {
       accessorFn: (a) => a.status ?? "",
       header: t("org.attendance.table.status"),
       cell: ({ row }) => (
-        <Badge variant={statusBadgeVariant(row.original.status)}>{t(`common.statuses.attendance.${row.original.status}`)}</Badge>
+        <Badge variant={statusBadgeVariant(row.original.status)}>
+          {t(`common.statuses.attendance.${row.original.status}`)}
+        </Badge>
       ),
     },
   ]

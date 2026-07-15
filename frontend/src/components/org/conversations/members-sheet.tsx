@@ -18,8 +18,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Spinner } from "@/components/ui/spinner"
-import { useProfileCard } from "@/stores/profile-card"
 import { cn } from "@/lib/utils"
+import { useProfileCard } from "@/stores/profile-card"
 
 import { avatarTint, initials } from "./lib/avatar"
 import { useChatCache } from "./use-chat-cache"
@@ -117,9 +117,7 @@ export function MembersSheet({ convId, open, onOpenChange, canManage }: MembersS
                 >
                   <button
                     type="button"
-                    onClick={() =>
-                      openCard({ userId: memberUserId, name, username: member.user?.username })
-                    }
+                    onClick={() => openCard({ userId: memberUserId, name, username: member.user?.username })}
                     className="flex min-w-0 flex-1 items-center gap-3 text-start"
                   >
                     <Avatar className="size-9 shrink-0">
@@ -132,7 +130,9 @@ export function MembersSheet({ convId, open, onOpenChange, canManage }: MembersS
                       <span className="truncate text-sm font-medium">
                         {name}
                         {isSelf && (
-                          <span className="text-muted-foreground ms-1 font-normal">{t("conversations.members.you")}</span>
+                          <span className="text-muted-foreground ms-1 font-normal">
+                            {t("conversations.members.you")}
+                          </span>
                         )}
                       </span>
                       {member.user?.username && (

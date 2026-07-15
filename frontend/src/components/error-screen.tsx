@@ -30,28 +30,25 @@ export function ErrorScreen({ error, reset }: ErrorComponentProps) {
       </div>
 
       <h1
-        className="animate-reveal mt-4 font-heading font-semibold leading-[1.12] tracking-tight text-balance"
+        className="animate-reveal font-heading mt-4 leading-[1.12] font-semibold tracking-tight text-balance"
         style={{ animationDelay: "340ms", fontSize: "clamp(1.75rem, 5vw, 2.75rem)" }}
       >
         {t("errorPages.serverError.title")}
       </h1>
 
       <p
-        className="animate-reveal mt-5 max-w-md text-base leading-relaxed text-muted-foreground text-pretty"
+        className="animate-reveal text-muted-foreground mt-5 max-w-md text-base leading-relaxed text-pretty"
         style={{ animationDelay: "400ms" }}
       >
         {t("errorPages.serverError.description")}
       </p>
 
       {import.meta.env.DEV && error?.message && (
-        <details
-          className="animate-reveal mt-7 w-full max-w-lg text-start"
-          style={{ animationDelay: "440ms" }}
-        >
-          <summary className="cursor-pointer font-mono text-xs tracking-caps text-muted-foreground/80 uppercase transition-colors hover:text-foreground">
+        <details className="animate-reveal mt-7 w-full max-w-lg text-start" style={{ animationDelay: "440ms" }}>
+          <summary className="tracking-caps text-muted-foreground/80 hover:text-foreground cursor-pointer font-mono text-xs uppercase transition-colors">
             {t("errorPages.serverError.details")}
           </summary>
-          <pre className="mt-3 max-h-56 overflow-auto rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-start font-mono text-xs leading-relaxed text-destructive whitespace-pre-wrap">
+          <pre className="border-destructive/20 bg-destructive/5 text-destructive mt-3 max-h-56 overflow-auto rounded-lg border p-4 text-start font-mono text-xs leading-relaxed whitespace-pre-wrap">
             {error.message}
           </pre>
         </details>

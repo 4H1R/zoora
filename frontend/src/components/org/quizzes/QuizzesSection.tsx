@@ -20,17 +20,13 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import {
-  getGetQuizzesQueryKey,
-  useDeleteQuizzesId,
-  useGetQuizzes,
-} from "@/api/quizzes/quizzes"
+import { getGetQuizzesQueryKey, useDeleteQuizzesId, useGetQuizzes } from "@/api/quizzes/quizzes"
 import { QuizQuestionsDialog } from "@/components/admin/quizzes/QuizQuestionsDialog"
+import { Eyebrow } from "@/components/eyebrow"
+import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { SectionNoResults } from "@/components/org/session/section-no-results"
 import { SectionPagination } from "@/components/org/session/section-pagination"
 import { SectionToolbar } from "@/components/org/session/section-toolbar"
-import { Eyebrow } from "@/components/eyebrow"
-import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -86,7 +82,7 @@ function QuizCard({ quiz, index, classSessionId, onEdit, onManageQuestions, onDe
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             {quiz.no_back_navigation && (
               <span
-                className="border-foreground/15 text-muted-foreground inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider"
+                className="border-foreground/15 text-muted-foreground inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[10px] tracking-wider uppercase"
                 title={t("org.session.quizzes.flags.noBackNavigation")}
               >
                 <LockKeyholeIcon className="size-3" />
@@ -95,7 +91,7 @@ function QuizCard({ quiz, index, classSessionId, onEdit, onManageQuestions, onDe
             )}
             {quiz.shuffle_questions && (
               <span
-                className="border-foreground/15 text-muted-foreground inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider"
+                className="border-foreground/15 text-muted-foreground inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[10px] tracking-wider uppercase"
                 title={t("org.session.quizzes.flags.shuffleQuestions")}
               >
                 <ShuffleIcon className="size-3" />
@@ -167,13 +163,7 @@ function QuizCard({ quiz, index, classSessionId, onEdit, onManageQuestions, onDe
           {quiz.id && canTake && (
             <Button
               size="sm"
-              render={
-                <Link
-                  to="/quiz/$quizId"
-                  params={{ quizId: quiz.id }}
-                  search={{ classSessionId }}
-                />
-              }
+              render={<Link to="/quiz/$quizId" params={{ quizId: quiz.id }} search={{ classSessionId }} />}
             >
               <PlayIcon className="size-3.5" />
               {t("org.session.quizzes.actions.take")}
@@ -257,7 +247,7 @@ export function QuizzesSection({ classId, classSessionId }: QuizzesSectionProps)
   if (!canView) return null
 
   return (
-    <section id="quizzes" className="flex flex-col gap-5 scroll-mt-20">
+    <section id="quizzes" className="flex scroll-mt-20 flex-col gap-5">
       <div className="flex items-end justify-between gap-4">
         <div className="flex flex-col gap-1.5">
           <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.quizzes.title")}</h2>
@@ -327,12 +317,7 @@ export function QuizzesSection({ classId, classSessionId }: QuizzesSectionProps)
               />
             ))}
           </div>
-          <SectionPagination
-            page={list.page}
-            pageSize={pageSize}
-            total={total}
-            onPageChange={list.setPage}
-          />
+          <SectionPagination page={list.page} pageSize={pageSize} total={total} onPageChange={list.setPage} />
         </>
       )}
 

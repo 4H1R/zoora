@@ -52,9 +52,7 @@ export function BooleanFieldRow({
       )}
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="text-sm leading-snug font-medium">{label}</span>
-        {Boolean(hint) && (
-          <span className="text-muted-foreground text-xs leading-relaxed">{hint}</span>
-        )}
+        {Boolean(hint) && <span className="text-muted-foreground text-xs leading-relaxed">{hint}</span>}
       </div>
     </label>
   )

@@ -90,21 +90,12 @@ function ClassLiveRoomsPage() {
       <StatCards stats={statCards} />
       <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.liveRooms.filter.class")}
-          </label>
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.liveRooms.filter.class")}</label>
           <ClassPicker value={classId} onChange={() => {}} disabled />
         </div>
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.liveRooms.filter.session")}
-          </label>
-          <SessionPicker
-            classId={classId}
-            value={sessionId}
-            onChange={() => {}}
-            disabled
-          />
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.liveRooms.filter.session")}</label>
+          <SessionPicker classId={classId} value={sessionId} onChange={() => {}} disabled />
         </div>
       </Card>
       {sessionId ? (
@@ -115,11 +106,7 @@ function ClassLiveRoomsPage() {
         </Card>
       )}
 
-      <LiveRoomCreateModal
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        defaultClassId={classId}
-      />
+      <LiveRoomCreateModal open={createOpen} onOpenChange={setCreateOpen} defaultClassId={classId} />
     </div>
   )
 }

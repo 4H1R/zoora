@@ -10,13 +10,7 @@ import { getClassNames } from "./calendar.styles"
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>
 
-function CalendarGregorian({
-  components,
-  showOutsideDays = true,
-  className,
-  classNames,
-  ...props
-}: CalendarProps) {
+function CalendarGregorian({ components, showOutsideDays = true, className, classNames, ...props }: CalendarProps) {
   return (
     <DayPicker
       className={cn("p-3", className)}

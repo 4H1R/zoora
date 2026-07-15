@@ -37,9 +37,9 @@ export function TypingIndicator({ convId }: TypingIndicatorProps) {
             className="text-muted-foreground flex items-center gap-1.5 text-xs"
           >
             <span className="flex items-center gap-0.5" aria-hidden="true">
-              <span className="bg-current animate-typing-bounce size-1 rounded-full" />
-              <span className="bg-current animate-typing-bounce size-1 rounded-full [animation-delay:150ms]" />
-              <span className="bg-current animate-typing-bounce size-1 rounded-full [animation-delay:300ms]" />
+              <span className="animate-typing-bounce size-1 rounded-full bg-current" />
+              <span className="animate-typing-bounce size-1 rounded-full bg-current [animation-delay:150ms]" />
+              <span className="animate-typing-bounce size-1 rounded-full bg-current [animation-delay:300ms]" />
             </span>
             <span>{label}</span>
           </motion.div>

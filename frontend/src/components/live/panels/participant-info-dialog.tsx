@@ -1,4 +1,8 @@
-import { ParticipantEvent, type Participant } from "livekit-client"
+import type { DeviceType } from "../presence"
+import type { RoomRole } from "../room-role"
+import type { Participant } from "livekit-client"
+
+import { ParticipantEvent } from "livekit-client"
 import { Cpu, Globe, Monitor, Smartphone, Tablet, Wifi } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -7,9 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { UserAvatar } from "@/components/user-avatar"
 import { cn } from "@/lib/utils"
 
-import { NetStatList, QUALITY_COLOR, SignalBars, qualityLabel } from "../connection-quality"
-import { readPresence, type DeviceType } from "../presence"
-import type { RoomRole } from "../room-role"
+import { NetStatList, QUALITY_COLOR, qualityLabel, SignalBars } from "../connection-quality"
+import { readPresence } from "../presence"
 
 const DEVICE_ICON: Record<DeviceType, typeof Smartphone> = {
   mobile: Smartphone,
@@ -17,20 +20,12 @@ const DEVICE_ICON: Record<DeviceType, typeof Smartphone> = {
   desktop: Monitor,
 }
 
-function InfoRow({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof Smartphone
-  label: string
-  value: string
-}) {
+function InfoRow({ icon: Icon, label, value }: { icon: typeof Smartphone; label: string; value: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5">
-      <Icon className="size-4 shrink-0 text-muted-foreground" />
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="ms-auto truncate text-sm font-medium text-foreground" dir="ltr">
+    <div className="border-border flex items-center gap-3 rounded-lg border px-3 py-2.5">
+      <Icon className="text-muted-foreground size-4 shrink-0" />
+      <span className="text-muted-foreground text-xs">{label}</span>
+      <span className="text-foreground ms-auto truncate text-sm font-medium" dir="ltr">
         {value}
       </span>
     </div>
@@ -63,9 +58,7 @@ export function ParticipantInfoDialog({
   return (
     <Dialog open={participant !== null} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
-        {participant && (
-          <ParticipantInfoBody participant={participant} role={role} />
-        )}
+        {participant && <ParticipantInfoBody participant={participant} role={role} />}
       </DialogContent>
     </Dialog>
   )
@@ -80,9 +73,7 @@ function ParticipantInfoBody({ participant, role }: { participant: Participant; 
   const unknown = t("liveRoom.people.info.unknown")
 
   const DeviceIcon = device ? DEVICE_ICON[device.device] : Cpu
-  const deviceLabel = device
-    ? t(`liveRoom.people.info.deviceType.${device.device}`)
-    : unknown
+  const deviceLabel = device ? t(`liveRoom.people.info.deviceType.${device.device}`) : unknown
 
   return (
     <>
@@ -91,8 +82,8 @@ function ParticipantInfoBody({ participant, role }: { participant: Participant; 
         <div className="flex items-center gap-3">
           <UserAvatar name={name} size="md" online={true} />
           <div className="min-w-0 text-start">
-            <p className="truncate text-base font-semibold text-foreground">{name}</p>
-            <p className="text-xs text-muted-foreground">{t(`liveRoom.people.roles.${role}`)}</p>
+            <p className="text-foreground truncate text-base font-semibold">{name}</p>
+            <p className="text-muted-foreground text-xs">{t(`liveRoom.people.roles.${role}`)}</p>
           </div>
         </div>
       </DialogHeader>
@@ -103,10 +94,10 @@ function ParticipantInfoBody({ participant, role }: { participant: Participant; 
         <InfoRow icon={Globe} label={t("liveRoom.people.info.browser")} value={device?.browser ?? unknown} />
       </div>
 
-      <div className="space-y-2.5 rounded-lg border border-border p-3">
+      <div className="border-border space-y-2.5 rounded-lg border p-3">
         <div className="flex items-center justify-between">
-          <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Wifi className="size-4 text-muted-foreground" />
+          <span className="text-foreground flex items-center gap-2 text-sm font-semibold">
+            <Wifi className="text-muted-foreground size-4" />
             {t("liveRoom.people.info.network")}
           </span>
           <span className="flex items-center gap-2">

@@ -126,9 +126,7 @@ function ChangelogEditorPage() {
                 {t("admin.changelog.unpublish")}
               </Button>
             ) : (
-              <Button onClick={() => publish.mutate({ id })}>
-                {t("admin.changelog.publish")}
-              </Button>
+              <Button onClick={() => publish.mutate({ id })}>{t("admin.changelog.publish")}</Button>
             )}
           </div>
         }
@@ -144,10 +142,7 @@ function ChangelogEditorPage() {
           />
         </div>
         <label className="flex items-end gap-2 pb-2">
-          <Checkbox
-            checked={form.is_major}
-            onCheckedChange={(v) => setForm((f) => ({ ...f, is_major: !!v }))}
-          />
+          <Checkbox checked={form.is_major} onCheckedChange={(v) => setForm((f) => ({ ...f, is_major: !!v }))} />
           {t("admin.changelog.major")}
         </label>
       </div>

@@ -18,11 +18,7 @@ interface QuestionPhotoUploaderProps {
   questionId?: string
 }
 
-export function QuestionPhotoUploader({
-  value,
-  onChange,
-  questionId,
-}: QuestionPhotoUploaderProps) {
+export function QuestionPhotoUploader({ value, onChange, questionId }: QuestionPhotoUploaderProps) {
   const { t } = useTranslation()
   const inputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -82,37 +78,17 @@ export function QuestionPhotoUploader({
 
   return (
     <div className="flex flex-col gap-2">
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleFile}
-      />
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
       <div className="flex flex-wrap gap-2">
         {value.map((m) => (
-          <PhotoThumb
-            key={m.media_id}
-            mediaID={m.media_id}
-            onRemove={() => handleRemove(m.media_id)}
-          />
+          <PhotoThumb key={m.media_id} mediaID={m.media_id} onRemove={() => handleRemove(m.media_id)} />
         ))}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handlePick}
-          disabled={isUploading}
-        >
+        <Button type="button" variant="outline" size="sm" onClick={handlePick} disabled={isUploading}>
           {isUploading ? <Loader2Icon className="animate-spin" /> : <ImagePlusIcon />}
           {t("admin.questions.form.photos.add")}
         </Button>
       </div>
-      {value.length === 0 && (
-        <p className="text-muted-foreground text-xs">
-          {t("admin.questions.form.photos.empty")}
-        </p>
-      )}
+      {value.length === 0 && <p className="text-muted-foreground text-xs">{t("admin.questions.form.photos.empty")}</p>}
     </div>
   )
 }

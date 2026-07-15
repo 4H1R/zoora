@@ -2,7 +2,6 @@ import type { ReactNode } from "react"
 
 import { useTranslation } from "react-i18next"
 
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -14,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
+import { cn } from "@/lib/utils"
 
 interface ResourceFormDialogProps {
   open: boolean

@@ -1,6 +1,8 @@
-import type { GithubCom4H1RZooraInternalDomainAttendance as Attendance } from "@/api/model"
-import type { GithubCom4H1RZooraInternalDomainClassMember as ClassMember } from "@/api/model"
-import type { GithubCom4H1RZooraInternalDomainCreateAttendanceDTOStatus as ApiStatus } from "@/api/model"
+import type {
+  GithubCom4H1RZooraInternalDomainCreateAttendanceDTOStatus as ApiStatus,
+  GithubCom4H1RZooraInternalDomainAttendance as Attendance,
+  GithubCom4H1RZooraInternalDomainClassMember as ClassMember,
+} from "@/api/model"
 import type { ColumnDef } from "@tanstack/react-table"
 
 import { useQueryClient } from "@tanstack/react-query"

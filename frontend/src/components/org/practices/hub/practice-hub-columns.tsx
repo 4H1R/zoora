@@ -44,18 +44,14 @@ export function usePracticeHubColumns({
     {
       id: "class",
       header: t("org.practices.manager.class"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-xs">{row.original.class?.name ?? "—"}</span>
-      ),
+      cell: ({ row }) => <span className="text-muted-foreground text-xs">{row.original.class?.name ?? "—"}</span>,
       enableSorting: false,
       enableHiding: true,
     },
     {
       id: "teacher",
       header: t("org.practices.manager.teacher"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-xs">{row.original.user?.name ?? "—"}</span>
-      ),
+      cell: ({ row }) => <span className="text-muted-foreground text-xs">{row.original.user?.name ?? "—"}</span>,
       enableSorting: false,
       enableHiding: true,
     },
@@ -77,9 +73,7 @@ export function usePracticeHubColumns({
       id: "graded",
       header: t("org.practices.manager.graded"),
       cell: ({ row }) => (
-        <span className="text-muted-foreground text-sm tabular-nums">
-          {row.original.stats?.graded_count ?? 0}
-        </span>
+        <span className="text-muted-foreground text-sm tabular-nums">{row.original.stats?.graded_count ?? 0}</span>
       ),
       enableSorting: false,
       enableHiding: true,
@@ -104,9 +98,7 @@ export function usePracticeHubColumns({
     {
       id: "due",
       header: t("org.practices.due"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-xs">{formatDate(row.original.end_time)}</span>
-      ),
+      cell: ({ row }) => <span className="text-muted-foreground text-xs">{formatDate(row.original.end_time)}</span>,
       enableSorting: false,
       enableHiding: true,
     },

@@ -8,8 +8,7 @@ import { DataTable } from "@/components/data-table/data-table"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { TableFilter } from "@/components/data-table/table-filter"
 import { Card } from "@/components/ui/card"
-import { getEntityColor, getInitials, useFormatDate } from "@/lib/data-table"
-import { useAdminTable } from "@/lib/data-table"
+import { getEntityColor, getInitials, useAdminTable, useFormatDate } from "@/lib/data-table"
 import { cn } from "@/lib/utils"
 
 import { SessionActions } from "./SessionActions"
@@ -81,9 +80,7 @@ function useSessionColumns({
     {
       accessorKey: "created_at",
       header: t("admin.sessions.createdAt"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-xs">{formatDate(row.original.created_at)}</span>
-      ),
+      cell: ({ row }) => <span className="text-muted-foreground text-xs">{formatDate(row.original.created_at)}</span>,
       enableSorting: true,
       enableHiding: true,
     },
@@ -91,11 +88,7 @@ function useSessionColumns({
       id: "actions",
       header: "",
       cell: ({ row }) => (
-        <SessionActions
-          session={row.original}
-          classId={classId ?? row.original.class_id ?? ""}
-          onEdit={onEdit}
-        />
+        <SessionActions session={row.original} classId={classId ?? row.original.class_id ?? ""} onEdit={onEdit} />
       ),
       enableSorting: false,
       enableHiding: false,

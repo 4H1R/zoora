@@ -1,4 +1,5 @@
 import type { GithubCom4H1RZooraInternalDomainPracticeRoom as PracticeRoom } from "@/api/model"
+import type { PendingAttachment } from "@/components/media/MediaAttachmentUploader"
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
@@ -8,14 +9,8 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
 
-import {
-  getGetPracticesQueryKey,
-  usePostPracticesIdSubmissions,
-} from "@/api/practices/practices"
-import {
-  MediaAttachmentUploader,
-  type PendingAttachment,
-} from "@/components/media/MediaAttachmentUploader"
+import { getGetPracticesQueryKey, usePostPracticesIdSubmissions } from "@/api/practices/practices"
+import { MediaAttachmentUploader } from "@/components/media/MediaAttachmentUploader"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -97,11 +92,7 @@ export function PracticeSubmitDialog({ open, onOpenChange, practice }: PracticeS
             </Field>
             <Field>
               <FieldLabel>{t("org.session.practices.submit.attachments")}</FieldLabel>
-              <MediaAttachmentUploader
-                value={attachments}
-                onChange={setAttachments}
-                modelType="practice_submission"
-              />
+              <MediaAttachmentUploader value={attachments} onChange={setAttachments} modelType="practice_submission" />
             </Field>
           </FieldGroup>
 

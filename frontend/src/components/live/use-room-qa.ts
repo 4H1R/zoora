@@ -1,7 +1,8 @@
+import type { GithubCom4H1RZooraInternalDomainQAQuestionView } from "@/api/model"
+
 import { useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 
-import type { GithubCom4H1RZooraInternalDomainQAQuestionView } from "@/api/model"
 import {
   getGetQaQueryKey,
   useDeleteQaId,
@@ -38,10 +39,7 @@ export interface RoomQuestion {
 }
 
 function errorStatus(err: unknown): number | undefined {
-  return (
-    (err as { status?: number })?.status ??
-    (err as { response?: { status?: number } })?.response?.status
-  )
+  return (err as { status?: number })?.status ?? (err as { response?: { status?: number } })?.response?.status
 }
 
 export function useRoomQa(liveId: string) {
@@ -149,7 +147,7 @@ export function useRoomQa(liveId: string) {
     if (!liveId) return
     askMutation.mutate(
       { data: { model_type: QA_MODEL_TYPE, model_id: liveId, text } },
-      { onError: (err) => onError?.(errorStatus(err)) },
+      { onError: (err) => onError?.(errorStatus(err)) }
     )
   }
   const vote = (id: string) => voteMutation.mutate({ id })

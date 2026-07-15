@@ -1,10 +1,11 @@
+import type { CalendarEvent } from "@/lib/calendar"
 import type { DayButtonProps } from "react-day-picker"
 
 import { useTranslation } from "react-i18next"
 
 import { CalendarGregorian } from "@/components/ui/calendar/calendar-gregorian"
 import { CalendarJalali } from "@/components/ui/calendar/calendar-jalali"
-import { bucketByDay, dateKey, eventDotColor, type CalendarEvent } from "@/lib/calendar"
+import { bucketByDay, dateKey, eventDotColor } from "@/lib/calendar"
 import { cn } from "@/lib/utils"
 
 type CalendarBoardProps = {
@@ -20,13 +21,7 @@ type CalendarBoardProps = {
 // per-type dots on days that have events. Selection/navigation is delegated to
 // the parent so it can be reused by both the full calendar page and the
 // dashboard widget.
-export function CalendarBoard({
-  events,
-  month,
-  onMonthChange,
-  selected,
-  onSelect,
-}: CalendarBoardProps) {
+export function CalendarBoard({ events, month, onMonthChange, selected, onSelect }: CalendarBoardProps) {
   const { i18n } = useTranslation()
   const isFa = i18n.language === "fa"
   const buckets = bucketByDay(events)

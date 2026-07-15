@@ -96,20 +96,12 @@ function OfflinesPage() {
       <StatCards stats={statCards} />
       <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.offlines.filter.class")}
-          </label>
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.offlines.filter.class")}</label>
           <ClassPicker value={classId} onChange={handleClassChange} />
         </div>
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.offlines.filter.session")}
-          </label>
-          <SessionPicker
-            classId={classId}
-            value={sessionId}
-            onChange={(id) => setSessionId(id || undefined)}
-          />
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.offlines.filter.session")}</label>
+          <SessionPicker classId={classId} value={sessionId} onChange={(id) => setSessionId(id || undefined)} />
         </div>
         {(classId || sessionId) && (
           <Button variant="outline" size="sm" onClick={handleClearFilters}>
@@ -118,13 +110,7 @@ function OfflinesPage() {
           </Button>
         )}
       </Card>
-      <OfflineTable
-        rooms={rooms}
-        total={total}
-        isLoading={isLoading}
-        sorting={sorting}
-        onEdit={handleEdit}
-      />
+      <OfflineTable rooms={rooms} total={total} isLoading={isLoading} sorting={sorting} onEdit={handleEdit} />
 
       <OfflineCreateModal open={formOpen} onOpenChange={handleFormOpenChange} room={editingRoom} />
     </div>

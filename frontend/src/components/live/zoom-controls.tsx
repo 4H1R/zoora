@@ -31,7 +31,7 @@ export function ZoomControls({
   return (
     <div
       className={cn(
-        "absolute bottom-4 start-4 z-20 flex flex-col items-center overflow-hidden rounded-full bg-black/70 text-zinc-100 shadow-lg",
+        "absolute start-4 bottom-4 z-20 flex flex-col items-center overflow-hidden rounded-full bg-black/70 text-zinc-100 shadow-lg",
         className
       )}
     >

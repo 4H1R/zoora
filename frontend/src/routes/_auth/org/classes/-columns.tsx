@@ -6,9 +6,8 @@ import { ChevronRight, UserIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { getGradient } from "@/components/class-card"
-import { getInitials } from "@/components/user-avatar"
 import { Button } from "@/components/ui/button"
-import { UserAvatar } from "@/components/user-avatar"
+import { getInitials, UserAvatar } from "@/components/user-avatar"
 import { cn } from "@/lib/utils"
 
 export function useClassColumns(): ColumnDef<GithubCom4H1RZooraInternalDomainClass>[] {

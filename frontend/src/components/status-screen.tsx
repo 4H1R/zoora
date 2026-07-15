@@ -28,14 +28,17 @@ export function StatusScreen({ tone = "brand", children }: { tone?: "brand" | "a
   const year = formatDate(new Date(), lang, "year")
 
   return (
-    <main className="relative flex min-h-svh flex-col overflow-hidden bg-background text-foreground">
+    <main className="bg-background text-foreground relative flex min-h-svh flex-col overflow-hidden">
       <BackgroundFX tone={tone} />
 
       <header
         className="animate-reveal relative z-10 flex items-center justify-between px-6 py-6 sm:px-10"
         style={{ animationDelay: "60ms" }}
       >
-        <Link to="/" className="rounded-md outline-none transition-opacity hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/50">
+        <Link
+          to="/"
+          className="focus-visible:ring-ring/50 rounded-md transition-opacity outline-none hover:opacity-80 focus-visible:ring-3"
+        >
           <Logo className="text-lg" />
         </Link>
         <div className="flex items-center gap-1.5">
@@ -43,7 +46,7 @@ export function StatusScreen({ tone = "brand", children }: { tone?: "brand" | "a
             type="button"
             onClick={() => i18n.changeLanguage(nextLang)}
             aria-label={t("comingSoon.toggleLang")}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border/70 bg-background/40 px-3 font-mono text-xs tracking-caps text-muted-foreground backdrop-blur-md transition-colors hover:border-primary/40 hover:text-foreground"
+            className="border-border/70 bg-background/40 tracking-caps text-muted-foreground hover:border-primary/40 hover:text-foreground inline-flex h-9 items-center gap-1.5 rounded-full border px-3 font-mono text-xs backdrop-blur-md transition-colors"
           >
             <Languages className="size-3.5" />
             {languages[nextLang].label}
@@ -52,7 +55,7 @@ export function StatusScreen({ tone = "brand", children }: { tone?: "brand" | "a
             type="button"
             onClick={toggleTheme}
             aria-label={t("comingSoon.toggleTheme")}
-            className="inline-flex size-9 items-center justify-center rounded-full border border-border/70 bg-background/40 text-muted-foreground backdrop-blur-md transition-colors hover:border-primary/40 hover:text-foreground"
+            className="border-border/70 bg-background/40 text-muted-foreground hover:border-primary/40 hover:text-foreground inline-flex size-9 items-center justify-center rounded-full border backdrop-blur-md transition-colors"
           >
             {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
           </button>
@@ -64,10 +67,12 @@ export function StatusScreen({ tone = "brand", children }: { tone?: "brand" | "a
       </section>
 
       <footer
-        className="animate-reveal relative z-10 flex items-center justify-center px-6 py-6 font-mono text-[0.7rem] tracking-caps text-muted-foreground/60 uppercase sm:justify-between sm:px-10"
+        className="animate-reveal tracking-caps text-muted-foreground/60 relative z-10 flex items-center justify-center px-6 py-6 font-mono text-[0.7rem] uppercase sm:justify-between sm:px-10"
         style={{ animationDelay: "700ms" }}
       >
-        <span>© {year} {t("common.brandName")}</span>
+        <span>
+          © {year} {t("common.brandName")}
+        </span>
         <span className="hidden sm:inline">{t("comingSoon.footerNote")}</span>
       </footer>
     </main>
@@ -85,19 +90,15 @@ export function StatusGlyph({ code, tone = "brand" }: { code: string; tone?: "br
       : "linear-gradient(115deg, var(--green-400), var(--green-600) 55%, var(--green-800))"
 
   return (
-    <div
-      className="animate-reveal relative select-none"
-      style={{ animationDelay: "180ms" }}
-      aria-hidden
-    >
+    <div className="animate-reveal relative select-none" style={{ animationDelay: "180ms" }} aria-hidden>
       <span
-        className="absolute inset-0 bg-clip-text leading-none font-heading font-bold tracking-tight text-transparent opacity-40 blur-2xl"
+        className="font-heading absolute inset-0 bg-clip-text leading-none font-bold tracking-tight text-transparent opacity-40 blur-2xl"
         style={{ backgroundImage: gradient, fontSize: "clamp(7rem, 26vw, 16rem)" }}
       >
         {code}
       </span>
       <span
-        className="relative block bg-clip-text leading-none font-heading font-bold tracking-tight text-transparent"
+        className="font-heading relative block bg-clip-text leading-none font-bold tracking-tight text-transparent"
         style={{ backgroundImage: gradient, fontSize: "clamp(7rem, 26vw, 16rem)" }}
       >
         {code}

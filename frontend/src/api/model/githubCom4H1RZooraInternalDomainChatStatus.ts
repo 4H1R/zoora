@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0
  */
 
-export type GithubCom4H1RZooraInternalDomainChatStatus = typeof GithubCom4H1RZooraInternalDomainChatStatus[keyof typeof GithubCom4H1RZooraInternalDomainChatStatus];
-
+export type GithubCom4H1RZooraInternalDomainChatStatus =
+  (typeof GithubCom4H1RZooraInternalDomainChatStatus)[keyof typeof GithubCom4H1RZooraInternalDomainChatStatus]
 
 export const GithubCom4H1RZooraInternalDomainChatStatus = {
-  ChatStatusActive: 'active',
-  ChatStatusArchived: 'archived',
-} as const;
+  ChatStatusActive: "active",
+  ChatStatusArchived: "archived",
+} as const

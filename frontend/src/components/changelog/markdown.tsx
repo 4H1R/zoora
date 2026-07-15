@@ -11,21 +11,14 @@ const VIDEO_EXT = /\.(mp4|webm|mov|m4v)(\?.*)?$/i
  */
 export function ChangelogMarkdown({ children }: { children: string }) {
   return (
-    <div className="prose prose-sm dark:prose-invert max-w-none prose-img:rounded-lg prose-video:rounded-lg">
+    <div className="prose prose-sm dark:prose-invert prose-img:rounded-lg prose-video:rounded-lg max-w-none">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
           img: ({ src, alt }) => {
             const url = typeof src === "string" ? src : ""
             if (VIDEO_EXT.test(url)) {
-              return (
-                <video
-                  src={url}
-                  controls
-                  preload="metadata"
-                  className="w-full rounded-lg"
-                />
-              )
+              return <video src={url} controls preload="metadata" className="w-full rounded-lg" />
             }
             return <img src={url} alt={alt ?? ""} loading="lazy" className="rounded-lg" />
           },

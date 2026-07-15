@@ -1,4 +1,6 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import type { ReactNode } from "react"
+
+import { createContext, useContext, useEffect, useState } from "react"
 
 // A single breadcrumb crumb. `to` present → clickable link; `to` omitted →
 // current-page (non-link) per the "omit to = current" convention. `label` null
@@ -19,9 +21,7 @@ const BreadcrumbContext = createContext<BreadcrumbContextValue | null>(null)
 
 export function BreadcrumbProvider({ children }: { children: ReactNode }) {
   const [crumbs, setCrumbs] = useState<Crumb[] | null>(null)
-  return (
-    <BreadcrumbContext.Provider value={{ crumbs, setCrumbs }}>{children}</BreadcrumbContext.Provider>
-  )
+  return <BreadcrumbContext.Provider value={{ crumbs, setCrumbs }}>{children}</BreadcrumbContext.Provider>
 }
 
 // Reader. Provider-optional on purpose: the navbar's SidebarBreadcrumb is shared

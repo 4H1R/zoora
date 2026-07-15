@@ -35,6 +35,15 @@ import type {
   GetFilesFolders200,
   GetFilesFolders401,
   GetFilesFolders403,
+  GetFilesOwners200,
+  GetFilesOwners401,
+  GetFilesOwners403,
+  GetFilesOwnersKindFiles200,
+  GetFilesOwnersKindFiles400,
+  GetFilesOwnersKindFiles401,
+  GetFilesOwnersKindFiles403,
+  GetFilesOwnersKindFilesParams,
+  GetFilesOwnersParams,
   GetFilesParams,
   GetMedia200,
   GetMedia400,
@@ -330,6 +339,283 @@ export function useGetFilesFolders<TData = Awaited<ReturnType<typeof getFilesFol
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetFilesFoldersQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type getFilesOwnersResponse200 = {
+  data: GetFilesOwners200
+  status: 200
+}
+
+export type getFilesOwnersResponse401 = {
+  data: GetFilesOwners401
+  status: 401
+}
+
+export type getFilesOwnersResponse403 = {
+  data: GetFilesOwners403
+  status: 403
+}
+
+export type getFilesOwnersResponseSuccess = (getFilesOwnersResponse200) & {
+  headers: Headers;
+};
+export type getFilesOwnersResponseError = (getFilesOwnersResponse401 | getFilesOwnersResponse403) & {
+  headers: Headers;
+};
+
+export type getFilesOwnersResponse = (getFilesOwnersResponseSuccess | getFilesOwnersResponseError)
+
+export const getGetFilesOwnersUrl = (params?: GetFilesOwnersParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/files/owners?${stringifiedParams}` : `/files/owners`
+}
+
+/**
+ * Aggregates the caller's org media + recordings by resolved owner (class, question_bank, conversation, shared, other), size-sorted, with a storage quota header. Requires media:view_any.
+ * @summary List org storage by owner
+ */
+export const getFilesOwners = async (params?: GetFilesOwnersParams, options?: RequestInit): Promise<getFilesOwnersResponse> => {
+
+  return customInstance<getFilesOwnersResponse>(getGetFilesOwnersUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetFilesOwnersQueryKey = (params?: GetFilesOwnersParams,) => {
+    return [
+    `/files/owners`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetFilesOwnersQueryOptions = <TData = Awaited<ReturnType<typeof getFilesOwners>>, TError = ErrorType<GetFilesOwners401 | GetFilesOwners403>>(params?: GetFilesOwnersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFilesOwners>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFilesOwnersQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFilesOwners>>> = ({ signal }) => getFilesOwners(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFilesOwners>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetFilesOwnersQueryResult = NonNullable<Awaited<ReturnType<typeof getFilesOwners>>>
+export type GetFilesOwnersQueryError = ErrorType<GetFilesOwners401 | GetFilesOwners403>
+
+
+export function useGetFilesOwners<TData = Awaited<ReturnType<typeof getFilesOwners>>, TError = ErrorType<GetFilesOwners401 | GetFilesOwners403>>(
+ params: undefined |  GetFilesOwnersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFilesOwners>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFilesOwners>>,
+          TError,
+          Awaited<ReturnType<typeof getFilesOwners>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFilesOwners<TData = Awaited<ReturnType<typeof getFilesOwners>>, TError = ErrorType<GetFilesOwners401 | GetFilesOwners403>>(
+ params?: GetFilesOwnersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFilesOwners>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFilesOwners>>,
+          TError,
+          Awaited<ReturnType<typeof getFilesOwners>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFilesOwners<TData = Awaited<ReturnType<typeof getFilesOwners>>, TError = ErrorType<GetFilesOwners401 | GetFilesOwners403>>(
+ params?: GetFilesOwnersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFilesOwners>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List org storage by owner
+ */
+
+export function useGetFilesOwners<TData = Awaited<ReturnType<typeof getFilesOwners>>, TError = ErrorType<GetFilesOwners401 | GetFilesOwners403>>(
+ params?: GetFilesOwnersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFilesOwners>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetFilesOwnersQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type getFilesOwnersKindFilesResponse200 = {
+  data: GetFilesOwnersKindFiles200
+  status: 200
+}
+
+export type getFilesOwnersKindFilesResponse400 = {
+  data: GetFilesOwnersKindFiles400
+  status: 400
+}
+
+export type getFilesOwnersKindFilesResponse401 = {
+  data: GetFilesOwnersKindFiles401
+  status: 401
+}
+
+export type getFilesOwnersKindFilesResponse403 = {
+  data: GetFilesOwnersKindFiles403
+  status: 403
+}
+
+export type getFilesOwnersKindFilesResponseSuccess = (getFilesOwnersKindFilesResponse200) & {
+  headers: Headers;
+};
+export type getFilesOwnersKindFilesResponseError = (getFilesOwnersKindFilesResponse400 | getFilesOwnersKindFilesResponse401 | getFilesOwnersKindFilesResponse403) & {
+  headers: Headers;
+};
+
+export type getFilesOwnersKindFilesResponse = (getFilesOwnersKindFilesResponseSuccess | getFilesOwnersKindFilesResponseError)
+
+export const getGetFilesOwnersKindFilesUrl = (kind: 'class' | 'question_bank' | 'conversation' | 'shared' | 'other',
+    params?: GetFilesOwnersKindFilesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/files/owners/${kind}/files?${stringifiedParams}` : `/files/owners/${kind}/files`
+}
+
+/**
+ * Paginated, searchable files for a single owner. Class owners include read-only recordings. ownerID is omitted for shared/other buckets. Requires media:view_any.
+ * @summary List files under one owner
+ */
+export const getFilesOwnersKindFiles = async (kind: 'class' | 'question_bank' | 'conversation' | 'shared' | 'other',
+    params?: GetFilesOwnersKindFilesParams, options?: RequestInit): Promise<getFilesOwnersKindFilesResponse> => {
+
+  return customInstance<getFilesOwnersKindFilesResponse>(getGetFilesOwnersKindFilesUrl(kind,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetFilesOwnersKindFilesQueryKey = (kind: 'class' | 'question_bank' | 'conversation' | 'shared' | 'other',
+    params?: GetFilesOwnersKindFilesParams,) => {
+    return [
+    `/files/owners/${kind}/files`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetFilesOwnersKindFilesQueryOptions = <TData = Awaited<ReturnType<typeof getFilesOwnersKindFiles>>, TError = ErrorType<GetFilesOwnersKindFiles400 | GetFilesOwnersKindFiles401 | GetFilesOwnersKindFiles403>>(kind: 'class' | 'question_bank' | 'conversation' | 'shared' | 'other',
+    params?: GetFilesOwnersKindFilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFilesOwnersKindFiles>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFilesOwnersKindFilesQueryKey(kind,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFilesOwnersKindFiles>>> = ({ signal }) => getFilesOwnersKindFiles(kind,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: kind !== null && kind !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFilesOwnersKindFiles>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetFilesOwnersKindFilesQueryResult = NonNullable<Awaited<ReturnType<typeof getFilesOwnersKindFiles>>>
+export type GetFilesOwnersKindFilesQueryError = ErrorType<GetFilesOwnersKindFiles400 | GetFilesOwnersKindFiles401 | GetFilesOwnersKindFiles403>
+
+
+export function useGetFilesOwnersKindFiles<TData = Awaited<ReturnType<typeof getFilesOwnersKindFiles>>, TError = ErrorType<GetFilesOwnersKindFiles400 | GetFilesOwnersKindFiles401 | GetFilesOwnersKindFiles403>>(
+ kind: 'class' | 'question_bank' | 'conversation' | 'shared' | 'other',
+    params: undefined |  GetFilesOwnersKindFilesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFilesOwnersKindFiles>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFilesOwnersKindFiles>>,
+          TError,
+          Awaited<ReturnType<typeof getFilesOwnersKindFiles>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFilesOwnersKindFiles<TData = Awaited<ReturnType<typeof getFilesOwnersKindFiles>>, TError = ErrorType<GetFilesOwnersKindFiles400 | GetFilesOwnersKindFiles401 | GetFilesOwnersKindFiles403>>(
+ kind: 'class' | 'question_bank' | 'conversation' | 'shared' | 'other',
+    params?: GetFilesOwnersKindFilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFilesOwnersKindFiles>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFilesOwnersKindFiles>>,
+          TError,
+          Awaited<ReturnType<typeof getFilesOwnersKindFiles>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFilesOwnersKindFiles<TData = Awaited<ReturnType<typeof getFilesOwnersKindFiles>>, TError = ErrorType<GetFilesOwnersKindFiles400 | GetFilesOwnersKindFiles401 | GetFilesOwnersKindFiles403>>(
+ kind: 'class' | 'question_bank' | 'conversation' | 'shared' | 'other',
+    params?: GetFilesOwnersKindFilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFilesOwnersKindFiles>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List files under one owner
+ */
+
+export function useGetFilesOwnersKindFiles<TData = Awaited<ReturnType<typeof getFilesOwnersKindFiles>>, TError = ErrorType<GetFilesOwnersKindFiles400 | GetFilesOwnersKindFiles401 | GetFilesOwnersKindFiles403>>(
+ kind: 'class' | 'question_bank' | 'conversation' | 'shared' | 'other',
+    params?: GetFilesOwnersKindFilesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFilesOwnersKindFiles>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetFilesOwnersKindFilesQueryOptions(kind,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

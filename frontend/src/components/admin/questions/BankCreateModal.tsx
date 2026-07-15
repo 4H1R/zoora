@@ -86,10 +86,7 @@ export function BankCreateModal({ open, onOpenChange, onCreated }: BankCreateMod
       <FieldGroup>
         <Field data-invalid={!!errors.name || undefined}>
           <FieldLabel>{t("admin.questionBanks.form.name")}</FieldLabel>
-          <Input
-            {...form.register("name")}
-            placeholder={t("admin.questionBanks.form.namePlaceholder")}
-          />
+          <Input {...form.register("name")} placeholder={t("admin.questionBanks.form.namePlaceholder")} />
           <FieldError errors={[errors.name]} />
         </Field>
         <Field>

@@ -1,11 +1,13 @@
+import type { TypingExpiryMap } from "./lib/typing"
+import type { WsEvent } from "./lib/ws-client"
+
 import { useEffect, useState } from "react"
 import { useAccess } from "react-access-engine"
 
 import { useGetConversationsIdMembers } from "@/api/conversations/conversations"
 
 import { useChatWs } from "./chat-provider"
-import { activeTypers, markTyping, pruneExpired, TYPING_PRUNE_INTERVAL_MS, type TypingExpiryMap } from "./lib/typing"
-import type { WsEvent } from "./lib/ws-client"
+import { activeTypers, markTyping, pruneExpired, TYPING_PRUNE_INTERVAL_MS } from "./lib/typing"
 
 export interface Typer {
   userId: string

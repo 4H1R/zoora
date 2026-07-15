@@ -1,25 +1,21 @@
+import type { CalendarProps } from "./calendar-gregorian"
 import type { ClassNames } from "react-day-picker"
 
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-import type { CalendarProps } from "./calendar-gregorian"
-
 export const getClassNames = (props: CalendarProps): Partial<ClassNames> => {
   return {
     root: "border rounded-md",
-    months:
-      "flex flex-col items-center space-y-4 sm:space-x-4 sm:space-y-0 relative",
+    months: "flex flex-col items-center space-y-4 sm:space-x-4 sm:space-y-0 relative",
     month: "space-y-4 !m-0 w-full",
     month_caption: "flex justify-center pt-1 relative items-center",
     caption_label: "text-sm font-medium",
     dropdown: "w-fit h-full border border-primary p-2",
     dropdowns: "flex items-center justify-center gap-3",
     dropdown_root: " h-full",
-    months_dropdown:
-      "bg-background text-foreground py-1 px-2 rounded-md border-input cursor-pointer",
-    years_dropdown:
-      "bg-background text-foreground py-1 px-2 rounded-md border-input cursor-pointer",
+    months_dropdown: "bg-background text-foreground py-1 px-2 rounded-md border-input cursor-pointer",
+    years_dropdown: "bg-background text-foreground py-1 px-2 rounded-md border-input cursor-pointer",
     nav: "space-x-1 flex items-center justify-between",
     button_next: cn(
       buttonVariants({ variant: "outline" }),
@@ -57,15 +53,11 @@ export const getClassNames = (props: CalendarProps): Partial<ClassNames> => {
       "bg-primary rounded-md text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
     today: cn(
       "[&:not([aria-selected])]:bg-primary/10 text-accent-foreground rounded-md",
-      props.mode === "range"
-        ? "aria-selected:text-chart-4"
-        : "aria-selected:bg-primary aria-selected:text-chart-4"
+      props.mode === "range" ? "aria-selected:text-chart-4" : "aria-selected:bg-primary aria-selected:text-chart-4"
     ),
-    outside:
-      "day-outside text-muted-foreground opacity-50 aria-selected:bg-primary/60",
+    outside: "day-outside text-muted-foreground opacity-50 aria-selected:bg-primary/60",
     disabled: "text-muted-foreground opacity-50",
-    range_middle:
-      "aria-selected:bg-accent aria-selected:text-accent-foreground",
+    range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
     hidden: "invisible w-8",
   }
 }

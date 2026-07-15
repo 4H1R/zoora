@@ -9,12 +9,7 @@ import { toast } from "sonner"
 import { z } from "zod"
 
 import { getGetAdminQuizzesQueryKey } from "@/api/admin-quizzes/admin-quizzes"
-import {
-  getGetQuizzesQueryKey,
-  postQuizzesIdRooms,
-  usePostQuizzes,
-  usePutQuizzesId,
-} from "@/api/quizzes/quizzes"
+import { getGetQuizzesQueryKey, postQuizzesIdRooms, usePostQuizzes, usePutQuizzesId } from "@/api/quizzes/quizzes"
 import { ClassPicker, SessionPicker } from "@/components/admin/forms/ClassSessionPicker"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
 import {
@@ -27,13 +22,7 @@ import {
 } from "@/components/quizzes/quiz-form-fields"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { isPlanError } from "@/lib/plan-errors"
 
 const TRANSLATION_PREFIX = "admin.quizzes.form"
@@ -65,9 +54,7 @@ function QuizNegativeFields({
       <FieldLabel>{t("admin.quizzes.form.negativeMark.label")}</FieldLabel>
       <Select value={mode} onValueChange={(v) => onModeChange(v as NegativeMode)}>
         <SelectTrigger>
-          <SelectValue>
-            {(value: NegativeMode) => t(`admin.questions.form.negativeMark.modes.${value}`)}
-          </SelectValue>
+          <SelectValue>{(value: NegativeMode) => t(`admin.questions.form.negativeMark.modes.${value}`)}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           {NEGATIVE_MODES.map((m) => (
@@ -102,9 +89,7 @@ function QuizNegativeFields({
           />
         </div>
       )}
-      <p className="text-muted-foreground text-xs">
-        {t("admin.quizzes.form.negativeMark.hint")}
-      </p>
+      <p className="text-muted-foreground text-xs">{t("admin.quizzes.form.negativeMark.hint")}</p>
     </Field>
   )
 }
@@ -174,12 +159,7 @@ interface QuizCreateModalProps {
   defaultClassId?: string
 }
 
-export function QuizCreateModal({
-  open,
-  onOpenChange,
-  quiz,
-  defaultClassId,
-}: QuizCreateModalProps) {
+export function QuizCreateModal({ open, onOpenChange, quiz, defaultClassId }: QuizCreateModalProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const isEdit = !!quiz
@@ -232,13 +212,7 @@ interface CreateDialogProps {
   t: (key: string) => string
 }
 
-function CreateDialog({
-  open,
-  onOpenChange,
-  defaultClassId,
-  onInvalidate,
-  t,
-}: CreateDialogProps) {
+function CreateDialog({ open, onOpenChange, defaultClassId, onInvalidate, t }: CreateDialogProps) {
   const form = useForm<CreateInput, unknown, CreateValues>({
     resolver: zodResolver(createSchema),
     defaultValues: buildCreateDefaults(defaultClassId),
@@ -325,9 +299,7 @@ function CreateDialog({
           <SessionPicker
             classId={classId || undefined}
             value={sessionId || undefined}
-            onChange={(id) =>
-              form.setValue("class_session_id", id, { shouldValidate: true })
-            }
+            onChange={(id) => form.setValue("class_session_id", id, { shouldValidate: true })}
             placeholder={t(`${TRANSLATION_PREFIX}.sessionPlaceholder`)}
           />
           <FieldError errors={[errors.class_session_id]} />
@@ -335,10 +307,7 @@ function CreateDialog({
 
         <QuizCoreFields register={form.register} errors={errors} prefix={TRANSLATION_PREFIX} />
         <QuizScheduleFields control={form.control as never} errors={errors} prefix={TRANSLATION_PREFIX} />
-        <QuizFlagsFields
-          values={antiCheatFromQuiz(form.watch())}
-          onChange={(k, v) => form.setValue(k, v)}
-        />
+        <QuizFlagsFields values={antiCheatFromQuiz(form.watch())} onChange={(k, v) => form.setValue(k, v)} />
         <QuizNegativeFields
           mode={negMode}
           negativeValue={negValue}
@@ -412,10 +381,7 @@ function EditDialog({ open, onOpenChange, quiz, onInvalidate, t }: EditDialogPro
     >
       <FieldGroup>
         <QuizCoreFields register={form.register} errors={errors} prefix={TRANSLATION_PREFIX} />
-        <QuizFlagsFields
-          values={antiCheatFromQuiz(form.watch())}
-          onChange={(k, v) => form.setValue(k, v)}
-        />
+        <QuizFlagsFields values={antiCheatFromQuiz(form.watch())} onChange={(k, v) => form.setValue(k, v)} />
         <QuizNegativeFields
           mode={negMode}
           negativeValue={negValue}

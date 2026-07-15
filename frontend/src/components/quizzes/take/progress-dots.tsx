@@ -28,7 +28,7 @@ export function ProgressRail({ order, index, answers }: ProgressRailProps) {
                 ? "bg-primary shadow-primary/40 w-6 shadow-[0_0_0_1px] md:w-7"
                 : isAnswered
                   ? "bg-foreground/55 w-1.5"
-                  : "bg-foreground/15 w-1.5",
+                  : "bg-foreground/15 w-1.5"
             )}
           />
         )

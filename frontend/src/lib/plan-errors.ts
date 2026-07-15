@@ -45,9 +45,7 @@ export function planErrorMessage(error: unknown): string | null {
   if (feature && i18n.exists(`planError.features.${feature}`)) {
     return i18n.t(`planError.features.${feature}`)
   }
-  return i18n.t(
-    body.code === "PLAN_LIMIT_REACHED" ? "planError.limitGeneric" : "planError.featureGeneric"
-  )
+  return i18n.t(body.code === "PLAN_LIMIT_REACHED" ? "planError.limitGeneric" : "planError.featureGeneric")
 }
 
 // showPlanErrorToast surfaces a plan-gate error as an upgrade toast. Returns true

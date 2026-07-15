@@ -8,12 +8,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
 
-import {
-  getGetQuizzesQueryKey,
-  postQuizzesIdRooms,
-  usePostQuizzes,
-  usePutQuizzesId,
-} from "@/api/quizzes/quizzes"
+import { getGetQuizzesQueryKey, postQuizzesIdRooms, usePostQuizzes, usePutQuizzesId } from "@/api/quizzes/quizzes"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
 import {
   antiCheatDefaults,
@@ -77,27 +72,13 @@ interface QuizFormDialogProps {
   classSessionId: string
 }
 
-export function QuizFormDialog({
-  open,
-  onOpenChange,
-  quiz,
-  classId,
-  classSessionId,
-}: QuizFormDialogProps) {
+export function QuizFormDialog({ open, onOpenChange, quiz, classId, classSessionId }: QuizFormDialogProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: getGetQuizzesQueryKey() })
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: getGetQuizzesQueryKey() })
 
   return quiz ? (
-    <EditDialog
-      key={quiz.id}
-      open={open}
-      onOpenChange={onOpenChange}
-      quiz={quiz}
-      onInvalidate={invalidate}
-      t={t}
-    />
+    <EditDialog key={quiz.id} open={open} onOpenChange={onOpenChange} quiz={quiz} onInvalidate={invalidate} t={t} />
   ) : (
     <CreateDialog
       open={open}
@@ -119,14 +100,7 @@ interface CreateDialogProps {
   t: (key: string) => string
 }
 
-function CreateDialog({
-  open,
-  onOpenChange,
-  classId,
-  classSessionId,
-  onInvalidate,
-  t,
-}: CreateDialogProps) {
+function CreateDialog({ open, onOpenChange, classId, classSessionId, onInvalidate, t }: CreateDialogProps) {
   const form = useForm<CreateInput, unknown, CreateValues>({
     resolver: zodResolver(createSchema),
     defaultValues: createDefaults,
@@ -191,10 +165,7 @@ function CreateDialog({
       <FieldGroup>
         <QuizCoreFields register={form.register} errors={errors} prefix={TRANSLATION_PREFIX} />
         <QuizScheduleFields control={form.control as never} errors={errors} prefix={TRANSLATION_PREFIX} />
-        <QuizFlagsFields
-          values={antiCheatFromQuiz(form.watch())}
-          onChange={(k, v) => form.setValue(k, v)}
-        />
+        <QuizFlagsFields values={antiCheatFromQuiz(form.watch())} onChange={(k, v) => form.setValue(k, v)} />
       </FieldGroup>
     </ResourceFormDialog>
   )
@@ -247,10 +218,7 @@ function EditDialog({ open, onOpenChange, quiz, onInvalidate, t }: EditDialogPro
     >
       <FieldGroup>
         <QuizCoreFields register={form.register} errors={errors} prefix={TRANSLATION_PREFIX} />
-        <QuizFlagsFields
-          values={antiCheatFromQuiz(form.watch())}
-          onChange={(k, v) => form.setValue(k, v)}
-        />
+        <QuizFlagsFields values={antiCheatFromQuiz(form.watch())} onChange={(k, v) => form.setValue(k, v)} />
       </FieldGroup>
     </ResourceFormDialog>
   )

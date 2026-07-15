@@ -1,5 +1,5 @@
-import type { ChatMessage, LocalAttachment } from "./messages"
 import type { UploadResult } from "../upload/upload-manager"
+import type { ChatMessage, LocalAttachment } from "./messages"
 import type { InfiniteData } from "@tanstack/react-query"
 
 /**

@@ -9,23 +9,17 @@ import {
   useGetQuizzesIdSubmissions,
 } from "@/api/quizzes/quizzes"
 import { useGetUsersMe } from "@/api/users/users"
-import { userHasAny } from "@/lib/access"
 import { CenterMessage, LoadingScreen } from "@/components/quizzes/take/messages"
 import { QuizRunner } from "@/components/quizzes/take/quiz-runner"
 import { ResultScreen } from "@/components/quizzes/take/result-screen"
 import { pickRoomForSession } from "@/components/quizzes/take/utils"
+import { userHasAny } from "@/lib/access"
 
 // QuizTake renders the full exam-taking flow for a quiz. The logic only needs
 // quizId; classSessionId is optional and only affects room selection + the
 // back link. Both the class-scoped take route and the standalone exam take
 // route render this component.
-export function QuizTake({
-  quizId,
-  classSessionId,
-}: {
-  quizId: string
-  classSessionId?: string
-}) {
+export function QuizTake({ quizId, classSessionId }: { quizId: string; classSessionId?: string }) {
   const { t } = useTranslation()
   // This component renders on the standalone /quiz route, which is OUTSIDE the
   // org <AccessProvider>, so the useAccess* hooks would throw. Read perms from
@@ -38,9 +32,7 @@ export function QuizTake({
   // can open the quiz but must not see the start flow — starting would 403.
   const canTake = userHasAny(me, ["quizzes:take"])
 
-  const backHref = classSessionId
-    ? `/org/classes/class-sessions/${classSessionId}`
-    : `/org/exams`
+  const backHref = classSessionId ? `/org/classes/class-sessions/${classSessionId}` : `/org/exams`
 
   const quizQ = useGetQuizzesId(quizId, { query: { enabled: canView } })
   const quiz = (quizQ.data?.status === 200 && quizQ.data.data.data) || undefined
@@ -101,11 +93,7 @@ export function QuizTake({
     return <LoadingScreen />
   }
 
-  if (
-    quizQ.data?.status === 403 ||
-    questionsQ.data?.status === 403 ||
-    previewQ.data?.status === 403
-  ) {
+  if (quizQ.data?.status === 403 || questionsQ.data?.status === 403 || previewQ.data?.status === 403) {
     return (
       <CenterMessage
         title={t("org.session.quizzes.take.noAccess.title")}
@@ -141,14 +129,7 @@ export function QuizTake({
   }
 
   if (finalSubmission) {
-    return (
-      <ResultScreen
-        quiz={quiz}
-        submission={finalSubmission}
-        questions={questions}
-        backHref={backHref}
-      />
-    )
+    return <ResultScreen quiz={quiz} submission={finalSubmission} questions={questions} backHref={backHref} />
   }
 
   // Viewers without take permission (e.g. Manager) can reach this screen but

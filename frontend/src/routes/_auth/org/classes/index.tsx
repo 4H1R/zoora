@@ -15,7 +15,7 @@ import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
-import { ViewModeToggle, useViewMode } from "@/components/view-mode-toggle"
+import { useViewMode, ViewModeToggle } from "@/components/view-mode-toggle"
 import { useOrgGuard } from "@/lib/access"
 import { useAdminTable } from "@/lib/data-table"
 import { orgHead } from "@/lib/org-head"
@@ -96,11 +96,7 @@ function RouteComponent() {
 
     if (classes.length === 0) {
       return (
-        <EmptyState
-          icon={LayoutGrid}
-          title={t("classesPage.noResults")}
-          description={t("classesPage.noResultsHint")}
-        />
+        <EmptyState icon={LayoutGrid} title={t("classesPage.noResults")} description={t("classesPage.noResultsHint")} />
       )
     }
 

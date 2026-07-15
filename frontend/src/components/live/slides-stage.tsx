@@ -1,9 +1,9 @@
 import { useHotkeys } from "@tanstack/react-hotkeys"
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
-import { Document, Page, pdfjs } from "react-pdf"
-import { useTranslation } from "react-i18next"
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url"
+import { useEffect, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
+import { Document, Page, pdfjs } from "react-pdf"
 
 import "react-pdf/dist/Page/AnnotationLayer.css"
 import "react-pdf/dist/Page/TextLayer.css"
@@ -116,7 +116,7 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
     if (
       target?.isContentEditable ||
       target?.closest(
-        "input, textarea, select, button, a[href], [role='button'], [role='menuitem'], [role='menuitemradio'], [role='option'], [role='tab'], [role='slider'], [contenteditable='true']",
+        "input, textarea, select, button, a[href], [role='button'], [role='menuitem'], [role='menuitemradio'], [role='option'], [role='tab'], [role='slider'], [contenteditable='true']"
       )
     )
       return
@@ -142,7 +142,7 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
       { hotkey: "ArrowUp", callback: (e) => navByKey(e, false, false) },
       { hotkey: "ArrowLeft", callback: (e) => navByKey(e, false, true) },
     ],
-    { enabled: isHost, preventDefault: false, stopPropagation: false, ignoreInputs: false },
+    { enabled: isHost, preventDefault: false, stopPropagation: false, ignoreInputs: false }
   )
 
   return (
@@ -153,11 +153,7 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
           while still allowing a taller page to scroll from its top edge (a plain
           flex-center container would clip the overflowing top, making it
           unreachable). */}
-      <div
-        ref={scrollRef}
-        onWheel={onWheel}
-        className="min-h-0 w-full flex-1 overflow-auto [scrollbar-gutter:stable]"
-      >
+      <div ref={scrollRef} onWheel={onWheel} className="min-h-0 w-full flex-1 [scrollbar-gutter:stable] overflow-auto">
         {/* w-max + min-w-full mirrors the min-h-full trick for the horizontal
             axis: when a zoomed page is wider than the viewport the wrapper grows
             to the page width so justify-center can't clip the left edge out of
@@ -200,7 +196,7 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
           steady; the active page pops on change. */}
       {numPages > 0 && (
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center pt-4">
-          <div className="pointer-events-auto flex items-center gap-0.5 rounded-full border border-white/10 bg-black/60 p-1 shadow-lg shadow-black/50 ring-1 ring-white/5 backdrop-blur-md">
+          <div className="pointer-events-auto flex items-center gap-0.5 rounded-full border border-white/10 bg-black/60 p-1 shadow-lg ring-1 shadow-black/50 ring-white/5 backdrop-blur-md">
             {isHost && (
               <button
                 type="button"
@@ -217,7 +213,7 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
               </button>
             )}
 
-            <div className="flex select-none items-center gap-1.5 px-3 text-sm tabular-nums">
+            <div className="flex items-center gap-1.5 px-3 text-sm tabular-nums select-none">
               {editing ? (
                 <input
                   type="number"
@@ -275,9 +271,7 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
         </div>
       )}
 
-      {!error && !loading && (
-        <ZoomControls zoom={zoom} onZoom={applyZoom} onReset={() => setZoom(1)} />
-      )}
+      {!error && !loading && <ZoomControls zoom={zoom} onZoom={applyZoom} onReset={() => setZoom(1)} />}
     </div>
   )
 }

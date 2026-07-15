@@ -192,7 +192,9 @@ function RoomShell({
         onError: (err) => {
           // The only 409 on this endpoint is POLL_CLOSED — the room finished (or
           // the host closed the poll) between render and click.
-          const status = (err as { status?: number; response?: { status?: number } })?.status ?? (err as { response?: { status?: number } })?.response?.status
+          const status =
+            (err as { status?: number; response?: { status?: number } })?.status ??
+            (err as { response?: { status?: number } })?.response?.status
           toast.error(status === 409 ? t("liveRoom.polls.closed") : t("liveRoom.polls.voteError"))
         },
       }
@@ -372,7 +374,12 @@ function RoomShell({
 
   return (
     <LayoutContextProvider value={layoutContext}>
-      <RoomHeader sessionName={sessionName} className={className} actualStartTime={actualStartTime} onOpenPeople={() => setTab("people")} />
+      <RoomHeader
+        sessionName={sessionName}
+        className={className}
+        actualStartTime={actualStartTime}
+        onOpenPeople={() => setTab("people")}
+      />
 
       <div className="flex min-h-0 flex-1">
         <div className="relative flex min-w-0 flex-1 flex-col">

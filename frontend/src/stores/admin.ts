@@ -22,8 +22,7 @@ export const useAdminStore = create<AdminState>()(
     (set) => ({
       activeOrganization: null,
       activeOrganizationId: null,
-      setActiveOrganization: (org) =>
-        set({ activeOrganization: org, activeOrganizationId: asUUID(org?.id) }),
+      setActiveOrganization: (org) => set({ activeOrganization: org, activeOrganizationId: asUUID(org?.id) }),
     }),
     {
       name: "admin",

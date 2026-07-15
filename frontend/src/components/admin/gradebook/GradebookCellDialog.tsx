@@ -88,11 +88,7 @@ export function GradebookCellDialog({
       <FieldGroup>
         <Field data-invalid={!!errors.value || undefined}>
           <FieldLabel>{t("admin.gradebook.form.value")}</FieldLabel>
-          <Input
-            {...form.register("value")}
-            placeholder={t("admin.gradebook.form.valuePlaceholder")}
-            autoFocus
-          />
+          <Input {...form.register("value")} placeholder={t("admin.gradebook.form.valuePlaceholder")} autoFocus />
           <FieldError errors={[errors.value]} />
         </Field>
       </FieldGroup>

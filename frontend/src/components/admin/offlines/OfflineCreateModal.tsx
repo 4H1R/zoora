@@ -143,9 +143,7 @@ export function OfflineCreateModal({
       open={open}
       onOpenChange={onOpenChange}
       title={isEdit ? t("admin.offlines.form.editTitle") : t("admin.offlines.form.createTitle")}
-      description={
-        isEdit ? t("admin.offlines.form.editDescription") : t("admin.offlines.form.createDescription")
-      }
+      description={isEdit ? t("admin.offlines.form.editDescription") : t("admin.offlines.form.createDescription")}
       onSubmit={isEdit ? onSubmitEdit : onSubmitCreate}
       isLoading={isLoading}
       submitLabel={isEdit ? t("common.save") : t("common.create")}
@@ -155,10 +153,7 @@ export function OfflineCreateModal({
           <>
             <Field data-invalid={!!editErrors.title || undefined}>
               <FieldLabel>{t("admin.offlines.form.title")}</FieldLabel>
-              <Input
-                {...editForm.register("title")}
-                placeholder={t("admin.offlines.form.titlePlaceholder")}
-              />
+              <Input {...editForm.register("title")} placeholder={t("admin.offlines.form.titlePlaceholder")} />
               <FieldError errors={[editErrors.title]} />
             </Field>
             <Field>
@@ -211,10 +206,7 @@ export function OfflineCreateModal({
             </Field>
             <Field data-invalid={!!createErrors.title || undefined}>
               <FieldLabel>{t("admin.offlines.form.title")}</FieldLabel>
-              <Input
-                {...createForm.register("title")}
-                placeholder={t("admin.offlines.form.titlePlaceholder")}
-              />
+              <Input {...createForm.register("title")} placeholder={t("admin.offlines.form.titlePlaceholder")} />
               <FieldError errors={[createErrors.title]} />
             </Field>
             <Field>

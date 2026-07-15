@@ -16,13 +16,7 @@ import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
 import { AttachmentPicker } from "@/components/org/tickets/attachments"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 
 const schema = z
@@ -113,9 +107,7 @@ export function CreateTicketDialog({
         quiz_room_id:
           values.type === "grade_objection" && values.target_kind === "quiz" ? values.quiz_room_id : undefined,
         gradebook_column_id:
-          values.type === "grade_objection" && values.target_kind === "column"
-            ? values.gradebook_column_id
-            : undefined,
+          values.type === "grade_objection" && values.target_kind === "column" ? values.gradebook_column_id : undefined,
         media_ids: attachments.map((a) => a.id),
       },
     })
@@ -244,9 +236,7 @@ export function CreateTicketDialog({
                 <Select
                   items={columnItems}
                   value={form.watch("gradebook_column_id") || null}
-                  onValueChange={(v) =>
-                    form.setValue("gradebook_column_id", v ?? undefined, { shouldValidate: true })
-                  }
+                  onValueChange={(v) => form.setValue("gradebook_column_id", v ?? undefined, { shouldValidate: true })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder={t("tickets.form.targetColumnPlaceholder")} />

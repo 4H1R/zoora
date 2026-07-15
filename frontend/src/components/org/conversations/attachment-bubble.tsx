@@ -5,8 +5,8 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { formatBytes } from "@/components/org/files/utils"
-import { useImageLightbox } from "@/stores/image-lightbox"
 import { cn } from "@/lib/utils"
+import { useImageLightbox } from "@/stores/image-lightbox"
 
 import { ProgressRing } from "./attachment-progress-ring"
 import { mediaIdStrings } from "./lib/messages"

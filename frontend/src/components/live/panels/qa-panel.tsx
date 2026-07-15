@@ -1,3 +1,5 @@
+import type { RoomQuestion, useRoomQa } from "../use-room-qa"
+
 import { Check, ChevronUp, MessageCircleQuestion, RotateCcw, SendHorizonal, Trash2, X } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -8,9 +10,6 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useFormatDate } from "@/lib/format-date"
 import { cn } from "@/lib/utils"
-
-import type { RoomQuestion } from "../use-room-qa"
-import type { useRoomQa } from "../use-room-qa"
 
 interface QaPanelProps {
   qa: ReturnType<typeof useRoomQa>
@@ -36,7 +35,7 @@ export function QaPanel({ qa, isHost, myId }: QaPanelProps) {
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex flex-col gap-2.5 p-3">
           {questions.length === 0 && (
-            <div className="flex flex-col items-center gap-2 py-12 text-center text-muted-foreground">
+            <div className="text-muted-foreground flex flex-col items-center gap-2 py-12 text-center">
               <MessageCircleQuestion className="size-7 opacity-40" />
               <p className="text-sm">{t("liveRoom.qa.empty")}</p>
               <p className="text-xs opacity-70">{t("liveRoom.qa.emptyHint")}</p>
@@ -58,13 +57,13 @@ export function QaPanel({ qa, isHost, myId }: QaPanelProps) {
         </div>
       </ScrollArea>
 
-      <form onSubmit={handleAsk} className="flex items-center gap-2 border-t border-border p-2.5">
+      <form onSubmit={handleAsk} className="border-border flex items-center gap-2 border-t p-2.5">
         <Input
           value={text}
           onChange={(e) => setText(e.target.value)}
           maxLength={500}
           placeholder={t("liveRoom.qa.placeholder")}
-          className="h-10 border-border bg-input text-foreground placeholder:text-muted-foreground focus-visible:ring-ring/40"
+          className="border-border bg-input text-foreground placeholder:text-muted-foreground focus-visible:ring-ring/40 h-10"
         />
         <Button type="submit" size="icon" disabled={isAsking || text.trim().length < 2} className="size-10 shrink-0">
           <SendHorizonal className="size-4 rtl:rotate-180" />
@@ -93,12 +92,7 @@ function QuestionCard({ q, isHost, isMine, onVote, onResolve, onDismiss, onReope
   const time = formatDate(q.createdAt || undefined, "time")
 
   return (
-    <div
-      className={cn(
-        "flex gap-2.5 rounded-lg border border-border bg-muted/40 p-2.5",
-        !isOpen && "opacity-60",
-      )}
-    >
+    <div className={cn("border-border bg-muted/40 flex gap-2.5 rounded-lg border p-2.5", !isOpen && "opacity-60")}>
       {/* Vote pill */}
       <button
         type="button"
@@ -110,7 +104,7 @@ function QuestionCard({ q, isHost, isMine, onVote, onResolve, onDismiss, onReope
           q.votedByMe
             ? "border-primary bg-primary/15 text-primary"
             : "border-border bg-background text-muted-foreground",
-          canVote ? "hover:border-primary hover:text-primary" : "cursor-default opacity-70",
+          canVote ? "hover:border-primary hover:text-primary" : "cursor-default opacity-70"
         )}
       >
         <ChevronUp className="size-4" />
@@ -120,8 +114,8 @@ function QuestionCard({ q, isHost, isMine, onVote, onResolve, onDismiss, onReope
       {/* Body */}
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex items-baseline gap-2">
-          <span className="truncate text-xs font-medium text-primary">{q.authorName}</span>
-          <span className="font-mono text-[10px] text-muted-foreground" dir="ltr">
+          <span className="text-primary truncate text-xs font-medium">{q.authorName}</span>
+          <span className="text-muted-foreground font-mono text-[10px]" dir="ltr">
             {time}
           </span>
           {q.status === "resolved" && (
@@ -130,12 +124,12 @@ function QuestionCard({ q, isHost, isMine, onVote, onResolve, onDismiss, onReope
             </span>
           )}
           {q.status === "dismissed" && (
-            <span className="ms-auto shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+            <span className="bg-muted text-muted-foreground ms-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold">
               {t("liveRoom.qa.dismissed")}
             </span>
           )}
         </div>
-        <p className="break-words text-sm text-foreground">{q.text}</p>
+        <p className="text-foreground text-sm break-words">{q.text}</p>
 
         {/* Actions — pinned to the inline-end (left in RTL, right in LTR), the
             side opposite the text, regardless of any inherited CSS direction
@@ -189,9 +183,9 @@ function ActionButton({
       aria-label={label}
       title={label}
       className={cn(
-        "flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent",
+        "text-muted-foreground hover:bg-accent flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors",
         tone === "positive" && "hover:text-green-500",
-        tone === "danger" && "hover:text-red-400",
+        tone === "danger" && "hover:text-red-400"
       )}
     >
       {children}

@@ -32,6 +32,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		authed.GET("/media", perm(domain.PermMediaView), h.ListByModel)
 		authed.GET("/files/folders", perm(domain.PermMediaViewAny), h.ListFolders)
 		authed.GET("/files", perm(domain.PermMediaViewAny), h.ListFiles)
+		authed.GET("/files/owners", perm(domain.PermMediaViewAny), h.ListOwners)
+		authed.GET("/files/owners/:kind/files", perm(domain.PermMediaViewAny), h.ListOwnerFiles)
 	}
 }
 
@@ -41,6 +43,27 @@ var filesListConfig = domain.ListConfig{
 	AllowedOrderFields:  []string{"created_at", "size", "name"},
 	DefaultOrderBy:      "created_at",
 	DefaultOrderDir:     "desc",
+}
+
+// ownersListConfig drives pagination for the "by owner" view. Owners are
+// sorted by size server-side, so no order white-list is exposed.
+var ownersListConfig = domain.ListConfig{DefaultOrderBy: "", DefaultOrderDir: "desc"}
+
+// ownerFilesListConfig white-lists search/order for one owner's file drill-down.
+var ownerFilesListConfig = domain.ListConfig{
+	AllowedSearchFields: []string{"name"},
+	AllowedOrderFields:  []string{"created_at", "size", "name"},
+	DefaultOrderBy:      "created_at",
+	DefaultOrderDir:     "desc",
+}
+
+// ownerKinds white-lists the owner-kind path segment.
+var ownerKinds = map[string]bool{
+	domain.MediaOwnerClass:        true,
+	domain.MediaOwnerQuestionBank: true,
+	domain.MediaOwnerConversation: true,
+	domain.MediaOwnerShared:       true,
+	domain.MediaOwnerOther:        true,
 }
 
 // PresignUpload creates a media record and returns a presigned S3 upload URL.
@@ -188,6 +211,70 @@ func (h *Handler) ListFiles(c *gin.Context) {
 	}
 	p := listparams.Bind(c, filesListConfig)
 	items, total, err := h.svc.ListFiles(c.Request.Context(), modelType, p)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(items, total, p))
+}
+
+// ListOwners returns the org's storage grouped by owning entity.
+// @Summary List org storage by owner
+// @Description Aggregates the caller's org media + recordings by resolved owner (class, question_bank, conversation, shared, other), size-sorted, with a storage quota header. Requires media:view_any.
+// @Tags Media
+// @Produce json
+// @Security BearerAuth
+// @Param page query int false "Page (1-based)"
+// @Param page_size query int false "Page size"
+// @Success 200 {object} domain.Response{data=domain.MediaOwnersResponse}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Router /files/owners [get]
+func (h *Handler) ListOwners(c *gin.Context) {
+	p := listparams.Bind(c, ownersListConfig)
+	resp, err := h.svc.ListOwners(c.Request.Context(), p)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, resp)
+}
+
+// ListOwnerFiles pages the files under one owner (media + recordings).
+// @Summary List files under one owner
+// @Description Paginated, searchable files for a single owner. Class owners include read-only recordings. ownerID is omitted for shared/other buckets. Requires media:view_any.
+// @Tags Media
+// @Produce json
+// @Security BearerAuth
+// @Param kind path string true "Owner kind" Enums(class, question_bank, conversation, shared, other)
+// @Param owner_id query string false "Owner UUID (omit for shared/other)"
+// @Param page query int false "Page (1-based)"
+// @Param page_size query int false "Page size"
+// @Param search query string false "Search in file name"
+// @Param order_by query string false "Order field" Enums(created_at, size, name)
+// @Param order_dir query string false "Order direction" Enums(asc, desc)
+// @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.OwnerFile}}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Router /files/owners/{kind}/files [get]
+func (h *Handler) ListOwnerFiles(c *gin.Context) {
+	kind := c.Param("kind")
+	if !ownerKinds[kind] {
+		_ = c.Error(domain.NewValidationError(map[string]string{"kind": "unknown owner kind"}))
+		return
+	}
+	var ownerID *uuid.UUID
+	if raw := c.Query("owner_id"); raw != "" {
+		id, err := uuid.Parse(raw)
+		if err != nil {
+			_ = c.Error(domain.NewValidationError(map[string]string{"owner_id": "must be a valid UUID"}))
+			return
+		}
+		ownerID = &id
+	}
+	p := listparams.Bind(c, ownerFilesListConfig)
+	items, total, err := h.svc.ListOwnerFiles(c.Request.Context(), kind, ownerID, p)
 	if err != nil {
 		_ = c.Error(err)
 		return

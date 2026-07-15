@@ -94,10 +94,7 @@ export function DateTimePicker({
     onChange(now.toISOString())
   }
 
-  const dayDisabled = [
-    ...(minDate ? [{ before: minDate }] : []),
-    ...(maxDate ? [{ after: maxDate }] : []),
-  ]
+  const dayDisabled = [...(minDate ? [{ before: minDate }] : []), ...(maxDate ? [{ after: maxDate }] : [])]
   const Calendar = isFa ? CalendarJalali : CalendarGregorian
 
   return (
@@ -111,7 +108,11 @@ export function DateTimePicker({
               variant="outline"
               disabled={disabled}
               aria-invalid={invalid || undefined}
-              className={cn("w-full justify-start font-normal", clearable && value && "pe-9", !value && "text-muted-foreground")}
+              className={cn(
+                "w-full justify-start font-normal",
+                clearable && value && "pe-9",
+                !value && "text-muted-foreground"
+              )}
             />
           }
         >
@@ -132,10 +133,7 @@ export function DateTimePicker({
               autoFocus
             />
             {showTime && (
-              <div
-                dir="ltr"
-                className="flex w-full flex-col border-t sm:w-auto sm:border-s sm:border-t-0"
-              >
+              <div dir="ltr" className="flex w-full flex-col border-t sm:w-auto sm:border-s sm:border-t-0">
                 <div className="flex h-12 items-center justify-between gap-3 border-b px-3">
                   <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs font-medium">
                     <ClockIcon className="size-3.5" />
@@ -143,13 +141,7 @@ export function DateTimePicker({
                       {selected ? `${pad2(selected.getHours())}:${pad2(selected.getMinutes())}` : "--:--"}
                     </span>
                   </span>
-                  <Button
-                    type="button"
-                    size="xs"
-                    variant="ghost"
-                    disabled={disabled}
-                    onClick={handleNow}
-                  >
+                  <Button type="button" size="xs" variant="ghost" disabled={disabled} onClick={handleNow}>
                     {t("common.dateTimePicker.now")}
                   </Button>
                 </div>
@@ -235,7 +227,7 @@ function TimeColumn({ open, values, selected, onSelect, format, ariaLabel, disab
               disabled={disabled}
               onClick={() => onSelect(v)}
               className={cn(
-                "flex h-8 w-12 shrink-0 items-center justify-center rounded-md font-mono text-sm tabular-nums outline-none transition-colors",
+                "flex h-8 w-12 shrink-0 items-center justify-center rounded-md font-mono text-sm tabular-nums transition-colors outline-none",
                 "hover:bg-muted focus-visible:ring-ring/50 focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50",
                 active && "bg-primary text-primary-foreground hover:bg-primary"
               )}

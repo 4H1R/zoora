@@ -7,10 +7,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { getGetAdminQuizzesQueryKey } from "@/api/admin-quizzes/admin-quizzes"
-import {
-  getGetQuizzesQueryKey,
-  useDeleteQuizzesId,
-} from "@/api/quizzes/quizzes"
+import { getGetQuizzesQueryKey, useDeleteQuizzesId } from "@/api/quizzes/quizzes"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
 import {

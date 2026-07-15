@@ -1,5 +1,4 @@
-import type { GetMediaIdDownloadUrlExpiry } from "@/api/model"
-import type { GithubCom4H1RZooraInternalDomainMedia as Media } from "@/api/model"
+import type { GetMediaIdDownloadUrlExpiry, GithubCom4H1RZooraInternalDomainMedia as Media } from "@/api/model"
 
 import { CheckIcon, CopyIcon, LinkIcon } from "lucide-react"
 import { useEffect, useState } from "react"
@@ -8,13 +7,7 @@ import { toast } from "sonner"
 
 import { useGetMediaIdDownloadUrl } from "@/api/media/media"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { cn } from "@/lib/utils"

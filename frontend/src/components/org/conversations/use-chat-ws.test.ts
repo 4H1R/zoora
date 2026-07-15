@@ -1,16 +1,12 @@
+import type { ChatMessage } from "./lib/messages"
+import type { MessagesInfinite } from "./use-chat-ws"
+import type { GithubCom4H1RZooraInternalDomainConversation as Conversation } from "@/api/model"
+
 import { QueryClient } from "@tanstack/react-query"
 import { describe, expect, it } from "vitest"
 
-import type { GithubCom4H1RZooraInternalDomainConversation as Conversation } from "@/api/model"
-
-import type { ChatMessage } from "./lib/messages"
 import { chatKeys } from "./lib/query-keys"
-import {
-  appendMessageToInfinite,
-  bumpConversationInList,
-  createChatEventHandler,
-  type MessagesInfinite,
-} from "./use-chat-ws"
+import { appendMessageToInfinite, bumpConversationInList, createChatEventHandler } from "./use-chat-ws"
 
 function msg(id: string, extra: Partial<ChatMessage> = {}): ChatMessage {
   return { id, conversation_id: "c1", sender_id: "u2", content: id, created_at: "2026-07-09T10:00:00Z", ...extra }
@@ -141,7 +137,14 @@ describe("createChatEventHandler conversation_bump", () => {
 
   const bump = (extra: Record<string, unknown> = {}) => ({
     type: "conversation_bump",
-    data: { conversation_id: "c2", id: "m9", sender_id: "u2", content: "hi", created_at: "2026-07-09T10:00:00Z", ...extra },
+    data: {
+      conversation_id: "c2",
+      id: "m9",
+      sender_id: "u2",
+      content: "hi",
+      created_at: "2026-07-09T10:00:00Z",
+      ...extra,
+    },
   })
 
   it("bumps an unfocused conv from another sender (move-to-top, preview, unread) without touching the thread", () => {

@@ -1,3 +1,5 @@
+import type { GradeRow } from "./-columns"
+
 import { createFileRoute } from "@tanstack/react-router"
 import { GraduationCapIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -10,12 +12,12 @@ import { PageHeader } from "@/components/page-header"
 import { Card } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ViewModeToggle, useViewMode } from "@/components/view-mode-toggle"
+import { useViewMode, ViewModeToggle } from "@/components/view-mode-toggle"
 import { useOrgGuard } from "@/lib/access"
 import { adminSearchSchema, useClientTable } from "@/lib/data-table"
 import { orgHead } from "@/lib/org-head"
 
-import { useGradeColumns, type GradeRow } from "./-columns"
+import { useGradeColumns } from "./-columns"
 
 export const Route = createFileRoute("/_auth/org/grades/")({
   head: () => orgHead("org.nav.grades"),

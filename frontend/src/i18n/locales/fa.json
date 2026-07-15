@@ -3188,6 +3188,42 @@
       "tooLarge": "حجم فایل بیشتر از ۲۰۰ مگابایت است",
       "failed": "بارگذاری ناموفق بود",
       "success": "بارگذاری شد"
+    },
+    "tabs": {
+      "byType": "بر اساس نوع",
+      "byOwner": "بر اساس مالک"
+    },
+    "owner": {
+      "description": "فضای ذخیره‌سازی بر اساس کلاس، بانک سؤال یا گفتگوی مالک آن",
+      "empty": "هنوز چیزی برای نمایش نیست",
+      "columns": {
+        "name": "مالک",
+        "kind": "نوع",
+        "files": "فایل‌ها",
+        "size": "فضا"
+      },
+      "kinds": {
+        "class": "کلاس",
+        "question_bank": "بانک سؤال",
+        "conversation": "گفتگو",
+        "shared": "اشتراکی",
+        "other": "بدون مالک"
+      },
+      "sharedName": "فایل‌های اشتراکی",
+      "otherName": "فایل‌های بدون مالک",
+      "quota": {
+        "used": "{{used}} از {{limit}} استفاده شده",
+        "usedUnlimited": "{{used}} استفاده شده",
+        "unlimited": "پلن نامحدود"
+      },
+      "recordingBadge": "ضبط",
+      "recordingReadOnly": "ضبط‌ها در بخش ضبط‌های کلاس مدیریت می‌شوند",
+      "fileColumns": {
+        "name": "فایل",
+        "kind": "نوع",
+        "size": "حجم",
+        "createdAt": "افزوده شده"
+      }
     }
   },
   "whatsNew": {

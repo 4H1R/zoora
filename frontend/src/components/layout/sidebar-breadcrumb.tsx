@@ -1,7 +1,9 @@
+import type { Crumb } from "@/components/layout/breadcrumb-context"
+
 import { useRouterState } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
-import { useBreadcrumbTrail, type Crumb } from "@/components/layout/breadcrumb-context"
+import { useBreadcrumbTrail } from "@/components/layout/breadcrumb-context"
 import { BreadcrumbTrailView } from "@/components/layout/breadcrumb-trail"
 
 export function SidebarBreadcrumb({

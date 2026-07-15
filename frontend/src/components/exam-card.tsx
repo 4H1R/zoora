@@ -46,7 +46,7 @@ export function ExamAction({ exam }: { exam: MyExam }) {
         </span>
       )}
       {exam.state === "graded" && (
-        <Eyebrow className="normal-case tracking-normal">
+        <Eyebrow className="tracking-normal normal-case">
           {t("org.exams.score", { score: exam.score ?? 0, total: exam.total_score ?? 0 })}
         </Eyebrow>
       )}

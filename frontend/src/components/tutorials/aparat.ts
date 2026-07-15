@@ -14,9 +14,7 @@ export function extractAparatHash(input: string): string {
   // Bare hash pasted directly.
   if (HASH_RE.test(raw)) return raw
   // /v/<hash> (watch page) or /embed/videohash/<hash> (embed URL).
-  const m =
-    raw.match(/\/v\/([A-Za-z0-9]+)/) ??
-    raw.match(/videohash\/([A-Za-z0-9]+)/)
+  const m = raw.match(/\/v\/([A-Za-z0-9]+)/) ?? raw.match(/videohash\/([A-Za-z0-9]+)/)
   return m ? m[1] : ""
 }
 

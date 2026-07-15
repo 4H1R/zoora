@@ -73,6 +73,7 @@ import { Route as AdminAdminTutorialsIdRouteImport } from './routes/_admin/admin
 import { Route as AdminAdminChangelogIdRouteImport } from './routes/_admin/admin/changelog/$id'
 import { Route as AdminAdminBillingPricesRouteImport } from './routes/_admin/admin/billing/prices'
 import { Route as AdminAdminBillingInvoicesIndexRouteImport } from './routes/_admin/admin/billing/invoices/index'
+import { Route as AuthOrgFilesOwnerKindRouteImport } from './routes/_auth/org/files/owner/$kind'
 import { Route as AuthOrgClassesClassSessionsClassSessionIdRouteImport } from './routes/_auth/org/classes/class-sessions/$classSessionId'
 import { Route as AuthOrgClassesClassIdGradebookRouteImport } from './routes/_auth/org/classes/$classId_.gradebook'
 import { Route as AdminAdminClassesClassIdSessionsRouteImport } from './routes/_admin/admin/classes/$classId/sessions'
@@ -420,6 +421,11 @@ const AdminAdminBillingInvoicesIndexRoute =
     path: '/admin/billing/invoices/',
     getParentRoute: () => AdminRoute,
   } as any)
+const AuthOrgFilesOwnerKindRoute = AuthOrgFilesOwnerKindRouteImport.update({
+  id: '/files/owner/$kind',
+  path: '/files/owner/$kind',
+  getParentRoute: () => AuthOrgRoute,
+} as any)
 const AuthOrgClassesClassSessionsClassSessionIdRoute =
   AuthOrgClassesClassSessionsClassSessionIdRouteImport.update({
     id: '/classes/class-sessions/$classSessionId',
@@ -552,6 +558,7 @@ export interface FileRoutesByFullPath {
   '/admin/classes/$classId/sessions': typeof AdminAdminClassesClassIdSessionsRoute
   '/org/classes/$classId/gradebook': typeof AuthOrgClassesClassIdGradebookRoute
   '/org/classes/class-sessions/$classSessionId': typeof AuthOrgClassesClassSessionsClassSessionIdRoute
+  '/org/files/owner/$kind': typeof AuthOrgFilesOwnerKindRoute
   '/admin/billing/invoices/': typeof AdminAdminBillingInvoicesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -623,6 +630,7 @@ export interface FileRoutesByTo {
   '/admin/classes/$classId/sessions': typeof AdminAdminClassesClassIdSessionsRoute
   '/org/classes/$classId/gradebook': typeof AuthOrgClassesClassIdGradebookRoute
   '/org/classes/class-sessions/$classSessionId': typeof AuthOrgClassesClassSessionsClassSessionIdRoute
+  '/org/files/owner/$kind': typeof AuthOrgFilesOwnerKindRoute
   '/admin/billing/invoices': typeof AdminAdminBillingInvoicesIndexRoute
 }
 export interface FileRoutesById {
@@ -700,6 +708,7 @@ export interface FileRoutesById {
   '/_admin/admin/classes/$classId/sessions': typeof AdminAdminClassesClassIdSessionsRoute
   '/_auth/org/classes/$classId_/gradebook': typeof AuthOrgClassesClassIdGradebookRoute
   '/_auth/org/classes/class-sessions/$classSessionId': typeof AuthOrgClassesClassSessionsClassSessionIdRoute
+  '/_auth/org/files/owner/$kind': typeof AuthOrgFilesOwnerKindRoute
   '/_admin/admin/billing/invoices/': typeof AdminAdminBillingInvoicesIndexRoute
 }
 export interface FileRouteTypes {
@@ -775,6 +784,7 @@ export interface FileRouteTypes {
     | '/admin/classes/$classId/sessions'
     | '/org/classes/$classId/gradebook'
     | '/org/classes/class-sessions/$classSessionId'
+    | '/org/files/owner/$kind'
     | '/admin/billing/invoices/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -846,6 +856,7 @@ export interface FileRouteTypes {
     | '/admin/classes/$classId/sessions'
     | '/org/classes/$classId/gradebook'
     | '/org/classes/class-sessions/$classSessionId'
+    | '/org/files/owner/$kind'
     | '/admin/billing/invoices'
   id:
     | '__root__'
@@ -922,6 +933,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/classes/$classId/sessions'
     | '/_auth/org/classes/$classId_/gradebook'
     | '/_auth/org/classes/class-sessions/$classSessionId'
+    | '/_auth/org/files/owner/$kind'
     | '/_admin/admin/billing/invoices/'
   fileRoutesById: FileRoutesById
 }
@@ -1383,6 +1395,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminBillingInvoicesIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_auth/org/files/owner/$kind': {
+      id: '/_auth/org/files/owner/$kind'
+      path: '/files/owner/$kind'
+      fullPath: '/org/files/owner/$kind'
+      preLoaderRoute: typeof AuthOrgFilesOwnerKindRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
     '/_auth/org/classes/class-sessions/$classSessionId': {
       id: '/_auth/org/classes/class-sessions/$classSessionId'
       path: '/classes/class-sessions/$classSessionId'
@@ -1582,6 +1601,7 @@ interface AuthOrgRouteChildren {
   AuthOrgUsersIndexRoute: typeof AuthOrgUsersIndexRoute
   AuthOrgClassesClassIdGradebookRoute: typeof AuthOrgClassesClassIdGradebookRoute
   AuthOrgClassesClassSessionsClassSessionIdRoute: typeof AuthOrgClassesClassSessionsClassSessionIdRoute
+  AuthOrgFilesOwnerKindRoute: typeof AuthOrgFilesOwnerKindRoute
 }
 
 const AuthOrgRouteChildren: AuthOrgRouteChildren = {
@@ -1616,6 +1636,7 @@ const AuthOrgRouteChildren: AuthOrgRouteChildren = {
   AuthOrgClassesClassIdGradebookRoute: AuthOrgClassesClassIdGradebookRoute,
   AuthOrgClassesClassSessionsClassSessionIdRoute:
     AuthOrgClassesClassSessionsClassSessionIdRoute,
+  AuthOrgFilesOwnerKindRoute: AuthOrgFilesOwnerKindRoute,
 }
 
 const AuthOrgRouteWithChildren =

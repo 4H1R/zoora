@@ -1,8 +1,10 @@
+import type { NetStats } from "./presence"
+import type { TransportSample } from "./webrtc-stats"
+
 import { useConnectionQualityIndicator, useLocalParticipant, useRoomContext } from "@livekit/components-react"
 import { useEffect, useRef, useState } from "react"
 
-import type { NetStats } from "./presence"
-import { deriveRates, readTransportStats, transportSources, type TransportSample } from "./webrtc-stats"
+import { deriveRates, readTransportStats, transportSources } from "./webrtc-stats"
 
 const POLL_MS = 2000
 

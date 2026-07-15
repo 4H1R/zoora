@@ -1,5 +1,6 @@
-import { RotateCcwIcon } from "lucide-react"
 import type { FieldValues, UseFormReturn } from "react-hook-form"
+
+import { RotateCcwIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
@@ -51,7 +52,7 @@ export function FormSaveBar<T extends FieldValues>({
     >
       <div className="bg-popover/95 ring-foreground/10 pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-full border py-2 ps-5 pe-2 shadow-xl ring-1 backdrop-blur">
         <span className="text-muted-foreground me-auto flex items-center gap-2 text-sm">
-          <span className="bg-warning size-1.5 animate-pulse-dot rounded-full" />
+          <span className="bg-warning animate-pulse-dot size-1.5 rounded-full" />
           {message ?? t("common.unsavedChanges")}
         </span>
         <Button
@@ -65,13 +66,7 @@ export function FormSaveBar<T extends FieldValues>({
           <RotateCcwIcon />
           {t("common.reset")}
         </Button>
-        <Button
-          type="button"
-          size="sm"
-          onClick={onSave}
-          disabled={pending}
-          className="rounded-full px-5 font-semibold"
-        >
+        <Button type="button" size="sm" onClick={onSave} disabled={pending} className="rounded-full px-5 font-semibold">
           {pending && <Spinner />}
           {pending ? t("common.saving") : (saveLabel ?? t("common.save"))}
         </Button>

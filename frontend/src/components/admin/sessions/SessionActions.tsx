@@ -7,10 +7,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { getGetAdminSessionsQueryKey } from "@/api/admin-classes/admin-classes"
-import {
-  getGetClassesIdSessionsQueryKey,
-  useDeleteClassesSessionsSessionId,
-} from "@/api/classes/classes"
+import { getGetClassesIdSessionsQueryKey, useDeleteClassesSessionsSessionId } from "@/api/classes/classes"
 import { SessionRoomsDialog } from "@/components/admin/sessions/SessionRoomsDialog"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
@@ -103,12 +100,7 @@ export function SessionActions({ session, classId, onEdit }: SessionActionsProps
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <SessionRoomsDialog
-        open={roomsOpen}
-        onOpenChange={setRoomsOpen}
-        session={session}
-        classId={classId}
-      />
+      <SessionRoomsDialog open={roomsOpen} onOpenChange={setRoomsOpen} session={session} classId={classId} />
 
       <DeleteConfirmDialog
         open={deleteOpen}

@@ -276,9 +276,8 @@ function StatStrip({
         value={loading ? null : graded}
         accent="success"
         suffix={
-          !loading && total > 0 && (
-            <span className="text-muted-foreground font-mono text-xs tabular-nums">{completion}%</span>
-          )
+          !loading &&
+          total > 0 && <span className="text-muted-foreground font-mono text-xs tabular-nums">{completion}%</span>
         }
       />
       <StatCell

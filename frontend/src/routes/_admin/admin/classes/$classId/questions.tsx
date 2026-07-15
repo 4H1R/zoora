@@ -15,13 +15,7 @@ import { StatCards } from "@/components/data-table/stat-cards"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { adminHead } from "@/lib/admin-head"
 import { adminSearchSchema } from "@/lib/data-table"
 
@@ -94,11 +88,7 @@ function ClassQuestionsPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title={
-          cls?.name
-            ? `${cls.name} · ${t("admin.questions.title")}`
-            : t("admin.questions.title")
-        }
+        title={cls?.name ? `${cls.name} · ${t("admin.questions.title")}` : t("admin.questions.title")}
         actions={
           <div className="flex items-center gap-2">
             <Link to="/admin/classes/$classId/sessions" params={{ classId }}>
@@ -107,11 +97,7 @@ function ClassQuestionsPage() {
                 {t("admin.classManagement.backToSessions")}
               </Button>
             </Link>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setBankFormOpen(true)}
-            >
+            <Button variant="outline" size="sm" onClick={() => setBankFormOpen(true)}>
               <LibraryIcon data-icon="inline-start" />
               {t("admin.questionBanks.newBank")}
             </Button>
@@ -125,15 +111,11 @@ function ClassQuestionsPage() {
 
       <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.questions.filter.bank")}
-          </label>
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.questions.filter.bank")}</label>
           <BankPicker value={bankId} onChange={setBankId} />
         </div>
         <div className="w-full sm:w-48">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.questions.filter.type")}
-          </label>
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.questions.filter.type")}</label>
           <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v ?? "all")}>
             <SelectTrigger>
               <SelectValue>
@@ -163,9 +145,7 @@ function ClassQuestionsPage() {
           onEdit={handleEdit}
         />
       ) : (
-        <Card className="text-muted-foreground p-8 text-center text-sm">
-          {t("admin.questions.pickBankHint")}
-        </Card>
+        <Card className="text-muted-foreground p-8 text-center text-sm">{t("admin.questions.pickBankHint")}</Card>
       )}
 
       <QuestionCreateModal
@@ -174,11 +154,7 @@ function ClassQuestionsPage() {
         question={editingQuestion}
         defaultBankId={bankId}
       />
-      <BankCreateModal
-        open={bankFormOpen}
-        onOpenChange={setBankFormOpen}
-        onCreated={(id) => setBankId(id)}
-      />
+      <BankCreateModal open={bankFormOpen} onOpenChange={setBankFormOpen} onCreated={(id) => setBankId(id)} />
     </div>
   )
 }

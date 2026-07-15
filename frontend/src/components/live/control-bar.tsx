@@ -1,10 +1,11 @@
+import type { RoomTab } from "./types"
+import type { LucideIcon } from "lucide-react"
+
 import { useLocalParticipant } from "@livekit/components-react"
-import { useRef, useState } from "react"
 import {
   BarChart3,
   Hand,
   LogOut,
-  type LucideIcon,
   MessageCircleQuestion,
   MessageSquare,
   Mic,
@@ -17,6 +18,7 @@ import {
   Video,
   VideoOff,
 } from "lucide-react"
+import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -35,7 +37,6 @@ import { Spinner } from "@/components/ui/spinner"
 import { cn } from "@/lib/utils"
 
 import { canPublish, useRoomRole } from "./room-role"
-import type { RoomTab } from "./types"
 
 interface ControlBarProps {
   tab: RoomTab | null
@@ -60,7 +61,28 @@ interface ControlBarProps {
   qaOpenCount: number
 }
 
-export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, onEndRoom, endPending, unread, raisedHandCount, handRaised, onToggleHand, canShareStage, stageKind, onShareSlides, onStopStage, onStartWhiteboard, isRecording, recordingPending, onToggleRecording, qaOpenCount }: ControlBarProps) {
+export function ControlBar({
+  tab,
+  openTab,
+  closePanel,
+  onLeave,
+  leavePending,
+  onEndRoom,
+  endPending,
+  unread,
+  raisedHandCount,
+  handRaised,
+  onToggleHand,
+  canShareStage,
+  stageKind,
+  onShareSlides,
+  onStopStage,
+  onStartWhiteboard,
+  isRecording,
+  recordingPending,
+  onToggleRecording,
+  qaOpenCount,
+}: ControlBarProps) {
   const { t } = useTranslation()
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled, isScreenShareEnabled } = useLocalParticipant()
   const role = useRoomRole()
@@ -116,8 +138,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/55 to-transparent" />
       {/* Solid bg, no backdrop-blur: this bar floats over the <video> stage, and a
           backdrop-filter pass over a video makes it paint black on some GPUs. */}
-      <div className="pointer-events-auto relative flex items-center gap-1.5 rounded-2xl border border-border bg-popover/95 p-1.5 shadow-2xl shadow-black/30 sm:gap-2">
-
+      <div className="border-border bg-popover/95 pointer-events-auto relative flex items-center gap-1.5 rounded-2xl border p-1.5 shadow-2xl shadow-black/30 sm:gap-2">
         {/* Mic / Cam — publishers only */}
         {publisher && (
           <>
@@ -128,10 +149,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
               danger
               label={isMicrophoneEnabled ? t("liveRoom.controls.micOff") : t("liveRoom.controls.micOn")}
               onClick={() =>
-                toggle(
-                  () => localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled),
-                  "liveRoom.errors.microphone",
-                )
+                toggle(() => localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled), "liveRoom.errors.microphone")
               }
             />
             <CtrlButton
@@ -141,10 +159,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
               danger
               label={isCameraEnabled ? t("liveRoom.controls.cameraOff") : t("liveRoom.controls.cameraOn")}
               onClick={() =>
-                toggle(
-                  () => localParticipant.setCameraEnabled(!isCameraEnabled),
-                  "liveRoom.errors.camera",
-                )
+                toggle(() => localParticipant.setCameraEnabled(!isCameraEnabled), "liveRoom.errors.camera")
               }
             />
           </>
@@ -159,10 +174,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
             label={isScreenShareEnabled ? t("liveRoom.controls.stopShare") : t("liveRoom.controls.shareScreen")}
             className="hidden sm:flex"
             onClick={() =>
-              toggle(
-                () => localParticipant.setScreenShareEnabled(!isScreenShareEnabled),
-                "liveRoom.errors.screenShare",
-              )
+              toggle(() => localParticipant.setScreenShareEnabled(!isScreenShareEnabled), "liveRoom.errors.screenShare")
             }
           />
         )}
@@ -194,7 +206,9 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
             icon={PenLine}
             on
             active={stageKind === "whiteboard"}
-            label={stageKind === "whiteboard" ? t("liveRoom.controls.stopWhiteboard") : t("liveRoom.controls.whiteboard")}
+            label={
+              stageKind === "whiteboard" ? t("liveRoom.controls.stopWhiteboard") : t("liveRoom.controls.whiteboard")
+            }
             className="hidden sm:flex"
             onClick={handleWhiteboardClick}
           />
@@ -213,7 +227,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
 
         {/* Divider — only when publisher-side controls precede it, else it
             orphans at the bar edge next to the hand icon for viewers */}
-        {publisher && <span className="mx-0.5 h-7 w-px bg-border" />}
+        {publisher && <span className="bg-border mx-0.5 h-7 w-px" />}
 
         {/* Raise hand — viewers only */}
         {!publisher && (
@@ -275,48 +289,56 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
                 type="button"
                 aria-label={t("liveRoom.controls.more")}
                 title={t("liveRoom.controls.more")}
-                className="relative flex size-11 items-center justify-center rounded-xl text-foreground transition-colors hover:bg-accent sm:hidden"
+                className="text-foreground hover:bg-accent relative flex size-11 items-center justify-center rounded-xl transition-colors sm:hidden"
               />
             }
           >
             <MoreHorizontal className="size-5" />
           </SheetTrigger>
-          <SheetContent side="bottom" className="bg-popover p-0 text-foreground" showCloseButton={false}>
+          <SheetContent side="bottom" className="bg-popover text-foreground p-0" showCloseButton={false}>
             <SheetTitle className="sr-only">{t("liveRoom.controls.more")}</SheetTitle>
-            <div className="flex flex-col divide-y divide-border py-2">
+            <div className="divide-border flex flex-col divide-y py-2">
               {publisher && (
                 <button
                   type="button"
                   onClick={() =>
                     toggle(
                       () => localParticipant.setScreenShareEnabled(!isScreenShareEnabled),
-                      "liveRoom.errors.screenShare",
+                      "liveRoom.errors.screenShare"
                     )
                   }
-                  className="flex items-center gap-3 px-5 py-3.5 text-sm text-foreground hover:bg-accent"
+                  className="text-foreground hover:bg-accent flex items-center gap-3 px-5 py-3.5 text-sm"
                 >
                   <MonitorUp className="size-5 shrink-0" />
-                  <span>{isScreenShareEnabled ? t("liveRoom.controls.stopShare") : t("liveRoom.controls.shareScreen")}</span>
+                  <span>
+                    {isScreenShareEnabled ? t("liveRoom.controls.stopShare") : t("liveRoom.controls.shareScreen")}
+                  </span>
                 </button>
               )}
               {canShareStage && (
                 <button
                   type="button"
                   onClick={handleSlidesClick}
-                  className="flex items-center gap-3 px-5 py-3.5 text-sm text-foreground hover:bg-accent"
+                  className="text-foreground hover:bg-accent flex items-center gap-3 px-5 py-3.5 text-sm"
                 >
                   <Presentation className="size-5 shrink-0" />
-                  <span>{stageKind === "slides" ? t("liveRoom.controls.stopSlides") : t("liveRoom.controls.shareSlides")}</span>
+                  <span>
+                    {stageKind === "slides" ? t("liveRoom.controls.stopSlides") : t("liveRoom.controls.shareSlides")}
+                  </span>
                 </button>
               )}
               {canShareStage && (
                 <button
                   type="button"
                   onClick={handleWhiteboardClick}
-                  className="flex items-center gap-3 px-5 py-3.5 text-sm text-foreground hover:bg-accent"
+                  className="text-foreground hover:bg-accent flex items-center gap-3 px-5 py-3.5 text-sm"
                 >
                   <PenLine className="size-5 shrink-0" />
-                  <span>{stageKind === "whiteboard" ? t("liveRoom.controls.stopWhiteboard") : t("liveRoom.controls.whiteboard")}</span>
+                  <span>
+                    {stageKind === "whiteboard"
+                      ? t("liveRoom.controls.stopWhiteboard")
+                      : t("liveRoom.controls.whiteboard")}
+                  </span>
                 </button>
               )}
               {/* Record — DISABLED (kept for later re-enable) */}
@@ -338,7 +360,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
               <button
                 type="button"
                 onClick={() => togglePanel("people")}
-                className="flex items-center gap-3 px-5 py-3.5 text-sm text-foreground hover:bg-accent"
+                className="text-foreground hover:bg-accent flex items-center gap-3 px-5 py-3.5 text-sm"
               >
                 <Users className="size-5 shrink-0" />
                 <span>{t("liveRoom.controls.people")}</span>
@@ -346,7 +368,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
               <button
                 type="button"
                 onClick={() => togglePanel("polls")}
-                className="flex items-center gap-3 px-5 py-3.5 text-sm text-foreground hover:bg-accent"
+                className="text-foreground hover:bg-accent flex items-center gap-3 px-5 py-3.5 text-sm"
               >
                 <BarChart3 className="size-5 shrink-0" />
                 <span>{t("liveRoom.controls.polls")}</span>
@@ -355,7 +377,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
           </SheetContent>
         </Sheet>
 
-        <span className="mx-0.5 h-7 w-px bg-border" />
+        <span className="bg-border mx-0.5 h-7 w-px" />
 
         {/* Leave */}
         <button
@@ -363,7 +385,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
           onClick={() => (isHost ? setLeaveOpen(true) : onLeave())}
           disabled={leavePending || endPending}
           title={t("liveRoom.leave")}
-          className="flex h-11 items-center gap-2 rounded-xl bg-destructive px-4 text-sm font-semibold text-white transition-colors hover:bg-destructive/90 disabled:opacity-60"
+          className="bg-destructive hover:bg-destructive/90 flex h-11 items-center gap-2 rounded-xl px-4 text-sm font-semibold text-white transition-colors disabled:opacity-60"
         >
           {leavePending || endPending ? <Spinner className="size-4" /> : <LogOut className="size-4 rtl:rotate-180" />}
           <span className="hidden sm:inline">{t("liveRoom.leave")}</span>
@@ -409,9 +431,7 @@ export function ControlBar({ tab, openTab, closePanel, onLeave, leavePending, on
               <AlertDialogDescription>{t("liveRoom.leaveDialog.description")}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={leavePending || endPending}>
-                {t("common.cancel")}
-              </AlertDialogCancel>
+              <AlertDialogCancel disabled={leavePending || endPending}>{t("common.cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 variant="outline"
                 disabled={leavePending || endPending}
@@ -473,16 +493,16 @@ function CtrlButton({
       className={cn(
         "relative flex size-11 items-center justify-center rounded-xl transition-colors",
         danger && !on
-          ? "bg-destructive text-white hover:bg-destructive/90"
+          ? "bg-destructive hover:bg-destructive/90 text-white"
           : active
             ? "bg-primary text-primary-foreground hover:bg-primary/90"
             : "text-foreground hover:bg-accent",
-        className,
+        className
       )}
     >
       <ShownIcon className="size-5" />
       {badge != null && badge > 0 && (
-        <span className="absolute -end-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+        <span className="bg-primary text-primary-foreground absolute -end-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold">
           {badge > 9 ? "9+" : badge}
         </span>
       )}

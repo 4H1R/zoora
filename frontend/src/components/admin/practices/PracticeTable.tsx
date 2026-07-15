@@ -34,9 +34,7 @@ function usePracticeColumns({ onEdit }: { onEdit: (p: PracticeRoom) => void }): 
           <div className="min-w-0">
             <div className="truncate text-start text-sm font-medium">{row.original.title}</div>
             {row.original.content && (
-              <div className="text-muted-foreground truncate text-start text-xs">
-                {row.original.content}
-              </div>
+              <div className="text-muted-foreground truncate text-start text-xs">{row.original.content}</div>
             )}
           </div>
         </div>
@@ -48,9 +46,7 @@ function usePracticeColumns({ onEdit }: { onEdit: (p: PracticeRoom) => void }): 
       accessorKey: "class",
       header: t("admin.practices.class"),
       cell: ({ row }) => (
-        <span className="text-sm">
-          {row.original.class?.name ?? <span className="text-muted-foreground">—</span>}
-        </span>
+        <span className="text-sm">{row.original.class?.name ?? <span className="text-muted-foreground">—</span>}</span>
       ),
       enableSorting: false,
       enableHiding: true,
@@ -70,9 +66,7 @@ function usePracticeColumns({ onEdit }: { onEdit: (p: PracticeRoom) => void }): 
       accessorKey: "user",
       header: t("admin.practices.teacher"),
       cell: ({ row }) => (
-        <span className="text-sm">
-          {row.original.user?.name ?? <span className="text-muted-foreground">—</span>}
-        </span>
+        <span className="text-sm">{row.original.user?.name ?? <span className="text-muted-foreground">—</span>}</span>
       ),
       enableSorting: false,
       enableHiding: true,
@@ -104,18 +98,14 @@ function usePracticeColumns({ onEdit }: { onEdit: (p: PracticeRoom) => void }): 
     {
       accessorKey: "end_time",
       header: t("admin.practices.endTime"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-xs">{formatDate(row.original.end_time)}</span>
-      ),
+      cell: ({ row }) => <span className="text-muted-foreground text-xs">{formatDate(row.original.end_time)}</span>,
       enableSorting: true,
       enableHiding: true,
     },
     {
       accessorKey: "created_at",
       header: t("admin.practices.createdAt"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-xs">{formatDate(row.original.created_at)}</span>
-      ),
+      cell: ({ row }) => <span className="text-muted-foreground text-xs">{formatDate(row.original.created_at)}</span>,
       enableSorting: true,
       enableHiding: true,
     },

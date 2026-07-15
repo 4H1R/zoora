@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest"
-
 import type { getConversationsResponse } from "@/api/conversations/conversations"
+
+import { describe, expect, it } from "vitest"
 
 import { unwrapConversations } from "./use-conversations"
 

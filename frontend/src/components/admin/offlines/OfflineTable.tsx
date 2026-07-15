@@ -13,11 +13,7 @@ import { cn } from "@/lib/utils"
 
 import { OfflineActions } from "./OfflineActions"
 
-function useOfflineColumns({
-  onEdit,
-}: {
-  onEdit: (room: OfflineRoom) => void
-}): ColumnDef<OfflineRoom>[] {
+function useOfflineColumns({ onEdit }: { onEdit: (room: OfflineRoom) => void }): ColumnDef<OfflineRoom>[] {
   const { t } = useTranslation()
   const formatDate = useFormatDate()
 
@@ -38,9 +34,7 @@ function useOfflineColumns({
           <div className="min-w-0">
             <div className="truncate text-start text-sm font-medium">{row.original.title}</div>
             {row.original.description && (
-              <div className="text-muted-foreground truncate text-start text-xs">
-                {row.original.description}
-              </div>
+              <div className="text-muted-foreground truncate text-start text-xs">{row.original.description}</div>
             )}
           </div>
         </div>
@@ -52,9 +46,7 @@ function useOfflineColumns({
       accessorKey: "class",
       header: t("admin.offlines.class"),
       cell: ({ row }) => (
-        <span className="text-sm">
-          {row.original.class?.name ?? <span className="text-muted-foreground">—</span>}
-        </span>
+        <span className="text-sm">{row.original.class?.name ?? <span className="text-muted-foreground">—</span>}</span>
       ),
       enableSorting: false,
       enableHiding: true,
@@ -85,18 +77,14 @@ function useOfflineColumns({
     {
       accessorKey: "published_at",
       header: t("admin.offlines.publishedAt"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-xs">{formatDate(row.original.published_at)}</span>
-      ),
+      cell: ({ row }) => <span className="text-muted-foreground text-xs">{formatDate(row.original.published_at)}</span>,
       enableSorting: true,
       enableHiding: true,
     },
     {
       accessorKey: "created_at",
       header: t("admin.offlines.createdAt"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-xs">{formatDate(row.original.created_at)}</span>
-      ),
+      cell: ({ row }) => <span className="text-muted-foreground text-xs">{formatDate(row.original.created_at)}</span>,
       enableSorting: true,
       enableHiding: true,
     },

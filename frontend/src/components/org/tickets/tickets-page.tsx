@@ -33,8 +33,7 @@ export function TicketsPage() {
   })
   const tickets = (data?.status === 200 && data.data.data?.items) || []
 
-  const select = (id: string | undefined) =>
-    navigate({ to: ".", search: id ? { ticket: id } : {}, replace: false })
+  const select = (id: string | undefined) => navigate({ to: ".", search: id ? { ticket: id } : {}, replace: false })
 
   return (
     <div className="flex flex-1 flex-col gap-4">

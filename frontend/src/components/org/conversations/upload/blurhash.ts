@@ -92,9 +92,7 @@ export function blurhashToDataUrl(hash: string, width = 32, height = 32): string
 /**
  * Natural pixel dimensions of an image File, or null for non-images / failure.
  */
-export async function imageDimensions(
-  file: File
-): Promise<{ width: number; height: number } | null> {
+export async function imageDimensions(file: File): Promise<{ width: number; height: number } | null> {
   if (!isImage(file)) return null
   try {
     const img = await loadImageElement(file)

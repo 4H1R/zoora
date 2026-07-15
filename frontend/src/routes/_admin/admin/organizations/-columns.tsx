@@ -1,4 +1,5 @@
 import type { GithubCom4H1RZooraInternalDomainOrganization as Organization } from "@/api/model"
+import type { PlanTier } from "@/lib/plan"
 import type { ColumnDef } from "@tanstack/react-table"
 
 import { CreditCardIcon, EllipsisVerticalIcon, ExternalLinkIcon, PencilIcon, Trash2Icon, UsersIcon } from "lucide-react"
@@ -16,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { getEntityColor, getInitials, useFormatDate } from "@/lib/data-table"
-import { planSize, planTier, type PlanTier } from "@/lib/plan"
+import { planSize, planTier } from "@/lib/plan"
 import { cn } from "@/lib/utils"
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {

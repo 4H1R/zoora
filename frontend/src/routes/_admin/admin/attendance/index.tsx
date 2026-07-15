@@ -81,29 +81,16 @@ function AttendancePage() {
       <StatCards stats={statCards} />
       <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.attendance.filter.class")}
-          </label>
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.attendance.filter.class")}</label>
           <ClassPicker value={classId} onChange={handleClassChange} />
         </div>
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.attendance.filter.session")}
-          </label>
-          <SessionPicker
-            classId={classId}
-            value={sessionId}
-            onChange={(id) => setSessionId(id || undefined)}
-          />
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.attendance.filter.session")}</label>
+          <SessionPicker classId={classId} value={sessionId} onChange={(id) => setSessionId(id || undefined)} />
         </div>
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.attendance.filter.status")}
-          </label>
-          <Select
-            value={status ?? null}
-            onValueChange={(val) => setStatus((val as AttendanceStatus) || undefined)}
-          >
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.attendance.filter.status")}</label>
+          <Select value={status ?? null} onValueChange={(val) => setStatus((val as AttendanceStatus) || undefined)}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder={t("admin.attendance.filter.allStatuses")}>
                 {(v: AttendanceStatus) => t(`common.statuses.attendance.${v}`)}

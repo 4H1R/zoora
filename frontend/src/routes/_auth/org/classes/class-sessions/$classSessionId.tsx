@@ -141,7 +141,7 @@ function SubTabsBar({
       {/* Scrolls horizontally on narrow viewports rather than wrapping into a
           jumbled stack. The -mb/pb pair reserves room for the active underline
           (bottom-[-5px]) so the overflow clip doesn't shave it off. */}
-      <div className="-mb-1.5 max-w-full overflow-x-auto pb-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="-mb-1.5 max-w-full [scrollbar-width:none] overflow-x-auto pb-1.5 [&::-webkit-scrollbar]:hidden">
         <TabsList variant="line">
           {tabs.map((tab) => (
             <TabsTrigger key={tab.key} value={tab.key} className="shrink-0 gap-2">
@@ -169,9 +169,7 @@ function SessionRelativeTime({ startIso, status }: { startIso: string | undefine
   return (
     <>
       <span className="text-muted-foreground/40">·</span>
-      <span className={cn("font-medium", status === "live" ? "text-destructive" : "text-primary")}>
-        {relativeStr}
-      </span>
+      <span className={cn("font-medium", status === "live" ? "text-destructive" : "text-primary")}>{relativeStr}</span>
     </>
   )
 }
@@ -414,7 +412,6 @@ function RouteComponent() {
     <div className="relative isolate flex flex-col gap-6 pb-10">
       <DecorativeBackground />
 
-
       <header className="border-foreground/10 bg-card/50 relative mt-5 flex flex-col gap-5 overflow-hidden rounded-2xl border p-4 backdrop-blur-sm md:p-5">
         <div className="flex min-w-0 flex-col gap-2.5">
           <div className="flex flex-wrap items-center gap-2.5">
@@ -427,9 +424,7 @@ function RouteComponent() {
           </h1>
 
           {session.description && (
-            <p className="text-muted-foreground line-clamp-2 max-w-xl text-sm leading-relaxed">
-              {session.description}
-            </p>
+            <p className="text-muted-foreground line-clamp-2 max-w-xl text-sm leading-relaxed">{session.description}</p>
           )}
 
           <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-sm">
@@ -466,7 +461,7 @@ function RouteComponent() {
             <Tabs value={activeSurface.key} onValueChange={handleSurfaceChange}>
               <TabsList
                 variant="default"
-                className="h-auto max-w-full justify-start overflow-x-auto p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                className="h-auto max-w-full [scrollbar-width:none] justify-start overflow-x-auto p-1 [&::-webkit-scrollbar]:hidden"
               >
                 {surfaces.map((surface) => (
                   <TabsTrigger key={surface.key} value={surface.key} className="shrink-0 gap-2 px-3 py-1.5">

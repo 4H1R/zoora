@@ -1,7 +1,10 @@
 import "tldraw/tldraw.css"
+
+import type { Editor } from "tldraw"
+
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Tldraw, type Editor } from "tldraw"
+import { Tldraw } from "tldraw"
 
 import { useThemeStore } from "@/stores/theme"
 

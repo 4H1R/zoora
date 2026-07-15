@@ -1,18 +1,19 @@
+import type { GithubCom4H1RZooraInternalDomainTutorial as Tutorial } from "@/api/model"
+
 import { createFileRoute } from "@tanstack/react-router"
 import { GraduationCapIcon, PlayIcon, SearchIcon, VideoIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { useGetTutorials } from "@/api/tutorials/tutorials"
-import type { GithubCom4H1RZooraInternalDomainTutorial as Tutorial } from "@/api/model"
 import { ChangelogMarkdown } from "@/components/changelog/markdown"
 import { Eyebrow } from "@/components/eyebrow"
 import { aparatEmbedUrl } from "@/components/tutorials/aparat"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
 import { orgHead } from "@/lib/org-head"
+import { cn } from "@/lib/utils"
 
 export const Route = createFileRoute("/_auth/org/tutorials")({
   head: () => orgHead("tutorials.title"),
@@ -35,7 +36,7 @@ function TutorialsPage() {
     ? tutorials.filter((tu) =>
         [tu.title_en, tu.title_fa, tu.description_en, tu.description_fa]
           .filter(Boolean)
-          .some((field) => field!.toLowerCase().includes(q)),
+          .some((field) => field!.toLowerCase().includes(q))
       )
     : tutorials
 
@@ -86,7 +87,7 @@ function TutorialsPage() {
                   // No overflow-hidden here: it clips the title's glyph
                   // side-bearing (tracking-tight) at the start edge. The poster
                   // below clips itself, so the card doesn't need it.
-                  "group animate-reveal text-start focus-visible:ring-ring/60 flex flex-col rounded-2xl outline-none focus-visible:ring-2",
+                  "group animate-reveal focus-visible:ring-ring/60 flex flex-col rounded-2xl text-start outline-none focus-visible:ring-2"
                 )}
                 style={{ animationDelay: `${Math.min(i, 9) * 60}ms` }}
               >
@@ -120,7 +121,10 @@ function TutorialsPage() {
                   </h2>
                   {description && (
                     <p className="text-muted-foreground mt-1 line-clamp-2 text-xs leading-relaxed">
-                      {description.replace(/[#*_`>[\]()!-]/g, " ").replace(/\s+/g, " ").trim()}
+                      {description
+                        .replace(/[#*_`>[\]()!-]/g, " ")
+                        .replace(/\s+/g, " ")
+                        .trim()}
                     </p>
                   )}
                 </div>
@@ -156,10 +160,7 @@ function PlayerDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent
-        showCloseButton={false}
-        className="max-w-3xl gap-0 overflow-hidden p-0 sm:max-w-3xl"
-      >
+      <DialogContent showCloseButton={false} className="max-w-3xl gap-0 overflow-hidden p-0 sm:max-w-3xl">
         {tutorial && (
           <>
             <div className="bg-black">
@@ -174,7 +175,7 @@ function PlayerDialog({
             </div>
             <div className="max-h-[40vh] space-y-2 overflow-y-auto p-5">
               <div className="flex items-center gap-2">
-                <span className="bg-primary size-1.5 animate-pulse-dot rounded-full" />
+                <span className="bg-primary animate-pulse-dot size-1.5 rounded-full" />
                 <span className="text-muted-foreground font-mono text-[0.65rem] tracking-[0.2em] uppercase">
                   {watchLabel}
                 </span>
@@ -208,7 +209,7 @@ function EmptyState({ title, hint, search }: { title: string; hint: string; sear
     <div className="relative isolate overflow-hidden rounded-2xl border px-6 py-20 text-center">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 opacity-70 [mask-image:radial-gradient(60%_50%_at_50%_30%,black,transparent)]"
+        className="pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(60%_50%_at_50%_30%,black,transparent)] opacity-70"
         style={{
           background:
             "radial-gradient(circle at 50% 25%, color-mix(in oklch, var(--primary) 16%, transparent), transparent 60%)",

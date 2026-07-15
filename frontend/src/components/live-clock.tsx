@@ -30,7 +30,7 @@ export function LiveClock({ className }: { className?: string }) {
     <div
       className={cn(
         "group border-border/60 bg-card/50 hover:border-border hover:bg-accent/40 relative flex items-center gap-2.5 rounded-lg border px-2.5 py-1 shadow-xs transition-colors",
-        className,
+        className
       )}
     >
       {/* heartbeat — a steady green tick that breathes once per second */}
@@ -38,7 +38,7 @@ export function LiveClock({ className }: { className?: string }) {
         <span
           className={cn(
             "bg-success/60 absolute inline-flex size-full rounded-full transition-all duration-700 ease-out",
-            tick ? "scale-100 opacity-0" : "scale-50 opacity-70",
+            tick ? "scale-100 opacity-0" : "scale-50 opacity-70"
           )}
         />
         <span className="bg-success size-1.5 rounded-full" />
@@ -48,21 +48,15 @@ export function LiveClock({ className }: { className?: string }) {
         <span className="text-foreground font-mono text-sm font-semibold tracking-tight tabular-nums">
           {timeParts.map((part, i) =>
             part.type === "literal" ? (
-              <span
-                key={i}
-                className={cn(
-                  "transition-opacity duration-300",
-                  tick ? "opacity-100" : "opacity-30",
-                )}
-              >
+              <span key={i} className={cn("transition-opacity duration-300", tick ? "opacity-100" : "opacity-30")}>
                 {part.value}
               </span>
             ) : (
               <span key={i}>{part.value}</span>
-            ),
+            )
           )}
         </span>
-        <span className="text-muted-foreground mt-0.5 hidden text-[0.625rem] font-medium tracking-caps uppercase lg:inline">
+        <span className="text-muted-foreground tracking-caps mt-0.5 hidden text-[0.625rem] font-medium uppercase lg:inline">
           {date}
         </span>
       </div>

@@ -30,9 +30,7 @@ export function dayDividerParts(iso: string | undefined, lang: string): DayDivid
   const d = iso ? new Date(iso) : new Date()
   const now = new Date()
   const isFa = lang === "fa"
-  const absolute = isFa
-    ? jFormat(d, "d MMMM yyyy", { locale: faIR })
-    : format(d, "d MMMM yyyy")
+  const absolute = isFa ? jFormat(d, "d MMMM yyyy", { locale: faIR }) : format(d, "d MMMM yyyy")
 
   let relative: DayDividerParts["relative"] = null
   if (isSameDay(d, now)) relative = "today"

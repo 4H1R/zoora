@@ -1,3 +1,5 @@
+import type { LivePoll, PollResults } from "../use-room-polls"
+
 import { BarChart3 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
@@ -5,7 +7,6 @@ import { useGetPollsId } from "@/api/polls/polls"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 import { resolveOptionLabel } from "../poll-labels"
-import type { LivePoll, PollResults } from "../use-room-polls"
 import { PollBars } from "./poll-bars"
 
 interface VotePollModalProps {
@@ -44,30 +45,28 @@ export function VotePollModal({ activePoll, results, hasAnswered, isPending, onV
             {results ? (
               // Host revealed final results
               <div className="flex flex-col gap-3">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
                   {t("liveRoom.polls.results")}
                 </p>
                 <PollBars options={activePoll.options} counts={results.counts} total={results.total} />
               </div>
             ) : hasAnswered ? (
               // Voted, waiting for the host to reveal
-              <div className="flex flex-col items-center gap-2 py-6 text-center text-muted-foreground">
+              <div className="text-muted-foreground flex flex-col items-center gap-2 py-6 text-center">
                 <BarChart3 className="size-7 opacity-40" />
                 <p className="text-sm">{t("liveRoom.polls.submitted")}</p>
               </div>
             ) : (
               // Cast a vote
               <div className="flex flex-col gap-2">
-                {isClosed && (
-                  <p className="text-xs text-muted-foreground">{t("liveRoom.polls.closed")}</p>
-                )}
+                {isClosed && <p className="text-muted-foreground text-xs">{t("liveRoom.polls.closed")}</p>}
                 {activePoll.options.map((opt) => (
                   <button
                     key={opt.value}
                     type="button"
                     disabled={isPending || isClosed}
                     onClick={() => onVote(opt.value)}
-                    className="w-full rounded-md border border-border bg-muted px-4 py-2.5 text-start text-sm text-foreground transition-colors hover:border-primary hover:bg-primary/10 disabled:opacity-50 disabled:hover:border-border disabled:hover:bg-muted"
+                    className="border-border bg-muted text-foreground hover:border-primary hover:bg-primary/10 disabled:hover:border-border disabled:hover:bg-muted w-full rounded-md border px-4 py-2.5 text-start text-sm transition-colors disabled:opacity-50"
                   >
                     {resolveOptionLabel(opt.value, opt.label, t)}
                   </button>

@@ -1,16 +1,10 @@
-import { useState } from "react"
 import { DownloadIcon, PlusSquareIcon, ShareIcon, XIcon } from "lucide-react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { usePwaInstall } from "@/components/pwa/use-pwa-install"
 import { Button } from "@/components/ui/button"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 
 /**
@@ -40,38 +34,27 @@ export function InstallAppBanner({ className }: { className?: string }) {
         className={cn(
           "group relative isolate overflow-hidden rounded-2xl border p-4 sm:p-5",
           "flex flex-col gap-3.5 sm:flex-row sm:items-center sm:gap-4",
-          "border-primary/25 bg-gradient-to-br from-primary/12 via-card to-card shadow-sm",
+          "border-primary/25 from-primary/12 via-card to-card bg-gradient-to-br shadow-sm",
           "animate-in fade-in-0 slide-in-from-top-2 fill-mode-both duration-500",
-          className,
+          className
         )}
       >
         {/* Slow shimmer sweep — draws the eye without shouting. Forced LTR so it
             always travels left→right regardless of page direction. */}
-        <div
-          aria-hidden
-          dir="ltr"
-          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-        >
-          <div className="animate-install-sweep absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-transparent via-primary/10 to-transparent" />
+        <div aria-hidden dir="ltr" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+          <div className="animate-install-sweep via-primary/10 absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-transparent to-transparent" />
         </div>
 
         <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
           {/* Glowing app icon. */}
-          <div className="relative grid size-11 shrink-0 place-items-center rounded-xl bg-primary/12 text-primary ring-1 ring-primary/20 ring-inset">
-            <span
-              aria-hidden
-              className="absolute inset-0 animate-pulse rounded-xl bg-primary/25 blur-md"
-            />
+          <div className="bg-primary/12 text-primary ring-primary/20 relative grid size-11 shrink-0 place-items-center rounded-xl ring-1 ring-inset">
+            <span aria-hidden className="bg-primary/25 absolute inset-0 animate-pulse rounded-xl blur-md" />
             <DownloadIcon className="relative size-5" />
           </div>
 
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <p className="text-sm font-semibold tracking-tight text-balance">
-              {t("pwa.install.title")}
-            </p>
-            <p className="text-muted-foreground text-xs text-pretty sm:text-sm">
-              {t("pwa.install.description")}
-            </p>
+            <p className="text-sm font-semibold tracking-tight text-balance">{t("pwa.install.title")}</p>
+            <p className="text-muted-foreground text-xs text-pretty sm:text-sm">{t("pwa.install.description")}</p>
           </div>
 
           {/* Dismiss lives in the top-end corner on mobile; folds into the row on sm+. */}

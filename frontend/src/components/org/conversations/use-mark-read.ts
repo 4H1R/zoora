@@ -1,11 +1,13 @@
+import type { ChatMessage } from "./lib/messages"
+import type { GithubCom4H1RZooraInternalDomainConversation as Conversation } from "@/api/model"
+
 import { useQueryClient } from "@tanstack/react-query"
 import { useEffect, useRef, useState } from "react"
 import { useDebouncedCallback } from "use-debounce"
 
 import { usePostConversationsIdRead } from "@/api/conversations/conversations"
-import type { GithubCom4H1RZooraInternalDomainConversation as Conversation } from "@/api/model"
 
-import { type ChatMessage, newestReadableId } from "./lib/messages"
+import { newestReadableId } from "./lib/messages"
 import { chatKeys } from "./lib/query-keys"
 
 // Wait this long after the newest readable id settles before POSTing — collapses
@@ -17,9 +19,7 @@ const READ_DEBOUNCE_MS = 500
  * the tab is backgrounded would clear a badge the user never actually saw.
  */
 function useWindowFocused(): boolean {
-  const [focused, setFocused] = useState(() =>
-    typeof document === "undefined" ? true : document.hasFocus()
-  )
+  const [focused, setFocused] = useState(() => (typeof document === "undefined" ? true : document.hasFocus()))
   useEffect(() => {
     const on = () => setFocused(true)
     const off = () => setFocused(false)

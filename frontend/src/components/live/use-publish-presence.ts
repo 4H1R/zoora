@@ -1,9 +1,12 @@
+import type { NetStats } from "./presence"
+import type { TransportSample } from "./webrtc-stats"
+
 import { useLocalParticipant, useRoomContext } from "@livekit/components-react"
 import { ConnectionState } from "livekit-client"
 import { useEffect, useRef } from "react"
 
-import { detectDevice, PRESENCE_KEYS, serializeNet, type NetStats } from "./presence"
-import { deriveRates, readTransportStats, transportSources, type TransportSample } from "./webrtc-stats"
+import { detectDevice, PRESENCE_KEYS, serializeNet } from "./presence"
+import { deriveRates, readTransportStats, transportSources } from "./webrtc-stats"
 
 const PUBLISH_MS = 5000
 

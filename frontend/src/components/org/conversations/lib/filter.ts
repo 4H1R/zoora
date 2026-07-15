@@ -32,7 +32,6 @@ export function filterByQuery(items: Conversation[], query: string, selfId: stri
   const q = query.trim().toLowerCase()
   if (!q) return items
   return items.filter(
-    (c) =>
-      conversationTitle(c, selfId).toLowerCase().includes(q) || c.last_message?.content?.toLowerCase().includes(q)
+    (c) => conversationTitle(c, selfId).toLowerCase().includes(q) || c.last_message?.content?.toLowerCase().includes(q)
   )
 }

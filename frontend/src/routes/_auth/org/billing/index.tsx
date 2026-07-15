@@ -130,10 +130,8 @@ function SizeToggle({ value, onChange }: { value: number; onChange: (v: number) 
           type="button"
           onClick={() => onChange(size)}
           className={cn(
-            "rounded-md px-3 py-1.5 text-sm font-medium transition-colors tabular-nums",
-            value === size
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+            "rounded-md px-3 py-1.5 text-sm font-medium tabular-nums transition-colors",
+            value === size ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
           )}
         >
           {t("billing.sizeOption", { size })}

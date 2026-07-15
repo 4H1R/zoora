@@ -101,21 +101,12 @@ function ClassPracticesPage() {
       <StatCards stats={statCards} />
       <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.practices.filter.class")}
-          </label>
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.practices.filter.class")}</label>
           <ClassPicker value={classId} onChange={() => {}} disabled />
         </div>
         <div className="flex-1">
-          <label className="mb-1.5 block text-xs font-medium">
-            {t("admin.practices.filter.session")}
-          </label>
-          <SessionPicker
-            classId={classId}
-            value={sessionId}
-            onChange={() => {}}
-            disabled
-          />
+          <label className="mb-1.5 block text-xs font-medium">{t("admin.practices.filter.session")}</label>
+          <SessionPicker classId={classId} value={sessionId} onChange={() => {}} disabled />
         </div>
       </Card>
       {sessionId ? (

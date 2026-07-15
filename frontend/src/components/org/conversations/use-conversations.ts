@@ -1,7 +1,9 @@
+import type { getConversationsResponse } from "@/api/conversations/conversations"
+import type { GithubCom4H1RZooraInternalDomainConversation as Conversation } from "@/api/model"
+
 import { useQuery } from "@tanstack/react-query"
 
-import { getConversations, type getConversationsResponse } from "@/api/conversations/conversations"
-import type { GithubCom4H1RZooraInternalDomainConversation as Conversation } from "@/api/model"
+import { getConversations } from "@/api/conversations/conversations"
 
 import { chatKeys } from "./lib/query-keys"
 

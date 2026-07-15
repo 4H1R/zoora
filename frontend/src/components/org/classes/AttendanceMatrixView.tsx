@@ -1,14 +1,15 @@
 import type { GithubCom4H1RZooraInternalDomainAttendanceMatrixResult as AttendanceMatrix } from "@/api/model"
+import type { AttendanceStatus } from "@/components/org/classes/AttendanceCellPopover"
 
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { useGetClassesIdAttendanceMatrix } from "@/api/attendance/attendance"
-import { AttendanceCellPopover, type AttendanceStatus } from "@/components/org/classes/AttendanceCellPopover"
-import { UserAvatar } from "@/components/user-avatar"
+import { AttendanceCellPopover } from "@/components/org/classes/AttendanceCellPopover"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { UserAvatar } from "@/components/user-avatar"
 import { cn } from "@/lib/utils"
 
 const STATUS_GLYPH: Record<AttendanceStatus, string> = {
@@ -27,15 +28,7 @@ const STATUS_CLASS: Record<AttendanceStatus, string> = {
 
 const LEGEND: AttendanceStatus[] = ["present", "absent", "late", "excused"]
 
-function StatusBadge({
-  status,
-  className,
-  title,
-}: {
-  status: AttendanceStatus
-  className?: string
-  title?: string
-}) {
+function StatusBadge({ status, className, title }: { status: AttendanceStatus; className?: string; title?: string }) {
   return (
     <span
       className={cn("inline-flex items-center justify-center rounded font-medium", STATUS_CLASS[status], className)}
@@ -154,7 +147,7 @@ export function AttendanceMatrixView({
                     const glyph = status ? (
                       <StatusBadge
                         status={status}
-                        className={cn("size-7 text-xs", cell?.is_auto_marked && "ring-1 ring-dashed ring-current/40")}
+                        className={cn("size-7 text-xs", cell?.is_auto_marked && "ring-dashed ring-1 ring-current/40")}
                         title={`${t(`common.statuses.attendance.${status}`)}${
                           cell?.is_auto_marked ? ` · ${t("org.class.attendance.autoMarked")}` : ""
                         }`}
@@ -162,9 +155,7 @@ export function AttendanceMatrixView({
                     ) : (
                       <span
                         className="text-muted-foreground/50 inline-flex size-7 items-center justify-center"
-                        title={
-                          sess.future ? t("org.class.attendance.future") : t("org.class.attendance.noRecord")
-                        }
+                        title={sess.future ? t("org.class.attendance.future") : t("org.class.attendance.noRecord")}
                       >
                         —
                       </span>

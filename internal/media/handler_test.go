@@ -69,6 +69,19 @@ func (m *mockMediaSvc) ListFiles(ctx context.Context, modelType string, p domain
 	return items, total, a.Error(2)
 }
 
+func (m *mockMediaSvc) ListOwners(ctx context.Context, p domain.ListParams) (*domain.MediaOwnersResponse, error) {
+	a := m.Called(ctx, p)
+	resp, _ := a.Get(0).(*domain.MediaOwnersResponse)
+	return resp, a.Error(1)
+}
+
+func (m *mockMediaSvc) ListOwnerFiles(ctx context.Context, kind string, ownerID *uuid.UUID, p domain.ListParams) ([]domain.OwnerFile, int64, error) {
+	a := m.Called(ctx, kind, ownerID, p)
+	items, _ := a.Get(0).([]domain.OwnerFile)
+	total, _ := a.Get(1).(int64)
+	return items, total, a.Error(2)
+}
+
 func newMediaRouter(t *testing.T) (*gin.Engine, *mockMediaSvc) {
 	t.Helper()
 	gin.SetMode(gin.TestMode)

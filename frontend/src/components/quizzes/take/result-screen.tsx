@@ -76,7 +76,7 @@ export function ResultScreen({ quiz, submission, questions = [], backHref }: Res
           <div aria-hidden className="bg-card ring-foreground/10 absolute inset-0 -z-10 rounded-3xl ring-1" />
           <div
             aria-hidden
-            className="animate-aurora pointer-events-none absolute -top-24 start-1/2 -z-10 size-72 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,var(--color-primary)/22%,transparent_70%)] blur-2xl rtl:translate-x-1/2"
+            className="animate-aurora pointer-events-none absolute start-1/2 -top-24 -z-10 size-72 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,var(--color-primary)/22%,transparent_70%)] blur-2xl rtl:translate-x-1/2"
           />
 
           <div className="mx-auto flex max-w-md flex-col items-center gap-6">

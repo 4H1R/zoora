@@ -93,6 +93,15 @@ func (f *fakeMedia) ListFolders(_ context.Context, _ uuid.UUID) ([]domain.MediaF
 func (f *fakeMedia) ListFiles(_ context.Context, _ uuid.UUID, _ string, _ domain.ListParams) ([]domain.Media, int64, error) {
 	return nil, 0, nil
 }
+func (f *fakeMedia) ListOwnerMedia(_ context.Context, _ uuid.UUID) ([]domain.MediaOwner, error) {
+	return nil, nil
+}
+func (f *fakeMedia) ListOwnerRecordings(_ context.Context, _ uuid.UUID) ([]domain.MediaOwner, error) {
+	return nil, nil
+}
+func (f *fakeMedia) ListOwnerFiles(_ context.Context, _ uuid.UUID, _ string, _ *uuid.UUID, _ domain.ListParams) ([]domain.OwnerFile, int64, error) {
+	return nil, 0, nil
+}
 
 func TestImageRenderer_RendersBodyAndChoiceOptions(t *testing.T) {
 	q := &domain.Question{

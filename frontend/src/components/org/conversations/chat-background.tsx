@@ -49,14 +49,7 @@ export function ChatBackground({ className }: ChatBackgroundProps) {
           <path d="M16 5 h8 M17 5 v9 L8 32 a3 3 0 0 0 3 4 h18 a3 3 0 0 0 3 -4 L23 14 V5" />
           <path d="M12 26 h16" />
         </g>
-        <g
-          id="cb-bulb"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
+        <g id="cb-bulb" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           <path d="M20 4 a11 11 0 0 0 -7 19 c1 1 2 2 2 4 h10 c0 -2 1 -3 2 -4 a11 11 0 0 0 -7 -19 Z" />
           <path d="M16 32 h8 M17 36 h6" />
         </g>

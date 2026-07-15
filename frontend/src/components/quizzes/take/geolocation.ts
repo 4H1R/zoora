@@ -23,7 +23,7 @@ export function requestGeolocation(): Promise<GeolocationResult> {
           gps_accuracy: pos.coords.accuracy,
         }),
       () => resolve({ gps_denied: true }),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     )
   })
 }

@@ -1,6 +1,7 @@
+import type { GithubCom4H1RZooraInternalDomainTutorial as Tutorial } from "@/api/model"
+
 import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { Reorder, useDragControls } from "motion/react"
 import {
   ChevronRightIcon,
   FileVideoIcon,
@@ -11,6 +12,7 @@ import {
   Trash2Icon,
   VideoIcon,
 } from "lucide-react"
+import { Reorder, useDragControls } from "motion/react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -22,7 +24,6 @@ import {
   usePostAdminTutorials,
   usePutAdminTutorialsReorder,
 } from "@/api/admin-tutorials/admin-tutorials"
-import type { GithubCom4H1RZooraInternalDomainTutorial as Tutorial } from "@/api/model"
 import { StatCards } from "@/components/data-table/stat-cards"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { PageHeader } from "@/components/page-header"
@@ -196,26 +197,15 @@ function TutorialRow({
   const isPublished = !!tu.published_at
 
   return (
-    <Reorder.Item
-      value={tu}
-      dragListener={false}
-      dragControls={controls}
-      onDragEnd={onSettle}
-      className="list-none"
-    >
+    <Reorder.Item value={tu} dragListener={false} dragControls={controls} onDragEnd={onSettle} className="list-none">
       <Card
         className={cn(
           "group relative flex-row items-center gap-3 overflow-hidden p-3 pe-3",
-          "transition-all duration-[--dur-slow] ease-[--ease-out] hover:border-foreground/20 hover:shadow-md",
+          "hover:border-foreground/20 transition-all duration-[--dur-slow] ease-[--ease-out] hover:shadow-md"
         )}
       >
         {/* status accent rail */}
-        <div
-          className={cn(
-            "absolute inset-y-0 start-0 w-1",
-            isPublished ? "bg-primary" : "bg-muted-foreground/25",
-          )}
-        />
+        <div className={cn("absolute inset-y-0 start-0 w-1", isPublished ? "bg-primary" : "bg-muted-foreground/25")} />
 
         {/* drag handle — only this initiates a reorder */}
         <button
@@ -247,10 +237,7 @@ function TutorialRow({
 
         <Badge variant={isPublished ? "default" : "secondary"} className="shrink-0 gap-1.5">
           <span
-            className={cn(
-              "size-1.5 rounded-full",
-              isPublished ? "bg-primary-foreground/90" : "bg-muted-foreground",
-            )}
+            className={cn("size-1.5 rounded-full", isPublished ? "bg-primary-foreground/90" : "bg-muted-foreground")}
           />
           {isPublished ? t("admin.tutorials.published") : t("admin.tutorials.draft")}
         </Badge>

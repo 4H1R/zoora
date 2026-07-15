@@ -6,10 +6,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
 
-import i18n from "@/i18n"
-
 import { usePostLeads } from "@/api/leads/leads"
-import { currentSlug } from "@/lib/tenant"
 import GridBackground from "@/components/auth/gradient-background"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { Logo } from "@/components/logo"
@@ -19,16 +16,15 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
+import i18n from "@/i18n"
 import { PLAN_TIERS } from "@/lib/plan"
+import { currentSlug } from "@/lib/tenant"
 import { cn } from "@/lib/utils"
 
 // Plan carried from the pricing card the visitor clicked. Constrained to the
 // known tiers; anything else is dropped so the field stays advisory-only.
 const searchSchema = z.object({
-  plan: z
-    .enum(PLAN_TIERS)
-    .optional()
-    .catch(undefined),
+  plan: z.enum(PLAN_TIERS).optional().catch(undefined),
 })
 
 export const Route = createFileRoute("/get-started")({
@@ -122,9 +118,7 @@ function GetStartedComponent() {
           ) : (
             <>
               <h1 className="text-2xl font-semibold tracking-tight">{t("landing.getStarted.title")}</h1>
-              <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-                {t("landing.getStarted.subtitle")}
-              </p>
+              <p className="text-muted-foreground mt-2 text-sm leading-relaxed">{t("landing.getStarted.subtitle")}</p>
               {plan ? (
                 <div className="border-primary/30 bg-primary/5 text-primary mt-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-1 text-xs font-medium">
                   {t("landing.getStarted.selectedPlan", { plan: t(`plans.tiers.${plan}`) })}
@@ -169,9 +163,7 @@ function GetStartedComponent() {
                   <Button type="submit" size="lg" className="mt-2 w-full rounded-full" disabled={submit.isPending}>
                     {submit.isPending ? <Spinner /> : null}
                     {t("landing.getStarted.submit")}
-                    {!submit.isPending ? (
-                      <ArrowRight className="rtl:-scale-x-100" data-icon="inline-end" />
-                    ) : null}
+                    {!submit.isPending ? <ArrowRight className="rtl:-scale-x-100" data-icon="inline-end" /> : null}
                   </Button>
                 </FieldGroup>
               </form>

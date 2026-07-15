@@ -9,16 +9,12 @@ import { useGetMedia, useGetMediaIdDownloadUrl } from "@/api/media/media"
 import { useGetOfflinesId } from "@/api/offlines/offlines"
 import { Eyebrow } from "@/components/eyebrow"
 import { useBreadcrumb } from "@/components/layout/breadcrumb-context"
+import { OFFLINE_ATTACHMENTS_COLLECTION, OFFLINE_MODEL_TYPE } from "@/components/org/offlines/attachments"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useOrgGuard } from "@/lib/access"
 import { orgHead } from "@/lib/org-head"
 import { formatSessionDate } from "@/lib/session-status"
-
-import {
-  OFFLINE_ATTACHMENTS_COLLECTION,
-  OFFLINE_MODEL_TYPE,
-} from "@/components/org/offlines/attachments"
 
 export const Route = createFileRoute("/_auth/org/offlines/$offlineId")({
   head: () => orgHead("org.offline.title"),

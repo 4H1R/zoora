@@ -10,7 +10,7 @@ export function Eyebrow({ className, ...props }: ComponentProps<"span">) {
         // Persian has no caps and breaks under tracking — signal "label" with
         // weight + a hair more size on Vazirmatn instead.
         "rtl:font-sans rtl:text-[0.8rem] rtl:font-semibold rtl:normal-case",
-        className,
+        className
       )}
       {...props}
     />

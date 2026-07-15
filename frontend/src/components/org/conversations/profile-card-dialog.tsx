@@ -13,8 +13,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
-import { useProfileCard } from "@/stores/profile-card"
 import { cn } from "@/lib/utils"
+import { useProfileCard } from "@/stores/profile-card"
 
 import { avatarTint, initials } from "./lib/avatar"
 import { PresenceDot } from "./presence-dot"
@@ -47,8 +47,7 @@ export function ProfileCardDialog() {
     { user_ids: userId ?? "" },
     { query: { enabled: open && !!userId } }
   )
-  const presence =
-    userId && presenceQuery.data?.status === 200 ? presenceQuery.data.data.data?.[userId] : undefined
+  const presence = userId && presenceQuery.data?.status === 200 ? presenceQuery.data.data.data?.[userId] : undefined
 
   const isSelf = !!userId && userId === user.id
 
@@ -91,9 +90,7 @@ export function ProfileCardDialog() {
     <Dialog open={open} onOpenChange={(next) => !next && close()}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader className="sr-only">
-          <DialogTitle>
-            {card?.name || card?.username || t("conversations.profile.title")}
-          </DialogTitle>
+          <DialogTitle>{card?.name || card?.username || t("conversations.profile.title")}</DialogTitle>
         </DialogHeader>
 
         {loading ? (
@@ -102,9 +99,7 @@ export function ProfileCardDialog() {
           </div>
         ) : !card ? (
           notFound ? (
-            <p className="text-muted-foreground py-8 text-center text-sm">
-              {t("conversations.profile.notFound")}
-            </p>
+            <p className="text-muted-foreground py-8 text-center text-sm">{t("conversations.profile.notFound")}</p>
           ) : null
         ) : (
           <div className="flex flex-col items-center gap-3 py-2">
@@ -115,7 +110,7 @@ export function ProfileCardDialog() {
                 </AvatarFallback>
               </Avatar>
               {presence && (
-                <span className="absolute bottom-1 end-1">
+                <span className="absolute end-1 bottom-1">
                   <PresenceDot online={presence.online} />
                 </span>
               )}
@@ -123,9 +118,7 @@ export function ProfileCardDialog() {
 
             <div className="flex flex-col items-center gap-0.5 text-center">
               <span className="text-lg font-semibold">{card.name}</span>
-              {card.username && (
-                <span className="text-muted-foreground font-mono text-sm">@{card.username}</span>
-              )}
+              {card.username && <span className="text-muted-foreground font-mono text-sm">@{card.username}</span>}
             </div>
 
             {card.isSelf ? (

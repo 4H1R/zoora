@@ -45,11 +45,7 @@ export function QuestionBankFormDialog({ open, onOpenChange, bank }: QuestionBan
 
   useEffect(() => {
     if (!open) return
-    form.reset(
-      isEdit && bank
-        ? { name: bank.name ?? "", description: bank.description ?? "" }
-        : emptyDefaults
-    )
+    form.reset(isEdit && bank ? { name: bank.name ?? "", description: bank.description ?? "" } : emptyDefaults)
   }, [open, bank, isEdit])
 
   const invalidate = () => {
@@ -97,11 +93,7 @@ export function QuestionBankFormDialog({ open, onOpenChange, bank }: QuestionBan
     <ResourceFormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={
-        isEdit
-          ? t("org.session.questionBanks.form.editTitle")
-          : t("org.session.questionBanks.form.createTitle")
-      }
+      title={isEdit ? t("org.session.questionBanks.form.editTitle") : t("org.session.questionBanks.form.createTitle")}
       description={
         isEdit
           ? t("org.session.questionBanks.form.editDescription")
@@ -114,10 +106,7 @@ export function QuestionBankFormDialog({ open, onOpenChange, bank }: QuestionBan
       <FieldGroup>
         <Field data-invalid={!!errors.name || undefined}>
           <FieldLabel>{t("org.session.questionBanks.form.name")}</FieldLabel>
-          <Input
-            {...form.register("name")}
-            placeholder={t("org.session.questionBanks.form.namePlaceholder")}
-          />
+          <Input {...form.register("name")} placeholder={t("org.session.questionBanks.form.namePlaceholder")} />
           <FieldError errors={[errors.name]} />
         </Field>
         <Field>

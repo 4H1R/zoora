@@ -1,6 +1,6 @@
 import type {
-  GithubCom4H1RZooraInternalDomainQuestion as Question,
   GithubCom4H1RZooraInternalDomainQuestionBank as Bank,
+  GithubCom4H1RZooraInternalDomainQuestion as Question,
 } from "@/api/model"
 
 import { useQueryClient } from "@tanstack/react-query"
@@ -18,13 +18,7 @@ import { QuestionCreateModal } from "@/components/admin/questions/QuestionCreate
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -36,22 +30,14 @@ interface QuestionBankQuestionsDialogProps {
   bank: Bank | null
 }
 
-export function QuestionBankQuestionsDialog({
-  open,
-  onOpenChange,
-  bank,
-}: QuestionBankQuestionsDialogProps) {
+export function QuestionBankQuestionsDialog({ open, onOpenChange, bank }: QuestionBankQuestionsDialogProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { canEdit, canDelete } = useBankPermissions()
 
   const bankId = bank?.id ?? ""
 
-  const { data, isLoading } = useGetQuestionBanksIdQuestions(
-    bankId,
-    {},
-    { query: { enabled: open && !!bankId } }
-  )
+  const { data, isLoading } = useGetQuestionBanksIdQuestions(bankId, {}, { query: { enabled: open && !!bankId } })
   const questions: Question[] = (data?.status === 200 && data.data.data?.items) || []
 
   const [formOpen, setFormOpen] = useState(false)
@@ -115,9 +101,7 @@ export function QuestionBankQuestionsDialog({
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">
-                  {t("org.session.questionBanks.questions.count")}
-                </span>
+                <span className="text-muted-foreground">{t("org.session.questionBanks.questions.count")}</span>
                 <Badge variant="secondary">{questions.length}</Badge>
               </div>
               {canEdit && (
@@ -138,52 +122,53 @@ export function QuestionBankQuestionsDialog({
               <ul className="divide-border max-h-[28rem] divide-y overflow-y-auto rounded-md border">
                 {isLoading ? (
                   <>
-                    <li className="px-3 py-3"><Skeleton className="h-5 w-3/5" /></li>
-                    <li className="px-3 py-3"><Skeleton className="h-5 w-2/5" /></li>
-                    <li className="px-3 py-3"><Skeleton className="h-5 w-1/2" /></li>
+                    <li className="px-3 py-3">
+                      <Skeleton className="h-5 w-3/5" />
+                    </li>
+                    <li className="px-3 py-3">
+                      <Skeleton className="h-5 w-2/5" />
+                    </li>
+                    <li className="px-3 py-3">
+                      <Skeleton className="h-5 w-1/2" />
+                    </li>
                   </>
                 ) : (
                   questions.map((q) => (
-                  <li key={q.id} className="group/qrow flex items-start gap-3 px-3 py-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="line-clamp-2 text-sm leading-snug">{q.text}</div>
-                      <div className="mt-1 flex items-center gap-2">
-                        <Badge variant="outline" className="text-[10px] uppercase">
-                          {t(`admin.questions.types.${q.type ?? "descriptive"}`)}
-                        </Badge>
-                        <span className="text-muted-foreground font-mono text-[10px]">
-                          {(q.options?.length ?? 0)} {t("org.session.questionBanks.questions.options")}
-                        </span>
+                    <li key={q.id} className="group/qrow flex items-start gap-3 px-3 py-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="line-clamp-2 text-sm leading-snug">{q.text}</div>
+                        <div className="mt-1 flex items-center gap-2">
+                          <Badge variant="outline" className="text-[10px] uppercase">
+                            {t(`admin.questions.types.${q.type ?? "descriptive"}`)}
+                          </Badge>
+                          <span className="text-muted-foreground font-mono text-[10px]">
+                            {q.options?.length ?? 0} {t("org.session.questionBanks.questions.options")}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover/qrow:opacity-100">
-                      {canEdit && (
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          onClick={() => openEdit(q)}
-                          title={t("common.edit")}
-                        >
-                          <PencilIcon />
-                        </Button>
-                      )}
-                      {canDelete && (
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                          title={t("common.delete")}
-                          onClick={() => {
-                            setDeletingQuestion(q)
-                            setDeleteOpen(true)
-                          }}
-                        >
-                          <Trash2Icon />
-                        </Button>
-                      )}
-                    </div>
-                  </li>
-                ))
+                      <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover/qrow:opacity-100">
+                        {canEdit && (
+                          <Button variant="ghost" size="icon-xs" onClick={() => openEdit(q)} title={t("common.edit")}>
+                            <PencilIcon />
+                          </Button>
+                        )}
+                        {canDelete && (
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            title={t("common.delete")}
+                            onClick={() => {
+                              setDeletingQuestion(q)
+                              setDeleteOpen(true)
+                            }}
+                          >
+                            <Trash2Icon />
+                          </Button>
+                        )}
+                      </div>
+                    </li>
+                  ))
                 )}
               </ul>
             )}

@@ -1,10 +1,5 @@
 import type { ReactNode } from "react"
-import type {
-  Control,
-  FieldError as RHFFieldError,
-  FieldErrors,
-  UseFormRegister,
-} from "react-hook-form"
+import type { Control, FieldErrors, FieldError as RHFFieldError, UseFormRegister } from "react-hook-form"
 
 import {
   ClipboardX,
@@ -14,8 +9,8 @@ import {
   Lock,
   MapPin,
   MousePointerClick,
-  Shuffle,
   ShieldCheck,
+  Shuffle,
   Trophy,
 } from "lucide-react"
 import { Controller } from "react-hook-form"
@@ -61,11 +56,7 @@ export function QuizCoreFields({ register, errors, prefix }: QuizCoreFieldsProps
       </Field>
       <Field>
         <FieldLabel>{t(`${prefix}.description`)}</FieldLabel>
-        <Textarea
-          {...register("description")}
-          placeholder={t(`${prefix}.descriptionPlaceholder`)}
-          rows={3}
-        />
+        <Textarea {...register("description")} placeholder={t(`${prefix}.descriptionPlaceholder`)} rows={3} />
       </Field>
       <Field data-invalid={!!errors.duration_minutes || undefined}>
         <FieldLabel>{t(`${prefix}.duration`)}</FieldLabel>
@@ -166,9 +157,7 @@ export const antiCheatDefaults: AntiCheatValues = {
 }
 
 /** Pulls the anti-cheat subset out of a quiz object, defaulting missing flags to false. */
-export function antiCheatFromQuiz(
-  quiz: Partial<Record<AntiCheatKey, boolean | undefined>>
-): AntiCheatValues {
+export function antiCheatFromQuiz(quiz: Partial<Record<AntiCheatKey, boolean | undefined>>): AntiCheatValues {
   return {
     no_back_navigation: quiz.no_back_navigation ?? false,
     shuffle_questions: quiz.shuffle_questions ?? false,
@@ -242,10 +231,7 @@ interface QuizFlagsFieldsProps {
 
 export function QuizFlagsFields({ values, onChange }: QuizFlagsFieldsProps) {
   const { t } = useTranslation()
-  const activeCount = ANTI_CHEAT_GROUPS.reduce(
-    (n, g) => n + g.toggles.filter((tg) => values[tg.key]).length,
-    0
-  )
+  const activeCount = ANTI_CHEAT_GROUPS.reduce((n, g) => n + g.toggles.filter((tg) => values[tg.key]).length, 0)
 
   return (
     <section className="border-foreground/10 bg-muted/20 flex flex-col gap-4 rounded-lg border p-4">
@@ -262,9 +248,7 @@ export function QuizFlagsFields({ values, onChange }: QuizFlagsFieldsProps) {
               </span>
             )}
           </div>
-          <p className="text-muted-foreground text-xs leading-relaxed">
-            {t("quizAntiCheat.subtitle")}
-          </p>
+          <p className="text-muted-foreground text-xs leading-relaxed">{t("quizAntiCheat.subtitle")}</p>
         </div>
       </header>
 

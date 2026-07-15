@@ -1,9 +1,10 @@
+import type { Group } from "./lib/messages"
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { useProfileCard } from "@/stores/profile-card"
 import { cn } from "@/lib/utils"
+import { useProfileCard } from "@/stores/profile-card"
 
 import { avatarTint, initials, nameColor } from "./lib/avatar"
-import type { Group } from "./lib/messages"
 
 interface MessageGroupProps {
   group: Group
@@ -28,12 +29,7 @@ export function MessageGroup({ group, isOwn, showSenderName, renderBubble }: Mes
   const openSender = () => sender?.id && openCard({ userId: sender.id, name: senderName })
 
   return (
-    <div
-      className={cn(
-        "flex items-end gap-2 px-4 py-1.5",
-        isOwn ? "flex-row pe-12" : "flex-row-reverse ps-12"
-      )}
-    >
+    <div className={cn("flex items-end gap-2 px-4 py-1.5", isOwn ? "flex-row pe-12" : "flex-row-reverse ps-12")}>
       {/* Sender avatar (other senders only), pinned to the group's last bubble.
           Own messages drop it — the accent bubble + end-side alignment already
           signal authorship (iMessage/Telegram asymmetry). Initials-only for now,

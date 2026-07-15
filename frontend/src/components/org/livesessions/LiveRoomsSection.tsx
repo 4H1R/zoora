@@ -15,10 +15,10 @@ import {
   usePostLiveRoomsIdEnd,
   usePostLiveRoomsIdStart,
 } from "@/api/live-sessions/live-sessions"
+import { Eyebrow } from "@/components/eyebrow"
 import { SectionNoResults } from "@/components/org/session/section-no-results"
 import { SectionPagination } from "@/components/org/session/section-pagination"
 import { SectionToolbar } from "@/components/org/session/section-toolbar"
-import { Eyebrow } from "@/components/eyebrow"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { EmptyState } from "@/components/ui/empty-state"
@@ -53,7 +53,9 @@ function ParticipantCountBadge({ roomId, isActive }: { roomId: string; isActive:
   return (
     <span className="text-muted-foreground inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.2em] uppercase">
       <UsersIcon className="size-3" />
-      {isActive ? t("org.session.liveRooms.participantsActive", { active, total }) : t("org.session.liveRooms.participantsTotal", { total })}
+      {isActive
+        ? t("org.session.liveRooms.participantsActive", { active, total })
+        : t("org.session.liveRooms.participantsTotal", { total })}
     </span>
   )
 }
@@ -269,11 +271,7 @@ export function LiveRoomsSection({ classSessionId }: { classSessionId: string })
       </div>
 
       {(rooms.length > 0 || list.isFiltered) && (
-        <SectionToolbar
-          sortOptions={sortOptions}
-          sort={list.sort}
-          onSortChange={list.setSort}
-        >
+        <SectionToolbar sortOptions={sortOptions} sort={list.sort} onSortChange={list.setSort}>
           <Select
             items={statusItems}
             value={list.status ?? "all"}
@@ -329,12 +327,7 @@ export function LiveRoomsSection({ classSessionId }: { classSessionId: string })
               />
             ))}
           </div>
-          <SectionPagination
-            page={list.page}
-            pageSize={pageSize}
-            total={total}
-            onPageChange={list.setPage}
-          />
+          <SectionPagination page={list.page} pageSize={pageSize} total={total} onPageChange={list.setPage} />
         </>
       )}
 

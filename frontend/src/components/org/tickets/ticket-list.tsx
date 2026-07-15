@@ -6,13 +6,7 @@ import { useTranslation } from "react-i18next"
 import { useGetClasses } from "@/api/classes/classes"
 import { TicketStatusBadge } from "@/components/org/tickets/ticket-badges"
 import { EmptyState } from "@/components/ui/empty-state"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatRelativeTime } from "@/lib/relative-time"
 import { cn } from "@/lib/utils"
@@ -86,9 +80,7 @@ export function TicketList({
           </Select>
         </div>
         <div className="min-w-0 flex-1">
-          <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
-            {t("tickets.filters.type")}
-          </label>
+          <label className="text-muted-foreground mb-1.5 block text-xs font-medium">{t("tickets.filters.type")}</label>
           <Select
             items={typeItems}
             value={filters.type ?? "all"}
@@ -107,9 +99,7 @@ export function TicketList({
           </Select>
         </div>
         <div className="w-full">
-          <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
-            {t("tickets.filters.class")}
-          </label>
+          <label className="text-muted-foreground mb-1.5 block text-xs font-medium">{t("tickets.filters.class")}</label>
           <Select
             items={classItems}
             value={filters.classId ?? "all"}
@@ -164,7 +154,7 @@ export function TicketList({
                       "w-full rounded-lg border border-transparent p-3 text-start transition-colors",
                       "hover:bg-muted/60",
                       selected && "border-border bg-muted",
-                      waitingOnYou && "border-s-2 border-s-primary bg-primary/5"
+                      waitingOnYou && "border-s-primary bg-primary/5 border-s-2"
                     )}
                   >
                     <div className="flex items-start justify-between gap-2">

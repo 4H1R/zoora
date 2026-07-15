@@ -1,10 +1,12 @@
+import type { Presence } from "./lib/presence"
+import type { WsEvent } from "./lib/ws-client"
+
 import { useEffect, useRef, useState } from "react"
 
 import { useGetConversationsPresence } from "@/api/conversations/conversations"
 
 import { useChatWs } from "./chat-provider"
-import { pickFreshestStatus, type Presence } from "./lib/presence"
-import type { WsEvent } from "./lib/ws-client"
+import { pickFreshestStatus } from "./lib/presence"
 
 // Presence is cheap to refetch but changes constantly via WS; a moderate
 // staleTime avoids refetch storms while navigation remounts consumers.
@@ -61,9 +63,7 @@ export function usePresence(userIds: string[]): (userId: string) => Presence | u
   return (userId: string): Presence | undefined => {
     const liveStatus = live[userId]
     const snap = snapshot[userId]
-    const snapStatus: Presence | undefined = snap
-      ? { online: !!snap.online, lastSeen: snap.last_seen }
-      : undefined
+    const snapStatus: Presence | undefined = snap ? { online: !!snap.online, lastSeen: snap.last_seen } : undefined
     return pickFreshestStatus(liveStatus, snapStatus)
   }
 }

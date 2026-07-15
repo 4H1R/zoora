@@ -1,10 +1,10 @@
-import { ConnectionQuality } from "livekit-client"
+import type { NetStats } from "./presence"
 import type { TFunction } from "i18next"
+
+import { ConnectionQuality } from "livekit-client"
 import { useTranslation } from "react-i18next"
 
 import { cn } from "@/lib/utils"
-
-import type { NetStats } from "./presence"
 
 export const QUALITY_BARS: Record<ConnectionQuality, number> = {
   [ConnectionQuality.Excellent]: 3,
@@ -42,7 +42,7 @@ export function SignalBars({ quality }: { quality: ConnectionQuality }) {
           className={cn(
             "w-1 rounded-sm",
             h,
-            i < filled ? cn(color, "bg-current") : "bg-current text-muted-foreground/25",
+            i < filled ? cn(color, "bg-current") : "text-muted-foreground/25 bg-current"
           )}
         />
       ))}
@@ -54,7 +54,7 @@ function StatRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-4 text-xs">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-mono text-foreground" dir="ltr">
+      <span className="text-foreground font-mono" dir="ltr">
         {value}
       </span>
     </div>

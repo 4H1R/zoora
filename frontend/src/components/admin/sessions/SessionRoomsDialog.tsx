@@ -10,13 +10,7 @@ import { useGetAdminPractices } from "@/api/admin-practices/admin-practices"
 import { useGetAdminQuizzes } from "@/api/admin-quizzes/admin-quizzes"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useFormatDate } from "@/lib/data-table"
 
@@ -27,12 +21,7 @@ interface SessionRoomsDialogProps {
   classId: string
 }
 
-export function SessionRoomsDialog({
-  open,
-  onOpenChange,
-  session,
-  classId,
-}: SessionRoomsDialogProps) {
+export function SessionRoomsDialog({ open, onOpenChange, session, classId }: SessionRoomsDialogProps) {
   const { t } = useTranslation()
   const sessionId = session?.id
 
@@ -59,9 +48,7 @@ export function SessionRoomsDialog({
   const allQuizzes = (quizData?.status === 200 && quizData.data.data?.items) || []
   // Quizzes are class-scoped. Filter to those whose rooms reference this session.
   const sessionQuizzes = sessionId
-    ? allQuizzes.filter((q) =>
-        (session?.quiz_rooms ?? []).some((r) => r.quiz_id === q.id)
-      )
+    ? allQuizzes.filter((q) => (session?.quiz_rooms ?? []).some((r) => r.quiz_id === q.id))
     : []
   // Fall back to all class quizzes when session has no preloaded rooms.
   const quizzesToShow = sessionQuizzes.length > 0 ? sessionQuizzes : allQuizzes
@@ -72,9 +59,7 @@ export function SessionRoomsDialog({
         <DialogHeader>
           <DialogTitle>
             {t("admin.sessions.manageRooms.title")}
-            {session?.name && (
-              <span className="text-muted-foreground ms-2 text-sm font-normal">· {session.name}</span>
-            )}
+            {session?.name && <span className="text-muted-foreground ms-2 text-sm font-normal">· {session.name}</span>}
           </DialogTitle>
           <DialogDescription>{t("admin.sessions.manageRooms.description")}</DialogDescription>
         </DialogHeader>
@@ -84,22 +69,30 @@ export function SessionRoomsDialog({
             <TabsTrigger value="live">
               <VideoIcon data-icon="inline-start" />
               {t("admin.sessions.manageRooms.tabs.live")}
-              <Badge variant="secondary" className="ms-1.5">{liveRooms.length}</Badge>
+              <Badge variant="secondary" className="ms-1.5">
+                {liveRooms.length}
+              </Badge>
             </TabsTrigger>
             <TabsTrigger value="offline">
               <FileVideoIcon data-icon="inline-start" />
               {t("admin.sessions.manageRooms.tabs.offline")}
-              <Badge variant="secondary" className="ms-1.5">{offlineRooms.length}</Badge>
+              <Badge variant="secondary" className="ms-1.5">
+                {offlineRooms.length}
+              </Badge>
             </TabsTrigger>
             <TabsTrigger value="practice">
               <DumbbellIcon data-icon="inline-start" />
               {t("admin.sessions.manageRooms.tabs.practice")}
-              <Badge variant="secondary" className="ms-1.5">{practiceRooms.length}</Badge>
+              <Badge variant="secondary" className="ms-1.5">
+                {practiceRooms.length}
+              </Badge>
             </TabsTrigger>
             <TabsTrigger value="quiz">
               <ClipboardListIcon data-icon="inline-start" />
               {t("admin.sessions.manageRooms.tabs.quiz")}
-              <Badge variant="secondary" className="ms-1.5">{quizzesToShow.length}</Badge>
+              <Badge variant="secondary" className="ms-1.5">
+                {quizzesToShow.length}
+              </Badge>
             </TabsTrigger>
           </TabsList>
 
@@ -113,11 +106,7 @@ export function SessionRoomsDialog({
                 secondary: r.status,
               }))}
               viewAll={
-                <Link
-                  to="/admin/classes/$classId/live-rooms"
-                  params={{ classId }}
-                  onClick={() => onOpenChange(false)}
-                >
+                <Link to="/admin/classes/$classId/live-rooms" params={{ classId }} onClick={() => onOpenChange(false)}>
                   <Button variant="outline" size="sm">
                     {t("admin.sessions.manageRooms.viewAll")}
                   </Button>
@@ -136,11 +125,7 @@ export function SessionRoomsDialog({
                 secondary: r.description,
               }))}
               viewAll={
-                <Link
-                  to="/admin/classes/$classId/offlines"
-                  params={{ classId }}
-                  onClick={() => onOpenChange(false)}
-                >
+                <Link to="/admin/classes/$classId/offlines" params={{ classId }} onClick={() => onOpenChange(false)}>
                   <Button variant="outline" size="sm">
                     {t("admin.sessions.manageRooms.viewAll")}
                   </Button>
@@ -159,11 +144,7 @@ export function SessionRoomsDialog({
                 secondary: q.description,
               }))}
               viewAll={
-                <Link
-                  to="/admin/classes/$classId/quizzes"
-                  params={{ classId }}
-                  onClick={() => onOpenChange(false)}
-                >
+                <Link to="/admin/classes/$classId/quizzes" params={{ classId }} onClick={() => onOpenChange(false)}>
                   <Button variant="outline" size="sm">
                     {t("admin.sessions.manageRooms.viewAll")}
                   </Button>
@@ -182,11 +163,7 @@ export function SessionRoomsDialog({
                 start_time: r.start_time,
               }))}
               viewAll={
-                <Link
-                  to="/admin/classes/$classId/practices"
-                  params={{ classId }}
-                  onClick={() => onOpenChange(false)}
-                >
+                <Link to="/admin/classes/$classId/practices" params={{ classId }} onClick={() => onOpenChange(false)}>
                   <Button variant="outline" size="sm">
                     {t("admin.sessions.manageRooms.viewAll")}
                   </Button>
@@ -235,9 +212,7 @@ function RoomList({
           <li key={it.id} className="flex items-center justify-between px-3 py-2">
             <div className="min-w-0">
               <div className="truncate text-sm font-medium">{it.primary}</div>
-              {it.secondary && (
-                <div className="text-muted-foreground truncate text-xs">{it.secondary}</div>
-              )}
+              {it.secondary && <div className="text-muted-foreground truncate text-xs">{it.secondary}</div>}
             </div>
           </li>
         ))}

@@ -1,10 +1,11 @@
+import type { WsEvent } from "./lib/ws-client"
+
 import { useEffect } from "react"
 
 import { useGetConversationsIdMembers } from "@/api/conversations/conversations"
 import { useChatRead } from "@/stores/chat"
 
 import { useChatWs } from "./chat-provider"
-import type { WsEvent } from "./lib/ws-client"
 
 const EMPTY: Record<string, string> = {}
 

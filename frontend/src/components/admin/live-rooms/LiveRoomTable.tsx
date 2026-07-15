@@ -61,9 +61,7 @@ function useLiveRoomColumns({
             </div>
             <div className="min-w-0">
               <div className="truncate text-start text-sm font-medium">{label}</div>
-              {className && (
-                <div className="text-muted-foreground truncate text-start text-xs">{className}</div>
-              )}
+              {className && <div className="text-muted-foreground truncate text-start text-xs">{className}</div>}
             </div>
           </div>
         )
@@ -107,9 +105,7 @@ function useLiveRoomColumns({
     {
       accessorKey: "created_at",
       header: t("admin.liveRooms.createdAt"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-xs">{formatDate(row.original.created_at)}</span>
-      ),
+      cell: ({ row }) => <span className="text-muted-foreground text-xs">{formatDate(row.original.created_at)}</span>,
       enableSorting: true,
       enableHiding: true,
     },

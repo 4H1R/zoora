@@ -1,4 +1,5 @@
 import type { GithubCom4H1RZooraInternalDomainPracticeRoom as PracticeRoom } from "@/api/model"
+import type { PendingAttachment } from "@/components/media/MediaAttachmentUploader"
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
@@ -8,16 +9,9 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
 
-import {
-  getGetPracticesQueryKey,
-  usePostPractices,
-  usePutPracticesId,
-} from "@/api/practices/practices"
-import {
-  MediaAttachmentUploader,
-  type PendingAttachment,
-} from "@/components/media/MediaAttachmentUploader"
+import { getGetPracticesQueryKey, usePostPractices, usePutPracticesId } from "@/api/practices/practices"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
+import { MediaAttachmentUploader } from "@/components/media/MediaAttachmentUploader"
 import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
@@ -64,12 +58,7 @@ interface PracticeFormDialogProps {
   classSessionId: string
 }
 
-export function PracticeFormDialog({
-  open,
-  onOpenChange,
-  practice,
-  classSessionId,
-}: PracticeFormDialogProps) {
+export function PracticeFormDialog({ open, onOpenChange, practice, classSessionId }: PracticeFormDialogProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const isEdit = !!practice
@@ -85,14 +74,11 @@ export function PracticeFormDialog({
   useEffect(() => {
     if (!open) return
     form.reset(practice ? practiceToValues(practice) : defaults)
-    setAttachments(
-      (practice?.attachments ?? []).map((id) => ({ media_id: id, name: id, size: 0 })),
-    )
+    setAttachments((practice?.attachments ?? []).map((id) => ({ media_id: id, name: id, size: 0 })))
     if (!practice) setNewModelId(crypto.randomUUID())
   }, [open, practice])
 
-  const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: getGetPracticesQueryKey() })
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: getGetPracticesQueryKey() })
 
   const createMutation = usePostPractices({
     mutation: {
@@ -139,9 +125,7 @@ export function PracticeFormDialog({
       open={open}
       onOpenChange={onOpenChange}
       title={isEdit ? t(`${TRANSLATION_PREFIX}.editTitle`) : t(`${TRANSLATION_PREFIX}.createTitle`)}
-      description={
-        isEdit ? t(`${TRANSLATION_PREFIX}.editDescription`) : t(`${TRANSLATION_PREFIX}.createDescription`)
-      }
+      description={isEdit ? t(`${TRANSLATION_PREFIX}.editDescription`) : t(`${TRANSLATION_PREFIX}.createDescription`)}
       onSubmit={onSubmit}
       isLoading={isLoading}
       submitLabel={isEdit ? t("common.save") : t("common.create")}

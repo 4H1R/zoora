@@ -1,7 +1,8 @@
+import type { WsEvent } from "./ws-client"
+
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ChatWsClient } from "./ws-client"
-import type { WsEvent } from "./ws-client"
 
 // Minimal fake WebSocket installed on globalThis. Tracks instances so tests can
 // drive lifecycle transitions manually.

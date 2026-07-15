@@ -1,14 +1,7 @@
 import type { GithubCom4H1RZooraInternalDomainLead as Lead } from "@/api/model"
 import type { ColumnDef } from "@tanstack/react-table"
 
-import {
-  Building2Icon,
-  CheckIcon,
-  EllipsisVerticalIcon,
-  PhoneIcon,
-  Trash2Icon,
-  UserPlusIcon,
-} from "lucide-react"
+import { Building2Icon, CheckIcon, EllipsisVerticalIcon, PhoneIcon, Trash2Icon, UserPlusIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { GithubCom4H1RZooraInternalDomainLeadStatus as LeadStatus } from "@/api/model"

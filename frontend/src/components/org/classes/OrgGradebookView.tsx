@@ -3,22 +3,15 @@ import type {
   GithubCom4H1RZooraInternalDomainGradebookColumn as GradebookColumn,
   GithubCom4H1RZooraInternalDomainGradebookMatrixRow as GradebookRow,
 } from "@/api/model"
+import type { ErrorType } from "@/api/mutator/custom-instance"
 
 import { useQueryClient } from "@tanstack/react-query"
-import {
-  EllipsisVerticalIcon,
-  LockIcon,
-  PencilIcon,
-  PlusIcon,
-  Trash2Icon,
-  TrophyIcon,
-} from "lucide-react"
+import { EllipsisVerticalIcon, LockIcon, PencilIcon, PlusIcon, Trash2Icon, TrophyIcon } from "lucide-react"
 import { useState } from "react"
-import { useTranslation } from "react-i18next"
 import { useAccess } from "react-access-engine"
+import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import type { ErrorType } from "@/api/mutator/custom-instance"
 import {
   getGetClassesIdGradebookQueryKey,
   useDeleteClassesIdGradebookColumnsColumnId,
@@ -223,10 +216,7 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
                                 <>
                                   {canManage && <DropdownMenuSeparator />}
                                   <DropdownMenuGroup>
-                                    <DropdownMenuItem
-                                      variant="destructive"
-                                      onClick={() => setDeleteColumn(col)}
-                                    >
+                                    <DropdownMenuItem variant="destructive" onClick={() => setDeleteColumn(col)}>
                                       <Trash2Icon data-icon="inline-start" />
                                       {t("common.delete")}
                                     </DropdownMenuItem>
@@ -254,12 +244,10 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
                         >
                           {getInitials(row.student?.name ?? row.student_id ?? "")}
                         </div>
-                        <div className="min-w-0 max-w-28 sm:max-w-44">
+                        <div className="max-w-28 min-w-0 sm:max-w-44">
                           <div className="truncate text-sm font-medium">{row.student?.name ?? "—"}</div>
                           {row.student?.username && (
-                            <div className="text-muted-foreground truncate text-xs">
-                              {row.student.username}
-                            </div>
+                            <div className="text-muted-foreground truncate text-xs">{row.student.username}</div>
                           )}
                         </div>
                       </div>

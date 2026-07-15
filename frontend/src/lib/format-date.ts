@@ -18,8 +18,8 @@ export type DateVariant =
   | "year" // 2026
 
 const PRESETS: Record<DateVariant, Intl.DateTimeFormatOptions> = {
-  "date": { year: "numeric", month: "short", day: "numeric" },
-  "datetime": { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" },
+  date: { year: "numeric", month: "short", day: "numeric" },
+  datetime: { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" },
   "datetime-long": {
     weekday: "short",
     year: "numeric",
@@ -28,9 +28,9 @@ const PRESETS: Record<DateVariant, Intl.DateTimeFormatOptions> = {
     hour: "2-digit",
     minute: "2-digit",
   },
-  "time": { hour: "2-digit", minute: "2-digit" },
+  time: { hour: "2-digit", minute: "2-digit" },
   "weekday-long": { weekday: "long", month: "long", day: "numeric" },
-  "year": { year: "numeric" },
+  year: { year: "numeric" },
 }
 
 const EMPTY = "—"

@@ -17,13 +17,13 @@ import {
   usePostMediaPresign,
 } from "@/api/media/media"
 import { useGetUsersMe } from "@/api/users/users"
-import { ShareDialog } from "@/components/org/files/share-dialog"
-import { MAX_SHARED_UPLOAD_BYTES, uploadSharedFile } from "@/components/org/files/upload-shared"
-import { SHARED_FOLDER, folderStyle, formatBytes } from "@/components/org/files/utils"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { TableFilter } from "@/components/data-table/table-filter"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
+import { ShareDialog } from "@/components/org/files/share-dialog"
+import { MAX_SHARED_UPLOAD_BYTES, uploadSharedFile } from "@/components/org/files/upload-shared"
+import { folderStyle, formatBytes, SHARED_FOLDER } from "@/components/org/files/utils"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner"
@@ -207,9 +207,7 @@ function FolderPage() {
     {
       accessorKey: "created_at",
       header: t("filesPage.columns.createdAt"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-xs">{formatDate(row.original.created_at)}</span>
-      ),
+      cell: ({ row }) => <span className="text-muted-foreground text-xs">{formatDate(row.original.created_at)}</span>,
       enableSorting: true,
       enableHiding: true,
     },
@@ -217,7 +215,12 @@ function FolderPage() {
       id: "actions",
       header: "",
       cell: ({ row }) => (
-        <FileRowActions media={row.original} canDelete={canDelete} onShare={setShareTarget} onDelete={setDeleteTarget} />
+        <FileRowActions
+          media={row.original}
+          canDelete={canDelete}
+          onShare={setShareTarget}
+          onDelete={setDeleteTarget}
+        />
       ),
       enableSorting: false,
       enableHiding: false,

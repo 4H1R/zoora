@@ -137,12 +137,8 @@ export function GradebookMatrixView({ classId }: GradebookMatrixViewProps) {
           {columns.length === 0 && rows.length === 0 && !isLoading ? (
             <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
               <TrophyIcon className="text-muted-foreground size-8 opacity-40" />
-              <p className="text-muted-foreground text-sm">
-                {t("admin.gradebook.noResults")}
-              </p>
-              <p className="text-muted-foreground text-xs">
-                {t("admin.gradebook.noResultsHint")}
-              </p>
+              <p className="text-muted-foreground text-sm">{t("admin.gradebook.noResults")}</p>
+              <p className="text-muted-foreground text-xs">{t("admin.gradebook.noResultsHint")}</p>
             </div>
           ) : (
             <Table>
@@ -163,10 +159,7 @@ export function GradebookMatrixView({ classId }: GradebookMatrixViewProps) {
                               </span>
                             )}
                           </span>
-                          <Badge
-                            variant={TYPE_BADGE[col.type ?? ""] ?? "outline"}
-                            className="w-fit text-[10px]"
-                          >
+                          <Badge variant={TYPE_BADGE[col.type ?? ""] ?? "outline"} className="w-fit text-[10px]">
                             {t(`admin.gradebook.types.${col.type}`)}
                           </Badge>
                         </div>
@@ -192,10 +185,7 @@ export function GradebookMatrixView({ classId }: GradebookMatrixViewProps) {
                             </DropdownMenuGroup>
                             <DropdownMenuSeparator />
                             <DropdownMenuGroup>
-                              <DropdownMenuItem
-                                variant="destructive"
-                                onClick={() => setDeleteColumn(col)}
-                              >
+                              <DropdownMenuItem variant="destructive" onClick={() => setDeleteColumn(col)}>
                                 <Trash2Icon data-icon="inline-start" />
                                 {t("common.delete")}
                               </DropdownMenuItem>
@@ -220,14 +210,10 @@ export function GradebookMatrixView({ classId }: GradebookMatrixViewProps) {
                         >
                           {getInitials(row.student?.name ?? row.student_id ?? "")}
                         </div>
-                        <div className="min-w-0 max-w-28 sm:max-w-44">
-                          <div className="truncate text-sm font-medium">
-                            {row.student?.name ?? "—"}
-                          </div>
+                        <div className="max-w-28 min-w-0 sm:max-w-44">
+                          <div className="truncate text-sm font-medium">{row.student?.name ?? "—"}</div>
                           {row.student?.username && (
-                            <div className="text-muted-foreground truncate text-xs">
-                              {row.student.username}
-                            </div>
+                            <div className="text-muted-foreground truncate text-xs">{row.student.username}</div>
                           )}
                         </div>
                       </div>
@@ -240,8 +226,7 @@ export function GradebookMatrixView({ classId }: GradebookMatrixViewProps) {
                           key={col.id}
                           className={cn(
                             "text-sm",
-                            !isAuto &&
-                              "hover:bg-muted/50 active:bg-muted/50 cursor-pointer transition-colors"
+                            !isAuto && "hover:bg-muted/50 active:bg-muted/50 cursor-pointer transition-colors"
                           )}
                           onClick={() => handleCellClick(col, row)}
                         >

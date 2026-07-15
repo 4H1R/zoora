@@ -1,5 +1,7 @@
-import type { GithubCom4H1RZooraInternalDomainAttendance as Attendance } from "@/api/model"
-import type { GetClassesIdSessionsSessionIdAttendanceStatus as AttendanceStatus } from "@/api/model"
+import type {
+  GithubCom4H1RZooraInternalDomainAttendance as Attendance,
+  GetClassesIdSessionsSessionIdAttendanceStatus as AttendanceStatus,
+} from "@/api/model"
 import type { SortOption } from "@/components/data-table/sort-picker"
 
 import { useQueryClient } from "@tanstack/react-query"
@@ -14,8 +16,8 @@ import {
   XCircleIcon,
 } from "lucide-react"
 import { useState } from "react"
-import { useTranslation } from "react-i18next"
 import { useAccess } from "react-access-engine"
+import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import {
@@ -25,11 +27,11 @@ import {
   usePostClassesIdSessionsSessionIdAttendanceAutoMark,
 } from "@/api/attendance/attendance"
 import { useGetClassesId, useGetClassesIdMembers } from "@/api/classes/classes"
+import { Eyebrow } from "@/components/eyebrow"
+import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { SectionNoResults } from "@/components/org/session/section-no-results"
 import { SectionPagination } from "@/components/org/session/section-pagination"
 import { SectionToolbar } from "@/components/org/session/section-toolbar"
-import { Eyebrow } from "@/components/eyebrow"
-import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
@@ -194,7 +196,9 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
   const [editing, setEditing] = useState<Attendance | null>(null)
   const [deleting, setDeleting] = useState<Attendance | null>(null)
 
-  const { data: classData, isPending: classPending } = useGetClassesId(classId, { query: { enabled: canView && !!classId } })
+  const { data: classData, isPending: classPending } = useGetClassesId(classId, {
+    query: { enabled: canView && !!classId },
+  })
   const cls = (classData?.status === 200 && classData.data.data) || undefined
 
   // Roster visibility mirrors backend canManageClass: classes:update_any OR class owner.
@@ -225,12 +229,9 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
         page: list.params.page,
       }
 
-  const query = useGetClassesIdSessionsSessionIdAttendance(
-    classId,
-    classSessionId,
-    attendanceParams,
-    { query: { enabled: canView && !!classId } }
-  )
+  const query = useGetClassesIdSessionsSessionIdAttendance(classId, classSessionId, attendanceParams, {
+    query: { enabled: canView && !!classId },
+  })
   const attendanceData = (query.data?.status === 200 && query.data.data.data) || undefined
   const records = attendanceData?.items ?? []
   const total = attendanceData?.total ?? 0
@@ -316,7 +317,9 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
           <EmptyState
             icon={UserCheckIcon}
             title={t("org.session.attendance.emptyTitle")}
-            description={canCreate ? t("org.session.attendance.emptyHint") : t("org.session.attendance.emptyHintMember")}
+            description={
+              canCreate ? t("org.session.attendance.emptyHint") : t("org.session.attendance.emptyHintMember")
+            }
           />
         )
       ) : (
@@ -333,12 +336,7 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
               />
             ))}
           </div>
-          <SectionPagination
-            page={list.page}
-            pageSize={pageSize}
-            total={total}
-            onPageChange={list.setPage}
-          />
+          <SectionPagination page={list.page} pageSize={pageSize} total={total} onPageChange={list.setPage} />
         </>
       )}
 

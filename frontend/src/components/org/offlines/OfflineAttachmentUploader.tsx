@@ -7,11 +7,7 @@ import { toast } from "sonner"
 import { getGetMediaQueryKey, useDeleteMediaId, useGetMedia, usePostMediaPresign } from "@/api/media/media"
 import { Button } from "@/components/ui/button"
 
-import {
-  OFFLINE_ATTACHMENTS_COLLECTION,
-  OFFLINE_MODEL_TYPE,
-  uploadOfflineAttachment,
-} from "./attachments"
+import { OFFLINE_ATTACHMENTS_COLLECTION, OFFLINE_MODEL_TYPE, uploadOfflineAttachment } from "./attachments"
 
 interface OfflineAttachmentUploaderProps {
   offlineId: string
@@ -74,10 +70,7 @@ export function OfflineAttachmentUploader({ offlineId }: OfflineAttachmentUpload
       ) : (
         <ul className="flex flex-col gap-1.5">
           {attachments.map((m) => (
-            <li
-              key={m.id}
-              className="border-border flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
-            >
+            <li key={m.id} className="border-border flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
               <FileIcon className="text-muted-foreground size-4 shrink-0" />
               <span className="min-w-0 flex-1 truncate">{m.name || m.file_name}</span>
               <Button

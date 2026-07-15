@@ -1,5 +1,5 @@
-import { useProfileCard } from "@/stores/profile-card"
 import { cn } from "@/lib/utils"
+import { useProfileCard } from "@/stores/profile-card"
 
 import { splitMentions } from "./lib/mentions"
 
@@ -19,7 +19,7 @@ export function MessageContent({ content, isOwn }: MessageContentProps) {
   const segments = splitMentions(content)
 
   return (
-    <p dir="auto" className="break-words whitespace-pre-wrap text-start">
+    <p dir="auto" className="text-start break-words whitespace-pre-wrap">
       {segments.map((segment, index) =>
         segment.isMention ? (
           <button

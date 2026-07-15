@@ -2,23 +2,17 @@ import type { ChevronProps } from "react-day-picker"
 
 import * as jalali from "date-fns-jalali"
 import { faIR } from "date-fns-jalali/locale"
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import * as React from "react"
 import { DayPicker } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 
 import { getClassNames } from "./calendar.styles"
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 
 export type CalendarJalaliProps = React.ComponentProps<typeof DayPicker>
 
-function CalendarJalali({
-  components,
-  showOutsideDays = true,
-  className,
-  classNames,
-  ...props
-}: CalendarJalaliProps) {
+function CalendarJalali({ components, showOutsideDays = true, className, classNames, ...props }: CalendarJalaliProps) {
   return (
     <DayPicker
       dir="rtl"

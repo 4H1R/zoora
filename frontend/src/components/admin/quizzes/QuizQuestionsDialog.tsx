@@ -20,28 +20,11 @@ import { BankPicker } from "@/components/admin/forms/BankPicker"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 
 const NEGATIVE_MODES = ["none", "per_wrong", "accumulative"] as const
@@ -91,23 +74,19 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
     setNegValue("")
   }
 
-  const showNegValue =
-    negDefault !== "default" && NEGATIVE_VALUE_MODES.includes(negDefault)
+  const showNegValue = negDefault !== "default" && NEGATIVE_VALUE_MODES.includes(negDefault)
   const negValueError: "required" | "positive" | "range" | null = (() => {
     if (!showNegValue) return null
     if (negValue.trim() === "") return "required"
     const n = Number(negValue)
     if (Number.isNaN(n) || n <= 0) return "positive"
-    if (negDefault === "accumulative" && (!Number.isInteger(n) || n < 2 || n > 5))
-      return "range"
+    if (negDefault === "accumulative" && (!Number.isInteger(n) || n < 2 || n > 5)) return "range"
     return null
   })()
 
-  const { data: rulesData, isLoading: rulesLoading } = useGetQuizzesIdRules(
-    quizId ?? "",
-    undefined,
-    { query: { enabled: open && !!quizId } }
-  )
+  const { data: rulesData, isLoading: rulesLoading } = useGetQuizzesIdRules(quizId ?? "", undefined, {
+    query: { enabled: open && !!quizId },
+  })
   const rules = (rulesData?.status === 200 && rulesData.data.data?.items) || []
 
   const { data: questionsData, isLoading: questionsLoading } = useGetQuestionBanksIdQuestions(
@@ -115,8 +94,7 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
     {},
     { query: { enabled: open && !!bankId } }
   )
-  const questions: Question[] =
-    (questionsData?.status === 200 && questionsData.data.data?.items) || []
+  const questions: Question[] = (questionsData?.status === 200 && questionsData.data.data?.items) || []
 
   const invalidateRules = () => {
     if (quizId) {
@@ -149,10 +127,8 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
 
   const negativeDefaultMode = negDefault === "default" ? undefined : negDefault
   // The single value input maps to a different backend field per mode.
-  const negativeDefaultValue =
-    negDefault === "per_wrong" ? Number(negValue) : undefined
-  const negativeDefaultWrongsPerPoint =
-    negDefault === "accumulative" ? Number(negValue) : undefined
+  const negativeDefaultValue = negDefault === "per_wrong" ? Number(negValue) : undefined
+  const negativeDefaultWrongsPerPoint = negDefault === "accumulative" ? Number(negValue) : undefined
 
   const addManualRule = () => {
     if (!quizId || !bankId || selectedIds.length === 0 || negValueError) return
@@ -195,11 +171,7 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
         <DialogHeader>
           <DialogTitle>
             {t("admin.quizzes.questions.title")}
-            {quiz?.title && (
-              <span className="text-muted-foreground ms-2 text-sm font-normal">
-                · {quiz.title}
-              </span>
-            )}
+            {quiz?.title && <span className="text-muted-foreground ms-2 text-sm font-normal">· {quiz.title}</span>}
           </DialogTitle>
           <DialogDescription>{t("admin.quizzes.questions.description")}</DialogDescription>
         </DialogHeader>
@@ -213,9 +185,7 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
           </div>
 
           <ul className="divide-border max-h-48 divide-y overflow-y-auto rounded-md border">
-            {rulesLoading && (
-              <li className="text-muted-foreground px-3 py-2 text-center text-sm">…</li>
-            )}
+            {rulesLoading && <li className="text-muted-foreground px-3 py-2 text-center text-sm">…</li>}
             {!rulesLoading && rules.length === 0 && (
               <li className="text-muted-foreground px-3 py-3 text-center text-xs">
                 {t("admin.quizzes.questions.empty")}
@@ -232,11 +202,7 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
                       {rule.count ?? 0} {t("admin.quizzes.questions.questions")}
                     </span>
                   </div>
-                  {rule.bank?.name && (
-                    <span className="text-muted-foreground truncate text-xs">
-                      {rule.bank.name}
-                    </span>
-                  )}
+                  {rule.bank?.name && <span className="text-muted-foreground truncate text-xs">{rule.bank.name}</span>}
                 </div>
                 <Button
                   variant="ghost"
@@ -279,9 +245,7 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
                       </span>
                     </FieldLabel>
                     <ul className="divide-border max-h-64 divide-y overflow-y-auto rounded-md border">
-                      {questionsLoading && (
-                        <li className="text-muted-foreground px-3 py-2 text-center text-sm">…</li>
-                      )}
+                      {questionsLoading && <li className="text-muted-foreground px-3 py-2 text-center text-sm">…</li>}
                       {!questionsLoading && questions.length === 0 && (
                         <li className="text-muted-foreground px-3 py-3 text-center text-xs">
                           {t("admin.questions.noResults")}
@@ -294,9 +258,7 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
                           <li key={q.id} className="flex items-start gap-3 px-3 py-2">
                             <Checkbox
                               checked={isSelected}
-                              onCheckedChange={(c) =>
-                                setSelected((prev) => ({ ...prev, [qid]: !!c }))
-                              }
+                              onCheckedChange={(c) => setSelected((prev) => ({ ...prev, [qid]: !!c }))}
                             />
                             <div className="min-w-0 flex-1">
                               <div className="line-clamp-2 text-sm">{q.text}</div>
@@ -314,12 +276,7 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
                   <Button
                     type="button"
                     onClick={addManualRule}
-                    disabled={
-                      !bankId ||
-                      selectedIds.length === 0 ||
-                      !!negValueError ||
-                      createRule.isPending
-                    }
+                    disabled={!bankId || selectedIds.length === 0 || !!negValueError || createRule.isPending}
                   >
                     {t("admin.quizzes.questions.addManual")}
                   </Button>
@@ -348,17 +305,13 @@ export function QuizQuestionsDialog({ open, onOpenChange, quiz }: QuizQuestionsD
                     value={randomCount}
                     onChange={(e) => setRandomCount(Number(e.target.value))}
                   />
-                  <p className="text-muted-foreground text-xs">
-                    {t("admin.quizzes.questions.randomHint")}
-                  </p>
+                  <p className="text-muted-foreground text-xs">{t("admin.quizzes.questions.randomHint")}</p>
                 </Field>
                 <div className="flex justify-end">
                   <Button
                     type="button"
                     onClick={addRandomRule}
-                    disabled={
-                      !bankId || randomCount <= 0 || !!negValueError || createRule.isPending
-                    }
+                    disabled={!bankId || randomCount <= 0 || !!negValueError || createRule.isPending}
                   >
                     {t("admin.quizzes.questions.addRandom")}
                   </Button>
@@ -384,13 +337,7 @@ interface NegativeDefaultFieldProps {
 // multiple-choice question added from the bank — manual and random alike. For
 // per_wrong / accumulative the user enters the penalty value; the field below
 // collapses smoothly for the modes that don't take one.
-function NegativeDefaultField({
-  value,
-  onChange,
-  numberValue,
-  onNumberValueChange,
-  error,
-}: NegativeDefaultFieldProps) {
+function NegativeDefaultField({ value, onChange, numberValue, onNumberValueChange, error }: NegativeDefaultFieldProps) {
   const { t } = useTranslation()
   const showValue = value === "per_wrong" || value === "accumulative"
   const isAccumulative = value === "accumulative"
@@ -415,9 +362,7 @@ function NegativeDefaultField({
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="default">
-            {t("admin.quizzes.questions.negativeDefault.keepDefault")}
-          </SelectItem>
+          <SelectItem value="default">{t("admin.quizzes.questions.negativeDefault.keepDefault")}</SelectItem>
           {NEGATIVE_MODES.map((m) => (
             <SelectItem key={m} value={m}>
               {t(`admin.questions.form.negativeMark.modes.${m}`)}
@@ -425,16 +370,12 @@ function NegativeDefaultField({
           ))}
         </SelectContent>
       </Select>
-      <p className="text-muted-foreground text-xs">
-        {t("admin.quizzes.questions.negativeDefault.hint")}
-      </p>
+      <p className="text-muted-foreground text-xs">{t("admin.quizzes.questions.negativeDefault.hint")}</p>
 
       <div
         className={cn(
           "grid transition-all duration-200 ease-out",
-          showValue
-            ? "mt-1 grid-rows-[1fr] opacity-100"
-            : "grid-rows-[0fr] opacity-0"
+          showValue ? "mt-1 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
         )}
       >
         <div className="overflow-hidden">
@@ -451,9 +392,7 @@ function NegativeDefaultField({
             onChange={(e) => onNumberValueChange(e.target.value)}
           />
           {error ? (
-            <p className="text-destructive text-xs">
-              {t(`admin.quizzes.questions.negativeDefault.errors.${error}`)}
-            </p>
+            <p className="text-destructive text-xs">{t(`admin.quizzes.questions.negativeDefault.errors.${error}`)}</p>
           ) : (
             <p className="text-muted-foreground text-xs">{valueHint}</p>
           )}

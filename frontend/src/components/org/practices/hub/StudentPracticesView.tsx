@@ -15,14 +15,14 @@ import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ViewModeToggle, useViewMode } from "@/components/view-mode-toggle"
+import { useViewMode, ViewModeToggle } from "@/components/view-mode-toggle"
 import { useAdminTable } from "@/lib/data-table"
 import { formatScore } from "@/lib/score"
 import { formatSessionDate } from "@/lib/session-status"
 import { Route } from "@/routes/_auth/org/practices/index"
 
-import { usePracticeStudentColumns } from "./practice-student-columns"
 import { PracticeStatusBadge } from "./practice-status-badge"
+import { usePracticeStudentColumns } from "./practice-student-columns"
 
 const STATUS_FILTERS = ["all", "to_submit", "submitted", "graded", "upcoming", "missed"] as const
 

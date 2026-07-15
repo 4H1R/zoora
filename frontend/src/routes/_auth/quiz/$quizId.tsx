@@ -8,8 +8,7 @@ export const Route = createFileRoute("/_auth/quiz/$quizId")({
   // classSessionId is optional: present when the quiz is taken inside a live
   // class session, absent for a standalone exam. Same page either way.
   validateSearch: (search: Record<string, unknown>): { classSessionId?: string } => ({
-    classSessionId:
-      typeof search.classSessionId === "string" ? search.classSessionId : undefined,
+    classSessionId: typeof search.classSessionId === "string" ? search.classSessionId : undefined,
   }),
   component: RouteComponent,
 })

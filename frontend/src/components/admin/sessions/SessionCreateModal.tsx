@@ -139,9 +139,7 @@ export function SessionCreateModal({ open, onOpenChange, classId, session }: Ses
       open={open}
       onOpenChange={onOpenChange}
       title={isEdit ? t("admin.sessions.form.editTitle") : t("admin.sessions.form.createTitle")}
-      description={
-        isEdit ? t("admin.sessions.form.editDescription") : t("admin.sessions.form.createDescription")
-      }
+      description={isEdit ? t("admin.sessions.form.editDescription") : t("admin.sessions.form.createDescription")}
       onSubmit={onSubmit}
       isLoading={isLoading}
       submitLabel={isEdit ? t("common.save") : t("common.create")}
@@ -149,10 +147,7 @@ export function SessionCreateModal({ open, onOpenChange, classId, session }: Ses
       <FieldGroup>
         <Field data-invalid={!!errors.name || undefined}>
           <FieldLabel>{t("admin.sessions.form.name")}</FieldLabel>
-          <Input
-            {...form.register("name")}
-            placeholder={t("admin.sessions.form.namePlaceholder")}
-          />
+          <Input {...form.register("name")} placeholder={t("admin.sessions.form.namePlaceholder")} />
           <FieldError errors={[errors.name]} />
         </Field>
 

@@ -1,5 +1,6 @@
-import { useDataChannel } from "@livekit/components-react"
 import type { DataPublishOptions } from "livekit-client"
+
+import { useDataChannel } from "@livekit/components-react"
 import { useRef } from "react"
 
 export interface ChannelMessage {
@@ -31,7 +32,7 @@ export type ChannelSend = (data: Uint8Array, options?: DataPublishOptions) => vo
  */
 export function useRoomChannel(
   topic: string | undefined,
-  onMessage: (msg: ChannelMessage) => void,
+  onMessage: (msg: ChannelMessage) => void
 ): { send: ChannelSend } {
   const onMessageRef = useRef(onMessage)
   onMessageRef.current = onMessage

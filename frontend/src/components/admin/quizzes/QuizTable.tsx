@@ -1,13 +1,7 @@
 import type { GithubCom4H1RZooraInternalDomainQuiz as Quiz } from "@/api/model"
 import type { ColumnDef, SortingState } from "@tanstack/react-table"
 
-import {
-  ClipboardListIcon,
-  ClockIcon,
-  LockKeyholeIcon,
-  ShuffleIcon,
-  TrophyIcon,
-} from "lucide-react"
+import { ClipboardListIcon, ClockIcon, LockKeyholeIcon, ShuffleIcon, TrophyIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { DataTable } from "@/components/data-table/data-table"
@@ -47,9 +41,7 @@ function useQuizColumns({
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="truncate text-start text-sm font-medium">
-                {row.original.title}
-              </span>
+              <span className="truncate text-start text-sm font-medium">{row.original.title}</span>
               {row.original.no_back_navigation && (
                 <Badge
                   variant="secondary"
@@ -72,9 +64,7 @@ function useQuizColumns({
               )}
             </div>
             {row.original.description && (
-              <div className="text-muted-foreground truncate text-start text-xs">
-                {row.original.description}
-              </div>
+              <div className="text-muted-foreground truncate text-start text-xs">{row.original.description}</div>
             )}
           </div>
         </div>
@@ -86,9 +76,7 @@ function useQuizColumns({
       accessorKey: "class",
       header: t("admin.quizzes.class"),
       cell: ({ row }) => (
-        <span className="text-sm">
-          {row.original.class?.name ?? <span className="text-muted-foreground">—</span>}
-        </span>
+        <span className="text-sm">{row.original.class?.name ?? <span className="text-muted-foreground">—</span>}</span>
       ),
       enableSorting: false,
       enableHiding: true,
@@ -121,9 +109,7 @@ function useQuizColumns({
       accessorKey: "user",
       header: t("admin.quizzes.teacher"),
       cell: ({ row }) => (
-        <span className="text-sm">
-          {row.original.user?.name ?? <span className="text-muted-foreground">—</span>}
-        </span>
+        <span className="text-sm">{row.original.user?.name ?? <span className="text-muted-foreground">—</span>}</span>
       ),
       enableSorting: false,
       enableHiding: true,
@@ -131,24 +117,14 @@ function useQuizColumns({
     {
       accessorKey: "created_at",
       header: t("admin.quizzes.createdAt"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-xs">
-          {formatDate(row.original.created_at)}
-        </span>
-      ),
+      cell: ({ row }) => <span className="text-muted-foreground text-xs">{formatDate(row.original.created_at)}</span>,
       enableSorting: true,
       enableHiding: true,
     },
     {
       id: "actions",
       header: "",
-      cell: ({ row }) => (
-        <QuizActions
-          quiz={row.original}
-          onEdit={onEdit}
-          onManageQuestions={onManageQuestions}
-        />
-      ),
+      cell: ({ row }) => <QuizActions quiz={row.original} onEdit={onEdit} onManageQuestions={onManageQuestions} />,
       enableSorting: false,
       enableHiding: false,
     },
@@ -164,14 +140,7 @@ interface QuizTableProps {
   onManageQuestions: (q: Quiz) => void
 }
 
-export function QuizTable({
-  quizzes,
-  total,
-  isLoading,
-  sorting,
-  onEdit,
-  onManageQuestions,
-}: QuizTableProps) {
+export function QuizTable({ quizzes, total, isLoading, sorting, onEdit, onManageQuestions }: QuizTableProps) {
   const { t } = useTranslation()
   const columns = useQuizColumns({ onEdit, onManageQuestions })
 

@@ -6,11 +6,11 @@
  * OpenAPI spec version: 1.0
  */
 
-export type GithubCom4H1RZooraInternalDomainMessageType = typeof GithubCom4H1RZooraInternalDomainMessageType[keyof typeof GithubCom4H1RZooraInternalDomainMessageType];
-
+export type GithubCom4H1RZooraInternalDomainMessageType =
+  (typeof GithubCom4H1RZooraInternalDomainMessageType)[keyof typeof GithubCom4H1RZooraInternalDomainMessageType]
 
 export const GithubCom4H1RZooraInternalDomainMessageType = {
-  MessageTypeText: 'text',
-  MessageTypeFile: 'file',
-  MessageTypeSystem: 'system',
-} as const;
+  MessageTypeText: "text",
+  MessageTypeFile: "file",
+  MessageTypeSystem: "system",
+} as const

@@ -1,12 +1,8 @@
-import { addDays, endOfMonth, format, isSameDay, startOfMonth } from "date-fns"
-import {
-  endOfMonth as jEndOfMonth,
-  format as jFormat,
-  startOfMonth as jStartOfMonth,
-} from "date-fns-jalali"
-import { faIR } from "date-fns-jalali/locale"
-
 import type { GithubCom4H1RZooraInternalDomainCalendarEvent as CalendarEvent } from "@/api/model"
+
+import { addDays, endOfMonth, format, isSameDay, startOfMonth } from "date-fns"
+import { endOfMonth as jEndOfMonth, format as jFormat, startOfMonth as jStartOfMonth } from "date-fns-jalali"
+import { faIR } from "date-fns-jalali/locale"
 
 export type { CalendarEvent }
 
@@ -22,10 +18,7 @@ export function dateKey(d: Date): string {
 // getMonthRange returns the UTC [from, to] ISO window covering the visible
 // month grid, padded ±7 days for the overflow weeks. Bounds are computed in
 // the active calendar system so the Jalali grid is fully covered.
-export function getMonthRange(
-  month: Date,
-  lang: string
-): { from: string; to: string } {
+export function getMonthRange(month: Date, lang: string): { from: string; to: string } {
   const isFa = lang === "fa"
   const start = isFa ? jStartOfMonth(month) : startOfMonth(month)
   const end = isFa ? jEndOfMonth(month) : endOfMonth(month)
@@ -37,10 +30,7 @@ export function getMonthRange(
 
 // formatDayParts splits a date into its weekday name and long date in the
 // active calendar system (Jalali for fa, Gregorian otherwise).
-export function formatDayParts(
-  d: Date,
-  lang: string
-): { weekday: string; date: string } {
+export function formatDayParts(d: Date, lang: string): { weekday: string; date: string } {
   if (lang === "fa") {
     return {
       weekday: jFormat(d, "EEEE", { locale: faIR }),
@@ -58,9 +48,7 @@ export function formatDayParts(
 export function eventTime(iso: string | undefined, lang: string): string {
   if (!iso) return ""
   const d = new Date(iso)
-  return lang === "fa"
-    ? jFormat(d, "HH:mm", { locale: faIR })
-    : format(d, "HH:mm")
+  return lang === "fa" ? jFormat(d, "HH:mm", { locale: faIR }) : format(d, "HH:mm")
 }
 
 // isToday reports whether d falls on the current local day. Calendar-system
@@ -102,9 +90,7 @@ export function eventAccent(type: string | undefined): EventAccent {
 }
 
 // bucketByDay groups events by local day key. Each value preserves order.
-export function bucketByDay(
-  events: CalendarEvent[]
-): Map<string, CalendarEvent[]> {
+export function bucketByDay(events: CalendarEvent[]): Map<string, CalendarEvent[]> {
   const map = new Map<string, CalendarEvent[]>()
   for (const e of events) {
     if (!e.start_time) continue
@@ -131,9 +117,7 @@ export function eventDotColor(type: string | undefined): string {
   }
 }
 
-export function eventLink(
-  e: CalendarEvent
-): { to: string; params: Record<string, string> } {
+export function eventLink(e: CalendarEvent): { to: string; params: Record<string, string> } {
   const entity = e.entity_id ?? ""
   switch (e.type) {
     case "live":

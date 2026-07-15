@@ -1,3 +1,4 @@
+import type { DashboardTileSpec } from "./tile-grid"
 import type { OrgRouteKey } from "@/lib/org-routes"
 
 import { useAccess } from "react-access-engine"
@@ -6,8 +7,6 @@ import { useTranslation } from "react-i18next"
 import { useFeatureGate } from "@/lib/entitlements"
 import { navVisible } from "@/lib/org-nav"
 import { ORG_ROUTES } from "@/lib/org-routes"
-
-import type { DashboardTileSpec } from "./tile-grid"
 
 // Launcher tiles in display order. Excludes "dashboard", includes "online-classes".
 // Metadata comes from ORG_ROUTES so tiles and nav never drift.

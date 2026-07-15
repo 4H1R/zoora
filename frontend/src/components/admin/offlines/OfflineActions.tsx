@@ -6,10 +6,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import {
-  getGetAdminOfflinesQueryKey,
-  useDeleteAdminOfflinesId,
-} from "@/api/admin-offlines/admin-offlines"
+import { getGetAdminOfflinesQueryKey, useDeleteAdminOfflinesId } from "@/api/admin-offlines/admin-offlines"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
 import {

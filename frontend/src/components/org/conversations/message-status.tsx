@@ -54,9 +54,7 @@ export function MessageStatus({ convId, messageId, conversationType, status }: M
   }
 
   const members = membersData?.status === 200 ? (membersData.data.data ?? []) : []
-  const otherIds = members
-    .map((m) => m.user_id ?? m.user?.id)
-    .filter((id): id is string => !!id && id !== user.id)
+  const otherIds = members.map((m) => m.user_id ?? m.user?.id).filter((id): id is string => !!id && id !== user.id)
 
   // Read = every OTHER member has read. Channels skip the compute (single tick
   // only); a solo conversation (no other members) also never reaches double.

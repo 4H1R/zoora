@@ -1,10 +1,9 @@
+import type { AnswerState } from "./types"
 import type {
   GithubCom4H1RZooraInternalDomainNegativeMarkConfig as NegativeMarkConfig,
   GithubCom4H1RZooraInternalDomainQuestion as Question,
   GithubCom4H1RZooraInternalDomainQuizRoom as QuizRoom,
 } from "@/api/model"
-
-import type { AnswerState } from "./types"
 
 export function shuffleSeeded<T>(arr: T[], seed: string): T[] {
   let h = 2166136261
@@ -48,11 +47,7 @@ export function computeDeadline(startedAtIso: string | undefined, durationMinute
   return Math.min(startedAt + durationMs, roomEnd)
 }
 
-export function countAnswered(
-  answers: Record<string, AnswerState>,
-  order: string[],
-  questions: Question[],
-): number {
+export function countAnswered(answers: Record<string, AnswerState>, order: string[], questions: Question[]): number {
   let n = 0
   for (const qid of order) {
     const q = questions.find((qq) => qq.id === qid)
@@ -85,7 +80,7 @@ export function formatFraction(value: number): string {
 // when the config has no negative marking.
 export function penaltyText(
   cfg: NegativeMarkConfig | undefined,
-  t: (key: string, opts?: Record<string, unknown>) => string,
+  t: (key: string, opts?: Record<string, unknown>) => string
 ): string | null {
   if (!cfg || !cfg.mode || cfg.mode === "none") return null
   if (cfg.mode === "per_wrong") {

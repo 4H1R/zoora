@@ -233,9 +233,7 @@ export function ConversationSettings({ conversation, open, onOpenChange, canMana
           </div>
         </div>
 
-        {canEditDetails && (
-          <FormSaveBar form={form} onSave={onSaveDetails} isPending={patchMutation.isPending} />
-        )}
+        {canEditDetails && <FormSaveBar form={form} onSave={onSaveDetails} isPending={patchMutation.isPending} />}
       </SheetContent>
 
       <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>

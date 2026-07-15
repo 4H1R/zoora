@@ -1,5 +1,5 @@
-import type { ChatMessage, LocalAttachment } from "./messages"
 import type { UploadResult } from "../upload/upload-manager"
+import type { ChatMessage, LocalAttachment } from "./messages"
 import type { InfiniteData } from "@tanstack/react-query"
 
 import { describe, expect, it } from "vitest"
@@ -106,12 +106,9 @@ describe("allAttachmentsSucceeded", () => {
 
   it("is false while any attachment is still uploading or errored", () => {
     expect(allAttachmentsSucceeded([att("a", { status: "done", mediaId: "x" }), att("b")])).toBe(false)
-    expect(
-      allAttachmentsSucceeded([
-        att("a", { status: "done", mediaId: "x" }),
-        att("b", { status: "error" }),
-      ])
-    ).toBe(false)
+    expect(allAttachmentsSucceeded([att("a", { status: "done", mediaId: "x" }), att("b", { status: "error" })])).toBe(
+      false
+    )
   })
 
   it("is false when a done attachment has no media id", () => {
@@ -120,10 +117,7 @@ describe("allAttachmentsSucceeded", () => {
 
   it("is true when every attachment is done with a media id", () => {
     expect(
-      allAttachmentsSucceeded([
-        att("a", { status: "done", mediaId: "x" }),
-        att("b", { status: "done", mediaId: "y" }),
-      ])
+      allAttachmentsSucceeded([att("a", { status: "done", mediaId: "x" }), att("b", { status: "done", mediaId: "y" })])
     ).toBe(true)
   })
 })

@@ -192,7 +192,8 @@ func main() {
 		os.Exit(1)
 	}
 	mediaRepo := media.NewRepository(db)
-	mediaService := media.NewService(mediaRepo, storageClient, nil, log)
+	// usage reader is nil — the worker never serves the files "by owner" view.
+	mediaService := media.NewService(mediaRepo, storageClient, nil, nil, log)
 	queueServer.HandleFunc(domain.TypeMediaCleanup, media.NewCleanupHandler(mediaService))
 	queueServer.HandleFunc(domain.TypeOrganizationCleanup, organizations.NewCleanupHandler(storageClient))
 

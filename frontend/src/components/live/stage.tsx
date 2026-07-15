@@ -1,10 +1,10 @@
-import { ParticipantTile, useTracks, VideoTrack } from "@livekit/components-react"
-import { isTrackReference } from "@livekit/components-react"
+import type { StageContent } from "./use-stage"
+
+import { isTrackReference, ParticipantTile, useTracks, VideoTrack } from "@livekit/components-react"
 import { Track } from "livekit-client"
 import { MonitorUp } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import type { StageContent } from "./use-stage"
 import { SlidesStage } from "./slides-stage"
 import { WhiteboardStage } from "./whiteboard-stage"
 import { ZoomableStage } from "./zoomable-stage"
@@ -47,20 +47,16 @@ export function Stage({ stage, isHost, liveId, canDraw, onPageChange, onLoadNumP
     )
   }
 
-  const screenShare = tracks.find(
-    (tr) => isTrackReference(tr) && tr.publication.source === Track.Source.ScreenShare
-  )
+  const screenShare = tracks.find((tr) => isTrackReference(tr) && tr.publication.source === Track.Source.ScreenShare)
 
   // Presenter-cam fallback: first camera track (only hosts publish in Phase 1).
-  const presenterCam = tracks.find(
-    (tr) => isTrackReference(tr) && tr.publication.source === Track.Source.Camera
-  )
+  const presenterCam = tracks.find((tr) => isTrackReference(tr) && tr.publication.source === Track.Source.Camera)
 
   const active = screenShare ?? presenterCam
 
   if (!active || !isTrackReference(active)) {
     // Quiet empty surface — no loud placeholder. Keeps the stage container so layout holds.
-    return <div className="h-full w-full rounded-2xl border border-border bg-muted/30" />
+    return <div className="border-border bg-muted/30 h-full w-full rounded-2xl border" />
   }
 
   // LiveKit's default ParticipantTile hardcodes an English "'s screen" suffix on

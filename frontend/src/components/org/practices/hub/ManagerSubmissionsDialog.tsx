@@ -10,13 +10,7 @@ import { useGetPracticesIdSubmissions } from "@/api/practices/practices"
 import { PracticeGradeDialog } from "@/components/org/practices/PracticeGradeDialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatScore } from "@/lib/score"
 import { formatSessionDate } from "@/lib/session-status"

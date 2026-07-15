@@ -1,10 +1,11 @@
+import type { MentionCandidate } from "./lib/mentions"
+
 import { useTranslation } from "react-i18next"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 
 import { initials } from "./lib/avatar"
-import type { MentionCandidate } from "./lib/mentions"
 
 interface MentionPopoverProps {
   /** Filtered members to offer for the in-progress `@token`. */
@@ -31,7 +32,7 @@ export function MentionPopover({ members, activeIndex, onSelect, onHover }: Ment
     <div
       role="listbox"
       aria-label={t("conversations.composer.mentions")}
-      className="bg-popover text-popover-foreground ring-foreground/10 absolute bottom-full start-0 z-50 mb-2 max-h-56 w-64 overflow-y-auto rounded-lg p-1 shadow-md ring-1"
+      className="bg-popover text-popover-foreground ring-foreground/10 absolute start-0 bottom-full z-50 mb-2 max-h-56 w-64 overflow-y-auto rounded-lg p-1 shadow-md ring-1"
     >
       {members.map((member, index) => (
         <button
@@ -51,9 +52,7 @@ export function MentionPopover({ members, activeIndex, onSelect, onHover }: Ment
           )}
         >
           <Avatar className="size-6 shrink-0">
-            <AvatarFallback className="bg-muted text-[10px] font-medium">
-              {initials(member.name)}
-            </AvatarFallback>
+            <AvatarFallback className="bg-muted text-[10px] font-medium">{initials(member.name)}</AvatarFallback>
           </Avatar>
           <span className="truncate">{member.name}</span>
           <span className="text-muted-foreground ms-auto shrink-0 font-mono text-xs">@{member.username}</span>

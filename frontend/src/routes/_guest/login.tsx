@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
-import i18n from "@/i18n"
 
 import { useGetOrg } from "@/api/auth/auth"
 import GridBackground from "@/components/auth/gradient-background"
@@ -10,6 +9,7 @@ import { Logo } from "@/components/logo"
 import { SplashScreen } from "@/components/splash-screen"
 import { StatusGlyph, StatusScreen } from "@/components/status-screen"
 import { ThemeToggle } from "@/components/theme-toggle"
+import i18n from "@/i18n"
 import { isAdminHost } from "@/lib/tenant"
 
 export const Route = createFileRoute("/_guest/login")({
@@ -37,14 +37,12 @@ function LoginComponent() {
         <StatusScreen tone="alert">
           <StatusGlyph code="404" tone="alert" />
           <h1
-            className="animate-reveal mt-6 font-heading font-semibold leading-[1.12] tracking-tight text-balance"
+            className="animate-reveal font-heading mt-6 leading-[1.12] font-semibold tracking-tight text-balance"
             style={{ animationDelay: "340ms", fontSize: "clamp(1.75rem, 5vw, 2.75rem)" }}
           >
             {t("login.workspace.notFoundTitle")}
           </h1>
-          <p className="mt-3 max-w-sm text-sm text-muted-foreground">
-            {t("login.workspace.notFoundDescription")}
-          </p>
+          <p className="text-muted-foreground mt-3 max-w-sm text-sm">{t("login.workspace.notFoundDescription")}</p>
         </StatusScreen>
       )
     }

@@ -53,65 +53,65 @@ export function AccountSettings({ showProfile = true }: { showProfile?: boolean 
       {/* Profile — read-only. Name/username are admin-managed (anti-troll); this
           card only displays them. Hidden for platform admins. */}
       {showProfile && (
-      <section className="ring-foreground/10 relative overflow-hidden rounded-2xl border ring-1">
-        <div
-          aria-hidden
-          className="from-primary/8 via-card to-card pointer-events-none absolute inset-0 bg-gradient-to-br"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.4]"
-          style={{
-            backgroundImage: "radial-gradient(circle at 1px 1px, var(--border) 1px, transparent 0)",
-            backgroundSize: "22px 22px",
-            maskImage: "radial-gradient(120% 100% at 100% 0%, black, transparent 65%)",
-            WebkitMaskImage: "radial-gradient(120% 100% at 100% 0%, black, transparent 65%)",
-          }}
-        />
-        <div
-          aria-hidden
-          className="bg-primary/15 pointer-events-none absolute -end-16 -top-20 size-56 rounded-full blur-3xl"
-        />
+        <section className="ring-foreground/10 relative overflow-hidden rounded-2xl border ring-1">
+          <div
+            aria-hidden
+            className="from-primary/8 via-card to-card pointer-events-none absolute inset-0 bg-gradient-to-br"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-[0.4]"
+            style={{
+              backgroundImage: "radial-gradient(circle at 1px 1px, var(--border) 1px, transparent 0)",
+              backgroundSize: "22px 22px",
+              maskImage: "radial-gradient(120% 100% at 100% 0%, black, transparent 65%)",
+              WebkitMaskImage: "radial-gradient(120% 100% at 100% 0%, black, transparent 65%)",
+            }}
+          />
+          <div
+            aria-hidden
+            className="bg-primary/15 pointer-events-none absolute -end-16 -top-20 size-56 rounded-full blur-3xl"
+          />
 
-        <div className="relative flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:gap-6 sm:p-8">
-          <div className="from-primary text-primary-foreground ring-foreground/10 font-heading grid size-18 shrink-0 place-items-center rounded-2xl bg-gradient-to-br to-indigo-700 text-2xl font-semibold tracking-tight shadow-lg ring-1 select-none">
-            {initials(me?.name)}
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <div className="mb-2 flex flex-wrap items-center gap-2.5">
-              <h1 className="font-heading text-foreground truncate text-2xl font-semibold tracking-tight sm:text-3xl">
-                {me?.name || "—"}
-              </h1>
-              <span className="border-primary/25 bg-primary/10 text-primary inline-flex h-6 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium">
-                <ShieldCheckIcon className="size-3.5" />
-                {role}
-              </span>
+          <div className="relative flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:gap-6 sm:p-8">
+            <div className="from-primary text-primary-foreground ring-foreground/10 font-heading grid size-18 shrink-0 place-items-center rounded-2xl bg-gradient-to-br to-indigo-700 text-2xl font-semibold tracking-tight shadow-lg ring-1 select-none">
+              {initials(me?.name)}
             </div>
 
-            <div className="text-muted-foreground flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm">
-              <span className="inline-flex items-center gap-1.5">
-                <UserIcon className="size-4" />
-                <span className="text-foreground font-medium">@{me?.username}</span>
-              </span>
-              {orgName && (
-                <span className="inline-flex items-center gap-1.5">
-                  <BuildingIcon className="size-4" />
-                  {orgName}
+            <div className="min-w-0 flex-1">
+              <div className="mb-2 flex flex-wrap items-center gap-2.5">
+                <h1 className="font-heading text-foreground truncate text-2xl font-semibold tracking-tight sm:text-3xl">
+                  {me?.name || "—"}
+                </h1>
+                <span className="border-primary/25 bg-primary/10 text-primary inline-flex h-6 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium">
+                  <ShieldCheckIcon className="size-3.5" />
+                  {role}
                 </span>
-              )}
-              {me?.created_at && (
-                <span className="inline-flex items-center gap-1.5">
-                  <CalendarDaysIcon className="size-4" />
-                  {t("account.created")} {formatDate(me.created_at)}
-                </span>
-              )}
-            </div>
+              </div>
 
-            <p className="text-muted-foreground mt-3 text-xs leading-relaxed">{t("account.lockedNote")}</p>
+              <div className="text-muted-foreground flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm">
+                <span className="inline-flex items-center gap-1.5">
+                  <UserIcon className="size-4" />
+                  <span className="text-foreground font-medium">@{me?.username}</span>
+                </span>
+                {orgName && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <BuildingIcon className="size-4" />
+                    {orgName}
+                  </span>
+                )}
+                {me?.created_at && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <CalendarDaysIcon className="size-4" />
+                    {t("account.created")} {formatDate(me.created_at)}
+                  </span>
+                )}
+              </div>
+
+              <p className="text-muted-foreground mt-3 text-xs leading-relaxed">{t("account.lockedNote")}</p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
       )}
 
       <SecuritySection />
@@ -311,19 +311,19 @@ function AccountSkeleton({ showProfile = true }: { showProfile?: boolean }) {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 pb-24">
       {showProfile && (
-      <section className="rounded-2xl border p-6 sm:p-8">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-6">
-          <Skeleton className="size-18 shrink-0 rounded-2xl" />
-          <div className="min-w-0 flex-1">
-            <Skeleton className="h-7 w-48" />
-            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-32" />
+        <section className="rounded-2xl border p-6 sm:p-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-6">
+            <Skeleton className="size-18 shrink-0 rounded-2xl" />
+            <div className="min-w-0 flex-1">
+              <Skeleton className="h-7 w-48" />
+              <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+              <Skeleton className="mt-3 h-3 w-64" />
             </div>
-            <Skeleton className="mt-3 h-3 w-64" />
           </div>
-        </div>
-      </section>
+        </section>
       )}
 
       {Array.from({ length: 2 }, (_, i) => (

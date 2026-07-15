@@ -16,17 +16,13 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import {
-  getGetPracticesQueryKey,
-  useDeletePracticesId,
-  useGetPractices,
-} from "@/api/practices/practices"
+import { getGetPracticesQueryKey, useDeletePracticesId, useGetPractices } from "@/api/practices/practices"
+import { Eyebrow } from "@/components/eyebrow"
+import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { MediaAttachmentList } from "@/components/media/MediaAttachmentList"
 import { SectionNoResults } from "@/components/org/session/section-no-results"
 import { SectionPagination } from "@/components/org/session/section-pagination"
 import { SectionToolbar } from "@/components/org/session/section-toolbar"
-import { Eyebrow } from "@/components/eyebrow"
-import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -216,7 +212,7 @@ export function PracticesSection({ classSessionId }: PracticesSectionProps) {
   if (!canView) return null
 
   return (
-    <section id="practices" className="flex flex-col gap-5 scroll-mt-20">
+    <section id="practices" className="flex scroll-mt-20 flex-col gap-5">
       <div className="flex items-end justify-between gap-4">
         <div className="flex flex-col gap-1.5">
           <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.practices.title")}</h2>
@@ -252,11 +248,7 @@ export function PracticesSection({ classSessionId }: PracticesSectionProps) {
           <EmptyState
             icon={DumbbellIcon}
             title={t("org.session.practices.emptyTitle")}
-            description={
-              canCreate
-                ? t("org.session.practices.emptyHint")
-                : t("org.session.practices.emptyHintMember")
-            }
+            description={canCreate ? t("org.session.practices.emptyHint") : t("org.session.practices.emptyHintMember")}
           >
             {canCreate && (
               <Button onClick={openCreate}>
@@ -290,12 +282,7 @@ export function PracticesSection({ classSessionId }: PracticesSectionProps) {
               />
             ))}
           </div>
-          <SectionPagination
-            page={list.page}
-            pageSize={pageSize}
-            total={total}
-            onPageChange={list.setPage}
-          />
+          <SectionPagination page={list.page} pageSize={pageSize} total={total} onPageChange={list.setPage} />
         </>
       )}
 

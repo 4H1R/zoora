@@ -11,10 +11,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import {
-  getGetQuizzesIdSubmissionsQueryKey,
-  usePostQuizzesIdSubmissions,
-} from "@/api/quizzes/quizzes"
+import { getGetQuizzesIdSubmissionsQueryKey, usePostQuizzesIdSubmissions } from "@/api/quizzes/quizzes"
 
 import { requestGeolocation } from "./geolocation"
 import { CenterMessage } from "./messages"
@@ -125,13 +122,5 @@ export function QuizRunner({
     )
   }
 
-  return (
-    <PlayArea
-      quiz={quiz}
-      room={room}
-      submission={existingSubmission}
-      questions={questions}
-      backHref={backHref}
-    />
-  )
+  return <PlayArea quiz={quiz} room={room} submission={existingSubmission} questions={questions} backHref={backHref} />
 }

@@ -5,14 +5,7 @@ import { useDebounce } from "use-debounce"
 
 import { useGetQuestionBanks } from "@/api/question-banks/question-banks"
 import { Button } from "@/components/ui/button"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
@@ -35,20 +28,12 @@ export function BankPicker({ value, onChange, placeholder }: BankPickerProps) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
-        render={
-          <Button
-            variant="outline"
-            role="combobox"
-            className="w-full justify-between font-normal"
-          />
-        }
+        render={<Button variant="outline" role="combobox" className="w-full justify-between font-normal" />}
       >
         {selected ? (
           <span className="truncate">{selected.name}</span>
         ) : (
-          <span className="text-muted-foreground">
-            {placeholder ?? t("admin.bankPicker.placeholder")}
-          </span>
+          <span className="text-muted-foreground">{placeholder ?? t("admin.bankPicker.placeholder")}</span>
         )}
         <ChevronsUpDownIcon className="text-muted-foreground ms-2 size-4 shrink-0 opacity-50" />
       </PopoverTrigger>
@@ -73,19 +58,10 @@ export function BankPicker({ value, onChange, placeholder }: BankPickerProps) {
                     }
                   }}
                 >
-                  <CheckIcon
-                    className={cn(
-                      "me-2 size-4",
-                      value === b.id ? "opacity-100" : "opacity-0"
-                    )}
-                  />
+                  <CheckIcon className={cn("me-2 size-4", value === b.id ? "opacity-100" : "opacity-0")} />
                   <div className="min-w-0">
                     <div className="truncate text-sm">{b.name}</div>
-                    {b.description && (
-                      <div className="text-muted-foreground truncate text-xs">
-                        {b.description}
-                      </div>
-                    )}
+                    {b.description && <div className="text-muted-foreground truncate text-xs">{b.description}</div>}
                   </div>
                 </CommandItem>
               ))}

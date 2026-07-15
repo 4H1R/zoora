@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
 
-import { type SessionStatus } from "@/lib/session-status"
 import { Badge } from "@/components/ui/badge"
+import { type SessionStatus } from "@/lib/session-status"
 import { cn } from "@/lib/utils"
 
 interface SessionStatusPillProps {
