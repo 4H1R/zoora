@@ -1203,7 +1203,16 @@
         "conceptPlaceholder": "Concept the answer should mention",
         "synonymsPlaceholder": "Synonyms (comma-separated)",
         "modelAnswer": "Model answer",
-        "modelAnswerPlaceholder": "Reference answer used to compute the similarity signal…"
+        "modelAnswerPlaceholder": "Reference answer used to compute the similarity signal…",
+        "renderAsImage": {
+          "label": "Render as image (anti-cheat)",
+          "description": "The question and options are shown to students as images, not text — harder to copy, scrape, or feed to AI. Images are generated in the background after saving."
+        },
+        "imageStatus": {
+          "pending": "Preparing images…",
+          "ready": "Images ready",
+          "failed": "Image generation failed — re-save to retry"
+        }
       }
     },
     "roles": {
@@ -1898,16 +1907,8 @@
           }
         },
         "features": {
-          "free": [
-            "Core virtual classrooms",
-            "Exams, homework & gradebook",
-            "Offline rooms & notifications"
-          ],
-          "plus": [
-            "Everything in Free",
-            "More storage & live capacity",
-            "Ticketing & file sharing"
-          ],
+          "free": ["Core virtual classrooms", "Exams, homework & gradebook", "Offline rooms & notifications"],
+          "plus": ["Everything in Free", "More storage & live capacity", "Ticketing & file sharing"],
           "pro": [
             "Everything in Plus",
             "Whiteboard & chat",
@@ -1915,12 +1916,7 @@
             "Messenger & email connectors",
             "AI assistance"
           ],
-          "max": [
-            "Everything in Pro",
-            "Cloud recordings",
-            "Auto grading",
-            "Single sign-on (SSO)"
-          ]
+          "max": ["Everything in Pro", "Cloud recordings", "Auto grading", "Single sign-on (SSO)"]
         }
       },
       "members": "Members",

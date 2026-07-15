@@ -28,6 +28,10 @@ const (
 	// files are presigned). Validation in the tickets service checks
 	// ModelID == ticket.ClassID.
 	MediaModelTicket = "ticket"
+	// MediaModelOfflineRoom is the model type for offline-room attachments;
+	// ModelID is the offline room ID. Uploaded via the shared media presign
+	// flow (see frontend offlines/attachments.ts), collection "attachments".
+	MediaModelOfflineRoom = "offline_room"
 )
 
 type Media struct {

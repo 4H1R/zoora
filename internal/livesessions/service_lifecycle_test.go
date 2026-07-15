@@ -195,25 +195,28 @@ func TestAutoClose_HostStillConnected_RefreshesLastSeen(t *testing.T) {
 
 // --- Recording ---------------------------------------------------------------
 
-func TestStartRecording_ActiveRecordingExists_Conflict(t *testing.T) {
-	svc, f := newTestServiceLK(t)
-	stubRoomLookups(f, activeTestRoom())
-	f.recs.On("FindActiveByRoom", mock.Anything, testRoomID).
-		Return(&domain.LiveRecording{ID: uuid.New(), Status: domain.LiveRecordingStatusStarted}, nil)
-
-	_, err := svc.StartRecording(teacherCtx(), testRoomID)
-	assert.ErrorIs(t, err, domain.ErrConflict)
-	f.recs.AssertNotCalled(t, "Create")
-}
-
-func TestStartRecording_FreePlanRejected(t *testing.T) {
-	svc, f := newTestServiceLK(t)
-	stubRoomLookups(f, activeTestRoom())
-
-	_, err := svc.StartRecording(freeTeacherCtx(), testRoomID)
-	assert.ErrorIs(t, err, domain.ErrFeatureNotInPlan)
-	f.recs.AssertNotCalled(t, "Create")
-}
+// Live-room recording (LiveKit egress) is disabled for now — StartRecording
+// returns ErrForbidden. These tests cover the original flow and are commented
+// out until the feature is re-enabled (see service.go StartRecording).
+// func TestStartRecording_ActiveRecordingExists_Conflict(t *testing.T) {
+// 	svc, f := newTestServiceLK(t)
+// 	stubRoomLookups(f, activeTestRoom())
+// 	f.recs.On("FindActiveByRoom", mock.Anything, testRoomID).
+// 		Return(&domain.LiveRecording{ID: uuid.New(), Status: domain.LiveRecordingStatusStarted}, nil)
+//
+// 	_, err := svc.StartRecording(teacherCtx(), testRoomID)
+// 	assert.ErrorIs(t, err, domain.ErrConflict)
+// 	f.recs.AssertNotCalled(t, "Create")
+// }
+//
+// func TestStartRecording_FreePlanRejected(t *testing.T) {
+// 	svc, f := newTestServiceLK(t)
+// 	stubRoomLookups(f, activeTestRoom())
+//
+// 	_, err := svc.StartRecording(freeTeacherCtx(), testRoomID)
+// 	assert.ErrorIs(t, err, domain.ErrFeatureNotInPlan)
+// 	f.recs.AssertNotCalled(t, "Create")
+// }
 
 func TestStartRoom_ConcurrentRoomLimitReached(t *testing.T) {
 	svc, f := newTestServiceLKEnt(t, fakeEntSvc{

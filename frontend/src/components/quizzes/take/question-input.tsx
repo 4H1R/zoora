@@ -1,3 +1,4 @@
+import type { AnswerState } from "./types"
 import type { GithubCom4H1RZooraInternalDomainQuestion as Question } from "@/api/model"
 
 import { useTranslation } from "react-i18next"
@@ -6,7 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 
 import { OptionTile } from "./option-tile"
-import type { AnswerState } from "./types"
 
 interface QuestionInputProps {
   question: Question
@@ -32,6 +32,7 @@ export function QuestionInput({ question, answer, onChange }: QuestionInputProps
               label={opt.value ?? ""}
               checked={checked}
               imageMediaID={opt.image_media_id}
+              systemImageMediaID={opt.system_image_media_id}
               onClick={() => onChange((prev) => toggleSelection(prev, id, isMulti))}
             />
           )

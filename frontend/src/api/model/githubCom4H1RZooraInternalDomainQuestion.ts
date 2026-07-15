@@ -5,6 +5,7 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
+import type { GithubCom4H1RZooraInternalDomainImageRenderStatus } from './githubCom4H1RZooraInternalDomainImageRenderStatus';
 import type { GithubCom4H1RZooraInternalDomainNegativeMarkConfig } from './githubCom4H1RZooraInternalDomainNegativeMarkConfig';
 import type { GithubCom4H1RZooraInternalDomainNegativeMarkMode } from './githubCom4H1RZooraInternalDomainNegativeMarkMode';
 import type { GithubCom4H1RZooraInternalDomainQuestionBank } from './githubCom4H1RZooraInternalDomainQuestionBank';
@@ -17,6 +18,11 @@ export interface GithubCom4H1RZooraInternalDomainQuestion {
   bank_id?: string;
   created_at?: string;
   id?: string;
+  /**
+     * ImageRenderStatus reflects whether the generated images are ready. A quiz
+     * cannot be started while any image question is not yet ready.
+     */
+  image_render_status?: GithubCom4H1RZooraInternalDomainImageRenderStatus;
   /**
      * IsMultiSelectFlag is populated only by the "take" endpoint after answer
      * keys are stripped, so the client can still render multi-select choice
@@ -47,6 +53,17 @@ export interface GithubCom4H1RZooraInternalDomainQuestion {
   negative_value?: number;
   options?: GithubCom4H1RZooraInternalDomainQuestionOption[];
   organization_id?: string;
+  /**
+     * RenderAsImage turns on anti-cheat image rendering: the worker renders the
+     * body text (and every option value) to distorted PNGs, and the take
+     * endpoint withholds the raw text so students see only the images.
+     */
+  render_as_image?: boolean;
+  /**
+     * SystemImageMediaID references the rendered body image (see RenderAsImage).
+     * Server-owned; nil until the render task completes.
+     */
+  system_image_media_id?: string;
   text?: string;
   type?: GithubCom4H1RZooraInternalDomainQuestionType;
   updated_at?: string;

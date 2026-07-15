@@ -17,5 +17,12 @@ export interface GithubCom4H1RZooraInternalDomainQuestionOption {
      * Unused for choice options.
      */
   synonyms?: string[];
+  /**
+     * SystemImageMediaID references the anti-cheat image rendered by the worker
+     * from Value (see RenderAsImage). Server-owned: clients cannot set it, and
+     * the take endpoint blanks Value while keeping this so the student sees only
+     * the image. Nil until the render task completes.
+     */
+  system_image_media_id?: string;
   value?: string;
 }

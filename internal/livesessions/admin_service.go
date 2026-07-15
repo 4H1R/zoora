@@ -55,6 +55,11 @@ func (s *service) AdminHardDelete(ctx context.Context, roomID uuid.UUID) error {
 	if err := s.rooms.HardDelete(ctx, roomID); err != nil {
 		return err
 	}
+	// Hard delete removes the room row for good, so its shared slides (media rows +
+	// S3 objects) would otherwise be orphaned — the normal EndRoom teardown never
+	// runs on this path. Slide media is polymorphic (no FK to the room), so no
+	// cascade reaches it. Best-effort, mirrors the EndRoom cleanup.
+	s.enqueueSlidesCleanup(ctx, roomID)
 	s.logger.Warn("admin hard-deleted live room",
 		"room_id", roomID.String(),
 		"deleted_by", caller.UserID.String(),

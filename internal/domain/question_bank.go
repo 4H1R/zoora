@@ -32,6 +32,12 @@ type QuestionOption struct {
 	Score        float64    `json:"score"`
 	ImageMediaID *uuid.UUID `json:"image_media_id,omitempty"`
 
+	// SystemImageMediaID references the anti-cheat image rendered by the worker
+	// from Value (see RenderAsImage). Server-owned: clients cannot set it, and
+	// the take endpoint blanks Value while keeping this so the student sees only
+	// the image. Nil until the render task completes.
+	SystemImageMediaID *uuid.UUID `json:"system_image_media_id,omitempty"`
+
 	// Synonyms are alternative accepted phrasings of Value. For short_answer
 	// options they are extra accepted answers; for descriptive rubric concepts
 	// they are alternative wordings that count as mentioning the concept.
@@ -66,6 +72,34 @@ const QuestionPhotosCollection = "photos"
 // QuestionOptionPhotosCollection is the media collection name for per-option
 // images on choice questions.
 const QuestionOptionPhotosCollection = "option-photos"
+
+// QuestionSystemPhotosCollection and QuestionOptionSystemPhotosCollection are
+// the media collections for anti-cheat images the worker renders from a
+// question's body text and each option's value. Kept distinct from the
+// user-uploaded "photos"/"option-photos" collections so the two never collide
+// and cleanup can target only the generated set.
+const (
+	QuestionSystemPhotosCollection       = "system-photos"
+	QuestionOptionSystemPhotosCollection = "system-option-photos"
+)
+
+// ImageRenderStatus tracks the lifecycle of a question's anti-cheat images.
+type ImageRenderStatus string
+
+const (
+	ImageRenderStatusNone    ImageRenderStatus = "none"    // not an image question
+	ImageRenderStatusPending ImageRenderStatus = "pending" // render task enqueued / running
+	ImageRenderStatusReady   ImageRenderStatus = "ready"   // images generated, exam can start
+	ImageRenderStatusFailed  ImageRenderStatus = "failed"  // render failed, needs re-save
+)
+
+func (s ImageRenderStatus) Valid() bool {
+	switch s {
+	case ImageRenderStatusNone, ImageRenderStatusPending, ImageRenderStatusReady, ImageRenderStatusFailed:
+		return true
+	}
+	return false
+}
 
 type QuestionBank struct {
 	ID             uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
@@ -102,6 +136,17 @@ type Question struct {
 	// flagged for review, never rejected.
 	MinSeconds int `gorm:"not null;default:0" json:"min_seconds"`
 
+	// RenderAsImage turns on anti-cheat image rendering: the worker renders the
+	// body text (and every option value) to distorted PNGs, and the take
+	// endpoint withholds the raw text so students see only the images.
+	RenderAsImage bool `gorm:"not null;default:false" json:"render_as_image"`
+	// ImageRenderStatus reflects whether the generated images are ready. A quiz
+	// cannot be started while any image question is not yet ready.
+	ImageRenderStatus ImageRenderStatus `gorm:"type:varchar(20);not null;default:'none'" json:"image_render_status"`
+	// SystemImageMediaID references the rendered body image (see RenderAsImage).
+	// Server-owned; nil until the render task completes.
+	SystemImageMediaID *uuid.UUID `gorm:"type:uuid" json:"system_image_media_id,omitempty"`
+
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
@@ -137,6 +182,7 @@ type CreateQuestionDTO struct {
 	NegativeValue    float64            `json:"negative_value"`
 	WrongsPerPoint   int                `json:"wrongs_per_point"`
 	MinSeconds       int                `json:"min_seconds" binding:"omitempty,gte=0"`
+	RenderAsImage    bool               `json:"render_as_image"`
 }
 
 type UpdateQuestionDTO struct {
@@ -149,6 +195,7 @@ type UpdateQuestionDTO struct {
 	NegativeValue    *float64           `json:"negative_value"`
 	WrongsPerPoint   *int               `json:"wrongs_per_point"`
 	MinSeconds       *int               `json:"min_seconds" binding:"omitempty,gte=0"`
+	RenderAsImage    *bool              `json:"render_as_image"`
 }
 
 // IsMultiSelect reports whether a choice question has more than one

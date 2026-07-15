@@ -37,6 +37,7 @@ func (s *service) AdminHardDelete(ctx context.Context, id uuid.UUID) error {
 	if err := s.rooms.HardDelete(ctx, id); err != nil {
 		return err
 	}
+	s.enqueueAttachmentCleanup(ctx, id)
 	s.logger.Warn("admin hard-deleted offline room",
 		"room_id", id.String(),
 		"deleted_by", caller.UserID.String(),

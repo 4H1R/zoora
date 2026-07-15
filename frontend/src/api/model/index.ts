@@ -806,6 +806,7 @@ export * from './githubCom4H1RZooraInternalDomainGradebookMatrixRow';
 export * from './githubCom4H1RZooraInternalDomainGradebookMatrixRowCells';
 export * from './githubCom4H1RZooraInternalDomainGradePracticeSubmissionDTO';
 export * from './githubCom4H1RZooraInternalDomainGradeSubmissionDTO';
+export * from './githubCom4H1RZooraInternalDomainImageRenderStatus';
 export * from './githubCom4H1RZooraInternalDomainImportJob';
 export * from './githubCom4H1RZooraInternalDomainImportStatus';
 export * from './githubCom4H1RZooraInternalDomainImportType';

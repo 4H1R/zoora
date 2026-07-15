@@ -29,7 +29,19 @@ const (
 	TypeBillingExpireSweep   = "billing:expire-sweep"
 
 	TypeImportProcess = "import:process"
+
+	TypeQuestionRenderImages = "question:render-images"
 )
+
+// QuestionRenderImagesPayload drives anti-cheat image generation for one
+// question: the worker (re)renders the body text and every option value to
+// PNGs, stores them as media, and flips the question's ImageRenderStatus. Also
+// runs when RenderAsImage was just turned off, in which case it only purges the
+// previously generated media. Idempotent: it deletes the prior system media
+// before regenerating, so a retry or re-enqueue is safe.
+type QuestionRenderImagesPayload struct {
+	QuestionID uuid.UUID `json:"question_id"`
+}
 
 // NotificationFanoutPayload resolves a notification's audience to user IDs
 // and inserts inbox rows. Retry-safe: recipient insert ignores conflicts.

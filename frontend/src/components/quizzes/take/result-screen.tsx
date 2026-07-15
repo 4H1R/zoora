@@ -15,6 +15,7 @@ import { formatScore } from "@/lib/score"
 
 import { DecorativeBackground } from "./decorations"
 import { MetaCell } from "./meta-cell"
+import { SystemImage } from "./system-image"
 import { formatClock } from "./utils"
 
 interface ResultScreenProps {
@@ -38,7 +39,7 @@ export function ResultScreen({ quiz, submission, questions = [], backHref }: Res
   const revealed = submission.results_revealed ?? true
 
   return (
-    <div className="relative isolate flex flex-col gap-10 pb-24 pt-8">
+    <div className="relative isolate flex flex-col gap-10 pt-8 pb-24">
       <DecorativeBackground />
 
       <div className="flex items-center justify-between">
@@ -66,9 +67,7 @@ export function ResultScreen({ quiz, submission, questions = [], backHref }: Res
           <span className="bg-primary/10 text-primary flex size-12 items-center justify-center rounded-full [&_svg]:size-6">
             <TrophyIcon />
           </span>
-          <h2 className="text-xl font-semibold tracking-tight">
-            {t("org.session.quizzes.take.result.hidden.title")}
-          </h2>
+          <h2 className="text-xl font-semibold tracking-tight">{t("org.session.quizzes.take.result.hidden.title")}</h2>
           <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
             {quiz.show_results
               ? t("org.session.quizzes.take.result.hidden.deferred")
@@ -117,47 +116,51 @@ export function ResultScreen({ quiz, submission, questions = [], backHref }: Res
           <Eyebrow>{t("org.session.quizzes.take.result.perQuestionEyebrow")}</Eyebrow>
           <div className="flex flex-col divide-y divide-dashed">
             {answers.map((a, i) => {
-            const q = questionById.get(a.question_id)
-            const selectedIds = a.selected_option_ids ?? []
-            const selectedOptions = (q?.options ?? []).filter((o) =>
-              selectedIds.includes(o.id ?? ""),
-            )
-            const imageOptions = selectedOptions.filter((o) => o.image_media_id)
-            const earnedScore = a.earned_score ?? 0
-            // We can only confirm a penalty was applied when the earned score is
-            // negative (scores are stripped on the take endpoint). Degrade to the
-            // earned score otherwise.
-            const penalized = earnedScore < 0
-            return (
-              <div key={a.question_id} className="flex flex-col gap-2 py-3">
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground font-mono text-xs tracking-[0.2em]">
-                    Q{String(i + 1).padStart(2, "0")}
-                  </span>
-                  <span className="text-foreground/80 ms-2 grow truncate font-mono text-xs">
-                    {q?.text ?? a.question_id?.slice(0, 8)}
-                  </span>
-                  <span className="text-muted-foreground font-mono text-xs tabular-nums">
-                    {formatClock(a.spent_seconds ?? 0)}
-                  </span>
-                  <span className="text-foreground font-mono text-sm font-semibold tabular-nums">
-                    {formatScore(earnedScore)}
-                  </span>
-                </div>
-                {imageOptions.length > 0 && (
-                  <div className="ms-8 flex flex-wrap gap-2">
-                    {imageOptions.map((o) => (
-                      <OptionImageThumb key={o.id} mediaID={o.image_media_id!} />
-                    ))}
+              const q = questionById.get(a.question_id)
+              const selectedIds = a.selected_option_ids ?? []
+              const selectedOptions = (q?.options ?? []).filter((o) => selectedIds.includes(o.id ?? ""))
+              const imageOptions = selectedOptions.filter((o) => o.image_media_id || o.system_image_media_id)
+              const earnedScore = a.earned_score ?? 0
+              // We can only confirm a penalty was applied when the earned score is
+              // negative (scores are stripped on the take endpoint). Degrade to the
+              // earned score otherwise.
+              const penalized = earnedScore < 0
+              return (
+                <div key={a.question_id} className="flex flex-col gap-2 py-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground font-mono text-xs tracking-[0.2em]">
+                      Q{String(i + 1).padStart(2, "0")}
+                    </span>
+                    {q?.render_as_image && q.system_image_media_id ? (
+                      <span className="ms-2 grow">
+                        <SystemImage mediaID={q.system_image_media_id} className="max-h-8 w-auto" />
+                      </span>
+                    ) : (
+                      <span className="text-foreground/80 ms-2 grow truncate font-mono text-xs">
+                        {q?.text ?? a.question_id?.slice(0, 8)}
+                      </span>
+                    )}
+                    <span className="text-muted-foreground font-mono text-xs tabular-nums">
+                      {formatClock(a.spent_seconds ?? 0)}
+                    </span>
+                    <span className="text-foreground font-mono text-sm font-semibold tabular-nums">
+                      {formatScore(earnedScore)}
+                    </span>
                   </div>
-                )}
-                {penalized && (
-                  <span className="text-destructive ms-8 text-xs">
-                    {t("org.session.quizzes.take.penalty.breakdown")}
-                  </span>
-                )}
-              </div>
-            )
+                  {imageOptions.length > 0 && (
+                    <div className="ms-8 flex flex-wrap gap-2">
+                      {imageOptions.map((o) => (
+                        <OptionImageThumb key={o.id} mediaID={(o.image_media_id ?? o.system_image_media_id)!} />
+                      ))}
+                    </div>
+                  )}
+                  {penalized && (
+                    <span className="text-destructive ms-8 text-xs">
+                      {t("org.session.quizzes.take.penalty.breakdown")}
+                    </span>
+                  )}
+                </div>
+              )
             })}
           </div>
         </section>

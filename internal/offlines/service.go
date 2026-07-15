@@ -2,11 +2,14 @@ package offlines
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 
 	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 
 	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/platform/queue"
 )
 
 // service implements domain.OfflineService. RBAC hierarchy:
@@ -23,6 +26,7 @@ type service struct {
 	sessions domain.ClassSessionRepository
 	classes  domain.ClassRepository
 	members  domain.ClassMemberRepository
+	queue    *queue.Client
 	logger   *slog.Logger
 }
 
@@ -32,6 +36,7 @@ func NewService(
 	sessions domain.ClassSessionRepository,
 	classes domain.ClassRepository,
 	members domain.ClassMemberRepository,
+	queueClient *queue.Client,
 	logger *slog.Logger,
 ) domain.OfflineService {
 	return &service{
@@ -40,7 +45,31 @@ func NewService(
 		sessions: sessions,
 		classes:  classes,
 		members:  members,
+		queue:    queueClient,
 		logger:   logger,
+	}
+}
+
+// enqueueAttachmentCleanup schedules a purge of ALL media (rows + S3 objects)
+// owned by an offline room — teacher-uploaded attachments keyed by room id. A
+// hard delete removes the room row for good, so without this every object is
+// orphaned (media is polymorphic, no FK to the room, so no cascade reaches it).
+// An empty collection name matches every collection. Best-effort: a failure to
+// enqueue is logged, not surfaced, so the delete still succeeds.
+func (s *service) enqueueAttachmentCleanup(ctx context.Context, roomID uuid.UUID) {
+	if s.queue == nil {
+		return
+	}
+	payload, err := json.Marshal(domain.MediaCleanupPayload{
+		ModelType: domain.MediaModelOfflineRoom,
+		ModelID:   roomID,
+	})
+	if err != nil {
+		s.logger.Error("attachment cleanup enqueue: marshal payload", "room_id", roomID.String(), "error", err)
+		return
+	}
+	if _, err := s.queue.Enqueue(asynq.NewTask(domain.TypeMediaCleanup, payload), asynq.Queue(domain.QueueMedia)); err != nil {
+		s.logger.Error("attachment cleanup enqueue", "room_id", roomID.String(), "error", err)
 	}
 }
 

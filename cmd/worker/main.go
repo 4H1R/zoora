@@ -35,6 +35,7 @@ import (
 	"github.com/4H1R/zoora/internal/platform/sms"
 	"github.com/4H1R/zoora/internal/platform/storage"
 	"github.com/4H1R/zoora/internal/polls"
+	"github.com/4H1R/zoora/internal/questionbanks"
 	"github.com/4H1R/zoora/internal/roles"
 	"github.com/4H1R/zoora/internal/users"
 )
@@ -194,6 +195,11 @@ func main() {
 	mediaService := media.NewService(mediaRepo, storageClient, nil, log)
 	queueServer.HandleFunc(domain.TypeMediaCleanup, media.NewCleanupHandler(mediaService))
 	queueServer.HandleFunc(domain.TypeOrganizationCleanup, organizations.NewCleanupHandler(storageClient))
+
+	// Anti-cheat: render question/option text to distorted images (server-side).
+	questionRepo := questionbanks.NewQuestionRepository(db)
+	questionImageRenderer := questionbanks.NewImageRenderer(questionRepo, mediaRepo, storageClient, log)
+	queueServer.HandleFunc(domain.TypeQuestionRenderImages, questionbanks.NewRenderImagesHandler(questionImageRenderer))
 
 	// --- bulk imports: service isn't used to enqueue here (only the API does),
 	// but the constructor requires a queue client + result store regardless. ---

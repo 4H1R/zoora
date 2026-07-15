@@ -18,6 +18,7 @@ export interface GithubCom4H1RZooraInternalDomainCreateQuestionDTO {
   negative_mark_mode?: GithubCom4H1RZooraInternalDomainNegativeMarkMode;
   negative_value?: number;
   options?: GithubCom4H1RZooraInternalDomainQuestionOption[];
+  render_as_image?: boolean;
   /** @minLength 1 */
   text: string;
   type: GithubCom4H1RZooraInternalDomainCreateQuestionDTOType;

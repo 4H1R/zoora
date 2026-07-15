@@ -242,6 +242,14 @@ func (s *service) buildQuestionSet(ctx context.Context, quiz *domain.Quiz, submi
 				continue
 			}
 			seen[q.ID] = struct{}{}
+			// Anti-cheat image questions must be fully rendered before an exam can
+			// start, else a student could be served a question with no readable
+			// content. Renders complete in seconds; the client should retry.
+			if q.RenderAsImage && q.ImageRenderStatus != domain.ImageRenderStatusReady {
+				return nil, domain.NewValidationError(map[string]string{
+					"images": "exam images are still being prepared, please try again in a moment",
+				})
+			}
 			var order []string
 			if q.Type == domain.QuestionTypeChoice {
 				ids := make([]string, len(q.Options))
@@ -321,18 +329,31 @@ func (s *service) pickQuestionsForRule(ctx context.Context, r domain.QuizRule) (
 // sanitizeQuestionForTaking removes answer-key data from a question. Choice
 // options keep id+value but lose score; short_answer/descriptive lose options
 // entirely because their options hold correct answers.
+//
+// When the question is in anti-cheat image mode (RenderAsImage), the raw body
+// text and every option value are blanked so they never reach the client — the
+// caller renders the SystemImageMediaID images instead. Option ids are kept so
+// answering and grading are unaffected.
 func sanitizeQuestionForTaking(q domain.Question) domain.Question {
+	imageMode := q.RenderAsImage
 	switch q.Type {
 	case domain.QuestionTypeChoice:
 		multi := q.IsMultiSelect()
 		opts := make([]domain.QuestionOption, len(q.Options))
 		for i, o := range q.Options {
-			opts[i] = domain.QuestionOption{ID: o.ID, Value: o.Value, ImageMediaID: o.ImageMediaID}
+			no := domain.QuestionOption{ID: o.ID, Value: o.Value, ImageMediaID: o.ImageMediaID, SystemImageMediaID: o.SystemImageMediaID}
+			if imageMode {
+				no.Value = ""
+			}
+			opts[i] = no
 		}
 		q.Options = opts
 		q.IsMultiSelectFlag = &multi
 	case domain.QuestionTypeShortAnswer, domain.QuestionTypeDescriptive:
 		q.Options = []domain.QuestionOption{}
+	}
+	if imageMode {
+		q.Text = ""
 	}
 	q.ModelAnswer = ""
 	return q

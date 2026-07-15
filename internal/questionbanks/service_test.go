@@ -160,7 +160,7 @@ func memberCtx() context.Context {
 }
 
 func newTestBankService(bankRepo *mockBankRepo, questionRepo *mockQuestionRepo) domain.QuestionBankService {
-	return questionbanks.NewService(bankRepo, questionRepo, &mockMediaRepo{}, slog.Default())
+	return questionbanks.NewService(bankRepo, questionRepo, &mockMediaRepo{}, nil, slog.Default())
 }
 
 func TestBankService_Create_AsStaff(t *testing.T) {
@@ -239,6 +239,48 @@ func TestBankService_Delete_CrossOrg_Forbidden(t *testing.T) {
 	svc := newTestBankService(bankRepo, &mockQuestionRepo{})
 	err := svc.Delete(ctx, bankID)
 	assert.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+func TestBankService_Delete_SnapshotsQuestionsForMediaCleanup(t *testing.T) {
+	orgID := uuid.New()
+	ctx := adminCtx()
+	bankRepo := &mockBankRepo{}
+	qRepo := &mockQuestionRepo{}
+	bankID := uuid.New()
+
+	bankRepo.On("FindByID", ctx, bankID).
+		Return(&domain.QuestionBank{ID: bankID, OrganizationID: orgID}, nil)
+	// The bank's questions must be snapshotted (before deletion) so their media
+	// can be purged — media is keyed by question, not bank.
+	qRepo.On("ListAllByBank", ctx, bankID).
+		Return([]domain.Question{{ID: uuid.New()}, {ID: uuid.New()}}, nil)
+	bankRepo.On("Delete", ctx, bankID).Return(nil)
+
+	svc := newTestBankService(bankRepo, qRepo)
+	err := svc.Delete(ctx, bankID)
+	assert.NoError(t, err)
+	qRepo.AssertExpectations(t)
+	bankRepo.AssertExpectations(t)
+}
+
+func TestBankService_DeleteQuestion_Success(t *testing.T) {
+	orgID := uuid.New()
+	ctx := adminCtx()
+	bankRepo := &mockBankRepo{}
+	qRepo := &mockQuestionRepo{}
+	bankID := uuid.New()
+	questionID := uuid.New()
+
+	qRepo.On("FindByID", ctx, questionID).
+		Return(&domain.Question{ID: questionID, BankID: bankID, OrganizationID: orgID}, nil)
+	bankRepo.On("FindByID", ctx, bankID).
+		Return(&domain.QuestionBank{ID: bankID, OrganizationID: orgID}, nil)
+	qRepo.On("Delete", ctx, questionID).Return(nil)
+
+	svc := newTestBankService(bankRepo, qRepo)
+	err := svc.DeleteQuestion(ctx, questionID)
+	assert.NoError(t, err)
+	qRepo.AssertExpectations(t)
 }
 
 func TestBankService_CreateQuestion_Success(t *testing.T) {

@@ -1,3 +1,4 @@
+import type { AnswerState } from "./types"
 import type {
   GithubCom4H1RZooraInternalDomainQuestion as Question,
   GithubCom4H1RZooraInternalDomainQuiz as Quiz,
@@ -7,21 +8,12 @@ import type {
 } from "@/api/model"
 
 import { useQueryClient } from "@tanstack/react-query"
-import {
-  AlertTriangleIcon,
-  ArrowLeftIcon,
-  ArrowRightIcon,
-  FlagIcon,
-  LockKeyholeIcon,
-} from "lucide-react"
+import { AlertTriangleIcon, ArrowLeftIcon, ArrowRightIcon, FlagIcon, LockKeyholeIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import {
-  getGetQuizzesIdSubmissionsQueryKey,
-  usePostQuizzesSubmissionsSubmissionIdSubmit,
-} from "@/api/quizzes/quizzes"
+import { getGetQuizzesIdSubmissionsQueryKey, usePostQuizzesSubmissionsSubmissionIdSubmit } from "@/api/quizzes/quizzes"
 import { Eyebrow } from "@/components/eyebrow"
 import { Button } from "@/components/ui/button"
 import {
@@ -40,18 +32,12 @@ import { CenterMessage } from "./messages"
 import { ProgressDots } from "./progress-dots"
 import { QuestionInput } from "./question-input"
 import { clearPersistedState, loadPersistedState, savePersistedState } from "./storage"
+import { SystemImage } from "./system-image"
 import { TimerPill } from "./timer-pill"
-import type { AnswerState } from "./types"
 import { emptyAnswer } from "./types"
 import { useExamLockdown } from "./use-exam-lockdown"
 import { useTabVisibility } from "./use-tab-visibility"
-import {
-  computeDeadline,
-  countAnswered,
-  penaltyText,
-  questionTypeKey,
-  shuffleSeeded,
-} from "./utils"
+import { computeDeadline, countAnswered, penaltyText, questionTypeKey, shuffleSeeded } from "./utils"
 
 interface PlayAreaProps {
   quiz: Quiz
@@ -149,9 +135,7 @@ export function PlayArea({ quiz, room, submission, questions, backHref }: PlayAr
       submissionId,
       data: {
         answers: payload,
-        ...(tabStats
-          ? { tab_hidden_count: tabStats.count, tab_hidden_seconds: tabStats.seconds }
-          : {}),
+        ...(tabStats ? { tab_hidden_count: tabStats.count, tab_hidden_seconds: tabStats.seconds } : {}),
       },
     })
     if (reason === "auto") toast.message(t("org.session.quizzes.take.autoSubmitNote"))
@@ -206,7 +190,7 @@ export function PlayArea({ quiz, room, submission, questions, backHref }: PlayAr
   }
 
   return (
-    <div className="relative isolate flex flex-col gap-8 pb-32 pt-6">
+    <div className="relative isolate flex flex-col gap-8 pt-6 pb-32">
       <DecorativeBackground />
 
       <div className="sticky top-0 z-10 -mx-4 backdrop-blur md:-mx-6">
@@ -236,9 +220,13 @@ export function PlayArea({ quiz, room, submission, questions, backHref }: PlayAr
           </span>
         </div>
 
-        <h2 className="max-w-3xl text-2xl leading-snug font-semibold tracking-tight text-balance md:text-3xl">
-          {currentQuestion.text}
-        </h2>
+        {currentQuestion.render_as_image && currentQuestion.system_image_media_id ? (
+          <SystemImage mediaID={currentQuestion.system_image_media_id} className="max-h-40 w-auto" />
+        ) : (
+          <h2 className="max-w-3xl text-2xl leading-snug font-semibold tracking-tight text-balance md:text-3xl">
+            {currentQuestion.text}
+          </h2>
+        )}
 
         <PenaltyBadge question={currentQuestion} />
 
@@ -252,11 +240,7 @@ export function PlayArea({ quiz, room, submission, questions, backHref }: PlayAr
             {t("org.session.quizzes.flags.noBackNavigation")}
           </span>
         ) : (
-          <Button
-            variant="outline"
-            onClick={() => setIndex((i) => Math.max(0, i - 1))}
-            disabled={isFirst}
-          >
+          <Button variant="outline" onClick={() => setIndex((i) => Math.max(0, i - 1))} disabled={isFirst}>
             <ArrowLeftIcon className="size-4" />
             {t("org.session.quizzes.take.previous")}
           </Button>
@@ -326,7 +310,7 @@ function PenaltyBadge({ question }: { question: Question }) {
 // the answer's spent_seconds. Commits the remaining delta on unmount/switch.
 function usePerQuestionTimer(
   currentQuestionId: string | undefined,
-  setAnswers: (updater: (prev: Record<string, AnswerState>) => Record<string, AnswerState>) => void,
+  setAnswers: (updater: (prev: Record<string, AnswerState>) => Record<string, AnswerState>) => void
 ) {
   const lastTickRef = useRef<number>(Date.now())
 

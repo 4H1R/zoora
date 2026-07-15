@@ -2,20 +2,24 @@ package questionbanks
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 
 	"github.com/4H1R/zoora/internal/domain"
+	"github.com/4H1R/zoora/internal/platform/queue"
 )
 
 type service struct {
 	repo      domain.QuestionBankRepository
 	questions domain.QuestionRepository
 	media     domain.MediaRepository
+	queue     *queue.Client
 	logger    *slog.Logger
 }
 
@@ -23,9 +27,74 @@ func NewService(
 	repo domain.QuestionBankRepository,
 	questions domain.QuestionRepository,
 	media domain.MediaRepository,
+	queueClient *queue.Client,
 	logger *slog.Logger,
 ) domain.QuestionBankService {
-	return &service{repo: repo, questions: questions, media: media, logger: logger}
+	return &service{repo: repo, questions: questions, media: media, queue: queueClient, logger: logger}
+}
+
+// enqueueRenderImages schedules anti-cheat image (re)generation for a question.
+// Runs on the media queue (S3-bound, like other slow media work) with a
+// question-scoped TaskID so a rapid re-save coalesces onto one pending task
+// instead of piling up. Best-effort: a failure to enqueue is logged, not
+// surfaced — the images simply stay not-ready, which the take gate catches.
+func (s *service) enqueueRenderImages(ctx context.Context, questionID uuid.UUID) {
+	if s.queue == nil {
+		return
+	}
+	payload, err := json.Marshal(domain.QuestionRenderImagesPayload{QuestionID: questionID})
+	if err != nil {
+		s.logger.Error("marshal render-images payload", "question_id", questionID.String(), "error", err)
+		return
+	}
+	task := asynq.NewTask(domain.TypeQuestionRenderImages, payload)
+	// A question-scoped TaskID coalesces rapid re-saves: while a render is still
+	// pending, a repeat enqueue conflicts and is ignored — the pending task reads
+	// the latest question row at processing time, so it renders current state.
+	_, err = s.queue.Enqueue(task,
+		asynq.Queue(domain.QueueMedia),
+		asynq.TaskID("question-render-"+questionID.String()),
+	)
+	if err != nil && !errors.Is(err, asynq.ErrTaskIDConflict) {
+		s.logger.Error("enqueue render-images", "question_id", questionID.String(), "error", err)
+	}
+}
+
+// enqueueMediaCleanup schedules a purge of ALL media (rows + S3 objects) owned
+// by a deleted question — teacher-uploaded body/option photos and worker-rendered
+// anti-cheat images alike. Media is keyed by question, so a delete alone leaves
+// every object orphaned. An empty collection name matches every collection.
+// Best-effort: a failure to enqueue is logged, not surfaced, so the delete still
+// succeeds and the orphans can be swept later.
+func (s *service) enqueueMediaCleanup(ctx context.Context, questionID uuid.UUID) {
+	if s.queue == nil {
+		return
+	}
+	payload, err := json.Marshal(domain.MediaCleanupPayload{
+		ModelType: domain.QuestionMediaModelType,
+		ModelID:   questionID,
+	})
+	if err != nil {
+		s.logger.Error("marshal media-cleanup payload", "question_id", questionID.String(), "error", err)
+		return
+	}
+	if _, err := s.queue.Enqueue(asynq.NewTask(domain.TypeMediaCleanup, payload), asynq.Queue(domain.QueueMedia)); err != nil {
+		s.logger.Error("enqueue media-cleanup", "question_id", questionID.String(), "error", err)
+	}
+}
+
+// stripIncomingSystemImages nils the server-owned SystemImageMediaID on any
+// option the client sent — only the worker may set it.
+func stripIncomingSystemImages(in []domain.QuestionOption) []domain.QuestionOption {
+	if in == nil {
+		return in
+	}
+	out := make([]domain.QuestionOption, len(in))
+	for i, o := range in {
+		o.SystemImageMediaID = nil
+		out[i] = o
+	}
+	return out
 }
 
 func (s *service) validateMetadataMedia(ctx context.Context, items []domain.QuestionMetadata) error {
@@ -177,8 +246,18 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	if !canDeleteBank(caller, bank) {
 		return domain.ErrForbidden
 	}
+	// Snapshot the bank's questions before deleting it so their media can be
+	// purged. Media is keyed by question (not bank), so the bank delete leaves
+	// every question's uploaded + rendered images orphaned otherwise.
+	questions, err := s.questions.ListAllByBank(ctx, id)
+	if err != nil {
+		return err
+	}
 	if err := s.repo.Delete(ctx, id); err != nil {
 		return err
+	}
+	for i := range questions {
+		s.enqueueMediaCleanup(ctx, questions[i].ID)
 	}
 	s.logger.Info("question bank deleted",
 		"bank_id", id.String(),
@@ -216,7 +295,7 @@ func (s *service) CreateQuestion(ctx context.Context, bankID uuid.UUID, dto doma
 	if !canManageBank(caller, bank) {
 		return nil, domain.ErrForbidden
 	}
-	options := clearOptionImagesForNonChoice(dto.Type, dto.Options)
+	options := stripIncomingSystemImages(clearOptionImagesForNonChoice(dto.Type, dto.Options))
 	if err := domain.ValidateQuestionOptions(dto.Type, options); err != nil {
 		return nil, err
 	}
@@ -234,21 +313,30 @@ func (s *service) CreateQuestion(ctx context.Context, bankID uuid.UUID, dto doma
 	if metadata == nil {
 		metadata = []domain.QuestionMetadata{}
 	}
+	renderStatus := domain.ImageRenderStatusNone
+	if dto.RenderAsImage {
+		renderStatus = domain.ImageRenderStatusPending
+	}
 	question := &domain.Question{
-		BankID:           bankID,
-		OrganizationID:   bank.OrganizationID,
-		Text:             dto.Text,
-		Type:             dto.Type,
-		Options:          options,
-		ModelAnswer:      dto.ModelAnswer,
-		Metadata:         metadata,
-		NegativeMarkMode: mode,
-		NegativeValue:    val,
-		WrongsPerPoint:   wpp,
-		MinSeconds:       dto.MinSeconds,
+		BankID:            bankID,
+		OrganizationID:    bank.OrganizationID,
+		Text:              dto.Text,
+		Type:              dto.Type,
+		Options:           options,
+		ModelAnswer:       dto.ModelAnswer,
+		Metadata:          metadata,
+		NegativeMarkMode:  mode,
+		NegativeValue:     val,
+		WrongsPerPoint:    wpp,
+		MinSeconds:        dto.MinSeconds,
+		RenderAsImage:     dto.RenderAsImage,
+		ImageRenderStatus: renderStatus,
 	}
 	if err := s.questions.Create(ctx, question); err != nil {
 		return nil, err
+	}
+	if question.RenderAsImage {
+		s.enqueueRenderImages(ctx, question.ID)
 	}
 	return question, nil
 }
@@ -288,6 +376,7 @@ func (s *service) UpdateQuestion(ctx context.Context, id uuid.UUID, dto domain.U
 	if !canManageBank(caller, bank) {
 		return nil, domain.ErrForbidden
 	}
+	wasImage := question.RenderAsImage
 	if dto.Text != nil {
 		question.Text = *dto.Text
 	}
@@ -295,10 +384,13 @@ func (s *service) UpdateQuestion(ctx context.Context, id uuid.UUID, dto domain.U
 		question.Type = *dto.Type
 	}
 	if dto.Options != nil {
-		question.Options = dto.Options
+		question.Options = stripIncomingSystemImages(dto.Options)
 	}
 	if dto.ModelAnswer != nil {
 		question.ModelAnswer = *dto.ModelAnswer
+	}
+	if dto.RenderAsImage != nil {
+		question.RenderAsImage = *dto.RenderAsImage
 	}
 	question.Options = clearOptionImagesForNonChoice(question.Type, question.Options)
 	if dto.Options != nil || dto.Type != nil {
@@ -332,10 +424,42 @@ func (s *service) UpdateQuestion(ctx context.Context, id uuid.UUID, dto domain.U
 		}
 		question.Metadata = dto.Metadata
 	}
+
+	// Decide whether anti-cheat images need (re)generating or purging. Rendered
+	// content is the body text, option values, and type; a change to any while
+	// image mode is on invalidates the existing images.
+	contentChanged := dto.Text != nil || dto.Options != nil || dto.Type != nil
+	enqueueRender := false
+	switch {
+	case question.RenderAsImage && (!wasImage || contentChanged):
+		// Turned on, or edited while on: mark not-ready and clear stale ids so a
+		// mid-render take can't be served old images. Worker refills them.
+		question.ImageRenderStatus = domain.ImageRenderStatusPending
+		clearSystemImages(question)
+		enqueueRender = true
+	case !question.RenderAsImage && wasImage:
+		// Turned off: drop back to plain text; worker purges the generated media.
+		question.ImageRenderStatus = domain.ImageRenderStatusNone
+		clearSystemImages(question)
+		enqueueRender = true
+	}
+
 	if err := s.questions.Update(ctx, question); err != nil {
 		return nil, err
 	}
+	if enqueueRender {
+		s.enqueueRenderImages(ctx, question.ID)
+	}
 	return question, nil
+}
+
+// clearSystemImages nils every server-generated image reference on a question
+// (body + options) so a pending/disabled question never carries stale ids.
+func clearSystemImages(q *domain.Question) {
+	q.SystemImageMediaID = nil
+	for i := range q.Options {
+		q.Options[i].SystemImageMediaID = nil
+	}
 }
 
 // clearOptionImagesForNonChoice strips ImageMediaID from options when the
@@ -368,7 +492,11 @@ func (s *service) DeleteQuestion(ctx context.Context, id uuid.UUID) error {
 	if !canDeleteBank(caller, bank) {
 		return domain.ErrForbidden
 	}
-	return s.questions.Delete(ctx, id)
+	if err := s.questions.Delete(ctx, id); err != nil {
+		return err
+	}
+	s.enqueueMediaCleanup(ctx, id)
+	return nil
 }
 
 func (s *service) ListQuestions(ctx context.Context, bankID uuid.UUID, q domain.ListQuestionsQuery) ([]domain.Question, int64, error) {

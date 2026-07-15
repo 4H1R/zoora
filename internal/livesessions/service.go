@@ -515,7 +515,7 @@ func (s *service) endRoomInternal(ctx context.Context, room *domain.LiveRoom) (*
 	s.disarmCloseIfNoHost(room)
 
 	s.enqueueAutoMark(ctx, room)
-	s.enqueueSlidesCleanup(ctx, room)
+	s.enqueueSlidesCleanup(ctx, room.ID)
 
 	return room, nil
 }
@@ -547,21 +547,21 @@ func (s *service) enqueueAutoMark(ctx context.Context, room *domain.LiveRoom) {
 // enqueueSlidesCleanup schedules deletion of the slide PDFs the host shared into
 // this room (media rows + S3 objects). Best-effort: failures are logged and
 // never block room teardown.
-func (s *service) enqueueSlidesCleanup(ctx context.Context, room *domain.LiveRoom) {
+func (s *service) enqueueSlidesCleanup(ctx context.Context, roomID uuid.UUID) {
 	if s.queue == nil {
 		return
 	}
 	payload, err := json.Marshal(domain.MediaCleanupPayload{
 		ModelType:      domain.MediaModelLiveRoom,
-		ModelID:        room.ID,
+		ModelID:        roomID,
 		CollectionName: domain.MediaCollectionSlides,
 	})
 	if err != nil {
-		s.logger.Error("slides cleanup enqueue: marshal payload", "room_id", room.ID.String(), "error", err)
+		s.logger.Error("slides cleanup enqueue: marshal payload", "room_id", roomID.String(), "error", err)
 		return
 	}
 	if _, err := s.queue.Enqueue(asynq.NewTask(domain.TypeMediaCleanup, payload), asynq.Queue(domain.QueueMedia)); err != nil {
-		s.logger.Error("slides cleanup enqueue", "room_id", room.ID.String(), "error", err)
+		s.logger.Error("slides cleanup enqueue", "room_id", roomID.String(), "error", err)
 	}
 }
 

@@ -189,7 +189,7 @@ func main() {
 	sessionManager := auth.NewSessionManager(jwtService, redisClient)
 	userService := users.NewService(userRepo, roleRepo, entitlementService, redisClient, sessionManager, log)
 	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, queueClient, log)
-	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, log)
+	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, queueClient, log)
 	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, log)
 	transactor := database.NewTransactor(db)
 
@@ -228,7 +228,7 @@ func main() {
 		chatService, pollService, transactor,
 		livekitClient, storageClient, queueClient, entitlementService, cfg.LiveRoomHostGracePeriod, log,
 	)
-	offlineService := offlines.NewService(offlineRoomRepo, offlineViewRepo, classSessionRepo, classRepo, classMemberRepo, log)
+	offlineService := offlines.NewService(offlineRoomRepo, offlineViewRepo, classSessionRepo, classRepo, classMemberRepo, queueClient, log)
 	practiceService := practices.NewService(practiceRoomRepo, practiceSubRepo, classSessionRepo, classRepo, classMemberRepo, log)
 
 	attendanceRepo := attendance.NewRepository(db)

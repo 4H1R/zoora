@@ -188,7 +188,7 @@ func newTestService(t *testing.T) (domain.OfflineService, *mockRoomRepo, *mockVi
 	sessionRepo := &mockSessionRepo{}
 	classRepo := &mockClassRepo{}
 	memberRepo := &mockMemberRepo{}
-	svc := offlines.NewService(roomRepo, viewRepo, sessionRepo, classRepo, memberRepo, slog.Default())
+	svc := offlines.NewService(roomRepo, viewRepo, sessionRepo, classRepo, memberRepo, nil, slog.Default())
 	return svc, roomRepo, viewRepo, sessionRepo, classRepo, memberRepo
 }
 
