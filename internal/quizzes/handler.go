@@ -54,6 +54,7 @@ func (h *Handler) RegisterRoutes(
 	ruleIDParam := httpx.RequireUUIDParam("ruleId")
 	roomIDParam := httpx.RequireUUIDParam("roomId")
 	submissionIDParam := httpx.RequireUUIDParam("submissionId")
+	jobIDParam := httpx.RequireUUIDParam("jobId")
 
 	authed := rg.Group("", authMiddleware)
 	{
@@ -86,6 +87,10 @@ func (h *Handler) RegisterRoutes(
 		authed.POST("/quizzes/submissions/:submissionId/submit", permAny(domain.PermQuizzesView, domain.PermQuizzesTake), submissionIDParam, h.SubmitQuiz)
 		authed.GET("/quizzes/submissions/:submissionId", permAny(domain.PermQuizzesView, domain.PermQuizzesTake), submissionIDParam, h.GetSubmission)
 		authed.POST("/quizzes/submissions/:submissionId/grade", perm(domain.PermQuizzesUpdate), submissionIDParam, h.GradeSubmission)
+		// Reuses the :id quiz-param slot (gin forbids a second wildcard name at
+		// this position, e.g. :quizId, alongside the existing :id routes).
+		authed.POST("/quizzes/:id/ai-grading", perm(domain.PermQuizzesUpdate), idParam, h.StartAIGrading)
+		authed.GET("/quizzes/ai-grading/:jobId", perm(domain.PermQuizzesUpdate), jobIDParam, h.GetAIGradingJob)
 		authed.GET("/quizzes/:id/anti-cheat", perm(domain.PermQuizzesView), idParam, h.AntiCheatReport)
 	}
 }
@@ -697,4 +702,52 @@ func (h *Handler) GradeSubmission(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, sub)
+}
+
+// StartAIGrading triggers AI grading of a quiz's descriptive answers.
+// @Summary Start AI grading of a quiz
+// @Description Fans out AI grading over all submitted answers. Requires the AI feature (Pro/Max).
+// @Tags Quizzes
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Quiz UUID"
+// @Param body body domain.StartAIGradingDTO true "AI grading options"
+// @Success 202 {object} domain.Response{data=domain.AIGradingJob}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Router /quizzes/{id}/ai-grading [post]
+func (h *Handler) StartAIGrading(c *gin.Context) {
+	var dto domain.StartAIGradingDTO
+	if err := httpx.Bind(c, &dto); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	job, err := h.svc.StartAIGrading(c.Request.Context(), httpx.UUIDParam(c, "id"), dto)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusAccepted, job)
+}
+
+// GetAIGradingJob returns AI grading progress for polling.
+// @Summary Get AI grading job status
+// @Tags Quizzes
+// @Produce json
+// @Security BearerAuth
+// @Param jobId path string true "AI grading job UUID"
+// @Success 200 {object} domain.Response{data=domain.AIGradingJob}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /quizzes/ai-grading/{jobId} [get]
+func (h *Handler) GetAIGradingJob(c *gin.Context) {
+	job, err := h.svc.GetAIGradingJob(c.Request.Context(), httpx.UUIDParam(c, "jobId"))
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, job)
 }

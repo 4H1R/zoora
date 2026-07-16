@@ -35,6 +35,10 @@ import type {
   GetQuizzes401,
   GetQuizzes403,
   GetQuizzes500,
+  GetQuizzesAiGradingJobId200,
+  GetQuizzesAiGradingJobId401,
+  GetQuizzesAiGradingJobId403,
+  GetQuizzesAiGradingJobId404,
   GetQuizzesId200,
   GetQuizzesId401,
   GetQuizzesId403,
@@ -88,6 +92,7 @@ import type {
   GithubCom4H1RZooraInternalDomainGradeSubmissionDTO,
   GithubCom4H1RZooraInternalDomainResponse,
   GithubCom4H1RZooraInternalDomainSaveAnswerDTO,
+  GithubCom4H1RZooraInternalDomainStartAIGradingDTO,
   GithubCom4H1RZooraInternalDomainStartQuizSubmissionDTO,
   GithubCom4H1RZooraInternalDomainSubmitQuizDTO,
   GithubCom4H1RZooraInternalDomainUpdateQuizDTO,
@@ -96,6 +101,10 @@ import type {
   PostQuizzes400,
   PostQuizzes401,
   PostQuizzes403,
+  PostQuizzesIdAiGrading202,
+  PostQuizzesIdAiGrading400,
+  PostQuizzesIdAiGrading401,
+  PostQuizzesIdAiGrading403,
   PostQuizzesIdRooms201,
   PostQuizzesIdRooms400,
   PostQuizzesIdRooms401,
@@ -403,7 +412,136 @@ export const usePostQuizzes = <TError = ErrorType<PostQuizzes400 | PostQuizzes40
       > => {
       return useMutation(getPostQuizzesMutationOptions(options), queryClient);
     }
-    export type getQuizzesMeResponse200 = {
+    export type getQuizzesAiGradingJobIdResponse200 = {
+  data: GetQuizzesAiGradingJobId200
+  status: 200
+}
+
+export type getQuizzesAiGradingJobIdResponse401 = {
+  data: GetQuizzesAiGradingJobId401
+  status: 401
+}
+
+export type getQuizzesAiGradingJobIdResponse403 = {
+  data: GetQuizzesAiGradingJobId403
+  status: 403
+}
+
+export type getQuizzesAiGradingJobIdResponse404 = {
+  data: GetQuizzesAiGradingJobId404
+  status: 404
+}
+
+export type getQuizzesAiGradingJobIdResponseSuccess = (getQuizzesAiGradingJobIdResponse200) & {
+  headers: Headers;
+};
+export type getQuizzesAiGradingJobIdResponseError = (getQuizzesAiGradingJobIdResponse401 | getQuizzesAiGradingJobIdResponse403 | getQuizzesAiGradingJobIdResponse404) & {
+  headers: Headers;
+};
+
+export type getQuizzesAiGradingJobIdResponse = (getQuizzesAiGradingJobIdResponseSuccess | getQuizzesAiGradingJobIdResponseError)
+
+export const getGetQuizzesAiGradingJobIdUrl = (jobId: string,) => {
+
+
+
+
+  return `/quizzes/ai-grading/${jobId}`
+}
+
+/**
+ * @summary Get AI grading job status
+ */
+export const getQuizzesAiGradingJobId = async (jobId: string, options?: RequestInit): Promise<getQuizzesAiGradingJobIdResponse> => {
+
+  return customInstance<getQuizzesAiGradingJobIdResponse>(getGetQuizzesAiGradingJobIdUrl(jobId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetQuizzesAiGradingJobIdQueryKey = (jobId: string,) => {
+    return [
+    `/quizzes/ai-grading/${jobId}`
+    ] as const;
+    }
+
+
+export const getGetQuizzesAiGradingJobIdQueryOptions = <TData = Awaited<ReturnType<typeof getQuizzesAiGradingJobId>>, TError = ErrorType<GetQuizzesAiGradingJobId401 | GetQuizzesAiGradingJobId403 | GetQuizzesAiGradingJobId404>>(jobId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesAiGradingJobId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetQuizzesAiGradingJobIdQueryKey(jobId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizzesAiGradingJobId>>> = ({ signal }) => getQuizzesAiGradingJobId(jobId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: jobId !== null && jobId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuizzesAiGradingJobId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetQuizzesAiGradingJobIdQueryResult = NonNullable<Awaited<ReturnType<typeof getQuizzesAiGradingJobId>>>
+export type GetQuizzesAiGradingJobIdQueryError = ErrorType<GetQuizzesAiGradingJobId401 | GetQuizzesAiGradingJobId403 | GetQuizzesAiGradingJobId404>
+
+
+export function useGetQuizzesAiGradingJobId<TData = Awaited<ReturnType<typeof getQuizzesAiGradingJobId>>, TError = ErrorType<GetQuizzesAiGradingJobId401 | GetQuizzesAiGradingJobId403 | GetQuizzesAiGradingJobId404>>(
+ jobId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesAiGradingJobId>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getQuizzesAiGradingJobId>>,
+          TError,
+          Awaited<ReturnType<typeof getQuizzesAiGradingJobId>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesAiGradingJobId<TData = Awaited<ReturnType<typeof getQuizzesAiGradingJobId>>, TError = ErrorType<GetQuizzesAiGradingJobId401 | GetQuizzesAiGradingJobId403 | GetQuizzesAiGradingJobId404>>(
+ jobId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesAiGradingJobId>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getQuizzesAiGradingJobId>>,
+          TError,
+          Awaited<ReturnType<typeof getQuizzesAiGradingJobId>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuizzesAiGradingJobId<TData = Awaited<ReturnType<typeof getQuizzesAiGradingJobId>>, TError = ErrorType<GetQuizzesAiGradingJobId401 | GetQuizzesAiGradingJobId403 | GetQuizzesAiGradingJobId404>>(
+ jobId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesAiGradingJobId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get AI grading job status
+ */
+
+export function useGetQuizzesAiGradingJobId<TData = Awaited<ReturnType<typeof getQuizzesAiGradingJobId>>, TError = ErrorType<GetQuizzesAiGradingJobId401 | GetQuizzesAiGradingJobId403 | GetQuizzesAiGradingJobId404>>(
+ jobId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesAiGradingJobId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetQuizzesAiGradingJobIdQueryOptions(jobId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type getQuizzesMeResponse200 = {
   data: GetQuizzesMe200
   status: 200
 }
@@ -1974,6 +2112,107 @@ export const useDeleteQuizzesId = <TError = ErrorType<DeleteQuizzesId401 | Delet
         TContext
       > => {
       return useMutation(getDeleteQuizzesIdMutationOptions(options), queryClient);
+    }
+    export type postQuizzesIdAiGradingResponse202 = {
+  data: PostQuizzesIdAiGrading202
+  status: 202
+}
+
+export type postQuizzesIdAiGradingResponse400 = {
+  data: PostQuizzesIdAiGrading400
+  status: 400
+}
+
+export type postQuizzesIdAiGradingResponse401 = {
+  data: PostQuizzesIdAiGrading401
+  status: 401
+}
+
+export type postQuizzesIdAiGradingResponse403 = {
+  data: PostQuizzesIdAiGrading403
+  status: 403
+}
+
+export type postQuizzesIdAiGradingResponseSuccess = (postQuizzesIdAiGradingResponse202) & {
+  headers: Headers;
+};
+export type postQuizzesIdAiGradingResponseError = (postQuizzesIdAiGradingResponse400 | postQuizzesIdAiGradingResponse401 | postQuizzesIdAiGradingResponse403) & {
+  headers: Headers;
+};
+
+export type postQuizzesIdAiGradingResponse = (postQuizzesIdAiGradingResponseSuccess | postQuizzesIdAiGradingResponseError)
+
+export const getPostQuizzesIdAiGradingUrl = (id: string,) => {
+
+
+
+
+  return `/quizzes/${id}/ai-grading`
+}
+
+/**
+ * Fans out AI grading over all submitted answers. Requires the AI feature (Pro/Max).
+ * @summary Start AI grading of a quiz
+ */
+export const postQuizzesIdAiGrading = async (id: string,
+    githubCom4H1RZooraInternalDomainStartAIGradingDTO: GithubCom4H1RZooraInternalDomainStartAIGradingDTO, options?: RequestInit): Promise<postQuizzesIdAiGradingResponse> => {
+
+  return customInstance<postQuizzesIdAiGradingResponse>(getPostQuizzesIdAiGradingUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(githubCom4H1RZooraInternalDomainStartAIGradingDTO)
+  }
+);}
+
+
+
+
+
+export const getPostQuizzesIdAiGradingMutationOptions = <TError = ErrorType<PostQuizzesIdAiGrading400 | PostQuizzesIdAiGrading401 | PostQuizzesIdAiGrading403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzesIdAiGrading>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainStartAIGradingDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postQuizzesIdAiGrading>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainStartAIGradingDTO}, TContext> => {
+
+const mutationKey = ['postQuizzesIdAiGrading'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postQuizzesIdAiGrading>>, {id: string;data: GithubCom4H1RZooraInternalDomainStartAIGradingDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postQuizzesIdAiGrading(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostQuizzesIdAiGradingMutationResult = NonNullable<Awaited<ReturnType<typeof postQuizzesIdAiGrading>>>
+    export type PostQuizzesIdAiGradingMutationBody = GithubCom4H1RZooraInternalDomainStartAIGradingDTO
+    export type PostQuizzesIdAiGradingMutationError = ErrorType<PostQuizzesIdAiGrading400 | PostQuizzesIdAiGrading401 | PostQuizzesIdAiGrading403>
+
+    /**
+ * @summary Start AI grading of a quiz
+ */
+export const usePostQuizzesIdAiGrading = <TError = ErrorType<PostQuizzesIdAiGrading400 | PostQuizzesIdAiGrading401 | PostQuizzesIdAiGrading403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuizzesIdAiGrading>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainStartAIGradingDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postQuizzesIdAiGrading>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainStartAIGradingDTO},
+        TContext
+      > => {
+      return useMutation(getPostQuizzesIdAiGradingMutationOptions(options), queryClient);
     }
     export type getQuizzesIdAntiCheatResponse200 = {
   data: GetQuizzesIdAntiCheat200

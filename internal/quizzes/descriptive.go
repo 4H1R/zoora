@@ -67,5 +67,9 @@ func trigramFreq(s string) map[string]int {
 func stripSimilarity(sub *domain.QuizSubmission) {
 	for i := range sub.Answers {
 		sub.Answers[i].SimilarityPct = nil
+		sub.Answers[i].SuggestedScore = nil
+		sub.Answers[i].AIRationale = ""
+		sub.Answers[i].AIStatus = ""
+		// GradedBy is safe to expose (it's just "graded by teacher/ai"); keep it.
 	}
 }
