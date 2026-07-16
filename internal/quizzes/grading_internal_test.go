@@ -7,8 +7,8 @@ import (
 )
 
 func TestGradeShortAnswer(t *testing.T) {
-	opts := func(value float64, v string, syns ...string) []domain.QuestionOption {
-		return []domain.QuestionOption{{ID: "a1", Value: v, Score: value, Synonyms: syns}}
+	opts := func(value float64, v string) []domain.QuestionOption {
+		return []domain.QuestionOption{{ID: "a1", Value: v, Score: value}}
 	}
 	cases := []struct {
 		name    string
@@ -27,8 +27,6 @@ func TestGradeShortAnswer(t *testing.T) {
 		{"spaced vs attached english (pass 2)", opts(1, "ice cream"), "icecream", 1},
 		{"numeric guard: spaced digits stay distinct", opts(1, "15"), "1 5", 0},
 		{"numeric exact still works", opts(1, "15"), "۱۵", 1},
-		{"synonym matches", opts(2, "photosynthesis", "فتوسنتز"), "فتوسنتز", 2},
-		{"synonym pass 2", opts(2, "photosynthesis", "نور ساخت"), "نورساخت", 2},
 		{"wrong answer", opts(2, "photosynthesis"), "respiration", 0},
 		{"zero-score option never matches", []domain.QuestionOption{{ID: "a1", Value: "x", Score: 0}}, "x", 0},
 		{"empty student answer", opts(2, "photosynthesis"), "", 0},

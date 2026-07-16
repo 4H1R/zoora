@@ -1023,13 +1023,9 @@
         "gradedOf": "{{done}} of {{total}} graded",
         "spent": "Time spent",
         "secondsShort": "s",
-        "suggestedScore": "Suggested score",
-        "applySuggestion": "Apply",
         "similarity": "Similarity to model answer",
-        "matchedConcepts": "Matched concepts",
-        "rubric": "Rubric",
         "modelAnswer": "Model answer",
-        "suggestionHint": "Advisory only — computed from rubric keyword matching, never shown to students."
+        "suggestionHint": "Advisory only — a text-similarity hint, never shown to students. You set the score."
       },
       "integrity": {
         "column": "Integrity",
@@ -1162,7 +1158,7 @@
         "hints": {
           "choice": "Add at least 2 options. Correct options get a positive score; distractors can be 0 or negative.",
           "short_answer": "List accepted answers with a non-negative score each.",
-          "descriptive": "Add weighted rubric concepts the answer should mention — the suggested score is the sum of matched weights. Synonyms and a model answer improve the suggestion."
+          "descriptive": "Set the point value for this answer. You grade the free-text answer manually; a text-similarity hint helps."
         },
         "errors": {
           "choice": "Choice questions need at least 2 options.",
@@ -1199,9 +1195,7 @@
           "perWrongHint": "Each selected wrong option deducts this many points.",
           "accumulativeHint": "Every this-many wrong selections deducts 1 point (between 2 and 5)."
         },
-        "rubric": "Grading rubric",
-        "conceptPlaceholder": "Concept the answer should mention",
-        "synonymsPlaceholder": "Synonyms (comma-separated)",
+        "points": "Points",
         "modelAnswer": "Model answer",
         "modelAnswerPlaceholder": "Reference answer used to compute the similarity signal…"
       }

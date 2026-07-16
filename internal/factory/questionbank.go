@@ -61,18 +61,13 @@ func NewQuestion(bankID, orgID uuid.UUID, opts ...func(*domain.Question)) *domai
 			}
 			q.Options = []domain.QuestionOption{opt}
 		case domain.QuestionTypeDescriptive:
-			// Rubric concepts: each option is a weighted concept the answer
-			// should mention; synonyms are alternative phrasings.
-			count := fake.IntRange(2, 4)
-			q.Options = make([]domain.QuestionOption, count)
-			for i := range count {
-				q.Options[i] = domain.QuestionOption{
-					ID:       uuid.New().String(),
-					Value:    fakeSentence(fake.IntRange(1, 2)),
-					Score:    float64(fake.IntRange(1, 3)),
-					Synonyms: []string{fakeSentence(1)},
-				}
-			}
+			// A single score-holder option carries the point value the grader
+			// marks the free-text answer out of; the model answer feeds the
+			// advisory similarity hint.
+			q.Options = []domain.QuestionOption{{
+				ID:    uuid.New().String(),
+				Score: float64(fake.IntRange(1, 5)),
+			}}
 			q.ModelAnswer = fakeSentence(12)
 		}
 	}

@@ -277,13 +277,11 @@ type SubmissionAnswer struct {
 	EarnedScore       float64   `json:"earned_score"`
 	SpentSeconds      int       `json:"spent_seconds"`
 
-	// Advisory auto-grading signals for descriptive answers, computed at
-	// finalize from the question's rubric options and model answer. They never
-	// affect EarnedScore/TotalScore and are stripped from student-facing reads
-	// — the teacher confirms or overrides them during manual grading.
-	SuggestedScore  *float64 `json:"suggested_score,omitempty"`
-	MatchedConcepts []string `json:"matched_concepts,omitempty"`
-	SimilarityPct   *float64 `json:"similarity_pct,omitempty"`
+	// SimilarityPct is the advisory char-trigram similarity of a descriptive
+	// answer to the question's model answer, computed at finalize. It never
+	// affects EarnedScore/TotalScore and is stripped from student-facing reads —
+	// the teacher uses it only as a hint during manual grading.
+	SimilarityPct *float64 `json:"similarity_pct,omitempty"`
 }
 
 // SubmissionQuestion is one frozen question in a student's submission: the

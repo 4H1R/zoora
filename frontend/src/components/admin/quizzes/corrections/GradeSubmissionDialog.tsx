@@ -314,12 +314,7 @@ function AnswerRow({ index, answer, score, onScoreChange, fast }: AnswerRowProps
           <>
             <StudentAnswer value={answer.value} type={questionType} expected={expectedAnswers} />
             {questionType === "descriptive" && (
-              <DescriptiveInsights
-                answer={answer}
-                rubric={expectedAnswers.filter((o) => !!o.value?.trim())}
-                modelAnswer={question?.model_answer}
-                onApply={onScoreChange}
-              />
+              <DescriptiveInsights answer={answer} modelAnswer={question?.model_answer} />
             )}
           </>
         )}
@@ -328,57 +323,17 @@ function AnswerRow({ index, answer, score, onScoreChange, fast }: AnswerRowProps
   )
 }
 
-// Advisory auto-grading signals for a descriptive answer: rubric concepts
-// (matched ones highlighted), the model answer, and the suggested score with
-// a one-click apply. Suggestion never saves by itself — the teacher decides.
-function DescriptiveInsights({
-  answer,
-  rubric,
-  modelAnswer,
-  onApply,
-}: {
-  answer: SubmissionAnswer
-  rubric: QuestionOption[]
-  modelAnswer?: string
-  onApply: (v: number) => void
-}) {
+// Advisory grading hints for a descriptive answer: the teacher's model answer
+// and the char-trigram similarity of the student's text to it. Both are hints
+// only — the teacher assigns the score manually.
+function DescriptiveInsights({ answer, modelAnswer }: { answer: SubmissionAnswer; modelAnswer?: string }) {
   const { t } = useTranslation()
-  const matched = new Set(answer.matched_concepts ?? [])
-  const hasSuggestion = answer.suggested_score != null
   const hasSimilarity = answer.similarity_pct != null
 
-  if (rubric.length === 0 && !modelAnswer && !hasSuggestion && !hasSimilarity) return null
+  if (!modelAnswer && !hasSimilarity) return null
 
   return (
     <section className="space-y-3">
-      {rubric.length > 0 && (
-        <div>
-          <div className="text-muted-foreground mb-1.5 text-xs font-medium tracking-wide uppercase">
-            {t("admin.corrections.dialog.rubric")}
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {rubric.map((o) => {
-              const hit = !!o.value && matched.has(o.value)
-              return (
-                <Badge
-                  key={o.id ?? o.value}
-                  variant="outline"
-                  className={cn(
-                    hit
-                      ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                      : "text-muted-foreground"
-                  )}
-                >
-                  {hit && <CheckCircle2 className="me-1 size-3" />}
-                  {o.value}
-                  <span className="ms-1 tabular-nums opacity-80">+{formatScore(o.score ?? 0)}</span>
-                </Badge>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
       {!!modelAnswer && (
         <div>
           <div className="text-muted-foreground mb-1.5 text-xs font-medium tracking-wide uppercase">
@@ -390,30 +345,13 @@ function DescriptiveInsights({
         </div>
       )}
 
-      {(hasSuggestion || hasSimilarity) && (
+      {hasSimilarity && (
         <div className="rounded-md border border-amber-500/40 bg-amber-500/5 px-3.5 py-2.5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-              {hasSuggestion && (
-                <span className="inline-flex items-center gap-1.5 font-medium text-amber-700 dark:text-amber-300">
-                  <Lightbulb className="size-4" />
-                  {t("admin.corrections.dialog.suggestedScore")}:{" "}
-                  <span className="tabular-nums">{formatScore(answer.suggested_score ?? 0)}</span>
-                </span>
-              )}
-              {hasSimilarity && (
-                <span className="text-muted-foreground text-xs">
-                  {t("admin.corrections.dialog.similarity")}:{" "}
-                  <span className="tabular-nums">{answer.similarity_pct}%</span>
-                </span>
-              )}
-            </div>
-            {hasSuggestion && (
-              <Button type="button" variant="outline" size="sm" onClick={() => onApply(answer.suggested_score ?? 0)}>
-                {t("admin.corrections.dialog.applySuggestion")}
-              </Button>
-            )}
-          </div>
+          <span className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 dark:text-amber-300">
+            <Lightbulb className="size-4" />
+            {t("admin.corrections.dialog.similarity")}:{" "}
+            <span className="tabular-nums">{answer.similarity_pct}%</span>
+          </span>
           <p className="text-muted-foreground mt-1 text-xs">{t("admin.corrections.dialog.suggestionHint")}</p>
         </div>
       )}

@@ -653,8 +653,7 @@ func (s *service) gradeAndFinalize(ctx context.Context, sub *domain.QuizSubmissi
 		if q, ok := qMap[sub.Answers[i].QuestionID]; ok {
 			sub.Answers[i].EarnedScore = gradeAnswer(q, sub.Answers[i], cfgFor(q))
 			if q.Type == domain.QuestionTypeDescriptive {
-				sub.Answers[i].SuggestedScore, sub.Answers[i].MatchedConcepts, sub.Answers[i].SimilarityPct =
-					suggestDescriptive(q, sub.Answers[i].Value)
+				sub.Answers[i].SimilarityPct = computeSimilarity(q, sub.Answers[i].Value)
 			}
 		}
 		total += sub.Answers[i].EarnedScore
@@ -714,11 +713,11 @@ func (s *service) resultsRevealed(ctx context.Context, quiz *domain.Quiz, sub *d
 }
 
 // redactForStudent prepares a submission for return to its owner: it removes the
-// advisory grading suggestions and, until results are revealed, masks the score.
+// advisory similarity hint and, until results are revealed, masks the score.
 // This is the single transform every student-facing read of an own submission
 // must apply so the reveal rule can never be bypassed by one path forgetting it.
 func (s *service) redactForStudent(ctx context.Context, quiz *domain.Quiz, sub *domain.QuizSubmission, now time.Time) {
-	stripSuggestions(sub)
+	stripSimilarity(sub)
 	sub.ResultsRevealed = s.resultsRevealed(ctx, quiz, sub, now)
 	if !sub.ResultsRevealed {
 		stripResults(sub)
@@ -895,10 +894,10 @@ func gradeChoice(options []domain.QuestionOption, selectedIDs []string, cfg doma
 	return positive - cfg.Penalty(wrongCount)
 }
 
-// gradeShortAnswer matches the student's answer against every accepted
-// option value and synonym. Pass 1 compares normalized text; pass 2 retries
-// spacing-insensitively (ZWNJ/space/attached forms compare equal) and is
-// skipped for purely numeric accepted answers so "1 5" never matches "15".
+// gradeShortAnswer matches the student's answer against each accepted option
+// value. Pass 1 compares normalized text; pass 2 retries spacing-insensitively
+// (ZWNJ/space/attached forms compare equal) and is skipped for purely numeric
+// accepted answers so "1 5" never matches "15".
 func gradeShortAnswer(options []domain.QuestionOption, value string) float64 {
 	normalized := normalizeText(value)
 	compact := normalizeCompact(value)
@@ -906,17 +905,15 @@ func gradeShortAnswer(options []domain.QuestionOption, value string) float64 {
 		if o.Score <= 0 {
 			continue
 		}
-		for _, accepted := range append([]string{o.Value}, o.Synonyms...) {
-			want := normalizeText(accepted)
-			if want == "" {
-				continue
-			}
-			if want == normalized {
-				return o.Score
-			}
-			if !isNumericAnswer(accepted) && normalizeCompact(accepted) == compact {
-				return o.Score
-			}
+		want := normalizeText(o.Value)
+		if want == "" {
+			continue
+		}
+		if want == normalized {
+			return o.Score
+		}
+		if !isNumericAnswer(o.Value) && normalizeCompact(o.Value) == compact {
+			return o.Score
 		}
 	}
 	return 0

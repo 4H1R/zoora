@@ -1389,7 +1389,7 @@ func TestQuizService_AntiCheatReport_ForbiddenForNonManager(t *testing.T) {
 	d.subRepo.AssertNotCalled(t, "ListByQuiz", mock.Anything, mock.Anything, mock.Anything)
 }
 
-func TestQuizService_SubmitQuiz_DescriptiveSuggestions_PersistedButStrippedForStudent(t *testing.T) {
+func TestQuizService_SubmitQuiz_DescriptiveSimilarity_PersistedButStrippedForStudent(t *testing.T) {
 	studentID := uuid.New()
 	quizID := uuid.New()
 	subID := uuid.New()
@@ -1418,8 +1418,7 @@ func TestQuizService_SubmitQuiz_DescriptiveSuggestions_PersistedButStrippedForSt
 			ID: qID, Type: domain.QuestionTypeDescriptive,
 			ModelAnswer: "گیاهان با فتوسنتز غذا می‌سازند",
 			Options: []domain.QuestionOption{
-				{ID: "c1", Value: "فتوسنتز", Score: 2},
-				{ID: "c2", Value: "کلروفیل", Score: 1},
+				{ID: "c1", Score: 3},
 			},
 		},
 	}, nil)
@@ -1439,29 +1438,22 @@ func TestQuizService_SubmitQuiz_DescriptiveSuggestions_PersistedButStrippedForSt
 	})
 
 	assert.NoError(t, err)
-	// persisted answer carries the advisory suggestion
+	// persisted answer carries the advisory similarity hint
 	if assert.Len(t, persisted, 1) {
-		if assert.NotNil(t, persisted[0].SuggestedScore) {
-			assert.Equal(t, 2.0, *persisted[0].SuggestedScore)
-		}
-		assert.Equal(t, []string{"فتوسنتز"}, persisted[0].MatchedConcepts)
 		assert.NotNil(t, persisted[0].SimilarityPct)
 	}
 	// earned score still 0 and total unaffected
 	assert.Equal(t, 0.0, persisted[0].EarnedScore)
 	assert.Equal(t, 0.0, result.TotalScore)
 	// student-facing return is stripped
-	assert.Nil(t, result.Answers[0].SuggestedScore)
-	assert.Nil(t, result.Answers[0].MatchedConcepts)
 	assert.Nil(t, result.Answers[0].SimilarityPct)
 }
 
-func TestQuizService_GetSubmission_SuggestionsVisibilityByRole(t *testing.T) {
+func TestQuizService_GetSubmission_SimilarityVisibilityByRole(t *testing.T) {
 	studentID := uuid.New()
 	teacherID := uuid.New()
 	quizID := uuid.New()
 	subID := uuid.New()
-	score := 2.0
 	sim := 80.0
 
 	makeSub := func() *domain.QuizSubmission {
@@ -1469,10 +1461,8 @@ func TestQuizService_GetSubmission_SuggestionsVisibilityByRole(t *testing.T) {
 			ID: subID, QuizID: quizID, UserID: studentID,
 			Status: domain.SubmissionStatusSubmitted,
 			Answers: []domain.SubmissionAnswer{{
-				QuestionID:      uuid.New(),
-				SuggestedScore:  &score,
-				MatchedConcepts: []string{"فتوسنتز"},
-				SimilarityPct:   &sim,
+				QuestionID:    uuid.New(),
+				SimilarityPct: &sim,
 			}},
 		}
 	}
@@ -1485,12 +1475,10 @@ func TestQuizService_GetSubmission_SuggestionsVisibilityByRole(t *testing.T) {
 		svc := d.service()
 		got, err := svc.GetSubmission(ctx, subID)
 		assert.NoError(t, err)
-		assert.Nil(t, got.Answers[0].SuggestedScore)
-		assert.Nil(t, got.Answers[0].MatchedConcepts)
 		assert.Nil(t, got.Answers[0].SimilarityPct)
 	})
 
-	t.Run("manager sees suggestions", func(t *testing.T) {
+	t.Run("manager sees similarity", func(t *testing.T) {
 		ctx := teacherCtx(teacherID)
 		d := newDeps()
 		d.subRepo.On("FindByID", ctx, subID).Return(makeSub(), nil)
@@ -1499,16 +1487,16 @@ func TestQuizService_GetSubmission_SuggestionsVisibilityByRole(t *testing.T) {
 		svc := d.service()
 		got, err := svc.GetSubmission(ctx, subID)
 		assert.NoError(t, err)
-		if assert.NotNil(t, got.Answers[0].SuggestedScore) {
-			assert.Equal(t, 2.0, *got.Answers[0].SuggestedScore)
+		if assert.NotNil(t, got.Answers[0].SimilarityPct) {
+			assert.Equal(t, 80.0, *got.Answers[0].SimilarityPct)
 		}
 	})
 }
 
-func TestQuizService_ListSubmissions_StripsSuggestionsForStudent(t *testing.T) {
+func TestQuizService_ListSubmissions_StripsSimilarityForStudent(t *testing.T) {
 	studentID := uuid.New()
 	quizID := uuid.New()
-	score := 2.0
+	sim := 80.0
 	ctx := studentCtx(studentID)
 	d := newDeps()
 
@@ -1519,11 +1507,11 @@ func TestQuizService_ListSubmissions_StripsSuggestionsForStudent(t *testing.T) {
 		Return([]domain.QuizSubmission{{
 			ID: uuid.New(), QuizID: quizID, UserID: studentID,
 			Status:  domain.SubmissionStatusSubmitted,
-			Answers: []domain.SubmissionAnswer{{QuestionID: uuid.New(), SuggestedScore: &score}},
+			Answers: []domain.SubmissionAnswer{{QuestionID: uuid.New(), SimilarityPct: &sim}},
 		}}, int64(1), nil)
 
 	svc := d.service()
 	subs, _, err := svc.ListSubmissions(ctx, quizID, domain.ListSubmissionsQuery{})
 	assert.NoError(t, err)
-	assert.Nil(t, subs[0].Answers[0].SuggestedScore)
+	assert.Nil(t, subs[0].Answers[0].SimilarityPct)
 }

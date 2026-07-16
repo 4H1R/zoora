@@ -37,12 +37,6 @@ type QuestionOption struct {
 	// cannot set it, and the take endpoint blanks Value while keeping this so the
 	// student sees only the image. Nil until the render task completes.
 	SystemImageMediaID *uuid.UUID `json:"system_image_media_id,omitempty"`
-
-	// Synonyms are alternative accepted phrasings of Value. For short_answer
-	// options they are extra accepted answers; for descriptive rubric concepts
-	// they are alternative wordings that count as mentioning the concept.
-	// Unused for choice options.
-	Synonyms []string `json:"synonyms,omitempty"`
 }
 
 type QuestionMetadataType string
@@ -223,8 +217,8 @@ func (q *Question) IsMultiSelect() bool {
 
 // MaxScore returns the highest option score. Negative-only sets return 0.
 // For multi-select choice questions, returns the sum of positive scores.
-// For descriptive questions, options are additive rubric concepts, so the
-// max is the sum of all weights.
+// Descriptive questions carry a single score-holder option, so the max is its
+// score — the point value the grader marks the free-text answer out of.
 func (q *Question) MaxScore() float64 {
 	if q.Type == QuestionTypeDescriptive {
 		var sum float64

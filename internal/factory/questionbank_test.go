@@ -41,12 +41,9 @@ func TestNewQuestion_Descriptive(t *testing.T) {
 	})
 
 	assert.Equal(t, domain.QuestionTypeDescriptive, q.Type)
-	assert.GreaterOrEqual(t, len(q.Options), 2)
-	for _, o := range q.Options {
-		assert.NotEmpty(t, o.Value)
-		assert.Greater(t, o.Score, 0.0)
-		assert.NotEmpty(t, o.Synonyms)
-	}
+	// A single score-holder option carries the point value; no rubric concepts.
+	assert.Len(t, q.Options, 1)
+	assert.Greater(t, q.Options[0].Score, 0.0)
 	assert.NotEmpty(t, q.ModelAnswer)
 }
 

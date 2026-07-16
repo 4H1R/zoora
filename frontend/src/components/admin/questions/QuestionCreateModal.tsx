@@ -33,8 +33,6 @@ const optionSchema = z.object({
   value: z.string(),
   score: z.coerce.number(),
   image_media_id: z.string().nullable().optional(),
-  // Comma-separated in the form; converted to string[] on submit.
-  synonyms: z.string().optional(),
 })
 
 const metadataSchema = z.object({
@@ -50,14 +48,6 @@ const baseSchema = z.object({
   model_answer: z.string().optional(),
   metadata: z.array(metadataSchema),
 })
-
-function parseSynonyms(raw?: string): string[] | undefined {
-  const list = (raw ?? "")
-    .split(/[,،]/)
-    .map((s) => s.trim())
-    .filter(Boolean)
-  return list.length > 0 ? list : undefined
-}
 
 type FormInput = z.input<typeof baseSchema>
 type FormValues = z.infer<typeof baseSchema>
@@ -85,7 +75,8 @@ function defaultOptionsFor(type: QType): FormOption[] {
     case "short_answer":
       return [{ id: nextOptId(), value: "", score: 1 }]
     case "descriptive":
-      // Rubric: each option is a weighted concept the answer should mention.
+      // Single score-holder option: the point value the free-text answer is
+      // graded out of. No rubric concepts — grading is manual.
       return [{ id: nextOptId(), value: "", score: 1 }]
   }
 }
@@ -130,15 +121,22 @@ export function QuestionCreateModal({ open, onOpenChange, question, defaultBankI
     if (!open) return
     if (isEdit && question) {
       const type = ((question.type as QType) ?? "descriptive") as QType
-      const opts = question.options?.length
-        ? question.options.map((o) => ({
-            id: o.id ?? nextOptId(),
-            value: o.value ?? "",
-            score: o.score ?? 0,
-            image_media_id: o.image_media_id ?? null,
-            synonyms: (o.synonyms ?? []).join(", "),
-          }))
-        : defaultOptionsFor(type)
+      let opts: FormOption[]
+      if (type === "descriptive") {
+        // Descriptive carries a single score-holder option. Collapse any legacy
+        // rubric concepts into one Points field, preserving the total weight.
+        const total = (question.options ?? []).reduce((s, o) => s + Math.max(0, o.score ?? 0), 0)
+        opts = [{ id: question.options?.[0]?.id ?? nextOptId(), value: "", score: total || 1 }]
+      } else {
+        opts = question.options?.length
+          ? question.options.map((o) => ({
+              id: o.id ?? nextOptId(),
+              value: o.value ?? "",
+              score: o.score ?? 0,
+              image_media_id: o.image_media_id ?? null,
+            }))
+          : defaultOptionsFor(type)
+      }
       form.reset({
         bank_id: question.bank_id ?? "",
         text: question.text ?? "",
@@ -206,8 +204,10 @@ export function QuestionCreateModal({ open, onOpenChange, question, defaultBankI
     } else if (next === "short_answer") {
       if (current.length < 1) form.setValue("options", defaultOptionsFor("short_answer"))
     } else {
-      // descriptive: options are weighted rubric concepts.
-      if (current.length < 1) form.setValue("options", defaultOptionsFor("descriptive"))
+      // descriptive: a single score-holder option (the Points field). Collapse
+      // whatever was there, preserving the total weight as the point value.
+      const total = current.reduce((s, o) => s + Math.max(0, Number(o.score) || 0), 0)
+      form.setValue("options", [{ id: current[0]?.id ?? nextOptId(), value: "", score: total || 1 }])
     }
   }
 
@@ -218,14 +218,16 @@ export function QuestionCreateModal({ open, onOpenChange, question, defaultBankI
       return
     }
 
-    const isChoice = values.type === "choice"
-    const options = values.options.map((o) => ({
-      id: o.id,
-      value: o.value,
-      score: o.score,
-      image_media_id: isChoice ? (o.image_media_id ?? undefined) : undefined,
-      synonyms: isChoice ? undefined : parseSynonyms(o.synonyms),
-    }))
+    const options =
+      values.type === "descriptive"
+        ? // Single score-holder option: no value, just the point total.
+          [{ id: values.options[0]?.id ?? nextOptId(), value: "", score: values.options[0]?.score ?? 0 }]
+        : values.options.map((o) => ({
+            id: o.id,
+            value: o.value,
+            score: o.score,
+            image_media_id: values.type === "choice" ? (o.image_media_id ?? undefined) : undefined,
+          }))
     const modelAnswer = values.type === "descriptive" ? (values.model_answer ?? "") : ""
 
     if (isEdit) {
@@ -316,75 +318,81 @@ export function QuestionCreateModal({ open, onOpenChange, question, defaultBankI
           <FieldError errors={[errors.type]} />
         </Field>
 
-        <Field>
-          <FieldLabel className="flex items-center justify-between">
-            <span>{type === "descriptive" ? t("admin.questions.form.rubric") : t("admin.questions.form.options")}</span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => optsArr.append({ id: nextOptId(), value: "", score: type === "choice" ? 0 : 1 })}
-            >
-              <PlusIcon data-icon="inline-start" />
-              {t("admin.questions.form.addOption")}
-            </Button>
-          </FieldLabel>
-          <div className="flex flex-col gap-2">
-            {optsArr.fields.map((field, idx) => (
-              <div key={field.id} className="flex flex-col gap-2">
-                <div className="flex items-start gap-2">
-                  <Input
-                    className="flex-1"
-                    placeholder={
-                      type === "descriptive"
-                        ? t("admin.questions.form.conceptPlaceholder")
-                        : t("admin.questions.form.optionValuePlaceholder")
-                    }
-                    {...form.register(`options.${idx}.value`)}
-                  />
-                  <Input
-                    type="number"
-                    step="any"
-                    className="w-24"
-                    placeholder={t("admin.questions.form.scorePlaceholder")}
-                    {...form.register(`options.${idx}.score`, { valueAsNumber: true })}
-                  />
-                  {optsArr.fields.length > minOptions && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      onClick={() => optsArr.remove(idx)}
-                    >
-                      <Trash2Icon />
-                    </Button>
+        {type === "descriptive" ? (
+          // Descriptive answers are graded manually — the teacher just sets the
+          // point value the free-text answer is marked out of.
+          <Field>
+            <FieldLabel>{t("admin.questions.form.points")}</FieldLabel>
+            <Input
+              type="number"
+              step="any"
+              className="w-32"
+              placeholder={t("admin.questions.form.scorePlaceholder")}
+              {...form.register("options.0.score", { valueAsNumber: true })}
+            />
+            <p className="text-muted-foreground text-xs">{t("admin.questions.form.hints.descriptive")}</p>
+          </Field>
+        ) : (
+          <Field>
+            <FieldLabel className="flex items-center justify-between">
+              <span>{t("admin.questions.form.options")}</span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => optsArr.append({ id: nextOptId(), value: "", score: type === "choice" ? 0 : 1 })}
+              >
+                <PlusIcon data-icon="inline-start" />
+                {t("admin.questions.form.addOption")}
+              </Button>
+            </FieldLabel>
+            <div className="flex flex-col gap-2">
+              {optsArr.fields.map((field, idx) => (
+                <div key={field.id} className="flex flex-col gap-2">
+                  <div className="flex items-start gap-2">
+                    <Input
+                      className="flex-1"
+                      placeholder={t("admin.questions.form.optionValuePlaceholder")}
+                      {...form.register(`options.${idx}.value`)}
+                    />
+                    <Input
+                      type="number"
+                      step="any"
+                      className="w-24"
+                      placeholder={t("admin.questions.form.scorePlaceholder")}
+                      {...form.register(`options.${idx}.score`, { valueAsNumber: true })}
+                    />
+                    {optsArr.fields.length > minOptions && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => optsArr.remove(idx)}
+                      >
+                        <Trash2Icon />
+                      </Button>
+                    )}
+                  </div>
+                  {type === "choice" && (
+                    <div className="ps-1">
+                      <OptionImageControl
+                        value={form.watch(`options.${idx}.image_media_id`)}
+                        questionId={question?.id}
+                        onChange={(id) =>
+                          form.setValue(`options.${idx}.image_media_id`, id, {
+                            shouldDirty: true,
+                          })
+                        }
+                      />
+                    </div>
                   )}
                 </div>
-                {type !== "choice" && (
-                  <Input
-                    placeholder={t("admin.questions.form.synonymsPlaceholder")}
-                    {...form.register(`options.${idx}.synonyms`)}
-                  />
-                )}
-                {type === "choice" && (
-                  <div className="ps-1">
-                    <OptionImageControl
-                      value={form.watch(`options.${idx}.image_media_id`)}
-                      questionId={question?.id}
-                      onChange={(id) =>
-                        form.setValue(`options.${idx}.image_media_id`, id, {
-                          shouldDirty: true,
-                        })
-                      }
-                    />
-                  </div>
-                )}
-              </div>
-            ))}
-            <p className="text-muted-foreground text-xs">{t(`admin.questions.form.hints.${type}`)}</p>
-          </div>
-        </Field>
+              ))}
+              <p className="text-muted-foreground text-xs">{t(`admin.questions.form.hints.${type}`)}</p>
+            </div>
+          </Field>
+        )}
 
         {type === "descriptive" && (
           <Field>
