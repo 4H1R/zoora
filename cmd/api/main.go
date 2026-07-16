@@ -14,6 +14,7 @@ import (
 
 	_ "github.com/4H1R/zoora/docs"
 	"github.com/4H1R/zoora/internal/admin"
+	"github.com/4H1R/zoora/internal/ai"
 	"github.com/4H1R/zoora/internal/attendance"
 	"github.com/4H1R/zoora/internal/auth"
 	"github.com/4H1R/zoora/internal/billing"
@@ -43,6 +44,7 @@ import (
 	"github.com/4H1R/zoora/internal/platform/health"
 	"github.com/4H1R/zoora/internal/platform/httpx"
 	lk "github.com/4H1R/zoora/internal/platform/livekit"
+	"github.com/4H1R/zoora/internal/platform/llm"
 	"github.com/4H1R/zoora/internal/platform/logger"
 	"github.com/4H1R/zoora/internal/platform/payment"
 	"github.com/4H1R/zoora/internal/platform/queue"
@@ -190,8 +192,26 @@ func main() {
 	userService := users.NewService(userRepo, roleRepo, entitlementService, redisClient, sessionManager, log)
 	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, queueClient, log)
 	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, queueClient, log)
-	// TODO(Task 18): replace nil, nil with real LLM client + AI grading job repo.
-	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, queueClient, nil, nil, log)
+
+	// AI / LLM (optional; disabled when LLM_API_KEY is empty). Leave llmClient as
+	// a nil interface when AI is off to avoid the typed-nil pitfall.
+	aiUsageRepo := ai.NewUsageRepository(db)
+	aiJobRepo := ai.NewJobRepository(db)
+	var llmClient domain.LLM
+	if built, err := llm.New(llm.AdapterConfig{
+		APIKey:    cfg.LLMAPIKey,
+		Model:     cfg.LLMModel,
+		BaseURL:   cfg.LLMBaseURL,
+		MaxTokens: cfg.LLMMaxTokens,
+		Timeout:   cfg.LLMTimeout,
+	}, cfg.LLMProvider, aiUsageRepo, cfg.LLMAIQueueConcurrency); err != nil {
+		log.Error("llm init failed", "error", err)
+		os.Exit(1)
+	} else if built != nil {
+		llmClient = built
+	}
+
+	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, queueClient, llmClient, aiJobRepo, log)
 	transactor := database.NewTransactor(db)
 
 	leadRepo := leads.NewRepository(db)
