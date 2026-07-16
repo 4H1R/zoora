@@ -171,6 +171,11 @@ func submissionHasDescriptive(sub domain.QuizSubmission, descriptive map[uuid.UU
 // call, retries any missing answer individually, applies results per mode, and
 // recomputes the total. Pure over its inputs (no DB) so it is unit-testable; the
 // DB wrapper is gradeSubmissionAI. orgID feeds metering context.
+//
+// Returns the number of eligible descriptive answers that were successfully
+// scored this run and the number that failed (unresolved by the model, or with a
+// non-positive max score). Callers use these counts to attribute the submission
+// as done vs failed on the job.
 func gradeAnswersAI(
 	ctx context.Context,
 	llmClient domain.LLM,
@@ -179,7 +184,7 @@ func gradeAnswersAI(
 	mode domain.AIGradingMode,
 	force bool,
 	orgID uuid.UUID,
-) (*domain.QuizSubmission, error) {
+) (updated *domain.QuizSubmission, scoredCount, failedCount int, err error) {
 	qByID := make(map[uuid.UUID]domain.Question, len(questions))
 	for _, q := range questions {
 		qByID[q.ID] = q
@@ -197,22 +202,31 @@ func gradeAnswersAI(
 		if !shouldGrade(a, force) {
 			continue
 		}
+		// A descriptive question with no positive max score cannot be scored
+		// meaningfully (the model has nothing to grade out of). Mark it failed so
+		// it surfaces for manual grading instead of silently becoming 0/graded.
+		if q.MaxScore() <= 0 {
+			sub.Answers[i].AIStatus = domain.AIAnswerStatusFailed
+			failedCount++
+			continue
+		}
 		answerIdx[a.QuestionID] = i
 		items = append(items, gradeItem{Question: q, Answer: a.Value})
 	}
-	if len(items) == 0 {
-		return sub, nil
-	}
 
-	scored := gradeBatchWithRetry(ctx, llmClient, items, orgID)
+	if len(items) > 0 {
+		scored := gradeBatchWithRetry(ctx, llmClient, items, orgID)
 
-	// Apply results; mark unresolved as failed.
-	for _, it := range items {
-		idx := answerIdx[it.Question.ID]
-		if s, ok := scored[it.Question.ID]; ok {
-			applyAIScore(&sub.Answers[idx], s, mode, force)
-		} else {
-			sub.Answers[idx].AIStatus = domain.AIAnswerStatusFailed
+		// Apply results; mark unresolved as failed.
+		for _, it := range items {
+			idx := answerIdx[it.Question.ID]
+			if s, ok := scored[it.Question.ID]; ok {
+				applyAIScore(&sub.Answers[idx], s, mode, force)
+				scoredCount++
+			} else {
+				sub.Answers[idx].AIStatus = domain.AIAnswerStatusFailed
+				failedCount++
+			}
 		}
 	}
 
@@ -222,7 +236,7 @@ func gradeAnswersAI(
 		total += a.EarnedScore
 	}
 	sub.TotalScore = total
-	return sub, nil
+	return sub, scoredCount, failedCount, nil
 }
 
 // gradeBatchWithRetry does the batch call, then retries any missing answer as a
@@ -278,9 +292,15 @@ func callLLM(ctx context.Context, llmClient domain.LLM, system, user string, org
 
 // gradeSubmissionAI is the worker entry point: load, grade, persist, advance job.
 func (s *service) gradeSubmissionAI(ctx context.Context, p domain.QuizAIGradeSubmissionPayload) error {
+	if s.llm == nil {
+		// AI disabled after this task was enqueued; count it as failed so the job can complete.
+		_ = s.aiJobs.IncrementProgress(ctx, p.JobID, 0, 1)
+		return nil
+	}
+
 	sub, err := s.submissions.FindByID(ctx, p.SubmissionID)
 	if err != nil {
-		return err
+		return s.countFailureIfExhausted(ctx, p.JobID, err)
 	}
 	ids := make([]uuid.UUID, 0, len(sub.Answers))
 	for _, a := range sub.Answers {
@@ -288,29 +308,66 @@ func (s *service) gradeSubmissionAI(ctx context.Context, p domain.QuizAIGradeSub
 	}
 	questions, err := s.questions.FindByIDs(ctx, ids)
 	if err != nil {
-		return err
+		return s.countFailureIfExhausted(ctx, p.JobID, err)
 	}
 
-	updated, err := gradeAnswersAI(ctx, s.llm, sub, questions, p.Mode, p.Force, p.OrganizationID)
+	// Descriptive-question id set: used both to gate completion and (implicitly)
+	// by gradeAnswersAI, which only grades descriptive answers.
+	descriptiveIDs := make(map[uuid.UUID]bool, len(questions))
+	for _, q := range questions {
+		if q.Type == domain.QuestionTypeDescriptive {
+			descriptiveIDs[q.ID] = true
+		}
+	}
+
+	updated, scoredCount, failedCount, err := gradeAnswersAI(ctx, s.llm, sub, questions, p.Mode, p.Force, p.OrganizationID)
 	if err != nil {
-		return err
+		return s.countFailureIfExhausted(ctx, p.JobID, err)
 	}
 
-	// Apply mode: if all descriptive answers are now graded, advance to graded.
-	if p.Mode == domain.AIGradingModeApply && allDescriptiveGraded(updated) {
+	// Apply mode: if every descriptive answer now carries a grade, advance the
+	// submission to graded.
+	if p.Mode == domain.AIGradingModeApply && allDescriptiveGraded(updated, descriptiveIDs) {
 		updated.Status = domain.SubmissionStatusGraded
 	}
 	if err := s.submissions.Update(ctx, updated); err != nil {
-		return err
+		return s.countFailureIfExhausted(ctx, p.JobID, err)
+	}
+
+	// Attribute the submission: if it had eligible descriptive answers but none
+	// could be scored this run, count it failed; otherwise count it done.
+	if scoredCount == 0 && failedCount > 0 {
+		return s.aiJobs.IncrementProgress(ctx, p.JobID, 0, 1)
 	}
 	return s.aiJobs.IncrementProgress(ctx, p.JobID, 1, 0)
 }
 
+// countFailureIfExhausted returns err to trigger an Asynq retry, unless this is
+// the final attempt — then it records the submission as failed and acks (nil) so
+// the job can reach completion instead of hanging forever.
+func (s *service) countFailureIfExhausted(ctx context.Context, jobID uuid.UUID, err error) error {
+	retried, _ := asynq.GetRetryCount(ctx)
+	maxRetry, _ := asynq.GetMaxRetry(ctx)
+	if retried >= maxRetry {
+		if incErr := s.aiJobs.IncrementProgress(ctx, jobID, 0, 1); incErr != nil {
+			s.logger.Error("count ai grading failure", "job_id", jobID.String(), "error", incErr)
+		}
+		s.logger.Error("ai grading submission failed permanently", "job_id", jobID.String(), "error", err)
+		return nil
+	}
+	return err
+}
+
 // allDescriptiveGraded reports whether every descriptive answer has a grade
-// (ai or manual). Non-descriptive answers are auto-graded already.
-func allDescriptiveGraded(sub *domain.QuizSubmission) bool {
+// (ai or manual). An answer is considered ungraded when GradedBy is empty —
+// covering both failed AI attempts and answers not yet processed. Non-descriptive
+// answers are auto-graded via EarnedScore and are ignored here.
+func allDescriptiveGraded(sub *domain.QuizSubmission, descriptiveIDs map[uuid.UUID]bool) bool {
 	for _, a := range sub.Answers {
-		if a.GradedBy == "" && a.AIStatus == domain.AIAnswerStatusFailed {
+		if !descriptiveIDs[a.QuestionID] {
+			continue
+		}
+		if a.GradedBy == "" {
 			return false
 		}
 	}
