@@ -68,7 +68,7 @@ func TestIntegration_QuizService_ListMine_States(t *testing.T) {
 		SubmittedAt: &submittedAt,
 	}))
 
-	svc := quizzes.NewService(r.quizzes, r.rules, r.rooms, r.submissions, r.questions, r.classes, r.members, slog.Default())
+	svc := quizzes.NewService(r.quizzes, r.rules, r.rooms, r.submissions, r.questions, r.classes, r.members, nil, nil, nil, slog.Default())
 
 	callerCtx := domain.WithCaller(ctx, domain.Caller{
 		UserID:      f.student.ID,

@@ -132,7 +132,7 @@ func setupBillingFlow(t *testing.T) billingHarness {
 		pdf,
 		billing.BillingConfig{
 			CallbackBaseURL: "https://api.test",
-			AppBaseURL:      "https://app.test",
+			AppURLTemplate:  "https://{slug}.app.test",
 		},
 		slog.Default(),
 	)
