@@ -282,6 +282,13 @@ type SubmissionAnswer struct {
 	// affects EarnedScore/TotalScore and is stripped from student-facing reads —
 	// the teacher uses it only as a hint during manual grading.
 	SimilarityPct *float64 `json:"similarity_pct,omitempty"`
+
+	// --- AI grading (advisory + audit). All live inside the answers jsonb blob,
+	// so no migration is needed. Stripped from student-facing reads. ---
+	SuggestedScore *float64 `json:"suggested_score,omitempty"` // AI-proposed score; nil until scored
+	AIRationale    string   `json:"ai_rationale,omitempty"`    // short Persian justification
+	AIStatus       string   `json:"ai_status,omitempty"`       // "" | pending | scored | failed
+	GradedBy       string   `json:"graded_by,omitempty"`       // "" | ai | manual
 }
 
 // SubmissionQuestion is one frozen question in a student's submission: the
