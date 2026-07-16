@@ -11,13 +11,6 @@ export interface GithubCom4H1RZooraInternalDomainQuestionOption {
   image_media_id?: string;
   score?: number;
   /**
-     * Synonyms are alternative accepted phrasings of Value. For short_answer
-     * options they are extra accepted answers; for descriptive rubric concepts
-     * they are alternative wordings that count as mentioning the concept.
-     * Unused for choice options.
-     */
-  synonyms?: string[];
-  /**
      * SystemImageMediaID references the anti-cheat image rendered by the worker
      * from Value when the owning quiz renders as image. Server-owned: clients
      * cannot set it, and the take endpoint blanks Value while keeping this so the

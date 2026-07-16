@@ -238,6 +238,13 @@ func renderText(face *font.Face, text []rune, sizePx, maxWidthPx float64, streng
 	for i := range img.Pix {
 		img.Pix[i] = 0xff // white background
 	}
+	// Faint decoy words/numbers go down first, so the real text is drawn on top
+	// and covers any decoy pixels sharing its space — decoys survive only in the
+	// whitespace. This is a MILD deterrent (kills copy-paste, DOM-scrape and weak
+	// OCR); it does not beat strong multimodal models, so it is kept legible.
+	if strength >= int(NoiseHigh) {
+		drawDecoysBehind(img, face, script, lang, dir, w, h, sizePx, scale, rng)
+	}
 	ras.Draw(img, img.Bounds(), image.NewUniform(color.RGBA{20, 20, 24, 255}), image.Point{})
 	return img, nil
 }

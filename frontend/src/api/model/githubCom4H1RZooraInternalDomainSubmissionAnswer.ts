@@ -8,17 +8,15 @@
 
 export interface GithubCom4H1RZooraInternalDomainSubmissionAnswer {
   earned_score?: number;
-  matched_concepts?: string[];
   question_id?: string;
   selected_option_ids?: string[];
+  /**
+     * SimilarityPct is the advisory char-trigram similarity of a descriptive
+     * answer to the question's model answer, computed at finalize. It never
+     * affects EarnedScore/TotalScore and is stripped from student-facing reads —
+     * the teacher uses it only as a hint during manual grading.
+     */
   similarity_pct?: number;
   spent_seconds?: number;
-  /**
-     * Advisory auto-grading signals for descriptive answers, computed at
-     * finalize from the question's rubric options and model answer. They never
-     * affect EarnedScore/TotalScore and are stripped from student-facing reads
-     * — the teacher confirms or overrides them during manual grading.
-     */
-  suggested_score?: number;
   value?: string;
 }
