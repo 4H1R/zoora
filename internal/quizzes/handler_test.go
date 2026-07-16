@@ -150,6 +150,16 @@ func (m *mockQuizSvc) AntiCheatReport(ctx context.Context, quizID uuid.UUID) ([]
 func (m *mockQuizSvc) AdminHardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+func (m *mockQuizSvc) StartAIGrading(ctx context.Context, quizID uuid.UUID, dto domain.StartAIGradingDTO) (*domain.AIGradingJob, error) {
+	a := m.Called(ctx, quizID, dto)
+	j, _ := a.Get(0).(*domain.AIGradingJob)
+	return j, a.Error(1)
+}
+func (m *mockQuizSvc) GetAIGradingJob(ctx context.Context, jobID uuid.UUID) (*domain.AIGradingJob, error) {
+	a := m.Called(ctx, jobID)
+	j, _ := a.Get(0).(*domain.AIGradingJob)
+	return j, a.Error(1)
+}
 
 func newQuizHandlerRouter(t *testing.T) (*gin.Engine, *mockQuizSvc) {
 	t.Helper()

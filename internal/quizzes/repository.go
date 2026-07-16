@@ -379,6 +379,16 @@ func (r *submissionRepository) FindByQuizAndUser(ctx context.Context, quizID, us
 	return &sub, nil
 }
 
+func (r *submissionRepository) FindByQuizID(ctx context.Context, quizID uuid.UUID) ([]domain.QuizSubmission, error) {
+	var subs []domain.QuizSubmission
+	if err := database.DB(ctx, r.db).Model(&domain.QuizSubmission{}).
+		Where("quiz_id = ?", quizID).
+		Find(&subs).Error; err != nil {
+		return nil, fmt.Errorf("quizzes.submissionRepository.FindByQuizID: %w", err)
+	}
+	return subs, nil
+}
+
 func (r *submissionRepository) ListByQuiz(ctx context.Context, quizID uuid.UUID, q domain.ListSubmissionsQuery) ([]domain.QuizSubmission, int64, error) {
 	base := database.DB(ctx, r.db).Model(&domain.QuizSubmission{}).
 		Preload("User").

@@ -10,6 +10,7 @@ const (
 	QueueDefault       = "default"
 	QueueNotifications = "notifications"
 	QueueMedia         = "media"
+	QueueAI            = "ai"
 )
 
 const (
@@ -31,6 +32,8 @@ const (
 	TypeImportProcess = "import:process"
 
 	TypeQuestionRenderImages = "question:render-images"
+
+	TypeQuizAIGradeSubmission = "quiz:ai-grade-submission"
 )
 
 // QuestionRenderImagesPayload drives anti-cheat image generation for one
@@ -42,6 +45,16 @@ const (
 // re-enqueue is safe.
 type QuestionRenderImagesPayload struct {
 	QuestionID uuid.UUID `json:"question_id"`
+}
+
+// QuizAIGradeSubmissionPayload drives AI grading of one student's descriptive
+// answers as part of a job. Idempotent per (job, submission).
+type QuizAIGradeSubmissionPayload struct {
+	JobID          uuid.UUID     `json:"job_id"`
+	SubmissionID   uuid.UUID     `json:"submission_id"`
+	OrganizationID uuid.UUID     `json:"organization_id"`
+	Mode           AIGradingMode `json:"mode"`
+	Force          bool          `json:"force"`
 }
 
 // NotificationFanoutPayload resolves a notification's audience to user IDs

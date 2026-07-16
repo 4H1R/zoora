@@ -239,6 +239,11 @@ func (m *mQuizSubRepo) ListByQuiz(ctx context.Context, quizID uuid.UUID, q domai
 	subs, _ := a.Get(0).([]domain.QuizSubmission)
 	return subs, a.Get(1).(int64), a.Error(2)
 }
+func (m *mQuizSubRepo) FindByQuizID(ctx context.Context, quizID uuid.UUID) ([]domain.QuizSubmission, error) {
+	a := m.Called(ctx, quizID)
+	subs, _ := a.Get(0).([]domain.QuizSubmission)
+	return subs, a.Error(1)
+}
 
 func teacherCtx(userID uuid.UUID) context.Context {
 	return domain.WithCaller(context.Background(), domain.Caller{

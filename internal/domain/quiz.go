@@ -494,6 +494,9 @@ type QuizSubmissionRepository interface {
 	Update(ctx context.Context, sub *QuizSubmission) error
 	FindByQuizAndUser(ctx context.Context, quizID, userID uuid.UUID) (*QuizSubmission, error)
 	ListByQuiz(ctx context.Context, quizID uuid.UUID, q ListSubmissionsQuery) ([]QuizSubmission, int64, error)
+	// FindByQuizID returns every submission for a quiz, unpaginated. Used by AI
+	// grading fan-out, which must enumerate all submissions (not a page).
+	FindByQuizID(ctx context.Context, quizID uuid.UUID) ([]QuizSubmission, error)
 }
 
 // Anti-cheat review thresholds. Fixed constants: raw values are always stored
@@ -564,6 +567,9 @@ type QuizService interface {
 	ListSubmissions(ctx context.Context, quizID uuid.UUID, q ListSubmissionsQuery) ([]QuizSubmission, int64, error)
 	GradeSubmission(ctx context.Context, id uuid.UUID, dto GradeSubmissionDTO) (*QuizSubmission, error)
 	AntiCheatReport(ctx context.Context, quizID uuid.UUID) ([]SubmissionAntiCheatReport, error)
+
+	StartAIGrading(ctx context.Context, quizID uuid.UUID, dto StartAIGradingDTO) (*AIGradingJob, error)
+	GetAIGradingJob(ctx context.Context, jobID uuid.UUID) (*AIGradingJob, error)
 
 	AdminList(ctx context.Context, q AdminListQuizzesQuery) ([]Quiz, int64, error)
 	AdminHardDelete(ctx context.Context, id uuid.UUID) error

@@ -190,7 +190,8 @@ func main() {
 	userService := users.NewService(userRepo, roleRepo, entitlementService, redisClient, sessionManager, log)
 	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, queueClient, log)
 	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, queueClient, log)
-	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, queueClient, log)
+	// TODO(Task 18): replace nil, nil with real LLM client + AI grading job repo.
+	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, queueClient, nil, nil, log)
 	transactor := database.NewTransactor(db)
 
 	leadRepo := leads.NewRepository(db)
