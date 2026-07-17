@@ -55,11 +55,17 @@ export function SlidesStage({ url, page, numPages, isHost, onLoadNumPages, onPag
     return () => observer.disconnect()
   }, [])
 
-  // Fit the page to the full viewport width. Portrait / tall pages then overflow
-  // vertically, giving a real scrollbar + wheel scroll. Landscape slides fit
-  // without overflow. INSET leaves breathing room beside the scrollbar.
+  // Fit the page to the viewport width, but cap it: on a wide monitor a full-bleed
+  // page renders huge and forces horizontal scroll, which reads as broken. Capping
+  // the base width keeps the slide at a comfortable reading size, centered on the
+  // black stage (the inner wrapper's justify-center handles the centering). Zoom
+  // still multiplies past the cap for anyone who wants to lean in. Portrait / tall
+  // pages overflow vertically for a real scrollbar; INSET leaves room beside it.
   const INSET = 16
-  const fitWidth = containerWidth ? Math.max(1, (containerWidth - INSET) * zoom) : undefined
+  const MAX_STAGE_WIDTH = 1280
+  const fitWidth = containerWidth
+    ? Math.max(1, Math.min(containerWidth - INSET, MAX_STAGE_WIDTH) * zoom)
+    : undefined
 
   const clamp = (n: number) => Math.max(1, Math.min(n, numPages || 1))
 

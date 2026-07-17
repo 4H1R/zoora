@@ -43,6 +43,7 @@ import { cn } from "@/lib/utils"
 import { ControlBar } from "./control-bar"
 import { VotePollModal } from "./panels/vote-poll-modal"
 import { ReconnectOverlay } from "./reconnect-overlay"
+import { SlidesUploadOverlay, type SlidesUpload } from "./slides-upload-overlay"
 import { RoomHeader } from "./room-header"
 import { RoomPanel } from "./room-panel"
 import { canPublish, RoomRoleContext, useRoomRole } from "./room-role"
@@ -57,6 +58,35 @@ import { WebcamRail } from "./webcam-rail"
 
 // Silence LiveKit's verbose signal/track console logs (info/debug); keep warnings + errors.
 setLogLevel("warn")
+
+// PUT the file to S3 via XHR (not fetch) so we get real upload-progress events —
+// fetch/redaxios can't report byte progress. `xhrRef` exposes the request so the
+// host can abort a large upload; an abort rejects with "aborted" (a silent cancel,
+// not an error). Resolves on 2xx.
+function putWithProgress(
+  url: string,
+  file: File,
+  mime: string,
+  onProgress: (pct: number) => void,
+  xhrRef: React.RefObject<XMLHttpRequest | null>
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhrRef.current = xhr
+    xhr.open("PUT", url)
+    xhr.setRequestHeader("Content-Type", mime)
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100))
+    }
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve()
+      else reject(new Error(`upload failed: ${xhr.status}`))
+    }
+    xhr.onerror = () => reject(new Error("network error"))
+    xhr.onabort = () => reject(new Error("aborted"))
+    xhr.send(file)
+  })
+}
 
 interface ActiveRoomProps {
   token: string
@@ -209,7 +239,13 @@ function RoomShell({
 
   const onStartWhiteboard = () => setStage({ kind: "whiteboard" })
 
+  // Upload progress for a host-shared PDF, surfaced as an overlay over the stage
+  // so the host sees it's working (and can cancel). Null when idle.
+  const [slidesUpload, setSlidesUpload] = useState<SlidesUpload | null>(null)
+  const uploadXhrRef = useRef<XMLHttpRequest | null>(null)
+
   const onShareSlides = async (file: File) => {
+    setSlidesUpload({ fileName: file.name, phase: "preparing", progress: 0 })
     try {
       const mime = file.type || "application/pdf"
       const presignRes = await postMediaPresign({
@@ -224,22 +260,34 @@ function RoomShell({
       const mediaId = presignRes.status === 201 ? presignRes.data.data?.media?.id : undefined
       if (!uploadUrl || !mediaId) throw new Error("presign failed")
 
-      const put = await fetch(uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": mime },
-      })
-      if (!put.ok) throw new Error(`upload failed: ${put.status}`)
+      setSlidesUpload({ fileName: file.name, phase: "uploading", progress: 0 })
+      await putWithProgress(uploadUrl, file, mime, (pct) => {
+        setSlidesUpload((u) => (u ? { ...u, progress: pct } : u))
+      }, uploadXhrRef)
 
-      // Get a presigned download URL so all clients can fetch the PDF
+      // Uploaded — resolve a presigned download URL all clients can fetch.
+      setSlidesUpload({ fileName: file.name, phase: "processing", progress: 100 })
       const dlRes = await getMediaIdDownloadUrl(mediaId)
       const dlUrl = dlRes.status === 200 ? dlRes.data.data?.url : undefined
       if (!dlUrl) throw new Error("download url failed")
 
+      // Broadcast to every participant (reliable data channel + late-join resync).
       setStage({ kind: "slides", url: dlUrl, page: 1, numPages: 0 })
-    } catch {
-      toast.error(t("liveRoom.errors.upload"))
+      setSlidesUpload(null)
+      // Confirm to the host that it's now live for the whole room.
+      toast.success(t("liveRoom.stage.shared"))
+    } catch (err) {
+      setSlidesUpload(null)
+      // A user-initiated cancel is not an error — stay quiet.
+      if ((err as Error)?.message !== "aborted") toast.error(t("liveRoom.errors.upload"))
+    } finally {
+      uploadXhrRef.current = null
     }
+  }
+
+  const onCancelSlidesUpload = () => {
+    uploadXhrRef.current?.abort()
+    setSlidesUpload(null)
   }
 
   const onStopStage = () => setStage({ kind: "none" })
@@ -389,7 +437,7 @@ function RoomShell({
                 <WebcamRail orientation="vertical" />
               </div>
             )}
-            <div className="min-w-0 flex-1">
+            <div className="relative min-w-0 flex-1">
               <Stage
                 stage={stage}
                 isHost={isHost}
@@ -398,6 +446,7 @@ function RoomShell({
                 onPageChange={onPageChange}
                 onLoadNumPages={onLoadNumPages}
               />
+              {slidesUpload && <SlidesUploadOverlay upload={slidesUpload} onCancel={onCancelSlidesUpload} />}
             </div>
           </div>
 
