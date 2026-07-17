@@ -16,6 +16,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input"
 import { InputGroup, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
 import { Spinner } from "@/components/ui/spinner"
+import { apiErrorCode, applyFieldErrors } from "@/lib/api-error"
 import { cn } from "@/lib/utils"
 
 const loginSchema = z.object({
@@ -64,13 +65,16 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
           }
         },
         onError: (error) => {
-          const code = error.response?.data?.error?.code
-          if (code === "ACCOUNT_LOCKED") {
+          if (apiErrorCode(error) === "ACCOUNT_LOCKED") {
             toast.error(t("login.locked"))
             setError("username", { message: t("login.locked") })
             return
           }
-          setError("username", { message: t("login.error") })
+          // Surface any per-field validation errors inline; otherwise fall back
+          // to the generic invalid-credentials message on the username field.
+          if (!applyFieldErrors(error, setError)) {
+            setError("username", { message: t("login.error") })
+          }
         },
       }
     )

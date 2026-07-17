@@ -50,6 +50,28 @@ func (c *Client) Cancel(queue, taskID string) error {
 	return fmt.Errorf("canceling task %s: %w", taskID, err)
 }
 
+// QueueInfos returns the current asynq.QueueInfo for every known queue (pending,
+// retry, archived counts, etc.). A queue that vanishes between listing and
+// lookup is skipped rather than failing the whole call.
+func (c *Client) QueueInfos() ([]*asynq.QueueInfo, error) {
+	queues, err := c.inspector.Queues()
+	if err != nil {
+		return nil, fmt.Errorf("listing queues: %w", err)
+	}
+	infos := make([]*asynq.QueueInfo, 0, len(queues))
+	for _, q := range queues {
+		info, err := c.inspector.GetQueueInfo(q)
+		if err != nil {
+			if errors.Is(err, asynq.ErrQueueNotFound) {
+				continue
+			}
+			return nil, fmt.Errorf("queue info %s: %w", q, err)
+		}
+		infos = append(infos, info)
+	}
+	return infos, nil
+}
+
 func (c *Client) Close() error {
 	if err := c.inspector.Close(); err != nil {
 		c.logger.Error("failed to close asynq inspector", "error", err)

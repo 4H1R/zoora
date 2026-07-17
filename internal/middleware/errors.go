@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
 
 	"github.com/4H1R/zoora/internal/domain"
@@ -41,6 +42,13 @@ func ErrorHandler(logger *slog.Logger) gin.HandlerFunc {
 				"path", c.Request.URL.Path,
 			)
 			body.Message = "internal server error"
+			body.RequestID = domain.RequestIDFromCtx(c.Request.Context())
+			// Report the 5xx to Sentry when enabled. Non-panic errors (returned
+			// via c.Error) never reach sentrygin's panic handler, so capture them
+			// here. No-op when Sentry is disabled: the hub is absent.
+			if hub := sentrygin.GetHubFromContext(c); hub != nil {
+				hub.CaptureException(err)
+			}
 		}
 
 		c.AbortWithStatusJSON(status, domain.Response{Success: false, Error: body})

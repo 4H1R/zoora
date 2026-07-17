@@ -24,9 +24,9 @@ type Config struct {
 	// Per-role Redis URLs. Each falls back to RedisURL when empty, so one Redis
 	// instance stays the default; splitting queue / pub-sub / cache onto separate
 	// instances later is a config change, not a code change.
-	RedisQueueURL  string `env:"REDIS_QUEUE_URL"`
-	RedisPubSubURL string `env:"REDIS_PUBSUB_URL"`
-	RedisCacheURL  string `env:"REDIS_CACHE_URL"`
+	RedisQueueURL    string `env:"REDIS_QUEUE_URL"`
+	RedisPubSubURL   string `env:"REDIS_PUBSUB_URL"`
+	RedisCacheURL    string `env:"REDIS_CACHE_URL"`
 	LiveKitHost      string `env:"LIVEKIT_HOST,required"`
 	LiveKitPublicURL string `env:"LIVEKIT_PUBLIC_URL"`
 	LiveKitAPIKey    string `env:"LIVEKIT_API_KEY,required"`
@@ -97,6 +97,16 @@ type Config struct {
 	// Remote Chromium CDP URL (e.g. http://chrome:9222) for headless PDF receipt
 	// rendering. Empty launches a local headless Chromium via the exec allocator.
 	ChromeRemoteURL string `env:"CHROME_REMOTE_URL"`
+
+	// --- error monitoring (Sentry; fully optional) ---
+	// SentryDSN enables error reporting. Empty (the default) disables Sentry
+	// entirely — the app runs unchanged, so keys can be added later without code
+	// changes. SentryTracesSampleRate > 0 additionally enables performance
+	// tracing (0.0–1.0); 0 keeps tracing off. SentryRelease tags events with a
+	// build/version string for regression tracking.
+	SentryDSN              string  `env:"SENTRY_DSN"`
+	SentryTracesSampleRate float64 `env:"SENTRY_TRACES_SAMPLE_RATE" envDefault:"0"`
+	SentryRelease          string  `env:"SENTRY_RELEASE"`
 }
 
 func Load() (*Config, error) {

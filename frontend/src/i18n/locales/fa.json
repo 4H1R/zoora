@@ -262,6 +262,11 @@
   },
   "common": {
     "brandName": "زورا",
+    "apiError": {
+      "generic": "مشکلی پیش آمد. لطفاً دوباره تلاش کنید.",
+      "serverGeneric": "مشکلی از سمت ما پیش آمد. لطفاً کمی بعد دوباره تلاش کنید.",
+      "requestId": "کد پیگیری"
+    },
     "back": "بازگشت",
     "autoSessionTitle": "کلاس {{date}} ساعت {{time}}",
     "dateTimePicker": {

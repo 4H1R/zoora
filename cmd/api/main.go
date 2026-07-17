@@ -44,6 +44,7 @@ import (
 	"github.com/4H1R/zoora/internal/platform/httpx"
 	lk "github.com/4H1R/zoora/internal/platform/livekit"
 	"github.com/4H1R/zoora/internal/platform/logger"
+	"github.com/4H1R/zoora/internal/platform/observability"
 	"github.com/4H1R/zoora/internal/platform/payment"
 	"github.com/4H1R/zoora/internal/platform/queue"
 	"github.com/4H1R/zoora/internal/platform/sms"
@@ -260,9 +261,15 @@ func main() {
 		log.Warn("rate limiting is DISABLED (RATE_LIMIT_DISABLED=true)")
 	}
 
+	// Optional Sentry error reporting. No-op (empty handlers) when SENTRY_DSN is
+	// unset, so the app runs unchanged until keys are added. Registered after
+	// Recovery so panics are captured and then re-raised for Recovery to answer.
+	sentryFlush, sentryHandlers := observability.InitSentry(cfg, log)
+	defer sentryFlush()
+
+	router.Use(middleware.RequestID(), middleware.Recovery(log))
+	router.Use(sentryHandlers...)
 	router.Use(
-		middleware.RequestID(),
-		middleware.Recovery(log),
 		middleware.ErrorHandler(log),
 		middleware.Logging(log),
 		middleware.CORS(cfg.CORSAllowedOrigins),

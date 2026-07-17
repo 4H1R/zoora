@@ -262,6 +262,11 @@
   },
   "common": {
     "brandName": "Zoora",
+    "apiError": {
+      "generic": "Something went wrong. Please try again.",
+      "serverGeneric": "Something went wrong on our end. Please try again in a moment.",
+      "requestId": "Ref"
+    },
     "back": "Go back",
     "autoSessionTitle": "Class {{date}} at {{time}}",
     "dateTimePicker": {
