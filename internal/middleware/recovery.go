@@ -6,6 +6,8 @@ import (
 	"runtime/debug"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/4H1R/zoora/internal/domain"
 )
 
 func Recovery(logger *slog.Logger) gin.HandlerFunc {
@@ -21,8 +23,9 @@ func Recovery(logger *slog.Logger) gin.HandlerFunc {
 				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 					"success": false,
 					"error": gin.H{
-						"code":    "INTERNAL_ERROR",
-						"message": "internal server error",
+						"code":       "INTERNAL_ERROR",
+						"message":    "internal server error",
+						"request_id": domain.RequestIDFromCtx(c.Request.Context()),
 					},
 				})
 			}

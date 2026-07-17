@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,6 +17,9 @@ type ErrorBody struct {
 	Code    string            `json:"code"`
 	Message string            `json:"message"`
 	Fields  map[string]string `json:"fields,omitempty"`
+	// RequestID echoes the correlation id on 5xx responses (where Message is
+	// scrubbed) so a user can quote it and support can grep straight to the log.
+	RequestID string `json:"request_id,omitempty"`
 	// Plan carries plan-gate detail (feature/limit/current/ceiling) for 402
 	// responses so the client can render an upgrade prompt.
 	Plan *PlanError `json:"plan_detail,omitempty"`
@@ -61,6 +65,9 @@ func ErrorResponse(c *gin.Context, err error) {
 	var pe *PlanError
 	if errors.As(err, &pe) {
 		body.Plan = pe
+	}
+	if status >= http.StatusInternalServerError {
+		body.RequestID = RequestIDFromCtx(c.Request.Context())
 	}
 	c.JSON(status, Response{Success: false, Error: body})
 }

@@ -14,4 +14,4 @@ make lint
 
 # 3. Frontend TypeScript check
 echo "▶ frontend typecheck"
-cd frontend && pnpm typecheck
+cd frontend && bun run typecheck

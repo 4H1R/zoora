@@ -11,6 +11,12 @@ const clientEnvSchema = z.object({
   VITE_FIREBASE_SENDER_ID: z.string().optional(),
   VITE_FIREBASE_APP_ID: z.string().optional(),
   VITE_FIREBASE_VAPID_KEY: z.string().optional(),
+  // Sentry error reporting. Optional — unset disables Sentry entirely, so the
+  // app runs unchanged until a DSN is added. VITE_SENTRY_TRACES_SAMPLE_RATE
+  // (0.0–1.0, default 0) additionally enables performance tracing.
+  VITE_SENTRY_DSN: z.string().optional(),
+  VITE_SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).optional(),
+  VITE_SENTRY_ENVIRONMENT: z.string().optional(),
 })
 
 export const clientEnv = clientEnvSchema.parse(import.meta.env)

@@ -262,6 +262,11 @@
   },
   "common": {
     "brandName": "Zoora",
+    "apiError": {
+      "generic": "Something went wrong. Please try again.",
+      "serverGeneric": "Something went wrong on our end. Please try again in a moment.",
+      "requestId": "Ref"
+    },
     "back": "Go back",
     "autoSessionTitle": "Class {{date}} at {{time}}",
     "dateTimePicker": {
@@ -2941,7 +2946,12 @@
       "pageOf": "{{page}} / {{total}}",
       "prevPage": "Previous page",
       "nextPage": "Next page",
-      "goToPage": "Go to page"
+      "goToPage": "Go to page",
+      "preparing": "Preparing…",
+      "uploading": "Uploading slides…",
+      "processing": "Processing…",
+      "cancelUpload": "Cancel upload",
+      "shared": "Slides are now showing to everyone"
     },
     "polls": {
       "comingSoon": "Polls are coming soon",
@@ -2952,7 +2962,9 @@
       "addOption": "Add option",
       "option": "Option",
       "launch": "Launch poll",
-      "reveal": "Reveal to students",
+      "reveal": "Share results",
+      "resultsShared": "Results shared",
+      "liveToStudents": "Live to students",
       "close": "Close poll",
       "vote": "Vote",
       "submitted": "Answer submitted — waiting for results",

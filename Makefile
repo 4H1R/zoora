@@ -52,7 +52,7 @@ swagger:
 	$(EXEC) swag init -g cmd/api/main.go -o docs --parseDependency --parseInternal
 
 generate: swagger
-	cd frontend && pnpm generate
+	cd frontend && bun run generate
 
 seed:
 	$(EXEC_TTY) go run cmd/seed/main.go

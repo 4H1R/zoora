@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next"
 
 import { ConnectionBanner } from "@/components/connection-banner"
 import { ErrorScreen } from "@/components/error-screen"
+import { GlobalErrorListeners } from "@/components/global-error-listeners"
 import { NotFound } from "@/components/not-found"
 import { PWAUpdater } from "@/components/pwa-updater"
 import { DirectionProvider } from "@/components/ui/direction"
@@ -131,6 +132,7 @@ function RootComponent() {
     <HotkeysProvider>
       <DirectionProvider direction={dir}>
         <Outlet />
+        <GlobalErrorListeners />
         <ConnectionBanner />
         <Toaster />
         <PWAUpdater />

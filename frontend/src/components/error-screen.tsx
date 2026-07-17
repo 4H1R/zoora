@@ -2,12 +2,14 @@ import type { ErrorComponentProps } from "@tanstack/react-router"
 
 import { Link, useRouter } from "@tanstack/react-router"
 import { Home, RotateCw } from "lucide-react"
+import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 
 import { Eyebrow } from "@/components/eyebrow"
 import { StatusGlyph, StatusScreen } from "@/components/status-screen"
 import { Button } from "@/components/ui/button"
 import { useSeo } from "@/hooks/use-seo"
+import { reportError } from "@/lib/sentry"
 
 /** Rendered for thrown render/loader errors via the root route's `errorComponent`. */
 export function ErrorScreen({ error, reset }: ErrorComponentProps) {
@@ -15,6 +17,12 @@ export function ErrorScreen({ error, reset }: ErrorComponentProps) {
   const router = useRouter()
 
   useSeo("errorPages.serverError.title", "errorPages.serverError.description")
+
+  // Report the render/loader error that tripped this boundary (no-op when
+  // Sentry is disabled).
+  useEffect(() => {
+    reportError(error)
+  }, [error])
 
   const handleRetry = () => {
     router.invalidate()

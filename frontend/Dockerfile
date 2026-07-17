@@ -6,7 +6,9 @@ ENV HUSKY=0
 COPY package.json bun.lock bunfig.toml ./
 COPY frontend/package.json ./frontend/package.json
 COPY frontend/patches/ ./frontend/patches/
-RUN bun install --frozen-lockfile
+COPY videos/package.json ./videos/package.json
+
+RUN bun install --frozen-lockfile --filter frontend
 
 COPY frontend/ ./frontend/
 

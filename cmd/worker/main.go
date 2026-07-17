@@ -280,6 +280,10 @@ func main() {
 	queueServer.HandleFunc(domain.TypeBillingReminderSweep, billing.NewReminderSweepHandler(billingSvc))
 	queueServer.HandleFunc(domain.TypeBillingExpireSweep, billing.NewExpireSweepHandler(billingSvc))
 
+	// Periodic queue self-inspection: warns when tasks pile up in the archived
+	// (dead-letter) / retry sets so exhausted-retry failures don't sit unnoticed.
+	queueServer.HandleFunc(domain.TypeQueueHealthCheck, queue.NewHealthCheckHandler(queueClient, log))
+
 	// Periodic safety net for missed LiveKit webhooks: re-scan for active rooms
 	// whose host went stale and close the ones LiveKit confirms are host-less.
 	// The event-driven webhook path is primary; this catches dropped events.
@@ -303,6 +307,10 @@ func main() {
 	}
 	if _, err := scheduler.Register("@every 1h", asynq.NewTask(domain.TypeBillingExpireSweep, nil)); err != nil {
 		log.Error("failed to register billing expire schedule", "error", err)
+		os.Exit(1)
+	}
+	if _, err := scheduler.Register("@every 15m", asynq.NewTask(domain.TypeQueueHealthCheck, nil)); err != nil {
+		log.Error("failed to register queue health schedule", "error", err)
 		os.Exit(1)
 	}
 	go func() {

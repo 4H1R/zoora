@@ -34,6 +34,11 @@ const (
 	TypeQuestionRenderImages = "question:render-images"
 
 	TypeQuizAIGradeSubmission = "quiz:ai-grade-submission"
+
+	// TypeQueueHealthCheck is a periodic self-inspection task: it scans every
+	// queue and warns when tasks have piled up in the archived (dead-letter) or
+	// retry sets, so exhausted-retry failures don't sit unnoticed.
+	TypeQueueHealthCheck = "system:queue-health"
 )
 
 // QuestionRenderImagesPayload drives anti-cheat image generation for one

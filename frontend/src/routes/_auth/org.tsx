@@ -11,9 +11,11 @@ import { AppSidebar } from "@/components/layout/app-sidebar"
 import { BreadcrumbProvider } from "@/components/layout/breadcrumb-context"
 import { MobileBreadcrumb } from "@/components/layout/mobile-breadcrumb"
 import { SidebarBreadcrumb } from "@/components/layout/sidebar-breadcrumb"
+import { LanguageSwitcher } from "@/components/language-switcher"
 import { NotificationBell } from "@/components/notifications/notification-bell"
 import { ChatProvider } from "@/components/org/conversations/chat-provider"
 import { SplashScreen } from "@/components/splash-screen"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { useDirection } from "@/components/ui/direction"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { buildAccess } from "@/lib/access"
@@ -94,6 +96,8 @@ function RouteComponent() {
               <div className="ms-auto flex items-center gap-2">
                 {/* <LiveClock className="me-1 hidden sm:flex" /> */}
                 <NotificationBell to="/org/notifications" />
+                <LanguageSwitcher />
+                <ThemeToggle />
               </div>
             </header>
             <MajorModal />

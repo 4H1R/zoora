@@ -1,6 +1,6 @@
 import type { LivePoll, PollResults, RoomPolls } from "../use-room-polls"
 
-import { BarChart3, ChevronDown, History, Plus, Trash2 } from "lucide-react"
+import { BarChart3, Check, ChevronDown, History, Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -185,11 +185,12 @@ function CreatePollForm({ liveId, onLaunch }: CreatePollFormProps) {
 // ---------------------------------------------------------------------------
 interface HostActivePollProps {
   activePoll: LivePoll
+  revealed: boolean
   onReveal: (results: PollResults) => void
   onClose: () => void
 }
 
-function HostActivePoll({ activePoll, onReveal, onClose }: HostActivePollProps) {
+function HostActivePoll({ activePoll, revealed, onReveal, onClose }: HostActivePollProps) {
   const { t } = useTranslation()
 
   const resultsQuery = useGetPollsIdResults(activePoll.pollId, {
@@ -209,11 +210,26 @@ function HostActivePoll({ activePoll, onReveal, onClose }: HostActivePollProps) 
 
   return (
     <div className="flex flex-col gap-4 p-3">
-      <p className="text-foreground text-sm font-semibold">{activePoll.name}</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-foreground text-sm font-semibold">{activePoll.name}</p>
+        {revealed && (
+          <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+            <span className="size-1.5 rounded-full bg-emerald-500" />
+            {t("liveRoom.polls.liveToStudents")}
+          </span>
+        )}
+      </div>
       <PollBars options={activePoll.options} counts={counts} total={total} />
       <div className="flex gap-2">
-        <Button size="sm" className="flex-1" onClick={handleReveal}>
-          {t("liveRoom.polls.reveal")}
+        <Button size="sm" className="flex-1" onClick={handleReveal} disabled={revealed}>
+          {revealed ? (
+            <>
+              <Check className="size-4" />
+              {t("liveRoom.polls.resultsShared")}
+            </>
+          ) : (
+            t("liveRoom.polls.reveal")
+          )}
         </Button>
         <Button
           size="sm"
@@ -368,7 +384,12 @@ export function PollsPanel({ liveId, isHost, polls, onVote, answerPending }: Pol
     return (
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         {activePoll ? (
-          <HostActivePoll activePoll={activePoll} onReveal={revealResults} onClose={closePoll} />
+          <HostActivePoll
+            activePoll={activePoll}
+            revealed={results !== null}
+            onReveal={revealResults}
+            onClose={closePoll}
+          />
         ) : (
           <>
             <p className="text-muted-foreground px-3 pt-3 text-xs font-semibold tracking-wider uppercase">

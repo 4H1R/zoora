@@ -17,4 +17,9 @@ export interface GithubCom4H1RZooraInternalDomainErrorBody {
      * responses so the client can render an upgrade prompt.
      */
   plan_detail?: GithubCom4H1RZooraInternalDomainPlanError;
+  /**
+     * RequestID echoes the correlation id on 5xx responses (where Message is
+     * scrubbed) so a user can quote it and support can grep straight to the log.
+     */
+  request_id?: string;
 }

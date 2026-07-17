@@ -2,7 +2,8 @@
     "name": "zoora",
     "version": "1.0.0",
     "workspaces": [
-        "frontend"
+        "frontend",
+        "videos"
     ],
     "patchedDependencies": {
         "@tldraw/editor@5.1.1": "frontend/patches/@tldraw__editor@5.1.1.patch"
