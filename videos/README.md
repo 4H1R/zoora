@@ -30,9 +30,12 @@ src/
   intro/
     script.ts           # Scene timings + narration lines (single source of truth)
     Intro.tsx           # TransitionSeries of the six scenes
+    Music.tsx           # Loop arrangement of the 30s generated track (crossfaded)
     scenes/             # Logo, Classes, Live, Quiz, Reach, Outro
+public/
+  intro-music.mp3       # Gemini-generated background track (~30.7s, looped in Music.tsx)
 docs/
-  voiceover-intro.md    # Voice-over script with timestamps (matches script.ts)
+  voiceover-intro.md    # Subtitle timing reference; VO pattern for future tutorials
 ```
 
 ## Conventions
@@ -40,7 +43,7 @@ docs/
 - **One `script.ts` per video** holds scene durations and subtitle lines. Subtitles double as the voice-over script; keep `docs/voiceover-*.md` in sync when editing.
 - **No emoji** in any scene — the render Chrome has no emoji font (tofu boxes). Add an SVG to `Icon.tsx` instead.
 - Persian digits via `toFa()` from `lib/tokens.ts`; wrap Persian blocks in `dir="rtl"`.
-- Voice-over is recorded separately and mixed onto the rendered MP4 in editing.
+- The intro has no voice-over — music only, arranged in `src/intro/Music.tsx` (the generated clip is 30s; head plays straight, the 8–25s middle loops with 1s crossfades, the final 6s resolve lands at the video's end). Future tutorial videos: record VO from their `docs/voiceover-*.md` and mix in editing, or drop the file in `public/` and add an `<Audio>` the same way.
 
 ## Adding a new tutorial video
 
