@@ -13,6 +13,8 @@ import i18n from "@/i18n"
 import { isAdminHost } from "@/lib/tenant"
 
 export const Route = createFileRoute("/_guest/login")({
+  validateSearch: (search: Record<string, unknown>) =>
+    typeof search.redirect === "string" ? { redirect: search.redirect } : {},
   head: () => {
     const title = `${i18n.t("login.title")} — ${i18n.t("common.brandName")}`
     return { meta: [{ title }, { name: "description", content: title }] }
