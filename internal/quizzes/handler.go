@@ -2,6 +2,8 @@ package quizzes
 
 import (
 	"net/http"
+	"slices"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -92,26 +94,49 @@ func (h *Handler) RegisterRoutes(
 
 // ListMine returns the caller's own exams across all their classes.
 // @Summary List my exams
-// @Description Exams for classes the caller belongs to, with availability (open/upcoming room) and the caller's own submission state + score. Orderable fields: created_at, updated_at, title, duration_minutes.
+// @Description Exams for classes the caller belongs to, with availability (open/upcoming room) and the caller's own submission state + score. Without order_by, results are sorted by urgency: open, then upcoming (soonest first), then submitted, then graded. Orderable fields: created_at, updated_at, title, duration_minutes.
 // @Tags Quizzes
 // @Produce json
 // @Security BearerAuth
+// @Param class_id query string false "Filter by class UUID"
+// @Param state query string false "Filter by derived state: upcoming, open, submitted, graded"
+// @Param search query string false "Substring match on title/description"
 // @Param order_by query string false "One of: created_at, updated_at, title, duration_minutes"
 // @Param order_dir query string false "asc or desc"
 // @Param page query int false "1-based page number"
+// @Param page_size query int false "Items per page (max 200)"
 // @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.MyExam}}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 403 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 500 {object} domain.Response{error=domain.ErrorBody}
 // @Router /quizzes/me [get]
 func (h *Handler) ListMine(c *gin.Context) {
-	p := listparams.Bind(c, quizzesListConfig)
-	exams, total, err := h.svc.ListMine(c.Request.Context(), p)
+	var q domain.ListMyExamsQuery
+	if err := httpx.BindUUIDQueries(c, map[string]**uuid.UUID{
+		"class_id": &q.ClassID,
+	}); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	if raw := strings.TrimSpace(c.Query("state")); raw != "" {
+		st := domain.MyExamState(raw)
+		switch st {
+		case domain.MyExamStateUpcoming, domain.MyExamStateOpen, domain.MyExamStateSubmitted, domain.MyExamStateGraded:
+			q.State = &st
+		default:
+			_ = c.Error(domain.NewValidationError(map[string]string{"state": "must be one of: upcoming, open, submitted, graded"}))
+			return
+		}
+	}
+	q.ExplicitOrder = slices.Contains(quizzesListConfig.AllowedOrderFields, strings.TrimSpace(c.Query("order_by")))
+	q.ListParams = listparams.Bind(c, quizzesListConfig)
+	exams, total, err := h.svc.ListMine(c.Request.Context(), q)
 	if err != nil {
 		_ = c.Error(err)
 		return
 	}
-	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(exams, total, p))
+	domain.SuccessResponse(c, http.StatusOK, domain.NewPaginatedFromParams(exams, total, q.ListParams))
 }
 
 // List returns quizzes visible to the caller.
@@ -126,6 +151,7 @@ func (h *Handler) ListMine(c *gin.Context) {
 // @Param order_by query string false "One of: created_at, updated_at, title, duration_minutes"
 // @Param order_dir query string false "asc or desc"
 // @Param page query int false "1-based page number"
+// @Param page_size query int false "Items per page (max 200)"
 // @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.Quiz}}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 403 {object} domain.Response{error=domain.ErrorBody}

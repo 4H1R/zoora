@@ -113,7 +113,7 @@ func (r *quizRepository) List(ctx context.Context, scope domain.QuizListScope, p
 	return quizzes, total, nil
 }
 
-func (r *quizRepository) ListByMemberWithRooms(ctx context.Context, userID uuid.UUID, p domain.ListParams) ([]domain.Quiz, int64, error) {
+func (r *quizRepository) ListByMemberWithRooms(ctx context.Context, userID uuid.UUID, classID *uuid.UUID, p domain.ListParams) ([]domain.Quiz, error) {
 	db := database.DB(ctx, r.db)
 	base := db.Model(&domain.Quiz{}).
 		Preload("Class").
@@ -121,12 +121,14 @@ func (r *quizRepository) ListByMemberWithRooms(ctx context.Context, userID uuid.
 			"class_id IN (SELECT class_id FROM class_members WHERE user_id = ?)",
 			userID,
 		)
-	var quizzes []domain.Quiz
-	total, err := listparams.Paginate(base, p, &quizzes)
-	if err != nil {
-		return nil, 0, fmt.Errorf("quizzes.repository.ListByMemberWithRooms: %w", err)
+	if classID != nil {
+		base = base.Where("class_id = ?", *classID)
 	}
-	return quizzes, total, nil
+	var quizzes []domain.Quiz
+	if err := listparams.Apply(base, p).Find(&quizzes).Error; err != nil {
+		return nil, fmt.Errorf("quizzes.repository.ListByMemberWithRooms: %w", err)
+	}
+	return quizzes, nil
 }
 
 func (r *quizRepository) HardDelete(ctx context.Context, id uuid.UUID) error {

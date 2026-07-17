@@ -65,6 +65,7 @@ import type {
   GetQuizzesIdSubmissions403,
   GetQuizzesIdSubmissionsParams,
   GetQuizzesMe200,
+  GetQuizzesMe400,
   GetQuizzesMe401,
   GetQuizzesMe403,
   GetQuizzesMe500,
@@ -408,6 +409,11 @@ export const usePostQuizzes = <TError = ErrorType<PostQuizzes400 | PostQuizzes40
   status: 200
 }
 
+export type getQuizzesMeResponse400 = {
+  data: GetQuizzesMe400
+  status: 400
+}
+
 export type getQuizzesMeResponse401 = {
   data: GetQuizzesMe401
   status: 401
@@ -426,7 +432,7 @@ export type getQuizzesMeResponse500 = {
 export type getQuizzesMeResponseSuccess = (getQuizzesMeResponse200) & {
   headers: Headers;
 };
-export type getQuizzesMeResponseError = (getQuizzesMeResponse401 | getQuizzesMeResponse403 | getQuizzesMeResponse500) & {
+export type getQuizzesMeResponseError = (getQuizzesMeResponse400 | getQuizzesMeResponse401 | getQuizzesMeResponse403 | getQuizzesMeResponse500) & {
   headers: Headers;
 };
 
@@ -448,7 +454,7 @@ export const getGetQuizzesMeUrl = (params?: GetQuizzesMeParams,) => {
 }
 
 /**
- * Exams for classes the caller belongs to, with availability (open/upcoming room) and the caller's own submission state + score. Orderable fields: created_at, updated_at, title, duration_minutes.
+ * Exams for classes the caller belongs to, with availability (open/upcoming room) and the caller's own submission state + score. Without order_by, results are sorted by urgency: open, then upcoming (soonest first), then submitted, then graded. Orderable fields: created_at, updated_at, title, duration_minutes.
  * @summary List my exams
  */
 export const getQuizzesMe = async (params?: GetQuizzesMeParams, options?: RequestInit): Promise<getQuizzesMeResponse> => {
@@ -473,7 +479,7 @@ export const getGetQuizzesMeQueryKey = (params?: GetQuizzesMeParams,) => {
     }
 
 
-export const getGetQuizzesMeQueryOptions = <TData = Awaited<ReturnType<typeof getQuizzesMe>>, TError = ErrorType<GetQuizzesMe401 | GetQuizzesMe403 | GetQuizzesMe500>>(params?: GetQuizzesMeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getGetQuizzesMeQueryOptions = <TData = Awaited<ReturnType<typeof getQuizzesMe>>, TError = ErrorType<GetQuizzesMe400 | GetQuizzesMe401 | GetQuizzesMe403 | GetQuizzesMe500>>(params?: GetQuizzesMeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -492,10 +498,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetQuizzesMeQueryResult = NonNullable<Awaited<ReturnType<typeof getQuizzesMe>>>
-export type GetQuizzesMeQueryError = ErrorType<GetQuizzesMe401 | GetQuizzesMe403 | GetQuizzesMe500>
+export type GetQuizzesMeQueryError = ErrorType<GetQuizzesMe400 | GetQuizzesMe401 | GetQuizzesMe403 | GetQuizzesMe500>
 
 
-export function useGetQuizzesMe<TData = Awaited<ReturnType<typeof getQuizzesMe>>, TError = ErrorType<GetQuizzesMe401 | GetQuizzesMe403 | GetQuizzesMe500>>(
+export function useGetQuizzesMe<TData = Awaited<ReturnType<typeof getQuizzesMe>>, TError = ErrorType<GetQuizzesMe400 | GetQuizzesMe401 | GetQuizzesMe403 | GetQuizzesMe500>>(
  params: undefined |  GetQuizzesMeParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesMe>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuizzesMe>>,
@@ -505,7 +511,7 @@ export function useGetQuizzesMe<TData = Awaited<ReturnType<typeof getQuizzesMe>>
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuizzesMe<TData = Awaited<ReturnType<typeof getQuizzesMe>>, TError = ErrorType<GetQuizzesMe401 | GetQuizzesMe403 | GetQuizzesMe500>>(
+export function useGetQuizzesMe<TData = Awaited<ReturnType<typeof getQuizzesMe>>, TError = ErrorType<GetQuizzesMe400 | GetQuizzesMe401 | GetQuizzesMe403 | GetQuizzesMe500>>(
  params?: GetQuizzesMeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesMe>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getQuizzesMe>>,
@@ -515,7 +521,7 @@ export function useGetQuizzesMe<TData = Awaited<ReturnType<typeof getQuizzesMe>>
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetQuizzesMe<TData = Awaited<ReturnType<typeof getQuizzesMe>>, TError = ErrorType<GetQuizzesMe401 | GetQuizzesMe403 | GetQuizzesMe500>>(
+export function useGetQuizzesMe<TData = Awaited<ReturnType<typeof getQuizzesMe>>, TError = ErrorType<GetQuizzesMe400 | GetQuizzesMe401 | GetQuizzesMe403 | GetQuizzesMe500>>(
  params?: GetQuizzesMeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -523,7 +529,7 @@ export function useGetQuizzesMe<TData = Awaited<ReturnType<typeof getQuizzesMe>>
  * @summary List my exams
  */
 
-export function useGetQuizzesMe<TData = Awaited<ReturnType<typeof getQuizzesMe>>, TError = ErrorType<GetQuizzesMe401 | GetQuizzesMe403 | GetQuizzesMe500>>(
+export function useGetQuizzesMe<TData = Awaited<ReturnType<typeof getQuizzesMe>>, TError = ErrorType<GetQuizzesMe400 | GetQuizzesMe401 | GetQuizzesMe403 | GetQuizzesMe500>>(
  params?: GetQuizzesMeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuizzesMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

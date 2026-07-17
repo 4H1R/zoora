@@ -37,10 +37,10 @@ func (m *mQuizRepo) List(ctx context.Context, scope domain.QuizListScope, p doma
 	qs, _ := a.Get(0).([]domain.Quiz)
 	return qs, a.Get(1).(int64), a.Error(2)
 }
-func (m *mQuizRepo) ListByMemberWithRooms(ctx context.Context, userID uuid.UUID, p domain.ListParams) ([]domain.Quiz, int64, error) {
-	a := m.Called(ctx, userID, p)
+func (m *mQuizRepo) ListByMemberWithRooms(ctx context.Context, userID uuid.UUID, classID *uuid.UUID, p domain.ListParams) ([]domain.Quiz, error) {
+	a := m.Called(ctx, userID, classID, p)
 	qs, _ := a.Get(0).([]domain.Quiz)
-	return qs, a.Get(1).(int64), a.Error(2)
+	return qs, a.Error(1)
 }
 func (m *mQuizRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
@@ -960,8 +960,8 @@ func TestQuizService_ListMine_DerivesStates(t *testing.T) {
 	// score is revealed to the student.
 	gradedQuiz := domain.Quiz{ID: q2, Title: "Done", ClassID: c1, Class: &domain.Class{Name: "Math"}, DurationMinutes: 30, TotalScore: 20, ShowResults: true}
 
-	d.quizRepo.On("ListByMemberWithRooms", mock.Anything, studentID, mock.Anything).
-		Return([]domain.Quiz{openQuiz, gradedQuiz}, int64(2), nil)
+	d.quizRepo.On("ListByMemberWithRooms", mock.Anything, studentID, (*uuid.UUID)(nil), mock.Anything).
+		Return([]domain.Quiz{openQuiz, gradedQuiz}, nil)
 
 	start := time.Now().Add(-time.Minute)
 	end := time.Now().Add(time.Hour)
@@ -982,7 +982,7 @@ func TestQuizService_ListMine_DerivesStates(t *testing.T) {
 		Return(&domain.QuizSubmission{Status: domain.SubmissionStatusGraded, TotalScore: 18, SubmittedAt: &submittedAt, QuizRoomID: &q2RoomID}, nil)
 
 	svc := d.service()
-	exams, total, err := svc.ListMine(ctx, domain.ListParams{Page: 1, PageSize: 20})
+	exams, total, err := svc.ListMine(ctx, domain.ListMyExamsQuery{ListParams: domain.ListParams{Page: 1, PageSize: 20}})
 	assert.NoError(t, err)
 	assert.Equal(t, int64(2), total)
 	assert.Len(t, exams, 2)
@@ -1000,8 +1000,156 @@ func TestQuizService_ListMine_DerivesStates(t *testing.T) {
 func TestQuizService_ListMine_NoCaller_Forbidden(t *testing.T) {
 	d := newDeps()
 	svc := d.service()
-	_, _, err := svc.ListMine(context.Background(), domain.ListParams{Page: 1, PageSize: 20})
+	_, _, err := svc.ListMine(context.Background(), domain.ListMyExamsQuery{ListParams: domain.ListParams{Page: 1, PageSize: 20}})
 	assert.ErrorIs(t, err, domain.ErrForbidden)
+}
+
+// mineExamQuiz builds a quiz plus its room/submission mocks for ListMine tests.
+// state decides what the mocks return: open/upcoming rooms, submitted/graded subs.
+func mineExamQuiz(d testDeps, studentID uuid.UUID, title string, state domain.MyExamState, roomStart time.Time) domain.Quiz {
+	quizID := uuid.New()
+	quiz := domain.Quiz{ID: quizID, Title: title, ClassID: uuid.New(), DurationMinutes: 30, TotalScore: 20}
+
+	switch state {
+	case domain.MyExamStateOpen:
+		start := time.Now().Add(-time.Minute)
+		end := time.Now().Add(time.Hour)
+		d.roomRepo.On("ListByQuiz", mock.Anything, quizID, mock.Anything).
+			Return([]domain.QuizRoom{{ID: uuid.New(), ClassSessionID: uuid.New(), StartedAt: &start, EndedAt: &end}}, int64(1), nil)
+		d.subRepo.On("FindByQuizAndUser", mock.Anything, quizID, studentID).
+			Return(nil, domain.ErrNotFound)
+	case domain.MyExamStateUpcoming:
+		start := roomStart
+		d.roomRepo.On("ListByQuiz", mock.Anything, quizID, mock.Anything).
+			Return([]domain.QuizRoom{{ID: uuid.New(), ClassSessionID: uuid.New(), StartedAt: &start}}, int64(1), nil)
+		d.subRepo.On("FindByQuizAndUser", mock.Anything, quizID, studentID).
+			Return(nil, domain.ErrNotFound)
+	case domain.MyExamStateSubmitted:
+		submittedAt := time.Now()
+		d.roomRepo.On("ListByQuiz", mock.Anything, quizID, mock.Anything).
+			Return([]domain.QuizRoom{}, int64(0), nil)
+		d.subRepo.On("FindByQuizAndUser", mock.Anything, quizID, studentID).
+			Return(&domain.QuizSubmission{Status: domain.SubmissionStatusSubmitted, SubmittedAt: &submittedAt}, nil)
+	case domain.MyExamStateGraded:
+		submittedAt := time.Now()
+		d.roomRepo.On("ListByQuiz", mock.Anything, quizID, mock.Anything).
+			Return([]domain.QuizRoom{}, int64(0), nil)
+		d.subRepo.On("FindByQuizAndUser", mock.Anything, quizID, studentID).
+			Return(&domain.QuizSubmission{Status: domain.SubmissionStatusGraded, TotalScore: 15, SubmittedAt: &submittedAt}, nil)
+	}
+	return quiz
+}
+
+func TestQuizService_ListMine_FiltersByState(t *testing.T) {
+	studentID := uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	open := mineExamQuiz(d, studentID, "Open", domain.MyExamStateOpen, time.Time{})
+	submitted := mineExamQuiz(d, studentID, "Submitted", domain.MyExamStateSubmitted, time.Time{})
+	d.quizRepo.On("ListByMemberWithRooms", mock.Anything, studentID, (*uuid.UUID)(nil), mock.Anything).
+		Return([]domain.Quiz{open, submitted}, nil)
+
+	state := domain.MyExamStateOpen
+	svc := d.service()
+	exams, total, err := svc.ListMine(ctx, domain.ListMyExamsQuery{
+		State:      &state,
+		ListParams: domain.ListParams{Page: 1, PageSize: 20},
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), total)
+	assert.Len(t, exams, 1)
+	assert.Equal(t, "Open", exams[0].Title)
+}
+
+func TestQuizService_ListMine_PassesClassFilterToRepo(t *testing.T) {
+	studentID := uuid.New()
+	classID := uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	d.quizRepo.On("ListByMemberWithRooms", mock.Anything, studentID, &classID, mock.Anything).
+		Return([]domain.Quiz{}, nil)
+
+	svc := d.service()
+	_, total, err := svc.ListMine(ctx, domain.ListMyExamsQuery{
+		ClassID:    &classID,
+		ListParams: domain.ListParams{Page: 1, PageSize: 20},
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), total)
+	d.quizRepo.AssertExpectations(t)
+}
+
+func TestQuizService_ListMine_DefaultSortStatePriority(t *testing.T) {
+	studentID := uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	graded := mineExamQuiz(d, studentID, "Graded", domain.MyExamStateGraded, time.Time{})
+	upcomingLate := mineExamQuiz(d, studentID, "UpcomingLate", domain.MyExamStateUpcoming, time.Now().Add(48*time.Hour))
+	submitted := mineExamQuiz(d, studentID, "Submitted", domain.MyExamStateSubmitted, time.Time{})
+	upcomingSoon := mineExamQuiz(d, studentID, "UpcomingSoon", domain.MyExamStateUpcoming, time.Now().Add(2*time.Hour))
+	open := mineExamQuiz(d, studentID, "Open", domain.MyExamStateOpen, time.Time{})
+
+	d.quizRepo.On("ListByMemberWithRooms", mock.Anything, studentID, (*uuid.UUID)(nil), mock.Anything).
+		Return([]domain.Quiz{graded, upcomingLate, submitted, upcomingSoon, open}, nil)
+
+	svc := d.service()
+	exams, total, err := svc.ListMine(ctx, domain.ListMyExamsQuery{ListParams: domain.ListParams{Page: 1, PageSize: 20}})
+	assert.NoError(t, err)
+	assert.Equal(t, int64(5), total)
+	titles := make([]string, len(exams))
+	for i, e := range exams {
+		titles[i] = e.Title
+	}
+	assert.Equal(t, []string{"Open", "UpcomingSoon", "UpcomingLate", "Submitted", "Graded"}, titles)
+}
+
+func TestQuizService_ListMine_ExplicitOrderPreservesRepoOrder(t *testing.T) {
+	studentID := uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	graded := mineExamQuiz(d, studentID, "Graded", domain.MyExamStateGraded, time.Time{})
+	open := mineExamQuiz(d, studentID, "Open", domain.MyExamStateOpen, time.Time{})
+
+	d.quizRepo.On("ListByMemberWithRooms", mock.Anything, studentID, (*uuid.UUID)(nil), mock.Anything).
+		Return([]domain.Quiz{graded, open}, nil)
+
+	svc := d.service()
+	exams, _, err := svc.ListMine(ctx, domain.ListMyExamsQuery{
+		ExplicitOrder: true,
+		ListParams:    domain.ListParams{Page: 1, PageSize: 20, OrderBy: "title", OrderDir: "asc"},
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, "Graded", exams[0].Title)
+	assert.Equal(t, "Open", exams[1].Title)
+}
+
+func TestQuizService_ListMine_PaginatesAfterStateFilter(t *testing.T) {
+	studentID := uuid.New()
+	ctx := studentCtx(studentID)
+	d := newDeps()
+
+	open1 := mineExamQuiz(d, studentID, "Open1", domain.MyExamStateOpen, time.Time{})
+	open2 := mineExamQuiz(d, studentID, "Open2", domain.MyExamStateOpen, time.Time{})
+	open3 := mineExamQuiz(d, studentID, "Open3", domain.MyExamStateOpen, time.Time{})
+	graded := mineExamQuiz(d, studentID, "Graded", domain.MyExamStateGraded, time.Time{})
+
+	d.quizRepo.On("ListByMemberWithRooms", mock.Anything, studentID, (*uuid.UUID)(nil), mock.Anything).
+		Return([]domain.Quiz{open1, open2, open3, graded}, nil)
+
+	state := domain.MyExamStateOpen
+	svc := d.service()
+	exams, total, err := svc.ListMine(ctx, domain.ListMyExamsQuery{
+		State:      &state,
+		ListParams: domain.ListParams{Page: 2, PageSize: 2},
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, int64(3), total)
+	assert.Len(t, exams, 1)
+	assert.Equal(t, "Open3", exams[0].Title)
 }
 
 // captureGraded records the submission as persisted by SubmitQuiz's grading,

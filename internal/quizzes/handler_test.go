@@ -46,8 +46,8 @@ func (m *mockQuizSvc) List(ctx context.Context, q domain.ListQuizzesQuery) ([]do
 	qs, _ := a.Get(0).([]domain.Quiz)
 	return qs, a.Get(1).(int64), a.Error(2)
 }
-func (m *mockQuizSvc) ListMine(ctx context.Context, p domain.ListParams) ([]domain.MyExam, int64, error) {
-	a := m.Called(ctx, p)
+func (m *mockQuizSvc) ListMine(ctx context.Context, q domain.ListMyExamsQuery) ([]domain.MyExam, int64, error) {
+	a := m.Called(ctx, q)
 	es, _ := a.Get(0).([]domain.MyExam)
 	return es, a.Get(1).(int64), a.Error(2)
 }

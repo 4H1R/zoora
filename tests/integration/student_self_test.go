@@ -34,9 +34,8 @@ func TestIntegration_QuizRepo_ListByMemberWithRooms(t *testing.T) {
 	otherQuiz := &domain.Quiz{OrganizationID: f.org.ID, UserID: otherTeacher.ID, ClassID: otherClass.ID, Title: "Other", DurationMinutes: 30}
 	require.NoError(t, r.quizzes.Create(ctx, otherQuiz))
 
-	got, total, err := r.quizzes.ListByMemberWithRooms(ctx, f.student.ID, domain.ListParams{Page: 1, PageSize: 50})
+	got, err := r.quizzes.ListByMemberWithRooms(ctx, f.student.ID, nil, domain.ListParams{Page: 1, PageSize: 50})
 	require.NoError(t, err)
-	assert.Equal(t, int64(1), total)
 	require.Len(t, got, 1)
 	assert.Equal(t, f.quiz.ID, got[0].ID)
 	require.NotNil(t, got[0].Class)
@@ -68,14 +67,14 @@ func TestIntegration_QuizService_ListMine_States(t *testing.T) {
 		SubmittedAt: &submittedAt,
 	}))
 
-	svc := quizzes.NewService(r.quizzes, r.rules, r.rooms, r.submissions, r.questions, r.classes, r.members, slog.Default())
+	svc := quizzes.NewService(r.quizzes, r.rules, r.rooms, r.submissions, r.questions, r.classes, r.members, nil, slog.Default())
 
 	callerCtx := domain.WithCaller(ctx, domain.Caller{
 		UserID:      f.student.ID,
 		Permissions: []string{string(domain.PermQuizzesTake)},
 	})
 
-	exams, total, err := svc.ListMine(callerCtx, domain.ListParams{Page: 1, PageSize: 50})
+	exams, total, err := svc.ListMine(callerCtx, domain.ListMyExamsQuery{ListParams: domain.ListParams{Page: 1, PageSize: 50}})
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), total)
 	require.Len(t, exams, 2)

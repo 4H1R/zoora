@@ -649,6 +649,7 @@ export * from './getQuizzesIdSubmissions403';
 export * from './getQuizzesIdSubmissionsParams';
 export * from './getQuizzesMe200';
 export * from './getQuizzesMe200Data';
+export * from './getQuizzesMe400';
 export * from './getQuizzesMe401';
 export * from './getQuizzesMe403';
 export * from './getQuizzesMe500';

@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next"
 import { ExamAction, examStateBadgeVariant } from "@/components/exam-card"
 import { Badge } from "@/components/ui/badge"
 
-export function useExamColumns(): ColumnDef<MyExam>[] {
+export function useStudentExamColumns(): ColumnDef<MyExam>[] {
   const { t } = useTranslation()
 
   return [
@@ -31,18 +31,20 @@ export function useExamColumns(): ColumnDef<MyExam>[] {
       id: "class_name",
       accessorFn: (e) => e.class_name ?? "",
       header: t("org.exams.table.class"),
+      enableSorting: false,
       cell: ({ getValue }) => <span className="text-sm">{(getValue() as string) || "—"}</span>,
     },
     {
       id: "state",
       accessorFn: (e) => e.state ?? "",
       header: t("org.exams.table.state"),
+      enableSorting: false,
       cell: ({ row }) => (
         <Badge variant={examStateBadgeVariant(row.original.state)}>{t(`org.exams.state.${row.original.state}`)}</Badge>
       ),
     },
     {
-      id: "duration",
+      id: "duration_minutes",
       accessorFn: (e) => e.duration_minutes ?? 0,
       header: t("org.exams.table.duration"),
       cell: ({ row }) =>

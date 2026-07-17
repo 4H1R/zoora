@@ -1697,7 +1697,10 @@
     },
     "exams": {
       "title": "My Exams",
+      "subtitle": "Open and upcoming exams come first",
       "empty": "You have no exams yet.",
+      "noResults": "No exams match the filters",
+      "noResultsHint": "Try changing the search or filters.",
       "duration": "{{count}} min",
       "state": {
         "upcoming": "Upcoming",
@@ -1710,11 +1713,24 @@
       "score": "Score: {{score}} / {{total}}",
       "opensAt": "Opens {{date}}",
       "searchPlaceholder": "Search exams…",
+      "filter": {
+        "all": "All",
+        "allClasses": "All classes",
+        "allSessions": "All sessions",
+        "chooseClassFirst": "Choose a class first"
+      },
+      "manage": {
+        "title": "Manage exams",
+        "subtitle": "Exams across all classes — open a class session to create or run an exam",
+        "viewClass": "View class"
+      },
       "table": {
         "title": "Exam",
         "class": "Class",
         "state": "Status",
-        "duration": "Duration"
+        "duration": "Duration",
+        "totalScore": "Total score",
+        "created": "Created"
       }
     },
     "calendar": {

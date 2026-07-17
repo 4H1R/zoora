@@ -34,7 +34,7 @@ func TestOrganizationCRUD(t *testing.T) {
 	jwtService := auth.NewJWTService(cfg)
 	orgRepo := organizations.NewRepository(db)
 	userRepo := users.NewRepository(db)
-	orgSvc := organizations.NewService(orgRepo, userRepo, orgsettings.NewRepository(db), nil, logger)
+	orgSvc := organizations.NewService(orgRepo, userRepo, orgsettings.NewRepository(db), nil, nil, logger)
 	handler := organizations.NewHandler(orgSvc)
 
 	org := &domain.Organization{Name: "Test University", Description: "A test organization"}

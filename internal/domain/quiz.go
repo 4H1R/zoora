@@ -237,6 +237,16 @@ type ListQuizzesQuery struct {
 	ListParams     ListParams `form:"-"`
 }
 
+// ListMyExamsQuery filters the caller's own exam list (/quizzes/me).
+type ListMyExamsQuery struct {
+	ClassID *uuid.UUID   `form:"-"`
+	State   *MyExamState `form:"-"`
+	// ExplicitOrder is set when the client supplied a valid order_by; it
+	// disables the default state-priority sort in favor of the SQL ordering.
+	ExplicitOrder bool       `form:"-"`
+	ListParams    ListParams `form:"-"`
+}
+
 type AdminListQuizzesQuery struct {
 	ClassID        *uuid.UUID `form:"-"`
 	ClassSessionID *uuid.UUID `form:"-"`
@@ -454,9 +464,11 @@ type QuizRepository interface {
 	Update(ctx context.Context, quiz *Quiz) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, scope QuizListScope, p ListParams) ([]Quiz, int64, error)
-	// ListByMemberWithRooms returns quizzes whose class the given user is a
-	// member of, with Class preloaded, ordered by created_at desc.
-	ListByMemberWithRooms(ctx context.Context, userID uuid.UUID, p ListParams) ([]Quiz, int64, error)
+	// ListByMemberWithRooms returns ALL quizzes whose class the given user is
+	// a member of (optionally narrowed to one class), with Class preloaded.
+	// p is applied for search/ordering only — pagination happens in the
+	// service after derived-state filtering.
+	ListByMemberWithRooms(ctx context.Context, userID uuid.UUID, classID *uuid.UUID, p ListParams) ([]Quiz, error)
 
 	HardDelete(ctx context.Context, id uuid.UUID) error
 	FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*Quiz, error)
@@ -534,7 +546,7 @@ type QuizService interface {
 	Update(ctx context.Context, id uuid.UUID, dto UpdateQuizDTO) (*Quiz, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, q ListQuizzesQuery) ([]Quiz, int64, error)
-	ListMine(ctx context.Context, p ListParams) ([]MyExam, int64, error)
+	ListMine(ctx context.Context, q ListMyExamsQuery) ([]MyExam, int64, error)
 
 	CreateRule(ctx context.Context, quizID uuid.UUID, dto CreateQuizRuleDTO) (*QuizRule, error)
 	GetRule(ctx context.Context, id uuid.UUID) (*QuizRule, error)

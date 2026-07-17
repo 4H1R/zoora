@@ -31,4 +31,8 @@ order_dir?: string;
  * 1-based page number
  */
 page?: number;
+/**
+ * Items per page (max 200)
+ */
+page_size?: number;
 };

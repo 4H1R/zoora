@@ -1759,7 +1759,10 @@
     },
     "exams": {
       "title": "آزمون‌های من",
+      "subtitle": "آزمون‌های باز و پیش‌رو بالای فهرست‌اند",
       "empty": "هنوز آزمونی ندارید.",
+      "noResults": "آزمونی مطابق فیلترها پیدا نشد",
+      "noResultsHint": "جستجو یا فیلترها را تغییر دهید.",
       "duration": "{{count}} دقیقه",
       "state": {
         "upcoming": "پیش‌رو",
@@ -1772,11 +1775,24 @@
       "score": "نمره: {{score}} از {{total}}",
       "opensAt": "شروع {{date}}",
       "searchPlaceholder": "جستجوی آزمون‌ها…",
+      "filter": {
+        "all": "همه",
+        "allClasses": "همهٔ درس‌ها",
+        "allSessions": "همهٔ جلسه‌ها",
+        "chooseClassFirst": "ابتدا درس را انتخاب کنید"
+      },
+      "manage": {
+        "title": "مدیریت آزمون‌ها",
+        "subtitle": "نمای کلی آزمون‌ها در همهٔ درس‌ها؛ برای ساخت و مدیریت آزمون به صفحهٔ جلسهٔ درس بروید",
+        "viewClass": "مشاهدهٔ درس"
+      },
       "table": {
         "title": "آزمون",
         "class": "درس",
         "state": "وضعیت",
-        "duration": "مدت"
+        "duration": "مدت",
+        "totalScore": "بارم",
+        "created": "تاریخ ایجاد"
       }
     },
     "calendar": {

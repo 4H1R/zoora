@@ -8,6 +8,18 @@
 
 export type GetQuizzesMeParams = {
 /**
+ * Filter by class UUID
+ */
+class_id?: string;
+/**
+ * Filter by derived state: upcoming, open, submitted, graded
+ */
+state?: string;
+/**
+ * Substring match on title/description
+ */
+search?: string;
+/**
  * One of: created_at, updated_at, title, duration_minutes
  */
 order_by?: string;
@@ -19,4 +31,8 @@ order_dir?: string;
  * 1-based page number
  */
 page?: number;
+/**
+ * Items per page (max 200)
+ */
+page_size?: number;
 };
