@@ -157,6 +157,27 @@ func TestIntegration_QuizRepo_List_OwnerScope(t *testing.T) {
 	assert.Len(t, got, 2)
 }
 
+func TestIntegration_QuizRepo_List_PreloadsRooms(t *testing.T) {
+	r := setupQuizzesDB(t)
+	ctx := context.Background()
+	f := seedQuizFixture(t, r)
+
+	start := time.Now().UTC()
+	end := start.Add(time.Hour)
+	require.NoError(t, r.rooms.Create(ctx, &domain.QuizRoom{
+		QuizID:         f.quiz.ID,
+		ClassSessionID: f.session.ID,
+		StartedAt:      &start,
+		EndedAt:        &end,
+	}))
+
+	got, _, err := r.quizzes.List(ctx, domain.QuizListScope{All: true}, domain.ListParams{Page: 1, PageSize: 50})
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+	require.Len(t, got[0].Rooms, 1)
+	assert.Equal(t, f.session.ID, got[0].Rooms[0].ClassSessionID)
+}
+
 func TestIntegration_QuizRepo_List_AllOrgs(t *testing.T) {
 	r := setupQuizzesDB(t)
 	ctx := context.Background()

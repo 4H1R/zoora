@@ -8,6 +8,8 @@ import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { formatSessionDate } from "@/lib/session-status"
 
+import { surfacedRoom } from "./room-window"
+
 export function useManagerExamColumns(): ColumnDef<Quiz>[] {
   const { t, i18n } = useTranslation()
 
@@ -58,6 +60,34 @@ export function useManagerExamColumns(): ColumnDef<Quiz>[] {
         ),
     },
     {
+      id: "start_time",
+      accessorFn: (q) => surfacedRoom(q)?.started_at ?? "",
+      header: t("org.exams.table.start"),
+      enableSorting: false,
+      cell: ({ row }) => {
+        const startedAt = surfacedRoom(row.original)?.started_at
+        return startedAt ? (
+          <span className="text-sm">{formatSessionDate(startedAt, i18n.language, "short")}</span>
+        ) : (
+          <span className="text-muted-foreground">{t("org.exams.table.noRoom")}</span>
+        )
+      },
+    },
+    {
+      id: "end_time",
+      accessorFn: (q) => surfacedRoom(q)?.ended_at ?? "",
+      header: t("org.exams.table.end"),
+      enableSorting: false,
+      cell: ({ row }) => {
+        const endedAt = surfacedRoom(row.original)?.ended_at
+        return endedAt ? (
+          <span className="text-sm">{formatSessionDate(endedAt, i18n.language, "short")}</span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )
+      },
+    },
+    {
       id: "created_at",
       accessorFn: (q) => q.created_at ?? "",
       header: t("org.exams.table.created"),
@@ -77,7 +107,7 @@ export function useManagerExamColumns(): ColumnDef<Quiz>[] {
       enableHiding: false,
       cell: ({ row }) =>
         row.original.class_id ? (
-          <div className="flex justify-end">
+          <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
             <Link to="/org/classes/$classId" params={{ classId: row.original.class_id }}>
               <Button size="sm" variant="ghost">
                 {t("org.exams.manage.viewClass")}

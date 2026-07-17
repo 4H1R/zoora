@@ -13,6 +13,7 @@ import { Route } from "@/routes/_auth/org/exams/index"
 
 import { ClassFilterSelect, SessionFilterSelect } from "./class-session-filters"
 import { useManagerExamColumns } from "./manager-exam-columns"
+import { surfacedRoom } from "./room-window"
 
 export function ManagerExamsView() {
   const { t } = useTranslation()
@@ -47,6 +48,21 @@ export function ManagerExamsView() {
   const setSession = (sessionId?: string) =>
     navigate({ to: ".", search: (prev) => ({ ...prev, class_session_id: sessionId, page: 1 }) })
 
+  // Row click jumps to where the quiz is managed: its session's quizzes tab,
+  // or the class page when no room has been scheduled yet.
+  const openQuiz = (quiz: (typeof rows)[number]) => {
+    const sessionId = surfacedRoom(quiz)?.class_session_id
+    if (sessionId) {
+      navigate({
+        to: "/org/classes/class-sessions/$classSessionId",
+        params: { classSessionId: sessionId },
+        search: { tab: "quizzes" },
+      })
+    } else if (quiz.class_id) {
+      navigate({ to: "/org/classes/$classId", params: { classId: quiz.class_id } })
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
@@ -70,6 +86,7 @@ export function ManagerExamsView() {
           <DataTable
             table={table}
             isLoading={isLoading}
+            onRowClick={openQuiz}
             emptyIcon={<ClipboardListIcon className="size-8 opacity-40" />}
             emptyTitle={t("org.exams.noResults")}
             emptyHint={t("org.exams.noResultsHint")}

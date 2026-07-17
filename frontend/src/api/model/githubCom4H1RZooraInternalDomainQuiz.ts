@@ -8,6 +8,7 @@
 import type { GithubCom4H1RZooraInternalDomainClass } from './githubCom4H1RZooraInternalDomainClass';
 import type { GithubCom4H1RZooraInternalDomainImageRenderStatus } from './githubCom4H1RZooraInternalDomainImageRenderStatus';
 import type { GithubCom4H1RZooraInternalDomainNegativeMarkMode } from './githubCom4H1RZooraInternalDomainNegativeMarkMode';
+import type { GithubCom4H1RZooraInternalDomainQuizRoom } from './githubCom4H1RZooraInternalDomainQuizRoom';
 import type { GithubCom4H1RZooraInternalDomainUser } from './githubCom4H1RZooraInternalDomainUser';
 
 export interface GithubCom4H1RZooraInternalDomainQuiz {
@@ -44,6 +45,11 @@ export interface GithubCom4H1RZooraInternalDomainQuiz {
      */
   render_as_image?: boolean;
   require_gps?: boolean;
+  /**
+     * Rooms are the scheduled windows of this quiz across class sessions.
+     * Preloaded only on list reads that surface schedule columns.
+     */
+  rooms?: GithubCom4H1RZooraInternalDomainQuizRoom[];
   /**
      * ShowResults opts the quiz into revealing each student's score and earned
      * marks back to them. Reveal is deferred until the student's room window has

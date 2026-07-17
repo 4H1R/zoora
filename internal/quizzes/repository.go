@@ -73,7 +73,7 @@ func (r *quizRepository) Delete(ctx context.Context, id uuid.UUID) error {
 
 func (r *quizRepository) List(ctx context.Context, scope domain.QuizListScope, p domain.ListParams) ([]domain.Quiz, int64, error) {
 	db := database.DB(ctx, r.db)
-	base := db.Model(&domain.Quiz{}).Preload("User").Preload("Class")
+	base := db.Model(&domain.Quiz{}).Preload("User").Preload("Class").Preload("Rooms")
 	if scope.IncludeDeleted {
 		base = base.Unscoped()
 	}

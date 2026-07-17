@@ -72,6 +72,10 @@ type Quiz struct {
 	NegativeValue    float64          `gorm:"not null;default:0" json:"negative_value"`
 	WrongsPerPoint   int              `gorm:"not null;default:0" json:"wrongs_per_point"`
 
+	// Rooms are the scheduled windows of this quiz across class sessions.
+	// Preloaded only on list reads that surface schedule columns.
+	Rooms []QuizRoom `gorm:"foreignKey:QuizID" json:"rooms,omitempty"`
+
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
