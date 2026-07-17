@@ -9,6 +9,8 @@
 !bun.lock
 !bunfig.toml
 !frontend
+# videos is a root workspace; bun needs its manifest to resolve workspaces.
+!videos/package.json
 
 # Never ship installed modules or prior build output into the context.
 frontend/node_modules
