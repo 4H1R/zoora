@@ -1,13 +1,15 @@
 import type { GradeRow } from "./-columns"
 
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { GraduationCapIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { z } from "zod"
 
 import { useGetGradebookMe } from "@/api/gradebook/gradebook"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { TableFilter } from "@/components/data-table/table-filter"
+import { ClassFilterSelect } from "@/components/org/class-session-filters"
 import { PageHeader } from "@/components/page-header"
 import { Card } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
@@ -19,15 +21,20 @@ import { orgHead } from "@/lib/org-head"
 
 import { useGradeColumns } from "./-columns"
 
+const gradesSearchSchema = adminSearchSchema.extend({
+  class_id: z.string().optional(),
+})
+
 export const Route = createFileRoute("/_auth/org/grades/")({
   head: () => orgHead("org.nav.grades"),
-  validateSearch: adminSearchSchema,
+  validateSearch: gradesSearchSchema,
   component: RouteComponent,
 })
 
 function RouteComponent() {
   const { t } = useTranslation()
-  const { search, order_by, order_dir, page, page_size } = Route.useSearch()
+  const navigate = useNavigate()
+  const { search, class_id, order_by, order_dir, page, page_size } = Route.useSearch()
   const allowed = useOrgGuard(["gradebook:view"])
 
   const gradesQ = useGetGradebookMe({ query: { enabled: allowed } })
@@ -35,8 +42,12 @@ function RouteComponent() {
   const classes = gradebook?.classes ?? []
   const loading = gradesQ.isPending
 
+  // The gradebook payload already holds every class — the class filter is
+  // applied client-side, and its options come from the payload itself.
+  const visibleClasses = class_id ? classes.filter((cls) => cls.class_id === class_id) : classes
+
   // Flatten the gradebook matrix to one row per graded item for the table view.
-  const rows: GradeRow[] = classes.flatMap((cls) =>
+  const rows: GradeRow[] = visibleClasses.flatMap((cls) =>
     (cls.columns ?? []).map((col) => ({
       classId: cls.class_id ?? "",
       className: cls.class_name ?? "",
@@ -58,7 +69,12 @@ function RouteComponent() {
     pageSize: page_size ?? 20,
   })
 
+  const setClass = (classId?: string) =>
+    navigate({ to: ".", search: (prev) => ({ ...prev, class_id: classId, page: 1 }) })
+
   if (!allowed) return null
+
+  const hasFilters = !!(search || class_id)
 
   const renderContent = () => {
     if (isTable) {
@@ -69,7 +85,8 @@ function RouteComponent() {
               table={table}
               isLoading={loading}
               emptyIcon={<GraduationCapIcon className="size-8 opacity-40" />}
-              emptyTitle={t("org.grades.empty")}
+              emptyTitle={hasFilters ? t("org.grades.noResults") : t("org.grades.empty")}
+              emptyHint={hasFilters ? t("org.grades.noResultsHint") : undefined}
             />
           </div>
           <DataTablePagination table={table} />
@@ -99,13 +116,15 @@ function RouteComponent() {
       )
     }
 
-    if (classes.length === 0) {
-      return <EmptyState icon={GraduationCapIcon} title={t("org.grades.empty")} />
+    if (visibleClasses.length === 0) {
+      return (
+        <EmptyState icon={GraduationCapIcon} title={hasFilters ? t("org.grades.noResults") : t("org.grades.empty")} />
+      )
     }
 
     return (
       <div className="flex flex-col gap-4">
-        {classes.map((cls) => {
+        {visibleClasses.map((cls) => {
           const cols = cls.columns ?? []
           return (
             <Card key={cls.class_id} className="gap-0 overflow-hidden p-0">
@@ -152,7 +171,10 @@ function RouteComponent() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title={t("org.grades.title")} />
+      <div className="flex flex-col gap-1">
+        <PageHeader title={t("org.grades.title")} />
+        <p className="text-muted-foreground text-sm">{t("org.grades.subtitle")}</p>
+      </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex-1">
@@ -163,7 +185,13 @@ function RouteComponent() {
             columnsLabel={t("common.toolbar.columns")}
             toggleColumnsLabel={t("common.toolbar.toggleColumns")}
             showColumnsToggle={isTable}
-          />
+          >
+            <ClassFilterSelect
+              value={class_id}
+              onChange={setClass}
+              classes={classes.map((cls) => ({ id: cls.class_id, name: cls.class_name }))}
+            />
+          </TableFilter>
         </div>
         <ViewModeToggle value={viewMode} onChange={setViewMode} />
       </div>

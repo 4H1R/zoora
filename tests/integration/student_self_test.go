@@ -200,10 +200,22 @@ func TestIntegration_Attendance_ListMine(t *testing.T) {
 	}))
 
 	// Repo-level scoping.
-	rows, total, err := attRepo.ListByUser(ctx, student.ID, domain.ListParams{Page: 1, PageSize: 50})
+	rows, total, err := attRepo.ListByUser(ctx, student.ID, domain.ListMyAttendanceQuery{
+		ListParams: domain.ListParams{Page: 1, PageSize: 50},
+	})
 	require.NoError(t, err)
 	assert.Equal(t, int64(4), total)
 	assert.Len(t, rows, 4)
+
+	// Status filter narrows the set.
+	present := domain.AttendanceStatusPresent
+	rows, total, err = attRepo.ListByUser(ctx, student.ID, domain.ListMyAttendanceQuery{
+		Status:     &present,
+		ListParams: domain.ListParams{Page: 1, PageSize: 50},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), total)
+	assert.Len(t, rows, 2)
 
 	// Service-level summary.
 	svc := attendance.NewService(attRepo, classRepo, sessRepo, nil, nil, nil, nil, nil, nil, authz.NewResolver(nil), slog.Default())
@@ -211,11 +223,38 @@ func TestIntegration_Attendance_ListMine(t *testing.T) {
 		UserID:      student.ID,
 		Permissions: []string{string(domain.PermAttendanceView)},
 	})
-	res, err := svc.ListMine(callerCtx, domain.ListParams{Page: 1, PageSize: 50})
+	res, err := svc.ListMine(callerCtx, domain.ListMyAttendanceQuery{
+		ListParams: domain.ListParams{Page: 1, PageSize: 50},
+	})
 	require.NoError(t, err)
 	assert.Equal(t, 2, res.Summary.Present)
 	assert.Equal(t, 1, res.Summary.Absent)
 	assert.Equal(t, 1, res.Summary.Late)
 	assert.Equal(t, 0, res.Summary.Excused)
 	assert.Len(t, res.Items, 4)
+	assert.Equal(t, int64(4), res.Total)
+
+	// Summary must aggregate the FULL filtered set even when the page is
+	// smaller than the result set.
+	res, err = svc.ListMine(callerCtx, domain.ListMyAttendanceQuery{
+		ListParams: domain.ListParams{Page: 1, PageSize: 2},
+	})
+	require.NoError(t, err)
+	assert.Len(t, res.Items, 2)
+	assert.Equal(t, int64(4), res.Total)
+	assert.Equal(t, 2, res.Summary.Present)
+	assert.Equal(t, 1, res.Summary.Absent)
+	assert.Equal(t, 1, res.Summary.Late)
+
+	// Status filter narrows items/total, but the summary stays a full
+	// breakdown by status over the class/session scope.
+	res, err = svc.ListMine(callerCtx, domain.ListMyAttendanceQuery{
+		Status:     &present,
+		ListParams: domain.ListParams{Page: 1, PageSize: 50},
+	})
+	require.NoError(t, err)
+	assert.Len(t, res.Items, 2)
+	assert.Equal(t, int64(2), res.Total)
+	assert.Equal(t, 2, res.Summary.Present)
+	assert.Equal(t, 1, res.Summary.Absent)
 }

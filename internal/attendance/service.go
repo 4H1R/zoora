@@ -569,27 +569,25 @@ func (s *service) Matrix(ctx context.Context, classID uuid.UUID, q domain.ListAt
 }
 
 // ListMine returns the caller's own attendance history + a status summary.
-func (s *service) ListMine(ctx context.Context, p domain.ListParams) (*domain.MyAttendance, error) {
+// The summary is aggregated over the full filtered set, not the current page.
+func (s *service) ListMine(ctx context.Context, q domain.ListMyAttendanceQuery) (*domain.MyAttendance, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	rows, _, err := s.repo.ListByUser(ctx, caller.UserID, p)
+	rows, total, err := s.repo.ListByUser(ctx, caller.UserID, q)
 	if err != nil {
 		return nil, fmt.Errorf("listing my attendance: %w", err)
 	}
-	res := &domain.MyAttendance{Items: rows}
-	for i := range rows {
-		switch rows[i].Status {
-		case domain.AttendanceStatusPresent:
-			res.Summary.Present++
-		case domain.AttendanceStatusAbsent:
-			res.Summary.Absent++
-		case domain.AttendanceStatusLate:
-			res.Summary.Late++
-		case domain.AttendanceStatusExcused:
-			res.Summary.Excused++
-		}
+	summary, err := s.repo.SummarizeByUser(ctx, caller.UserID, q)
+	if err != nil {
+		return nil, fmt.Errorf("summarizing my attendance: %w", err)
 	}
-	return res, nil
+	return &domain.MyAttendance{
+		Summary:  summary,
+		Items:    rows,
+		Total:    total,
+		Page:     q.ListParams.Page,
+		PageSize: q.ListParams.Limit(),
+	}, nil
 }

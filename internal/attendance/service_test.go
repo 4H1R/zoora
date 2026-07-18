@@ -46,10 +46,15 @@ func (m *mAttRepo) FindBySessionAndUser(ctx context.Context, sessionID, userID u
 	}
 	return a.Get(0).(*domain.Attendance), a.Error(1)
 }
-func (m *mAttRepo) ListByUser(ctx context.Context, userID uuid.UUID, p domain.ListParams) ([]domain.Attendance, int64, error) {
-	a := m.Called(ctx, userID, p)
+func (m *mAttRepo) ListByUser(ctx context.Context, userID uuid.UUID, q domain.ListMyAttendanceQuery) ([]domain.Attendance, int64, error) {
+	a := m.Called(ctx, userID, q)
 	res, _ := a.Get(0).([]domain.Attendance)
 	return res, a.Get(1).(int64), a.Error(2)
+}
+func (m *mAttRepo) SummarizeByUser(ctx context.Context, userID uuid.UUID, q domain.ListMyAttendanceQuery) (domain.MyAttendanceSummary, error) {
+	a := m.Called(ctx, userID, q)
+	res, _ := a.Get(0).(domain.MyAttendanceSummary)
+	return res, a.Error(1)
 }
 func (m *mAttRepo) AdminList(ctx context.Context, q domain.AdminListAttendanceQuery) ([]domain.Attendance, int64, error) {
 	a := m.Called(ctx, q)
@@ -317,9 +322,13 @@ func TestListMine_Summarizes(t *testing.T) {
 			{Status: domain.AttendanceStatusAbsent},
 			{Status: domain.AttendanceStatusLate},
 		}, int64(4), nil)
+	repo.On("SummarizeByUser", mock.Anything, studentID, mock.Anything).
+		Return(domain.MyAttendanceSummary{Present: 2, Absent: 1, Late: 1}, nil)
 
 	svc := newSvc(repo, classes, sessions)
-	res, err := svc.ListMine(ownerCtx(studentID), domain.ListParams{Page: 1, PageSize: 50})
+	res, err := svc.ListMine(ownerCtx(studentID), domain.ListMyAttendanceQuery{
+		ListParams: domain.ListParams{Page: 1, PageSize: 50},
+	})
 
 	assert.NoError(t, err)
 	assert.Equal(t, 2, res.Summary.Present)
@@ -327,11 +336,16 @@ func TestListMine_Summarizes(t *testing.T) {
 	assert.Equal(t, 1, res.Summary.Late)
 	assert.Equal(t, 0, res.Summary.Excused)
 	assert.Len(t, res.Items, 4)
+	assert.Equal(t, int64(4), res.Total)
+	assert.Equal(t, 1, res.Page)
+	assert.Equal(t, 50, res.PageSize)
 }
 
 func TestListMine_NoCaller_Forbidden(t *testing.T) {
 	svc := newSvc(&mAttRepo{}, &mClassRepo{}, &mSessRepo{})
-	_, err := svc.ListMine(context.Background(), domain.ListParams{Page: 1, PageSize: 50})
+	_, err := svc.ListMine(context.Background(), domain.ListMyAttendanceQuery{
+		ListParams: domain.ListParams{Page: 1, PageSize: 50},
+	})
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 

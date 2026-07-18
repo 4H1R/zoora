@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/card"
 import { useAdminTable } from "@/lib/data-table"
 import { Route } from "@/routes/_auth/org/exams/index"
 
-import { ClassFilterSelect, SessionFilterSelect } from "./class-session-filters"
+import { ClassFilterSelect, SessionFilterSelect } from "@/components/org/class-session-filters"
 import { useManagerExamColumns } from "./manager-exam-columns"
 import { surfacedRoom } from "./room-window"
 

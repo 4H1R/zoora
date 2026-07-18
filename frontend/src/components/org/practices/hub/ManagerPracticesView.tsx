@@ -8,6 +8,7 @@ import { useGetPractices } from "@/api/practices/practices"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { TableFilter } from "@/components/data-table/table-filter"
+import { ClassFilterSelect, SessionFilterSelect } from "@/components/org/class-session-filters"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -23,7 +24,8 @@ const WINDOW_OPTIONS = ["all", "upcoming", "open", "ended"] as const
 export function ManagerPracticesView() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { search, needs_grading, window: windowState, order_by, order_dir, page } = Route.useSearch()
+  const { search, needs_grading, window: windowState, class_id, class_session_id, order_by, order_dir, page, page_size } =
+    Route.useSearch()
 
   // Default landing filter is "needs grading" — the teacher's actual job queue.
   const needsGrading = needs_grading ?? true
@@ -35,9 +37,12 @@ export function ManagerPracticesView() {
     search: search || undefined,
     needs_grading: needsGrading || undefined,
     window: windowState,
+    class_id: class_id || undefined,
+    class_session_id: class_session_id || undefined,
     order_by: order_by || undefined,
     order_dir: order_dir || undefined,
     page: page ?? 1,
+    page_size: page_size ?? 20,
   })
 
   const listData = (data?.status === 200 && data.data.data) || undefined
@@ -49,6 +54,14 @@ export function ManagerPracticesView() {
 
   const setNeedsGrading = (value: boolean) =>
     navigate({ to: ".", search: (prev) => ({ ...prev, needs_grading: value || undefined, page: 1 }) })
+  // Changing class invalidates any chosen session — sessions belong to one class.
+  const setClass = (classId?: string) =>
+    navigate({
+      to: ".",
+      search: (prev) => ({ ...prev, class_id: classId, class_session_id: undefined, page: 1 }),
+    })
+  const setSession = (sessionId?: string) =>
+    navigate({ to: ".", search: (prev) => ({ ...prev, class_session_id: sessionId, page: 1 }) })
   const windowItems = WINDOW_OPTIONS.map((value) => ({
     value,
     label: value === "all" ? t("org.practices.filter.windowAll") : t(`org.practices.filter.window.${value}`),
@@ -80,6 +93,8 @@ export function ManagerPracticesView() {
         <Button size="sm" variant={needsGrading ? "default" : "outline"} onClick={() => setNeedsGrading(!needsGrading)}>
           {t("org.practices.filter.needsGrading")}
         </Button>
+        <ClassFilterSelect value={class_id} onChange={setClass} />
+        <SessionFilterSelect classId={class_id} value={class_session_id} onChange={setSession} />
         <Select items={windowItems} value={windowState ?? "all"} onValueChange={setWindow}>
           <SelectTrigger size="sm" className="w-36">
             <SelectValue />

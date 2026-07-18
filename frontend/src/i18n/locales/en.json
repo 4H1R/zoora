@@ -262,6 +262,11 @@
   },
   "common": {
     "brandName": "Zoora",
+    "filter": {
+      "allClasses": "All classes",
+      "allSessions": "All sessions",
+      "chooseClassFirst": "Choose a class first"
+    },
     "apiError": {
       "generic": "Something went wrong. Please try again.",
       "serverGeneric": "Something went wrong on our end. Please try again in a moment.",
@@ -1714,10 +1719,7 @@
       "opensAt": "Opens {{date}}",
       "searchPlaceholder": "Search exams…",
       "filter": {
-        "all": "All",
-        "allClasses": "All classes",
-        "allSessions": "All sessions",
-        "chooseClassFirst": "Choose a class first"
+        "all": "All"
       },
       "manage": {
         "title": "Manage exams",
@@ -1761,7 +1763,10 @@
     },
     "grades": {
       "title": "Report Card",
+      "subtitle": "Your grades across all classes",
       "empty": "No grades recorded yet.",
+      "noResults": "No grades match the filters",
+      "noResultsHint": "Try changing the search or filters.",
       "noColumns": "No graded items in this class yet.",
       "searchPlaceholder": "Search grades…",
       "table": {
@@ -1772,8 +1777,14 @@
     },
     "attendance": {
       "title": "My Attendance",
+      "subtitle": "Your attendance record across all classes",
       "empty": "No attendance records yet.",
+      "noResults": "No attendance matches the filters",
+      "noResultsHint": "Try changing the search or filters.",
       "searchPlaceholder": "Search attendance…",
+      "tabs": {
+        "all": "All"
+      },
       "table": {
         "class": "Class",
         "session": "Session",

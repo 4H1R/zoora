@@ -14,7 +14,7 @@ import { useViewMode, ViewModeToggle } from "@/components/view-mode-toggle"
 import { useAdminTable } from "@/lib/data-table"
 import { Route } from "@/routes/_auth/org/exams/index"
 
-import { ClassFilterSelect } from "./class-session-filters"
+import { ClassFilterSelect } from "@/components/org/class-session-filters"
 import { useStudentExamColumns } from "./student-exam-columns"
 
 // Ordered by urgency, mirroring the server's default sort.

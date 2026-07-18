@@ -5,8 +5,25 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
+import type { GetAttendanceMeStatus } from './getAttendanceMeStatus';
 
 export type GetAttendanceMeParams = {
+/**
+ * Filter by status
+ */
+status?: GetAttendanceMeStatus;
+/**
+ * Filter by class UUID
+ */
+class_id?: string;
+/**
+ * Filter by class session UUID
+ */
+class_session_id?: string;
+/**
+ * Substring match on remarks
+ */
+search?: string;
 /**
  * One of: created_at, updated_at, status
  */
@@ -19,4 +36,8 @@ order_dir?: string;
  * 1-based page number
  */
 page?: number;
+/**
+ * Items per page (max 200)
+ */
+page_size?: number;
 };

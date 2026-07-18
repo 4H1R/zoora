@@ -293,6 +293,7 @@ export * from './getAttendanceId404';
 export * from './getAttendanceMe200';
 export * from './getAttendanceMe401';
 export * from './getAttendanceMeParams';
+export * from './getAttendanceMeStatus';
 export * from './getBillingInvoices200';
 export * from './getBillingInvoices200Data';
 export * from './getBillingInvoices401';

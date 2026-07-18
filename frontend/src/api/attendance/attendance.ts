@@ -132,6 +132,7 @@ export const getGetAttendanceMeUrl = (params?: GetAttendanceMeParams,) => {
 }
 
 /**
+ * Returns the caller's attendance records, paged, with a status summary. The summary is a breakdown by status over the class/session scope and ignores the status filter. Filters: status, class_id, class_session_id. Search matches substrings of: remarks. Orderable fields: created_at, updated_at, status.
  * @summary List my attendance
  */
 export const getAttendanceMe = async (params?: GetAttendanceMeParams, options?: RequestInit): Promise<getAttendanceMeResponse> => {

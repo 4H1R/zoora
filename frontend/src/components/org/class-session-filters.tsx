@@ -6,20 +6,23 @@ import { formatSessionDate } from "@/lib/session-status"
 
 const ALL = "all"
 
-/** Class dropdown for exam filters. Emits undefined for "all". */
+/** Class dropdown for org list filters. Emits undefined for "all".
+ * Pass `classes` to supply options directly (skips the classes fetch). */
 export function ClassFilterSelect({
   value,
   onChange,
+  classes: providedClasses,
 }: {
   value?: string
   onChange: (classId?: string) => void
+  classes?: { id?: string; name?: string }[]
 }) {
   const { t } = useTranslation()
-  const classesQ = useGetClasses()
-  const classes = (classesQ.data?.status === 200 && classesQ.data.data.data?.items) || []
+  const classesQ = useGetClasses(undefined, { query: { enabled: !providedClasses } })
+  const classes = providedClasses ?? ((classesQ.data?.status === 200 && classesQ.data.data.data?.items) || [])
 
   const items = [
-    { value: ALL, label: t("org.exams.filter.allClasses") },
+    { value: ALL, label: t("common.filter.allClasses") },
     ...classes.map((c) => ({ value: c.id ?? "", label: c.name ?? "" })),
   ]
 
@@ -54,7 +57,7 @@ export function SessionFilterSelect({
   const sessions = (sessionsQ.data?.status === 200 && sessionsQ.data.data.data?.items) || []
 
   const items = [
-    { value: ALL, label: t("org.exams.filter.allSessions") },
+    { value: ALL, label: t("common.filter.allSessions") },
     ...sessions.map((s) => ({
       value: s.id ?? "",
       label: s.name || (s.start_time ? formatSessionDate(s.start_time, i18n.language, "short") : (s.id ?? "")),
@@ -68,7 +71,7 @@ export function SessionFilterSelect({
       onValueChange={(v) => onChange(v && v !== ALL ? v : undefined)}
       disabled={!classId}
     >
-      <SelectTrigger size="sm" className="w-40" title={!classId ? t("org.exams.filter.chooseClassFirst") : undefined}>
+      <SelectTrigger size="sm" className="w-40" title={!classId ? t("common.filter.chooseClassFirst") : undefined}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

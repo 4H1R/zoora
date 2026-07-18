@@ -9,6 +9,7 @@ const practicesSearchSchema = adminSearchSchema.extend({
   window: z.enum(["upcoming", "open", "ended"]).optional(),
   needs_grading: z.boolean().optional(),
   class_id: z.string().optional(),
+  class_session_id: z.string().optional(),
 })
 
 export const Route = createFileRoute("/_auth/org/practices/")({
