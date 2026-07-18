@@ -3,7 +3,7 @@
 // These mirror orval's generated hook surface but are maintained by hand
 // because the endpoints could not be regenerated at the time of writing.
 // Replace with the generated hooks (usePostUsersIdDisable, etc.) once the
-// OpenAPI spec is regenerated via `pnpm generate`.
+// OpenAPI spec is regenerated via `bun run generate`.
 import type { GithubCom4H1RZooraInternalDomainUser as User } from "@/api/model"
 import type { ErrorType } from "@/api/mutator/custom-instance"
 import type { UseMutationOptions } from "@tanstack/react-query"

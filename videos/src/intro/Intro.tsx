@@ -2,6 +2,7 @@ import { AbsoluteFill } from 'remotion';
 import { TransitionSeries, linearTiming } from '@remotion/transitions';
 import { fade } from '@remotion/transitions/fade';
 import { Subtitles } from '../lib/Subtitles';
+import { IntroMusic } from './Music';
 import { LINES, D, T, INTRO_DURATION, FPS } from './script';
 import { SceneLogo } from './scenes/SceneLogo';
 import { SceneClasses } from './scenes/SceneClasses';
@@ -45,6 +46,7 @@ export const Intro: React.FC = () => {
         </TransitionSeries.Sequence>
       </TransitionSeries>
       <Subtitles lines={LINES} />
+      <IntroMusic />
     </AbsoluteFill>
   );
 };

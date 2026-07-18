@@ -224,7 +224,7 @@ entity := factory.NewEntity(orgID, func(e *domain.Entity) {
 
 After all Go changes + `make swagger`:
 ```bash
-cd frontend && pnpm generate
+cd frontend && bun run generate
 ```
 
 This regenerates `frontend/src/api/model/*.ts` DTO types and hooks automatically.
@@ -247,5 +247,5 @@ Fix any compilation errors before reporting done.
 5. Update handler swagger (if new query params)
 6. Update factory
 7. Update seeder (if needed)
-8. `make migrate-reset` → `make swagger` → `cd frontend && pnpm generate`
+8. `make migrate-reset` → `make swagger` → `cd frontend && bun run generate`
 9. `make lint` + `make test`

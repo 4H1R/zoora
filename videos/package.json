@@ -12,6 +12,7 @@
   "dependencies": {
     "@fontsource-variable/vazirmatn": "^5.2.5",
     "@remotion/cli": "^4.0.246",
+    "@remotion/media": "^4.0.246",
     "@remotion/transitions": "^4.0.246",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

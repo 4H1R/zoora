@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
-import { useNavigate } from "@tanstack/react-router"
+import { useNavigate, useSearch } from "@tanstack/react-router"
 import { Eye, EyeOff } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input"
 import { InputGroup, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
 import { Spinner } from "@/components/ui/spinner"
 import { apiErrorCode, applyFieldErrors } from "@/lib/api-error"
+import { safeRedirectPath } from "@/lib/redirect"
 import { cn } from "@/lib/utils"
 
 const loginSchema = z.object({
@@ -29,6 +30,7 @@ type LoginFormValues = z.infer<typeof loginSchema>
 export function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { redirect } = useSearch({ from: "/_guest/login" })
   const queryClient = useQueryClient()
   const loginMutation = usePostAuthLogin()
   const [showPassword, setShowPassword] = useState(false)
@@ -55,7 +57,10 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 
             toast.success(t("login.success"))
 
-            if (user?.is_admin) {
+            const target = safeRedirectPath(redirect)
+            if (target) {
+              navigate({ to: target })
+            } else if (user?.is_admin) {
               navigate({ to: "/admin/dashboard" })
             } else if (user?.organization_id) {
               navigate({ to: "/org/dashboard" })
