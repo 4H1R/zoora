@@ -1,14 +1,21 @@
 import type { GithubCom4H1RZooraInternalDomainQuiz as Quiz } from "@/api/model"
+import type { RoomWindowStatus } from "./room-window"
 import type { ColumnDef } from "@tanstack/react-table"
 
-import { Link } from "@tanstack/react-router"
 import { ClipboardListIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { formatSessionDate } from "@/lib/session-status"
 
-import { surfacedRoom } from "./room-window"
+import { roomWindowStatus, surfacedRoom } from "./room-window"
+
+const STATUS_BADGE_VARIANT: Record<RoomWindowStatus, "default" | "secondary" | "outline" | "ghost"> = {
+  in_progress: "default",
+  not_started: "outline",
+  ended: "secondary",
+  not_scheduled: "ghost",
+}
 
 export function useManagerExamColumns(): ColumnDef<Quiz>[] {
   const { t, i18n } = useTranslation()
@@ -69,7 +76,7 @@ export function useManagerExamColumns(): ColumnDef<Quiz>[] {
         return startedAt ? (
           <span className="text-sm">{formatSessionDate(startedAt, i18n.language, "short")}</span>
         ) : (
-          <span className="text-muted-foreground">{t("org.exams.table.noRoom")}</span>
+          <span className="text-muted-foreground">—</span>
         )
       },
     },
@@ -88,33 +95,14 @@ export function useManagerExamColumns(): ColumnDef<Quiz>[] {
       },
     },
     {
-      id: "created_at",
-      accessorFn: (q) => q.created_at ?? "",
-      header: t("org.exams.table.created"),
-      cell: ({ row }) =>
-        row.original.created_at ? (
-          <span className="text-muted-foreground text-sm">
-            {formatSessionDate(row.original.created_at, i18n.language, "short")}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        ),
-    },
-    {
-      id: "actions",
-      header: "",
+      id: "room_status",
+      accessorFn: (q) => roomWindowStatus(q),
+      header: t("org.exams.table.state"),
       enableSorting: false,
-      enableHiding: false,
-      cell: ({ row }) =>
-        row.original.class_id ? (
-          <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
-            <Link to="/org/classes/$classId" params={{ classId: row.original.class_id }}>
-              <Button size="sm" variant="ghost">
-                {t("org.exams.manage.viewClass")}
-              </Button>
-            </Link>
-          </div>
-        ) : null,
+      cell: ({ row }) => {
+        const status = roomWindowStatus(row.original)
+        return <Badge variant={STATUS_BADGE_VARIANT[status]}>{t(`org.exams.roomStatus.${status}`)}</Badge>
+      },
     },
   ]
 }

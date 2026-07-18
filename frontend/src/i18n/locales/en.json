@@ -1721,8 +1721,13 @@
       },
       "manage": {
         "title": "Manage exams",
-        "subtitle": "Exams across all classes — open a class session to create or run an exam",
-        "viewClass": "View class"
+        "subtitle": "Exams across all classes — open a class session to create or run an exam"
+      },
+      "roomStatus": {
+        "not_scheduled": "Not scheduled",
+        "not_started": "Not started",
+        "in_progress": "In progress",
+        "ended": "Completed"
       },
       "table": {
         "title": "Exam",
@@ -1731,9 +1736,7 @@
         "duration": "Duration",
         "totalScore": "Total score",
         "start": "Start",
-        "end": "End",
-        "noRoom": "Not scheduled",
-        "created": "Created"
+        "end": "End"
       }
     },
     "calendar": {

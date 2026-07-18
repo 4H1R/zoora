@@ -30,3 +30,19 @@ export function surfacedRoom(quiz: Quiz): QuizRoom | undefined {
     .filter((r) => started(r) !== undefined)
     .sort((a, b) => (started(b) ?? 0) - (started(a) ?? 0))[0]
 }
+
+export type RoomWindowStatus = "not_scheduled" | "not_started" | "in_progress" | "ended"
+
+// roomWindowStatus reads the surfaced room's window against now:
+// no room → not_scheduled, future start → not_started,
+// open window → in_progress, past end → ended.
+export function roomWindowStatus(quiz: Quiz): RoomWindowStatus {
+  const room = surfacedRoom(quiz)
+  if (!room?.started_at) return "not_scheduled"
+  const now = Date.now()
+  const start = new Date(room.started_at).getTime()
+  if (start > now) return "not_started"
+  const end = room.ended_at ? new Date(room.ended_at).getTime() : undefined
+  if (end !== undefined && end <= now) return "ended"
+  return "in_progress"
+}
