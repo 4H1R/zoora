@@ -2397,7 +2397,44 @@
         "actions": {
           "manage": "Manage questions",
           "edit": "Edit bank",
-          "delete": "Delete bank"
+          "delete": "Delete bank",
+          "share": "Share bank"
+        },
+        "status": {
+          "copying": "Copying…",
+          "failed": "Copy failed"
+        },
+        "share": {
+          "title": "Share question bank",
+          "description": "Anyone with this code can import an independent copy of this bank into their organization.",
+          "noCodeHint": "Generate a code to let other teachers import this bank.",
+          "expiryLabel": "Code validity",
+          "expiry": {
+            "7d": "7 days",
+            "30d": "30 days",
+            "never": "No expiry"
+          },
+          "generate": "Generate code",
+          "regenerate": "Regenerate",
+          "regenerateHint": "Generating a new code disables the previous one.",
+          "codeLabel": "Share code",
+          "copied": "Code copied",
+          "generateSuccess": "Share code generated",
+          "revoke": "Revoke code",
+          "revokeSuccess": "Share code revoked",
+          "expiresAt": "Expires {{date}}",
+          "neverExpires": "Never expires"
+        },
+        "redeem": {
+          "button": "Import via code",
+          "title": "Import question bank",
+          "description": "Enter a share code to copy a bank into your organization.",
+          "codePlaceholder": "e.g. AB2CD3EF4G",
+          "check": "Check",
+          "invalid": "Invalid or expired code",
+          "questionCount": "{{count}} questions",
+          "import": "Import bank",
+          "success": "Import started — the bank will be ready shortly"
         },
         "form": {
           "createTitle": "New question bank",

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net/url"
 	"strings"
 	"time"
 
@@ -182,6 +183,22 @@ func (c *Client) PutObject(ctx context.Context, key string, body []byte, content
 	})
 	if err != nil {
 		return fmt.Errorf("putting object %s: %w", key, err)
+	}
+	return nil
+}
+
+// CopyObject server-side copies an object within the bucket — no bytes pass
+// through this process. Used to clone question media when a shared bank is
+// redeemed into another organization.
+func (c *Client) CopyObject(ctx context.Context, srcKey, dstKey string) error {
+	source := url.URL{Path: c.bucket + "/" + srcKey}
+	_, err := c.s3.CopyObject(ctx, &s3.CopyObjectInput{
+		Bucket:     aws.String(c.bucket),
+		CopySource: aws.String(source.EscapedPath()),
+		Key:        aws.String(dstKey),
+	})
+	if err != nil {
+		return fmt.Errorf("copying object %s -> %s: %w", srcKey, dstKey, err)
 	}
 	return nil
 }

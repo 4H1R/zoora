@@ -95,14 +95,53 @@ func (s ImageRenderStatus) Valid() bool {
 	return false
 }
 
+// QuestionBankStatus tracks a bank's copy lifecycle. Banks created directly are
+// 'ready'; a bank created by redeeming a share code starts as 'copying' while
+// the worker clones questions + media, then flips to 'ready' (or 'failed').
+type QuestionBankStatus string
+
+const (
+	QuestionBankStatusReady   QuestionBankStatus = "ready"
+	QuestionBankStatusCopying QuestionBankStatus = "copying"
+	QuestionBankStatusFailed  QuestionBankStatus = "failed"
+)
+
 type QuestionBank struct {
-	ID             uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	OrganizationID uuid.UUID      `gorm:"type:uuid;not null;index" json:"organization_id"`
-	Name           string         `gorm:"not null" json:"name"`
-	Description    string         `json:"description"`
-	CreatedAt      time.Time      `json:"created_at"`
-	UpdatedAt      time.Time      `json:"updated_at"`
-	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`
+	ID             uuid.UUID          `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	OrganizationID uuid.UUID          `gorm:"type:uuid;not null;index" json:"organization_id"`
+	Name           string             `gorm:"not null" json:"name"`
+	Description    string             `json:"description"`
+	Status         QuestionBankStatus `gorm:"type:varchar(20);not null;default:'ready'" json:"status"`
+	CreatedAt      time.Time          `json:"created_at"`
+	UpdatedAt      time.Time          `json:"updated_at"`
+	DeletedAt      gorm.DeletedAt     `gorm:"index" json:"-"`
+}
+
+// QuestionBankShareCode is a bank's redeemable share code: multi-use until it
+// expires or is revoked; at most one non-revoked code exists per bank. Redeeming
+// clones the bank into the redeemer's org as an independent copy.
+type QuestionBankShareCode struct {
+	ID             uuid.UUID     `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	BankID         uuid.UUID     `gorm:"type:uuid;not null;index" json:"bank_id"`
+	Bank           *QuestionBank `gorm:"foreignKey:BankID" json:"-"`
+	OrganizationID uuid.UUID     `gorm:"type:uuid;not null" json:"organization_id"`
+	Code           string        `gorm:"type:varchar(32);not null;uniqueIndex" json:"code"`
+	CreatedBy      uuid.UUID     `gorm:"type:uuid;not null" json:"created_by"`
+	ExpiresAt      *time.Time    `json:"expires_at,omitempty"`
+	RevokedAt      *time.Time    `json:"-"`
+	CreatedAt      time.Time     `json:"created_at"`
+	UpdatedAt      time.Time     `json:"updated_at"`
+}
+
+// Active reports whether the code can still be redeemed at the given time.
+func (c *QuestionBankShareCode) Active(now time.Time) bool {
+	if c.RevokedAt != nil {
+		return false
+	}
+	if c.ExpiresAt != nil && c.ExpiresAt.Before(now) {
+		return false
+	}
+	return true
 }
 
 type Question struct {
@@ -339,6 +378,25 @@ type AdminListQuestionsQuery struct {
 	ListParams     ListParams    `form:"-"`
 }
 
+// GenerateShareCodeDTO creates (or replaces) a bank's share code. A nil
+// ExpiresInDays means the code never expires (until revoked).
+type GenerateShareCodeDTO struct {
+	ExpiresInDays *int `json:"expires_in_days" binding:"omitempty,gte=1,lte=365"`
+}
+
+type RedeemShareCodeDTO struct {
+	Code string `json:"code" binding:"required,min=4,max=32"`
+}
+
+// ShareCodePreview is what a prospective redeemer sees before cloning: enough
+// to decide, nothing org-identifying.
+type ShareCodePreview struct {
+	BankName      string     `json:"bank_name"`
+	Description   string     `json:"description"`
+	QuestionCount int64      `json:"question_count"`
+	ExpiresAt     *time.Time `json:"expires_at,omitempty"`
+}
+
 type AdminCreateQuestionBankDTO struct {
 	OrganizationID uuid.UUID `json:"organization_id" binding:"required"`
 	Name           string    `json:"name" binding:"required,min=2"`
@@ -360,6 +418,13 @@ type QuestionBankRepository interface {
 	HardDelete(ctx context.Context, id uuid.UUID) error
 	FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*QuestionBank, error)
 	AdminList(ctx context.Context, q AdminListQuestionBanksQuery) ([]QuestionBank, int64, error)
+
+	CreateShareCode(ctx context.Context, code *QuestionBankShareCode) error
+	FindShareCodeByCode(ctx context.Context, code string) (*QuestionBankShareCode, error)
+	// FindActiveShareCodeByBank returns the bank's single non-revoked code
+	// (which may still be expired — callers check Active()).
+	FindActiveShareCodeByBank(ctx context.Context, bankID uuid.UUID) (*QuestionBankShareCode, error)
+	RevokeActiveShareCodesByBank(ctx context.Context, bankID uuid.UUID, at time.Time) error
 }
 
 type QuestionRepository interface {
@@ -389,6 +454,14 @@ type QuestionBankService interface {
 	UpdateQuestion(ctx context.Context, id uuid.UUID, dto UpdateQuestionDTO) (*Question, error)
 	DeleteQuestion(ctx context.Context, id uuid.UUID) error
 	ListQuestions(ctx context.Context, bankID uuid.UUID, q ListQuestionsQuery) ([]Question, int64, error)
+
+	GenerateShareCode(ctx context.Context, bankID uuid.UUID, dto GenerateShareCodeDTO) (*QuestionBankShareCode, error)
+	GetShareCode(ctx context.Context, bankID uuid.UUID) (*QuestionBankShareCode, error)
+	RevokeShareCode(ctx context.Context, bankID uuid.UUID) error
+	PreviewShareCode(ctx context.Context, code string) (*ShareCodePreview, error)
+	// RedeemShareCode clones the code's bank into the caller's org: it creates a
+	// 'copying' shell bank, enqueues the copy task, and returns the shell.
+	RedeemShareCode(ctx context.Context, dto RedeemShareCodeDTO) (*QuestionBank, error)
 
 	AdminList(ctx context.Context, q AdminListQuestionBanksQuery) ([]QuestionBank, int64, error)
 	AdminListQuestions(ctx context.Context, q AdminListQuestionsQuery) ([]Question, int64, error)

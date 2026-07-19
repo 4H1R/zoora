@@ -2,7 +2,16 @@ import type { GithubCom4H1RZooraInternalDomainQuestionBank as Bank } from "@/api
 import type { SortOption } from "@/components/data-table/sort-picker"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { CalendarClockIcon, LibraryIcon, ListChecksIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react"
+import {
+  CalendarClockIcon,
+  LibraryIcon,
+  ListChecksIcon,
+  PencilIcon,
+  PlusIcon,
+  Share2Icon,
+  TicketIcon,
+  Trash2Icon,
+} from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -14,6 +23,7 @@ import {
 } from "@/api/question-banks/question-banks"
 import { Eyebrow } from "@/components/eyebrow"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
+import { StatusBadge } from "@/components/status-badge"
 import { SectionNoResults } from "@/components/org/session/section-no-results"
 import { SectionPagination } from "@/components/org/session/section-pagination"
 import { SectionToolbar } from "@/components/org/session/section-toolbar"
@@ -26,6 +36,8 @@ import { useSectionList } from "@/lib/use-section-list"
 
 import { QuestionBankFormDialog } from "./QuestionBankFormDialog"
 import { QuestionBankQuestionsDialog } from "./QuestionBankQuestionsDialog"
+import { QuestionBankRedeemDialog } from "./QuestionBankRedeemDialog"
+import { QuestionBankShareDialog } from "./QuestionBankShareDialog"
 import { useBankPermissions } from "./use-bank-permissions"
 
 interface BankCardProps {
@@ -36,12 +48,16 @@ interface BankCardProps {
   onEdit: (b: Bank) => void
   onManage: (b: Bank) => void
   onDelete: (b: Bank) => void
+  onShare: (b: Bank) => void
 }
 
-function BankCard({ bank, index, canEdit, canDelete, onEdit, onManage, onDelete }: BankCardProps) {
+function BankCard({ bank, index, canEdit, canDelete, onEdit, onManage, onDelete, onShare }: BankCardProps) {
   const { t, i18n } = useTranslation()
   const tileNumber = String(index + 1).padStart(2, "0")
   const createdStr = bank.created_at ? formatSessionDate(bank.created_at, i18n.language, "short") : "—"
+  // Banks cloned from a share code arrive as 'copying' and may end 'failed';
+  // ready (or legacy undefined) is the only actionable state.
+  const isReady = !bank.status || bank.status === "ready"
 
   return (
     <div className="group/bank bg-card text-card-foreground ring-foreground/10 hover:ring-foreground/30 relative isolate flex flex-col gap-5 overflow-hidden rounded-2xl p-5 ring-1 transition-all">
@@ -53,7 +69,15 @@ function BankCard({ bank, index, canEdit, canDelete, onEdit, onManage, onDelete 
         <div className="bg-muted text-foreground flex size-10 items-center justify-center rounded-xl">
           <LibraryIcon className="size-5" />
         </div>
-        <span className="text-muted-foreground font-mono text-xs tracking-[0.25em]">/{tileNumber}</span>
+        <div className="flex items-center gap-2">
+          {bank.status === "copying" && (
+            <StatusBadge status="processing">{t("org.session.questionBanks.status.copying")}</StatusBadge>
+          )}
+          {bank.status === "failed" && (
+            <StatusBadge status="failed">{t("org.session.questionBanks.status.failed")}</StatusBadge>
+          )}
+          <span className="text-muted-foreground font-mono text-xs tracking-[0.25em]">/{tileNumber}</span>
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -72,14 +96,26 @@ function BankCard({ bank, index, canEdit, canDelete, onEdit, onManage, onDelete 
           {createdStr}
         </span>
         <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover/bank:opacity-100">
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            title={t("org.session.questionBanks.actions.manage")}
-            onClick={() => onManage(bank)}
-          >
-            <ListChecksIcon />
-          </Button>
+          {isReady && (
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              title={t("org.session.questionBanks.actions.manage")}
+              onClick={() => onManage(bank)}
+            >
+              <ListChecksIcon />
+            </Button>
+          )}
+          {canEdit && isReady && (
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              title={t("org.session.questionBanks.actions.share")}
+              onClick={() => onShare(bank)}
+            >
+              <Share2Icon />
+            </Button>
+          )}
           {canEdit && (
             <Button
               variant="ghost"
@@ -135,7 +171,20 @@ export function QuestionBanksSection() {
     { id: "name", label: t("org.session.controls.sortFields.name") },
   ]
 
-  const banksQuery = useGetQuestionBanks({ ...list.params }, { query: { enabled: canView } })
+  const banksQuery = useGetQuestionBanks(
+    { ...list.params },
+    {
+      query: {
+        enabled: canView,
+        // Imported banks copy in the background — poll while any is in flight.
+        refetchInterval: (query) => {
+          const d = query.state.data
+          const items = (d?.status === 200 && d.data.data?.items) || []
+          return items.some((b) => b.status === "copying") ? 3000 : false
+        },
+      },
+    }
+  )
   const banksData = (banksQuery.data?.status === 200 && banksQuery.data.data.data) || undefined
   const banks: Bank[] = banksData?.items ?? []
   const total = banksData?.total ?? 0
@@ -147,6 +196,9 @@ export function QuestionBanksSection() {
   const [managingBank, setManagingBank] = useState<Bank | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deletingBank, setDeletingBank] = useState<Bank | null>(null)
+  const [shareOpen, setShareOpen] = useState(false)
+  const [sharingBank, setSharingBank] = useState<Bank | null>(null)
+  const [redeemOpen, setRedeemOpen] = useState(false)
 
   const deleteMutation = useDeleteQuestionBanksId({
     mutation: {
@@ -173,10 +225,16 @@ export function QuestionBanksSection() {
           <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.questionBanks.title")}</h2>
         </div>
         {canCreate && (
-          <Button onClick={openCreate}>
-            <PlusIcon className="size-4" />
-            {t("org.session.questionBanks.newBank")}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setRedeemOpen(true)}>
+              <TicketIcon className="size-4" />
+              {t("org.session.questionBanks.redeem.button")}
+            </Button>
+            <Button onClick={openCreate}>
+              <PlusIcon className="size-4" />
+              {t("org.session.questionBanks.newBank")}
+            </Button>
+          </div>
         )}
       </div>
 
@@ -235,6 +293,10 @@ export function QuestionBanksSection() {
                   setDeletingBank(bank)
                   setDeleteOpen(true)
                 }}
+                onShare={(bank) => {
+                  setSharingBank(bank)
+                  setShareOpen(true)
+                }}
               />
             ))}
           </div>
@@ -259,6 +321,17 @@ export function QuestionBanksSection() {
         }}
         bank={managingBank}
       />
+
+      <QuestionBankShareDialog
+        open={shareOpen}
+        onOpenChange={(open) => {
+          setShareOpen(open)
+          if (!open) setSharingBank(null)
+        }}
+        bank={sharingBank}
+      />
+
+      <QuestionBankRedeemDialog open={redeemOpen} onOpenChange={setRedeemOpen} />
 
       <DeleteConfirmDialog
         open={deleteOpen}

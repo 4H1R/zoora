@@ -202,6 +202,11 @@ func main() {
 	questionImageRenderer := questionbanks.NewImageRenderer(questionRepo, mediaRepo, storageClient, log)
 	queueServer.HandleFunc(domain.TypeQuestionRenderImages, questionbanks.NewRenderImagesHandler(questionImageRenderer))
 
+	// Share-code redeems: clone a bank (questions + media) into the redeemer's org.
+	questionBankRepo := questionbanks.NewRepository(db)
+	bankCopier := questionbanks.NewBankCopier(questionBankRepo, questionRepo, mediaRepo, mediaService, storageClient, log)
+	queueServer.HandleFunc(domain.TypeQuestionBankCopy, questionbanks.NewCopyBankHandler(bankCopier))
+
 	// --- bulk imports: service isn't used to enqueue here (only the API does),
 	// but the constructor requires a queue client + result store regardless. ---
 	roleRepo := roles.NewRoleRepository(db)

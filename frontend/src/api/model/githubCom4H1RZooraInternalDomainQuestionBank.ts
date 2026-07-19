@@ -5,6 +5,7 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
+import type { GithubCom4H1RZooraInternalDomainQuestionBankStatus } from './githubCom4H1RZooraInternalDomainQuestionBankStatus';
 
 export interface GithubCom4H1RZooraInternalDomainQuestionBank {
   created_at?: string;
@@ -12,5 +13,6 @@ export interface GithubCom4H1RZooraInternalDomainQuestionBank {
   id?: string;
   name?: string;
   organization_id?: string;
+  status?: GithubCom4H1RZooraInternalDomainQuestionBankStatus;
   updated_at?: string;
 }

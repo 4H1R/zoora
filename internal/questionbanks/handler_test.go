@@ -69,6 +69,29 @@ func (m *mockBankSvc) ListQuestions(ctx context.Context, bankID uuid.UUID, q dom
 	qs, _ := a.Get(0).([]domain.Question)
 	return qs, a.Get(1).(int64), a.Error(2)
 }
+func (m *mockBankSvc) GenerateShareCode(ctx context.Context, bankID uuid.UUID, dto domain.GenerateShareCodeDTO) (*domain.QuestionBankShareCode, error) {
+	a := m.Called(ctx, bankID, dto)
+	c, _ := a.Get(0).(*domain.QuestionBankShareCode)
+	return c, a.Error(1)
+}
+func (m *mockBankSvc) GetShareCode(ctx context.Context, bankID uuid.UUID) (*domain.QuestionBankShareCode, error) {
+	a := m.Called(ctx, bankID)
+	c, _ := a.Get(0).(*domain.QuestionBankShareCode)
+	return c, a.Error(1)
+}
+func (m *mockBankSvc) RevokeShareCode(ctx context.Context, bankID uuid.UUID) error {
+	return m.Called(ctx, bankID).Error(0)
+}
+func (m *mockBankSvc) PreviewShareCode(ctx context.Context, code string) (*domain.ShareCodePreview, error) {
+	a := m.Called(ctx, code)
+	p, _ := a.Get(0).(*domain.ShareCodePreview)
+	return p, a.Error(1)
+}
+func (m *mockBankSvc) RedeemShareCode(ctx context.Context, dto domain.RedeemShareCodeDTO) (*domain.QuestionBank, error) {
+	a := m.Called(ctx, dto)
+	b, _ := a.Get(0).(*domain.QuestionBank)
+	return b, a.Error(1)
+}
 func (m *mockBankSvc) AdminList(ctx context.Context, q domain.AdminListQuestionBanksQuery) ([]domain.QuestionBank, int64, error) {
 	a := m.Called(ctx, q)
 	bs, _ := a.Get(0).([]domain.QuestionBank)

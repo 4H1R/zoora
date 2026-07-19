@@ -28,6 +28,9 @@ import type {
   DeleteQuestionBanksId401,
   DeleteQuestionBanksId403,
   DeleteQuestionBanksId404,
+  DeleteQuestionBanksIdShareCode401,
+  DeleteQuestionBanksIdShareCode403,
+  DeleteQuestionBanksIdShareCode404,
   DeleteQuestionBanksQuestionsQuestionId401,
   DeleteQuestionBanksQuestionsQuestionId403,
   DeleteQuestionBanksQuestionsQuestionId404,
@@ -44,13 +47,23 @@ import type {
   GetQuestionBanksIdQuestions403,
   GetQuestionBanksIdQuestions404,
   GetQuestionBanksIdQuestionsParams,
+  GetQuestionBanksIdShareCode200,
+  GetQuestionBanksIdShareCode401,
+  GetQuestionBanksIdShareCode403,
+  GetQuestionBanksIdShareCode404,
   GetQuestionBanksParams,
   GetQuestionBanksQuestionsQuestionId200,
   GetQuestionBanksQuestionsQuestionId401,
   GetQuestionBanksQuestionsQuestionId403,
   GetQuestionBanksQuestionsQuestionId404,
+  GetQuestionBanksShareCodesCode200,
+  GetQuestionBanksShareCodesCode400,
+  GetQuestionBanksShareCodesCode401,
+  GetQuestionBanksShareCodesCode403,
   GithubCom4H1RZooraInternalDomainCreateQuestionBankDTO,
   GithubCom4H1RZooraInternalDomainCreateQuestionDTO,
+  GithubCom4H1RZooraInternalDomainGenerateShareCodeDTO,
+  GithubCom4H1RZooraInternalDomainRedeemShareCodeDTO,
   GithubCom4H1RZooraInternalDomainResponse,
   GithubCom4H1RZooraInternalDomainUpdateQuestionBankDTO,
   GithubCom4H1RZooraInternalDomainUpdateQuestionDTO,
@@ -63,6 +76,15 @@ import type {
   PostQuestionBanksIdQuestions401,
   PostQuestionBanksIdQuestions403,
   PostQuestionBanksIdQuestions404,
+  PostQuestionBanksIdShareCode201,
+  PostQuestionBanksIdShareCode400,
+  PostQuestionBanksIdShareCode401,
+  PostQuestionBanksIdShareCode403,
+  PostQuestionBanksIdShareCode404,
+  PostQuestionBanksRedeem201,
+  PostQuestionBanksRedeem400,
+  PostQuestionBanksRedeem401,
+  PostQuestionBanksRedeem403,
   PutQuestionBanksId200,
   PutQuestionBanksId400,
   PutQuestionBanksId401,
@@ -667,7 +689,237 @@ export const useDeleteQuestionBanksQuestionsQuestionId = <TError = ErrorType<Del
       > => {
       return useMutation(getDeleteQuestionBanksQuestionsQuestionIdMutationOptions(options), queryClient);
     }
-    export type getQuestionBanksIdResponse200 = {
+    export type postQuestionBanksRedeemResponse201 = {
+  data: PostQuestionBanksRedeem201
+  status: 201
+}
+
+export type postQuestionBanksRedeemResponse400 = {
+  data: PostQuestionBanksRedeem400
+  status: 400
+}
+
+export type postQuestionBanksRedeemResponse401 = {
+  data: PostQuestionBanksRedeem401
+  status: 401
+}
+
+export type postQuestionBanksRedeemResponse403 = {
+  data: PostQuestionBanksRedeem403
+  status: 403
+}
+
+export type postQuestionBanksRedeemResponseSuccess = (postQuestionBanksRedeemResponse201) & {
+  headers: Headers;
+};
+export type postQuestionBanksRedeemResponseError = (postQuestionBanksRedeemResponse400 | postQuestionBanksRedeemResponse401 | postQuestionBanksRedeemResponse403) & {
+  headers: Headers;
+};
+
+export type postQuestionBanksRedeemResponse = (postQuestionBanksRedeemResponseSuccess | postQuestionBanksRedeemResponseError)
+
+export const getPostQuestionBanksRedeemUrl = () => {
+
+
+
+
+  return `/question-banks/redeem`
+}
+
+/**
+ * Clones the shared bank (questions + media) into the caller's organization as an independent copy. Returns the new bank with status 'copying'; the copy completes in the background and the bank flips to 'ready'.
+ * @summary Redeem a share code
+ */
+export const postQuestionBanksRedeem = async (githubCom4H1RZooraInternalDomainRedeemShareCodeDTO: GithubCom4H1RZooraInternalDomainRedeemShareCodeDTO, options?: RequestInit): Promise<postQuestionBanksRedeemResponse> => {
+
+  return customInstance<postQuestionBanksRedeemResponse>(getPostQuestionBanksRedeemUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(githubCom4H1RZooraInternalDomainRedeemShareCodeDTO)
+  }
+);}
+
+
+
+
+
+export const getPostQuestionBanksRedeemMutationOptions = <TError = ErrorType<PostQuestionBanksRedeem400 | PostQuestionBanksRedeem401 | PostQuestionBanksRedeem403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuestionBanksRedeem>>, TError,{data: GithubCom4H1RZooraInternalDomainRedeemShareCodeDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postQuestionBanksRedeem>>, TError,{data: GithubCom4H1RZooraInternalDomainRedeemShareCodeDTO}, TContext> => {
+
+const mutationKey = ['postQuestionBanksRedeem'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postQuestionBanksRedeem>>, {data: GithubCom4H1RZooraInternalDomainRedeemShareCodeDTO}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postQuestionBanksRedeem(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostQuestionBanksRedeemMutationResult = NonNullable<Awaited<ReturnType<typeof postQuestionBanksRedeem>>>
+    export type PostQuestionBanksRedeemMutationBody = GithubCom4H1RZooraInternalDomainRedeemShareCodeDTO
+    export type PostQuestionBanksRedeemMutationError = ErrorType<PostQuestionBanksRedeem400 | PostQuestionBanksRedeem401 | PostQuestionBanksRedeem403>
+
+    /**
+ * @summary Redeem a share code
+ */
+export const usePostQuestionBanksRedeem = <TError = ErrorType<PostQuestionBanksRedeem400 | PostQuestionBanksRedeem401 | PostQuestionBanksRedeem403>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuestionBanksRedeem>>, TError,{data: GithubCom4H1RZooraInternalDomainRedeemShareCodeDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postQuestionBanksRedeem>>,
+        TError,
+        {data: GithubCom4H1RZooraInternalDomainRedeemShareCodeDTO},
+        TContext
+      > => {
+      return useMutation(getPostQuestionBanksRedeemMutationOptions(options), queryClient);
+    }
+    export type getQuestionBanksShareCodesCodeResponse200 = {
+  data: GetQuestionBanksShareCodesCode200
+  status: 200
+}
+
+export type getQuestionBanksShareCodesCodeResponse400 = {
+  data: GetQuestionBanksShareCodesCode400
+  status: 400
+}
+
+export type getQuestionBanksShareCodesCodeResponse401 = {
+  data: GetQuestionBanksShareCodesCode401
+  status: 401
+}
+
+export type getQuestionBanksShareCodesCodeResponse403 = {
+  data: GetQuestionBanksShareCodesCode403
+  status: 403
+}
+
+export type getQuestionBanksShareCodesCodeResponseSuccess = (getQuestionBanksShareCodesCodeResponse200) & {
+  headers: Headers;
+};
+export type getQuestionBanksShareCodesCodeResponseError = (getQuestionBanksShareCodesCodeResponse400 | getQuestionBanksShareCodesCodeResponse401 | getQuestionBanksShareCodesCodeResponse403) & {
+  headers: Headers;
+};
+
+export type getQuestionBanksShareCodesCodeResponse = (getQuestionBanksShareCodesCodeResponseSuccess | getQuestionBanksShareCodesCodeResponseError)
+
+export const getGetQuestionBanksShareCodesCodeUrl = (code: string,) => {
+
+
+
+
+  return `/question-banks/share-codes/${code}`
+}
+
+/**
+ * Shows the shared bank's name, description and question count so the redeemer can decide before cloning. Invalid, expired, or revoked codes return a generic validation error.
+ * @summary Preview a share code
+ */
+export const getQuestionBanksShareCodesCode = async (code: string, options?: RequestInit): Promise<getQuestionBanksShareCodesCodeResponse> => {
+
+  return customInstance<getQuestionBanksShareCodesCodeResponse>(getGetQuestionBanksShareCodesCodeUrl(code),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetQuestionBanksShareCodesCodeQueryKey = (code: string,) => {
+    return [
+    `/question-banks/share-codes/${code}`
+    ] as const;
+    }
+
+
+export const getGetQuestionBanksShareCodesCodeQueryOptions = <TData = Awaited<ReturnType<typeof getQuestionBanksShareCodesCode>>, TError = ErrorType<GetQuestionBanksShareCodesCode400 | GetQuestionBanksShareCodesCode401 | GetQuestionBanksShareCodesCode403>>(code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksShareCodesCode>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetQuestionBanksShareCodesCodeQueryKey(code);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuestionBanksShareCodesCode>>> = ({ signal }) => getQuestionBanksShareCodesCode(code, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: code !== null && code !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksShareCodesCode>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetQuestionBanksShareCodesCodeQueryResult = NonNullable<Awaited<ReturnType<typeof getQuestionBanksShareCodesCode>>>
+export type GetQuestionBanksShareCodesCodeQueryError = ErrorType<GetQuestionBanksShareCodesCode400 | GetQuestionBanksShareCodesCode401 | GetQuestionBanksShareCodesCode403>
+
+
+export function useGetQuestionBanksShareCodesCode<TData = Awaited<ReturnType<typeof getQuestionBanksShareCodesCode>>, TError = ErrorType<GetQuestionBanksShareCodesCode400 | GetQuestionBanksShareCodesCode401 | GetQuestionBanksShareCodesCode403>>(
+ code: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksShareCodesCode>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getQuestionBanksShareCodesCode>>,
+          TError,
+          Awaited<ReturnType<typeof getQuestionBanksShareCodesCode>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuestionBanksShareCodesCode<TData = Awaited<ReturnType<typeof getQuestionBanksShareCodesCode>>, TError = ErrorType<GetQuestionBanksShareCodesCode400 | GetQuestionBanksShareCodesCode401 | GetQuestionBanksShareCodesCode403>>(
+ code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksShareCodesCode>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getQuestionBanksShareCodesCode>>,
+          TError,
+          Awaited<ReturnType<typeof getQuestionBanksShareCodesCode>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuestionBanksShareCodesCode<TData = Awaited<ReturnType<typeof getQuestionBanksShareCodesCode>>, TError = ErrorType<GetQuestionBanksShareCodesCode400 | GetQuestionBanksShareCodesCode401 | GetQuestionBanksShareCodesCode403>>(
+ code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksShareCodesCode>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Preview a share code
+ */
+
+export function useGetQuestionBanksShareCodesCode<TData = Awaited<ReturnType<typeof getQuestionBanksShareCodesCode>>, TError = ErrorType<GetQuestionBanksShareCodesCode400 | GetQuestionBanksShareCodesCode401 | GetQuestionBanksShareCodesCode403>>(
+ code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksShareCodesCode>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetQuestionBanksShareCodesCodeQueryOptions(code,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type getQuestionBanksIdResponse200 = {
   data: GetQuestionBanksId200
   status: 200
 }
@@ -1249,4 +1501,338 @@ export const usePostQuestionBanksIdQuestions = <TError = ErrorType<PostQuestionB
         TContext
       > => {
       return useMutation(getPostQuestionBanksIdQuestionsMutationOptions(options), queryClient);
+    }
+    export type getQuestionBanksIdShareCodeResponse200 = {
+  data: GetQuestionBanksIdShareCode200
+  status: 200
+}
+
+export type getQuestionBanksIdShareCodeResponse401 = {
+  data: GetQuestionBanksIdShareCode401
+  status: 401
+}
+
+export type getQuestionBanksIdShareCodeResponse403 = {
+  data: GetQuestionBanksIdShareCode403
+  status: 403
+}
+
+export type getQuestionBanksIdShareCodeResponse404 = {
+  data: GetQuestionBanksIdShareCode404
+  status: 404
+}
+
+export type getQuestionBanksIdShareCodeResponseSuccess = (getQuestionBanksIdShareCodeResponse200) & {
+  headers: Headers;
+};
+export type getQuestionBanksIdShareCodeResponseError = (getQuestionBanksIdShareCodeResponse401 | getQuestionBanksIdShareCodeResponse403 | getQuestionBanksIdShareCodeResponse404) & {
+  headers: Headers;
+};
+
+export type getQuestionBanksIdShareCodeResponse = (getQuestionBanksIdShareCodeResponseSuccess | getQuestionBanksIdShareCodeResponseError)
+
+export const getGetQuestionBanksIdShareCodeUrl = (id: string,) => {
+
+
+
+
+  return `/question-banks/${id}/share-code`
+}
+
+/**
+ * @summary Get active share code of a question bank
+ */
+export const getQuestionBanksIdShareCode = async (id: string, options?: RequestInit): Promise<getQuestionBanksIdShareCodeResponse> => {
+
+  return customInstance<getQuestionBanksIdShareCodeResponse>(getGetQuestionBanksIdShareCodeUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetQuestionBanksIdShareCodeQueryKey = (id: string,) => {
+    return [
+    `/question-banks/${id}/share-code`
+    ] as const;
+    }
+
+
+export const getGetQuestionBanksIdShareCodeQueryOptions = <TData = Awaited<ReturnType<typeof getQuestionBanksIdShareCode>>, TError = ErrorType<GetQuestionBanksIdShareCode401 | GetQuestionBanksIdShareCode403 | GetQuestionBanksIdShareCode404>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksIdShareCode>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetQuestionBanksIdShareCodeQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuestionBanksIdShareCode>>> = ({ signal }) => getQuestionBanksIdShareCode(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksIdShareCode>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetQuestionBanksIdShareCodeQueryResult = NonNullable<Awaited<ReturnType<typeof getQuestionBanksIdShareCode>>>
+export type GetQuestionBanksIdShareCodeQueryError = ErrorType<GetQuestionBanksIdShareCode401 | GetQuestionBanksIdShareCode403 | GetQuestionBanksIdShareCode404>
+
+
+export function useGetQuestionBanksIdShareCode<TData = Awaited<ReturnType<typeof getQuestionBanksIdShareCode>>, TError = ErrorType<GetQuestionBanksIdShareCode401 | GetQuestionBanksIdShareCode403 | GetQuestionBanksIdShareCode404>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksIdShareCode>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getQuestionBanksIdShareCode>>,
+          TError,
+          Awaited<ReturnType<typeof getQuestionBanksIdShareCode>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuestionBanksIdShareCode<TData = Awaited<ReturnType<typeof getQuestionBanksIdShareCode>>, TError = ErrorType<GetQuestionBanksIdShareCode401 | GetQuestionBanksIdShareCode403 | GetQuestionBanksIdShareCode404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksIdShareCode>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getQuestionBanksIdShareCode>>,
+          TError,
+          Awaited<ReturnType<typeof getQuestionBanksIdShareCode>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetQuestionBanksIdShareCode<TData = Awaited<ReturnType<typeof getQuestionBanksIdShareCode>>, TError = ErrorType<GetQuestionBanksIdShareCode401 | GetQuestionBanksIdShareCode403 | GetQuestionBanksIdShareCode404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksIdShareCode>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get active share code of a question bank
+ */
+
+export function useGetQuestionBanksIdShareCode<TData = Awaited<ReturnType<typeof getQuestionBanksIdShareCode>>, TError = ErrorType<GetQuestionBanksIdShareCode401 | GetQuestionBanksIdShareCode403 | GetQuestionBanksIdShareCode404>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getQuestionBanksIdShareCode>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetQuestionBanksIdShareCodeQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type postQuestionBanksIdShareCodeResponse201 = {
+  data: PostQuestionBanksIdShareCode201
+  status: 201
+}
+
+export type postQuestionBanksIdShareCodeResponse400 = {
+  data: PostQuestionBanksIdShareCode400
+  status: 400
+}
+
+export type postQuestionBanksIdShareCodeResponse401 = {
+  data: PostQuestionBanksIdShareCode401
+  status: 401
+}
+
+export type postQuestionBanksIdShareCodeResponse403 = {
+  data: PostQuestionBanksIdShareCode403
+  status: 403
+}
+
+export type postQuestionBanksIdShareCodeResponse404 = {
+  data: PostQuestionBanksIdShareCode404
+  status: 404
+}
+
+export type postQuestionBanksIdShareCodeResponseSuccess = (postQuestionBanksIdShareCodeResponse201) & {
+  headers: Headers;
+};
+export type postQuestionBanksIdShareCodeResponseError = (postQuestionBanksIdShareCodeResponse400 | postQuestionBanksIdShareCodeResponse401 | postQuestionBanksIdShareCodeResponse403 | postQuestionBanksIdShareCodeResponse404) & {
+  headers: Headers;
+};
+
+export type postQuestionBanksIdShareCodeResponse = (postQuestionBanksIdShareCodeResponseSuccess | postQuestionBanksIdShareCodeResponseError)
+
+export const getPostQuestionBanksIdShareCodeUrl = (id: string,) => {
+
+
+
+
+  return `/question-banks/${id}/share-code`
+}
+
+/**
+ * Creates a new multi-use share code for the bank, revoking any previous one. Optional expiry in days; omitted = never expires. Redeeming the code clones the bank into the redeemer's organization.
+ * @summary Generate share code for a question bank
+ */
+export const postQuestionBanksIdShareCode = async (id: string,
+    githubCom4H1RZooraInternalDomainGenerateShareCodeDTO: GithubCom4H1RZooraInternalDomainGenerateShareCodeDTO, options?: RequestInit): Promise<postQuestionBanksIdShareCodeResponse> => {
+
+  return customInstance<postQuestionBanksIdShareCodeResponse>(getPostQuestionBanksIdShareCodeUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(githubCom4H1RZooraInternalDomainGenerateShareCodeDTO)
+  }
+);}
+
+
+
+
+
+export const getPostQuestionBanksIdShareCodeMutationOptions = <TError = ErrorType<PostQuestionBanksIdShareCode400 | PostQuestionBanksIdShareCode401 | PostQuestionBanksIdShareCode403 | PostQuestionBanksIdShareCode404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuestionBanksIdShareCode>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainGenerateShareCodeDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postQuestionBanksIdShareCode>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainGenerateShareCodeDTO}, TContext> => {
+
+const mutationKey = ['postQuestionBanksIdShareCode'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postQuestionBanksIdShareCode>>, {id: string;data: GithubCom4H1RZooraInternalDomainGenerateShareCodeDTO}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postQuestionBanksIdShareCode(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostQuestionBanksIdShareCodeMutationResult = NonNullable<Awaited<ReturnType<typeof postQuestionBanksIdShareCode>>>
+    export type PostQuestionBanksIdShareCodeMutationBody = GithubCom4H1RZooraInternalDomainGenerateShareCodeDTO
+    export type PostQuestionBanksIdShareCodeMutationError = ErrorType<PostQuestionBanksIdShareCode400 | PostQuestionBanksIdShareCode401 | PostQuestionBanksIdShareCode403 | PostQuestionBanksIdShareCode404>
+
+    /**
+ * @summary Generate share code for a question bank
+ */
+export const usePostQuestionBanksIdShareCode = <TError = ErrorType<PostQuestionBanksIdShareCode400 | PostQuestionBanksIdShareCode401 | PostQuestionBanksIdShareCode403 | PostQuestionBanksIdShareCode404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postQuestionBanksIdShareCode>>, TError,{id: string;data: GithubCom4H1RZooraInternalDomainGenerateShareCodeDTO}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postQuestionBanksIdShareCode>>,
+        TError,
+        {id: string;data: GithubCom4H1RZooraInternalDomainGenerateShareCodeDTO},
+        TContext
+      > => {
+      return useMutation(getPostQuestionBanksIdShareCodeMutationOptions(options), queryClient);
+    }
+    export type deleteQuestionBanksIdShareCodeResponse200 = {
+  data: GithubCom4H1RZooraInternalDomainResponse
+  status: 200
+}
+
+export type deleteQuestionBanksIdShareCodeResponse401 = {
+  data: DeleteQuestionBanksIdShareCode401
+  status: 401
+}
+
+export type deleteQuestionBanksIdShareCodeResponse403 = {
+  data: DeleteQuestionBanksIdShareCode403
+  status: 403
+}
+
+export type deleteQuestionBanksIdShareCodeResponse404 = {
+  data: DeleteQuestionBanksIdShareCode404
+  status: 404
+}
+
+export type deleteQuestionBanksIdShareCodeResponseSuccess = (deleteQuestionBanksIdShareCodeResponse200) & {
+  headers: Headers;
+};
+export type deleteQuestionBanksIdShareCodeResponseError = (deleteQuestionBanksIdShareCodeResponse401 | deleteQuestionBanksIdShareCodeResponse403 | deleteQuestionBanksIdShareCodeResponse404) & {
+  headers: Headers;
+};
+
+export type deleteQuestionBanksIdShareCodeResponse = (deleteQuestionBanksIdShareCodeResponseSuccess | deleteQuestionBanksIdShareCodeResponseError)
+
+export const getDeleteQuestionBanksIdShareCodeUrl = (id: string,) => {
+
+
+
+
+  return `/question-banks/${id}/share-code`
+}
+
+/**
+ * @summary Revoke share code of a question bank
+ */
+export const deleteQuestionBanksIdShareCode = async (id: string, options?: RequestInit): Promise<deleteQuestionBanksIdShareCodeResponse> => {
+
+  return customInstance<deleteQuestionBanksIdShareCodeResponse>(getDeleteQuestionBanksIdShareCodeUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteQuestionBanksIdShareCodeMutationOptions = <TError = ErrorType<DeleteQuestionBanksIdShareCode401 | DeleteQuestionBanksIdShareCode403 | DeleteQuestionBanksIdShareCode404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteQuestionBanksIdShareCode>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteQuestionBanksIdShareCode>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteQuestionBanksIdShareCode'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteQuestionBanksIdShareCode>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteQuestionBanksIdShareCode(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteQuestionBanksIdShareCodeMutationResult = NonNullable<Awaited<ReturnType<typeof deleteQuestionBanksIdShareCode>>>
+
+    export type DeleteQuestionBanksIdShareCodeMutationError = ErrorType<DeleteQuestionBanksIdShareCode401 | DeleteQuestionBanksIdShareCode403 | DeleteQuestionBanksIdShareCode404>
+
+    /**
+ * @summary Revoke share code of a question bank
+ */
+export const useDeleteQuestionBanksIdShareCode = <TError = ErrorType<DeleteQuestionBanksIdShareCode401 | DeleteQuestionBanksIdShareCode403 | DeleteQuestionBanksIdShareCode404>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteQuestionBanksIdShareCode>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteQuestionBanksIdShareCode>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteQuestionBanksIdShareCodeMutationOptions(options), queryClient);
     }

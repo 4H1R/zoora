@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -50,6 +51,26 @@ func (m *mockBankRepo) AdminList(ctx context.Context, q domain.AdminListQuestion
 	a := m.Called(ctx, q)
 	bs, _ := a.Get(0).([]domain.QuestionBank)
 	return bs, a.Get(1).(int64), a.Error(2)
+}
+func (m *mockBankRepo) CreateShareCode(ctx context.Context, code *domain.QuestionBankShareCode) error {
+	return m.Called(ctx, code).Error(0)
+}
+func (m *mockBankRepo) FindShareCodeByCode(ctx context.Context, code string) (*domain.QuestionBankShareCode, error) {
+	a := m.Called(ctx, code)
+	if a.Get(0) == nil {
+		return nil, a.Error(1)
+	}
+	return a.Get(0).(*domain.QuestionBankShareCode), a.Error(1)
+}
+func (m *mockBankRepo) FindActiveShareCodeByBank(ctx context.Context, bankID uuid.UUID) (*domain.QuestionBankShareCode, error) {
+	a := m.Called(ctx, bankID)
+	if a.Get(0) == nil {
+		return nil, a.Error(1)
+	}
+	return a.Get(0).(*domain.QuestionBankShareCode), a.Error(1)
+}
+func (m *mockBankRepo) RevokeActiveShareCodesByBank(ctx context.Context, bankID uuid.UUID, at time.Time) error {
+	return m.Called(ctx, bankID, at).Error(0)
 }
 
 type mockQuestionRepo struct{ mock.Mock }

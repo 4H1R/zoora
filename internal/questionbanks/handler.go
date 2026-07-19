@@ -44,6 +44,12 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 		authed.PUT("/question-banks/:id", perm(domain.PermQuestionBanksUpdate), idParam, h.Update)
 		authed.DELETE("/question-banks/:id", perm(domain.PermQuestionBanksDelete), idParam, h.Delete)
 
+		authed.POST("/question-banks/redeem", perm(domain.PermQuestionBanksCreate), h.RedeemShareCode)
+		authed.GET("/question-banks/share-codes/:code", perm(domain.PermQuestionBanksCreate), h.PreviewShareCode)
+		authed.POST("/question-banks/:id/share-code", perm(domain.PermQuestionBanksUpdate), idParam, h.GenerateShareCode)
+		authed.GET("/question-banks/:id/share-code", perm(domain.PermQuestionBanksUpdate), idParam, h.GetShareCode)
+		authed.DELETE("/question-banks/:id/share-code", perm(domain.PermQuestionBanksUpdate), idParam, h.RevokeShareCode)
+
 		authed.GET("/question-banks/:id/questions", perm(domain.PermQuestionBanksView), idParam, h.ListQuestions)
 		authed.POST("/question-banks/:id/questions", perm(domain.PermQuestionBanksUpdate), idParam, h.CreateQuestion)
 		authed.GET("/question-banks/questions/:questionId", perm(domain.PermQuestionBanksView), questionIDParam, h.GetQuestion)
@@ -163,6 +169,117 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 	domain.SuccessResponse(c, http.StatusOK, nil)
+}
+
+// @Summary Generate share code for a question bank
+// @Description Creates a new multi-use share code for the bank, revoking any previous one. Optional expiry in days; omitted = never expires. Redeeming the code clones the bank into the redeemer's organization.
+// @Tags QuestionBanks
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Question bank UUID"
+// @Param body body domain.GenerateShareCodeDTO true "Share code options"
+// @Success 201 {object} domain.Response{data=domain.QuestionBankShareCode}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /question-banks/{id}/share-code [post]
+func (h *Handler) GenerateShareCode(c *gin.Context) {
+	var dto domain.GenerateShareCodeDTO
+	if err := httpx.Bind(c, &dto); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	code, err := h.svc.GenerateShareCode(c.Request.Context(), httpx.UUIDParam(c, "id"), dto)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusCreated, code)
+}
+
+// @Summary Get active share code of a question bank
+// @Tags QuestionBanks
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Question bank UUID"
+// @Success 200 {object} domain.Response{data=domain.QuestionBankShareCode}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /question-banks/{id}/share-code [get]
+func (h *Handler) GetShareCode(c *gin.Context) {
+	code, err := h.svc.GetShareCode(c.Request.Context(), httpx.UUIDParam(c, "id"))
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, code)
+}
+
+// @Summary Revoke share code of a question bank
+// @Tags QuestionBanks
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Question bank UUID"
+// @Success 200 {object} domain.Response
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Router /question-banks/{id}/share-code [delete]
+func (h *Handler) RevokeShareCode(c *gin.Context) {
+	if err := h.svc.RevokeShareCode(c.Request.Context(), httpx.UUIDParam(c, "id")); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, nil)
+}
+
+// @Summary Preview a share code
+// @Description Shows the shared bank's name, description and question count so the redeemer can decide before cloning. Invalid, expired, or revoked codes return a generic validation error.
+// @Tags QuestionBanks
+// @Produce json
+// @Security BearerAuth
+// @Param code path string true "Share code"
+// @Success 200 {object} domain.Response{data=domain.ShareCodePreview}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Router /question-banks/share-codes/{code} [get]
+func (h *Handler) PreviewShareCode(c *gin.Context) {
+	preview, err := h.svc.PreviewShareCode(c.Request.Context(), c.Param("code"))
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusOK, preview)
+}
+
+// @Summary Redeem a share code
+// @Description Clones the shared bank (questions + media) into the caller's organization as an independent copy. Returns the new bank with status 'copying'; the copy completes in the background and the bank flips to 'ready'.
+// @Tags QuestionBanks
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body domain.RedeemShareCodeDTO true "Share code"
+// @Success 201 {object} domain.Response{data=domain.QuestionBank}
+// @Failure 400 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 403 {object} domain.Response{error=domain.ErrorBody}
+// @Router /question-banks/redeem [post]
+func (h *Handler) RedeemShareCode(c *gin.Context) {
+	var dto domain.RedeemShareCodeDTO
+	if err := httpx.Bind(c, &dto); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	bank, err := h.svc.RedeemShareCode(c.Request.Context(), dto)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	domain.SuccessResponse(c, http.StatusCreated, bank)
 }
 
 // @Summary List questions in a bank
