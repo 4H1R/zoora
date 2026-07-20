@@ -43,7 +43,7 @@ export function buildOrgNavGroups(
     { label: t("org.panel"), keys: ["dashboard", "calendar", "classes", "conversations"] },
     {
       label: t("org.nav.learning"),
-      keys: ["online-classes", "exams", "practices", "grades", "attendance", "tickets"],
+      keys: ["online-classes", "exams", "question-banks", "practices", "grades", "attendance", "tickets"],
     },
     {
       label: t("org.nav.management"),

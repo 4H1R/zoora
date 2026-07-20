@@ -10,6 +10,7 @@ import {
   FileIcon,
   GraduationCapIcon,
   LayoutDashboardIcon,
+  LibraryIcon,
   MessageCircleIcon,
   NotebookPenIcon,
   SchoolIcon,
@@ -28,6 +29,7 @@ export type OrgRouteKey =
   | "classes"
   | "online-classes"
   | "exams"
+  | "question-banks"
   | "practices"
   | "grades"
   | "attendance"
@@ -90,6 +92,12 @@ export const ORG_ROUTES: Record<OrgRouteKey, OrgRouteSpec> = {
     icon: <ClipboardListIcon />,
     segment: "exams",
     perms: ["quizzes:view", "quizzes:take"],
+  },
+  "question-banks": {
+    i18nKey: "org.nav.questionBanks",
+    icon: <LibraryIcon />,
+    segment: "question-banks",
+    perms: ["question_banks:view", "question_banks:view_any"],
   },
   practices: {
     i18nKey: "org.nav.practices",

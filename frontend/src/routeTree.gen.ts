@@ -33,6 +33,7 @@ import { Route as AuthOrgUsersIndexRouteImport } from './routes/_auth/org/users/
 import { Route as AuthOrgTicketsIndexRouteImport } from './routes/_auth/org/tickets/index'
 import { Route as AuthOrgSettingsIndexRouteImport } from './routes/_auth/org/settings/index'
 import { Route as AuthOrgRolesIndexRouteImport } from './routes/_auth/org/roles/index'
+import { Route as AuthOrgQuestionBanksIndexRouteImport } from './routes/_auth/org/question-banks/index'
 import { Route as AuthOrgPracticesIndexRouteImport } from './routes/_auth/org/practices/index'
 import { Route as AuthOrgOnlineClassesIndexRouteImport } from './routes/_auth/org/online-classes/index'
 import { Route as AuthOrgNotificationsIndexRouteImport } from './routes/_auth/org/notifications/index'
@@ -204,6 +205,12 @@ const AuthOrgRolesIndexRoute = AuthOrgRolesIndexRouteImport.update({
   path: '/roles/',
   getParentRoute: () => AuthOrgRoute,
 } as any)
+const AuthOrgQuestionBanksIndexRoute =
+  AuthOrgQuestionBanksIndexRouteImport.update({
+    id: '/question-banks/',
+    path: '/question-banks/',
+    getParentRoute: () => AuthOrgRoute,
+  } as any)
 const AuthOrgPracticesIndexRoute = AuthOrgPracticesIndexRouteImport.update({
   id: '/practices/',
   path: '/practices/',
@@ -551,6 +558,7 @@ export interface FileRoutesByFullPath {
   '/org/notifications/': typeof AuthOrgNotificationsIndexRoute
   '/org/online-classes/': typeof AuthOrgOnlineClassesIndexRoute
   '/org/practices/': typeof AuthOrgPracticesIndexRoute
+  '/org/question-banks/': typeof AuthOrgQuestionBanksIndexRoute
   '/org/roles/': typeof AuthOrgRolesIndexRoute
   '/org/settings/': typeof AuthOrgSettingsIndexRoute
   '/org/tickets/': typeof AuthOrgTicketsIndexRoute
@@ -624,6 +632,7 @@ export interface FileRoutesByTo {
   '/org/notifications': typeof AuthOrgNotificationsIndexRoute
   '/org/online-classes': typeof AuthOrgOnlineClassesIndexRoute
   '/org/practices': typeof AuthOrgPracticesIndexRoute
+  '/org/question-banks': typeof AuthOrgQuestionBanksIndexRoute
   '/org/roles': typeof AuthOrgRolesIndexRoute
   '/org/settings': typeof AuthOrgSettingsIndexRoute
   '/org/tickets': typeof AuthOrgTicketsIndexRoute
@@ -703,6 +712,7 @@ export interface FileRoutesById {
   '/_auth/org/notifications/': typeof AuthOrgNotificationsIndexRoute
   '/_auth/org/online-classes/': typeof AuthOrgOnlineClassesIndexRoute
   '/_auth/org/practices/': typeof AuthOrgPracticesIndexRoute
+  '/_auth/org/question-banks/': typeof AuthOrgQuestionBanksIndexRoute
   '/_auth/org/roles/': typeof AuthOrgRolesIndexRoute
   '/_auth/org/settings/': typeof AuthOrgSettingsIndexRoute
   '/_auth/org/tickets/': typeof AuthOrgTicketsIndexRoute
@@ -780,6 +790,7 @@ export interface FileRouteTypes {
     | '/org/notifications/'
     | '/org/online-classes/'
     | '/org/practices/'
+    | '/org/question-banks/'
     | '/org/roles/'
     | '/org/settings/'
     | '/org/tickets/'
@@ -853,6 +864,7 @@ export interface FileRouteTypes {
     | '/org/notifications'
     | '/org/online-classes'
     | '/org/practices'
+    | '/org/question-banks'
     | '/org/roles'
     | '/org/settings'
     | '/org/tickets'
@@ -931,6 +943,7 @@ export interface FileRouteTypes {
     | '/_auth/org/notifications/'
     | '/_auth/org/online-classes/'
     | '/_auth/org/practices/'
+    | '/_auth/org/question-banks/'
     | '/_auth/org/roles/'
     | '/_auth/org/settings/'
     | '/_auth/org/tickets/'
@@ -1126,6 +1139,13 @@ declare module '@tanstack/react-router' {
       path: '/roles'
       fullPath: '/org/roles/'
       preLoaderRoute: typeof AuthOrgRolesIndexRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
+    '/_auth/org/question-banks/': {
+      id: '/_auth/org/question-banks/'
+      path: '/question-banks'
+      fullPath: '/org/question-banks/'
+      preLoaderRoute: typeof AuthOrgQuestionBanksIndexRouteImport
       parentRoute: typeof AuthOrgRoute
     }
     '/_auth/org/practices/': {
@@ -1615,6 +1635,7 @@ interface AuthOrgRouteChildren {
   AuthOrgNotificationsIndexRoute: typeof AuthOrgNotificationsIndexRoute
   AuthOrgOnlineClassesIndexRoute: typeof AuthOrgOnlineClassesIndexRoute
   AuthOrgPracticesIndexRoute: typeof AuthOrgPracticesIndexRoute
+  AuthOrgQuestionBanksIndexRoute: typeof AuthOrgQuestionBanksIndexRoute
   AuthOrgRolesIndexRoute: typeof AuthOrgRolesIndexRoute
   AuthOrgSettingsIndexRoute: typeof AuthOrgSettingsIndexRoute
   AuthOrgTicketsIndexRoute: typeof AuthOrgTicketsIndexRoute
@@ -1650,6 +1671,7 @@ const AuthOrgRouteChildren: AuthOrgRouteChildren = {
   AuthOrgNotificationsIndexRoute: AuthOrgNotificationsIndexRoute,
   AuthOrgOnlineClassesIndexRoute: AuthOrgOnlineClassesIndexRoute,
   AuthOrgPracticesIndexRoute: AuthOrgPracticesIndexRoute,
+  AuthOrgQuestionBanksIndexRoute: AuthOrgQuestionBanksIndexRoute,
   AuthOrgRolesIndexRoute: AuthOrgRolesIndexRoute,
   AuthOrgSettingsIndexRoute: AuthOrgSettingsIndexRoute,
   AuthOrgTicketsIndexRoute: AuthOrgTicketsIndexRoute,
