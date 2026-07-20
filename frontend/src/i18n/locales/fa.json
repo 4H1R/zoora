@@ -1800,7 +1800,14 @@
         "duration": "مدت",
         "totalScore": "بارم",
         "start": "شروع",
-        "end": "پایان"
+        "end": "پایان",
+        "corrections": "تصحیح"
+      },
+      "corrections": {
+        "title": "تصحیح",
+        "back": "بازگشت به آزمون‌ها",
+        "notFound": "آزمون پیدا نشد",
+        "openSession": "باز کردن جلسه"
       }
     },
     "calendar": {

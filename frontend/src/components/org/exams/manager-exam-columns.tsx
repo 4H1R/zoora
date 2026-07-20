@@ -2,10 +2,13 @@ import type { GithubCom4H1RZooraInternalDomainQuiz as Quiz } from "@/api/model"
 import type { RoomWindowStatus } from "./room-window"
 import type { ColumnDef } from "@tanstack/react-table"
 
-import { ClipboardListIcon } from "lucide-react"
+import { Link } from "@tanstack/react-router"
+import { ClipboardListIcon, PencilIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { useAccess } from "react-access-engine"
 
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { formatSessionDate } from "@/lib/session-status"
 
 import { roomWindowStatus, surfacedRoom } from "./room-window"
@@ -19,6 +22,10 @@ const STATUS_BADGE_VARIANT: Record<RoomWindowStatus, "default" | "secondary" | "
 
 export function useManagerExamColumns(): ColumnDef<Quiz>[] {
   const { t, i18n } = useTranslation()
+  const { can, user } = useAccess()
+
+  // Managers grade any quiz; teachers only quizzes they own.
+  const canGradeQuiz = (quiz: Quiz) => can("quizzes:update_any") || (can("quizzes:update") && quiz.user_id === user.id)
 
   return [
     {
@@ -102,6 +109,26 @@ export function useManagerExamColumns(): ColumnDef<Quiz>[] {
       cell: ({ row }) => {
         const status = roomWindowStatus(row.original)
         return <Badge variant={STATUS_BADGE_VARIANT[status]}>{t(`org.exams.roomStatus.${status}`)}</Badge>
+      },
+    },
+    {
+      id: "corrections",
+      header: t("org.exams.table.corrections"),
+      enableSorting: false,
+      cell: ({ row }) => {
+        const quiz = row.original
+        if (!quiz.id || !canGradeQuiz(quiz)) return null
+        return (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(e) => e.stopPropagation()}
+            render={<Link to="/org/exams/$quizId/corrections" params={{ quizId: quiz.id }} />}
+          >
+            <PencilIcon data-icon="inline-start" />
+            {t("org.exams.table.corrections")}
+          </Button>
+        )
       },
     },
   ]

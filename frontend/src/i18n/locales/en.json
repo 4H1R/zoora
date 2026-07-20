@@ -1738,7 +1738,14 @@
         "duration": "Duration",
         "totalScore": "Total score",
         "start": "Start",
-        "end": "End"
+        "end": "End",
+        "corrections": "Corrections"
+      },
+      "corrections": {
+        "title": "Corrections",
+        "back": "Back to exams",
+        "notFound": "Exam not found",
+        "openSession": "Open session"
       }
     },
     "calendar": {

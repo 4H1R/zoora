@@ -74,6 +74,7 @@ import { Route as AdminAdminChangelogIdRouteImport } from './routes/_admin/admin
 import { Route as AdminAdminBillingPricesRouteImport } from './routes/_admin/admin/billing/prices'
 import { Route as AdminAdminBillingInvoicesIndexRouteImport } from './routes/_admin/admin/billing/invoices/index'
 import { Route as AuthOrgFilesOwnerKindRouteImport } from './routes/_auth/org/files/owner/$kind'
+import { Route as AuthOrgExamsQuizIdCorrectionsRouteImport } from './routes/_auth/org/exams/$quizId.corrections'
 import { Route as AuthOrgClassesClassSessionsClassSessionIdRouteImport } from './routes/_auth/org/classes/class-sessions/$classSessionId'
 import { Route as AuthOrgClassesClassIdGradebookRouteImport } from './routes/_auth/org/classes/$classId_.gradebook'
 import { Route as AdminAdminClassesClassIdSessionsRouteImport } from './routes/_admin/admin/classes/$classId/sessions'
@@ -426,6 +427,12 @@ const AuthOrgFilesOwnerKindRoute = AuthOrgFilesOwnerKindRouteImport.update({
   path: '/files/owner/$kind',
   getParentRoute: () => AuthOrgRoute,
 } as any)
+const AuthOrgExamsQuizIdCorrectionsRoute =
+  AuthOrgExamsQuizIdCorrectionsRouteImport.update({
+    id: '/exams/$quizId/corrections',
+    path: '/exams/$quizId/corrections',
+    getParentRoute: () => AuthOrgRoute,
+  } as any)
 const AuthOrgClassesClassSessionsClassSessionIdRoute =
   AuthOrgClassesClassSessionsClassSessionIdRouteImport.update({
     id: '/classes/class-sessions/$classSessionId',
@@ -558,6 +565,7 @@ export interface FileRoutesByFullPath {
   '/admin/classes/$classId/sessions': typeof AdminAdminClassesClassIdSessionsRoute
   '/org/classes/$classId/gradebook': typeof AuthOrgClassesClassIdGradebookRoute
   '/org/classes/class-sessions/$classSessionId': typeof AuthOrgClassesClassSessionsClassSessionIdRoute
+  '/org/exams/$quizId/corrections': typeof AuthOrgExamsQuizIdCorrectionsRoute
   '/org/files/owner/$kind': typeof AuthOrgFilesOwnerKindRoute
   '/admin/billing/invoices/': typeof AdminAdminBillingInvoicesIndexRoute
 }
@@ -630,6 +638,7 @@ export interface FileRoutesByTo {
   '/admin/classes/$classId/sessions': typeof AdminAdminClassesClassIdSessionsRoute
   '/org/classes/$classId/gradebook': typeof AuthOrgClassesClassIdGradebookRoute
   '/org/classes/class-sessions/$classSessionId': typeof AuthOrgClassesClassSessionsClassSessionIdRoute
+  '/org/exams/$quizId/corrections': typeof AuthOrgExamsQuizIdCorrectionsRoute
   '/org/files/owner/$kind': typeof AuthOrgFilesOwnerKindRoute
   '/admin/billing/invoices': typeof AdminAdminBillingInvoicesIndexRoute
 }
@@ -708,6 +717,7 @@ export interface FileRoutesById {
   '/_admin/admin/classes/$classId/sessions': typeof AdminAdminClassesClassIdSessionsRoute
   '/_auth/org/classes/$classId_/gradebook': typeof AuthOrgClassesClassIdGradebookRoute
   '/_auth/org/classes/class-sessions/$classSessionId': typeof AuthOrgClassesClassSessionsClassSessionIdRoute
+  '/_auth/org/exams/$quizId/corrections': typeof AuthOrgExamsQuizIdCorrectionsRoute
   '/_auth/org/files/owner/$kind': typeof AuthOrgFilesOwnerKindRoute
   '/_admin/admin/billing/invoices/': typeof AdminAdminBillingInvoicesIndexRoute
 }
@@ -784,6 +794,7 @@ export interface FileRouteTypes {
     | '/admin/classes/$classId/sessions'
     | '/org/classes/$classId/gradebook'
     | '/org/classes/class-sessions/$classSessionId'
+    | '/org/exams/$quizId/corrections'
     | '/org/files/owner/$kind'
     | '/admin/billing/invoices/'
   fileRoutesByTo: FileRoutesByTo
@@ -856,6 +867,7 @@ export interface FileRouteTypes {
     | '/admin/classes/$classId/sessions'
     | '/org/classes/$classId/gradebook'
     | '/org/classes/class-sessions/$classSessionId'
+    | '/org/exams/$quizId/corrections'
     | '/org/files/owner/$kind'
     | '/admin/billing/invoices'
   id:
@@ -933,6 +945,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/classes/$classId/sessions'
     | '/_auth/org/classes/$classId_/gradebook'
     | '/_auth/org/classes/class-sessions/$classSessionId'
+    | '/_auth/org/exams/$quizId/corrections'
     | '/_auth/org/files/owner/$kind'
     | '/_admin/admin/billing/invoices/'
   fileRoutesById: FileRoutesById
@@ -1402,6 +1415,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthOrgFilesOwnerKindRouteImport
       parentRoute: typeof AuthOrgRoute
     }
+    '/_auth/org/exams/$quizId/corrections': {
+      id: '/_auth/org/exams/$quizId/corrections'
+      path: '/exams/$quizId/corrections'
+      fullPath: '/org/exams/$quizId/corrections'
+      preLoaderRoute: typeof AuthOrgExamsQuizIdCorrectionsRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
     '/_auth/org/classes/class-sessions/$classSessionId': {
       id: '/_auth/org/classes/class-sessions/$classSessionId'
       path: '/classes/class-sessions/$classSessionId'
@@ -1601,6 +1621,7 @@ interface AuthOrgRouteChildren {
   AuthOrgUsersIndexRoute: typeof AuthOrgUsersIndexRoute
   AuthOrgClassesClassIdGradebookRoute: typeof AuthOrgClassesClassIdGradebookRoute
   AuthOrgClassesClassSessionsClassSessionIdRoute: typeof AuthOrgClassesClassSessionsClassSessionIdRoute
+  AuthOrgExamsQuizIdCorrectionsRoute: typeof AuthOrgExamsQuizIdCorrectionsRoute
   AuthOrgFilesOwnerKindRoute: typeof AuthOrgFilesOwnerKindRoute
 }
 
@@ -1636,6 +1657,7 @@ const AuthOrgRouteChildren: AuthOrgRouteChildren = {
   AuthOrgClassesClassIdGradebookRoute: AuthOrgClassesClassIdGradebookRoute,
   AuthOrgClassesClassSessionsClassSessionIdRoute:
     AuthOrgClassesClassSessionsClassSessionIdRoute,
+  AuthOrgExamsQuizIdCorrectionsRoute: AuthOrgExamsQuizIdCorrectionsRoute,
   AuthOrgFilesOwnerKindRoute: AuthOrgFilesOwnerKindRoute,
 }
 
