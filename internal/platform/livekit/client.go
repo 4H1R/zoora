@@ -35,7 +35,17 @@ type Client struct {
 	apiKey          string
 	apiSecret       string
 	webhookProvider auth.KeyProvider
-	logger          *slog.Logger
+	// s3* configure where recording egress uploads the finished MP4. Passed to
+	// LiveKit in the egress request (S3Upload) so the self-hosted egress worker
+	// writes directly to our bucket without its own config file. The endpoint is
+	// the internal S3 host (reachable from the egress container), not the public
+	// browser-facing one.
+	s3Endpoint  string
+	s3Region    string
+	s3Bucket    string
+	s3AccessKey string
+	s3Secret    string
+	logger      *slog.Logger
 }
 
 func NewClient(cfg *config.Config, logger *slog.Logger) *Client {
@@ -57,6 +67,11 @@ func NewClient(cfg *config.Config, logger *slog.Logger) *Client {
 		apiKey:          cfg.LiveKitAPIKey,
 		apiSecret:       cfg.LiveKitSecret,
 		webhookProvider: auth.NewSimpleKeyProvider(cfg.LiveKitAPIKey, cfg.LiveKitSecret),
+		s3Endpoint:      cfg.S3Endpoint,
+		s3Region:        cfg.S3Region,
+		s3Bucket:        cfg.S3Bucket,
+		s3AccessKey:     cfg.S3AccessKey,
+		s3Secret:        cfg.S3SecretKey,
 		logger:          logger,
 	}
 }
@@ -138,27 +153,46 @@ func (c *Client) GenerateToken(roomName, identity, name, metadata string, source
 	return token, nil
 }
 
+// StartRecording launches a Room Composite egress: LiveKit renders the room via
+// a headless Chrome template, encodes it to a single MP4, and uploads it straight
+// to our S3 bucket at s3Path. The 720p30 preset keeps files (and encode cost)
+// down versus the 1080p default. Returns the egress ID used to stop/track it.
 func (c *Client) StartRecording(ctx context.Context, roomName, s3Path string) (string, error) {
-	// LiveKit egress recording is disabled for now — the call site (service layer)
-	// returns Forbidden before reaching here.
-	// egressClient := lksdk.NewEgressClient(c.host, c.apiKey, c.apiSecret)
-	//
-	// info, err := egressClient.StartRoomCompositeEgress(ctx, &livekit.RoomCompositeEgressRequest{
-	// 	RoomName: roomName,
-	// 	Output: &livekit.RoomCompositeEgressRequest_File{
-	// 		File: &livekit.EncodedFileOutput{
-	// 			FileType: livekit.EncodedFileType_MP4,
-	// 			Filepath: s3Path,
-	// 		},
-	// 	},
-	// })
-	// if err != nil {
-	// 	return "", fmt.Errorf("starting recording: %w", err)
-	// }
-	//
-	// c.logger.Info("recording started", "room", roomName, "egress_id", info.EgressId)
-	// return info.EgressId, nil
-	return "", fmt.Errorf("live-room recording is disabled")
+	egressClient := lksdk.NewEgressClient(c.host, c.apiKey, c.apiSecret)
+
+	info, err := egressClient.StartRoomCompositeEgress(ctx, &livekit.RoomCompositeEgressRequest{
+		RoomName: roomName,
+		// H264 720p30 — smaller output and lighter encode than the 1080p default,
+		// which matters since each composite runs Chrome + an encoder.
+		Options: &livekit.RoomCompositeEgressRequest_Preset{
+			Preset: livekit.EncodingOptionsPreset_H264_720P_30,
+		},
+		FileOutputs: []*livekit.EncodedFileOutput{
+			{
+				FileType: livekit.EncodedFileType_MP4,
+				Filepath: s3Path,
+				// Upload directly to our bucket. ForcePathStyle matches RustFS/MinIO
+				// (bucket in the path, not the host). Endpoint is the internal S3
+				// host the egress worker can reach.
+				Output: &livekit.EncodedFileOutput_S3{
+					S3: &livekit.S3Upload{
+						AccessKey:      c.s3AccessKey,
+						Secret:         c.s3Secret,
+						Region:         c.s3Region,
+						Endpoint:       c.s3Endpoint,
+						Bucket:         c.s3Bucket,
+						ForcePathStyle: true,
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		return "", fmt.Errorf("starting recording: %w", err)
+	}
+
+	c.logger.Info("recording started", "room", roomName, "egress_id", info.EgressId)
+	return info.EgressId, nil
 }
 
 func (c *Client) StopRecording(ctx context.Context, egressID string) error {

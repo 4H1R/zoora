@@ -2970,6 +2970,7 @@
       "started": "Recording started",
       "stopped": "Recording stopped",
       "startError": "Couldn't start recording",
+      "capacityFull": "Recording capacity is full right now. Please try again in a few minutes.",
       "upgradeRequired": "Recording isn't available on your current plan. Upgrade to record live rooms.",
       "stopError": "Couldn't stop recording",
       "startDialog": {

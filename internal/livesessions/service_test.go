@@ -158,6 +158,10 @@ func (m *mockRecordingRepo) ListByRoom(ctx context.Context, roomID uuid.UUID, q 
 	recs, _ := a.Get(0).([]domain.LiveRecording)
 	return recs, a.Get(1).(int64), a.Error(2)
 }
+func (m *mockRecordingRepo) CountActive(ctx context.Context) (int64, error) {
+	a := m.Called(ctx)
+	return a.Get(0).(int64), a.Error(1)
+}
 
 type mockWhiteboardRepo struct{ mock.Mock }
 
@@ -489,6 +493,22 @@ func newTestServiceLK(t *testing.T) (domain.LiveSessionService, *lkFixture) {
 }
 
 func newTestServiceLKEnt(t *testing.T, ent entitlements.Service) (domain.LiveSessionService, *lkFixture) {
+	return newTestServiceCfg(t, ent, 0, nil)
+}
+
+// fakeStorage implements livesessions.SessionStorage with a canned presigned
+// download URL so recording-list tests can assert the raw key was signed.
+type fakeStorage struct{ downloadURL string }
+
+func (fakeStorage) PublicPresignUpload(context.Context, string, time.Duration) (string, error) {
+	return "", nil
+}
+func (fakeStorage) PublicURL(string) string { return "" }
+func (f fakeStorage) GeneratePresignedDownloadURL(_ context.Context, key string, _ time.Duration) (string, error) {
+	return f.downloadURL + "?key=" + key, nil
+}
+
+func newTestServiceCfg(t *testing.T, ent entitlements.Service, egressCap int, storage livesessions.SessionStorage) (domain.LiveSessionService, *lkFixture) {
 	t.Helper()
 	f := &lkFixture{
 		rooms:   &mockRoomRepo{},
@@ -510,10 +530,11 @@ func newTestServiceLKEnt(t *testing.T, ent entitlements.Service) (domain.LiveSes
 		f.sess, f.classes, f.members,
 		f.chat, f.poll, noopTx{},
 		f.lk,
-		nil, // whiteboard storage
+		storage,
 		nil, // queue client
 		ent,
 		15*time.Minute,
+		egressCap,
 		slog.Default(),
 	)
 	return svc, f
@@ -1224,4 +1245,71 @@ func TestGetWhiteboard_NoRecord_ReturnsEmpty(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, testRoomID, wb.LiveRoomID)
 	assert.Equal(t, json.RawMessage("{}"), wb.Snapshot)
+}
+
+func activeRoom() *domain.LiveRoom {
+	r := testRoom()
+	r.Status = domain.LiveRoomStatusActive
+	return r
+}
+
+// loadRoom wires the room→session→class lookups every recording call makes.
+func loadRoom(f *lkFixture) {
+	f.rooms.On("FindByID", mock.Anything, testRoomID).Return(activeRoom(), nil)
+	f.sess.On("FindByID", mock.Anything, testSessionID).Return(testSession(), nil)
+	f.classes.On("FindByID", mock.Anything, testClassID).Return(testClass(), nil)
+}
+
+func TestStartRecording_CapFull_Returns503(t *testing.T) {
+	svc, f := newTestServiceCfg(t, fakeEntSvc{}, 1, nil)
+	loadRoom(f)
+	f.recs.On("FindActiveByRoom", mock.Anything, testRoomID).Return(nil, domain.ErrNotFound)
+	f.recs.On("CountActive", mock.Anything).Return(int64(1), nil)
+
+	_, err := svc.StartRecording(teacherCtx(), testRoomID)
+	assert.ErrorIs(t, err, domain.ErrRecordingCapacityFull)
+	f.recs.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+}
+
+func TestStartRecording_UnderCap_Starts(t *testing.T) {
+	svc, f := newTestServiceCfg(t, fakeEntSvc{}, 3, nil)
+	loadRoom(f)
+	f.recs.On("FindActiveByRoom", mock.Anything, testRoomID).Return(nil, domain.ErrNotFound)
+	f.recs.On("CountActive", mock.Anything).Return(int64(1), nil)
+	f.recs.On("Create", mock.Anything, mock.AnythingOfType("*domain.LiveRecording")).Return(nil)
+
+	rec, err := svc.StartRecording(teacherCtx(), testRoomID)
+	assert.NoError(t, err)
+	if assert.NotNil(t, rec) {
+		assert.Equal(t, "EG_test", rec.EgressID)
+		assert.Equal(t, domain.LiveRecordingStatusStarted, rec.Status)
+	}
+}
+
+func TestStartRecording_FreePlan_FeatureGate(t *testing.T) {
+	svc, f := newTestServiceCfg(t, fakeEntSvc{}, 3, nil)
+	loadRoom(f)
+
+	_, err := svc.StartRecording(freeTeacherCtx(), testRoomID)
+	assert.ErrorIs(t, err, domain.ErrFeatureNotInPlan)
+	// Feature gate short-circuits before the cap query.
+	f.recs.AssertNotCalled(t, "CountActive", mock.Anything)
+}
+
+func TestListRecordings_PresignsCompletedOnly(t *testing.T) {
+	svc, f := newTestServiceCfg(t, fakeEntSvc{}, 0, fakeStorage{downloadURL: "https://cdn.test/get"})
+	loadRoom(f)
+	items := []domain.LiveRecording{
+		{ID: uuid.New(), Status: domain.LiveRecordingStatusCompleted, FileURL: "orgs/x/recordings/y/done.mp4"},
+		{ID: uuid.New(), Status: domain.LiveRecordingStatusStarted, FileURL: "orgs/x/recordings/y/live.mp4"},
+	}
+	f.recs.On("ListByRoom", mock.Anything, testRoomID, mock.Anything).Return(items, int64(2), nil)
+
+	got, total, err := svc.ListRecordings(teacherCtx(), testRoomID, domain.ListLiveRecordingsQuery{})
+	assert.NoError(t, err)
+	assert.Equal(t, int64(2), total)
+	// Completed row's raw key is swapped for a signed URL.
+	assert.Equal(t, "https://cdn.test/get?key=orgs/x/recordings/y/done.mp4", got[0].FileURL)
+	// Started row has no downloadable object yet — left untouched.
+	assert.Equal(t, "orgs/x/recordings/y/live.mp4", got[1].FileURL)
 }

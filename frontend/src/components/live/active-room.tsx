@@ -352,6 +352,14 @@ function RoomShell({
             // Plan-gate 402s get a central upgrade toast (see main.tsx); only
             // handle the non-plan failure here.
             if (isPlanError(error)) return
+            // 503 when the concurrent-recording cap is full: tell the host to
+            // retry shortly rather than showing a generic failure.
+            const code = (error as { response?: { data?: { error?: { code?: string } } } })?.response?.data?.error
+              ?.code
+            if (code === "RECORDING_CAPACITY_FULL") {
+              toast.error(t("liveRoom.recording.capacityFull"))
+              return
+            }
             toast.error(t("liveRoom.recording.startError"))
           },
         }

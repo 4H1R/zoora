@@ -35,6 +35,12 @@ type Config struct {
 	// last host leaves before it is auto-closed. Drives both the webhook-driven
 	// delayed close task and the periodic safety-net sweep.
 	LiveRoomHostGracePeriod time.Duration `env:"LIVE_ROOM_HOST_GRACE_PERIOD" envDefault:"15m"`
+	// LiveKitEgressMaxConcurrent caps how many recordings (LiveKit egress jobs)
+	// may run at once across the whole deployment. Each Room Composite egress
+	// runs a headless Chrome + encoder (2-6 CPU), so this bounds the load the
+	// self-hosted egress workers take on. When the cap is hit, StartRecording
+	// returns ErrRecordingCapacityFull (HTTP 503) instead of queuing.
+	LiveKitEgressMaxConcurrent int `env:"LIVEKIT_EGRESS_MAX_CONCURRENT" envDefault:"3"`
 	S3Endpoint              string        `env:"S3_ENDPOINT,required"`
 	// S3PublicEndpoint is the browser-facing host used to sign upload/download
 	// URLs. The SDK client talks to S3Endpoint (internal, e.g. http://rustfs:9000)

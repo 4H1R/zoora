@@ -331,8 +331,11 @@ func (h *Handler) ListParticipants(c *gin.Context) {
 // @Success 201 {object} domain.Response{data=domain.LiveRecording}
 // @Failure 400 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 402 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 403 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 404 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 409 {object} domain.Response{error=domain.ErrorBody}
+// @Failure 503 {object} domain.Response{error=domain.ErrorBody} "Recording capacity full — retry shortly"
 // @Router /live-rooms/{id}/recordings [post]
 func (h *Handler) StartRecording(c *gin.Context) {
 	rec, err := h.svc.StartRecording(c.Request.Context(), httpx.UUIDParam(c, "id"))

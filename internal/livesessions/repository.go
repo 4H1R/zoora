@@ -466,6 +466,17 @@ func (r *recordingRepository) Update(ctx context.Context, rec *domain.LiveRecord
 	return nil
 }
 
+func (r *recordingRepository) CountActive(ctx context.Context) (int64, error) {
+	var n int64
+	err := database.DB(ctx, r.db).Model(&domain.LiveRecording{}).
+		Where("status = ?", domain.LiveRecordingStatusStarted).
+		Count(&n).Error
+	if err != nil {
+		return 0, fmt.Errorf("livesessions.recordingRepository.CountActive: %w", err)
+	}
+	return n, nil
+}
+
 func (r *recordingRepository) ListByRoom(ctx context.Context, roomID uuid.UUID, q domain.ListLiveRecordingsQuery) ([]domain.LiveRecording, int64, error) {
 	base := database.DB(ctx, r.db).Model(&domain.LiveRecording{}).
 		Where("live_room_id = ?", roomID)

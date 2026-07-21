@@ -25,6 +25,10 @@ var (
 	ErrCannotRemoveSelf       = errors.New("cannot remove yourself from the room")
 	ErrWhiteboardNotFound     = errors.New("whiteboard not found")
 	ErrPollClosed             = errors.New("poll is closed")
+	// ErrRecordingCapacityFull reports that the concurrent-egress cap is reached,
+	// so a new recording cannot start right now. Mapped to 503 so the client can
+	// tell the host to retry shortly (the class continues un-recorded meanwhile).
+	ErrRecordingCapacityFull = errors.New("recording capacity full")
 
 	// Plan / entitlement gates (mapped to HTTP 402 Payment Required).
 	ErrFeatureNotInPlan = errors.New("feature not available on current plan")
@@ -130,6 +134,8 @@ func MapError(err error) (int, string) {
 		return http.StatusNotFound, "WHITEBOARD_NOT_FOUND"
 	case errors.Is(err, ErrPollClosed):
 		return http.StatusConflict, "POLL_CLOSED"
+	case errors.Is(err, ErrRecordingCapacityFull):
+		return http.StatusServiceUnavailable, "RECORDING_CAPACITY_FULL"
 	case errors.Is(err, ErrFeatureNotInPlan):
 		return http.StatusPaymentRequired, "FEATURE_NOT_IN_PLAN"
 	case errors.Is(err, ErrPlanLimitReached):
