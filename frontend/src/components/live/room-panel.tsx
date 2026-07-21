@@ -185,7 +185,7 @@ export function RoomPanel({
   }
 
   return (
-    <aside className="border-border bg-card/70 flex h-full w-96 shrink-0 flex-col border-s backdrop-blur-xl">
+    <aside className="border-border bg-card flex h-full w-96 shrink-0 flex-col border-s">
       <div className="border-border flex items-center justify-between border-b px-3 py-2">
         <span className="text-foreground text-sm font-medium">{t("liveRoom.panel.title")}</span>
         <button
