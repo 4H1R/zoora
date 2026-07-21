@@ -1,4 +1,5 @@
 import type { AnswerState } from "./types"
+import type { DeviceInfo } from "@/lib/device"
 import type {
   GithubCom4H1RZooraInternalDomainQuestion as Question,
   GithubCom4H1RZooraInternalDomainQuiz as Quiz,
@@ -29,6 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
+import { detectDevice } from "@/lib/device"
 import { useNow } from "@/lib/session-status"
 
 import { DecorativeBackground } from "./decorations"
@@ -191,11 +193,20 @@ export function PlayArea({ quiz, room, submission, questions, backHref }: PlayAr
       }
     })
     const tabStats = quiz.track_tab_switches ? tabVisibility.read() : null
+    // Advisory device snapshot — the server pairs this with the raw user-agent
+    // header. Best-effort; never block submit if detection throws.
+    let device: DeviceInfo | undefined
+    try {
+      device = detectDevice()
+    } catch {
+      device = undefined
+    }
     submitMutation.mutate({
       submissionId,
       data: {
         answers: payload,
         ...(tabStats ? { tab_hidden_count: tabStats.count, tab_hidden_seconds: tabStats.seconds } : {}),
+        ...(device ? { device } : {}),
       },
     })
     if (reason === "auto") toast.message(t("org.session.quizzes.take.autoSubmitNote"))

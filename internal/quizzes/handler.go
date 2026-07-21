@@ -615,6 +615,9 @@ func (h *Handler) SubmitQuiz(c *gin.Context) {
 		_ = c.Error(err)
 		return
 	}
+	// Server-truth anchor for the advisory device snapshot: read the raw
+	// user-agent here, never trust a client-supplied value.
+	dto.UserAgent = c.GetHeader("User-Agent")
 	sub, err := h.svc.SubmitQuiz(c.Request.Context(), httpx.UUIDParam(c, "submissionId"), dto)
 	if err != nil {
 		_ = c.Error(err)

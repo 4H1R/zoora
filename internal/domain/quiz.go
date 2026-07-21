@@ -298,6 +298,18 @@ type SubmissionAnswer struct {
 	SimilarityPct *float64 `json:"similarity_pct,omitempty"`
 }
 
+// DeviceInfo is an advisory snapshot of the device a student used, captured on
+// final submit. Device/OS/Browser are the client's own best-effort parse of its
+// user-agent (same detector the live room uses); UserAgent is the raw header the
+// server reads directly and is the non-spoofable anchor. Teacher-facing only —
+// stripped from student reads. Stored as jsonb on the submission.
+type DeviceInfo struct {
+	Device    string `json:"device"` // "mobile" | "tablet" | "desktop"
+	OS        string `json:"os"`     // e.g. "Android 14", "iOS 17.2"
+	Browser   string `json:"browser"`
+	UserAgent string `json:"user_agent,omitempty"`
+}
+
 // SubmissionQuestion is one frozen question in a student's submission: the
 // question id plus the shuffled display order of its option ids. Built once at
 // StartSubmission so reloads/resume are deterministic.
@@ -327,6 +339,10 @@ type QuizSubmission struct {
 	GPSLng           *float64             `gorm:"column:gps_lng" json:"gps_lng,omitempty"`
 	GPSAccuracy      *float64             `gorm:"column:gps_accuracy" json:"gps_accuracy,omitempty"`
 	GPSDenied        bool                 `gorm:"not null;default:false" json:"gps_denied"`
+
+	// SubmitDevice is the advisory device snapshot captured at final submit.
+	// Teacher-facing; stripped from student reads by redactForStudent.
+	SubmitDevice *DeviceInfo `gorm:"type:jsonb;serializer:json" json:"submit_device,omitempty"`
 
 	TotalScore  float64    `gorm:"not null;default:0" json:"total_score"`
 	StartedAt   time.Time  `gorm:"not null" json:"started_at"`
@@ -385,12 +401,25 @@ type SubmitAnswerDTO struct {
 	SpentSeconds      int       `json:"spent_seconds" binding:"gte=0"`
 }
 
+// SubmitDeviceDTO is the client's own device/OS/browser parse, sent on submit.
+// Advisory and spoofable; the server pairs it with the raw user-agent header.
+type SubmitDeviceDTO struct {
+	Device  string `json:"device"`
+	OS      string `json:"os"`
+	Browser string `json:"browser"`
+}
+
 type SubmitQuizDTO struct {
 	// Answers is optional: with incremental save the final submit may carry zero
 	// new answers ("finalize what's saved"). Merged into the saved answers.
 	Answers          []SubmitAnswerDTO `json:"answers" binding:"omitempty,dive"`
 	TabHiddenCount   int               `json:"tab_hidden_count" binding:"gte=0"`
 	TabHiddenSeconds int               `json:"tab_hidden_seconds" binding:"gte=0"`
+	// Device is the client's best-effort device snapshot (optional).
+	Device *SubmitDeviceDTO `json:"device" binding:"omitempty"`
+	// UserAgent is stamped by the handler from the request header, never bound
+	// from client JSON — the non-spoofable anchor for Device.
+	UserAgent string `json:"-"`
 }
 
 type GradeAnswerDTO struct {

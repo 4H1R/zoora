@@ -610,6 +610,19 @@ func (s *service) SubmitQuiz(ctx context.Context, submissionID uuid.UUID, dto do
 		sub.TabHiddenSeconds = dto.TabHiddenSeconds
 	}
 
+	// Advisory device snapshot: client's own parse plus the raw user-agent the
+	// handler read off the request. Only recorded on the explicit submit path —
+	// deadline auto-submit has no request and leaves it nil.
+	if dto.Device != nil || dto.UserAgent != "" {
+		dev := &domain.DeviceInfo{UserAgent: dto.UserAgent}
+		if dto.Device != nil {
+			dev.Device = dto.Device.Device
+			dev.OS = dto.Device.OS
+			dev.Browser = dto.Device.Browser
+		}
+		sub.SubmitDevice = dev
+	}
+
 	if err := s.gradeAndFinalize(ctx, sub, quiz); err != nil {
 		return nil, err
 	}
@@ -718,6 +731,8 @@ func (s *service) resultsRevealed(ctx context.Context, quiz *domain.Quiz, sub *d
 // must apply so the reveal rule can never be bypassed by one path forgetting it.
 func (s *service) redactForStudent(ctx context.Context, quiz *domain.Quiz, sub *domain.QuizSubmission, now time.Time) {
 	stripSimilarity(sub)
+	// The device snapshot is a teacher-only review signal, like the similarity hint.
+	sub.SubmitDevice = nil
 	sub.ResultsRevealed = s.resultsRevealed(ctx, quiz, sub, now)
 	if !sub.ResultsRevealed {
 		stripResults(sub)

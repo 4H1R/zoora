@@ -1053,6 +1053,10 @@
         "fastValue": "{{count}}",
         "fastDetail": "{{count}} answered faster than allowed",
         "fastAnswer": "Too fast"
+      },
+      "device": {
+        "title": "Submitted from",
+        "unknown": "Unknown"
       }
     },
     "questionBanks": {

@@ -1053,6 +1053,10 @@
         "fastValue": "{{count}}",
         "fastDetail": "{{count}} پاسخ سریع‌تر از حد مجاز",
         "fastAnswer": "خیلی سریع"
+      },
+      "device": {
+        "title": "ارسال‌شده از",
+        "unknown": "نامشخص"
       }
     },
     "questionBanks": {

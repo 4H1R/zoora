@@ -83,6 +83,7 @@ CREATE TABLE quiz_submissions (
     gps_lng DOUBLE PRECISION,
     gps_accuracy DOUBLE PRECISION,
     gps_denied BOOLEAN NOT NULL DEFAULT FALSE,
+    submit_device JSONB,
     total_score DOUBLE PRECISION NOT NULL DEFAULT 0,
     started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     submitted_at TIMESTAMPTZ,

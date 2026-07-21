@@ -1,10 +1,23 @@
 import type {
+  GithubCom4H1RZooraInternalDomainDeviceInfo as DeviceInfo,
   GithubCom4H1RZooraInternalDomainSubmissionAntiCheatReport as AntiCheatReport,
   GithubCom4H1RZooraInternalDomainQuizSubmission as QuizSubmission,
 } from "@/api/model"
 import type { LucideIcon } from "lucide-react"
 
-import { EyeOff, MapPin, MapPinOff, ShieldAlert, ShieldCheck, Zap } from "lucide-react"
+import {
+  Cpu,
+  EyeOff,
+  Globe,
+  MapPin,
+  MapPinOff,
+  Monitor,
+  ShieldAlert,
+  ShieldCheck,
+  Smartphone,
+  Tablet,
+  Zap,
+} from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -208,9 +221,63 @@ export function ExamIntegrityPanel({ report, submission }: { report?: AntiCheatR
           )}
         </div>
 
+        <SubmissionDevice device={submission?.submit_device} />
+
         <span className="text-muted-foreground ms-auto text-xs">{t("admin.corrections.integrity.advisory")}</span>
       </div>
     </section>
+  )
+}
+
+const DEVICE_ICON: Record<string, LucideIcon> = {
+  mobile: Smartphone,
+  tablet: Tablet,
+  desktop: Monitor,
+}
+
+// Informational device snapshot captured on submit — the device/OS/browser the
+// student used. Neutral by design: it's context for the grader, not a warning,
+// so it wears a muted tint rather than the amber/red signal tones. The raw
+// user-agent (the server-read anchor behind the client's parse) shows on hover.
+export function SubmissionDevice({ device }: { device?: DeviceInfo | null }) {
+  const { t } = useTranslation()
+  if (!device || (!device.device && !device.os && !device.browser)) return null
+
+  const DeviceIcon = DEVICE_ICON[device.device ?? ""] ?? Monitor
+  const os = device.os || t("admin.corrections.device.unknown")
+  const browser = device.browser || t("admin.corrections.device.unknown")
+
+  const tile = (
+    <span className="border-border bg-muted/40 text-foreground inline-flex items-center gap-2 rounded-md border px-2 py-1 text-xs">
+      <span className="bg-background/60 text-muted-foreground grid size-5 place-items-center rounded">
+        <DeviceIcon className="size-3.5" />
+      </span>
+      <span className="flex items-center gap-1.5" dir="ltr">
+        <span className="font-medium tabular-nums">{os}</span>
+        <span className="bg-border h-3 w-px" aria-hidden />
+        <span className="text-muted-foreground inline-flex items-center gap-1">
+          <Globe className="size-3" />
+          {browser}
+        </span>
+      </span>
+    </span>
+  )
+
+  if (!device.user_agent) return tile
+
+  return (
+    <Tooltip>
+      <TooltipTrigger render={<span className="cursor-help">{tile}</span>} />
+      <TooltipContent className="flex max-w-72 flex-col items-start gap-1 py-2 text-start">
+        <span className="inline-flex items-center gap-1.5 font-medium">
+          <Cpu className="size-3.5" />
+          {t("admin.corrections.device.title")}
+        </span>
+        <span className="text-background/70 font-mono text-[11px] break-all" dir="ltr">
+          {device.user_agent}
+        </span>
+      </TooltipContent>
+    </Tooltip>
   )
 }
 
