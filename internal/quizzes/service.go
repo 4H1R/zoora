@@ -382,7 +382,40 @@ func (s *service) List(ctx context.Context, q domain.ListQuizzesQuery) ([]domain
 	if canManage(caller) {
 		scope.IncludeDeleted = q.IncludeDeleted
 	}
-	return s.repo.List(ctx, scope, q.ListParams)
+	quizzes, total, err := s.repo.List(ctx, scope, q.ListParams)
+	if err != nil {
+		return nil, 0, err
+	}
+	if err := s.fillPendingSubmissionCounts(ctx, caller, quizzes); err != nil {
+		return nil, 0, err
+	}
+	return quizzes, total, nil
+}
+
+// fillPendingSubmissionCounts populates the grader-only pending aggregate on
+// the quizzes the caller can manage; other quizzes keep the field omitted.
+func (s *service) fillPendingSubmissionCounts(ctx context.Context, caller domain.Caller, quizzes []domain.Quiz) error {
+	ids := make([]uuid.UUID, 0, len(quizzes))
+	for i := range quizzes {
+		if canManageQuiz(caller, &quizzes[i]) {
+			ids = append(ids, quizzes[i].ID)
+		}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	counts, err := s.repo.CountPendingSubmissionsByQuizIDs(ctx, ids)
+	if err != nil {
+		return fmt.Errorf("counting pending submissions: %w", err)
+	}
+	for i := range quizzes {
+		if !canManageQuiz(caller, &quizzes[i]) {
+			continue
+		}
+		n := counts[quizzes[i].ID]
+		quizzes[i].PendingSubmissionsCount = &n
+	}
+	return nil
 }
 
 func (s *service) ListMine(ctx context.Context, q domain.ListMyExamsQuery) ([]domain.MyExam, int64, error) {

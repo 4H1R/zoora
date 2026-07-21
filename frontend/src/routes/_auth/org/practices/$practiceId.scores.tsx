@@ -1,47 +1,39 @@
-import type { RoomWindowStatus } from "@/components/org/exams/room-window"
-
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { ArrowLeftIcon, ClockIcon, ExternalLinkIcon, TargetIcon } from "lucide-react"
+import { ArrowLeftIcon, ClockIcon, ExternalLinkIcon, TrophyIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import { useGetQuizzesId } from "@/api/quizzes/quizzes"
+import { useGetPracticesId } from "@/api/practices/practices"
 import { Eyebrow } from "@/components/eyebrow"
 import { useBreadcrumb } from "@/components/layout/breadcrumb-context"
-import { roomWindowStatus, surfacedRoom } from "@/components/org/exams/room-window"
-import { QuizCorrectionsPanel } from "@/components/org/quizzes/QuizCorrectionsPanel"
-import { Badge } from "@/components/ui/badge"
+import { PracticeGradingPanel } from "@/components/org/practices/PracticeGradingPanel"
+import { usePracticePermissions } from "@/components/org/practices/use-practice-permissions"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useCanSelfOr, useOrgGuard } from "@/lib/access"
+import { useOrgGuard } from "@/lib/access"
 import { orgHead } from "@/lib/org-head"
+import { formatScore } from "@/lib/score"
+import { formatSessionDate } from "@/lib/session-status"
 
-export const Route = createFileRoute("/_auth/org/exams/$quizId/corrections")({
-  head: () => orgHead("org.exams.corrections.title"),
+export const Route = createFileRoute("/_auth/org/practices/$practiceId/scores")({
+  head: () => orgHead("org.practices.scores.title"),
   component: RouteComponent,
 })
 
-const STATUS_BADGE_VARIANT: Record<RoomWindowStatus, "default" | "secondary" | "outline" | "ghost"> = {
-  in_progress: "default",
-  not_started: "outline",
-  ended: "secondary",
-  not_scheduled: "ghost",
-}
-
 function RouteComponent() {
   const { t, i18n } = useTranslation()
-  const { quizId } = Route.useParams()
-  // Students never hold quizzes:update — they bounce to the dashboard here.
-  const allowed = useOrgGuard(["quizzes:update", "quizzes:update_any"])
+  const { practiceId } = Route.useParams()
+  const allowed = useOrgGuard(["practices:view", "practices:view_any"])
+  const { canGrade } = usePracticePermissions()
 
-  const { data, isPending, isError } = useGetQuizzesId(quizId)
-  const quiz = (data?.status === 200 && data.data.data) || undefined
-
-  // Managers grade any quiz; teachers only their own.
-  const canGrade = useCanSelfOr("quizzes:update", "quizzes:update_any", quiz?.user_id)
+  const { data, isPending, isError } = useGetPracticesId(practiceId)
+  const practice = (data?.status === 200 && data.data.data) || undefined
+  // The practice knows its own session, so the back path needs no URL params —
+  // a shared link keeps its context.
+  const sessionId = practice?.class_session_id
 
   useBreadcrumb([
-    { label: t("org.exams.manage.title"), to: "/org/exams" },
-    { label: quiz?.title ?? null, loading: !quiz },
+    { label: t("org.nav.practices"), to: "/org/practices" },
+    { label: practice?.title ?? null, loading: !practice },
   ])
 
   if (!allowed) return null
@@ -65,21 +57,20 @@ function RouteComponent() {
     )
   }
 
-  if (isError || !quiz || !canGrade) {
+  if (isError || !practice || !canGrade) {
     return (
       <div className="flex flex-col items-start gap-4 py-16">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("org.exams.corrections.notFound")}</h1>
-        <Button variant="outline" render={<Link to="/org/exams" />}>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("org.practices.scores.notFound")}</h1>
+        <Button variant="outline" render={<Link to="/org/practices" />}>
           <ArrowLeftIcon className="size-4 rtl:rotate-180" />
-          {t("org.exams.corrections.back")}
+          {t("org.practices.scores.back")}
         </Button>
       </div>
     )
   }
 
-  const room = surfacedRoom(quiz)
-  const status = roomWindowStatus(quiz)
-  const sessionId = room?.class_session_id
+  const startStr = formatSessionDate(practice.start_time, i18n.language, "short")
+  const endStr = formatSessionDate(practice.end_time, i18n.language, "short")
 
   return (
     <div className="relative isolate flex flex-col gap-8 pb-16">
@@ -89,67 +80,61 @@ function RouteComponent() {
       />
 
       <div className="pt-6">
-        {/* When the quiz is tied to a session, back means the session the
-            grader came from — not the org-wide exams list. */}
         {sessionId ? (
           <Link
             to="/org/classes/class-sessions/$classSessionId"
             params={{ classSessionId: sessionId }}
-            search={{ tab: "quizzes" }}
+            search={{ tab: "practices" }}
             className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 font-mono text-xs tracking-[0.25em] uppercase transition-colors"
           >
             <ArrowLeftIcon className="size-3.5 rtl:rotate-180" />
-            {t("org.exams.corrections.backToSession")}
+            {t("org.practices.scores.backToSession")}
           </Link>
         ) : (
           <Link
-            to="/org/exams"
+            to="/org/practices"
             className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 font-mono text-xs tracking-[0.25em] uppercase transition-colors"
           >
             <ArrowLeftIcon className="size-3.5 rtl:rotate-180" />
-            {t("org.exams.corrections.back")}
+            {t("org.practices.scores.back")}
           </Link>
         )}
       </div>
 
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-3">
-          <Eyebrow>{t("org.exams.corrections.title")}</Eyebrow>
-          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">{quiz.title || "—"}</h1>
+          <Eyebrow>{t("org.practices.scores.title")}</Eyebrow>
+          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">{practice.title || "—"}</h1>
           <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-            {quiz.class?.name && <span>{quiz.class.name}</span>}
-            {typeof quiz.duration_minutes === "number" && (
+            <span className="inline-flex items-center gap-1.5 tabular-nums">
+              <ClockIcon className="size-4" />
+              {startStr} → {endStr}
+            </span>
+            {typeof practice.max_score === "number" && (
               <span className="inline-flex items-center gap-1.5 tabular-nums">
-                <ClockIcon className="size-4" />
-                {t("org.exams.duration", { count: quiz.duration_minutes })}
+                <TrophyIcon className="size-4" />
+                {formatScore(practice.max_score)}
               </span>
             )}
-            {typeof quiz.total_score === "number" && (
-              <span className="inline-flex items-center gap-1.5 tabular-nums">
-                <TargetIcon className="size-4" />
-                {t("org.exams.table.totalScore")}: {quiz.total_score}
-              </span>
-            )}
-            <Badge variant={STATUS_BADGE_VARIANT[status]}>{t(`org.exams.roomStatus.${status}`)}</Badge>
             {sessionId && (
               <Link
                 to="/org/classes/class-sessions/$classSessionId"
                 params={{ classSessionId: sessionId }}
-                search={{ tab: "quizzes" }}
+                search={{ tab: "practices" }}
                 className="hover:text-foreground inline-flex items-center gap-1.5 underline-offset-4 transition-colors hover:underline"
               >
                 <ExternalLinkIcon className="size-3.5" />
-                {t("org.exams.corrections.openSession")}
+                {t("org.practices.scores.openSession")}
               </Link>
             )}
           </div>
         </div>
         <span className="text-muted-foreground hidden font-mono text-[11px] tracking-[0.25em] uppercase md:inline">
-          {`// ${quiz.title ?? ""}`}
+          {`// ${practice.title ?? ""}`}
         </span>
       </header>
 
-      <QuizCorrectionsPanel quiz={quiz} />
+      <PracticeGradingPanel practice={practice} />
     </div>
   )
 }

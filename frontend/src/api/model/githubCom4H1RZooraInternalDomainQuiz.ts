@@ -36,6 +36,12 @@ export interface GithubCom4H1RZooraInternalDomainQuiz {
   no_back_navigation?: boolean;
   organization_id?: string;
   /**
+     * PendingSubmissionsCount is a transient, grader-only aggregate: submissions
+     * with status "submitted" that still await manual grading. Populated on list
+     * reads for callers who can manage the quiz; omitted for everyone else.
+     */
+  pending_submissions_count?: number;
+  /**
      * RenderAsImage turns on anti-cheat image rendering for the whole quiz: every
      * question the quiz can draw (manual rules' explicit questions plus every
      * question in a random rule's bank) is rendered to distorted PNGs by the

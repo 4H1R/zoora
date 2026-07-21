@@ -1688,6 +1688,13 @@
         "due": "Due",
         "status": "Status",
         "score": "Score"
+      },
+      "scores": {
+        "title": "Practice grading",
+        "back": "Back to practices",
+        "backToSession": "Back to session",
+        "openSession": "Open session",
+        "notFound": "Practice not found"
       }
     },
     "portal": {
@@ -1751,7 +1758,8 @@
         "title": "Corrections",
         "back": "Back to exams",
         "notFound": "Exam not found",
-        "openSession": "Open session"
+        "openSession": "Open session",
+        "backToSession": "Back to session"
       }
     },
     "calendar": {
@@ -1953,8 +1961,16 @@
           }
         },
         "features": {
-          "free": ["Core virtual classrooms", "Exams, homework & gradebook", "Offline rooms & notifications"],
-          "plus": ["Everything in Free", "More storage & live capacity", "Ticketing & file sharing"],
+          "free": [
+            "Core virtual classrooms",
+            "Exams, homework & gradebook",
+            "Offline rooms & notifications"
+          ],
+          "plus": [
+            "Everything in Free",
+            "More storage & live capacity",
+            "Ticketing & file sharing"
+          ],
           "pro": [
             "Everything in Plus",
             "Whiteboard & chat",
@@ -1962,7 +1978,12 @@
             "Messenger & email connectors",
             "AI assistance"
           ],
-          "max": ["Everything in Pro", "Cloud recordings", "Auto grading", "Single sign-on (SSO)"]
+          "max": [
+            "Everything in Pro",
+            "Cloud recordings",
+            "Auto grading",
+            "Single sign-on (SSO)"
+          ]
         }
       },
       "members": "Members",
@@ -2243,7 +2264,8 @@
           "edit": "Edit quiz",
           "delete": "Delete quiz",
           "manageQuestions": "Manage questions",
-          "take": "Take quiz"
+          "take": "Take quiz",
+          "corrections": "Corrections"
         },
         "flags": {
           "noBackNavigation": "Back navigation locked",
@@ -2376,7 +2398,9 @@
             "tabWarning": "Leaving the exam tab is recorded — {{count}} time(s).",
             "blocked": "This action is disabled during the exam."
           }
-        }
+        },
+        "banksLink": "Question banks",
+        "emptyBankCta": "Build from a question bank"
       },
       "corrections": {
         "eyebrow": "Corrections",
@@ -2495,7 +2519,8 @@
         "actions": {
           "edit": "Edit practice",
           "delete": "Delete practice",
-          "submit": "Submit"
+          "submit": "Submit",
+          "scores": "Grade"
         },
         "form": {
           "createTitle": "New practice",
@@ -2712,7 +2737,9 @@
           "roomPlaceholder": "Select a room",
           "minMinutes": "Min minutes",
           "run": "Auto-mark",
-          "success": "Marked {{marked}}, skipped {{skipped}}"
+          "success": "Marked {{marked}}, skipped {{skipped}}",
+          "roomAll": "All rooms",
+          "roomLabel": "Source room"
         },
         "form": {
           "editTitle": "Edit attendance",
@@ -2737,6 +2764,14 @@
           "title": "Class roster",
           "hint": "Tap a status for each student, then save."
         }
+      },
+      "header": {
+        "myAttendance": "My attendance",
+        "pendingCorrections": "{{count}} submissions awaiting correction",
+        "pendingPracticeGrades": "{{count}} practice submissions awaiting grades"
+      },
+      "attendancePage": {
+        "back": "Back to session"
       }
     },
     "offline": {

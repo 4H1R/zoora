@@ -27,6 +27,7 @@ import {
   usePostClassesIdSessionsSessionIdAttendanceAutoMark,
 } from "@/api/attendance/attendance"
 import { useGetClassesId, useGetClassesIdMembers } from "@/api/classes/classes"
+import { useGetLiveRooms } from "@/api/live-sessions/live-sessions"
 import { Eyebrow } from "@/components/eyebrow"
 import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { SectionNoResults } from "@/components/org/session/section-no-results"
@@ -61,6 +62,17 @@ interface AutoMarkControlProps {
 function AutoMarkControl({ classId, classSessionId }: AutoMarkControlProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  // "all" aggregates every room of the session (backend default); picking a
+  // room scopes the roll to it, so a side room never counts toward presence.
+  const [roomId, setRoomId] = useState("all")
+
+  const roomsQ = useGetLiveRooms({ class_session_id: classSessionId })
+  const rooms = (roomsQ.data?.status === 200 && roomsQ.data.data.data?.items) || []
+
+  const roomItems = [
+    { value: "all", label: t("org.session.attendance.autoMark.roomAll") },
+    ...rooms.map((r) => ({ value: r.id ?? "", label: r.name ?? "—" })),
+  ]
 
   const autoMark = usePostClassesIdSessionsSessionIdAttendanceAutoMark({
     mutation: {
@@ -83,7 +95,7 @@ function AutoMarkControl({ classId, classSessionId }: AutoMarkControlProps) {
     autoMark.mutate({
       id: classId,
       sessionId: classSessionId,
-      data: { source: "live_room" },
+      data: { source: "live_room", ...(roomId !== "all" && { room_id: roomId }) },
     })
   }
 
@@ -101,7 +113,22 @@ function AutoMarkControl({ classId, classSessionId }: AutoMarkControlProps) {
         <p className="text-muted-foreground text-sm leading-relaxed">{t("org.session.attendance.autoMark.hint")}</p>
       </div>
 
-      <div>
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-col gap-1.5">
+          <Eyebrow className="text-[10px]">{t("org.session.attendance.autoMark.roomLabel")}</Eyebrow>
+          <Select items={roomItems} value={roomId} onValueChange={(v) => setRoomId(v ?? "all")}>
+            <SelectTrigger className="h-9 w-52 gap-1.5 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {roomItems.map((item) => (
+                <SelectItem key={item.value} value={item.value} className="text-sm">
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <Button disabled={autoMark.isPending} onClick={run}>
           <UserCheckIcon className="size-4" />
           {t("org.session.attendance.autoMark.run")}
@@ -263,10 +290,6 @@ export function AttendanceSection({ classId, classSessionId }: AttendanceSection
 
   return (
     <section id="attendance" className="flex scroll-mt-20 flex-col gap-5">
-      <div className="flex flex-col gap-1.5">
-        <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.attendance.title")}</h2>
-      </div>
-
       {canCreate && <AutoMarkControl classId={classId} classSessionId={classSessionId} />}
 
       {!canViewRoster && !loading && (records.length > 0 || list.isFiltered) && (

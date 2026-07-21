@@ -65,8 +65,9 @@ const (
 
 type AutoMarkAttendanceDTO struct {
 	Source AutoMarkSource `json:"source" binding:"required,oneof=live_room offline_room"`
-	// RoomID is required only for the offline source; live auto-mark is
-	// session-scoped and ignores it.
+	// RoomID is required for the offline source. For the live source it is
+	// optional: when set, presence is computed from that room alone; when
+	// empty, the session's rooms are aggregated.
 	RoomID uuid.UUID `json:"room_id" binding:"omitempty"`
 }
 

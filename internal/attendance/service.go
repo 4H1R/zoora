@@ -192,6 +192,9 @@ func (s *service) AutoMark(ctx context.Context, classID, sessionID uuid.UUID, dt
 
 	switch dto.Source {
 	case domain.AutoMarkSourceLive:
+		if dto.RoomID != uuid.Nil {
+			return s.autoMarkLiveRoom(ctx, class, sessionID, dto.RoomID)
+		}
 		return s.autoMarkLiveSession(ctx, class, sessionID)
 	case domain.AutoMarkSourceOffline:
 		if dto.RoomID == uuid.Nil {
@@ -265,6 +268,44 @@ func (s *service) autoMarkLiveSession(ctx context.Context, class *domain.Class, 
 	return result, nil
 }
 
+// autoMarkLiveRoom scopes live auto-mark to a single room of the session so a
+// side room (e.g. an optional Q&A) never counts toward the roll.
+func (s *service) autoMarkLiveRoom(ctx context.Context, class *domain.Class, sessionID, roomID uuid.UUID) (*domain.AutoMarkResult, error) {
+	room, err := s.liveRooms.FindByID(ctx, roomID)
+	if err != nil {
+		return nil, err
+	}
+	if room.ClassSessionID != sessionID {
+		return nil, domain.ErrNotFound
+	}
+	settings, err := s.orgSettings.GetByOrgID(ctx, class.OrganizationID)
+	if err != nil {
+		return nil, err
+	}
+	present, ok, err := s.resolvePresentLiveRooms(ctx, []domain.LiveRoom{*room}, settings.AttendancePresentThresholdPercent)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		s.logger.Warn("auto-mark skipped: no valid room duration",
+			"class_id", class.ID.String(), "session_id", sessionID.String(), "room_id", roomID.String())
+		return &domain.AutoMarkResult{Marked: 0, Skipped: 0}, nil
+	}
+	result, err := s.writeAutoMark(ctx, class, sessionID, present, "live_room")
+	if err != nil {
+		return nil, err
+	}
+	s.logger.Info("auto-mark attendance completed",
+		"session_id", sessionID.String(),
+		"source", "live_room",
+		"room_id", roomID.String(),
+		"percent", settings.AttendancePresentThresholdPercent,
+		"marked", result.Marked,
+		"skipped", result.Skipped,
+	)
+	return result, nil
+}
+
 // resolvePresentLiveSession aggregates participant durations across all of the
 // session's live rooms that have valid actual start/end times. Returns ok=false
 // when no room contributes a positive duration (caller should skip).
@@ -273,6 +314,13 @@ func (s *service) resolvePresentLiveSession(ctx context.Context, sessionID uuid.
 	if err != nil {
 		return nil, false, err
 	}
+	return s.resolvePresentLiveRooms(ctx, rooms, percent)
+}
+
+// resolvePresentLiveRooms sums participant durations across the given rooms
+// (skipping rooms without a valid actual start/end window) and resolves present
+// users against the percent threshold.
+func (s *service) resolvePresentLiveRooms(ctx context.Context, rooms []domain.LiveRoom, percent int) ([]uuid.UUID, bool, error) {
 	totalRoomSeconds := 0
 	userSeconds := make(map[uuid.UUID]int)
 	for _, room := range rooms {

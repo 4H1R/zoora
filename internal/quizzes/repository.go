@@ -113,6 +113,30 @@ func (r *quizRepository) List(ctx context.Context, scope domain.QuizListScope, p
 	return quizzes, total, nil
 }
 
+func (r *quizRepository) CountPendingSubmissionsByQuizIDs(ctx context.Context, quizIDs []uuid.UUID) (map[uuid.UUID]int64, error) {
+	counts := make(map[uuid.UUID]int64, len(quizIDs))
+	if len(quizIDs) == 0 {
+		return counts, nil
+	}
+	var rows []struct {
+		QuizID uuid.UUID
+		Count  int64
+	}
+	err := database.DB(ctx, r.db).
+		Model(&domain.QuizSubmission{}).
+		Select("quiz_id, COUNT(*) AS count").
+		Where("quiz_id IN ? AND status = ?", quizIDs, domain.SubmissionStatusSubmitted).
+		Group("quiz_id").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("quizzes.repository.CountPendingSubmissionsByQuizIDs: %w", err)
+	}
+	for _, row := range rows {
+		counts[row.QuizID] = row.Count
+	}
+	return counts, nil
+}
+
 func (r *quizRepository) ListByMemberWithRooms(ctx context.Context, userID uuid.UUID, classID *uuid.UUID, p domain.ListParams) ([]domain.Quiz, error) {
 	db := database.DB(ctx, r.db)
 	base := db.Model(&domain.Quiz{}).

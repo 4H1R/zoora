@@ -9,8 +9,9 @@ import type { GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTOSource } from
 
 export interface GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTO {
   /**
-     * RoomID is required only for the offline source; live auto-mark is
-     * session-scoped and ignores it.
+     * RoomID is required for the offline source. For the live source it is
+     * optional: when set, presence is computed from that room alone; when
+     * empty, the session's rooms are aggregated.
      */
   room_id?: string;
   source: GithubCom4H1RZooraInternalDomainAutoMarkAttendanceDTOSource;

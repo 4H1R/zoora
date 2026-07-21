@@ -74,6 +74,7 @@ import { Route as AdminAdminTutorialsIdRouteImport } from './routes/_admin/admin
 import { Route as AdminAdminChangelogIdRouteImport } from './routes/_admin/admin/changelog/$id'
 import { Route as AdminAdminBillingPricesRouteImport } from './routes/_admin/admin/billing/prices'
 import { Route as AdminAdminBillingInvoicesIndexRouteImport } from './routes/_admin/admin/billing/invoices/index'
+import { Route as AuthOrgPracticesPracticeIdScoresRouteImport } from './routes/_auth/org/practices/$practiceId.scores'
 import { Route as AuthOrgFilesOwnerKindRouteImport } from './routes/_auth/org/files/owner/$kind'
 import { Route as AuthOrgExamsQuizIdCorrectionsRouteImport } from './routes/_auth/org/exams/$quizId.corrections'
 import { Route as AuthOrgClassesClassSessionsClassSessionIdRouteImport } from './routes/_auth/org/classes/class-sessions/$classSessionId'
@@ -86,6 +87,7 @@ import { Route as AdminAdminClassesClassIdOfflinesRouteImport } from './routes/_
 import { Route as AdminAdminClassesClassIdMembersRouteImport } from './routes/_admin/admin/classes/$classId/members'
 import { Route as AdminAdminClassesClassIdLiveRoomsRouteImport } from './routes/_admin/admin/classes/$classId/live-rooms'
 import { Route as AdminAdminClassesClassIdGradebookRouteImport } from './routes/_admin/admin/classes/$classId/gradebook'
+import { Route as AuthOrgClassesClassSessionsClassSessionIdAttendanceRouteImport } from './routes/_auth/org/classes/class-sessions/$classSessionId_.attendance'
 
 const GetStartedRoute = GetStartedRouteImport.update({
   id: '/get-started',
@@ -429,6 +431,12 @@ const AdminAdminBillingInvoicesIndexRoute =
     path: '/admin/billing/invoices/',
     getParentRoute: () => AdminRoute,
   } as any)
+const AuthOrgPracticesPracticeIdScoresRoute =
+  AuthOrgPracticesPracticeIdScoresRouteImport.update({
+    id: '/practices/$practiceId/scores',
+    path: '/practices/$practiceId/scores',
+    getParentRoute: () => AuthOrgRoute,
+  } as any)
 const AuthOrgFilesOwnerKindRoute = AuthOrgFilesOwnerKindRouteImport.update({
   id: '/files/owner/$kind',
   path: '/files/owner/$kind',
@@ -499,6 +507,12 @@ const AdminAdminClassesClassIdGradebookRoute =
     id: '/admin/classes/$classId/gradebook',
     path: '/admin/classes/$classId/gradebook',
     getParentRoute: () => AdminRoute,
+  } as any)
+const AuthOrgClassesClassSessionsClassSessionIdAttendanceRoute =
+  AuthOrgClassesClassSessionsClassSessionIdAttendanceRouteImport.update({
+    id: '/classes/class-sessions/$classSessionId_/attendance',
+    path: '/classes/class-sessions/$classSessionId/attendance',
+    getParentRoute: () => AuthOrgRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -575,7 +589,9 @@ export interface FileRoutesByFullPath {
   '/org/classes/class-sessions/$classSessionId': typeof AuthOrgClassesClassSessionsClassSessionIdRoute
   '/org/exams/$quizId/corrections': typeof AuthOrgExamsQuizIdCorrectionsRoute
   '/org/files/owner/$kind': typeof AuthOrgFilesOwnerKindRoute
+  '/org/practices/$practiceId/scores': typeof AuthOrgPracticesPracticeIdScoresRoute
   '/admin/billing/invoices/': typeof AdminAdminBillingInvoicesIndexRoute
+  '/org/classes/class-sessions/$classSessionId/attendance': typeof AuthOrgClassesClassSessionsClassSessionIdAttendanceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -649,7 +665,9 @@ export interface FileRoutesByTo {
   '/org/classes/class-sessions/$classSessionId': typeof AuthOrgClassesClassSessionsClassSessionIdRoute
   '/org/exams/$quizId/corrections': typeof AuthOrgExamsQuizIdCorrectionsRoute
   '/org/files/owner/$kind': typeof AuthOrgFilesOwnerKindRoute
+  '/org/practices/$practiceId/scores': typeof AuthOrgPracticesPracticeIdScoresRoute
   '/admin/billing/invoices': typeof AdminAdminBillingInvoicesIndexRoute
+  '/org/classes/class-sessions/$classSessionId/attendance': typeof AuthOrgClassesClassSessionsClassSessionIdAttendanceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -729,7 +747,9 @@ export interface FileRoutesById {
   '/_auth/org/classes/class-sessions/$classSessionId': typeof AuthOrgClassesClassSessionsClassSessionIdRoute
   '/_auth/org/exams/$quizId/corrections': typeof AuthOrgExamsQuizIdCorrectionsRoute
   '/_auth/org/files/owner/$kind': typeof AuthOrgFilesOwnerKindRoute
+  '/_auth/org/practices/$practiceId/scores': typeof AuthOrgPracticesPracticeIdScoresRoute
   '/_admin/admin/billing/invoices/': typeof AdminAdminBillingInvoicesIndexRoute
+  '/_auth/org/classes/class-sessions/$classSessionId_/attendance': typeof AuthOrgClassesClassSessionsClassSessionIdAttendanceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -807,7 +827,9 @@ export interface FileRouteTypes {
     | '/org/classes/class-sessions/$classSessionId'
     | '/org/exams/$quizId/corrections'
     | '/org/files/owner/$kind'
+    | '/org/practices/$practiceId/scores'
     | '/admin/billing/invoices/'
+    | '/org/classes/class-sessions/$classSessionId/attendance'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -881,7 +903,9 @@ export interface FileRouteTypes {
     | '/org/classes/class-sessions/$classSessionId'
     | '/org/exams/$quizId/corrections'
     | '/org/files/owner/$kind'
+    | '/org/practices/$practiceId/scores'
     | '/admin/billing/invoices'
+    | '/org/classes/class-sessions/$classSessionId/attendance'
   id:
     | '__root__'
     | '/'
@@ -960,7 +984,9 @@ export interface FileRouteTypes {
     | '/_auth/org/classes/class-sessions/$classSessionId'
     | '/_auth/org/exams/$quizId/corrections'
     | '/_auth/org/files/owner/$kind'
+    | '/_auth/org/practices/$practiceId/scores'
     | '/_admin/admin/billing/invoices/'
+    | '/_auth/org/classes/class-sessions/$classSessionId_/attendance'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1428,6 +1454,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminBillingInvoicesIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_auth/org/practices/$practiceId/scores': {
+      id: '/_auth/org/practices/$practiceId/scores'
+      path: '/practices/$practiceId/scores'
+      fullPath: '/org/practices/$practiceId/scores'
+      preLoaderRoute: typeof AuthOrgPracticesPracticeIdScoresRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
     '/_auth/org/files/owner/$kind': {
       id: '/_auth/org/files/owner/$kind'
       path: '/files/owner/$kind'
@@ -1511,6 +1544,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/classes/$classId/gradebook'
       preLoaderRoute: typeof AdminAdminClassesClassIdGradebookRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/_auth/org/classes/class-sessions/$classSessionId_/attendance': {
+      id: '/_auth/org/classes/class-sessions/$classSessionId_/attendance'
+      path: '/classes/class-sessions/$classSessionId/attendance'
+      fullPath: '/org/classes/class-sessions/$classSessionId/attendance'
+      preLoaderRoute: typeof AuthOrgClassesClassSessionsClassSessionIdAttendanceRouteImport
+      parentRoute: typeof AuthOrgRoute
     }
   }
 }
@@ -1644,6 +1684,8 @@ interface AuthOrgRouteChildren {
   AuthOrgClassesClassSessionsClassSessionIdRoute: typeof AuthOrgClassesClassSessionsClassSessionIdRoute
   AuthOrgExamsQuizIdCorrectionsRoute: typeof AuthOrgExamsQuizIdCorrectionsRoute
   AuthOrgFilesOwnerKindRoute: typeof AuthOrgFilesOwnerKindRoute
+  AuthOrgPracticesPracticeIdScoresRoute: typeof AuthOrgPracticesPracticeIdScoresRoute
+  AuthOrgClassesClassSessionsClassSessionIdAttendanceRoute: typeof AuthOrgClassesClassSessionsClassSessionIdAttendanceRoute
 }
 
 const AuthOrgRouteChildren: AuthOrgRouteChildren = {
@@ -1681,6 +1723,9 @@ const AuthOrgRouteChildren: AuthOrgRouteChildren = {
     AuthOrgClassesClassSessionsClassSessionIdRoute,
   AuthOrgExamsQuizIdCorrectionsRoute: AuthOrgExamsQuizIdCorrectionsRoute,
   AuthOrgFilesOwnerKindRoute: AuthOrgFilesOwnerKindRoute,
+  AuthOrgPracticesPracticeIdScoresRoute: AuthOrgPracticesPracticeIdScoresRoute,
+  AuthOrgClassesClassSessionsClassSessionIdAttendanceRoute:
+    AuthOrgClassesClassSessionsClassSessionIdAttendanceRoute,
 }
 
 const AuthOrgRouteWithChildren =

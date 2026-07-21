@@ -240,6 +240,85 @@ func TestAutoMarkSessionLive_OverwritesAutoPreservesManual(t *testing.T) {
 	repo.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
 }
 
+func TestAutoMark_LiveRoomScopedCountsOnlyThatRoom(t *testing.T) {
+	ownerID := uuid.New()
+	classID := uuid.New()
+	sessionID := uuid.New()
+	orgID := uuid.New()
+	userA := uuid.New() // 80% in target room -> present
+	userB := uuid.New() // only in the other room -> absent
+
+	repo := &mAttRepo{}
+	classes := &mClassRepo{}
+	sessions := &mSessRepo{}
+	members := &mMemberRepo{}
+	rooms := &mLiveRoomRepo{}
+	parts := &mParticipantRepo{}
+
+	target := liveRoom(sessionID, 1000)
+	other := liveRoom(sessionID, 1000)
+	classes.On("FindByID", mock.Anything, classID).Return(&domain.Class{ID: classID, OrganizationID: orgID, UserID: ownerID}, nil)
+	sessions.On("FindByID", mock.Anything, sessionID).Return(&domain.ClassSession{ID: sessionID, ClassID: classID}, nil)
+	rooms.On("FindByID", mock.Anything, target.ID).Return(&target, nil)
+	parts.On("ListAllByRoom", mock.Anything, target.ID).Return([]domain.LiveParticipant{
+		{UserID: userA, TotalDurationSeconds: 800},
+	}, nil)
+	members.On("ListAllByClass", mock.Anything, classID).Return([]domain.ClassMember{
+		{ClassID: classID, UserID: userA},
+		{ClassID: classID, UserID: userB},
+	}, nil)
+	repo.On("FindBySessionAndUser", mock.Anything, sessionID, mock.Anything).Return(nil, domain.ErrNotFound)
+
+	created := map[uuid.UUID]domain.AttendanceStatus{}
+	repo.On("Create", mock.Anything, mock.AnythingOfType("*domain.Attendance")).
+		Run(func(args mock.Arguments) {
+			a := args.Get(1).(*domain.Attendance)
+			created[a.UserID] = a.Status
+		}).Return(nil)
+
+	svc := newAutoMarkSvc(repo, classes, sessions, members, rooms, parts, 75)
+	res, err := svc.AutoMark(ownerCtx(ownerID), classID, sessionID, domain.AutoMarkAttendanceDTO{
+		Source: domain.AutoMarkSourceLive,
+		RoomID: target.ID,
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, 2, res.Marked)
+	require.Equal(t, domain.AttendanceStatusPresent, created[userA])
+	require.Equal(t, domain.AttendanceStatusAbsent, created[userB])
+	rooms.AssertNotCalled(t, "ListByClassSession", mock.Anything, mock.Anything)
+	parts.AssertNotCalled(t, "ListAllByRoom", mock.Anything, other.ID)
+}
+
+func TestAutoMark_LiveRoomWrongSessionNotFound(t *testing.T) {
+	ownerID := uuid.New()
+	classID := uuid.New()
+	sessionID := uuid.New()
+	orgID := uuid.New()
+
+	repo := &mAttRepo{}
+	classes := &mClassRepo{}
+	sessions := &mSessRepo{}
+	members := &mMemberRepo{}
+	rooms := &mLiveRoomRepo{}
+	parts := &mParticipantRepo{}
+
+	foreign := liveRoom(uuid.New(), 1000) // belongs to another session
+	classes.On("FindByID", mock.Anything, classID).Return(&domain.Class{ID: classID, OrganizationID: orgID, UserID: ownerID}, nil)
+	sessions.On("FindByID", mock.Anything, sessionID).Return(&domain.ClassSession{ID: sessionID, ClassID: classID}, nil)
+	rooms.On("FindByID", mock.Anything, foreign.ID).Return(&foreign, nil)
+
+	svc := newAutoMarkSvc(repo, classes, sessions, members, rooms, parts, 75)
+	_, err := svc.AutoMark(ownerCtx(ownerID), classID, sessionID, domain.AutoMarkAttendanceDTO{
+		Source: domain.AutoMarkSourceLive,
+		RoomID: foreign.ID,
+	})
+
+	require.ErrorIs(t, err, domain.ErrNotFound)
+	repo.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+	repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+}
+
 func TestAutoMarkSessionLive_ZeroDurationSkips(t *testing.T) {
 	classID := uuid.New()
 	sessionID := uuid.New()

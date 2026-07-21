@@ -5,8 +5,10 @@ import { useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import {
   CalendarClockIcon,
+  CheckSquareIcon,
   ClipboardListIcon,
   ClockIcon,
+  LibraryIcon,
   ListChecksIcon,
   LockKeyholeIcon,
   PencilIcon,
@@ -36,6 +38,7 @@ import { formatScore } from "@/lib/score"
 import { formatSessionDate } from "@/lib/session-status"
 import { useSectionList } from "@/lib/use-section-list"
 
+import { useBankPermissions } from "../question-banks/use-bank-permissions"
 import { QuizFormDialog } from "./QuizFormDialog"
 import { useQuizPermissions } from "./use-quiz-permissions"
 
@@ -54,6 +57,9 @@ function QuizCard({ quiz, index, classSessionId, onEdit, onManageQuestions, onDe
   const canDelete = useCanSelfOr("quizzes:delete", "quizzes:delete_any", quiz.user_id)
   // Starting a quiz requires enrollment; a viewer (e.g. Manager) would hit a 403.
   const canTake = useCanAny(["quizzes:take"])
+  // The field only arrives for callers who can manage the quiz — its presence
+  // is the grader signal, its value the to-do count on the corrections button.
+  const pendingCorrections = quiz.pending_submissions_count
   const tileNumber = String(index + 1).padStart(2, "0")
   const createdStr = formatSessionDate(quiz.created_at, i18n.language, "short")
 
@@ -160,6 +166,21 @@ function QuizCard({ quiz, index, classSessionId, onEdit, onManageQuestions, onDe
               )}
             </div>
           )}
+          {quiz.id && pendingCorrections != null && (
+            <Button
+              size="sm"
+              variant="outline"
+              render={<Link to="/org/exams/$quizId/corrections" params={{ quizId: quiz.id }} />}
+            >
+              <CheckSquareIcon className="size-3.5" />
+              {t("org.session.quizzes.actions.corrections")}
+              {pendingCorrections > 0 && (
+                <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 font-mono text-[10px] text-amber-700 tabular-nums dark:text-amber-300">
+                  {pendingCorrections}
+                </span>
+              )}
+            </Button>
+          )}
           {quiz.id && canTake && (
             <Button
               size="sm"
@@ -204,6 +225,7 @@ export function QuizzesSection({ classId, classSessionId }: QuizzesSectionProps)
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { canView, canCreate } = useQuizPermissions()
+  const { canView: canViewBanks } = useBankPermissions()
 
   const list = useSectionList()
   const sortOptions: SortOption[] = [
@@ -252,12 +274,20 @@ export function QuizzesSection({ classId, classSessionId }: QuizzesSectionProps)
         <div className="flex flex-col gap-1.5">
           <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.quizzes.title")}</h2>
         </div>
-        {canCreate && (
-          <Button onClick={openCreate}>
-            <PlusIcon className="size-4" />
-            {t("org.session.quizzes.newQuiz")}
-          </Button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {canViewBanks && (
+            <Button variant="outline" render={<Link to="/org/question-banks" />}>
+              <LibraryIcon className="size-4" />
+              {t("org.session.quizzes.banksLink")}
+            </Button>
+          )}
+          {canCreate && (
+            <Button onClick={openCreate}>
+              <PlusIcon className="size-4" />
+              {t("org.session.quizzes.newQuiz")}
+            </Button>
+          )}
+        </div>
       </div>
 
       {(quizzes.length > 0 || list.isFiltered) && (
@@ -286,10 +316,18 @@ export function QuizzesSection({ classId, classSessionId }: QuizzesSectionProps)
             description={t("org.session.quizzes.emptyHint")}
           >
             {canCreate && (
-              <Button onClick={openCreate}>
-                <PlusIcon className="size-4" />
-                {t("org.session.quizzes.newQuiz")}
-              </Button>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button onClick={openCreate}>
+                  <PlusIcon className="size-4" />
+                  {t("org.session.quizzes.newQuiz")}
+                </Button>
+                {canViewBanks && (
+                  <Button variant="outline" render={<Link to="/org/question-banks" />}>
+                    <LibraryIcon className="size-4" />
+                    {t("org.session.quizzes.emptyBankCta")}
+                  </Button>
+                )}
+              </div>
             )}
           </EmptyState>
         )

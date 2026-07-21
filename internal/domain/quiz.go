@@ -60,6 +60,11 @@ type Quiz struct {
 	// ready. Only populated on reads that resolve the question set.
 	ImageRenderStatus ImageRenderStatus `gorm:"-" json:"image_render_status,omitempty"`
 
+	// PendingSubmissionsCount is a transient, grader-only aggregate: submissions
+	// with status "submitted" that still await manual grading. Populated on list
+	// reads for callers who can manage the quiz; omitted for everyone else.
+	PendingSubmissionsCount *int64 `gorm:"-" json:"pending_submissions_count,omitempty"`
+
 	// ShowResults opts the quiz into revealing each student's score and earned
 	// marks back to them. Reveal is deferred until the student's room window has
 	// closed (see resultsRevealed) so early finishers cannot leak answers to
@@ -497,6 +502,9 @@ type QuizRepository interface {
 	Update(ctx context.Context, quiz *Quiz) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, scope QuizListScope, p ListParams) ([]Quiz, int64, error)
+	// CountPendingSubmissionsByQuizIDs returns, per quiz id, how many
+	// submissions sit in status "submitted" (awaiting manual grading).
+	CountPendingSubmissionsByQuizIDs(ctx context.Context, quizIDs []uuid.UUID) (map[uuid.UUID]int64, error)
 	// ListByMemberWithRooms returns ALL quizzes whose class the given user is
 	// a member of (optionally narrowed to one class), with Class preloaded.
 	// p is applied for search/ordering only — pagination happens in the
