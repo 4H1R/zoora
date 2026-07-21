@@ -109,13 +109,13 @@ export const ORG_ROUTES: Record<OrgRouteKey, OrgRouteSpec> = {
     i18nKey: "org.nav.grades",
     icon: <GraduationCapIcon />,
     segment: "grades",
-    perms: ["gradebook:view"],
+    perms: ["gradebook:view", "gradebook:view_any", "gradebook:create"],
   },
   attendance: {
     i18nKey: "org.nav.attendance",
     icon: <CalendarCheckIcon />,
     segment: "attendance",
-    perms: ["attendance:view"],
+    perms: ["attendance:view", "attendance:view_any", "attendance:create"],
   },
   users: {
     i18nKey: "org.nav.users",

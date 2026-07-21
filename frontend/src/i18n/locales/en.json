@@ -304,6 +304,7 @@
     "publish": "Publish",
     "create": "Create",
     "edit": "Edit",
+    "openClass": "Open class page",
     "delete": "Delete",
     "deleteConfirm": {
       "title": "Are you sure?",
@@ -1777,6 +1778,11 @@
       "noResultsHint": "Try changing the search or filters.",
       "noColumns": "No graded items in this class yet.",
       "searchPlaceholder": "Search grades…",
+      "manager": {
+        "subtitle": "View and edit gradebooks for the classes you manage",
+        "noClasses": "No classes to grade",
+        "noClassesHint": "Create a class or get assigned to one to manage its gradebook."
+      },
       "table": {
         "class": "Class",
         "item": "Item",
@@ -1790,6 +1796,11 @@
       "noResults": "No attendance matches the filters",
       "noResultsHint": "Try changing the search or filters.",
       "searchPlaceholder": "Search attendance…",
+      "manager": {
+        "subtitle": "Track and mark attendance for the classes you manage",
+        "noClasses": "No classes to track",
+        "noClassesHint": "Create a class or get assigned to one to manage its attendance."
+      },
       "tabs": {
         "all": "All"
       },

@@ -23,4 +23,8 @@ order_dir?: string;
  * 1-based page number
  */
 page?: number;
+/**
+ * Items per page
+ */
+page_size?: number;
 };
