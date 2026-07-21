@@ -11,6 +11,7 @@ import {
   GraduationCapIcon,
   LayoutDashboardIcon,
   LibraryIcon,
+  ListPlusIcon,
   MessageCircleIcon,
   NotebookPenIcon,
   SchoolIcon,
@@ -36,6 +37,7 @@ export type OrgRouteKey =
   | "users"
   | "roles"
   | "settings"
+  | "custom-fields"
   | "billing"
   | "files"
   | "notifications"
@@ -134,6 +136,12 @@ export const ORG_ROUTES: Record<OrgRouteKey, OrgRouteSpec> = {
     icon: <SettingsIcon />,
     segment: "settings",
     perms: ["organizations:update"],
+  },
+  "custom-fields": {
+    i18nKey: "org.nav.customFields",
+    icon: <ListPlusIcon />,
+    segment: "settings/custom-fields",
+    perms: ["custom_fields:manage"],
   },
   billing: {
     i18nKey: "billing.title",

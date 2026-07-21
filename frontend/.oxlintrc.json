@@ -1,0 +1,40 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": [
+    "src/api/**",
+    "src/routeTree.gen.ts",
+    "dist/**",
+    ".output/**",
+    ".nitro/**",
+    "patches/**"
+  ],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "plugins": ["react", "typescript", "import"],
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2022": true
+  },
+  "rules": {
+    "no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
+    "react-hooks/exhaustive-deps": "warn",
+    "react-hooks/rules-of-hooks": "error",
+    "react/iframe-missing-sandbox": "warn",
+
+    "react/react-in-jsx-scope": "off",
+    "import/no-unassigned-import": "off",
+    "no-underscore-dangle": "off",
+
+    "import/default": "off"
+  }
+}

@@ -94,7 +94,7 @@ func ParseClassesFile(data []byte) ([]ClassRow, []MemberRow, error) {
 	}
 	classCols, err := headerIndex(classRows[0], []string{"class_name", "owner_username"})
 	if err != nil {
-		return nil, nil, fmt.Errorf("Classes sheet: %w", err)
+		return nil, nil, fmt.Errorf("reading Classes sheet: %w", err)
 	}
 
 	var classes []ClassRow
@@ -112,10 +112,10 @@ func ParseClassesFile(data []byte) ([]ClassRow, []MemberRow, error) {
 		classes = append(classes, r)
 	}
 	if len(classes) == 0 {
-		return nil, nil, fmt.Errorf("Classes sheet has no data rows")
+		return nil, nil, fmt.Errorf("classes sheet has no data rows")
 	}
 	if len(classes) > MaxRows {
-		return nil, nil, fmt.Errorf("Classes sheet exceeds %d data rows", MaxRows)
+		return nil, nil, fmt.Errorf("classes sheet exceeds %d data rows", MaxRows)
 	}
 
 	var members []MemberRow
@@ -123,7 +123,7 @@ func ParseClassesFile(data []byte) ([]ClassRow, []MemberRow, error) {
 	if err == nil { // Members sheet is optional
 		memberCols, herr := headerIndex(memberRows[0], []string{"class_name", "member_username"})
 		if herr != nil {
-			return nil, nil, fmt.Errorf("Members sheet: %w", herr)
+			return nil, nil, fmt.Errorf("reading Members sheet: %w", herr)
 		}
 		for i, row := range memberRows[1:] {
 			r := MemberRow{
@@ -137,7 +137,7 @@ func ParseClassesFile(data []byte) ([]ClassRow, []MemberRow, error) {
 			members = append(members, r)
 		}
 		if len(members) > MaxRows {
-			return nil, nil, fmt.Errorf("Members sheet exceeds %d data rows", MaxRows)
+			return nil, nil, fmt.Errorf("members sheet exceeds %d data rows", MaxRows)
 		}
 	}
 	return classes, members, nil

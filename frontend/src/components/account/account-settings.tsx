@@ -11,6 +11,7 @@ import { z } from "zod"
 import { AUTH_TOKEN_KEY } from "@/api/mutator/custom-instance"
 import { useGetOrganizationsId } from "@/api/organizations/organizations"
 import { useGetUsersMe, usePostUsersMePassword } from "@/api/users/users"
+import { AccountCustomFields } from "@/components/account/account-custom-fields"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
@@ -113,6 +114,8 @@ export function AccountSettings({ showProfile = true }: { showProfile?: boolean 
           </div>
         </section>
       )}
+
+      {showProfile && <AccountCustomFields />}
 
       <SecuritySection />
 

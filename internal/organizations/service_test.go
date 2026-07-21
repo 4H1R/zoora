@@ -207,8 +207,8 @@ func TestOrganizationGetByIDScopesNonAdminsToTheirOrganization(t *testing.T) {
 func TestOrganizationUpdateAppliesOnlyProvidedFields(t *testing.T) {
 	repo := &orgRepoMock{}
 	svc := newOrganizationService(repo)
-	ctx := orgCaller(uuid.New(), nil, false)
 	orgID := uuid.New()
+	ctx := orgCaller(uuid.New(), &orgID, false)
 	org := &domain.Organization{ID: orgID, Name: "Old", Description: "old", Status: domain.OrganizationStatusTrial}
 	newName := "New"
 

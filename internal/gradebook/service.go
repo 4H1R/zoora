@@ -21,10 +21,10 @@ import (
 //	teacher (class.UserID == caller.UserID): manage gradebook of own class
 //	student (enrolled via class_members): view-only
 type service struct {
-	columns      domain.GradebookColumnRepository
-	cells        domain.GradebookCellRepository
-	classes      domain.ClassRepository
-	members      domain.ClassMemberRepository
+	columns       domain.GradebookColumnRepository
+	cells         domain.GradebookCellRepository
+	classes       domain.ClassRepository
+	members       domain.ClassMemberRepository
 	attendance    domain.AttendanceRepository
 	practiceSubs  domain.PracticeSubmissionRepository
 	quizSubs      domain.QuizSubmissionRepository

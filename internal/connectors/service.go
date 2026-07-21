@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"math/big"
@@ -92,7 +93,7 @@ func (s *service) CreateLinkToken(ctx context.Context, t domain.ConnectorType) (
 func (s *service) CompleteLink(ctx context.Context, t domain.ConnectorType, token, chatID string) (*domain.ConnectorLinkResult, error) {
 	key := linkKey(t, token)
 	val, err := s.rdb.GetDel(ctx, key).Result()
-	if err == redis.Nil {
+	if errors.Is(err, redis.Nil) {
 		return nil, domain.ErrNotFound
 	}
 	if err != nil {
@@ -192,7 +193,7 @@ func (s *service) VerifySMSOTP(ctx context.Context, dto domain.VerifySMSOTPDTO) 
 		return domain.ErrForbidden
 	}
 	raw, err := s.rdb.Get(ctx, otpKey(caller.UserID)).Result()
-	if err == redis.Nil {
+	if errors.Is(err, redis.Nil) {
 		return domain.NewValidationError(map[string]string{"code": "no pending verification — request a new code"})
 	}
 	if err != nil {

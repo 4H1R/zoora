@@ -6,9 +6,15 @@
  * OpenAPI spec version: 1.0
  */
 import type { GithubCom4H1RZooraInternalDomainRole } from './githubCom4H1RZooraInternalDomainRole';
+import type { GithubCom4H1RZooraInternalDomainUserCustomFields } from './githubCom4H1RZooraInternalDomainUserCustomFields';
 
 export interface GithubCom4H1RZooraInternalDomainUser {
   created_at?: string;
+  /**
+     * CustomFields holds manager-defined profile values, keyed by
+     * UserCustomFieldDefinition UUID: {"<def-uuid>": <value>}.
+     */
+  custom_fields?: GithubCom4H1RZooraInternalDomainUserCustomFields;
   disabled_at?: string;
   disabled_by?: string;
   disabled_reason?: string;

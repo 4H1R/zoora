@@ -74,11 +74,13 @@ func (m *mediaRepoMock) ListOwnerMedia(ctx context.Context, orgID uuid.UUID) ([]
 	owners, _ := args.Get(0).([]domain.MediaOwner)
 	return owners, args.Error(1)
 }
+
 func (m *mediaRepoMock) ListOwnerRecordings(ctx context.Context, orgID uuid.UUID) ([]domain.MediaOwner, error) {
 	args := m.Called(ctx, orgID)
 	owners, _ := args.Get(0).([]domain.MediaOwner)
 	return owners, args.Error(1)
 }
+
 func (m *mediaRepoMock) ListOwnerFiles(ctx context.Context, orgID uuid.UUID, kind string, ownerID *uuid.UUID, p domain.ListParams) ([]domain.OwnerFile, int64, error) {
 	args := m.Called(ctx, orgID, kind, ownerID, p)
 	files, _ := args.Get(0).([]domain.OwnerFile)
@@ -100,12 +102,15 @@ type fakeEntService struct{ storageErr error }
 func (f fakeEntService) CheckUserLimit(context.Context, uuid.UUID, domain.Entitlements) error {
 	return nil
 }
+
 func (f fakeEntService) CheckUserLimitN(context.Context, uuid.UUID, domain.Entitlements, int64) error {
 	return nil
 }
+
 func (f fakeEntService) CheckStorageLimit(context.Context, uuid.UUID, domain.Entitlements, int64) error {
 	return f.storageErr
 }
+
 func (f fakeEntService) CheckConcurrentRoomsLimit(context.Context, uuid.UUID, domain.Entitlements) error {
 	return nil
 }

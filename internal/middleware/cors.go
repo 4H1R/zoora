@@ -9,7 +9,7 @@ import (
 
 func CORS(allowedOrigins []string) gin.HandlerFunc {
 	return cors.New(cors.Config{
-		AllowOrigins:     allowedOrigins,
+		AllowOrigins: allowedOrigins,
 		// Multi-tenant: each org is served from its own <org>.zoora.ir host, so
 		// the allow-list uses a "https://*.zoora.ir" wildcard. Without this the
 		// single "*" would be rejected as a bad origin at startup.

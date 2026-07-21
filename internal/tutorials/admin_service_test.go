@@ -22,11 +22,13 @@ func (s *stubRepo) Create(_ context.Context, tu *domain.Tutorial) error {
 	s.entry = tu
 	return nil
 }
+
 func (s *stubRepo) Update(_ context.Context, tu *domain.Tutorial) error {
 	s.saved = tu
 	s.entry = tu
 	return nil
 }
+
 func (s *stubRepo) FindByID(context.Context, uuid.UUID) (*domain.Tutorial, error) {
 	return s.entry, nil
 }

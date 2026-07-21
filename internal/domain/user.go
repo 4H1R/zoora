@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,6 +25,9 @@ type User struct {
 	DisabledAt          *time.Time     `gorm:"index" json:"disabled_at,omitempty"`
 	DisabledBy          *uuid.UUID     `gorm:"type:uuid" json:"disabled_by,omitempty"`
 	DisabledReason      *string        `json:"disabled_reason,omitempty"`
+	// CustomFields holds manager-defined profile values, keyed by
+	// UserCustomFieldDefinition UUID: {"<def-uuid>": <value>}.
+	CustomFields json.RawMessage `gorm:"type:jsonb;not null;default:'{}'" json:"custom_fields" swaggertype:"object"`
 }
 
 type CreateUserDTO struct {

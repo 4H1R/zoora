@@ -27,9 +27,11 @@ func (m *mockRepo) Delete(context.Context, uuid.UUID) error { return nil }
 func (m *mockRepo) ListPublished(context.Context, int, int) ([]domain.ChangelogEntry, int64, error) {
 	return nil, 0, nil
 }
+
 func (m *mockRepo) AdminList(context.Context, int, int) ([]domain.ChangelogEntry, int64, error) {
 	return nil, 0, nil
 }
+
 func (m *mockRepo) LatestPublished(context.Context) (*domain.ChangelogEntry, error) {
 	return m.latestPub, nil
 }
@@ -37,9 +39,11 @@ func (m *mockRepo) CountUnseen(context.Context, *time.Time) (int64, error) { ret
 func (m *mockRepo) LatestMajorUnseen(context.Context, *time.Time) (*domain.ChangelogEntry, error) {
 	return m.latestMajor, nil
 }
+
 func (m *mockRepo) GetLastSeen(context.Context, uuid.UUID) (*time.Time, error) {
 	return m.lastSeen, nil
 }
+
 func (m *mockRepo) UpdateLastSeen(_ context.Context, _ uuid.UUID, t time.Time) error {
 	m.updatedSeen = &t
 	return nil

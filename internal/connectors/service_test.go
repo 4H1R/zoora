@@ -22,6 +22,7 @@ func (m *mockConnRepo) Create(_ context.Context, c *domain.UserConnector) error 
 	m.created = c
 	return nil
 }
+
 func (m *mockConnRepo) FindByID(context.Context, uuid.UUID) (*domain.UserConnector, error) {
 	if m.byID == nil {
 		return nil, domain.ErrNotFound
@@ -136,10 +137,14 @@ func TestConnectedMessage(t *testing.T) {
 	}{
 		{"nil falls back", nil, "✅ Connected! You will now receive Zoora notifications here."},
 		{"no username falls back", &domain.ConnectorLinkResult{}, "✅ Connected! You will now receive Zoora notifications here."},
-		{"username + name + org", &domain.ConnectorLinkResult{Username: "ali", Name: "Ali A", OrgName: "Acme"},
-			"✅ Connected as @ali (Ali A) · Acme.\nYou will now receive Zoora notifications for this account here."},
-		{"username only", &domain.ConnectorLinkResult{Username: "ali"},
-			"✅ Connected as @ali.\nYou will now receive Zoora notifications for this account here."},
+		{
+			"username + name + org", &domain.ConnectorLinkResult{Username: "ali", Name: "Ali A", OrgName: "Acme"},
+			"✅ Connected as @ali (Ali A) · Acme.\nYou will now receive Zoora notifications for this account here.",
+		},
+		{
+			"username only", &domain.ConnectorLinkResult{Username: "ali"},
+			"✅ Connected as @ali.\nYou will now receive Zoora notifications for this account here.",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

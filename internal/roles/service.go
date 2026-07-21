@@ -93,7 +93,20 @@ func (s *service) Create(ctx context.Context, dto domain.CreateRoleDTO) (*domain
 }
 
 func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*domain.Role, error) {
-	return s.roleRepo.FindByID(ctx, id)
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	role, err := s.roleRepo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if !caller.IsAdmin && !role.IsPreset {
+		if role.OrganizationID == nil || caller.OrgID == nil || *role.OrganizationID != *caller.OrgID {
+			return nil, domain.ErrForbidden
+		}
+	}
+	return role, nil
 }
 
 func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateRoleDTO) (*domain.Role, error) {
@@ -109,6 +122,11 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateRol
 
 	if role.IsPreset && !caller.IsAdmin {
 		return nil, domain.ErrForbidden
+	}
+	if !caller.IsAdmin && !role.IsPreset {
+		if role.OrganizationID == nil || caller.OrgID == nil || *role.OrganizationID != *caller.OrgID {
+			return nil, domain.ErrForbidden
+		}
 	}
 	if dto.IsPreset != nil && !caller.IsAdmin {
 		return nil, domain.ErrForbidden
@@ -168,6 +186,11 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	}
 	if role.IsPreset && !caller.IsAdmin {
 		return domain.ErrForbidden
+	}
+	if !caller.IsAdmin && !role.IsPreset {
+		if role.OrganizationID == nil || caller.OrgID == nil || *role.OrganizationID != *caller.OrgID {
+			return domain.ErrForbidden
+		}
 	}
 
 	if err := s.roleRepo.Delete(ctx, id); err != nil {

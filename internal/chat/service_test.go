@@ -19,6 +19,7 @@ type mockChatRepo struct{ mock.Mock }
 func (m *mockChatRepo) Create(ctx context.Context, c *domain.LiveRoomChat) error {
 	return m.Called(ctx, c).Error(0)
 }
+
 func (m *mockChatRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.LiveRoomChat, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
@@ -26,16 +27,20 @@ func (m *mockChatRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Live
 	}
 	return args.Get(0).(*domain.LiveRoomChat), args.Error(1)
 }
+
 func (m *mockChatRepo) Update(ctx context.Context, c *domain.LiveRoomChat) error {
 	return m.Called(ctx, c).Error(0)
 }
+
 func (m *mockChatRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockChatRepo) List(ctx context.Context, q domain.ListChatsQuery) ([]domain.LiveRoomChat, int64, error) {
 	args := m.Called(ctx, q)
 	return args.Get(0).([]domain.LiveRoomChat), args.Get(1).(int64), args.Error(2)
 }
+
 func (m *mockChatRepo) FindByRoom(ctx context.Context, liveRoomID uuid.UUID) (*domain.LiveRoomChat, error) {
 	args := m.Called(ctx, liveRoomID)
 	if args.Get(0) == nil {
@@ -49,6 +54,7 @@ type mockMessageRepo struct{ mock.Mock }
 func (m *mockMessageRepo) Create(ctx context.Context, msg *domain.LiveRoomMessage) error {
 	return m.Called(ctx, msg).Error(0)
 }
+
 func (m *mockMessageRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.LiveRoomMessage, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
@@ -56,12 +62,15 @@ func (m *mockMessageRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.L
 	}
 	return args.Get(0).(*domain.LiveRoomMessage), args.Error(1)
 }
+
 func (m *mockMessageRepo) Update(ctx context.Context, msg *domain.LiveRoomMessage) error {
 	return m.Called(ctx, msg).Error(0)
 }
+
 func (m *mockMessageRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockMessageRepo) List(ctx context.Context, chatID uuid.UUID, q domain.ListMessagesQuery) ([]domain.LiveRoomMessage, int64, error) {
 	args := m.Called(ctx, chatID, q)
 	return args.Get(0).([]domain.LiveRoomMessage), args.Get(1).(int64), args.Error(2)

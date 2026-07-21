@@ -40,8 +40,8 @@ type Config struct {
 	// runs a headless Chrome + encoder (2-6 CPU), so this bounds the load the
 	// self-hosted egress workers take on. When the cap is hit, StartRecording
 	// returns ErrRecordingCapacityFull (HTTP 503) instead of queuing.
-	LiveKitEgressMaxConcurrent int `env:"LIVEKIT_EGRESS_MAX_CONCURRENT" envDefault:"3"`
-	S3Endpoint              string        `env:"S3_ENDPOINT,required"`
+	LiveKitEgressMaxConcurrent int    `env:"LIVEKIT_EGRESS_MAX_CONCURRENT" envDefault:"3"`
+	S3Endpoint                 string `env:"S3_ENDPOINT,required"`
 	// S3PublicEndpoint is the browser-facing host used to sign upload/download
 	// URLs. The SDK client talks to S3Endpoint (internal, e.g. http://rustfs:9000)
 	// so boot-time calls don't depend on the public TLS edge. Falls back to

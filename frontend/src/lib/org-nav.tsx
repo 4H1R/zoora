@@ -47,7 +47,7 @@ export function buildOrgNavGroups(
     },
     {
       label: t("org.nav.management"),
-      keys: ["users", "roles", "settings", "billing", "files", "notifications"],
+      keys: ["users", "roles", "settings", "custom-fields", "billing", "files", "notifications"],
     },
   ]
 

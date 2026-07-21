@@ -22,6 +22,7 @@ type fakeRetentionRepo struct {
 func (f *fakeRetentionRepo) ListRecordingsWithPlan(context.Context) ([]livesessions.RecordingWithPlan, error) {
 	return f.rows, nil
 }
+
 func (f *fakeRetentionRepo) DeleteRecording(_ context.Context, id uuid.UUID) error {
 	f.deleted = append(f.deleted, id)
 	return nil

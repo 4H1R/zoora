@@ -21,12 +21,15 @@ type mockRepo struct {
 func (m *mockRepo) GetOrgPlan(context.Context, uuid.UUID) (domain.Plan, *time.Time, error) {
 	return domain.PlanFree, nil, nil
 }
+
 func (m *mockRepo) CountUsers(context.Context, uuid.UUID) (int64, error) {
 	return m.users, m.countErr
 }
+
 func (m *mockRepo) SumStorageBytes(context.Context, uuid.UUID) (int64, error) {
 	return m.storage, m.countErr
 }
+
 func (m *mockRepo) CountActiveLiveRooms(context.Context, uuid.UUID) (int64, error) {
 	return m.rooms, m.countErr
 }

@@ -963,7 +963,7 @@ func (s *service) afterSend(ctx context.Context, conv *domain.Conversation, msg 
 			"sender_id":       msg.SenderID,
 			// Sender name so a group row's "Name: preview" renders without the
 			// full-payload room event (recipients haven't joined this room).
-			"sender": map[string]any{"id": caller.UserID.String(), "name": caller.Name},
+			"sender":     map[string]any{"id": caller.UserID.String(), "name": caller.Name},
 			"content":    msg.Content,
 			"created_at": msg.CreatedAt,
 		})

@@ -25,6 +25,7 @@ import (
 	"github.com/4H1R/zoora/internal/config"
 	"github.com/4H1R/zoora/internal/connectors"
 	"github.com/4H1R/zoora/internal/conversations"
+	"github.com/4H1R/zoora/internal/customfields"
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/entitlements"
 	"github.com/4H1R/zoora/internal/gradebook"
@@ -134,6 +135,7 @@ func main() {
 	jwtService := auth.NewJWTService(cfg)
 
 	userRepo := users.NewRepository(db)
+	customFieldRepo := customfields.NewRepository(db)
 	orgRepo := organizations.NewRepository(db)
 	roleRepo := roles.NewRoleRepository(db)
 	permRepo := roles.NewPermissionRepository(db)
@@ -189,6 +191,7 @@ func main() {
 
 	sessionManager := auth.NewSessionManager(jwtService, redisClient)
 	userService := users.NewService(userRepo, roleRepo, entitlementService, redisClient, sessionManager, log)
+	customFieldService := customfields.NewService(customFieldRepo, log)
 	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, queueClient, log)
 	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, queueClient, log)
 	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, queueClient, log)
@@ -310,6 +313,9 @@ func main() {
 
 	userHandler := users.NewHandler(userService)
 	userHandler.RegisterRoutes(v1, authMiddleware, perm)
+
+	customFieldHandler := customfields.NewHandler(customFieldService)
+	customFieldHandler.RegisterRoutes(v1, authMiddleware, perm)
 
 	roleHandler := roles.NewHandler(roleService, permRepo)
 	roleHandler.RegisterRoutes(v1, authMiddleware, perm)

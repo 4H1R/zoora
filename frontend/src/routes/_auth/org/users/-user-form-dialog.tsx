@@ -2,6 +2,8 @@ import type {
   GithubCom4H1RZooraInternalDomainRole as Role,
   GithubCom4H1RZooraInternalDomainUser as User,
 } from "@/api/model"
+import type { ErrorType } from "@/api/mutator/custom-instance"
+import type { CustomFieldValues } from "@/components/org/users/custom-field-values"
 import type { Resolver } from "react-hook-form"
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -13,9 +15,11 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
 
+import { usePatchUsersIdCustomFields } from "@/api/custom-fields/custom-fields"
 import { useGetRoles } from "@/api/roles/roles"
 import { getGetUsersQueryKey, usePostUsers, usePutUsersId } from "@/api/users/users"
 import { ResourceFormDialog } from "@/components/form/resource-form-dialog"
+import { CustomFieldValuesEditor } from "@/components/org/users/custom-field-values"
 import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
@@ -64,6 +68,8 @@ export function UserFormDialog({ open, onOpenChange, user, organizationId }: Use
     defaultValues: { name: "", username: "", password: "", role_id: "" },
   })
 
+  const [customValues, setCustomValues] = useState<CustomFieldValues>({})
+
   useEffect(() => {
     if (open) {
       reset({
@@ -72,6 +78,7 @@ export function UserFormDialog({ open, onOpenChange, user, organizationId }: Use
         password: "",
         role_id: user?.role_id ?? "",
       })
+      setCustomValues((user?.custom_fields as CustomFieldValues) ?? {})
     }
   }, [open, user, reset])
 
@@ -83,48 +90,56 @@ export function UserFormDialog({ open, onOpenChange, user, organizationId }: Use
     queryClient.invalidateQueries({ queryKey: getGetUsersQueryKey() })
   }
 
-  const createMutation = usePostUsers({
-    mutation: {
-      onSuccess: () => {
-        toast.success(t("org.users.form.createSuccess"))
-        invalidate()
-        onOpenChange(false)
-      },
-    },
-  })
+  const createMutation = usePostUsers()
+  const updateMutation = usePutUsersId()
+  const setValuesMutation = usePatchUsersIdCustomFields()
 
-  const updateMutation = usePutUsersId({
-    mutation: {
-      onSuccess: () => {
+  const isLoading = createMutation.isPending || updateMutation.isPending || setValuesMutation.isPending
+
+  // Values ride on the user row, but are written through a dedicated endpoint
+  // after the user is saved. Skip when the manager entered nothing so blank
+  // required fields never block user creation (soft-required).
+  const persistValues = async (userId: string) => {
+    if (Object.keys(customValues).length === 0) return
+    await setValuesMutation.mutateAsync({ id: userId, data: { values: customValues } })
+  }
+
+  const onSubmit = handleSubmit(async (values) => {
+    try {
+      if (isEdit && user?.id) {
+        await updateMutation.mutateAsync({
+          id: user.id,
+          data: {
+            name: values.name,
+            username: values.username,
+            role_id: values.role_id || undefined,
+          },
+        })
+        await persistValues(user.id)
         toast.success(t("org.users.form.updateSuccess"))
-        invalidate()
-        onOpenChange(false)
-      },
-    },
-  })
-
-  const isLoading = createMutation.isPending || updateMutation.isPending
-
-  const onSubmit = handleSubmit((values) => {
-    if (isEdit && user?.id) {
-      updateMutation.mutate({
-        id: user.id,
-        data: {
-          name: values.name,
-          username: values.username,
-          role_id: values.role_id || undefined,
-        },
-      })
-    } else {
-      createMutation.mutate({
-        data: {
-          organization_id: organizationId,
-          name: values.name,
-          username: values.username,
-          password: values.password!,
-          role_id: values.role_id || undefined,
-        },
-      })
+      } else {
+        const res = await createMutation.mutateAsync({
+          data: {
+            organization_id: organizationId,
+            name: values.name,
+            username: values.username,
+            password: values.password!,
+            role_id: values.role_id || undefined,
+          },
+        })
+        const newId = res.status === 201 ? res.data.data?.id : undefined
+        if (newId) await persistValues(newId)
+        toast.success(t("org.users.form.createSuccess"))
+      }
+      invalidate()
+      onOpenChange(false)
+    } catch (err) {
+      const status = (err as ErrorType<unknown>).response?.status
+      if (status === 409) {
+        toast.error(t("org.customFields.errors.duplicateValue"))
+        return
+      }
+      toast.error(t("org.customFields.errors.generic"))
     }
   })
 
@@ -171,6 +186,8 @@ export function UserFormDialog({ open, onOpenChange, user, organizationId }: Use
           />
         </Field>
       </FieldGroup>
+
+      <CustomFieldValuesEditor value={customValues} onChange={setCustomValues} />
     </ResourceFormDialog>
   )
 }

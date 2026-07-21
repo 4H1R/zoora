@@ -56,6 +56,9 @@ func (s *service) Create(ctx context.Context, dto domain.CreateUserDTO) (*domain
 	}
 	if !caller.IsAdmin {
 		dto.IsAdmin = false
+		if caller.OrgID != nil {
+			dto.OrganizationID = caller.OrgID
+		}
 	}
 
 	// Enforce the org's seat limit (grandfather: blocks new creation only).
@@ -99,10 +102,20 @@ func (s *service) Create(ctx context.Context, dto domain.CreateUserDTO) (*domain
 }
 
 func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
-	if _, ok := domain.CallerFromCtx(ctx); !ok {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	return s.repo.FindByID(ctx, id)
+	user, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if !caller.IsAdmin && caller.OrgID != nil {
+		if user.OrganizationID == nil || *user.OrganizationID != *caller.OrgID {
+			return nil, domain.ErrForbidden
+		}
+	}
+	return user, nil
 }
 
 func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateUserDTO) (*domain.User, error) {
@@ -259,6 +272,15 @@ func (s *service) AssignRole(ctx context.Context, userID uuid.UUID, dto domain.A
 		return nil, err
 	}
 
+	if !caller.IsAdmin && caller.OrgID != nil {
+		if user.OrganizationID == nil || *user.OrganizationID != *caller.OrgID {
+			return nil, domain.ErrForbidden
+		}
+	}
+	if !caller.IsAdmin && s.isManagerRole(ctx, dto.RoleID) {
+		return nil, domain.ErrForbidden
+	}
+
 	user.RoleID = &dto.RoleID
 	if err := s.repo.Update(ctx, user); err != nil {
 		return nil, err
@@ -281,6 +303,12 @@ func (s *service) RemoveRole(ctx context.Context, userID uuid.UUID) (*domain.Use
 	user, err := s.repo.FindByID(ctx, userID)
 	if err != nil {
 		return nil, err
+	}
+
+	if !caller.IsAdmin && caller.OrgID != nil {
+		if user.OrganizationID == nil || *user.OrganizationID != *caller.OrgID {
+			return nil, domain.ErrForbidden
+		}
 	}
 
 	user.RoleID = nil

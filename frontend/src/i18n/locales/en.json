@@ -1635,7 +1635,45 @@
       "zoora": "Zoora",
       "conversations": "Chat",
       "tickets": "Tickets",
-      "account": "Account"
+      "account": "Account",
+      "customFields": "Custom Fields"
+    },
+    "customFields": {
+      "title": "Custom Fields",
+      "subtitle": "Define extra profile fields for your members",
+      "empty": "No custom fields yet. Add one to start collecting extra data.",
+      "add": "Add field",
+      "limitReached": "You've reached the maximum of 10 fields.",
+      "label": "Label",
+      "type": "Type",
+      "types": {
+        "text": "Text",
+        "number": "Number",
+        "date": "Date",
+        "boolean": "Yes / No",
+        "select": "Dropdown"
+      },
+      "options": "Options",
+      "optionsHint": "One choice per line",
+      "required": "Required",
+      "unique": "Unique",
+      "visibleToUser": "Visible to the member",
+      "description": "Help text",
+      "typeLocked": "Type can't be changed after creation",
+      "createTitle": "New custom field",
+      "editTitle": "Edit custom field",
+      "createSuccess": "Field created",
+      "updateSuccess": "Field updated",
+      "archiveConfirm": "Archive this field? Existing values are kept but hidden.",
+      "archive": "Archive",
+      "archiveSuccess": "Field archived",
+      "valuesTitle": "Custom fields",
+      "errors": {
+        "duplicateValue": "This value is already used by another member",
+        "optionInUse": "That option is still in use and can't be removed",
+        "typeImmutable": "Field type can't be changed",
+        "generic": "Something went wrong"
+      }
     },
     "practices": {
       "title": "Practices",

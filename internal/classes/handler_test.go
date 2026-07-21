@@ -30,19 +30,23 @@ func (m *mockClassSvc) Create(ctx context.Context, dto domain.CreateClassDTO) (*
 	c, _ := a.Get(0).(*domain.Class)
 	return c, a.Error(1)
 }
+
 func (m *mockClassSvc) GetByID(ctx context.Context, id uuid.UUID) (*domain.Class, error) {
 	a := m.Called(ctx, id)
 	c, _ := a.Get(0).(*domain.Class)
 	return c, a.Error(1)
 }
+
 func (m *mockClassSvc) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateClassDTO) (*domain.Class, error) {
 	a := m.Called(ctx, id, dto)
 	c, _ := a.Get(0).(*domain.Class)
 	return c, a.Error(1)
 }
+
 func (m *mockClassSvc) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockClassSvc) List(ctx context.Context, p domain.ListParams) ([]domain.Class, int64, error) {
 	a := m.Called(ctx, p)
 	cs, _ := a.Get(0).([]domain.Class)
@@ -54,19 +58,23 @@ func (m *mockClassSvc) CreateSession(ctx context.Context, classID uuid.UUID, dto
 	s, _ := a.Get(0).(*domain.ClassSession)
 	return s, a.Error(1)
 }
+
 func (m *mockClassSvc) GetSession(ctx context.Context, id uuid.UUID) (*domain.ClassSession, error) {
 	a := m.Called(ctx, id)
 	s, _ := a.Get(0).(*domain.ClassSession)
 	return s, a.Error(1)
 }
+
 func (m *mockClassSvc) UpdateSession(ctx context.Context, id uuid.UUID, dto domain.UpdateClassSessionDTO) (*domain.ClassSession, error) {
 	a := m.Called(ctx, id, dto)
 	s, _ := a.Get(0).(*domain.ClassSession)
 	return s, a.Error(1)
 }
+
 func (m *mockClassSvc) DeleteSession(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockClassSvc) ListSessions(ctx context.Context, classID uuid.UUID, q domain.ListClassSessionsQuery) ([]domain.ClassSession, int64, error) {
 	a := m.Called(ctx, classID, q)
 	ss, _ := a.Get(0).([]domain.ClassSession)
@@ -78,14 +86,17 @@ func (m *mockClassSvc) Enroll(ctx context.Context, classID uuid.UUID, dto domain
 	cm, _ := a.Get(0).(*domain.ClassMember)
 	return cm, a.Error(1)
 }
+
 func (m *mockClassSvc) Leave(ctx context.Context, classID, userID uuid.UUID) error {
 	return m.Called(ctx, classID, userID).Error(0)
 }
+
 func (m *mockClassSvc) ListMembers(ctx context.Context, classID uuid.UUID, q domain.ListClassMembersQuery) ([]domain.ClassMember, int64, error) {
 	a := m.Called(ctx, classID, q)
 	ms, _ := a.Get(0).([]domain.ClassMember)
 	return ms, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockClassSvc) ProvisionConversation(ctx context.Context, classID uuid.UUID, dto domain.ProvisionClassConversationDTO) (*domain.Conversation, error) {
 	a := m.Called(ctx, classID, dto)
 	conv, _ := a.Get(0).(*domain.Conversation)
@@ -97,22 +108,27 @@ func (m *mockClassSvc) AdminList(ctx context.Context, q domain.AdminListClassesQ
 	cs, _ := a.Get(0).([]domain.Class)
 	return cs, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockClassSvc) AdminCreate(ctx context.Context, dto domain.AdminCreateClassDTO) (*domain.Class, error) {
 	a := m.Called(ctx, dto)
 	c, _ := a.Get(0).(*domain.Class)
 	return c, a.Error(1)
 }
+
 func (m *mockClassSvc) AdminUpdate(ctx context.Context, id uuid.UUID, dto domain.AdminUpdateClassDTO) (*domain.Class, error) {
 	a := m.Called(ctx, id, dto)
 	c, _ := a.Get(0).(*domain.Class)
 	return c, a.Error(1)
 }
+
 func (m *mockClassSvc) AdminHardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockClassSvc) AdminHardDeleteSession(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockClassSvc) AdminListSessions(ctx context.Context, q domain.AdminListClassSessionsQuery) ([]domain.ClassSession, int64, error) {
 	a := m.Called(ctx, q)
 	ss, _ := a.Get(0).([]domain.ClassSession)

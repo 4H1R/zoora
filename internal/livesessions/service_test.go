@@ -22,6 +22,7 @@ type mockRoomRepo struct{ mock.Mock }
 func (m *mockRoomRepo) Create(ctx context.Context, room *domain.LiveRoom) error {
 	return m.Called(ctx, room).Error(0)
 }
+
 func (m *mockRoomRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.LiveRoom, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -29,33 +30,41 @@ func (m *mockRoomRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Live
 	}
 	return a.Get(0).(*domain.LiveRoom), a.Error(1)
 }
+
 func (m *mockRoomRepo) ListByClassSession(ctx context.Context, sessionID uuid.UUID) ([]domain.LiveRoom, error) {
 	a := m.Called(ctx, sessionID)
 	rooms, _ := a.Get(0).([]domain.LiveRoom)
 	return rooms, a.Error(1)
 }
+
 func (m *mockRoomRepo) Transition(ctx context.Context, room *domain.LiveRoom, from domain.LiveRoomStatus) error {
 	return m.Called(ctx, room, from).Error(0)
 }
+
 func (m *mockRoomRepo) TouchHostLastSeen(ctx context.Context, roomID uuid.UUID, seenAt time.Time) error {
 	return m.Called(ctx, roomID, seenAt).Error(0)
 }
+
 func (m *mockRoomRepo) UpdateConfig(ctx context.Context, roomID uuid.UUID, cfg domain.LiveRoomConfig) error {
 	return m.Called(ctx, roomID, cfg).Error(0)
 }
+
 func (m *mockRoomRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockRoomRepo) List(ctx context.Context, scope domain.LiveRoomListScope, p domain.ListParams) ([]domain.LiveRoom, int64, error) {
 	a := m.Called(ctx, scope, p)
 	rooms, _ := a.Get(0).([]domain.LiveRoom)
 	return rooms, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockRoomRepo) FindActiveRoomsWithStaleHost(ctx context.Context, d time.Duration) ([]domain.LiveRoom, error) {
 	a := m.Called(ctx, d)
 	rooms, _ := a.Get(0).([]domain.LiveRoom)
 	return rooms, a.Error(1)
 }
+
 func (m *mockRoomRepo) FindByLiveKitRoomName(ctx context.Context, name string) (*domain.LiveRoom, error) {
 	a := m.Called(ctx, name)
 	if a.Get(0) == nil {
@@ -63,14 +72,17 @@ func (m *mockRoomRepo) FindByLiveKitRoomName(ctx context.Context, name string) (
 	}
 	return a.Get(0).(*domain.LiveRoom), a.Error(1)
 }
+
 func (m *mockRoomRepo) AdminList(ctx context.Context, q domain.AdminListLiveRoomsQuery) ([]domain.LiveRoom, int64, error) {
 	a := m.Called(ctx, q)
 	rooms, _ := a.Get(0).([]domain.LiveRoom)
 	return rooms, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockRoomRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockRoomRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.LiveRoom, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -84,6 +96,7 @@ type mockParticipantRepo struct{ mock.Mock }
 func (m *mockParticipantRepo) Create(ctx context.Context, p *domain.LiveParticipant) error {
 	return m.Called(ctx, p).Error(0)
 }
+
 func (m *mockParticipantRepo) FindActiveByRoomAndUser(ctx context.Context, roomID, userID uuid.UUID) (*domain.LiveParticipant, error) {
 	a := m.Called(ctx, roomID, userID)
 	if a.Get(0) == nil {
@@ -91,19 +104,23 @@ func (m *mockParticipantRepo) FindActiveByRoomAndUser(ctx context.Context, roomI
 	}
 	return a.Get(0).(*domain.LiveParticipant), a.Error(1)
 }
+
 func (m *mockParticipantRepo) Update(ctx context.Context, p *domain.LiveParticipant) error {
 	return m.Called(ctx, p).Error(0)
 }
+
 func (m *mockParticipantRepo) ListByRoom(ctx context.Context, roomID uuid.UUID, q domain.ListLiveParticipantsQuery) ([]domain.LiveParticipant, int64, error) {
 	a := m.Called(ctx, roomID, q)
 	ps, _ := a.Get(0).([]domain.LiveParticipant)
 	return ps, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockParticipantRepo) ListAllByRoom(ctx context.Context, roomID uuid.UUID) ([]domain.LiveParticipant, error) {
 	a := m.Called(ctx, roomID)
 	ps, _ := a.Get(0).([]domain.LiveParticipant)
 	return ps, a.Error(1)
 }
+
 func (m *mockParticipantRepo) GetActiveParticipant(ctx context.Context, roomID uuid.UUID, identity string) (*domain.LiveParticipant, error) {
 	a := m.Called(ctx, roomID, identity)
 	if a.Get(0) == nil {
@@ -111,15 +128,19 @@ func (m *mockParticipantRepo) GetActiveParticipant(ctx context.Context, roomID u
 	}
 	return a.Get(0).(*domain.LiveParticipant), a.Error(1)
 }
+
 func (m *mockParticipantRepo) UpdateParticipantRole(ctx context.Context, roomID uuid.UUID, identity string, role domain.ParticipantRole) error {
 	return m.Called(ctx, roomID, identity, role).Error(0)
 }
+
 func (m *mockParticipantRepo) SetHandRaised(ctx context.Context, roomID uuid.UUID, identity string, raised bool) error {
 	return m.Called(ctx, roomID, identity, raised).Error(0)
 }
+
 func (m *mockParticipantRepo) MarkAllLeft(ctx context.Context, roomID uuid.UUID, leftAt time.Time) error {
 	return m.Called(ctx, roomID, leftAt).Error(0)
 }
+
 func (m *mockParticipantRepo) MarkLeftByIdentity(ctx context.Context, roomID uuid.UUID, identity string, leftAt time.Time) error {
 	return m.Called(ctx, roomID, identity, leftAt).Error(0)
 }
@@ -129,6 +150,7 @@ type mockRecordingRepo struct{ mock.Mock }
 func (m *mockRecordingRepo) Create(ctx context.Context, r *domain.LiveRecording) error {
 	return m.Called(ctx, r).Error(0)
 }
+
 func (m *mockRecordingRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.LiveRecording, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -136,6 +158,7 @@ func (m *mockRecordingRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain
 	}
 	return a.Get(0).(*domain.LiveRecording), a.Error(1)
 }
+
 func (m *mockRecordingRepo) FindActiveByRoom(ctx context.Context, roomID uuid.UUID) (*domain.LiveRecording, error) {
 	a := m.Called(ctx, roomID)
 	if a.Get(0) == nil {
@@ -143,6 +166,7 @@ func (m *mockRecordingRepo) FindActiveByRoom(ctx context.Context, roomID uuid.UU
 	}
 	return a.Get(0).(*domain.LiveRecording), a.Error(1)
 }
+
 func (m *mockRecordingRepo) FindByEgressID(ctx context.Context, egressID string) (*domain.LiveRecording, error) {
 	a := m.Called(ctx, egressID)
 	if a.Get(0) == nil {
@@ -150,14 +174,17 @@ func (m *mockRecordingRepo) FindByEgressID(ctx context.Context, egressID string)
 	}
 	return a.Get(0).(*domain.LiveRecording), a.Error(1)
 }
+
 func (m *mockRecordingRepo) Update(ctx context.Context, r *domain.LiveRecording) error {
 	return m.Called(ctx, r).Error(0)
 }
+
 func (m *mockRecordingRepo) ListByRoom(ctx context.Context, roomID uuid.UUID, q domain.ListLiveRecordingsQuery) ([]domain.LiveRecording, int64, error) {
 	a := m.Called(ctx, roomID, q)
 	recs, _ := a.Get(0).([]domain.LiveRecording)
 	return recs, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockRecordingRepo) CountActive(ctx context.Context) (int64, error) {
 	a := m.Called(ctx)
 	return a.Get(0).(int64), a.Error(1)
@@ -172,6 +199,7 @@ func (m *mockWhiteboardRepo) Get(ctx context.Context, roomID uuid.UUID) (*domain
 	}
 	return a.Get(0).(*domain.LiveWhiteboard), a.Error(1)
 }
+
 func (m *mockWhiteboardRepo) Upsert(ctx context.Context, roomID uuid.UUID, snapshot json.RawMessage) (*domain.LiveWhiteboard, error) {
 	a := m.Called(ctx, roomID, snapshot)
 	if a.Get(0) == nil {
@@ -179,6 +207,7 @@ func (m *mockWhiteboardRepo) Upsert(ctx context.Context, roomID uuid.UUID, snaps
 	}
 	return a.Get(0).(*domain.LiveWhiteboard), a.Error(1)
 }
+
 func (m *mockWhiteboardRepo) Delete(ctx context.Context, roomID uuid.UUID) error {
 	return m.Called(ctx, roomID).Error(0)
 }
@@ -188,6 +217,7 @@ type mockClassSessionRepo struct{ mock.Mock }
 func (m *mockClassSessionRepo) Create(ctx context.Context, s *domain.ClassSession) error {
 	return m.Called(ctx, s).Error(0)
 }
+
 func (m *mockClassSessionRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.ClassSession, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -195,25 +225,31 @@ func (m *mockClassSessionRepo) FindByID(ctx context.Context, id uuid.UUID) (*dom
 	}
 	return a.Get(0).(*domain.ClassSession), a.Error(1)
 }
+
 func (m *mockClassSessionRepo) Update(ctx context.Context, s *domain.ClassSession) error {
 	return m.Called(ctx, s).Error(0)
 }
+
 func (m *mockClassSessionRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockClassSessionRepo) ListByClass(ctx context.Context, classID uuid.UUID, q domain.ListClassSessionsQuery) ([]domain.ClassSession, int64, error) {
 	a := m.Called(ctx, classID, q)
 	ss, _ := a.Get(0).([]domain.ClassSession)
 	return ss, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockClassSessionRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockClassSessionRepo) AdminList(ctx context.Context, q domain.AdminListClassSessionsQuery) ([]domain.ClassSession, int64, error) {
 	a := m.Called(ctx, q)
 	ss, _ := a.Get(0).([]domain.ClassSession)
 	return ss, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockClassSessionRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.ClassSession, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -227,6 +263,7 @@ type mockClassRepo struct{ mock.Mock }
 func (m *mockClassRepo) Create(ctx context.Context, c *domain.Class) error {
 	return m.Called(ctx, c).Error(0)
 }
+
 func (m *mockClassRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Class, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -234,25 +271,31 @@ func (m *mockClassRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Cla
 	}
 	return a.Get(0).(*domain.Class), a.Error(1)
 }
+
 func (m *mockClassRepo) Update(ctx context.Context, c *domain.Class) error {
 	return m.Called(ctx, c).Error(0)
 }
+
 func (m *mockClassRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockClassRepo) List(ctx context.Context, scope domain.ClassListScope, p domain.ListParams) ([]domain.Class, int64, error) {
 	a := m.Called(ctx, scope, p)
 	cs, _ := a.Get(0).([]domain.Class)
 	return cs, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockClassRepo) ListByNames(ctx context.Context, orgID uuid.UUID, names []string) ([]domain.Class, error) {
 	a := m.Called(ctx, orgID, names)
 	cs, _ := a.Get(0).([]domain.Class)
 	return cs, a.Error(1)
 }
+
 func (m *mockClassRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockClassRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.Class, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -260,6 +303,7 @@ func (m *mockClassRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UU
 	}
 	return a.Get(0).(*domain.Class), a.Error(1)
 }
+
 func (m *mockClassRepo) AdminList(ctx context.Context, q domain.AdminListClassesQuery) ([]domain.Class, int64, error) {
 	a := m.Called(ctx, q)
 	cs, _ := a.Get(0).([]domain.Class)
@@ -271,22 +315,27 @@ type mockMemberRepo struct{ mock.Mock }
 func (m *mockMemberRepo) Create(ctx context.Context, cm *domain.ClassMember) error {
 	return m.Called(ctx, cm).Error(0)
 }
+
 func (m *mockMemberRepo) Delete(ctx context.Context, classID, userID uuid.UUID) error {
 	return m.Called(ctx, classID, userID).Error(0)
 }
+
 func (m *mockMemberRepo) Exists(ctx context.Context, classID, userID uuid.UUID) (bool, error) {
 	a := m.Called(ctx, classID, userID)
 	return a.Bool(0), a.Error(1)
 }
+
 func (m *mockMemberRepo) CountByClass(ctx context.Context, classID uuid.UUID) (int64, error) {
 	a := m.Called(ctx, classID)
 	return a.Get(0).(int64), a.Error(1)
 }
+
 func (m *mockMemberRepo) ListByClass(ctx context.Context, classID uuid.UUID, p domain.ListParams) ([]domain.ClassMember, int64, error) {
 	a := m.Called(ctx, classID, p)
 	ms, _ := a.Get(0).([]domain.ClassMember)
 	return ms, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockMemberRepo) ListAllByClass(ctx context.Context, classID uuid.UUID) ([]domain.ClassMember, error) {
 	a := m.Called(ctx, classID)
 	ms, _ := a.Get(0).([]domain.ClassMember)
@@ -302,6 +351,7 @@ func (m *mockChatService) CreateChat(ctx context.Context, dto domain.CreateChatD
 	}
 	return a.Get(0).(*domain.LiveRoomChat), a.Error(1)
 }
+
 func (m *mockChatService) GetChat(ctx context.Context, id uuid.UUID) (*domain.LiveRoomChat, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -309,6 +359,7 @@ func (m *mockChatService) GetChat(ctx context.Context, id uuid.UUID) (*domain.Li
 	}
 	return a.Get(0).(*domain.LiveRoomChat), a.Error(1)
 }
+
 func (m *mockChatService) UpdateChat(ctx context.Context, id uuid.UUID, dto domain.UpdateChatDTO) (*domain.LiveRoomChat, error) {
 	a := m.Called(ctx, id, dto)
 	if a.Get(0) == nil {
@@ -316,13 +367,16 @@ func (m *mockChatService) UpdateChat(ctx context.Context, id uuid.UUID, dto doma
 	}
 	return a.Get(0).(*domain.LiveRoomChat), a.Error(1)
 }
+
 func (m *mockChatService) DeleteChat(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockChatService) ListChats(ctx context.Context, q domain.ListChatsQuery) ([]domain.LiveRoomChat, int64, error) {
 	a := m.Called(ctx, q)
 	return a.Get(0).([]domain.LiveRoomChat), a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockChatService) SendMessage(ctx context.Context, chatID uuid.UUID, dto domain.SendMessageDTO) (*domain.LiveRoomMessage, error) {
 	a := m.Called(ctx, chatID, dto)
 	if a.Get(0) == nil {
@@ -330,6 +384,7 @@ func (m *mockChatService) SendMessage(ctx context.Context, chatID uuid.UUID, dto
 	}
 	return a.Get(0).(*domain.LiveRoomMessage), a.Error(1)
 }
+
 func (m *mockChatService) GetMessage(ctx context.Context, id uuid.UUID) (*domain.LiveRoomMessage, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -337,6 +392,7 @@ func (m *mockChatService) GetMessage(ctx context.Context, id uuid.UUID) (*domain
 	}
 	return a.Get(0).(*domain.LiveRoomMessage), a.Error(1)
 }
+
 func (m *mockChatService) UpdateMessage(ctx context.Context, id uuid.UUID, dto domain.UpdateMessageDTO) (*domain.LiveRoomMessage, error) {
 	a := m.Called(ctx, id, dto)
 	if a.Get(0) == nil {
@@ -344,13 +400,16 @@ func (m *mockChatService) UpdateMessage(ctx context.Context, id uuid.UUID, dto d
 	}
 	return a.Get(0).(*domain.LiveRoomMessage), a.Error(1)
 }
+
 func (m *mockChatService) DeleteMessage(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockChatService) ListMessages(ctx context.Context, chatID uuid.UUID, q domain.ListMessagesQuery) ([]domain.LiveRoomMessage, int64, error) {
 	a := m.Called(ctx, chatID, q)
 	return a.Get(0).([]domain.LiveRoomMessage), a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockChatService) FindChatByRoom(ctx context.Context, liveRoomID uuid.UUID) (*domain.LiveRoomChat, error) {
 	a := m.Called(ctx, liveRoomID)
 	if a.Get(0) == nil {
@@ -358,6 +417,7 @@ func (m *mockChatService) FindChatByRoom(ctx context.Context, liveRoomID uuid.UU
 	}
 	return a.Get(0).(*domain.LiveRoomChat), a.Error(1)
 }
+
 func (m *mockChatService) ArchiveByRoom(ctx context.Context, liveRoomID uuid.UUID) error {
 	return m.Called(ctx, liveRoomID).Error(0)
 }
@@ -369,12 +429,15 @@ type mockPollService struct{ mock.Mock }
 func (m *mockPollService) CloseByModel(ctx context.Context, modelType string, modelID uuid.UUID) error {
 	return m.Called(ctx, modelType, modelID).Error(0)
 }
+
 func (m *mockPollService) Create(context.Context, domain.CreatePollDTO) (*domain.Poll, error) {
 	panic("unused")
 }
+
 func (m *mockPollService) GetByID(context.Context, uuid.UUID) (*domain.Poll, error) {
 	panic("unused")
 }
+
 func (m *mockPollService) Update(context.Context, uuid.UUID, domain.UpdatePollDTO) (*domain.Poll, error) {
 	panic("unused")
 }
@@ -382,15 +445,19 @@ func (m *mockPollService) Delete(context.Context, uuid.UUID) error { panic("unus
 func (m *mockPollService) List(context.Context, domain.ListPollsQuery) ([]domain.Poll, int64, error) {
 	panic("unused")
 }
+
 func (m *mockPollService) Answer(context.Context, uuid.UUID, domain.AnswerPollDTO) ([]domain.PollAnswer, error) {
 	panic("unused")
 }
+
 func (m *mockPollService) ListAnswers(context.Context, uuid.UUID, domain.ListPollAnswersQuery) ([]domain.PollAnswer, int64, error) {
 	panic("unused")
 }
+
 func (m *mockPollService) Results(context.Context, uuid.UUID) (*domain.PollResults, error) {
 	panic("unused")
 }
+
 func (m *mockPollService) AdminList(context.Context, domain.AdminListPollsQuery) ([]domain.Poll, int64, error) {
 	panic("unused")
 }
@@ -423,6 +490,7 @@ func (f *fakeLiveKit) GenerateToken(_, _, _, metadata string, sources []lkproto.
 	f.tokenRoomAdmin = append(f.tokenRoomAdmin, roomAdmin)
 	return "test-token", nil
 }
+
 func (f *fakeLiveKit) StartRecording(context.Context, string, string) (string, error) {
 	return "EG_test", nil
 }
@@ -433,12 +501,15 @@ func (f *fakeLiveKit) ListParticipants(ctx context.Context, roomName string) ([]
 	}
 	return nil, nil
 }
+
 func (f *fakeLiveKit) UpdateParticipant(context.Context, string, string, string, []lkproto.TrackSource) error {
 	return nil
 }
+
 func (f *fakeLiveKit) MutePublishedTrack(context.Context, string, string, string, bool) error {
 	return nil
 }
+
 func (f *fakeLiveKit) RemoveParticipant(ctx context.Context, roomName, identity string) error {
 	if f.removeParticipantFn != nil {
 		return f.removeParticipantFn(ctx, roomName, identity)
@@ -481,9 +552,11 @@ func (f fakeEntSvc) CheckUserLimit(context.Context, uuid.UUID, domain.Entitlemen
 func (f fakeEntSvc) CheckUserLimitN(context.Context, uuid.UUID, domain.Entitlements, int64) error {
 	return nil
 }
+
 func (f fakeEntSvc) CheckStorageLimit(context.Context, uuid.UUID, domain.Entitlements, int64) error {
 	return nil
 }
+
 func (f fakeEntSvc) CheckConcurrentRoomsLimit(context.Context, uuid.UUID, domain.Entitlements) error {
 	return f.concurrentErr
 }

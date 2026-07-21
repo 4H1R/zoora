@@ -19,8 +19,8 @@ skipping the org-match guard that their sibling methods already apply. The canon
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
-| 001 | Tenant isolation: users + organizations single-object methods | P1 | S | — | TODO |
-| 002 | Tenant isolation: roles + orgsettings single-object methods | P1 | S | — | TODO |
+| 001 | Tenant isolation: users + organizations single-object methods | P1 | S | — | DONE |
+| 002 | Tenant isolation: roles + orgsettings single-object methods | P1 | S | — | DONE |
 | 003 | LiveRoom chat: enforce tenant + room-membership authz | P1 | M | — | TODO |
 | 004 | Polls: enforce model-scoped authorization | P1 | M | — | TODO |
 | 005 | classes.Enroll: block cross-tenant self-enrollment | P1 | S | — | TODO |

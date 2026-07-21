@@ -19,6 +19,7 @@ type mQuizRepo struct{ mock.Mock }
 func (m *mQuizRepo) Create(ctx context.Context, q *domain.Quiz) error {
 	return m.Called(ctx, q).Error(0)
 }
+
 func (m *mQuizRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Quiz, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -26,12 +27,15 @@ func (m *mQuizRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Quiz, e
 	}
 	return a.Get(0).(*domain.Quiz), a.Error(1)
 }
+
 func (m *mQuizRepo) Update(ctx context.Context, q *domain.Quiz) error {
 	return m.Called(ctx, q).Error(0)
 }
+
 func (m *mQuizRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mQuizRepo) List(ctx context.Context, scope domain.QuizListScope, p domain.ListParams) ([]domain.Quiz, int64, error) {
 	a := m.Called(ctx, scope, p)
 	qs, _ := a.Get(0).([]domain.Quiz)
@@ -42,14 +46,17 @@ func (m *mQuizRepo) CountPendingSubmissionsByQuizIDs(ctx context.Context, quizID
 	res, _ := a.Get(0).(map[uuid.UUID]int64)
 	return res, a.Error(1)
 }
+
 func (m *mQuizRepo) ListByMemberWithRooms(ctx context.Context, userID uuid.UUID, classID *uuid.UUID, p domain.ListParams) ([]domain.Quiz, error) {
 	a := m.Called(ctx, userID, classID, p)
 	qs, _ := a.Get(0).([]domain.Quiz)
 	return qs, a.Error(1)
 }
+
 func (m *mQuizRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mQuizRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.Quiz, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -57,6 +64,7 @@ func (m *mQuizRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) 
 	}
 	return a.Get(0).(*domain.Quiz), a.Error(1)
 }
+
 func (m *mQuizRepo) AdminList(ctx context.Context, q domain.AdminListQuizzesQuery) ([]domain.Quiz, int64, error) {
 	a := m.Called(ctx, q)
 	qs, _ := a.Get(0).([]domain.Quiz)
@@ -68,6 +76,7 @@ type mRuleRepo struct{ mock.Mock }
 func (m *mRuleRepo) Create(ctx context.Context, r *domain.QuizRule) error {
 	return m.Called(ctx, r).Error(0)
 }
+
 func (m *mRuleRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.QuizRule, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -75,12 +84,15 @@ func (m *mRuleRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.QuizRul
 	}
 	return a.Get(0).(*domain.QuizRule), a.Error(1)
 }
+
 func (m *mRuleRepo) Update(ctx context.Context, r *domain.QuizRule) error {
 	return m.Called(ctx, r).Error(0)
 }
+
 func (m *mRuleRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mRuleRepo) ListByQuiz(ctx context.Context, quizID uuid.UUID, p domain.ListParams) ([]domain.QuizRule, int64, error) {
 	a := m.Called(ctx, quizID, p)
 	rs, _ := a.Get(0).([]domain.QuizRule)
@@ -92,6 +104,7 @@ type mRoomRepo struct{ mock.Mock }
 func (m *mRoomRepo) Create(ctx context.Context, r *domain.QuizRoom) error {
 	return m.Called(ctx, r).Error(0)
 }
+
 func (m *mRoomRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.QuizRoom, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -99,22 +112,27 @@ func (m *mRoomRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.QuizRoo
 	}
 	return a.Get(0).(*domain.QuizRoom), a.Error(1)
 }
+
 func (m *mRoomRepo) Update(ctx context.Context, r *domain.QuizRoom) error {
 	return m.Called(ctx, r).Error(0)
 }
+
 func (m *mRoomRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mRoomRepo) ListByQuiz(ctx context.Context, quizID uuid.UUID, p domain.ListParams) ([]domain.QuizRoom, int64, error) {
 	a := m.Called(ctx, quizID, p)
 	rs, _ := a.Get(0).([]domain.QuizRoom)
 	return rs, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mRoomRepo) ListBySessionID(ctx context.Context, sessionID uuid.UUID) ([]domain.QuizRoom, error) {
 	a := m.Called(ctx, sessionID)
 	rs, _ := a.Get(0).([]domain.QuizRoom)
 	return rs, a.Error(1)
 }
+
 func (m *mRoomRepo) FindOpenByQuizID(ctx context.Context, quizID uuid.UUID) (*domain.QuizRoom, error) {
 	a := m.Called(ctx, quizID)
 	if a.Get(0) == nil {
@@ -128,6 +146,7 @@ type mSubRepo struct{ mock.Mock }
 func (m *mSubRepo) Create(ctx context.Context, s *domain.QuizSubmission) error {
 	return m.Called(ctx, s).Error(0)
 }
+
 func (m *mSubRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.QuizSubmission, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -135,9 +154,11 @@ func (m *mSubRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.QuizSubm
 	}
 	return a.Get(0).(*domain.QuizSubmission), a.Error(1)
 }
+
 func (m *mSubRepo) Update(ctx context.Context, s *domain.QuizSubmission) error {
 	return m.Called(ctx, s).Error(0)
 }
+
 func (m *mSubRepo) FindByQuizAndUser(ctx context.Context, quizID, userID uuid.UUID) (*domain.QuizSubmission, error) {
 	a := m.Called(ctx, quizID, userID)
 	if a.Get(0) == nil {
@@ -145,6 +166,7 @@ func (m *mSubRepo) FindByQuizAndUser(ctx context.Context, quizID, userID uuid.UU
 	}
 	return a.Get(0).(*domain.QuizSubmission), a.Error(1)
 }
+
 func (m *mSubRepo) ListByQuiz(ctx context.Context, quizID uuid.UUID, q domain.ListSubmissionsQuery) ([]domain.QuizSubmission, int64, error) {
 	a := m.Called(ctx, quizID, q)
 	ss, _ := a.Get(0).([]domain.QuizSubmission)
@@ -156,6 +178,7 @@ type mQRepo struct{ mock.Mock }
 func (m *mQRepo) Create(ctx context.Context, q *domain.Question) error {
 	return m.Called(ctx, q).Error(0)
 }
+
 func (m *mQRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Question, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -163,39 +186,48 @@ func (m *mQRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Question, 
 	}
 	return a.Get(0).(*domain.Question), a.Error(1)
 }
+
 func (m *mQRepo) Update(ctx context.Context, q *domain.Question) error {
 	return m.Called(ctx, q).Error(0)
 }
+
 func (m *mQRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mQRepo) ListByBank(ctx context.Context, bankID uuid.UUID, q domain.ListQuestionsQuery) ([]domain.Question, int64, error) {
 	a := m.Called(ctx, bankID, q)
 	qs, _ := a.Get(0).([]domain.Question)
 	return qs, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mQRepo) FindByIDs(ctx context.Context, ids []uuid.UUID) ([]domain.Question, error) {
 	a := m.Called(ctx, ids)
 	qs, _ := a.Get(0).([]domain.Question)
 	return qs, a.Error(1)
 }
+
 func (m *mQRepo) ListAllByBank(ctx context.Context, bankID uuid.UUID) ([]domain.Question, error) {
 	a := m.Called(ctx, bankID)
 	qs, _ := a.Get(0).([]domain.Question)
 	return qs, a.Error(1)
 }
+
 func (m *mQRepo) CountByBank(ctx context.Context, bankID uuid.UUID) (int64, error) {
 	a := m.Called(ctx, bankID)
 	return a.Get(0).(int64), a.Error(1)
 }
+
 func (m *mQRepo) RandomByBank(ctx context.Context, bankID uuid.UUID, count int) ([]domain.Question, error) {
 	a := m.Called(ctx, bankID, count)
 	qs, _ := a.Get(0).([]domain.Question)
 	return qs, a.Error(1)
 }
+
 func (m *mQRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mQRepo) AdminList(ctx context.Context, q domain.AdminListQuestionsQuery) ([]domain.Question, int64, error) {
 	a := m.Called(ctx, q)
 	qs, _ := a.Get(0).([]domain.Question)
@@ -207,6 +239,7 @@ type mClassRepo struct{ mock.Mock }
 func (m *mClassRepo) Create(ctx context.Context, c *domain.Class) error {
 	return m.Called(ctx, c).Error(0)
 }
+
 func (m *mClassRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Class, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -214,25 +247,31 @@ func (m *mClassRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Class,
 	}
 	return a.Get(0).(*domain.Class), a.Error(1)
 }
+
 func (m *mClassRepo) Update(ctx context.Context, c *domain.Class) error {
 	return m.Called(ctx, c).Error(0)
 }
+
 func (m *mClassRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mClassRepo) List(ctx context.Context, scope domain.ClassListScope, p domain.ListParams) ([]domain.Class, int64, error) {
 	a := m.Called(ctx, scope, p)
 	cs, _ := a.Get(0).([]domain.Class)
 	return cs, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mClassRepo) ListByNames(ctx context.Context, orgID uuid.UUID, names []string) ([]domain.Class, error) {
 	a := m.Called(ctx, orgID, names)
 	cs, _ := a.Get(0).([]domain.Class)
 	return cs, a.Error(1)
 }
+
 func (m *mClassRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mClassRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.Class, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -240,6 +279,7 @@ func (m *mClassRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID)
 	}
 	return a.Get(0).(*domain.Class), a.Error(1)
 }
+
 func (m *mClassRepo) AdminList(ctx context.Context, q domain.AdminListClassesQuery) ([]domain.Class, int64, error) {
 	a := m.Called(ctx, q)
 	cs, _ := a.Get(0).([]domain.Class)
@@ -251,22 +291,27 @@ type mMemberRepo struct{ mock.Mock }
 func (m *mMemberRepo) Create(ctx context.Context, cm *domain.ClassMember) error {
 	return m.Called(ctx, cm).Error(0)
 }
+
 func (m *mMemberRepo) Delete(ctx context.Context, classID, userID uuid.UUID) error {
 	return m.Called(ctx, classID, userID).Error(0)
 }
+
 func (m *mMemberRepo) Exists(ctx context.Context, classID, userID uuid.UUID) (bool, error) {
 	a := m.Called(ctx, classID, userID)
 	return a.Bool(0), a.Error(1)
 }
+
 func (m *mMemberRepo) CountByClass(ctx context.Context, classID uuid.UUID) (int64, error) {
 	a := m.Called(ctx, classID)
 	return a.Get(0).(int64), a.Error(1)
 }
+
 func (m *mMemberRepo) ListByClass(ctx context.Context, classID uuid.UUID, p domain.ListParams) ([]domain.ClassMember, int64, error) {
 	a := m.Called(ctx, classID, p)
 	ms, _ := a.Get(0).([]domain.ClassMember)
 	return ms, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mMemberRepo) ListAllByClass(ctx context.Context, classID uuid.UUID) ([]domain.ClassMember, error) {
 	a := m.Called(ctx, classID)
 	ms, _ := a.Get(0).([]domain.ClassMember)
@@ -1258,8 +1303,10 @@ func TestQuizService_StartSubmission_FreezesQuestionSetAndGPS(t *testing.T) {
 	classID := uuid.New()
 	roomID := uuid.New()
 	bankID := uuid.New()
-	q1 := domain.Question{ID: uuid.New(), Type: domain.QuestionTypeChoice,
-		Options: []domain.QuestionOption{{ID: "o1"}, {ID: "o2"}, {ID: "o3"}}}
+	q1 := domain.Question{
+		ID: uuid.New(), Type: domain.QuestionTypeChoice,
+		Options: []domain.QuestionOption{{ID: "o1"}, {ID: "o2"}, {ID: "o3"}},
+	}
 	ctx := studentCtx(studentID)
 	d := newDeps()
 
@@ -1328,12 +1375,16 @@ func TestQuizService_ListQuestionsForTaking_UsesFrozenSetAndOrder(t *testing.T) 
 	d.quizRepo.On("FindByID", ctx, quizID).Return(&domain.Quiz{ID: quizID, ClassID: classID, UserID: uuid.New()}, nil)
 	d.memberRepo.On("Exists", ctx, classID, studentID).Return(true, nil)
 	d.subRepo.On("FindByQuizAndUser", ctx, quizID, studentID).
-		Return(&domain.QuizSubmission{ID: uuid.New(), QuizID: quizID, UserID: studentID,
-			Status: domain.SubmissionStatusInProgress, QuestionSet: frozen}, nil)
+		Return(&domain.QuizSubmission{
+			ID: uuid.New(), QuizID: quizID, UserID: studentID,
+			Status: domain.SubmissionStatusInProgress, QuestionSet: frozen,
+		}, nil)
 	d.ruleRepo.On("ListByQuiz", ctx, quizID, mock.Anything).Return([]domain.QuizRule{}, int64(0), nil)
 	d.questionRepo.On("FindByIDs", ctx, []uuid.UUID{qid}).
-		Return([]domain.Question{{ID: qid, Type: domain.QuestionTypeChoice,
-			Options: []domain.QuestionOption{{ID: "o1", Value: "A", Score: 1}, {ID: "o2", Value: "B"}, {ID: "o3", Value: "C"}}}}, nil)
+		Return([]domain.Question{{
+			ID: qid, Type: domain.QuestionTypeChoice,
+			Options: []domain.QuestionOption{{ID: "o1", Value: "A", Score: 1}, {ID: "o2", Value: "B"}, {ID: "o3", Value: "C"}},
+		}}, nil)
 
 	svc := d.service()
 	qs, err := svc.ListQuestionsForTaking(ctx, quizID)
@@ -1353,8 +1404,10 @@ func TestQuizService_SaveAnswer_UpsertsAndKeepsInProgress(t *testing.T) {
 	ctx := studentCtx(studentID)
 	d := newDeps()
 
-	existing := &domain.QuizSubmission{ID: subID, QuizID: quizID, UserID: studentID, Status: domain.SubmissionStatusInProgress,
-		StartedAt: time.Now(), QuestionSet: []domain.SubmissionQuestion{{QuestionID: qid}}, Answers: []domain.SubmissionAnswer{}}
+	existing := &domain.QuizSubmission{
+		ID: subID, QuizID: quizID, UserID: studentID, Status: domain.SubmissionStatusInProgress,
+		StartedAt: time.Now(), QuestionSet: []domain.SubmissionQuestion{{QuestionID: qid}}, Answers: []domain.SubmissionAnswer{},
+	}
 	d.subRepo.On("FindByID", ctx, subID).Return(existing, nil)
 	d.quizRepo.On("FindByID", ctx, quizID).Return(&domain.Quiz{ID: quizID, DurationMinutes: 60}, nil)
 	d.subRepo.On("Update", ctx, mock.AnythingOfType("*domain.QuizSubmission")).
@@ -1382,10 +1435,12 @@ func TestQuizService_SaveAnswer_NoBackNavigation_RejectsOverwrite(t *testing.T) 
 	ctx := studentCtx(studentID)
 	d := newDeps()
 
-	existing := &domain.QuizSubmission{ID: subID, QuizID: quizID, UserID: studentID, Status: domain.SubmissionStatusInProgress,
+	existing := &domain.QuizSubmission{
+		ID: subID, QuizID: quizID, UserID: studentID, Status: domain.SubmissionStatusInProgress,
 		StartedAt:   time.Now(),
 		QuestionSet: []domain.SubmissionQuestion{{QuestionID: qid}},
-		Answers:     []domain.SubmissionAnswer{{QuestionID: qid, SelectedOptionIDs: []string{"o1"}}}}
+		Answers:     []domain.SubmissionAnswer{{QuestionID: qid, SelectedOptionIDs: []string{"o1"}}},
+	}
 	d.subRepo.On("FindByID", ctx, subID).Return(existing, nil)
 	d.quizRepo.On("FindByID", ctx, quizID).Return(&domain.Quiz{ID: quizID, DurationMinutes: 60, NoBackNavigation: true}, nil)
 
@@ -1403,9 +1458,11 @@ func TestQuizService_SaveAnswer_RejectsPastDeadline(t *testing.T) {
 	ctx := studentCtx(studentID)
 	d := newDeps()
 
-	sub := &domain.QuizSubmission{ID: subID, QuizID: quizID, UserID: studentID,
+	sub := &domain.QuizSubmission{
+		ID: subID, QuizID: quizID, UserID: studentID,
 		Status: domain.SubmissionStatusInProgress, StartedAt: time.Now().Add(-2 * time.Hour),
-		QuestionSet: []domain.SubmissionQuestion{{QuestionID: qid}}, Answers: []domain.SubmissionAnswer{}}
+		QuestionSet: []domain.SubmissionQuestion{{QuestionID: qid}}, Answers: []domain.SubmissionAnswer{},
+	}
 	d.subRepo.On("FindByID", ctx, subID).Return(sub, nil)
 	d.quizRepo.On("FindByID", ctx, quizID).Return(&domain.Quiz{ID: quizID, DurationMinutes: 30}, nil)
 	d.ruleRepo.On("ListByQuiz", ctx, quizID, mock.Anything).Return([]domain.QuizRule{}, int64(0), nil)
@@ -1425,14 +1482,18 @@ func TestQuizService_GetSubmission_LazyFinalizesPastDeadline(t *testing.T) {
 	d := newDeps()
 
 	started := time.Now().Add(-2 * time.Hour)
-	sub := &domain.QuizSubmission{ID: subID, QuizID: quizID, UserID: uuid.New(), Status: domain.SubmissionStatusInProgress,
+	sub := &domain.QuizSubmission{
+		ID: subID, QuizID: quizID, UserID: uuid.New(), Status: domain.SubmissionStatusInProgress,
 		StartedAt: started, QuestionSet: []domain.SubmissionQuestion{{QuestionID: qid}},
-		Answers: []domain.SubmissionAnswer{{QuestionID: qid, SelectedOptionIDs: []string{"o1"}}}}
+		Answers: []domain.SubmissionAnswer{{QuestionID: qid, SelectedOptionIDs: []string{"o1"}}},
+	}
 	d.subRepo.On("FindByID", ctx, subID).Return(sub, nil)
 	d.quizRepo.On("FindByID", ctx, quizID).Return(&domain.Quiz{ID: quizID, UserID: teacherID, DurationMinutes: 30}, nil)
 	d.questionRepo.On("FindByIDs", ctx, []uuid.UUID{qid}).
-		Return([]domain.Question{{ID: qid, Type: domain.QuestionTypeChoice,
-			Options: []domain.QuestionOption{{ID: "o1", Score: 1}}}}, nil)
+		Return([]domain.Question{{
+			ID: qid, Type: domain.QuestionTypeChoice,
+			Options: []domain.QuestionOption{{ID: "o1", Score: 1}},
+		}}, nil)
 	d.ruleRepo.On("ListByQuiz", ctx, quizID, mock.Anything).Return([]domain.QuizRule{}, int64(0), nil)
 	d.subRepo.On("Update", ctx, mock.AnythingOfType("*domain.QuizSubmission")).Return(nil)
 
@@ -1452,10 +1513,12 @@ func TestQuizService_SubmitQuiz_MergesSavedAnswersAndFiltersFrozenSet(t *testing
 	ctx := studentCtx(studentID)
 	d := newDeps()
 
-	sub := &domain.QuizSubmission{ID: subID, QuizID: quizID, UserID: studentID,
+	sub := &domain.QuizSubmission{
+		ID: subID, QuizID: quizID, UserID: studentID,
 		Status: domain.SubmissionStatusInProgress, StartedAt: time.Now(),
 		QuestionSet: []domain.SubmissionQuestion{{QuestionID: q1}, {QuestionID: q2}},
-		Answers:     []domain.SubmissionAnswer{{QuestionID: q1, SelectedOptionIDs: []string{"o1"}}}}
+		Answers:     []domain.SubmissionAnswer{{QuestionID: q1, SelectedOptionIDs: []string{"o1"}}},
+	}
 	now := time.Now()
 	d.subRepo.On("FindByID", ctx, subID).Return(sub, nil)
 	d.quizRepo.On("FindByID", ctx, quizID).Return(&domain.Quiz{ID: quizID, DurationMinutes: 30}, nil)
@@ -1492,10 +1555,12 @@ func TestQuizService_SubmitQuiz_NoBackNavigation_IgnoresOverwriteOfCommittedAnsw
 	ctx := studentCtx(studentID)
 	d := newDeps()
 
-	sub := &domain.QuizSubmission{ID: subID, QuizID: quizID, UserID: studentID,
+	sub := &domain.QuizSubmission{
+		ID: subID, QuizID: quizID, UserID: studentID,
 		Status: domain.SubmissionStatusInProgress, StartedAt: time.Now(),
 		QuestionSet: []domain.SubmissionQuestion{{QuestionID: q1}, {QuestionID: q2}},
-		Answers:     []domain.SubmissionAnswer{{QuestionID: q1, SelectedOptionIDs: []string{"o1"}}}}
+		Answers:     []domain.SubmissionAnswer{{QuestionID: q1, SelectedOptionIDs: []string{"o1"}}},
+	}
 	now := time.Now()
 	d.subRepo.On("FindByID", ctx, subID).Return(sub, nil)
 	d.quizRepo.On("FindByID", ctx, quizID).Return(&domain.Quiz{ID: quizID, DurationMinutes: 30, NoBackNavigation: true}, nil)

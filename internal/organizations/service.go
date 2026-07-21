@@ -87,7 +87,11 @@ func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*domain.Organizati
 }
 
 func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateOrganizationDTO) (*domain.Organization, error) {
-	if _, ok := domain.CallerFromCtx(ctx); !ok {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	if !caller.IsAdmin && (caller.OrgID == nil || *caller.OrgID != id) {
 		return nil, domain.ErrForbidden
 	}
 	org, err := s.repo.FindByID(ctx, id)

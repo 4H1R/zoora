@@ -75,22 +75,22 @@ type ConversationMember struct {
 }
 
 type ConversationMessage struct {
-	ID               uuid.UUID       `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	ConversationID   uuid.UUID       `gorm:"type:uuid;not null;index" json:"conversation_id"`
-	SenderID         *uuid.UUID      `gorm:"type:uuid;index" json:"sender_id"`
-	Sender           *User           `gorm:"foreignKey:SenderID" json:"sender,omitempty"`
-	ReplyToMessageID *uuid.UUID      `gorm:"type:uuid" json:"reply_to_message_id"`
-	Content          string          `gorm:"type:text;not null;default:''" json:"content"`
-	IsEdited         bool            `gorm:"not null;default:false" json:"is_edited"`
-	IsPinned         bool            `gorm:"not null;default:false" json:"is_pinned"`
-	PinnedBy         *uuid.UUID      `gorm:"type:uuid" json:"pinned_by"`
-	PinnedAt         *time.Time      `json:"pinned_at"`
+	ID               uuid.UUID  `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	ConversationID   uuid.UUID  `gorm:"type:uuid;not null;index" json:"conversation_id"`
+	SenderID         *uuid.UUID `gorm:"type:uuid;index" json:"sender_id"`
+	Sender           *User      `gorm:"foreignKey:SenderID" json:"sender,omitempty"`
+	ReplyToMessageID *uuid.UUID `gorm:"type:uuid" json:"reply_to_message_id"`
+	Content          string     `gorm:"type:text;not null;default:''" json:"content"`
+	IsEdited         bool       `gorm:"not null;default:false" json:"is_edited"`
+	IsPinned         bool       `gorm:"not null;default:false" json:"is_pinned"`
+	PinnedBy         *uuid.UUID `gorm:"type:uuid" json:"pinned_by"`
+	PinnedAt         *time.Time `json:"pinned_at"`
 	// swaggertype: the raw JSON column holds an array of media uuid strings —
 	// without the hint swag renders json.RawMessage as integer[].
-	MediaIDs         json.RawMessage `gorm:"type:jsonb;not null;default:'[]'" json:"media_ids" swaggertype:"array,string"`
-	AsDocument       bool            `gorm:"not null;default:false" json:"as_document"`
-	CreatedAt        time.Time       `json:"created_at"`
-	UpdatedAt        time.Time       `json:"updated_at"`
+	MediaIDs   json.RawMessage `gorm:"type:jsonb;not null;default:'[]'" json:"media_ids" swaggertype:"array,string"`
+	AsDocument bool            `gorm:"not null;default:false" json:"as_document"`
+	CreatedAt  time.Time       `json:"created_at"`
+	UpdatedAt  time.Time       `json:"updated_at"`
 
 	Reactions map[string]int `gorm:"-" json:"reactions,omitempty"`
 }

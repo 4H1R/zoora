@@ -96,7 +96,7 @@ func TestAdminCreate_RejectsOrgScopedAdmin(t *testing.T) {
 	_, err := svc.AdminCreate(ctx, domain.AdminCreateUserDTO{
 		OrganizationID: &orgID,
 		Username:       "u", Name: "X", Password: "Secret1A",
-		IsAdmin:        true,
+		IsAdmin: true,
 	})
 	assert.ErrorIs(t, err, domain.ErrValidation)
 	repo.AssertNotCalled(t, "Create")

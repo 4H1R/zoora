@@ -21,6 +21,7 @@ type mAttRepo struct{ mock.Mock }
 func (m *mAttRepo) Create(ctx context.Context, a *domain.Attendance) error {
 	return m.Called(ctx, a).Error(0)
 }
+
 func (m *mAttRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Attendance, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -28,17 +29,21 @@ func (m *mAttRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Attendan
 	}
 	return a.Get(0).(*domain.Attendance), a.Error(1)
 }
+
 func (m *mAttRepo) Update(ctx context.Context, a *domain.Attendance) error {
 	return m.Called(ctx, a).Error(0)
 }
+
 func (m *mAttRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mAttRepo) ListBySession(ctx context.Context, sessionID uuid.UUID, q domain.ListAttendanceQuery) ([]domain.Attendance, int64, error) {
 	a := m.Called(ctx, sessionID, q)
 	res, _ := a.Get(0).([]domain.Attendance)
 	return res, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mAttRepo) FindBySessionAndUser(ctx context.Context, sessionID, userID uuid.UUID) (*domain.Attendance, error) {
 	a := m.Called(ctx, sessionID, userID)
 	if a.Get(0) == nil {
@@ -46,21 +51,25 @@ func (m *mAttRepo) FindBySessionAndUser(ctx context.Context, sessionID, userID u
 	}
 	return a.Get(0).(*domain.Attendance), a.Error(1)
 }
+
 func (m *mAttRepo) ListByUser(ctx context.Context, userID uuid.UUID, q domain.ListMyAttendanceQuery) ([]domain.Attendance, int64, error) {
 	a := m.Called(ctx, userID, q)
 	res, _ := a.Get(0).([]domain.Attendance)
 	return res, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mAttRepo) SummarizeByUser(ctx context.Context, userID uuid.UUID, q domain.ListMyAttendanceQuery) (domain.MyAttendanceSummary, error) {
 	a := m.Called(ctx, userID, q)
 	res, _ := a.Get(0).(domain.MyAttendanceSummary)
 	return res, a.Error(1)
 }
+
 func (m *mAttRepo) AdminList(ctx context.Context, q domain.AdminListAttendanceQuery) ([]domain.Attendance, int64, error) {
 	a := m.Called(ctx, q)
 	res, _ := a.Get(0).([]domain.Attendance)
 	return res, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mAttRepo) ListByClassAndUsers(ctx context.Context, classID uuid.UUID, userIDs []uuid.UUID) ([]domain.Attendance, error) {
 	a := m.Called(ctx, classID, userIDs)
 	res, _ := a.Get(0).([]domain.Attendance)
@@ -72,6 +81,7 @@ type mClassRepo struct{ mock.Mock }
 func (m *mClassRepo) Create(ctx context.Context, c *domain.Class) error {
 	return m.Called(ctx, c).Error(0)
 }
+
 func (m *mClassRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Class, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -79,25 +89,31 @@ func (m *mClassRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Class,
 	}
 	return a.Get(0).(*domain.Class), a.Error(1)
 }
+
 func (m *mClassRepo) Update(ctx context.Context, c *domain.Class) error {
 	return m.Called(ctx, c).Error(0)
 }
+
 func (m *mClassRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mClassRepo) List(ctx context.Context, scope domain.ClassListScope, p domain.ListParams) ([]domain.Class, int64, error) {
 	a := m.Called(ctx, scope, p)
 	res, _ := a.Get(0).([]domain.Class)
 	return res, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mClassRepo) ListByNames(ctx context.Context, orgID uuid.UUID, names []string) ([]domain.Class, error) {
 	a := m.Called(ctx, orgID, names)
 	res, _ := a.Get(0).([]domain.Class)
 	return res, a.Error(1)
 }
+
 func (m *mClassRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mClassRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.Class, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -105,6 +121,7 @@ func (m *mClassRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID)
 	}
 	return a.Get(0).(*domain.Class), a.Error(1)
 }
+
 func (m *mClassRepo) AdminList(ctx context.Context, q domain.AdminListClassesQuery) ([]domain.Class, int64, error) {
 	a := m.Called(ctx, q)
 	res, _ := a.Get(0).([]domain.Class)
@@ -116,6 +133,7 @@ type mSessRepo struct{ mock.Mock }
 func (m *mSessRepo) Create(ctx context.Context, s *domain.ClassSession) error {
 	return m.Called(ctx, s).Error(0)
 }
+
 func (m *mSessRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.ClassSession, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -123,20 +141,25 @@ func (m *mSessRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.ClassSe
 	}
 	return a.Get(0).(*domain.ClassSession), a.Error(1)
 }
+
 func (m *mSessRepo) Update(ctx context.Context, s *domain.ClassSession) error {
 	return m.Called(ctx, s).Error(0)
 }
+
 func (m *mSessRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mSessRepo) ListByClass(ctx context.Context, classID uuid.UUID, q domain.ListClassSessionsQuery) ([]domain.ClassSession, int64, error) {
 	a := m.Called(ctx, classID, q)
 	res, _ := a.Get(0).([]domain.ClassSession)
 	return res, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mSessRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mSessRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.ClassSession, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -144,6 +167,7 @@ func (m *mSessRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) 
 	}
 	return a.Get(0).(*domain.ClassSession), a.Error(1)
 }
+
 func (m *mSessRepo) AdminList(ctx context.Context, q domain.AdminListClassSessionsQuery) ([]domain.ClassSession, int64, error) {
 	a := m.Called(ctx, q)
 	res, _ := a.Get(0).([]domain.ClassSession)
@@ -155,22 +179,27 @@ type mMemberRepo struct{ mock.Mock }
 func (m *mMemberRepo) Create(ctx context.Context, mem *domain.ClassMember) error {
 	return m.Called(ctx, mem).Error(0)
 }
+
 func (m *mMemberRepo) Delete(ctx context.Context, classID, userID uuid.UUID) error {
 	return m.Called(ctx, classID, userID).Error(0)
 }
+
 func (m *mMemberRepo) Exists(ctx context.Context, classID, userID uuid.UUID) (bool, error) {
 	a := m.Called(ctx, classID, userID)
 	return a.Bool(0), a.Error(1)
 }
+
 func (m *mMemberRepo) CountByClass(ctx context.Context, classID uuid.UUID) (int64, error) {
 	a := m.Called(ctx, classID)
 	return a.Get(0).(int64), a.Error(1)
 }
+
 func (m *mMemberRepo) ListByClass(ctx context.Context, classID uuid.UUID, p domain.ListParams) ([]domain.ClassMember, int64, error) {
 	a := m.Called(ctx, classID, p)
 	res, _ := a.Get(0).([]domain.ClassMember)
 	return res, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mMemberRepo) ListAllByClass(ctx context.Context, classID uuid.UUID) ([]domain.ClassMember, error) {
 	a := m.Called(ctx, classID)
 	res, _ := a.Get(0).([]domain.ClassMember)

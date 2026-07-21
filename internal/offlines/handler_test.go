@@ -28,29 +28,35 @@ func (m *mockOfflineSvc) CreateRoom(ctx context.Context, dto domain.CreateOfflin
 	r, _ := a.Get(0).(*domain.OfflineRoom)
 	return r, a.Error(1)
 }
+
 func (m *mockOfflineSvc) GetRoom(ctx context.Context, id uuid.UUID) (*domain.OfflineRoom, error) {
 	a := m.Called(ctx, id)
 	r, _ := a.Get(0).(*domain.OfflineRoom)
 	return r, a.Error(1)
 }
+
 func (m *mockOfflineSvc) UpdateRoom(ctx context.Context, id uuid.UUID, dto domain.UpdateOfflineRoomDTO) (*domain.OfflineRoom, error) {
 	a := m.Called(ctx, id, dto)
 	r, _ := a.Get(0).(*domain.OfflineRoom)
 	return r, a.Error(1)
 }
+
 func (m *mockOfflineSvc) DeleteRoom(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockOfflineSvc) ListRooms(ctx context.Context, q domain.ListOfflineRoomsQuery) ([]domain.OfflineRoom, int64, error) {
 	a := m.Called(ctx, q)
 	rs, _ := a.Get(0).([]domain.OfflineRoom)
 	return rs, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockOfflineSvc) AdminList(ctx context.Context, q domain.AdminListOfflineRoomsQuery) ([]domain.OfflineRoom, int64, error) {
 	a := m.Called(ctx, q)
 	rs, _ := a.Get(0).([]domain.OfflineRoom)
 	return rs, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockOfflineSvc) AdminHardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }

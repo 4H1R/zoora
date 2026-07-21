@@ -18,13 +18,13 @@ const (
 )
 
 type Organization struct {
-	ID          uuid.UUID          `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	Name        string             `gorm:"not null" json:"name"`
-	Slug        string             `gorm:"not null;uniqueIndex" json:"slug"`
-	Description string             `json:"description"`
-	Status      OrganizationStatus `gorm:"not null;default:'active'" json:"status"`
-	Plan          Plan       `gorm:"type:varchar(20);not null;default:'free'" json:"plan"`
-	PlanExpiresAt *time.Time `json:"plan_expires_at,omitempty"`
+	ID            uuid.UUID          `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	Name          string             `gorm:"not null" json:"name"`
+	Slug          string             `gorm:"not null;uniqueIndex" json:"slug"`
+	Description   string             `json:"description"`
+	Status        OrganizationStatus `gorm:"not null;default:'active'" json:"status"`
+	Plan          Plan               `gorm:"type:varchar(20);not null;default:'free'" json:"plan"`
+	PlanExpiresAt *time.Time         `json:"plan_expires_at,omitempty"`
 	// TotalUsers is computed (live COUNT of non-deleted users), not a stored column.
 	TotalUsers int            `gorm:"-" json:"total_users"`
 	CreatedAt  time.Time      `json:"created_at"`

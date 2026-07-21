@@ -43,6 +43,12 @@ var (
 	ErrAmountMismatch      = errors.New("payment amount does not match invoice")
 	ErrInvoiceNotDraft     = errors.New("invoice is not a draft")
 	ErrGatewayNotFound     = errors.New("payment gateway not supported")
+
+	// Custom fields.
+	ErrCustomFieldTypeImmutable  = errors.New("custom field type cannot be changed")
+	ErrCustomFieldLimitReached   = errors.New("custom field limit reached")
+	ErrCustomFieldOptionInUse    = errors.New("cannot remove an option that is in use")
+	ErrCustomFieldDuplicateValue = errors.New("custom field value must be unique")
 )
 
 // PlanError carries machine-readable context for a plan/entitlement gate so the
@@ -154,6 +160,14 @@ func MapError(err error) (int, string) {
 		return http.StatusBadRequest, "GATEWAY_NOT_SUPPORTED"
 	case errors.Is(err, ErrRateLimited):
 		return http.StatusTooManyRequests, "RATE_LIMITED"
+	case errors.Is(err, ErrCustomFieldLimitReached):
+		return http.StatusUnprocessableEntity, "CUSTOM_FIELD_LIMIT_REACHED"
+	case errors.Is(err, ErrCustomFieldTypeImmutable):
+		return http.StatusConflict, "CUSTOM_FIELD_TYPE_IMMUTABLE"
+	case errors.Is(err, ErrCustomFieldOptionInUse):
+		return http.StatusConflict, "CUSTOM_FIELD_OPTION_IN_USE"
+	case errors.Is(err, ErrCustomFieldDuplicateValue):
+		return http.StatusConflict, "CUSTOM_FIELD_DUPLICATE_VALUE"
 	case errors.Is(err, ErrValidation):
 		return http.StatusBadRequest, "VALIDATION_ERROR"
 	default:

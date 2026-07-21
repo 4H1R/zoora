@@ -20,11 +20,13 @@ func (s *stubRepo) Create(_ context.Context, e *domain.ChangelogEntry) error {
 	s.entry = e
 	return nil
 }
+
 func (s *stubRepo) Update(_ context.Context, e *domain.ChangelogEntry) error {
 	s.saved = e
 	s.entry = e
 	return nil
 }
+
 func (s *stubRepo) FindByID(context.Context, uuid.UUID) (*domain.ChangelogEntry, error) {
 	return s.entry, nil
 }
@@ -32,6 +34,7 @@ func (s *stubRepo) Delete(context.Context, uuid.UUID) error { return nil }
 func (s *stubRepo) ListPublished(context.Context, int, int) ([]domain.ChangelogEntry, int64, error) {
 	return nil, 0, nil
 }
+
 func (s *stubRepo) AdminList(context.Context, int, int) ([]domain.ChangelogEntry, int64, error) {
 	return nil, 0, nil
 }
@@ -40,8 +43,8 @@ func (s *stubRepo) CountUnseen(context.Context, *time.Time) (int64, error)      
 func (s *stubRepo) LatestMajorUnseen(context.Context, *time.Time) (*domain.ChangelogEntry, error) {
 	return nil, nil
 }
-func (s *stubRepo) GetLastSeen(context.Context, uuid.UUID) (*time.Time, error)   { return nil, nil }
-func (s *stubRepo) UpdateLastSeen(context.Context, uuid.UUID, time.Time) error   { return nil }
+func (s *stubRepo) GetLastSeen(context.Context, uuid.UUID) (*time.Time, error) { return nil, nil }
+func (s *stubRepo) UpdateLastSeen(context.Context, uuid.UUID, time.Time) error { return nil }
 
 func adminCtx() context.Context {
 	return domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New(), IsAdmin: true})

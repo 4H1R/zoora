@@ -81,16 +81,20 @@ func (m *mockRepo) ListPendingDeliveries(_ context.Context, _ uuid.UUID, channel
 	}
 	return rows, nil
 }
+
 func (m *mockRepo) ListDeliveriesByIDs(context.Context, []uuid.UUID) ([]domain.NotificationDelivery, error) {
 	return m.deliveriesByID, nil
 }
+
 func (m *mockRepo) MarkDeliveries(_ context.Context, ids []uuid.UUID, status domain.NotificationDeliveryStatus, errMsg *string, _ time.Time) error {
 	m.marked = append(m.marked, markedCall{ids: ids, status: status, errMsg: errMsg})
 	return nil
 }
+
 func (m *mockRepo) CountRecipients(context.Context, uuid.UUID) (int64, error) {
 	return m.recipientCount, nil
 }
+
 func (m *mockRepo) DeliveryReport(context.Context, uuid.UUID) ([]domain.NotificationChannelReport, error) {
 	return nil, nil
 }
@@ -104,6 +108,7 @@ type mockConnectorRepo struct {
 func (m *mockConnectorRepo) ListVerifiedEnabledByUsers(context.Context, []uuid.UUID) ([]domain.UserConnector, error) {
 	return m.conns, nil
 }
+
 func (m *mockConnectorRepo) DeleteByTypeTarget(_ context.Context, _ domain.ConnectorType, target string) error {
 	m.deleted = append(m.deleted, target)
 	return nil
@@ -167,31 +172,39 @@ func (m *mockRepo) Create(_ context.Context, n *domain.Notification) error {
 	m.created = n
 	return nil
 }
+
 func (m *mockRepo) CountBySenderSince(context.Context, uuid.UUID, time.Time) (int64, error) {
 	return m.senderCount, nil
 }
+
 func (m *mockRepo) CountActiveUsersByIDs(context.Context, []uuid.UUID, *uuid.UUID) (int64, error) {
 	return m.usersInOrg, nil
 }
+
 func (m *mockRepo) CountUsersInClassesOwnedBy(context.Context, []uuid.UUID, uuid.UUID) (int64, error) {
 	return m.usersInClasses, nil
 }
+
 func (m *mockRepo) RoleExistsInScope(context.Context, uuid.UUID, *uuid.UUID) (bool, error) {
 	return m.roleInScope, nil
 }
+
 func (m *mockRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.Notification, error) {
 	if m.found == nil {
 		return nil, domain.ErrNotFound
 	}
 	return m.found, nil
 }
+
 func (m *mockRepo) CreateRecipients(_ context.Context, r []domain.NotificationRecipient) error {
 	m.recipients = append(m.recipients, r...)
 	return nil
 }
+
 func (m *mockRepo) ListUserIDsByOrg(context.Context, uuid.UUID) ([]uuid.UUID, error) {
 	return m.orgUserIDs, nil
 }
+
 func (m *mockRepo) ListUserIDsByClass(context.Context, uuid.UUID) ([]uuid.UUID, error) {
 	return m.classUserIDs, nil
 }

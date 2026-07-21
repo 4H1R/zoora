@@ -2,10 +2,9 @@ package users_test
 
 import (
 	"context"
+	"log/slog"
 	"testing"
 	"time"
-
-	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -21,6 +20,7 @@ type mockUserRepo struct{ mock.Mock }
 func (m *mockUserRepo) Create(ctx context.Context, user *domain.User) error {
 	return m.Called(ctx, user).Error(0)
 }
+
 func (m *mockUserRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
@@ -28,6 +28,7 @@ func (m *mockUserRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.User
 	}
 	return args.Get(0).(*domain.User), args.Error(1)
 }
+
 func (m *mockUserRepo) FindByIDWithPermissions(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
@@ -35,6 +36,7 @@ func (m *mockUserRepo) FindByIDWithPermissions(ctx context.Context, id uuid.UUID
 	}
 	return args.Get(0).(*domain.User), args.Error(1)
 }
+
 func (m *mockUserRepo) FindByUsernameAndOrg(ctx context.Context, username string, orgID uuid.UUID) (*domain.User, error) {
 	args := m.Called(ctx, username, orgID)
 	if args.Get(0) == nil {
@@ -42,6 +44,7 @@ func (m *mockUserRepo) FindByUsernameAndOrg(ctx context.Context, username string
 	}
 	return args.Get(0).(*domain.User), args.Error(1)
 }
+
 func (m *mockUserRepo) FindByUsernames(ctx context.Context, orgID uuid.UUID, usernames []string) ([]domain.User, error) {
 	args := m.Called(ctx, orgID, usernames)
 	if args.Get(0) == nil {
@@ -49,6 +52,7 @@ func (m *mockUserRepo) FindByUsernames(ctx context.Context, orgID uuid.UUID, use
 	}
 	return args.Get(0).([]domain.User), args.Error(1)
 }
+
 func (m *mockUserRepo) SearchActiveInOrg(ctx context.Context, orgID uuid.UUID, query string, limit int) ([]domain.User, error) {
 	args := m.Called(ctx, orgID, query, limit)
 	if args.Get(0) == nil {
@@ -56,6 +60,7 @@ func (m *mockUserRepo) SearchActiveInOrg(ctx context.Context, orgID uuid.UUID, q
 	}
 	return args.Get(0).([]domain.User), args.Error(1)
 }
+
 func (m *mockUserRepo) FilterIDsInOrg(ctx context.Context, orgID uuid.UUID, ids []uuid.UUID) ([]uuid.UUID, error) {
 	args := m.Called(ctx, orgID, ids)
 	if args.Get(0) == nil {
@@ -63,6 +68,7 @@ func (m *mockUserRepo) FilterIDsInOrg(ctx context.Context, orgID uuid.UUID, ids 
 	}
 	return args.Get(0).([]uuid.UUID), args.Error(1)
 }
+
 func (m *mockUserRepo) FindAdminByUsername(ctx context.Context, username string) (*domain.User, error) {
 	args := m.Called(ctx, username)
 	if args.Get(0) == nil {
@@ -70,23 +76,29 @@ func (m *mockUserRepo) FindAdminByUsername(ctx context.Context, username string)
 	}
 	return args.Get(0).(*domain.User), args.Error(1)
 }
+
 func (m *mockUserRepo) Update(ctx context.Context, user *domain.User) error {
 	return m.Called(ctx, user).Error(0)
 }
+
 func (m *mockUserRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockUserRepo) List(ctx context.Context, scope domain.UserListScope, p domain.ListParams) ([]domain.User, int64, error) {
 	args := m.Called(ctx, scope, p)
 	return args.Get(0).([]domain.User), args.Get(1).(int64), args.Error(2)
 }
+
 func (m *mockUserRepo) StatusCounts(ctx context.Context, scope domain.UserListScope) (domain.UserStatusCounts, error) {
 	args := m.Called(ctx, scope)
 	return args.Get(0).(domain.UserStatusCounts), args.Error(1)
 }
+
 func (m *mockUserRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockUserRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
@@ -94,10 +106,12 @@ func (m *mockUserRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUI
 	}
 	return args.Get(0).(*domain.User), args.Error(1)
 }
+
 func (m *mockUserRepo) AdminList(ctx context.Context, q domain.AdminListUsersQuery) ([]domain.User, int64, error) {
 	args := m.Called(ctx, q)
 	return args.Get(0).([]domain.User), args.Get(1).(int64), args.Error(2)
 }
+
 func (m *mockUserRepo) CountAll(ctx context.Context) (int64, error) {
 	args := m.Called(ctx)
 	return args.Get(0).(int64), args.Error(1)
@@ -108,6 +122,7 @@ type mockRoleRepo struct{ mock.Mock }
 func (m *mockRoleRepo) Create(ctx context.Context, role *domain.Role) error {
 	return m.Called(ctx, role).Error(0)
 }
+
 func (m *mockRoleRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Role, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
@@ -115,6 +130,7 @@ func (m *mockRoleRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Role
 	}
 	return args.Get(0).(*domain.Role), args.Error(1)
 }
+
 func (m *mockRoleRepo) FindPresetByName(ctx context.Context, name string) (*domain.Role, error) {
 	args := m.Called(ctx, name)
 	if args.Get(0) == nil {
@@ -122,27 +138,34 @@ func (m *mockRoleRepo) FindPresetByName(ctx context.Context, name string) (*doma
 	}
 	return args.Get(0).(*domain.Role), args.Error(1)
 }
+
 func (m *mockRoleRepo) Update(ctx context.Context, role *domain.Role) error {
 	return m.Called(ctx, role).Error(0)
 }
+
 func (m *mockRoleRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockRoleRepo) List(ctx context.Context, f domain.RoleFilter) ([]domain.Role, error) {
 	args := m.Called(ctx, f)
 	return args.Get(0).([]domain.Role), args.Error(1)
 }
+
 func (m *mockRoleRepo) AdminList(ctx context.Context, f domain.AdminRoleFilter) ([]domain.Role, int64, error) {
 	args := m.Called(ctx, f)
 	return args.Get(0).([]domain.Role), args.Get(1).(int64), args.Error(2)
 }
+
 func (m *mockRoleRepo) SetPermissions(ctx context.Context, roleID uuid.UUID, permissionIDs []uuid.UUID) error {
 	return m.Called(ctx, roleID, permissionIDs).Error(0)
 }
+
 func (m *mockRoleRepo) Stats(ctx context.Context, orgID *uuid.UUID) (*domain.RoleStats, error) {
 	args := m.Called(ctx, orgID)
 	return args.Get(0).(*domain.RoleStats), args.Error(1)
 }
+
 func (m *mockRoleRepo) GetPermissionNames(ctx context.Context, roleID uuid.UUID) ([]string, error) {
 	args := m.Called(ctx, roleID)
 	return args.Get(0).([]string), args.Error(1)
@@ -174,12 +197,15 @@ type fakeEntService struct{ userLimitErr error }
 func (f fakeEntService) CheckUserLimit(context.Context, uuid.UUID, domain.Entitlements) error {
 	return f.userLimitErr
 }
+
 func (f fakeEntService) CheckUserLimitN(context.Context, uuid.UUID, domain.Entitlements, int64) error {
 	return f.userLimitErr
 }
+
 func (f fakeEntService) CheckStorageLimit(context.Context, uuid.UUID, domain.Entitlements, int64) error {
 	return nil
 }
+
 func (f fakeEntService) CheckConcurrentRoomsLimit(context.Context, uuid.UUID, domain.Entitlements) error {
 	return nil
 }

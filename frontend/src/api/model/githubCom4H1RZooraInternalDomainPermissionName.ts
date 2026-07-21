@@ -120,4 +120,5 @@ export const GithubCom4H1RZooraInternalDomainPermissionName = {
   PermBillingManage: 'billing:manage',
   PermNotificationsSend: 'notifications:send',
   PermNotificationsSendAny: 'notifications:send_any',
+  PermCustomFieldsManage: 'custom_fields:manage',
 } as const;

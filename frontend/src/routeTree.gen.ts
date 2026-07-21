@@ -62,6 +62,7 @@ import { Route as AdminAdminCorrectionsIndexRouteImport } from './routes/_admin/
 import { Route as AdminAdminClassesIndexRouteImport } from './routes/_admin/admin/classes/index'
 import { Route as AdminAdminChangelogIndexRouteImport } from './routes/_admin/admin/changelog/index'
 import { Route as AdminAdminAttendanceIndexRouteImport } from './routes/_admin/admin/attendance/index'
+import { Route as AuthOrgSettingsCustomFieldsRouteImport } from './routes/_auth/org/settings/custom-fields'
 import { Route as AuthOrgOfflinesOfflineIdRouteImport } from './routes/_auth/org/offlines/$offlineId'
 import { Route as AuthOrgNotificationsSettingsRouteImport } from './routes/_auth/org/notifications/settings'
 import { Route as AuthOrgNotificationsSendRouteImport } from './routes/_auth/org/notifications/send'
@@ -366,6 +367,12 @@ const AdminAdminAttendanceIndexRoute =
     path: '/admin/attendance/',
     getParentRoute: () => AdminRoute,
   } as any)
+const AuthOrgSettingsCustomFieldsRoute =
+  AuthOrgSettingsCustomFieldsRouteImport.update({
+    id: '/settings/custom-fields',
+    path: '/settings/custom-fields',
+    getParentRoute: () => AuthOrgRoute,
+  } as any)
 const AuthOrgOfflinesOfflineIdRoute =
   AuthOrgOfflinesOfflineIdRouteImport.update({
     id: '/offlines/$offlineId',
@@ -544,6 +551,7 @@ export interface FileRoutesByFullPath {
   '/org/notifications/send': typeof AuthOrgNotificationsSendRoute
   '/org/notifications/settings': typeof AuthOrgNotificationsSettingsRoute
   '/org/offlines/$offlineId': typeof AuthOrgOfflinesOfflineIdRoute
+  '/org/settings/custom-fields': typeof AuthOrgSettingsCustomFieldsRoute
   '/admin/attendance/': typeof AdminAdminAttendanceIndexRoute
   '/admin/changelog/': typeof AdminAdminChangelogIndexRoute
   '/admin/classes/': typeof AdminAdminClassesIndexRoute
@@ -620,6 +628,7 @@ export interface FileRoutesByTo {
   '/org/notifications/send': typeof AuthOrgNotificationsSendRoute
   '/org/notifications/settings': typeof AuthOrgNotificationsSettingsRoute
   '/org/offlines/$offlineId': typeof AuthOrgOfflinesOfflineIdRoute
+  '/org/settings/custom-fields': typeof AuthOrgSettingsCustomFieldsRoute
   '/admin/attendance': typeof AdminAdminAttendanceIndexRoute
   '/admin/changelog': typeof AdminAdminChangelogIndexRoute
   '/admin/classes': typeof AdminAdminClassesIndexRoute
@@ -702,6 +711,7 @@ export interface FileRoutesById {
   '/_auth/org/notifications/send': typeof AuthOrgNotificationsSendRoute
   '/_auth/org/notifications/settings': typeof AuthOrgNotificationsSettingsRoute
   '/_auth/org/offlines/$offlineId': typeof AuthOrgOfflinesOfflineIdRoute
+  '/_auth/org/settings/custom-fields': typeof AuthOrgSettingsCustomFieldsRoute
   '/_admin/admin/attendance/': typeof AdminAdminAttendanceIndexRoute
   '/_admin/admin/changelog/': typeof AdminAdminChangelogIndexRoute
   '/_admin/admin/classes/': typeof AdminAdminClassesIndexRoute
@@ -782,6 +792,7 @@ export interface FileRouteTypes {
     | '/org/notifications/send'
     | '/org/notifications/settings'
     | '/org/offlines/$offlineId'
+    | '/org/settings/custom-fields'
     | '/admin/attendance/'
     | '/admin/changelog/'
     | '/admin/classes/'
@@ -858,6 +869,7 @@ export interface FileRouteTypes {
     | '/org/notifications/send'
     | '/org/notifications/settings'
     | '/org/offlines/$offlineId'
+    | '/org/settings/custom-fields'
     | '/admin/attendance'
     | '/admin/changelog'
     | '/admin/classes'
@@ -939,6 +951,7 @@ export interface FileRouteTypes {
     | '/_auth/org/notifications/send'
     | '/_auth/org/notifications/settings'
     | '/_auth/org/offlines/$offlineId'
+    | '/_auth/org/settings/custom-fields'
     | '/_admin/admin/attendance/'
     | '/_admin/admin/changelog/'
     | '/_admin/admin/classes/'
@@ -1370,6 +1383,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminAttendanceIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_auth/org/settings/custom-fields': {
+      id: '/_auth/org/settings/custom-fields'
+      path: '/settings/custom-fields'
+      fullPath: '/org/settings/custom-fields'
+      preLoaderRoute: typeof AuthOrgSettingsCustomFieldsRouteImport
+      parentRoute: typeof AuthOrgRoute
+    }
     '/_auth/org/offlines/$offlineId': {
       id: '/_auth/org/offlines/$offlineId'
       path: '/offlines/$offlineId'
@@ -1665,6 +1685,7 @@ interface AuthOrgRouteChildren {
   AuthOrgNotificationsSendRoute: typeof AuthOrgNotificationsSendRoute
   AuthOrgNotificationsSettingsRoute: typeof AuthOrgNotificationsSettingsRoute
   AuthOrgOfflinesOfflineIdRoute: typeof AuthOrgOfflinesOfflineIdRoute
+  AuthOrgSettingsCustomFieldsRoute: typeof AuthOrgSettingsCustomFieldsRoute
   AuthOrgAttendanceIndexRoute: typeof AuthOrgAttendanceIndexRoute
   AuthOrgBillingIndexRoute: typeof AuthOrgBillingIndexRoute
   AuthOrgClassesIndexRoute: typeof AuthOrgClassesIndexRoute
@@ -1703,6 +1724,7 @@ const AuthOrgRouteChildren: AuthOrgRouteChildren = {
   AuthOrgNotificationsSendRoute: AuthOrgNotificationsSendRoute,
   AuthOrgNotificationsSettingsRoute: AuthOrgNotificationsSettingsRoute,
   AuthOrgOfflinesOfflineIdRoute: AuthOrgOfflinesOfflineIdRoute,
+  AuthOrgSettingsCustomFieldsRoute: AuthOrgSettingsCustomFieldsRoute,
   AuthOrgAttendanceIndexRoute: AuthOrgAttendanceIndexRoute,
   AuthOrgBillingIndexRoute: AuthOrgBillingIndexRoute,
   AuthOrgClassesIndexRoute: AuthOrgClassesIndexRoute,

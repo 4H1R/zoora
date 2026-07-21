@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/4H1R/zoora/internal/attendance"
-	"github.com/4H1R/zoora/internal/platform/authz"
 	"github.com/4H1R/zoora/internal/classes"
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/gradebook"
 	"github.com/4H1R/zoora/internal/organizations"
+	"github.com/4H1R/zoora/internal/platform/authz"
 	"github.com/4H1R/zoora/internal/quizzes"
 	"github.com/4H1R/zoora/internal/users"
 	"github.com/4H1R/zoora/tests/testutil"

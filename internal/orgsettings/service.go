@@ -20,7 +20,22 @@ func NewService(repo domain.OrganizationSettingsRepository, logger *slog.Logger)
 }
 
 // Get returns the org's settings, falling back to defaults if no row exists.
+// It is the HTTP-facing entrypoint: the caller must be an admin or belong to
+// the requested org.
 func (s *service) Get(ctx context.Context, orgID uuid.UUID) (*domain.OrganizationSettings, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	if !caller.IsAdmin && (caller.OrgID == nil || *caller.OrgID != orgID) {
+		return nil, domain.ErrForbidden
+	}
+	return s.get(ctx, orgID)
+}
+
+// get is the unguarded read used by both the HTTP-facing Get and the internal
+// GetByOrgID provider. It performs no caller check.
+func (s *service) get(ctx context.Context, orgID uuid.UUID) (*domain.OrganizationSettings, error) {
 	settings, err := s.repo.FindByOrgID(ctx, orgID)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
@@ -31,12 +46,21 @@ func (s *service) Get(ctx context.Context, orgID uuid.UUID) (*domain.Organizatio
 	return settings, nil
 }
 
-// GetByOrgID satisfies domain.OrganizationSettingsProvider.
+// GetByOrgID satisfies domain.OrganizationSettingsProvider. It is an internal
+// provider called by other services whose ctx carries no caller, so it uses the
+// unguarded read.
 func (s *service) GetByOrgID(ctx context.Context, orgID uuid.UUID) (*domain.OrganizationSettings, error) {
-	return s.Get(ctx, orgID)
+	return s.get(ctx, orgID)
 }
 
 func (s *service) Update(ctx context.Context, orgID uuid.UUID, dto domain.UpdateOrganizationSettingsDTO) (*domain.OrganizationSettings, error) {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	if !caller.IsAdmin && (caller.OrgID == nil || *caller.OrgID != orgID) {
+		return nil, domain.ErrForbidden
+	}
 	settings, err := s.repo.FindByOrgID(ctx, orgID)
 	if err != nil {
 		if !errors.Is(err, domain.ErrNotFound) {
