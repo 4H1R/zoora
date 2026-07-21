@@ -1,7 +1,5 @@
-import type { GithubCom4H1RZooraInternalDomainPracticeRoomView as PracticeRoomView } from "@/api/model"
-
 import { useNavigate } from "@tanstack/react-router"
-import { useState } from "react"
+import { NotebookPenIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { useGetPractices } from "@/api/practices/practices"
@@ -16,7 +14,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAdminTable } from "@/lib/data-table"
 import { Route } from "@/routes/_auth/org/practices/index"
 
-import { ManagerSubmissionsDialog } from "./ManagerSubmissionsDialog"
 import { usePracticeHubColumns } from "./practice-hub-columns"
 
 const WINDOW_OPTIONS = ["all", "upcoming", "open", "ended"] as const
@@ -27,11 +24,9 @@ export function ManagerPracticesView() {
   const { search, needs_grading, window: windowState, class_id, class_session_id, order_by, order_dir, page, page_size } =
     Route.useSearch()
 
-  // Default landing filter is "needs grading" — the teacher's actual job queue.
-  const needsGrading = needs_grading ?? true
+  // All rooms by default; "needs grading" is an opt-in filter.
+  const needsGrading = needs_grading ?? false
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
-
-  const [submissionsTarget, setSubmissionsTarget] = useState<PracticeRoomView | null>(null)
 
   const { data, isLoading } = useGetPractices({
     search: search || undefined,
@@ -49,8 +44,19 @@ export function ManagerPracticesView() {
   const rows = listData?.items ?? []
   const total = listData?.total ?? 0
 
-  const columns = usePracticeHubColumns({ onViewSubmissions: setSubmissionsTarget })
+  const columns = usePracticeHubColumns()
   const table = useAdminTable({ data: rows, columns, rowCount: total, sorting })
+
+  // Row click jumps to where the practice is managed: its session's practices tab.
+  const openPractice = (practice: (typeof rows)[number]) => {
+    if (practice.class_session_id) {
+      navigate({
+        to: "/org/classes/class-sessions/$classSessionId",
+        params: { classSessionId: practice.class_session_id },
+        search: { tab: "practices" },
+      })
+    }
+  }
 
   const setNeedsGrading = (value: boolean) =>
     navigate({ to: ".", search: (prev) => ({ ...prev, needs_grading: value || undefined, page: 1 }) })
@@ -114,18 +120,14 @@ export function ManagerPracticesView() {
           <DataTable
             table={table}
             isLoading={isLoading}
+            onRowClick={openPractice}
+            emptyIcon={<NotebookPenIcon className="size-8 opacity-40" />}
             emptyTitle={t("org.practices.noResults")}
             emptyHint={t("org.practices.noResultsHint")}
           />
         </div>
         <DataTablePagination table={table} />
       </Card>
-
-      <ManagerSubmissionsDialog
-        open={!!submissionsTarget}
-        onOpenChange={(open) => !open && setSubmissionsTarget(null)}
-        practice={submissionsTarget}
-      />
     </div>
   )
 }

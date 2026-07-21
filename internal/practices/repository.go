@@ -344,6 +344,7 @@ func (r *submissionRepository) CountsByRooms(ctx context.Context, roomIDs []uuid
 
 func (r *submissionRepository) ListByRoom(ctx context.Context, roomID uuid.UUID, p domain.ListParams) ([]domain.PracticeSubmission, int64, error) {
 	base := database.DB(ctx, r.db).Model(&domain.PracticeSubmission{}).
+		Preload("User").
 		Where("practice_room_id = ?", roomID)
 	var subs []domain.PracticeSubmission
 	total, err := listparams.Paginate(base, p, &subs)

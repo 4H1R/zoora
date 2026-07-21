@@ -1,118 +1,124 @@
 import type { GithubCom4H1RZooraInternalDomainPracticeRoomView as PracticeRoomView } from "@/api/model"
 import type { ColumnDef } from "@tanstack/react-table"
 
+import { Link } from "@tanstack/react-router"
+import { NotebookPenIcon, PencilIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { getEntityColor, getInitials, useFormatDate } from "@/lib/data-table"
-import { cn } from "@/lib/utils"
+import { formatScore } from "@/lib/score"
+import { formatSessionDate } from "@/lib/session-status"
 
-function completionPct(view: PracticeRoomView): number {
-  const members = view.stats?.member_count ?? 0
-  const submitted = view.stats?.submitted_count ?? 0
-  if (members <= 0) return 0
-  return Math.min(100, Math.round((submitted / members) * 100))
+type PracticeWindowStatus = "upcoming" | "open" | "ended"
+
+// Reads the practice's own window against now — mirrors the backend's
+// window filter buckets (upcoming/open/ended) so the status column and
+// the window filter speak the same language.
+function practiceWindowStatus(view: PracticeRoomView): PracticeWindowStatus {
+  const now = Date.now()
+  const start = view.start_time ? new Date(view.start_time).getTime() : undefined
+  const end = view.end_time ? new Date(view.end_time).getTime() : undefined
+  if (start !== undefined && start > now) return "upcoming"
+  if (end !== undefined && end <= now) return "ended"
+  return "open"
 }
 
-export function usePracticeHubColumns({
-  onViewSubmissions,
-}: {
-  onViewSubmissions: (view: PracticeRoomView) => void
-}): ColumnDef<PracticeRoomView>[] {
-  const { t } = useTranslation()
-  const formatDate = useFormatDate()
+const STATUS_BADGE_VARIANT: Record<PracticeWindowStatus, "default" | "secondary" | "outline"> = {
+  open: "default",
+  upcoming: "outline",
+  ended: "secondary",
+}
+
+export function usePracticeHubColumns(): ColumnDef<PracticeRoomView>[] {
+  const { t, i18n } = useTranslation()
 
   return [
     {
-      accessorKey: "title",
+      id: "title",
+      accessorFn: (p) => p.title ?? "",
       header: t("org.practices.title"),
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          <div
-            className={cn(
-              "flex size-9 shrink-0 items-center justify-center rounded-lg text-xs font-semibold text-white",
-              getEntityColor(row.original.title ?? "")
-            )}
-          >
-            {getInitials(row.original.title ?? "")}
+          <div className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-lg [&>svg]:size-4">
+            <NotebookPenIcon />
           </div>
-          <span className="truncate text-sm font-medium">{row.original.title}</span>
+          <span className="truncate text-sm font-medium">{row.original.title || "—"}</span>
         </div>
       ),
       enableHiding: false,
     },
     {
-      id: "class",
-      header: t("org.practices.manager.class"),
-      cell: ({ row }) => <span className="text-muted-foreground text-xs">{row.original.class?.name ?? "—"}</span>,
+      id: "class_name",
+      accessorFn: (p) => p.class?.name ?? "",
+      header: t("org.practices.table.class"),
       enableSorting: false,
-      enableHiding: true,
+      cell: ({ getValue }) => <span className="text-sm">{(getValue() as string) || "—"}</span>,
     },
     {
-      id: "teacher",
-      header: t("org.practices.manager.teacher"),
-      cell: ({ row }) => <span className="text-muted-foreground text-xs">{row.original.user?.name ?? "—"}</span>,
+      id: "max_score",
+      accessorFn: (p) => p.max_score ?? 0,
+      header: t("org.practices.table.maxScore"),
       enableSorting: false,
-      enableHiding: true,
+      cell: ({ row }) =>
+        typeof row.original.max_score === "number" ? (
+          <span className="text-sm tabular-nums">{formatScore(row.original.max_score)}</span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
     },
     {
-      id: "submissions",
-      header: t("org.practices.manager.submitted"),
-      cell: ({ row }) => (
-        <span className="text-sm tabular-nums">
-          {t("org.practices.manager.submissions", {
-            submitted: row.original.stats?.submitted_count ?? 0,
-            members: row.original.stats?.member_count ?? 0,
-          })}
-        </span>
-      ),
+      id: "start_time",
+      accessorFn: (p) => p.start_time ?? "",
+      header: t("org.practices.table.start"),
       enableSorting: false,
-      enableHiding: true,
+      cell: ({ row }) =>
+        row.original.start_time ? (
+          <span className="text-sm">{formatSessionDate(row.original.start_time, i18n.language, "short")}</span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
     },
     {
-      id: "graded",
-      header: t("org.practices.manager.graded"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-sm tabular-nums">{row.original.stats?.graded_count ?? 0}</span>
-      ),
+      id: "end_time",
+      accessorFn: (p) => p.end_time ?? "",
+      header: t("org.practices.table.end"),
       enableSorting: false,
-      enableHiding: true,
+      cell: ({ row }) =>
+        row.original.end_time ? (
+          <span className="text-sm">{formatSessionDate(row.original.end_time, i18n.language, "short")}</span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
     },
     {
-      id: "completion",
-      header: t("org.practices.manager.completion"),
+      id: "status",
+      header: t("org.practices.table.status"),
+      enableSorting: false,
       cell: ({ row }) => {
-        const pct = completionPct(row.original)
+        const status = practiceWindowStatus(row.original)
+        return <Badge variant={STATUS_BADGE_VARIANT[status]}>{t(`org.practices.filter.window.${status}`)}</Badge>
+      },
+    },
+    {
+      id: "grading",
+      header: t("org.practices.actions.enterScores"),
+      enableSorting: false,
+      cell: ({ row }) => {
+        const practice = row.original
+        if (!practice.id || !practice.can_grade) return null
         return (
-          <div className="flex w-28 items-center gap-2">
-            <div className="bg-muted h-1.5 flex-1 overflow-hidden rounded-full">
-              <div className="bg-primary h-full rounded-full" style={{ width: `${pct}%` }} />
-            </div>
-            <span className="text-muted-foreground w-9 text-end text-xs tabular-nums">{pct}%</span>
-          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(e) => e.stopPropagation()}
+            render={<Link to="/org/practices/$practiceId/scores" params={{ practiceId: practice.id }} />}
+          >
+            <PencilIcon data-icon="inline-start" />
+            {t("org.practices.actions.enterScores")}
+          </Button>
         )
       },
-      enableSorting: false,
-      enableHiding: true,
-    },
-    {
-      id: "due",
-      header: t("org.practices.due"),
-      cell: ({ row }) => <span className="text-muted-foreground text-xs">{formatDate(row.original.end_time)}</span>,
-      enableSorting: false,
-      enableHiding: true,
-    },
-    {
-      id: "actions",
-      header: "",
-      cell: ({ row }) => (
-        <div className="flex justify-end">
-          <Button size="sm" variant="outline" onClick={() => onViewSubmissions(row.original)}>
-            {t("org.practices.actions.viewSubmissions")}
-          </Button>
-        </div>
-      ),
-      enableSorting: false,
       enableHiding: false,
     },
   ]

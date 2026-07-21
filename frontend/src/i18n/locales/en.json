@@ -1708,24 +1708,24 @@
       "manager": {
         "class": "Class",
         "teacher": "Teacher",
+        "start": "Starts",
         "submitted": "Submitted",
-        "graded": "Graded",
-        "completion": "Completion",
-        "submissions": "{{submitted}} / {{members}}",
-        "submissionsTitle": "Submissions",
-        "noSubmissions": "No submissions yet"
+        "submissions": "{{submitted}} / {{members}}"
       },
       "actions": {
         "submit": "Submit",
         "grade": "Grade",
         "view": "View",
-        "viewSubmissions": "View submissions"
+        "enterScores": "Enter scores"
       },
       "table": {
         "class": "Class",
         "due": "Due",
         "status": "Status",
-        "score": "Score"
+        "score": "Score",
+        "maxScore": "Max score",
+        "start": "Starts",
+        "end": "Ends"
       },
       "scores": {
         "title": "Practice grading",

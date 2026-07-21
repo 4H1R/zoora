@@ -1770,24 +1770,24 @@
       "manager": {
         "class": "کلاس",
         "teacher": "مدرس",
+        "start": "شروع",
         "submitted": "ارسال‌شده",
-        "graded": "نمره‌داده‌شده",
-        "completion": "تکمیل",
-        "submissions": "{{submitted}} / {{members}}",
-        "submissionsTitle": "ارسال‌ها",
-        "noSubmissions": "هنوز ارسالی نیست"
+        "submissions": "{{submitted}} / {{members}}"
       },
       "actions": {
         "submit": "ارسال",
         "grade": "نمره‌دهی",
         "view": "مشاهده",
-        "viewSubmissions": "مشاهده ارسال‌ها"
+        "enterScores": "تصحیح نمرات"
       },
       "table": {
         "class": "درس",
         "due": "مهلت",
         "status": "وضعیت",
-        "score": "نمره"
+        "score": "نمره",
+        "maxScore": "بارم",
+        "start": "شروع",
+        "end": "پایان"
       },
       "scores": {
         "title": "نمره‌دهی تمرین",
