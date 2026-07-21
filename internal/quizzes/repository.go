@@ -256,7 +256,7 @@ func (r *ruleRepository) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 func (r *ruleRepository) ListByQuiz(ctx context.Context, quizID uuid.UUID, p domain.ListParams) ([]domain.QuizRule, int64, error) {
-	base := database.DB(ctx, r.db).Model(&domain.QuizRule{}).Where("quiz_id = ?", quizID)
+	base := database.DB(ctx, r.db).Model(&domain.QuizRule{}).Preload("Bank").Where("quiz_id = ?", quizID)
 	var rules []domain.QuizRule
 	total, err := listparams.Paginate(base, p, &rules)
 	if err != nil {
