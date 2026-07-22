@@ -176,11 +176,6 @@ func main() {
 	entitlementService := entitlements.NewService(entitlementRepo)
 
 	importRepo := imports.NewRepository(db)
-	importService := imports.NewService(
-		importRepo, userRepo, roleRepo, classRepo, classMemberRepo, mediaRepo,
-		entitlementService, storageClient, queueClient,
-		imports.NewRedisResultStore(redisClient), log,
-	)
 
 	authMiddleware := auth.Middleware(jwtService, redisClient, roleRepo, userRepo, entitlementRepo)
 	tenantMiddleware := middleware.Tenant(redisClient, orgRepo, cfg.BaseDomain, cfg.AdminSubdomain)
@@ -190,6 +185,12 @@ func main() {
 	transactor := database.NewTransactor(db)
 	auditRepo := audit.NewRepository(db)
 	auditService := audit.NewService(auditRepo, log)
+
+	importService := imports.NewService(
+		importRepo, userRepo, roleRepo, classRepo, classMemberRepo, mediaRepo,
+		entitlementService, storageClient, queueClient,
+		imports.NewRedisResultStore(redisClient), transactor, auditService, log,
+	)
 
 	orgSettingsRepo := orgsettings.NewRepository(db)
 	orgSettingsService := orgsettings.NewService(orgSettingsRepo, transactor, auditService, log)

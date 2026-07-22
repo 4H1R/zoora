@@ -222,7 +222,7 @@ func main() {
 	importService := imports.NewService(
 		importRepo, userRepo, roleRepo, classRepo, classMemberRepo, mediaRepo,
 		entitlementService, storageClient, queueClient,
-		imports.NewRedisResultStore(redisClient), log,
+		imports.NewRedisResultStore(redisClient), transactor, auditService, log,
 	)
 	queueServer.HandleFunc(domain.TypeImportProcess, imports.NewProcessHandler(importService))
 

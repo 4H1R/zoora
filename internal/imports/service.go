@@ -58,6 +58,8 @@ type service struct {
 	storage ObjectStore
 	queue   Enqueuer
 	results ResultStore
+	tx      domain.Transactor
+	audit   domain.AuditRecorder
 	logger  *slog.Logger
 }
 
@@ -72,11 +74,14 @@ func NewService(
 	storage ObjectStore,
 	queue Enqueuer,
 	results ResultStore,
+	tx domain.Transactor,
+	audit domain.AuditRecorder,
 	logger *slog.Logger,
 ) domain.ImportService {
 	return &service{
 		repo: repo, users: users, roles: roles, classes: classes, members: members,
-		media: media, ent: ent, storage: storage, queue: queue, results: results, logger: logger,
+		media: media, ent: ent, storage: storage, queue: queue, results: results,
+		tx: tx, audit: audit, logger: logger,
 	}
 }
 
@@ -161,7 +166,22 @@ func (s *service) Create(ctx context.Context, dto domain.CreateImportJobDTO) (*d
 		Type:           dto.Type,
 		Status:         domain.ImportStatusPending,
 	}
-	if err := s.repo.Create(ctx, job); err != nil {
+	if err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Create(ctx, job); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditCreated,
+			TargetType:  domain.AuditTargetImport,
+			TargetID:    &job.ID,
+			TargetLabel: m.FileName,
+			OrgID:       &job.OrganizationID,
+			Metadata: map[string]any{
+				"type":     string(job.Type),
+				"media_id": job.MediaID.String(),
+			},
+		})
+	}); err != nil {
 		return nil, err
 	}
 
@@ -295,6 +315,37 @@ func (s *service) ProcessJob(ctx context.Context, p domain.ImportProcessPayload)
 	default:
 		return s.fail(ctx, job, "unknown import type")
 	}
+}
+
+// complete persists a finished import job and files the finalization audit
+// entry in the same transaction. Runs worker-side (from ProcessJob), so OrgID
+// is set explicitly from the job — the entry always lands under the target org
+// regardless of the reconstructed Caller. The job filename is the label.
+func (s *service) complete(ctx context.Context, job *domain.ImportJob) error {
+	label := ""
+	if m, err := s.media.FindByID(ctx, job.MediaID); err == nil {
+		label = m.FileName
+	}
+	return s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Update(ctx, job); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditUpdated,
+			TargetType:  domain.AuditTargetImport,
+			TargetID:    &job.ID,
+			TargetLabel: label,
+			OrgID:       &job.OrganizationID,
+			Metadata: map[string]any{
+				"type":          string(job.Type),
+				"status":        string(job.Status),
+				"total_rows":    job.TotalRows,
+				"created_count": job.CreatedCount,
+				"skipped_count": job.SkippedCount,
+				"failed_count":  job.FailedCount,
+			},
+		})
+	})
 }
 
 // fail marks the job failed with a user-facing reason and swallows the

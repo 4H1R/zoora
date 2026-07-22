@@ -150,5 +150,5 @@ func (s *service) processClassMembers(ctx context.Context, job *domain.ImportJob
 	job.CreatedCount = created
 	job.SkippedCount = skipped
 	job.FailedCount = failed
-	return s.repo.Update(ctx, job)
+	return s.complete(ctx, job)
 }

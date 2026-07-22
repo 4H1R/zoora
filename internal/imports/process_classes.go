@@ -202,7 +202,7 @@ func (s *service) processClasses(ctx context.Context, job *domain.ImportJob, dat
 	job.CreatedCount = created
 	job.SkippedCount = skipped
 	job.FailedCount = failed
-	return s.repo.Update(ctx, job)
+	return s.complete(ctx, job)
 }
 
 func validateClassRow(r ClassRow) (string, int) {

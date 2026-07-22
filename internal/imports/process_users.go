@@ -148,7 +148,7 @@ func (s *service) processUsers(ctx context.Context, job *domain.ImportJob, data 
 	job.CreatedCount = created
 	job.SkippedCount = skipped
 	job.FailedCount = failed
-	return s.repo.Update(ctx, job)
+	return s.complete(ctx, job)
 }
 
 func validateUserRow(r UserRow) string {
