@@ -26,6 +26,8 @@ type service struct {
 	classes     domain.ClassRepository
 	members     domain.ClassMemberRepository
 	queue       *queue.Client
+	tx          domain.Transactor
+	audit       domain.AuditRecorder
 	logger      *slog.Logger
 }
 
@@ -38,6 +40,8 @@ func NewService(
 	classes domain.ClassRepository,
 	members domain.ClassMemberRepository,
 	queueClient *queue.Client,
+	tx domain.Transactor,
+	audit domain.AuditRecorder,
 	logger *slog.Logger,
 ) domain.QuizService {
 	return &service{
@@ -49,6 +53,8 @@ func NewService(
 		classes:     classes,
 		members:     members,
 		queue:       queueClient,
+		tx:          tx,
+		audit:       audit,
 		logger:      logger,
 	}
 }
@@ -239,7 +245,19 @@ func (s *service) Create(ctx context.Context, dto domain.CreateQuizDTO) (*domain
 		NegativeValue:              val,
 		WrongsPerPoint:             wpp,
 	}
-	if err := s.repo.Create(ctx, quiz); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Create(ctx, quiz); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditCreated,
+			TargetType:  domain.AuditTargetQuiz,
+			TargetID:    &quiz.ID,
+			TargetLabel: quiz.Title,
+			Metadata:    map[string]any{"class_id": quiz.ClassID.String()},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	s.logger.Info("quiz created",
@@ -290,40 +308,60 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateQui
 	if (wantsTab || wantsGPS) && !caller.HasFeature(domain.FeatureAdvancedAntiCheat) {
 		return nil, domain.NewFeatureError(caller.Ent.Plan, domain.FeatureAdvancedAntiCheat)
 	}
+	// Build a shallow changed-fields diff (from/to) before mutating so the audit
+	// entry records exactly what this update altered.
+	changed := map[string]any{}
+	setChanged := func(key string, from, to any) {
+		if from != to {
+			changed[key] = map[string]any{"from": from, "to": to}
+		}
+	}
 	if dto.Title != nil {
+		setChanged("title", quiz.Title, *dto.Title)
 		quiz.Title = *dto.Title
 	}
 	if dto.Description != nil {
+		setChanged("description", quiz.Description, *dto.Description)
 		quiz.Description = *dto.Description
 	}
 	if dto.DurationMinutes != nil {
+		setChanged("duration_minutes", quiz.DurationMinutes, *dto.DurationMinutes)
 		quiz.DurationMinutes = *dto.DurationMinutes
 	}
 	if dto.NoBackNavigation != nil {
+		setChanged("no_back_navigation", quiz.NoBackNavigation, *dto.NoBackNavigation)
 		quiz.NoBackNavigation = *dto.NoBackNavigation
 	}
 	if dto.ShuffleQuestions != nil {
+		setChanged("shuffle_questions", quiz.ShuffleQuestions, *dto.ShuffleQuestions)
 		quiz.ShuffleQuestions = *dto.ShuffleQuestions
 	}
 	if dto.ShuffleOptions != nil {
+		setChanged("shuffle_options", quiz.ShuffleOptions, *dto.ShuffleOptions)
 		quiz.ShuffleOptions = *dto.ShuffleOptions
 	}
 	if dto.TrackTabSwitches != nil {
+		setChanged("track_tab_switches", quiz.TrackTabSwitches, *dto.TrackTabSwitches)
 		quiz.TrackTabSwitches = *dto.TrackTabSwitches
 	}
 	if dto.RequireGPS != nil {
+		setChanged("require_gps", quiz.RequireGPS, *dto.RequireGPS)
 		quiz.RequireGPS = *dto.RequireGPS
 	}
 	if dto.DisableCopyPaste != nil {
+		setChanged("disable_copy_paste", quiz.DisableCopyPaste, *dto.DisableCopyPaste)
 		quiz.DisableCopyPaste = *dto.DisableCopyPaste
 	}
 	if dto.DisableRightClickShortcuts != nil {
+		setChanged("disable_right_click_shortcuts", quiz.DisableRightClickShortcuts, *dto.DisableRightClickShortcuts)
 		quiz.DisableRightClickShortcuts = *dto.DisableRightClickShortcuts
 	}
 	if dto.ShowResults != nil {
+		setChanged("show_results", quiz.ShowResults, *dto.ShowResults)
 		quiz.ShowResults = *dto.ShowResults
 	}
 	if dto.RenderAsImage != nil {
+		setChanged("render_as_image", quiz.RenderAsImage, *dto.RenderAsImage)
 		quiz.RenderAsImage = *dto.RenderAsImage
 	}
 	if dto.NegativeMarkMode != nil {
@@ -340,7 +378,19 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateQui
 		return nil, err
 	}
 	quiz.NegativeMarkMode, quiz.NegativeValue, quiz.WrongsPerPoint = mode, val, wpp
-	if err := s.repo.Update(ctx, quiz); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Update(ctx, quiz); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditUpdated,
+			TargetType:  domain.AuditTargetQuiz,
+			TargetID:    &quiz.ID,
+			TargetLabel: quiz.Title,
+			Metadata:    map[string]any{"changed": changed},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	// If the quiz renders as image (newly turned on, or already on), make sure
@@ -361,7 +411,19 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	if !canDeleteQuiz(caller, quiz) {
 		return domain.ErrForbidden
 	}
-	if err := s.repo.Delete(ctx, id); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Delete(ctx, id); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditDeleted,
+			TargetType:  domain.AuditTargetQuiz,
+			TargetID:    &id,
+			TargetLabel: quiz.Title,
+			Metadata:    map[string]any{"class_id": quiz.ClassID.String()},
+		})
+	})
+	if err != nil {
 		return err
 	}
 	s.logger.Info("quiz deleted",

@@ -342,6 +342,24 @@ func studentCtx(userID uuid.UUID) context.Context {
 	})
 }
 
+// fakeTransactor runs fn inline with no real DB — unit tests exercise the audit
+// same-tx wiring without a database.
+type fakeTransactor struct{}
+
+func (fakeTransactor) RunInTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
+
 type testDeps struct {
 	quizRepo     *mQuizRepo
 	ruleRepo     *mRuleRepo
@@ -350,6 +368,7 @@ type testDeps struct {
 	questionRepo *mQRepo
 	classRepo    *mClassRepo
 	memberRepo   *mMemberRepo
+	audit        *auditSpy
 }
 
 func newDeps() testDeps {
@@ -361,13 +380,15 @@ func newDeps() testDeps {
 		questionRepo: &mQRepo{},
 		classRepo:    &mClassRepo{},
 		memberRepo:   &mMemberRepo{},
+		audit:        &auditSpy{},
 	}
 }
 
 func (d testDeps) service() domain.QuizService {
 	return quizzes.NewService(
 		d.quizRepo, d.ruleRepo, d.roomRepo, d.subRepo,
-		d.questionRepo, d.classRepo, d.memberRepo, nil, slog.Default(),
+		d.questionRepo, d.classRepo, d.memberRepo, nil,
+		fakeTransactor{}, d.audit, slog.Default(),
 	)
 }
 
@@ -390,6 +411,28 @@ func TestQuizService_Create_AsTeacher(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "Midterm", quiz.Title)
 	assert.Equal(t, teacherID, quiz.UserID)
+}
+
+func TestQuizService_Delete_RecordsAudit(t *testing.T) {
+	teacherID := uuid.New()
+	classID := uuid.New()
+	quizID := uuid.New()
+	ctx := teacherCtx(teacherID)
+	d := newDeps()
+
+	d.quizRepo.On("FindByID", ctx, quizID).
+		Return(&domain.Quiz{ID: quizID, UserID: teacherID, ClassID: classID, Title: "Final Exam"}, nil)
+	d.quizRepo.On("Delete", ctx, quizID).Return(nil)
+
+	svc := d.service()
+	err := svc.Delete(ctx, quizID)
+	assert.NoError(t, err)
+	assert.Len(t, d.audit.records, 1)
+	assert.Equal(t, domain.AuditDeleted, d.audit.records[0].Action)
+	assert.Equal(t, domain.AuditTargetQuiz, d.audit.records[0].TargetType)
+	assert.Equal(t, "Final Exam", d.audit.records[0].TargetLabel)
+	assert.NotNil(t, d.audit.records[0].TargetID)
+	assert.Equal(t, quizID, *d.audit.records[0].TargetID)
 }
 
 func TestQuizService_Create_NoCaller_Forbidden(t *testing.T) {
