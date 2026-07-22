@@ -61,6 +61,7 @@ type service struct {
 	chatSvc      domain.LiveRoomChatService
 	pollSvc      domain.PollService
 	tx           domain.Transactor
+	audit        domain.AuditRecorder
 	livekit      LiveKitClient
 	queue        *queue.Client
 	ent          entitlements.Service
@@ -84,6 +85,7 @@ func NewService(
 	chatSvc domain.LiveRoomChatService,
 	pollSvc domain.PollService,
 	tx domain.Transactor,
+	audit domain.AuditRecorder,
 	livekit LiveKitClient,
 	sessionStorage SessionStorage,
 	queueClient *queue.Client,
@@ -111,6 +113,7 @@ func NewService(
 		chatSvc:             chatSvc,
 		pollSvc:             pollSvc,
 		tx:                  tx,
+		audit:               audit,
 		livekit:             livekit,
 		storage:             sessionStorage,
 		queue:               queueClient,
@@ -218,11 +221,23 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreateLiveRoomDTO) 
 		}
 
 		chatName := fmt.Sprintf("Chat – %s", session.Name)
-		_, cErr := s.chatSvc.CreateChat(txCtx, domain.CreateChatDTO{
+		if _, cErr := s.chatSvc.CreateChat(txCtx, domain.CreateChatDTO{
 			Name:       chatName,
 			LiveRoomID: room.ID.String(),
+		}); cErr != nil {
+			return cErr
+		}
+		return s.audit.Record(txCtx, domain.AuditRecord{
+			Action:      domain.AuditCreated,
+			TargetType:  domain.AuditTargetLiveSession,
+			TargetID:    &room.ID,
+			TargetLabel: room.Name,
+			OrgID:       &class.OrganizationID,
+			Metadata: map[string]any{
+				"class_id":         class.ID.String(),
+				"class_session_id": dto.ClassSessionID.String(),
+			},
 		})
-		return cErr
 	})
 	if err != nil {
 		return nil, err
@@ -619,7 +634,20 @@ func (s *service) UpdateRoomConfig(ctx context.Context, roomID uuid.UUID, dto do
 		return nil, domain.NewValidationError(map[string]string{"status": "cannot update finished room"})
 	}
 	room.Config = normalizeRoomConfig(*dto.Config, int(caller.Ent.Limit(domain.LimitMaxParticipants)))
-	if err := s.rooms.UpdateConfig(ctx, room.ID, room.Config); err != nil {
+	err = s.tx.RunInTx(ctx, func(txCtx context.Context) error {
+		if err := s.rooms.UpdateConfig(txCtx, room.ID, room.Config); err != nil {
+			return err
+		}
+		return s.audit.Record(txCtx, domain.AuditRecord{
+			Action:      domain.AuditUpdated,
+			TargetType:  domain.AuditTargetLiveSession,
+			TargetID:    &room.ID,
+			TargetLabel: room.Name,
+			OrgID:       &class.OrganizationID,
+			Metadata:    map[string]any{"class_id": class.ID.String(), "config": true},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	return room, nil

@@ -100,7 +100,7 @@ func main() {
 	liveSessionService := livesessions.NewService(
 		liveRoomRepo, liveParticipantRepo, liveRecordingRepo, liveWhiteboardRepo,
 		classSessionRepo, classRepo, classMemberRepo,
-		chatSvc, pollSvc, transactor,
+		chatSvc, pollSvc, transactor, auditService,
 		livekitClient, nil, queueClient, nil, cfg.LiveRoomHostGracePeriod, 0, log,
 	)
 	queueServer.HandleFunc(domain.TypeLiveSessionAutoClose, livesessions.NewAutoCloseHandler(liveSessionService))

@@ -236,7 +236,7 @@ func main() {
 	liveSessionService := livesessions.NewService(
 		liveRoomRepo, liveParticipantRepo, liveRecordingRepo, liveWhiteboardRepo,
 		classSessionRepo, classRepo, classMemberRepo,
-		chatService, pollService, transactor,
+		chatService, pollService, transactor, auditService,
 		livekitClient, storageClient, queueClient, entitlementService, cfg.LiveRoomHostGracePeriod, cfg.LiveKitEgressMaxConcurrent, log,
 	)
 	offlineService := offlines.NewService(offlineRoomRepo, offlineViewRepo, classSessionRepo, classRepo, classMemberRepo, queueClient, transactor, auditService, log)
