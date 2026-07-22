@@ -110,7 +110,7 @@ func main() {
 	offlineRoomRepo := offlines.NewRoomRepository(db)
 	offlineViewRepo := offlines.NewViewRepository(db)
 	orgSettingsRepo := orgsettings.NewRepository(db)
-	orgSettingsService := orgsettings.NewService(orgSettingsRepo, log)
+	orgSettingsService := orgsettings.NewService(orgSettingsRepo, transactor, auditService, log)
 	authzResolver := authz.NewResolver(classMemberRepo)
 	attendanceService := attendance.NewService(
 		attendanceRepo, classRepo, classSessionRepo, classMemberRepo,

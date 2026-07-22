@@ -187,18 +187,18 @@ func main() {
 
 	authzResolver := authz.NewResolver(classMemberRepo)
 
+	transactor := database.NewTransactor(db)
+	auditRepo := audit.NewRepository(db)
+	auditService := audit.NewService(auditRepo, log)
+
 	orgSettingsRepo := orgsettings.NewRepository(db)
-	orgSettingsService := orgsettings.NewService(orgSettingsRepo, log)
+	orgSettingsService := orgsettings.NewService(orgSettingsRepo, transactor, auditService, log)
 
 	sessionManager := auth.NewSessionManager(jwtService, redisClient)
 	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, queueClient, log)
-	transactor := database.NewTransactor(db)
 
 	leadRepo := leads.NewRepository(db)
 	leadService := leads.NewService(leadRepo, orgRepo, orgSettingsRepo, userRepo, roleRepo, transactor, log)
-
-	auditRepo := audit.NewRepository(db)
-	auditService := audit.NewService(auditRepo, log)
 
 	customFieldService := customfields.NewService(customFieldRepo, transactor, auditService, log)
 

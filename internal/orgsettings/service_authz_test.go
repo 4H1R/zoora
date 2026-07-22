@@ -31,8 +31,30 @@ func (m *mockSettingsRepo) Update(ctx context.Context, s *domain.OrganizationSet
 	return m.Called(ctx, s).Error(0)
 }
 
+// fakeTransactor runs fn inline with no real DB — unit tests exercise the audit
+// same-tx wiring without a database.
+type fakeTransactor struct{}
+
+func (fakeTransactor) RunInTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
+
 func newService(repo domain.OrganizationSettingsRepository) domain.OrganizationSettingsService {
-	return orgsettings.NewService(repo, slog.Default())
+	return orgsettings.NewService(repo, fakeTransactor{}, &auditSpy{}, slog.Default())
+}
+
+func newServiceWithAudit(repo domain.OrganizationSettingsRepository, audit domain.AuditRecorder) domain.OrganizationSettingsService {
+	return orgsettings.NewService(repo, fakeTransactor{}, audit, slog.Default())
 }
 
 func TestGet_RejectsOtherOrg(t *testing.T) {
@@ -104,7 +126,7 @@ func TestGetByOrgID_ProviderNotGuarded(t *testing.T) {
 	repo := &mockSettingsRepo{}
 	repo.On("FindByOrgID", mock.Anything, orgA).Return(&domain.OrganizationSettings{OrganizationID: orgA}, nil)
 
-	var provider domain.OrganizationSettingsProvider = orgsettings.NewService(repo, slog.Default())
+	var provider domain.OrganizationSettingsProvider = orgsettings.NewService(repo, fakeTransactor{}, &auditSpy{}, slog.Default())
 
 	settings, err := provider.GetByOrgID(context.Background(), orgA)
 	assert.NoError(t, err)
