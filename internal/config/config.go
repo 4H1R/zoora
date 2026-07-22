@@ -87,10 +87,10 @@ type Config struct {
 	FCMCredentialsFile   string `env:"FCM_CREDENTIALS_FILE"`
 
 	// --- LLM / AI (optional; empty LLM_API_KEY disables all AI features) ---
-	LLMProvider           string        `env:"LLM_PROVIDER"`                          // gemini | openai | anthropic
-	LLMAPIKey             string        `env:"LLM_API_KEY"`                           // empty ⇒ FeatureAI unusable
-	LLMModel              string        `env:"LLM_MODEL"`                             // e.g. gemini-2.0-flash
-	LLMBaseURL            string        `env:"LLM_BASE_URL"`                          // optional endpoint override
+	LLMProvider           string        `env:"LLM_PROVIDER"` // gemini | openai | anthropic
+	LLMAPIKey             string        `env:"LLM_API_KEY"`  // empty ⇒ FeatureAI unusable
+	LLMModel              string        `env:"LLM_MODEL"`    // e.g. gemini-2.0-flash
+	LLMBaseURL            string        `env:"LLM_BASE_URL"` // optional endpoint override
 	LLMMaxTokens          int           `env:"LLM_MAX_TOKENS"          envDefault:"512"`
 	LLMTimeout            time.Duration `env:"LLM_TIMEOUT"             envDefault:"30s"`
 	LLMAIQueueConcurrency int           `env:"LLM_AI_QUEUE_CONCURRENCY" envDefault:"5"`

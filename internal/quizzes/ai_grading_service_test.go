@@ -19,7 +19,7 @@ func callerWithAI(t *testing.T) domain.Caller {
 }
 
 func TestStartAIGradingRequiresFeature(t *testing.T) {
-	svc := &service{} // llm nil, no deps needed — gate must fail before any use
+	svc := &service{}         // llm nil, no deps needed — gate must fail before any use
 	caller := domain.Caller{} // zero-value ⇒ Free plan ⇒ no FeatureAI
 	ctx := domain.WithCaller(context.Background(), caller)
 

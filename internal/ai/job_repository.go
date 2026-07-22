@@ -2,6 +2,7 @@ package ai
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -30,7 +31,7 @@ func (r *JobRepository) Create(ctx context.Context, job *domain.AIGradingJob) er
 func (r *JobRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.AIGradingJob, error) {
 	var job domain.AIGradingJob
 	if err := r.db.WithContext(ctx).First(&job, "id = ?", id).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}
 		return nil, fmt.Errorf("finding ai grading job: %w", err)
