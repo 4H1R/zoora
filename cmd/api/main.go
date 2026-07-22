@@ -214,7 +214,8 @@ func main() {
 	changelogService := changelog.NewServiceWithMedia(changelogRepo, mediaRepo, storageClient, redisClient, log)
 	tutorialService := tutorials.NewService(tutorialRepo, log)
 	livekitClient := lk.NewClient(cfg, log)
-	chatService := chat.NewService(chatRepo, chatMessageRepo, transactor, log, livekitClient, liveRoomRepo)
+	modelAuthorizer := livesessions.NewModelAuthorizer(liveRoomRepo, classSessionRepo, classRepo, classMemberRepo)
+	chatService := chat.NewService(chatRepo, chatMessageRepo, transactor, log, livekitClient, liveRoomRepo, modelAuthorizer)
 
 	convHubMembership := conversations.NewHubMembership(convMemberRepo)
 	convHub := chathub.NewHub(convHubMembership, log)
@@ -222,10 +223,10 @@ func main() {
 	convPresence := chathub.NewPresence(pubsubRedisClient, chathub.PresenceTTL)
 	go convBridge.Run(context.Background())
 
-	pollService := polls.NewService(pollRepo, pollAnswerRepo, log)
-	qaAuthorizer := livesessions.NewModelAuthorizer(liveRoomRepo, classSessionRepo, classRepo, classMemberRepo)
+	pollModelAuthorizer := polls.NewModelAuthorizer(liveRoomRepo, classSessionRepo, classRepo, classMemberRepo)
+	pollService := polls.NewService(pollRepo, pollAnswerRepo, pollModelAuthorizer, log)
 	qaBroadcaster := qa.NewBroadcaster(livekitClient, liveRoomRepo, log)
-	qaService := qa.NewService(qaRepo, qaVoteRepo, qaAuthorizer, log, qaBroadcaster)
+	qaService := qa.NewService(qaRepo, qaVoteRepo, modelAuthorizer, log, qaBroadcaster)
 	liveSessionService := livesessions.NewService(
 		liveRoomRepo, liveParticipantRepo, liveRecordingRepo, liveWhiteboardRepo,
 		classSessionRepo, classRepo, classMemberRepo,
@@ -463,7 +464,7 @@ func main() {
 		gradebookColRepo, gradebookCellRepo,
 		classRepo, classMemberRepo,
 		attendanceRepo, practiceSubRepo, quizSubmissionRepo,
-		quizRepo, practiceRoomRepo,
+		quizRepo, practiceRoomRepo, classSessionRepo,
 		authzResolver, log,
 	)
 	gradebookHandler := gradebook.NewHandler(gradebookService)

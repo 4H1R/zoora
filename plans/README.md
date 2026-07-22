@@ -21,18 +21,18 @@ skipping the org-match guard that their sibling methods already apply. The canon
 |------|-------|----------|--------|------------|--------|
 | 001 | Tenant isolation: users + organizations single-object methods | P1 | S | — | DONE |
 | 002 | Tenant isolation: roles + orgsettings single-object methods | P1 | S | — | DONE |
-| 003 | LiveRoom chat: enforce tenant + room-membership authz | P1 | M | — | TODO |
-| 004 | Polls: enforce model-scoped authorization | P1 | M | — | TODO |
-| 005 | classes.Enroll: block cross-tenant self-enrollment | P1 | S | — | TODO |
-| 006 | Open redirect in public billing gateway callback | P1 | S | — | TODO |
-| 007 | SMS OTP verify: attempt cap + invalidate on wrong guess | P2 | S | — | TODO |
-| 008 | Harden default CORS (no `*` with credentials) | P2 | S | — | TODO |
-| 009 | Validate notification `action_url` scheme | P2 | S | — | TODO |
-| 010 | `_any` elevation: org-scope single-object authz helpers | P2 | M | 001, 002 | TODO |
-| 011 | Media download: scope authz to resource membership | P2 | M | — | TODO |
-| 012 | Gradebook auto-column: validate SourceID belongs to class | P2 | M | — | TODO |
-| 013 | Offline rooms: hide unpublished rooms from students | P3 | S | — | TODO |
-| 014 | Roles: restrict permissions a non-admin may grant | P3 | M | 001 | TODO |
+| 003 | LiveRoom chat: enforce tenant + room-membership authz | P1 | M | — | DONE |
+| 004 | Polls: enforce model-scoped authorization | P1 | M | — | DONE |
+| 005 | classes.Enroll: block cross-tenant self-enrollment | P1 | S | — | DONE |
+| 006 | Open redirect in public billing gateway callback | P1 | S | — | DONE |
+| 007 | SMS OTP verify: attempt cap + invalidate on wrong guess | P2 | S | — | DONE |
+| 008 | Harden default CORS (no `*` with credentials) | P2 | S | — | DONE |
+| 009 | Validate notification `action_url` scheme | P2 | S | — | DONE |
+| 010 | `_any` elevation: org-scope single-object authz helpers | P2 | M | 001, 002 | DONE |
+| 011 | Media download: scope authz to resource membership | P2 | M | — | BLOCKED (needs owner decision: membership-checker injection strategy; vuln confirmed; see plan Blocking findings) |
+| 012 | Gradebook auto-column: validate SourceID belongs to class | P2 | M | — | DONE |
+| 013 | Offline rooms: hide unpublished rooms from students | P3 | S | — | DONE |
+| 014 | Roles: restrict permissions a non-admin may grant | P3 | M | 001 | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (one-line reason) | REJECTED (one-line rationale)
 

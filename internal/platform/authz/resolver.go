@@ -19,10 +19,23 @@ const (
 	ScopeAll                // org-wide (admin or _any holder)
 )
 
+// hasOrgScopedAny reports whether the caller may act org-wide on class: admin
+// always, or an anyPerm holder whose org matches the class's org. This mirrors
+// ListScope's tenancy guard so a cross-org _any holder never elevates to
+// ScopeAll on a single object belonging to another org.
+func hasOrgScopedAny(caller domain.Caller, class *domain.Class, anyPerm domain.PermissionName) bool {
+	if caller.IsAdmin {
+		return true
+	}
+	return caller.HasPermission(anyPerm) &&
+		caller.OrgID != nil &&
+		*caller.OrgID == class.OrganizationID
+}
+
 // decideScope is the pure decision over already-fetched data. anyPerm is the
 // org-wide elevation permission for the resource being checked.
 func decideScope(caller domain.Caller, class *domain.Class, isMember bool, anyPerm domain.PermissionName) Scope {
-	if caller.IsAdmin || caller.HasPermission(anyPerm) {
+	if hasOrgScopedAny(caller, class, anyPerm) {
 		return ScopeAll
 	}
 	if caller.UserID == class.UserID {
@@ -64,7 +77,7 @@ func NewResolver(members domain.ClassMemberRepository) *Resolver {
 // Scope resolves the caller's scope over class. It only hits the DB when the
 // outcome actually depends on enrollment (i.e. not admin/_any/owner).
 func (r *Resolver) Scope(ctx context.Context, caller domain.Caller, class *domain.Class, anyPerm domain.PermissionName) (Scope, error) {
-	if caller.IsAdmin || caller.HasPermission(anyPerm) {
+	if hasOrgScopedAny(caller, class, anyPerm) {
 		return ScopeAll, nil
 	}
 	if caller.UserID == class.UserID {

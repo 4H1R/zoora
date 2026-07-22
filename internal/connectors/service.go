@@ -18,9 +18,10 @@ import (
 )
 
 const (
-	linkTokenTTL  = 15 * time.Minute
-	otpTTL        = 5 * time.Minute
-	otpMaxPerHour = 3
+	linkTokenTTL   = 15 * time.Minute
+	otpTTL         = 5 * time.Minute
+	otpMaxPerHour  = 3
+	otpMaxAttempts = 5
 )
 
 type BotLinkConfig struct {
@@ -49,8 +50,9 @@ func linkKey(t domain.ConnectorType, token string) string {
 	return fmt.Sprintf("connector:link:%s:%s", t, token)
 }
 
-func otpKey(userID uuid.UUID) string   { return "connector:otp:" + userID.String() }
-func otpRLKey(userID uuid.UUID) string { return "connector:otp-rl:" + userID.String() }
+func otpKey(userID uuid.UUID) string         { return "connector:otp:" + userID.String() }
+func otpRLKey(userID uuid.UUID) string       { return "connector:otp-rl:" + userID.String() }
+func otpAttemptsKey(userID uuid.UUID) string { return "connector:otp-att:" + userID.String() }
 
 func (s *service) CreateLinkToken(ctx context.Context, t domain.ConnectorType) (*domain.LinkTokenResponse, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
@@ -176,6 +178,7 @@ func (s *service) RequestSMSOTP(ctx context.Context, dto domain.RequestSMSOTPDTO
 	if err := s.rdb.Set(ctx, otpKey(caller.UserID), rec, otpTTL).Err(); err != nil {
 		return fmt.Errorf("connectors.service.RequestSMSOTP: storing otp: %w", err)
 	}
+	s.rdb.Del(ctx, otpAttemptsKey(caller.UserID))
 	return s.sms.SendOTP(ctx, dto.Phone, code)
 }
 
@@ -204,9 +207,18 @@ func (s *service) VerifySMSOTP(ctx context.Context, dto domain.VerifySMSOTPDTO) 
 		return fmt.Errorf("connectors.service.VerifySMSOTP: decoding: %w", err)
 	}
 	if rec.Code != dto.Code {
+		n, _ := s.rdb.Incr(ctx, otpAttemptsKey(caller.UserID)).Result()
+		if n == 1 {
+			s.rdb.Expire(ctx, otpAttemptsKey(caller.UserID), otpTTL)
+		}
+		if n >= otpMaxAttempts {
+			s.rdb.Del(ctx, otpKey(caller.UserID))
+			s.rdb.Del(ctx, otpAttemptsKey(caller.UserID))
+		}
 		return domain.NewValidationError(map[string]string{"code": "incorrect code"})
 	}
 	s.rdb.Del(ctx, otpKey(caller.UserID))
+	s.rdb.Del(ctx, otpAttemptsKey(caller.UserID))
 	now := time.Now()
 	return s.repo.Create(ctx, &domain.UserConnector{
 		UserID:     caller.UserID,

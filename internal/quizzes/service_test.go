@@ -41,6 +41,7 @@ func (m *mQuizRepo) List(ctx context.Context, scope domain.QuizListScope, p doma
 	qs, _ := a.Get(0).([]domain.Quiz)
 	return qs, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mQuizRepo) CountPendingSubmissionsByQuizIDs(ctx context.Context, quizIDs []uuid.UUID) (map[uuid.UUID]int64, error) {
 	a := m.Called(ctx, quizIDs)
 	res, _ := a.Get(0).(map[uuid.UUID]int64)

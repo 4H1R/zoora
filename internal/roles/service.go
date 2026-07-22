@@ -66,6 +66,16 @@ func (s *service) Create(ctx context.Context, dto domain.CreateRoleDTO) (*domain
 	if len(perms) != len(dto.PermissionIDs) {
 		return nil, fmt.Errorf("some permission IDs not found: %w", domain.ErrValidation)
 	}
+	// Delegation rule: a non-admin may only grant permissions they currently
+	// hold. Prevents minting a custom role carrying elevated perms the caller
+	// was never delegated (intra-org privilege escalation). Admins bypass.
+	if !caller.IsAdmin {
+		for _, p := range perms {
+			if !caller.HasPermission(p.Name) {
+				return nil, domain.ErrForbidden
+			}
+		}
+	}
 
 	role := &domain.Role{
 		OrganizationID: dto.OrganizationID,
@@ -147,6 +157,15 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateRol
 		}
 		if len(newPerms) != len(dto.PermissionIDs) {
 			return nil, fmt.Errorf("some permission IDs not found: %w", domain.ErrValidation)
+		}
+		// Delegation rule: a non-admin may only grant permissions they currently
+		// hold. Mirrors the check in Create. Admins bypass.
+		if !caller.IsAdmin {
+			for _, p := range newPerms {
+				if !caller.HasPermission(p.Name) {
+					return nil, domain.ErrForbidden
+				}
+			}
 		}
 	}
 

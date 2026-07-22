@@ -78,7 +78,9 @@ func main() {
 	chatRepo := chat.NewChatRepository(db)
 	chatMessageRepo := chat.NewMessageRepository(db)
 	// Worker has no LiveKit client; realtime chat broadcast is API-only (nil deps = no-op).
-	chatSvc := chat.NewService(chatRepo, chatMessageRepo, transactor, log, nil, nil)
+	// modelAuth is nil too: the worker only calls FindChatByRoom/ArchiveByRoom on the
+	// chat service (already room-authorized upstream), never the authz-gated methods.
+	chatSvc := chat.NewService(chatRepo, chatMessageRepo, transactor, log, nil, nil, nil)
 
 	liveRoomRepo := livesessions.NewRoomRepository(db)
 	liveParticipantRepo := livesessions.NewParticipantRepository(db)
@@ -90,7 +92,8 @@ func main() {
 	livekitClient := lk.NewClient(cfg, log)
 	pollRepo := polls.NewRepository(db)
 	pollAnswerRepo := polls.NewAnswerRepository(db)
-	pollSvc := polls.NewService(pollRepo, pollAnswerRepo, log)
+	pollModelAuthorizer := polls.NewModelAuthorizer(liveRoomRepo, classSessionRepo, classRepo, classMemberRepo)
+	pollSvc := polls.NewService(pollRepo, pollAnswerRepo, pollModelAuthorizer, log)
 	liveSessionService := livesessions.NewService(
 		liveRoomRepo, liveParticipantRepo, liveRecordingRepo, liveWhiteboardRepo,
 		classSessionRepo, classRepo, classMemberRepo,

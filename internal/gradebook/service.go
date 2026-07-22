@@ -30,6 +30,7 @@ type service struct {
 	quizSubs      domain.QuizSubmissionRepository
 	quizzes       domain.QuizRepository
 	practiceRooms domain.PracticeRoomRepository
+	sessions      domain.ClassSessionRepository
 	resolver      *authz.Resolver
 	logger        *slog.Logger
 }
@@ -44,6 +45,7 @@ func NewService(
 	quizSubs domain.QuizSubmissionRepository,
 	quizzes domain.QuizRepository,
 	practiceRooms domain.PracticeRoomRepository,
+	sessions domain.ClassSessionRepository,
 	resolver *authz.Resolver,
 	logger *slog.Logger,
 ) domain.GradebookService {
@@ -57,6 +59,7 @@ func NewService(
 		quizSubs:      quizSubs,
 		quizzes:       quizzes,
 		practiceRooms: practiceRooms,
+		sessions:      sessions,
 		resolver:      resolver,
 		logger:        logger,
 	}
@@ -95,6 +98,11 @@ func (s *service) CreateColumn(ctx context.Context, classID uuid.UUID, dto domai
 	if dto.Type.IsAuto() && dto.SourceID == nil {
 		return nil, domain.NewValidationError(map[string]string{"source_id": "required for auto column types"})
 	}
+	if dto.Type.IsAuto() {
+		if err := s.validateSource(ctx, dto.Type, *dto.SourceID, classID); err != nil {
+			return nil, err
+		}
+	}
 	col := &domain.GradebookColumn{
 		ClassID:    classID,
 		Title:      dto.Title,
@@ -112,6 +120,40 @@ func (s *service) CreateColumn(ctx context.Context, classID uuid.UUID, dto domai
 		"created_by", caller.UserID.String(),
 	)
 	return col, nil
+}
+
+// validateSource ensures an auto column's SourceID references a quiz, practice
+// room, or class session that belongs to classID. Without this check a teacher
+// could point an auto column at a source in a class they don't own and surface
+// those foreign grades for any student who also appears on their own roster.
+func (s *service) validateSource(ctx context.Context, typ domain.GradebookColumnType, sourceID, classID uuid.UUID) error {
+	var srcClassID uuid.UUID
+	switch typ {
+	case domain.GradebookColumnAutoQuiz:
+		q, err := s.quizzes.FindByID(ctx, sourceID)
+		if err != nil {
+			return err
+		}
+		srcClassID = q.ClassID
+	case domain.GradebookColumnAutoPractice:
+		r, err := s.practiceRooms.FindByID(ctx, sourceID)
+		if err != nil {
+			return err
+		}
+		srcClassID = r.ClassID
+	case domain.GradebookColumnAutoAttendance:
+		sess, err := s.sessions.FindByID(ctx, sourceID)
+		if err != nil {
+			return err
+		}
+		srcClassID = sess.ClassID
+	default:
+		return nil
+	}
+	if srcClassID != classID {
+		return domain.NewValidationError(map[string]string{"source_id": "source does not belong to this class"})
+	}
+	return nil
 }
 
 func (s *service) UpdateColumn(ctx context.Context, columnID uuid.UUID, dto domain.UpdateGradebookColumnDTO) (*domain.GradebookColumn, error) {

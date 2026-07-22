@@ -646,3 +646,81 @@ func TestReportRequiresSenderOrAdmin(t *testing.T) {
 		t.Fatalf("sender report err = %v, want nil", err)
 	}
 }
+
+func actionURLPtr(s string) *string { return &s }
+
+func TestValidateActionURL(t *testing.T) {
+	cases := []struct {
+		name    string
+		raw     *string
+		wantErr bool
+	}{
+		{"nil", nil, false},
+		{"empty", actionURLPtr(""), false},
+		{"https", actionURLPtr("https://example.com/x"), false},
+		{"http", actionURLPtr("http://example.com/x"), false},
+		{"relative", actionURLPtr("/org/quizzes/123"), false},
+		{"javascript", actionURLPtr("javascript:alert(1)"), true},
+		{"data", actionURLPtr("data:text/html,<script>alert(1)</script>"), true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateActionURL(tc.raw)
+			if tc.wantErr && err == nil {
+				t.Fatalf("validateActionURL(%s) = nil, want error", tc.name)
+			}
+			if !tc.wantErr && err != nil {
+				t.Fatalf("validateActionURL(%s) = %v, want nil", tc.name, err)
+			}
+		})
+	}
+}
+
+func TestSendRejectsJavascriptActionURL(t *testing.T) {
+	repo := &mockRepo{}
+	svc := NewService(repo, &mockClassRepo{}, nil, nil, nil, nil, Senders{}, 10, nil, nil)
+	d := dto(domain.NotificationAudienceDTO{Type: "all"})
+	d.ActionURL = actionURLPtr("javascript:alert(1)")
+	_, err := svc.Send(adminCtx(), d)
+	if err == nil {
+		t.Fatalf("Send with javascript action_url err = nil, want validation error")
+	}
+	var verr *domain.ValidationError
+	if !errors.As(err, &verr) {
+		t.Fatalf("err = %v, want *domain.ValidationError", err)
+	}
+	if repo.created != nil {
+		t.Fatalf("notification was created despite invalid action_url")
+	}
+}
+
+func TestSendAcceptsRelativeActionURL(t *testing.T) {
+	repo := &mockRepo{}
+	svc := NewService(repo, &mockClassRepo{}, nil, nil, nil, nil, Senders{}, 10, nil, nil)
+	d := dto(domain.NotificationAudienceDTO{Type: "all"})
+	d.ActionURL = actionURLPtr("/org/quizzes/123")
+	n, err := svc.Send(adminCtx(), d)
+	if err != nil {
+		t.Fatalf("Send with relative action_url err = %v, want nil", err)
+	}
+	if n.ActionURL == nil || *n.ActionURL != "/org/quizzes/123" {
+		t.Fatalf("ActionURL = %v, want /org/quizzes/123", n.ActionURL)
+	}
+}
+
+func TestSendSystemRejectsDataActionURL(t *testing.T) {
+	repo := &mockRepo{}
+	svc := NewService(repo, &mockClassRepo{}, nil, nil, nil, nil, Senders{}, 10, nil, nil)
+	err := svc.SendSystem(context.Background(), domain.SystemNotificationInput{
+		Title:     "t",
+		Body:      "b",
+		ActionURL: actionURLPtr("data:text/html,<script>alert(1)</script>"),
+		Audience:  domain.NotificationAudience{Type: domain.AudienceUsers, UserIDs: []uuid.UUID{uuid.New()}},
+	})
+	if err == nil {
+		t.Fatalf("SendSystem with data action_url err = nil, want validation error")
+	}
+	if repo.created != nil {
+		t.Fatalf("notification was created despite invalid action_url")
+	}
+}

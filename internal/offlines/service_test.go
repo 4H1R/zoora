@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -366,7 +367,7 @@ func TestGetRoom_Creator_Success(t *testing.T) {
 	roomRepo.AssertCalled(t, "IncrementViewCount", ctx, roomID)
 }
 
-func TestGetRoom_Member_Success(t *testing.T) {
+func TestGetRoom_Member_PublishedInPast_Success(t *testing.T) {
 	svc, roomRepo, viewRepo, _, _, memberRepo := newTestService(t)
 
 	userID := uuid.New()
@@ -375,9 +376,87 @@ func TestGetRoom_Member_Success(t *testing.T) {
 	classID := uuid.New()
 	ctx := callerCtx(userID, false, "offlines:view")
 
+	published := time.Now().Add(-time.Hour)
+	roomRepo.On("FindByID", ctx, roomID).
+		Return(&domain.OfflineRoom{ID: roomID, CreatorID: creatorID, ClassID: classID, PublishedAt: &published}, nil)
+	memberRepo.On("Exists", ctx, classID, userID).Return(true, nil)
+	roomRepo.On("IncrementViewCount", ctx, roomID).Return(nil)
+	viewRepo.On("Create", ctx, mock.AnythingOfType("*domain.OfflineRoomView")).Return(nil)
+
+	room, err := svc.GetRoom(ctx, roomID)
+	assert.NoError(t, err)
+	assert.Equal(t, roomID, room.ID)
+}
+
+func TestGetRoom_Member_Unpublished_Forbidden(t *testing.T) {
+	svc, roomRepo, _, _, _, memberRepo := newTestService(t)
+
+	userID := uuid.New()
+	creatorID := uuid.New()
+	roomID := uuid.New()
+	classID := uuid.New()
+	ctx := callerCtx(userID, false, "offlines:view")
+
+	// PublishedAt nil = draft/never released.
 	roomRepo.On("FindByID", ctx, roomID).
 		Return(&domain.OfflineRoom{ID: roomID, CreatorID: creatorID, ClassID: classID}, nil)
 	memberRepo.On("Exists", ctx, classID, userID).Return(true, nil)
+
+	_, err := svc.GetRoom(ctx, roomID)
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+	roomRepo.AssertNotCalled(t, "IncrementViewCount", ctx, roomID)
+}
+
+func TestGetRoom_Member_FuturePublish_Forbidden(t *testing.T) {
+	svc, roomRepo, _, _, _, memberRepo := newTestService(t)
+
+	userID := uuid.New()
+	creatorID := uuid.New()
+	roomID := uuid.New()
+	classID := uuid.New()
+	ctx := callerCtx(userID, false, "offlines:view")
+
+	published := time.Now().Add(time.Hour)
+	roomRepo.On("FindByID", ctx, roomID).
+		Return(&domain.OfflineRoom{ID: roomID, CreatorID: creatorID, ClassID: classID, PublishedAt: &published}, nil)
+	memberRepo.On("Exists", ctx, classID, userID).Return(true, nil)
+
+	_, err := svc.GetRoom(ctx, roomID)
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+	roomRepo.AssertNotCalled(t, "IncrementViewCount", ctx, roomID)
+}
+
+func TestGetRoom_Creator_Unpublished_Success(t *testing.T) {
+	svc, roomRepo, viewRepo, _, _, _ := newTestService(t)
+
+	userID := uuid.New()
+	roomID := uuid.New()
+	classID := uuid.New()
+	ctx := callerCtx(userID, false, "offlines:view")
+
+	// Creator must still preview an unpublished (nil PublishedAt) room.
+	roomRepo.On("FindByID", ctx, roomID).
+		Return(&domain.OfflineRoom{ID: roomID, CreatorID: userID, ClassID: classID}, nil)
+	roomRepo.On("IncrementViewCount", ctx, roomID).Return(nil)
+	viewRepo.On("Create", ctx, mock.AnythingOfType("*domain.OfflineRoomView")).Return(nil)
+
+	room, err := svc.GetRoom(ctx, roomID)
+	assert.NoError(t, err)
+	assert.Equal(t, roomID, room.ID)
+}
+
+func TestGetRoom_ViewAny_Unpublished_Success(t *testing.T) {
+	svc, roomRepo, viewRepo, _, _, _ := newTestService(t)
+
+	userID := uuid.New()
+	creatorID := uuid.New()
+	roomID := uuid.New()
+	classID := uuid.New()
+	ctx := callerCtx(userID, false, "offlines:view", "offlines:view_any")
+
+	// offlines:view_any holder must still see an unpublished room.
+	roomRepo.On("FindByID", ctx, roomID).
+		Return(&domain.OfflineRoom{ID: roomID, CreatorID: creatorID, ClassID: classID}, nil)
 	roomRepo.On("IncrementViewCount", ctx, roomID).Return(nil)
 	viewRepo.On("Create", ctx, mock.AnythingOfType("*domain.OfflineRoomView")).Return(nil)
 

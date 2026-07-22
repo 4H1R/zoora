@@ -186,6 +186,91 @@ func TestVerifySMSOTPWrongCode(t *testing.T) {
 	}
 }
 
+func TestVerifySMSOTPAttemptCapInvalidatesCode(t *testing.T) {
+	repo := &mockConnRepo{}
+	sms := &mockSMS{}
+	svc, _ := testService(t, repo, sms)
+	ctx := callerCtx(uuid.New())
+
+	if err := svc.RequestSMSOTP(ctx, domain.RequestSMSOTPDTO{Phone: "09120000001"}); err != nil {
+		t.Fatalf("RequestSMSOTP: %v", err)
+	}
+	// Exhaust the attempt budget with wrong guesses. Use a code that can never
+	// collide with the real 6-digit numeric code.
+	for i := 0; i < otpMaxAttempts; i++ {
+		if err := svc.VerifySMSOTP(ctx, domain.VerifySMSOTPDTO{Code: "wrong"}); err == nil {
+			t.Fatalf("wrong guess %d: expected error", i)
+		}
+	}
+	// The code is now burned: even the correct code returns "no pending verification".
+	err := svc.VerifySMSOTP(ctx, domain.VerifySMSOTPDTO{Code: sms.otpCode})
+	var verr *domain.ValidationError
+	if !errors.As(err, &verr) {
+		t.Fatalf("err = %v, want validation error", err)
+	}
+	if verr.Fields["code"] != "no pending verification — request a new code" {
+		t.Fatalf("field = %q, want no-pending message", verr.Fields["code"])
+	}
+	if repo.created != nil {
+		t.Fatalf("no connector should be created after cap, got %+v", repo.created)
+	}
+}
+
+func TestVerifySMSOTPSuccessClearsAttemptCounter(t *testing.T) {
+	repo := &mockConnRepo{}
+	sms := &mockSMS{}
+	svc, rdb := testService(t, repo, sms)
+	userID := uuid.New()
+	ctx := callerCtx(userID)
+
+	if err := svc.RequestSMSOTP(ctx, domain.RequestSMSOTPDTO{Phone: "09120000001"}); err != nil {
+		t.Fatalf("RequestSMSOTP: %v", err)
+	}
+	// A wrong guess within budget, then the correct code succeeds.
+	if err := svc.VerifySMSOTP(ctx, domain.VerifySMSOTPDTO{Code: "wrong"}); err == nil {
+		t.Fatal("expected error for wrong code")
+	}
+	if err := svc.VerifySMSOTP(ctx, domain.VerifySMSOTPDTO{Code: sms.otpCode}); err != nil {
+		t.Fatalf("VerifySMSOTP: %v", err)
+	}
+	if repo.created == nil || repo.created.Type != domain.ConnectorSMS {
+		t.Fatalf("created = %+v", repo.created)
+	}
+	// Both keys are cleared after success.
+	if n, _ := rdb.Exists(ctx, otpKey(userID)).Result(); n != 0 {
+		t.Fatal("otp key must be deleted on success")
+	}
+	if n, _ := rdb.Exists(ctx, otpAttemptsKey(userID)).Result(); n != 0 {
+		t.Fatal("attempt counter must be deleted on success")
+	}
+}
+
+func TestRequestSMSOTPResetsAttemptCounter(t *testing.T) {
+	repo := &mockConnRepo{}
+	sms := &mockSMS{}
+	svc, _ := testService(t, repo, sms)
+	ctx := callerCtx(uuid.New())
+
+	if err := svc.RequestSMSOTP(ctx, domain.RequestSMSOTPDTO{Phone: "09120000001"}); err != nil {
+		t.Fatalf("RequestSMSOTP: %v", err)
+	}
+	// Burn most of the budget without hitting the cap.
+	for i := 0; i < otpMaxAttempts-1; i++ {
+		_ = svc.VerifySMSOTP(ctx, domain.VerifySMSOTPDTO{Code: "wrong"})
+	}
+	// A fresh request resets the counter, so the user gets a full budget again.
+	if err := svc.RequestSMSOTP(ctx, domain.RequestSMSOTPDTO{Phone: "09120000001"}); err != nil {
+		t.Fatalf("re-RequestSMSOTP: %v", err)
+	}
+	// otpMaxAttempts-1 more wrong guesses must NOT burn the code (counter was reset).
+	for i := 0; i < otpMaxAttempts-1; i++ {
+		_ = svc.VerifySMSOTP(ctx, domain.VerifySMSOTPDTO{Code: "wrong"})
+	}
+	if err := svc.VerifySMSOTP(ctx, domain.VerifySMSOTPDTO{Code: sms.otpCode}); err != nil {
+		t.Fatalf("correct code after reset should succeed, got %v", err)
+	}
+}
+
 func TestUpdateForeignConnectorForbidden(t *testing.T) {
 	other := &domain.UserConnector{ID: uuid.New(), UserID: uuid.New()}
 	repo := &mockConnRepo{byID: other}

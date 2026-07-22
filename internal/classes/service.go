@@ -311,6 +311,14 @@ func (s *service) Enroll(ctx context.Context, classID uuid.UUID, dto domain.Enro
 	if err != nil {
 		return nil, err
 	}
+	// Tenant boundary: a non-admin may only enroll into a class that belongs to
+	// their own org. This runs before both the manage and self-enroll branches,
+	// so neither can cross tenants. Admins may enroll into any org.
+	if !caller.IsAdmin {
+		if caller.OrgID == nil || class.OrganizationID != *caller.OrgID {
+			return nil, domain.ErrForbidden
+		}
+	}
 	// Authorization: teacher/staff/admin may enroll any user. A student may
 	// only self-enroll.
 	if !canManageClass(caller, class) && dto.UserID != caller.UserID {

@@ -15,6 +15,44 @@
 - **Depends on**: none
 - **Category**: security
 - **Planned at**: commit `0071d2e`, 2026-07-21
+- **Execution status (2026-07-21)**: **BLOCKED at Step 1 (by design).** Vuln confirmed real
+  (`PresignDownload`/`GetByID` gate only on org-wide `authorizeOrgAccess`). Fix blocked on a
+  cross-feature design decision the owner must make — see "Blocking findings" below.
+
+## Blocking findings (from Step 1 investigation)
+
+The plan's remediation cannot proceed without an owner design decision:
+
+1. **No membership checker reaches the media package.** `media.NewService`
+   (`internal/media/service.go:49`) takes only `(MediaRepository, objectStorage,
+   entitlements.Service, storageUsageReader, logger)`. Resource-membership authz needs new
+   injected dependencies.
+2. **The plan's cited reference is inaccurate.** `ValidateAttachments` lives in
+   `internal/conversations/media_adapter.go:25` (not the media service) and is a *binding*
+   check (does this media belong to this conversation), not a *membership* check. It presumes
+   the caller was already proven a member upstream (`conversations/service.go:117
+   requireMember`). It cannot serve as the download-authz reference.
+3. **The existing `domain.ModelAuthorizer` does not cover media's model types.** Media rows use
+   model types `organization`, `conversation`, `ticket` (ModelID = **class** ID), `live_room`,
+   `offline_room` (see `internal/domain/media.go:14-35`). The only `ModelAuthorizer`
+   implementations (`livesessions`, `polls`) resolve **only** `"live_session"` — a different
+   string from media's `"live_room"` — and none resolve `conversation`/`ticket`/`offline_room`.
+
+**Model-type classification for the fix:**
+- `organization` → org-wide Shared folder; existing org check is sufficient (keep open).
+- nil `OrganizationID` (platform/changelog) → global (keep open).
+- `conversation` → needs `ConversationMemberRepository.Exists(convID, caller)`.
+- `ticket` (ModelID = class ID) → needs class-membership resolution.
+- `live_room` → needs room→session→class→member resolution.
+- `offline_room` → needs offline-room/class membership resolution.
+
+**Owner decision required — pick an injection strategy:**
+- (a) Extend/add `ModelAuthorizer` resolvers covering all four membership-scoped media model
+  strings, inject one into `media.NewService`; or
+- (b) Inject several narrow membership-checker ports into `media.NewService`.
+Either path edits files beyond this plan's in-scope list (`livesessions`/`conversations`/class/
+offline resolvers + `cmd/api/main.go` + `cmd/worker/main.go`). **This plan must be rewritten
+around the chosen strategy before re-dispatch.**
 
 ## Why this matters
 

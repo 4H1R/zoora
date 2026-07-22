@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
@@ -100,7 +101,15 @@ func (s *service) canViewRoom(ctx context.Context, caller domain.Caller, room *d
 	if caller.HasPermission(domain.PermOfflinesViewAny) {
 		return true, nil
 	}
-	return s.members.Exists(ctx, room.ClassID, caller.UserID)
+	isMember, err := s.members.Exists(ctx, room.ClassID, caller.UserID)
+	if err != nil {
+		return false, err
+	}
+	if !isMember {
+		return false, nil
+	}
+	// Members see a room only once it is published.
+	return room.PublishedAt != nil && !room.PublishedAt.After(time.Now()), nil
 }
 
 func (s *service) CreateRoom(ctx context.Context, dto domain.CreateOfflineRoomDTO) (*domain.OfflineRoom, error) {

@@ -284,6 +284,168 @@ func (m *mQuizSubRepo) ListByQuiz(ctx context.Context, quizID uuid.UUID, q domai
 	return subs, a.Get(1).(int64), a.Error(2)
 }
 
+type mQuizRepo struct{ mock.Mock }
+
+func (m *mQuizRepo) Create(ctx context.Context, quiz *domain.Quiz) error {
+	return m.Called(ctx, quiz).Error(0)
+}
+
+func (m *mQuizRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Quiz, error) {
+	a := m.Called(ctx, id)
+	if a.Get(0) == nil {
+		return nil, a.Error(1)
+	}
+	return a.Get(0).(*domain.Quiz), a.Error(1)
+}
+
+func (m *mQuizRepo) Update(ctx context.Context, quiz *domain.Quiz) error {
+	return m.Called(ctx, quiz).Error(0)
+}
+
+func (m *mQuizRepo) Delete(ctx context.Context, id uuid.UUID) error {
+	return m.Called(ctx, id).Error(0)
+}
+
+func (m *mQuizRepo) List(ctx context.Context, scope domain.QuizListScope, p domain.ListParams) ([]domain.Quiz, int64, error) {
+	a := m.Called(ctx, scope, p)
+	qs, _ := a.Get(0).([]domain.Quiz)
+	return qs, a.Get(1).(int64), a.Error(2)
+}
+
+func (m *mQuizRepo) CountPendingSubmissionsByQuizIDs(ctx context.Context, quizIDs []uuid.UUID) (map[uuid.UUID]int64, error) {
+	a := m.Called(ctx, quizIDs)
+	res, _ := a.Get(0).(map[uuid.UUID]int64)
+	return res, a.Error(1)
+}
+
+func (m *mQuizRepo) ListByMemberWithRooms(ctx context.Context, userID uuid.UUID, classID *uuid.UUID, p domain.ListParams) ([]domain.Quiz, error) {
+	a := m.Called(ctx, userID, classID, p)
+	qs, _ := a.Get(0).([]domain.Quiz)
+	return qs, a.Error(1)
+}
+
+func (m *mQuizRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
+	return m.Called(ctx, id).Error(0)
+}
+
+func (m *mQuizRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.Quiz, error) {
+	a := m.Called(ctx, id)
+	if a.Get(0) == nil {
+		return nil, a.Error(1)
+	}
+	return a.Get(0).(*domain.Quiz), a.Error(1)
+}
+
+func (m *mQuizRepo) AdminList(ctx context.Context, q domain.AdminListQuizzesQuery) ([]domain.Quiz, int64, error) {
+	a := m.Called(ctx, q)
+	qs, _ := a.Get(0).([]domain.Quiz)
+	return qs, a.Get(1).(int64), a.Error(2)
+}
+
+type mPracticeRoomRepo struct{ mock.Mock }
+
+func (m *mPracticeRoomRepo) Create(ctx context.Context, room *domain.PracticeRoom) error {
+	return m.Called(ctx, room).Error(0)
+}
+
+func (m *mPracticeRoomRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.PracticeRoom, error) {
+	a := m.Called(ctx, id)
+	if a.Get(0) == nil {
+		return nil, a.Error(1)
+	}
+	return a.Get(0).(*domain.PracticeRoom), a.Error(1)
+}
+
+func (m *mPracticeRoomRepo) Update(ctx context.Context, room *domain.PracticeRoom) error {
+	return m.Called(ctx, room).Error(0)
+}
+
+func (m *mPracticeRoomRepo) Delete(ctx context.Context, id uuid.UUID) error {
+	return m.Called(ctx, id).Error(0)
+}
+
+func (m *mPracticeRoomRepo) List(ctx context.Context, scope domain.PracticeRoomListScope, q domain.ListPracticeRoomsQuery) ([]domain.PracticeRoom, int64, error) {
+	a := m.Called(ctx, scope, q)
+	rs, _ := a.Get(0).([]domain.PracticeRoom)
+	return rs, a.Get(1).(int64), a.Error(2)
+}
+
+func (m *mPracticeRoomRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
+	return m.Called(ctx, id).Error(0)
+}
+
+func (m *mPracticeRoomRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.PracticeRoom, error) {
+	a := m.Called(ctx, id)
+	if a.Get(0) == nil {
+		return nil, a.Error(1)
+	}
+	return a.Get(0).(*domain.PracticeRoom), a.Error(1)
+}
+
+func (m *mPracticeRoomRepo) AdminList(ctx context.Context, q domain.AdminListPracticeRoomsQuery) ([]domain.PracticeRoom, int64, error) {
+	a := m.Called(ctx, q)
+	rs, _ := a.Get(0).([]domain.PracticeRoom)
+	return rs, a.Get(1).(int64), a.Error(2)
+}
+
+func (m *mPracticeRoomRepo) MemberCountsByClasses(ctx context.Context, classIDs []uuid.UUID) (map[uuid.UUID]int64, error) {
+	a := m.Called(ctx, classIDs)
+	res, _ := a.Get(0).(map[uuid.UUID]int64)
+	return res, a.Error(1)
+}
+
+func (m *mPracticeRoomRepo) ViewerMemberClasses(ctx context.Context, userID uuid.UUID, classIDs []uuid.UUID) ([]uuid.UUID, error) {
+	a := m.Called(ctx, userID, classIDs)
+	res, _ := a.Get(0).([]uuid.UUID)
+	return res, a.Error(1)
+}
+
+type mSessionRepo struct{ mock.Mock }
+
+func (m *mSessionRepo) Create(ctx context.Context, session *domain.ClassSession) error {
+	return m.Called(ctx, session).Error(0)
+}
+
+func (m *mSessionRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.ClassSession, error) {
+	a := m.Called(ctx, id)
+	if a.Get(0) == nil {
+		return nil, a.Error(1)
+	}
+	return a.Get(0).(*domain.ClassSession), a.Error(1)
+}
+
+func (m *mSessionRepo) Update(ctx context.Context, session *domain.ClassSession) error {
+	return m.Called(ctx, session).Error(0)
+}
+
+func (m *mSessionRepo) Delete(ctx context.Context, id uuid.UUID) error {
+	return m.Called(ctx, id).Error(0)
+}
+
+func (m *mSessionRepo) ListByClass(ctx context.Context, classID uuid.UUID, q domain.ListClassSessionsQuery) ([]domain.ClassSession, int64, error) {
+	a := m.Called(ctx, classID, q)
+	ss, _ := a.Get(0).([]domain.ClassSession)
+	return ss, a.Get(1).(int64), a.Error(2)
+}
+
+func (m *mSessionRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
+	return m.Called(ctx, id).Error(0)
+}
+
+func (m *mSessionRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.ClassSession, error) {
+	a := m.Called(ctx, id)
+	if a.Get(0) == nil {
+		return nil, a.Error(1)
+	}
+	return a.Get(0).(*domain.ClassSession), a.Error(1)
+}
+
+func (m *mSessionRepo) AdminList(ctx context.Context, q domain.AdminListClassSessionsQuery) ([]domain.ClassSession, int64, error) {
+	a := m.Called(ctx, q)
+	ss, _ := a.Get(0).([]domain.ClassSession)
+	return ss, a.Get(1).(int64), a.Error(2)
+}
+
 func teacherCtx(userID uuid.UUID) context.Context {
 	return domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      userID,
@@ -298,24 +460,30 @@ func studentCtx(userID uuid.UUID) context.Context {
 }
 
 type deps struct {
-	colRepo        *mColRepo
-	cellRepo       *mCellRepo
-	classRepo      *mClassRepo
-	memberRepo     *mMemberRepo
-	attendanceRepo *mAttendanceRepo
-	practiceRepo   *mPracticeSubRepo
-	quizSubRepo    *mQuizSubRepo
+	colRepo          *mColRepo
+	cellRepo         *mCellRepo
+	classRepo        *mClassRepo
+	memberRepo       *mMemberRepo
+	attendanceRepo   *mAttendanceRepo
+	practiceRepo     *mPracticeSubRepo
+	quizSubRepo      *mQuizSubRepo
+	quizRepo         *mQuizRepo
+	practiceRoomRepo *mPracticeRoomRepo
+	sessionRepo      *mSessionRepo
 }
 
 func newDeps() deps {
 	return deps{
-		colRepo:        &mColRepo{},
-		cellRepo:       &mCellRepo{},
-		classRepo:      &mClassRepo{},
-		memberRepo:     &mMemberRepo{},
-		attendanceRepo: &mAttendanceRepo{},
-		practiceRepo:   &mPracticeSubRepo{},
-		quizSubRepo:    &mQuizSubRepo{},
+		colRepo:          &mColRepo{},
+		cellRepo:         &mCellRepo{},
+		classRepo:        &mClassRepo{},
+		memberRepo:       &mMemberRepo{},
+		attendanceRepo:   &mAttendanceRepo{},
+		practiceRepo:     &mPracticeSubRepo{},
+		quizSubRepo:      &mQuizSubRepo{},
+		quizRepo:         &mQuizRepo{},
+		practiceRoomRepo: &mPracticeRoomRepo{},
+		sessionRepo:      &mSessionRepo{},
 	}
 }
 
@@ -323,7 +491,7 @@ func (d deps) service() domain.GradebookService {
 	return gradebook.NewService(
 		d.colRepo, d.cellRepo, d.classRepo, d.memberRepo,
 		d.attendanceRepo, d.practiceRepo, d.quizSubRepo,
-		nil, nil,
+		d.quizRepo, d.practiceRoomRepo, d.sessionRepo,
 		authz.NewResolver(d.memberRepo),
 		slog.Default(),
 	)
@@ -376,12 +544,132 @@ func TestCreateColumn_AutoWithSourceID_Success(t *testing.T) {
 
 	d.classRepo.On("FindByID", ctx, classID).
 		Return(&domain.Class{ID: classID, UserID: teacherID}, nil)
+	d.quizRepo.On("FindByID", ctx, sourceID).
+		Return(&domain.Quiz{ID: sourceID, ClassID: classID}, nil)
 	d.colRepo.On("Create", ctx, mock.AnythingOfType("*domain.GradebookColumn")).Return(nil)
 
 	svc := d.service()
 	col, err := svc.CreateColumn(ctx, classID, domain.CreateGradebookColumnDTO{
 		Title:    "Auto Quiz Score",
 		Type:     domain.GradebookColumnAutoQuiz,
+		SourceID: &sourceID,
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, &sourceID, col.SourceID)
+}
+
+// TestCreateColumn_AutoQuiz_ForeignClass_ValidationError guards the horizontal
+// grade-disclosure path: an auto column whose quiz belongs to a different class
+// must be rejected before any column is created.
+func TestCreateColumn_AutoQuiz_ForeignClass_ValidationError(t *testing.T) {
+	teacherID := uuid.New()
+	classID := uuid.New()
+	otherClassID := uuid.New()
+	sourceID := uuid.New()
+	ctx := teacherCtx(teacherID)
+	d := newDeps()
+
+	d.classRepo.On("FindByID", ctx, classID).
+		Return(&domain.Class{ID: classID, UserID: teacherID}, nil)
+	d.quizRepo.On("FindByID", ctx, sourceID).
+		Return(&domain.Quiz{ID: sourceID, ClassID: otherClassID}, nil)
+
+	svc := d.service()
+	_, err := svc.CreateColumn(ctx, classID, domain.CreateGradebookColumnDTO{
+		Title:    "Foreign Quiz",
+		Type:     domain.GradebookColumnAutoQuiz,
+		SourceID: &sourceID,
+	})
+	assert.ErrorIs(t, err, domain.ErrValidation)
+	d.colRepo.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+}
+
+func TestCreateColumn_AutoPractice_ForeignClass_ValidationError(t *testing.T) {
+	teacherID := uuid.New()
+	classID := uuid.New()
+	otherClassID := uuid.New()
+	sourceID := uuid.New()
+	ctx := teacherCtx(teacherID)
+	d := newDeps()
+
+	d.classRepo.On("FindByID", ctx, classID).
+		Return(&domain.Class{ID: classID, UserID: teacherID}, nil)
+	d.practiceRoomRepo.On("FindByID", ctx, sourceID).
+		Return(&domain.PracticeRoom{ID: sourceID, ClassID: otherClassID}, nil)
+
+	svc := d.service()
+	_, err := svc.CreateColumn(ctx, classID, domain.CreateGradebookColumnDTO{
+		Title:    "Foreign Practice",
+		Type:     domain.GradebookColumnAutoPractice,
+		SourceID: &sourceID,
+	})
+	assert.ErrorIs(t, err, domain.ErrValidation)
+	d.colRepo.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+}
+
+func TestCreateColumn_AutoAttendance_ForeignClass_ValidationError(t *testing.T) {
+	teacherID := uuid.New()
+	classID := uuid.New()
+	otherClassID := uuid.New()
+	sourceID := uuid.New()
+	ctx := teacherCtx(teacherID)
+	d := newDeps()
+
+	d.classRepo.On("FindByID", ctx, classID).
+		Return(&domain.Class{ID: classID, UserID: teacherID}, nil)
+	d.sessionRepo.On("FindByID", ctx, sourceID).
+		Return(&domain.ClassSession{ID: sourceID, ClassID: otherClassID}, nil)
+
+	svc := d.service()
+	_, err := svc.CreateColumn(ctx, classID, domain.CreateGradebookColumnDTO{
+		Title:    "Foreign Attendance",
+		Type:     domain.GradebookColumnAutoAttendance,
+		SourceID: &sourceID,
+	})
+	assert.ErrorIs(t, err, domain.ErrValidation)
+	d.colRepo.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+}
+
+func TestCreateColumn_AutoPractice_SameClass_Success(t *testing.T) {
+	teacherID := uuid.New()
+	classID := uuid.New()
+	sourceID := uuid.New()
+	ctx := teacherCtx(teacherID)
+	d := newDeps()
+
+	d.classRepo.On("FindByID", ctx, classID).
+		Return(&domain.Class{ID: classID, UserID: teacherID}, nil)
+	d.practiceRoomRepo.On("FindByID", ctx, sourceID).
+		Return(&domain.PracticeRoom{ID: sourceID, ClassID: classID}, nil)
+	d.colRepo.On("Create", ctx, mock.AnythingOfType("*domain.GradebookColumn")).Return(nil)
+
+	svc := d.service()
+	col, err := svc.CreateColumn(ctx, classID, domain.CreateGradebookColumnDTO{
+		Title:    "Practice",
+		Type:     domain.GradebookColumnAutoPractice,
+		SourceID: &sourceID,
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, &sourceID, col.SourceID)
+}
+
+func TestCreateColumn_AutoAttendance_SameClass_Success(t *testing.T) {
+	teacherID := uuid.New()
+	classID := uuid.New()
+	sourceID := uuid.New()
+	ctx := teacherCtx(teacherID)
+	d := newDeps()
+
+	d.classRepo.On("FindByID", ctx, classID).
+		Return(&domain.Class{ID: classID, UserID: teacherID}, nil)
+	d.sessionRepo.On("FindByID", ctx, sourceID).
+		Return(&domain.ClassSession{ID: sourceID, ClassID: classID}, nil)
+	d.colRepo.On("Create", ctx, mock.AnythingOfType("*domain.GradebookColumn")).Return(nil)
+
+	svc := d.service()
+	col, err := svc.CreateColumn(ctx, classID, domain.CreateGradebookColumnDTO{
+		Title:    "Attendance",
+		Type:     domain.GradebookColumnAutoAttendance,
 		SourceID: &sourceID,
 	})
 	assert.NoError(t, err)

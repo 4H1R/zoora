@@ -96,7 +96,11 @@ func TestCreateRole(t *testing.T) {
 
 	permID := uuid.New()
 
-	caller := domain.Caller{UserID: uuid.New(), Ent: domain.PlanCatalog[domain.PlanKey(domain.TierPro, 50)]}
+	caller := domain.Caller{
+		UserID:      uuid.New(),
+		Permissions: []string{"users:view"},
+		Ent:         domain.PlanCatalog[domain.PlanKey(domain.TierPro, 50)],
+	}
 	ctx := domain.WithCaller(context.Background(), caller)
 
 	perms := []domain.Permission{{ID: permID, Name: "users:view"}}
@@ -153,6 +157,117 @@ func TestCreateRole_AdminBypassesFeatureGateForPresets(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, "Manager", role.Name)
+}
+
+func TestCreateRole_RejectsGrantingUnheldPermission(t *testing.T) {
+	roleRepo := &mockRoleRepo{}
+	permRepo := &mockPermRepo{}
+	permA := uuid.New()
+	permC := uuid.New()
+
+	// Caller holds {users:view, users:update} but tries to grant users:delete_any.
+	caller := domain.Caller{
+		UserID:      uuid.New(),
+		Permissions: []string{"users:view", "users:update"},
+		Ent:         domain.PlanCatalog[domain.PlanKey(domain.TierPro, 50)],
+	}
+	ctx := domain.WithCaller(context.Background(), caller)
+
+	perms := []domain.Permission{
+		{ID: permA, Name: "users:view"},
+		{ID: permC, Name: "users:delete_any"},
+	}
+	permRepo.On("FindByIDs", ctx, []uuid.UUID{permA, permC}).Return(perms, nil)
+
+	svc := roles.NewService(roleRepo, permRepo, noopTx{}, nil, slog.Default())
+
+	orgID := uuid.New()
+	_, err := svc.Create(ctx, domain.CreateRoleDTO{
+		OrganizationID: &orgID,
+		Name:           "Escalated",
+		PermissionIDs:  []uuid.UUID{permA, permC},
+	})
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+	roleRepo.AssertNotCalled(t, "Create")
+	roleRepo.AssertNotCalled(t, "SetPermissions")
+}
+
+func TestCreateRole_AdminBypassesSubsetCheck(t *testing.T) {
+	roleRepo := &mockRoleRepo{}
+	permRepo := &mockPermRepo{}
+	permID := uuid.New()
+
+	// Admin holds no explicit Permissions but may grant anything.
+	caller := domain.Caller{UserID: uuid.New(), IsAdmin: true, Ent: domain.PlanCatalog[domain.PlanFree]}
+	ctx := domain.WithCaller(context.Background(), caller)
+
+	permRepo.On("FindByIDs", ctx, []uuid.UUID{permID}).Return([]domain.Permission{{ID: permID, Name: "users:delete_any"}}, nil)
+	roleRepo.On("Create", ctx, mock.AnythingOfType("*domain.Role")).Return(nil)
+	roleRepo.On("SetPermissions", ctx, mock.AnythingOfType("uuid.UUID"), []uuid.UUID{permID}).Return(nil)
+
+	svc := roles.NewService(roleRepo, permRepo, noopTx{}, nil, slog.Default())
+
+	orgID := uuid.New()
+	role, err := svc.Create(ctx, domain.CreateRoleDTO{
+		OrganizationID: &orgID,
+		Name:           "Powerful",
+		PermissionIDs:  []uuid.UUID{permID},
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, "Powerful", role.Name)
+}
+
+func TestUpdateRole_RejectsGrantingUnheldPermission(t *testing.T) {
+	roleRepo := &mockRoleRepo{}
+	permRepo := &mockPermRepo{}
+	orgID := uuid.New()
+	roleID := uuid.New()
+	permID := uuid.New()
+
+	// Caller owns the org role but does not hold users:delete_any.
+	caller := domain.Caller{
+		UserID:      uuid.New(),
+		OrgID:       &orgID,
+		Permissions: []string{"users:view"},
+	}
+	ctx := domain.WithCaller(context.Background(), caller)
+
+	roleRepo.On("FindByID", ctx, roleID).Return(&domain.Role{ID: roleID, OrganizationID: &orgID}, nil)
+	permRepo.On("FindByIDs", ctx, []uuid.UUID{permID}).Return([]domain.Permission{{ID: permID, Name: "users:delete_any"}}, nil)
+
+	svc := roles.NewService(roleRepo, permRepo, noopTx{}, nil, slog.Default())
+
+	_, err := svc.Update(ctx, roleID, domain.UpdateRoleDTO{PermissionIDs: []uuid.UUID{permID}})
+	assert.ErrorIs(t, err, domain.ErrForbidden)
+	roleRepo.AssertNotCalled(t, "Update")
+	roleRepo.AssertNotCalled(t, "SetPermissions")
+}
+
+func TestUpdateRole_AllowsGrantingHeldPermission(t *testing.T) {
+	roleRepo := &mockRoleRepo{}
+	permRepo := &mockPermRepo{}
+	orgID := uuid.New()
+	roleID := uuid.New()
+	permID := uuid.New()
+
+	caller := domain.Caller{
+		UserID:      uuid.New(),
+		OrgID:       &orgID,
+		Permissions: []string{"users:view"},
+	}
+	ctx := domain.WithCaller(context.Background(), caller)
+
+	roleRepo.On("FindByID", ctx, roleID).Return(&domain.Role{ID: roleID, OrganizationID: &orgID}, nil)
+	permRepo.On("FindByIDs", ctx, []uuid.UUID{permID}).Return([]domain.Permission{{ID: permID, Name: "users:view"}}, nil)
+	roleRepo.On("Update", ctx, mock.AnythingOfType("*domain.Role")).Return(nil)
+	roleRepo.On("SetPermissions", ctx, roleID, []uuid.UUID{permID}).Return(nil)
+
+	svc := roles.NewService(roleRepo, permRepo, noopTx{}, nil, slog.Default())
+
+	role, err := svc.Update(ctx, roleID, domain.UpdateRoleDTO{PermissionIDs: []uuid.UUID{permID}})
+	assert.NoError(t, err)
+	assert.Equal(t, roleID, role.ID)
+	roleRepo.AssertExpectations(t)
 }
 
 func TestAdminList_ForcesIncludePreset(t *testing.T) {

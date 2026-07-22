@@ -284,47 +284,91 @@ func TestClassEnrollmentRulesAndCapacity(t *testing.T) {
 	teacherID := uuid.New()
 	studentID := uuid.New()
 	otherStudentID := uuid.New()
+	orgID := uuid.New()
+	otherOrgID := uuid.New()
 
 	tests := []struct {
-		name       string
-		callerID   uuid.UUID
-		targetID   uuid.UUID
-		class      *domain.Class
-		count      int64
-		wantErr    error
-		wantCreate bool
+		name        string
+		callerID    uuid.UUID
+		callerOrgID *uuid.UUID
+		isAdmin     bool
+		targetID    uuid.UUID
+		class       *domain.Class
+		count       int64
+		wantErr     error
+		wantCreate  bool
 	}{
 		{
-			name:       "student cannot enroll another user",
-			callerID:   studentID,
-			targetID:   otherStudentID,
-			class:      &domain.Class{ID: classID, UserID: teacherID, TotalUsers: 0},
-			wantErr:    domain.ErrForbidden,
-			wantCreate: false,
+			name:        "student cannot enroll another user",
+			callerID:    studentID,
+			callerOrgID: &orgID,
+			targetID:    otherStudentID,
+			class:       &domain.Class{ID: classID, OrganizationID: orgID, UserID: teacherID, TotalUsers: 0},
+			wantErr:     domain.ErrForbidden,
+			wantCreate:  false,
 		},
 		{
-			name:       "capacity full conflicts",
-			callerID:   studentID,
-			targetID:   studentID,
-			class:      &domain.Class{ID: classID, UserID: teacherID, TotalUsers: 1},
-			count:      1,
-			wantErr:    domain.ErrConflict,
-			wantCreate: false,
+			name:        "capacity full conflicts",
+			callerID:    studentID,
+			callerOrgID: &orgID,
+			targetID:    studentID,
+			class:       &domain.Class{ID: classID, OrganizationID: orgID, UserID: teacherID, TotalUsers: 1},
+			count:       1,
+			wantErr:     domain.ErrConflict,
+			wantCreate:  false,
 		},
 		{
-			name:       "student can self enroll when capacity available",
-			callerID:   studentID,
-			targetID:   studentID,
-			class:      &domain.Class{ID: classID, UserID: teacherID, TotalUsers: 2},
-			count:      1,
-			wantCreate: true,
+			name:        "student can self enroll when capacity available",
+			callerID:    studentID,
+			callerOrgID: &orgID,
+			targetID:    studentID,
+			class:       &domain.Class{ID: classID, OrganizationID: orgID, UserID: teacherID, TotalUsers: 2},
+			count:       1,
+			wantCreate:  true,
 		},
 		{
-			name:       "teacher can enroll another user",
-			callerID:   teacherID,
-			targetID:   otherStudentID,
-			class:      &domain.Class{ID: classID, UserID: teacherID, TotalUsers: 0},
-			wantCreate: true,
+			name:        "teacher can enroll another user",
+			callerID:    teacherID,
+			callerOrgID: &orgID,
+			targetID:    otherStudentID,
+			class:       &domain.Class{ID: classID, OrganizationID: orgID, UserID: teacherID, TotalUsers: 0},
+			wantCreate:  true,
+		},
+		{
+			name:        "student cannot self-enroll into a class in another org",
+			callerID:    studentID,
+			callerOrgID: &orgID,
+			targetID:    studentID,
+			class:       &domain.Class{ID: classID, OrganizationID: otherOrgID, UserID: teacherID, TotalUsers: 0},
+			wantErr:     domain.ErrForbidden,
+			wantCreate:  false,
+		},
+		{
+			name:        "teacher cannot enroll another user into a class in another org",
+			callerID:    teacherID,
+			callerOrgID: &orgID,
+			targetID:    otherStudentID,
+			class:       &domain.Class{ID: classID, OrganizationID: otherOrgID, UserID: teacherID, TotalUsers: 0},
+			wantErr:     domain.ErrForbidden,
+			wantCreate:  false,
+		},
+		{
+			name:        "caller without an org cannot enroll",
+			callerID:    studentID,
+			callerOrgID: nil,
+			targetID:    studentID,
+			class:       &domain.Class{ID: classID, OrganizationID: orgID, UserID: teacherID, TotalUsers: 0},
+			wantErr:     domain.ErrForbidden,
+			wantCreate:  false,
+		},
+		{
+			name:        "admin can enroll into any org",
+			callerID:    teacherID,
+			callerOrgID: nil,
+			isAdmin:     true,
+			targetID:    otherStudentID,
+			class:       &domain.Class{ID: classID, OrganizationID: otherOrgID, UserID: teacherID, TotalUsers: 0},
+			wantCreate:  true,
 		},
 	}
 
@@ -333,7 +377,7 @@ func TestClassEnrollmentRulesAndCapacity(t *testing.T) {
 			repo := &classRepoSvcMock{}
 			members := &classMemberRepoSvcMock{}
 			svc := newClassService(repo, nil, members)
-			ctx := classCtx(tt.callerID, nil, false)
+			ctx := classCtx(tt.callerID, tt.callerOrgID, tt.isAdmin)
 
 			repo.On("FindByID", ctx, classID).Return(tt.class, nil)
 			if tt.class.TotalUsers > 0 && !assert.ObjectsAreEqual(tt.wantErr, domain.ErrForbidden) {

@@ -162,7 +162,13 @@ func (h *Handler) Callback(c *gin.Context) {
 	status := c.Query("Status") // Zarinpal: "OK" | "NOK"
 	// slug identifies the org whose subdomain we redirect back to; set on the
 	// callback URL at checkout so it survives even when the invoice lookup fails.
+	// Validate it against the strict slug charset before it can reach the redirect
+	// host, otherwise a crafted value would make this public endpoint an open redirect.
 	slug := c.Query("org")
+	if domain.ValidateSlug(slug) != nil {
+		c.String(http.StatusBadRequest, "invalid organization")
+		return
+	}
 	inv, err := h.svc.HandleCallback(c.Request.Context(), gateway, authority, status == "OK")
 	// Redirect regardless — the result page reads the invoice status.
 	if err != nil {
