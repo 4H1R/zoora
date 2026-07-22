@@ -88,7 +88,14 @@ func (m *voteMock) CountByQuestion(ctx context.Context, questionID uuid.UUID) (i
 	return args.Get(0).(int64), args.Error(1)
 }
 
-type authzMock struct{ mock.Mock }
+type authzMock struct {
+	mock.Mock
+	// org/orgErr back OrgForModel. Kept off the testify expectation set (a plain
+	// return) so the many tests that don't care about org resolution need no
+	// extra .On setup; set org to exercise the Platform Admin target-org path.
+	org    uuid.UUID
+	orgErr error
+}
 
 func (m *authzMock) CanParticipate(ctx context.Context, caller domain.Caller, modelType string, modelID uuid.UUID) (bool, error) {
 	args := m.Called(ctx, caller, modelType, modelID)
@@ -98,6 +105,10 @@ func (m *authzMock) CanParticipate(ctx context.Context, caller domain.Caller, mo
 func (m *authzMock) CanModerate(ctx context.Context, caller domain.Caller, modelType string, modelID uuid.UUID) (bool, error) {
 	args := m.Called(ctx, caller, modelType, modelID)
 	return args.Bool(0), args.Error(1)
+}
+
+func (m *authzMock) OrgForModel(_ context.Context, _ string, _ uuid.UUID) (uuid.UUID, error) {
+	return m.org, m.orgErr
 }
 
 // --- helpers ---

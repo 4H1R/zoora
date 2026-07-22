@@ -36,6 +36,22 @@ func NewService(
 	}
 }
 
+// orgForModel resolves the org the poll's polymorphic owner (class, or live
+// room -> session -> class) belongs to, so the audit entry is filed under the
+// TARGET's org. This matters for a Platform Admin, whose own Caller.OrgID is
+// nil: without a target org the recorder would return ErrValidation and roll the
+// whole mutation back. Every mutation path here first authorizes via CanModerate
+// (which resolves the same owner), so resolution succeeds whenever we reach a
+// Record call. On the off chance it errors, nil is returned and the recorder
+// falls back to the caller's org (a normal org user is unaffected).
+func (s *service) orgForModel(ctx context.Context, modelType string, modelID uuid.UUID) *uuid.UUID {
+	orgID, err := s.modelAuth.OrgForModel(ctx, modelType, modelID)
+	if err != nil {
+		return nil
+	}
+	return &orgID
+}
+
 func (s *service) Create(ctx context.Context, dto domain.CreatePollDTO) (*domain.Poll, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
@@ -65,6 +81,7 @@ func (s *service) Create(ctx context.Context, dto domain.CreatePollDTO) (*domain
 			TargetType:  domain.AuditTargetPoll,
 			TargetID:    &poll.ID,
 			TargetLabel: poll.Name,
+			OrgID:       s.orgForModel(ctx, poll.ModelType, poll.ModelID),
 			Metadata: map[string]any{
 				"model_type": poll.ModelType,
 				"model_id":   poll.ModelID.String(),
@@ -142,6 +159,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdatePol
 			TargetType:  domain.AuditTargetPoll,
 			TargetID:    &poll.ID,
 			TargetLabel: poll.Name,
+			OrgID:       s.orgForModel(ctx, poll.ModelType, poll.ModelID),
 			Metadata:    map[string]any{"changed": changed},
 		})
 	})
@@ -176,6 +194,7 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 			TargetType:  domain.AuditTargetPoll,
 			TargetID:    &id,
 			TargetLabel: poll.Name,
+			OrgID:       s.orgForModel(ctx, poll.ModelType, poll.ModelID),
 			Metadata: map[string]any{
 				"model_type": poll.ModelType,
 				"model_id":   poll.ModelID.String(),

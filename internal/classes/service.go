@@ -98,6 +98,7 @@ func (s *service) Create(ctx context.Context, dto domain.CreateClassDTO) (*domai
 			TargetType:  domain.AuditTargetClass,
 			TargetID:    &class.ID,
 			TargetLabel: class.Name,
+			OrgID:       &class.OrganizationID,
 		})
 	})
 	if err != nil {
@@ -169,6 +170,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateCla
 			TargetType:  domain.AuditTargetClass,
 			TargetID:    &class.ID,
 			TargetLabel: class.Name,
+			OrgID:       &class.OrganizationID,
 			Metadata:    map[string]any{"changed": changed},
 		})
 	})
@@ -203,6 +205,7 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 			TargetType:  domain.AuditTargetClass,
 			TargetID:    &id,
 			TargetLabel: class.Name,
+			OrgID:       &class.OrganizationID,
 			Metadata:    map[string]any{"cascaded": map[string]any{"enrollments": memberCount}},
 		})
 	})
@@ -397,6 +400,7 @@ func (s *service) Enroll(ctx context.Context, classID uuid.UUID, dto domain.Enro
 			TargetType:  domain.AuditTargetEnrollment,
 			TargetID:    &m.ID,
 			TargetLabel: class.Name,
+			OrgID:       &class.OrganizationID,
 			Metadata:    map[string]any{"class_id": classID.String(), "user_id": dto.UserID.String()},
 		})
 	})
@@ -434,6 +438,7 @@ func (s *service) Leave(ctx context.Context, classID, userID uuid.UUID) error {
 			Action:      domain.AuditUnenrolled,
 			TargetType:  domain.AuditTargetEnrollment,
 			TargetLabel: class.Name,
+			OrgID:       &class.OrganizationID,
 			Metadata:    map[string]any{"class_id": classID.String(), "user_id": userID.String()},
 		})
 	})

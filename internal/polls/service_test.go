@@ -100,6 +100,11 @@ type authorizerMock struct {
 	participateErr error
 	moderate       bool
 	moderateErr    error
+	// org is returned by OrgForModel (uuid.Nil by default -> the service treats
+	// it as resolvable and files the entry under it; set it to exercise the
+	// Platform Admin target-org path).
+	org    uuid.UUID
+	orgErr error
 }
 
 func (a authorizerMock) CanParticipate(_ context.Context, _ domain.Caller, _ string, _ uuid.UUID) (bool, error) {
@@ -108,6 +113,10 @@ func (a authorizerMock) CanParticipate(_ context.Context, _ domain.Caller, _ str
 
 func (a authorizerMock) CanModerate(_ context.Context, _ domain.Caller, _ string, _ uuid.UUID) (bool, error) {
 	return a.moderate, a.moderateErr
+}
+
+func (a authorizerMock) OrgForModel(_ context.Context, _ string, _ uuid.UUID) (uuid.UUID, error) {
+	return a.org, a.orgErr
 }
 
 func allowAll() authorizerMock { return authorizerMock{participate: true, moderate: true} }

@@ -112,6 +112,10 @@ func (s stubModelAuth) CanModerate(context.Context, domain.Caller, string, uuid.
 	return s.moderate, s.moderateErr
 }
 
+func (s stubModelAuth) OrgForModel(context.Context, string, uuid.UUID) (uuid.UUID, error) {
+	return uuid.Nil, nil
+}
+
 // allowAll authorizes every participate/moderate check; the default for tests
 // whose focus is not the authz decision itself.
 var allowAll = stubModelAuth{participate: true, moderate: true}

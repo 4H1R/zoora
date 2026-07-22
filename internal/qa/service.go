@@ -45,6 +45,20 @@ func qaLabel(text string) string {
 	return string(r[:qaLabelMaxRunes]) + "…"
 }
 
+// orgForModel resolves the org the question's polymorphic owner (live room ->
+// session -> class) belongs to, so the audit entry is filed under the TARGET's
+// org. This matters for a Platform Admin, whose own Caller.OrgID is nil: without
+// a target org the recorder would return ErrValidation and roll the whole
+// mutation back. Returns nil on any resolution error, in which case the recorder
+// falls back to the caller's org (a normal org user is unaffected).
+func (s *service) orgForModel(ctx context.Context, modelType string, modelID uuid.UUID) *uuid.UUID {
+	orgID, err := s.authz.OrgForModel(ctx, modelType, modelID)
+	if err != nil {
+		return nil
+	}
+	return &orgID
+}
+
 func (s *service) Ask(ctx context.Context, dto domain.CreateQAQuestionDTO) (*domain.QAQuestion, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
@@ -82,6 +96,7 @@ func (s *service) Ask(ctx context.Context, dto domain.CreateQAQuestionDTO) (*dom
 			TargetType:  domain.AuditTargetQA,
 			TargetID:    &q.ID,
 			TargetLabel: qaLabel(q.Text),
+			OrgID:       s.orgForModel(ctx, q.ModelType, q.ModelID),
 			Metadata: map[string]any{
 				"model_type": q.ModelType,
 				"model_id":   q.ModelID.String(),
@@ -150,6 +165,7 @@ func (s *service) UpdateText(ctx context.Context, id uuid.UUID, dto domain.Updat
 			TargetType:  domain.AuditTargetQA,
 			TargetID:    &q.ID,
 			TargetLabel: qaLabel(q.Text),
+			OrgID:       s.orgForModel(ctx, q.ModelType, q.ModelID),
 			Metadata: map[string]any{
 				"changed": map[string]any{"text": map[string]any{"from": qaLabel(oldText), "to": qaLabel(q.Text)}},
 			},
@@ -188,6 +204,7 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 			TargetType:  domain.AuditTargetQA,
 			TargetID:    &id,
 			TargetLabel: qaLabel(q.Text),
+			OrgID:       s.orgForModel(ctx, q.ModelType, q.ModelID),
 			Metadata: map[string]any{
 				"model_type": q.ModelType,
 				"model_id":   q.ModelID.String(),
@@ -281,6 +298,7 @@ func (s *service) close(ctx context.Context, id uuid.UUID, status string) (*doma
 			TargetType:  domain.AuditTargetQA,
 			TargetID:    &q.ID,
 			TargetLabel: qaLabel(q.Text),
+			OrgID:       s.orgForModel(ctx, q.ModelType, q.ModelID),
 			Metadata: map[string]any{
 				"changed": map[string]any{"status": map[string]any{"from": oldStatus, "to": status}},
 			},
@@ -322,6 +340,7 @@ func (s *service) Reopen(ctx context.Context, id uuid.UUID) (*domain.QAQuestion,
 			TargetType:  domain.AuditTargetQA,
 			TargetID:    &q.ID,
 			TargetLabel: qaLabel(q.Text),
+			OrgID:       s.orgForModel(ctx, q.ModelType, q.ModelID),
 			Metadata: map[string]any{
 				"changed": map[string]any{"status": map[string]any{"from": oldStatus, "to": domain.QAStatusOpen}},
 			},

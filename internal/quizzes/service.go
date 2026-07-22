@@ -254,6 +254,7 @@ func (s *service) Create(ctx context.Context, dto domain.CreateQuizDTO) (*domain
 			TargetType:  domain.AuditTargetQuiz,
 			TargetID:    &quiz.ID,
 			TargetLabel: quiz.Title,
+			OrgID:       &quiz.OrganizationID,
 			Metadata:    map[string]any{"class_id": quiz.ClassID.String()},
 		})
 	})
@@ -387,6 +388,7 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateQui
 			TargetType:  domain.AuditTargetQuiz,
 			TargetID:    &quiz.ID,
 			TargetLabel: quiz.Title,
+			OrgID:       &quiz.OrganizationID,
 			Metadata:    map[string]any{"changed": changed},
 		})
 	})
@@ -420,6 +422,7 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 			TargetType:  domain.AuditTargetQuiz,
 			TargetID:    &id,
 			TargetLabel: quiz.Title,
+			OrgID:       &quiz.OrganizationID,
 			Metadata:    map[string]any{"class_id": quiz.ClassID.String()},
 		})
 	})
