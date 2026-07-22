@@ -191,7 +191,6 @@ func main() {
 	orgSettingsService := orgsettings.NewService(orgSettingsRepo, log)
 
 	sessionManager := auth.NewSessionManager(jwtService, redisClient)
-	userService := users.NewService(userRepo, roleRepo, entitlementService, redisClient, sessionManager, log)
 	customFieldService := customfields.NewService(customFieldRepo, log)
 	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, queueClient, log)
 	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, queueClient, log)
@@ -203,6 +202,8 @@ func main() {
 
 	auditRepo := audit.NewRepository(db)
 	auditService := audit.NewService(auditRepo, log)
+
+	userService := users.NewService(userRepo, roleRepo, entitlementService, redisClient, sessionManager, transactor, auditService, log)
 
 	// Reconcile the permissions table + preset-role grants with the code-defined
 	// source of truth so renaming/removing a permission constant takes effect on

@@ -23,7 +23,7 @@ func TestGetByID_CrossTenant_Forbidden(t *testing.T) {
 	repo := &mockUserRepo{}
 	repo.On("FindByID", mock.Anything, targetID).Return(&domain.User{ID: targetID, OrganizationID: &orgB}, nil)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, fakeTransactor{}, &auditSpy{}, slog.Default())
 	ctx := domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      uuid.New(),
 		OrgID:       &orgA,
@@ -43,7 +43,7 @@ func TestGetByID_SameTenant_Success(t *testing.T) {
 	repo := &mockUserRepo{}
 	repo.On("FindByID", mock.Anything, targetID).Return(&domain.User{ID: targetID, Name: "Same Org", OrganizationID: &orgA}, nil)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, fakeTransactor{}, &auditSpy{}, slog.Default())
 	ctx := domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      uuid.New(),
 		OrgID:       &orgA,
@@ -63,7 +63,7 @@ func TestGetByID_Admin_AnyOrg(t *testing.T) {
 	repo := &mockUserRepo{}
 	repo.On("FindByID", mock.Anything, targetID).Return(&domain.User{ID: targetID, Name: "Other Org", OrganizationID: &orgB}, nil)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, fakeTransactor{}, &auditSpy{}, slog.Default())
 	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New(), IsAdmin: true})
 
 	user, err := svc.GetByID(ctx, targetID)
@@ -82,7 +82,7 @@ func TestCreate_NonAdminForcesCallerOrg(t *testing.T) {
 		return u.OrganizationID != nil && *u.OrganizationID == orgA
 	})).Return(nil)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, fakeTransactor{}, &auditSpy{}, slog.Default())
 	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New(), OrgID: &orgA})
 
 	user, err := svc.Create(ctx, domain.CreateUserDTO{
@@ -110,7 +110,7 @@ func TestAssignRole_ManagerPreset_Forbidden(t *testing.T) {
 	roleRepo := &mockRoleRepo{}
 	roleRepo.On("FindByID", mock.Anything, managerRoleID).Return(&domain.Role{ID: managerRoleID, IsPreset: true, Name: domain.PresetRoleManager}, nil)
 
-	svc := users.NewService(repo, roleRepo, nil, nil, nil, slog.Default())
+	svc := users.NewService(repo, roleRepo, nil, nil, nil, fakeTransactor{}, &auditSpy{}, slog.Default())
 	ctx := domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      uuid.New(),
 		OrgID:       &orgA,
@@ -133,7 +133,7 @@ func TestAssignRole_CrossTenant_Forbidden(t *testing.T) {
 	repo := &mockUserRepo{}
 	repo.On("FindByID", mock.Anything, targetID).Return(&domain.User{ID: targetID, OrganizationID: &orgB}, nil)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, fakeTransactor{}, &auditSpy{}, slog.Default())
 	ctx := domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      uuid.New(),
 		OrgID:       &orgA,
@@ -161,7 +161,7 @@ func TestAssignRole_SameTenantNormalRole_Success(t *testing.T) {
 	roleRepo := &mockRoleRepo{}
 	roleRepo.On("FindByID", mock.Anything, roleID).Return(&domain.Role{ID: roleID, IsPreset: false, Name: "Custom"}, nil)
 
-	svc := users.NewService(repo, roleRepo, nil, nil, nil, slog.Default())
+	svc := users.NewService(repo, roleRepo, nil, nil, nil, fakeTransactor{}, &auditSpy{}, slog.Default())
 	ctx := domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      uuid.New(),
 		OrgID:       &orgA,
@@ -184,7 +184,7 @@ func TestRemoveRole_CrossTenant_Forbidden(t *testing.T) {
 	repo := &mockUserRepo{}
 	repo.On("FindByID", mock.Anything, targetID).Return(&domain.User{ID: targetID, OrganizationID: &orgB}, nil)
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, nil, nil, fakeTransactor{}, &auditSpy{}, slog.Default())
 	ctx := domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      uuid.New(),
 		OrgID:       &orgA,

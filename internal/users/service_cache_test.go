@@ -31,7 +31,7 @@ func newCacheHarness(t *testing.T, repo domain.UserRepository) (domain.UserServi
 		t.Fatalf("seeding user cache: %v", err)
 	}
 
-	svc := users.NewService(repo, &mockRoleRepo{}, nil, rdb, nil, slog.Default())
+	svc := users.NewService(repo, &mockRoleRepo{}, nil, rdb, nil, fakeTransactor{}, &auditSpy{}, slog.Default())
 	return svc, rdb, userID
 }
 
