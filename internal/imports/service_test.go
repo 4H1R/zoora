@@ -1173,7 +1173,7 @@ func TestProcessUsers_ProgressUpdatesEvery25Creates(t *testing.T) {
 	orgID := uuid.New()
 
 	rows := [][]string{{"name", "username", "password", "role"}}
-	for i := 0; i < 30; i++ {
+	for i := range 30 {
 		rows = append(rows, []string{fmt.Sprintf("User %d", i), fmt.Sprintf("user%d", i), "password9", "-"})
 	}
 	file := usersXLSX(t, rows)

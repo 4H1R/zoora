@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -108,10 +109,8 @@ func ValidateCustomFieldValue(def UserCustomFieldDefinition, value any) error {
 		if !ok {
 			return fmt.Errorf("%w: %q expects a choice", ErrValidation, def.Label)
 		}
-		for _, o := range def.Options {
-			if o == s {
-				return nil
-			}
+		if slices.Contains(def.Options, s) {
+			return nil
 		}
 		return fmt.Errorf("%w: %q is not a valid option for %q", ErrValidation, s, def.Label)
 	case CustomFieldTypeNumber:

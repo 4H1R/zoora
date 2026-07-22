@@ -197,7 +197,7 @@ func TestVerifySMSOTPAttemptCapInvalidatesCode(t *testing.T) {
 	}
 	// Exhaust the attempt budget with wrong guesses. Use a code that can never
 	// collide with the real 6-digit numeric code.
-	for i := 0; i < otpMaxAttempts; i++ {
+	for i := range otpMaxAttempts {
 		if err := svc.VerifySMSOTP(ctx, domain.VerifySMSOTPDTO{Code: "wrong"}); err == nil {
 			t.Fatalf("wrong guess %d: expected error", i)
 		}
@@ -255,7 +255,7 @@ func TestRequestSMSOTPResetsAttemptCounter(t *testing.T) {
 		t.Fatalf("RequestSMSOTP: %v", err)
 	}
 	// Burn most of the budget without hitting the cap.
-	for i := 0; i < otpMaxAttempts-1; i++ {
+	for range otpMaxAttempts - 1 {
 		_ = svc.VerifySMSOTP(ctx, domain.VerifySMSOTPDTO{Code: "wrong"})
 	}
 	// A fresh request resets the counter, so the user gets a full budget again.
@@ -263,7 +263,7 @@ func TestRequestSMSOTPResetsAttemptCounter(t *testing.T) {
 		t.Fatalf("re-RequestSMSOTP: %v", err)
 	}
 	// otpMaxAttempts-1 more wrong guesses must NOT burn the code (counter was reset).
-	for i := 0; i < otpMaxAttempts-1; i++ {
+	for range otpMaxAttempts - 1 {
 		_ = svc.VerifySMSOTP(ctx, domain.VerifySMSOTPDTO{Code: "wrong"})
 	}
 	if err := svc.VerifySMSOTP(ctx, domain.VerifySMSOTPDTO{Code: sms.otpCode}); err != nil {

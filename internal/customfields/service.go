@@ -3,6 +3,7 @@ package customfields
 import (
 	"context"
 	"log/slog"
+	"maps"
 
 	"github.com/google/uuid"
 
@@ -188,9 +189,7 @@ func (s *service) SetUserValues(ctx context.Context, userID uuid.UUID, dto domai
 
 	fieldErrs := map[string]string{}
 	merged := make(map[string]any, len(current))
-	for k, v := range current {
-		merged[k] = v
-	}
+	maps.Copy(merged, current)
 	for key, val := range dto.Values {
 		def, ok := defByID[key]
 		if !ok {

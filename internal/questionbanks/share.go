@@ -74,7 +74,7 @@ func (s *service) GenerateShareCode(ctx context.Context, bankID uuid.UUID, dto d
 		return nil, err
 	}
 	// Retry a few times on the astronomically unlikely code collision.
-	for attempt := 0; attempt < 3; attempt++ {
+	for range 3 {
 		code, err := generateShareCode()
 		if err != nil {
 			return nil, err

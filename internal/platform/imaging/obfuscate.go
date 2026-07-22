@@ -94,7 +94,7 @@ func waveWarp(img *image.RGBA, strength int, rng *rand.Rand) {
 func speckle(img *image.RGBA, strength int, rng *rand.Rand) {
 	b := img.Bounds()
 	n := strength * (b.Dx() * b.Dy()) / 120
-	for i := 0; i < n; i++ {
+	for range n {
 		x := b.Min.X + rng.Intn(b.Dx())
 		y := b.Min.Y + rng.Intn(b.Dy())
 		g := uint8(rng.Intn(90))
@@ -110,7 +110,7 @@ func speckle(img *image.RGBA, strength int, rng *rand.Rand) {
 // segmentation.
 func strokes(img *image.RGBA, rng *rand.Rand) {
 	b := img.Bounds()
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		amp := 4.0 + rng.Float64()*8.0
 		period := 80.0 + rng.Float64()*80.0
 		phase := rng.Float64() * 2 * math.Pi

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"slices"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -12,13 +13,7 @@ func CORS(allowedOrigins []string) gin.HandlerFunc {
 	// (and browsers reject it anyway), so drop credentials whenever the
 	// allow-list contains a bare "*". An explicit list — including the
 	// "https://*.zoora.ir" subdomain wildcard — keeps credentials enabled.
-	allowCredentials := true
-	for _, o := range allowedOrigins {
-		if o == "*" {
-			allowCredentials = false
-			break
-		}
-	}
+	allowCredentials := !slices.Contains(allowedOrigins, "*")
 	return cors.New(cors.Config{
 		AllowOrigins: allowedOrigins,
 		// Multi-tenant: each org is served from its own <org>.zoora.ir host, so
