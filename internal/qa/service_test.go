@@ -102,8 +102,30 @@ func (m *authzMock) CanModerate(ctx context.Context, caller domain.Caller, model
 
 // --- helpers ---
 
+// fakeTransactor runs fn inline with no real DB — unit tests exercise the audit
+// same-tx wiring without a database.
+type fakeTransactor struct{}
+
+func (fakeTransactor) RunInTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
+
 func newSvc(repo *repoMock, votes *voteMock, authz *authzMock) domain.QAService {
-	return qa.NewService(repo, votes, authz, slog.Default(), nil)
+	return qa.NewService(repo, votes, authz, fakeTransactor{}, &auditSpy{}, slog.Default(), nil)
+}
+
+func newSvcWithAudit(repo *repoMock, votes *voteMock, authz *authzMock, audit *auditSpy) domain.QAService {
+	return qa.NewService(repo, votes, authz, fakeTransactor{}, audit, slog.Default(), nil)
 }
 
 func ctxWith(userID uuid.UUID) context.Context {
@@ -152,6 +174,26 @@ func TestAsk_Success(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, domain.QAStatusOpen, q.Status)
 	assert.Equal(t, userID, q.UserID)
+}
+
+func TestAsk_RecordsAudit(t *testing.T) {
+	userID := uuid.New()
+	repo, votes, authz := &repoMock{}, &voteMock{}, &authzMock{}
+	audit := &auditSpy{}
+	authz.On("CanParticipate", mock.Anything, mock.Anything, domain.QAModelLiveSession, modelID).Return(true, nil)
+	repo.On("CountOpenByUser", mock.Anything, domain.QAModelLiveSession, modelID, userID).Return(int64(0), nil)
+	repo.On("Create", mock.Anything, mock.AnythingOfType("*domain.QAQuestion")).Return(nil)
+
+	q, err := newSvcWithAudit(repo, votes, authz, audit).Ask(ctxWith(userID), domain.CreateQAQuestionDTO{
+		ModelType: domain.QAModelLiveSession, ModelID: modelID, Text: "what is the deadline?",
+	})
+	require.NoError(t, err)
+	require.Len(t, audit.records, 1)
+	assert.Equal(t, domain.AuditCreated, audit.records[0].Action)
+	assert.Equal(t, domain.AuditTargetQA, audit.records[0].TargetType)
+	assert.Equal(t, "what is the deadline?", audit.records[0].TargetLabel)
+	require.NotNil(t, audit.records[0].TargetID)
+	assert.Equal(t, q.ID, *audit.records[0].TargetID)
 }
 
 func TestToggleVote_RejectsSelfVote(t *testing.T) {

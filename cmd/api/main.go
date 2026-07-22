@@ -232,7 +232,7 @@ func main() {
 	pollModelAuthorizer := polls.NewModelAuthorizer(liveRoomRepo, classSessionRepo, classRepo, classMemberRepo)
 	pollService := polls.NewService(pollRepo, pollAnswerRepo, pollModelAuthorizer, transactor, auditService, log)
 	qaBroadcaster := qa.NewBroadcaster(livekitClient, liveRoomRepo, log)
-	qaService := qa.NewService(qaRepo, qaVoteRepo, modelAuthorizer, log, qaBroadcaster)
+	qaService := qa.NewService(qaRepo, qaVoteRepo, modelAuthorizer, transactor, auditService, log, qaBroadcaster)
 	liveSessionService := livesessions.NewService(
 		liveRoomRepo, liveParticipantRepo, liveRecordingRepo, liveWhiteboardRepo,
 		classSessionRepo, classRepo, classMemberRepo,
