@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -58,14 +59,17 @@ var routeSegments = map[string]domain.AuditTargetType{
 // AuditDenied records a best-effort 'denied' audit entry when a mutating
 // request resolves to 403 — whether the 403 came from a permission middleware
 // (writes the response directly) or a service returning ErrForbidden (mapped by
-// ErrorHandler). It runs AFTER the handler chain and inspects the final status,
-// so it catches both paths. Soft-fail: a recorder error is logged, never
-// surfaced to the client.
+// ErrorHandler). It runs AFTER the handler chain, but the outer ErrorHandler's
+// post-Next phase runs LATER than this inner middleware's, so a service-layer
+// ErrForbidden is still only an attached c.Error here — the status is not yet
+// 403. To stay ordering-independent it treats the request as denied when the
+// final status is 403 OR an attached error maps to 403. Soft-fail: a recorder
+// error is logged, never surfaced to the client.
 func AuditDenied(recorder domain.AuditRecorder, logger *slog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
 
-		if c.Writer.Status() != http.StatusForbidden {
+		if !requestDenied(c) {
 			return
 		}
 		if _, ok := mutatingMethods[c.Request.Method]; !ok {
@@ -100,6 +104,27 @@ func AuditDenied(recorder domain.AuditRecorder, logger *slog.Logger) gin.Handler
 				"err", err, "path", c.Request.URL.Path)
 		}
 	}
+}
+
+// requestDenied reports whether the finished request was a 403 denial. It is
+// ordering-independent: it returns true if the final status is already 403
+// (permission middleware wrote it inline) OR any attached c.Error maps to a 403
+// (a service returned domain.ErrForbidden / ErrUserDisabled, which the OUTER
+// ErrorHandler will map to 403 in its own — later — post-Next phase). The two
+// signals can overlap on a single request; callers must record only once.
+func requestDenied(c *gin.Context) bool {
+	if c.Writer.Status() == http.StatusForbidden {
+		return true
+	}
+	for _, e := range c.Errors {
+		if errors.Is(e.Err, domain.ErrForbidden) {
+			return true
+		}
+		if status, _ := domain.MapError(e.Err); status == http.StatusForbidden {
+			return true
+		}
+	}
+	return false
 }
 
 // routeSegmentToTargetType maps a gin route like "/api/v1/classes/:id" to a
