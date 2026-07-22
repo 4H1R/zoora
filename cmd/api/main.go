@@ -195,7 +195,7 @@ func main() {
 	orgSettingsService := orgsettings.NewService(orgSettingsRepo, transactor, auditService, log)
 
 	sessionManager := auth.NewSessionManager(jwtService, redisClient)
-	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, queueClient, log)
+	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, queueClient, transactor, auditService, log)
 
 	leadRepo := leads.NewRepository(db)
 	leadService := leads.NewService(leadRepo, orgRepo, orgSettingsRepo, userRepo, roleRepo, transactor, log)
