@@ -96,7 +96,7 @@ func main() {
 	pollRepo := polls.NewRepository(db)
 	pollAnswerRepo := polls.NewAnswerRepository(db)
 	pollModelAuthorizer := polls.NewModelAuthorizer(liveRoomRepo, classSessionRepo, classRepo, classMemberRepo)
-	pollSvc := polls.NewService(pollRepo, pollAnswerRepo, pollModelAuthorizer, log)
+	pollSvc := polls.NewService(pollRepo, pollAnswerRepo, pollModelAuthorizer, transactor, auditService, log)
 	liveSessionService := livesessions.NewService(
 		liveRoomRepo, liveParticipantRepo, liveRecordingRepo, liveWhiteboardRepo,
 		classSessionRepo, classRepo, classMemberRepo,

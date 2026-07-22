@@ -13,6 +13,8 @@ type service struct {
 	repo      domain.PollRepository
 	answers   domain.PollAnswerRepository
 	modelAuth domain.ModelAuthorizer
+	tx        domain.Transactor
+	audit     domain.AuditRecorder
 	logger    *slog.Logger
 }
 
@@ -20,12 +22,16 @@ func NewService(
 	repo domain.PollRepository,
 	answers domain.PollAnswerRepository,
 	modelAuth domain.ModelAuthorizer,
+	tx domain.Transactor,
+	audit domain.AuditRecorder,
 	logger *slog.Logger,
 ) domain.PollService {
 	return &service{
 		repo:      repo,
 		answers:   answers,
 		modelAuth: modelAuth,
+		tx:        tx,
+		audit:     audit,
 		logger:    logger,
 	}
 }
@@ -50,7 +56,22 @@ func (s *service) Create(ctx context.Context, dto domain.CreatePollDTO) (*domain
 		AllowedAnswersCount: dto.AllowedAnswersCount,
 		Options:             dto.Options,
 	}
-	if err := s.repo.Create(ctx, poll); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Create(ctx, poll); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditCreated,
+			TargetType:  domain.AuditTargetPoll,
+			TargetID:    &poll.ID,
+			TargetLabel: poll.Name,
+			Metadata: map[string]any{
+				"model_type": poll.ModelType,
+				"model_id":   poll.ModelID.String(),
+			},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	s.logger.Info("poll created",
@@ -97,16 +118,34 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdatePol
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	if dto.Name != nil {
+	// Shallow changed-fields diff captured before mutating so the audit entry
+	// records exactly what this update altered.
+	changed := map[string]any{}
+	if dto.Name != nil && *dto.Name != poll.Name {
+		changed["name"] = map[string]any{"from": poll.Name, "to": *dto.Name}
 		poll.Name = *dto.Name
 	}
-	if dto.AllowedAnswersCount != nil {
+	if dto.AllowedAnswersCount != nil && *dto.AllowedAnswersCount != poll.AllowedAnswersCount {
+		changed["allowed_answers_count"] = map[string]any{"from": poll.AllowedAnswersCount, "to": *dto.AllowedAnswersCount}
 		poll.AllowedAnswersCount = *dto.AllowedAnswersCount
 	}
 	if dto.Options != nil {
+		changed["options"] = true
 		poll.Options = dto.Options
 	}
-	if err := s.repo.Update(ctx, poll); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Update(ctx, poll); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditUpdated,
+			TargetType:  domain.AuditTargetPoll,
+			TargetID:    &poll.ID,
+			TargetLabel: poll.Name,
+			Metadata:    map[string]any{"changed": changed},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	return poll, nil
@@ -128,7 +167,22 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	if !ok {
 		return domain.ErrForbidden
 	}
-	if err := s.repo.Delete(ctx, id); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Delete(ctx, id); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditDeleted,
+			TargetType:  domain.AuditTargetPoll,
+			TargetID:    &id,
+			TargetLabel: poll.Name,
+			Metadata: map[string]any{
+				"model_type": poll.ModelType,
+				"model_id":   poll.ModelID.String(),
+			},
+		})
+	})
+	if err != nil {
 		return err
 	}
 	s.logger.Info("poll deleted",

@@ -230,7 +230,7 @@ func main() {
 	go convBridge.Run(context.Background())
 
 	pollModelAuthorizer := polls.NewModelAuthorizer(liveRoomRepo, classSessionRepo, classRepo, classMemberRepo)
-	pollService := polls.NewService(pollRepo, pollAnswerRepo, pollModelAuthorizer, log)
+	pollService := polls.NewService(pollRepo, pollAnswerRepo, pollModelAuthorizer, transactor, auditService, log)
 	qaBroadcaster := qa.NewBroadcaster(livekitClient, liveRoomRepo, log)
 	qaService := qa.NewService(qaRepo, qaVoteRepo, modelAuthorizer, log, qaBroadcaster)
 	liveSessionService := livesessions.NewService(
