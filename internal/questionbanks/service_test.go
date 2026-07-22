@@ -218,8 +218,30 @@ func memberCtx() context.Context {
 	})
 }
 
+// fakeTransactor runs fn inline with no real DB — unit tests exercise the audit
+// same-tx wiring without a database.
+type fakeTransactor struct{}
+
+func (fakeTransactor) RunInTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
+
 func newTestBankService(bankRepo *mockBankRepo, questionRepo *mockQuestionRepo) domain.QuestionBankService {
-	return questionbanks.NewService(bankRepo, questionRepo, &mockMediaRepo{}, nil, slog.Default())
+	return questionbanks.NewService(bankRepo, questionRepo, &mockMediaRepo{}, nil, fakeTransactor{}, &auditSpy{}, slog.Default())
+}
+
+func newTestBankServiceWithAudit(bankRepo *mockBankRepo, questionRepo *mockQuestionRepo, spy *auditSpy) domain.QuestionBankService {
+	return questionbanks.NewService(bankRepo, questionRepo, &mockMediaRepo{}, nil, fakeTransactor{}, spy, slog.Default())
 }
 
 func TestBankService_Create_AsStaff(t *testing.T) {
@@ -320,6 +342,32 @@ func TestBankService_Delete_SnapshotsQuestionsForMediaCleanup(t *testing.T) {
 	assert.NoError(t, err)
 	qRepo.AssertExpectations(t)
 	bankRepo.AssertExpectations(t)
+}
+
+func TestBankService_Delete_RecordsAudit(t *testing.T) {
+	orgID := uuid.New()
+	ctx := adminCtx()
+	bankRepo := &mockBankRepo{}
+	qRepo := &mockQuestionRepo{}
+	spy := &auditSpy{}
+	bankID := uuid.New()
+
+	bankRepo.On("FindByID", ctx, bankID).
+		Return(&domain.QuestionBank{ID: bankID, OrganizationID: orgID, Name: "Chemistry"}, nil)
+	qRepo.On("ListAllByBank", ctx, bankID).
+		Return([]domain.Question{{ID: uuid.New()}, {ID: uuid.New()}}, nil)
+	bankRepo.On("Delete", ctx, bankID).Return(nil)
+
+	svc := newTestBankServiceWithAudit(bankRepo, qRepo, spy)
+	err := svc.Delete(ctx, bankID)
+	assert.NoError(t, err)
+	assert.Len(t, spy.records, 1)
+	assert.Equal(t, domain.AuditDeleted, spy.records[0].Action)
+	assert.Equal(t, domain.AuditTargetQuestionBank, spy.records[0].TargetType)
+	assert.Equal(t, "Chemistry", spy.records[0].TargetLabel)
+	assert.NotNil(t, spy.records[0].TargetID)
+	assert.Equal(t, bankID, *spy.records[0].TargetID)
+	assert.Equal(t, map[string]any{"questions": 2}, spy.records[0].Metadata["cascaded"])
 }
 
 func TestBankService_DeleteQuestion_Success(t *testing.T) {

@@ -59,6 +59,32 @@ func (m *mockRepo) HasDuplicateFieldValues(ctx context.Context, orgID, fieldID u
 	return a.Get(0).(bool), a.Error(1)
 }
 
+// fakeTransactor runs fn inline with no real DB — unit tests exercise the audit
+// same-tx wiring without a database.
+type fakeTransactor struct{}
+
+func (fakeTransactor) RunInTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
+
+func newService(repo *mockRepo) domain.CustomFieldService {
+	return customfields.NewService(repo, fakeTransactor{}, &auditSpy{}, nil)
+}
+
+func newServiceWithAudit(repo *mockRepo, audit *auditSpy) domain.CustomFieldService {
+	return customfields.NewService(repo, fakeTransactor{}, audit, nil)
+}
+
 func managerCtx(orgID uuid.UUID) context.Context {
 	return domain.WithCaller(context.Background(), domain.Caller{
 		UserID:      uuid.New(),
@@ -71,7 +97,7 @@ func TestCreateDefinitionEnforcesCap(t *testing.T) {
 	orgID := uuid.New()
 	repo := &mockRepo{}
 	repo.On("CountActiveDefinitions", mock.Anything, orgID).Return(int64(domain.MaxActiveCustomFieldsPerOrg), nil)
-	svc := customfields.NewService(repo, nil)
+	svc := newService(repo)
 
 	_, err := svc.CreateDefinition(managerCtx(orgID), domain.CreateCustomFieldDefinitionDTO{
 		Label: "X", FieldType: domain.CustomFieldTypeText,
@@ -79,10 +105,32 @@ func TestCreateDefinitionEnforcesCap(t *testing.T) {
 	require.ErrorIs(t, err, domain.ErrCustomFieldLimitReached)
 }
 
+func TestCreateDefinitionRecordsAudit(t *testing.T) {
+	orgID := uuid.New()
+	repo := &mockRepo{}
+	repo.On("CountActiveDefinitions", mock.Anything, orgID).Return(int64(0), nil)
+	repo.On("CreateDefinition", mock.Anything, mock.AnythingOfType("*domain.UserCustomFieldDefinition")).Return(nil)
+	audit := &auditSpy{}
+	svc := newServiceWithAudit(repo, audit)
+
+	def, err := svc.CreateDefinition(managerCtx(orgID), domain.CreateCustomFieldDefinitionDTO{
+		Label: "Student ID", FieldType: domain.CustomFieldTypeText,
+	})
+	require.NoError(t, err)
+	require.Len(t, audit.records, 1)
+	require.Equal(t, domain.AuditCreated, audit.records[0].Action)
+	require.Equal(t, domain.AuditTargetCustomField, audit.records[0].TargetType)
+	require.Equal(t, "Student ID", audit.records[0].TargetLabel)
+	require.NotNil(t, audit.records[0].TargetID)
+	require.Equal(t, def.ID, *audit.records[0].TargetID)
+	require.NotNil(t, audit.records[0].OrgID)
+	require.Equal(t, orgID, *audit.records[0].OrgID)
+}
+
 func TestCreateDefinitionRequiresPermission(t *testing.T) {
 	orgID := uuid.New()
 	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New(), OrgID: &orgID})
-	svc := customfields.NewService(&mockRepo{}, nil)
+	svc := newService(&mockRepo{})
 
 	_, err := svc.CreateDefinition(ctx, domain.CreateCustomFieldDefinitionDTO{Label: "X", FieldType: domain.CustomFieldTypeText})
 	require.ErrorIs(t, err, domain.ErrForbidden)
@@ -95,7 +143,7 @@ func TestUpdateDefinitionRejectsUniqueToggleWithDuplicates(t *testing.T) {
 	repo := &mockRepo{}
 	repo.On("FindDefinitionByID", mock.Anything, fieldID).Return(existing, nil)
 	repo.On("HasDuplicateFieldValues", mock.Anything, orgID, fieldID).Return(true, nil)
-	svc := customfields.NewService(repo, nil)
+	svc := newService(repo)
 
 	trueVal := true
 	_, err := svc.UpdateDefinition(managerCtx(orgID), fieldID, domain.UpdateCustomFieldDefinitionDTO{IsUnique: &trueVal})
@@ -114,7 +162,7 @@ func TestSetUserValuesValidatesAndMerges(t *testing.T) {
 	repo.On("ListDefinitions", mock.Anything, orgID, false).Return(defs, nil)
 	repo.On("CountUsersWithFieldValue", mock.Anything, orgID, textField, "12345", userID).Return(int64(0), nil)
 	repo.On("SetUserCustomFields", mock.Anything, userID, mock.Anything).Return(nil)
-	svc := customfields.NewService(repo, nil)
+	svc := newService(repo)
 
 	out, err := svc.SetUserValues(managerCtx(orgID), userID, domain.SetUserCustomFieldsDTO{
 		Values: map[string]any{textField.String(): "12345"},
@@ -135,7 +183,7 @@ func TestSetUserValuesRejectsDuplicateUnique(t *testing.T) {
 	repo.On("GetUserCustomFields", mock.Anything, userID).Return(map[string]any{}, orgID, nil)
 	repo.On("ListDefinitions", mock.Anything, orgID, false).Return(defs, nil)
 	repo.On("CountUsersWithFieldValue", mock.Anything, orgID, textField, "12345", userID).Return(int64(1), nil)
-	svc := customfields.NewService(repo, nil)
+	svc := newService(repo)
 
 	_, err := svc.SetUserValues(managerCtx(orgID), userID, domain.SetUserCustomFieldsDTO{
 		Values: map[string]any{textField.String(): "12345"},
@@ -149,7 +197,7 @@ func TestSetUserValuesRejectsUnknownFieldKey(t *testing.T) {
 	repo := &mockRepo{}
 	repo.On("GetUserCustomFields", mock.Anything, userID).Return(map[string]any{}, orgID, nil)
 	repo.On("ListDefinitions", mock.Anything, orgID, false).Return([]domain.UserCustomFieldDefinition{}, nil)
-	svc := customfields.NewService(repo, nil)
+	svc := newService(repo)
 
 	_, err := svc.SetUserValues(managerCtx(orgID), userID, domain.SetUserCustomFieldsDTO{
 		Values: map[string]any{uuid.New().String(): "x"},
@@ -163,7 +211,7 @@ func TestSetUserValuesRejectsCrossOrgUser(t *testing.T) {
 	userID := uuid.New()
 	repo := &mockRepo{}
 	repo.On("GetUserCustomFields", mock.Anything, userID).Return(map[string]any{}, otherOrg, nil)
-	svc := customfields.NewService(repo, nil)
+	svc := newService(repo)
 
 	_, err := svc.SetUserValues(managerCtx(orgID), userID, domain.SetUserCustomFieldsDTO{
 		Values: map[string]any{uuid.New().String(): "x"},

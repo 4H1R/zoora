@@ -88,8 +88,31 @@ func (m *mediaRepoMock) ListOwnerFiles(ctx context.Context, orgID uuid.UUID, kin
 	return files, total, args.Error(2)
 }
 
+// fakeTransactor runs fn inline with no real DB — unit tests exercise the audit
+// same-tx wiring without a database.
+type fakeTransactor struct{}
+
+func (fakeTransactor) RunInTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
+
 func newMediaService(repo *mediaRepoMock, store *storageMock) domain.MediaService {
-	return media.NewService(repo, store, nil, nil, slog.Default())
+	return media.NewService(repo, store, nil, nil, fakeTransactor{}, &auditSpy{}, slog.Default())
+}
+
+func newMediaServiceAudit(repo *mediaRepoMock, store *storageMock) (domain.MediaService, *auditSpy) {
+	spy := &auditSpy{}
+	return media.NewService(repo, store, nil, nil, fakeTransactor{}, spy, slog.Default()), spy
 }
 
 func mediaCtx(isAdmin bool, perms ...string) context.Context {
@@ -174,6 +197,46 @@ func TestMediaDeleteRequiresAdminOrDeleteAnyPermission(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMediaDeleteRecordsAuditUnderTargetOrg(t *testing.T) {
+	repo := &mediaRepoMock{}
+	store := &storageMock{}
+	svc, spy := newMediaServiceAudit(repo, store)
+
+	orgID := uuid.New()
+	mediaID := uuid.New()
+	ctx := domain.WithCaller(context.Background(), domain.Caller{UserID: uuid.New(), OrgID: &orgID, IsAdmin: true})
+	repo.On("FindByID", ctx, mediaID).
+		Return(&domain.Media{ID: mediaID, OrganizationID: &orgID, ModelType: "practice", ModelID: uuid.New(), Name: "syllabus.pdf", FileName: "syllabus.pdf"}, nil)
+	store.On("DeleteObject", ctx, mock.Anything).Return(nil)
+	repo.On("Delete", ctx, mediaID).Return(nil)
+
+	require.NoError(t, svc.Delete(ctx, mediaID))
+	require.Len(t, spy.records, 1)
+	rec := spy.records[0]
+	assert.Equal(t, domain.AuditDeleted, rec.Action)
+	assert.Equal(t, domain.AuditTargetMedia, rec.TargetType)
+	assert.Equal(t, mediaID, *rec.TargetID)
+	assert.Equal(t, "syllabus.pdf", rec.TargetLabel)
+	require.NotNil(t, rec.OrgID)
+	assert.Equal(t, orgID, *rec.OrgID)
+}
+
+func TestMediaDeletePlatformGlobalSkipsAudit(t *testing.T) {
+	repo := &mediaRepoMock{}
+	store := &storageMock{}
+	svc, spy := newMediaServiceAudit(repo, store)
+
+	mediaID := uuid.New()
+	ctx := mediaCtx(true)
+	repo.On("FindByID", ctx, mediaID).
+		Return(&domain.Media{ID: mediaID, ModelType: "changelog", ModelID: uuid.New(), Name: "asset.png"}, nil)
+	store.On("DeleteObject", ctx, mock.Anything).Return(nil)
+	repo.On("Delete", ctx, mediaID).Return(nil)
+
+	require.NoError(t, svc.Delete(ctx, mediaID))
+	assert.Empty(t, spy.records)
 }
 
 func TestMediaCleanupByModelDeletesObjectsAndRows(t *testing.T) {
@@ -468,7 +531,7 @@ func TestMediaPresignUpload_StorageQuotaExceeded(t *testing.T) {
 	repo := &mediaRepoMock{}
 	orgID := uuid.New()
 	ent := fakeEntService{storageErr: domain.NewLimitError(domain.PlanFree, domain.LimitStorageGB, 1, 1)}
-	svc := media.NewService(repo, &storageMock{}, ent, nil, slog.Default())
+	svc := media.NewService(repo, &storageMock{}, ent, nil, fakeTransactor{}, &auditSpy{}, slog.Default())
 
 	ctx := domain.WithCaller(context.Background(), domain.Caller{
 		UserID: uuid.New(), OrgID: &orgID, Ent: domain.PlanCatalog[domain.PlanFree],
@@ -514,7 +577,7 @@ func TestListOwners_MergesClassMediaAndRecordingsAndSortsBySize(t *testing.T) {
 		{OwnerKind: domain.MediaOwnerClass, OwnerID: &classID, Name: "Math 101", FileCount: 1, TotalSize: 9000},
 	}, nil)
 
-	svc := media.NewService(repo, &storageMock{}, nil, usageStub{used: 9610}, slog.Default())
+	svc := media.NewService(repo, &storageMock{}, nil, usageStub{used: 9610}, fakeTransactor{}, &auditSpy{}, slog.Default())
 	resp, err := svc.ListOwners(ownersCtx(orgID), domain.ListParams{Page: 1, PageSize: 20})
 	require.NoError(t, err)
 	require.Len(t, resp.Owners, 3)
@@ -547,7 +610,7 @@ func TestListOwnerFiles_DelegatesToRepoWithCallerOrg(t *testing.T) {
 	}
 	repo.On("ListOwnerFiles", mock.Anything, orgID, domain.MediaOwnerClass, &classID, p).Return(want, int64(2), nil)
 
-	svc := media.NewService(repo, &storageMock{}, nil, usageStub{}, slog.Default())
+	svc := media.NewService(repo, &storageMock{}, nil, usageStub{}, fakeTransactor{}, &auditSpy{}, slog.Default())
 	files, total, err := svc.ListOwnerFiles(ownersCtx(orgID), domain.MediaOwnerClass, &classID, p)
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), total)
@@ -557,7 +620,7 @@ func TestListOwnerFiles_DelegatesToRepoWithCallerOrg(t *testing.T) {
 
 func TestListOwnerFiles_RequiresOrgViewAny(t *testing.T) {
 	repo := &mediaRepoMock{}
-	svc := media.NewService(repo, &storageMock{}, nil, usageStub{}, slog.Default())
+	svc := media.NewService(repo, &storageMock{}, nil, usageStub{}, fakeTransactor{}, &auditSpy{}, slog.Default())
 
 	// No caller in context → forbidden, repo never touched.
 	_, _, err := svc.ListOwnerFiles(context.Background(), domain.MediaOwnerShared, nil, domain.ListParams{Page: 1, PageSize: 20})

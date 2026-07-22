@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/4H1R/zoora/internal/audit"
 	"github.com/4H1R/zoora/internal/billing"
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/factory"
@@ -111,9 +112,11 @@ func setupBillingFlow(t *testing.T) billingHarness {
 		&domain.InvoiceItem{},
 		&domain.Payment{},
 		&domain.BillingReminderSent{},
+		&domain.AuditEntry{},
 	))
 
 	repo := billing.NewRepository(db)
+	auditSvc := audit.NewService(audit.NewRepository(db), slog.Default())
 	orgRepo := organizations.NewRepository(db)
 	pdf := &fakePDFRenderer{key: "orgs/x/invoices/y.pdf"}
 	queue := &fakeEnqueuer{}
@@ -130,6 +133,7 @@ func setupBillingFlow(t *testing.T) billingHarness {
 		queue,
 		notifier,
 		pdf,
+		auditSvc,
 		billing.BillingConfig{
 			CallbackBaseURL: "https://api.test",
 			AppURLTemplate:  "https://{slug}.app.test",

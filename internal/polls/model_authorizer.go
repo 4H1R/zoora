@@ -56,6 +56,17 @@ func (a *modelAuthorizer) classForModel(ctx context.Context, modelType string, m
 	}
 }
 
+// OrgForModel resolves the owning class and returns its organization, so a poll
+// mutation can be filed under the target's org even when the caller has none
+// (Platform Admin).
+func (a *modelAuthorizer) OrgForModel(ctx context.Context, modelType string, modelID uuid.UUID) (uuid.UUID, error) {
+	class, err := a.classForModel(ctx, modelType, modelID)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return class.OrganizationID, nil
+}
+
 // CanModerate reports whether the caller may perform host/teacher actions on the
 // poll: admins, polls:update_any holders, or the owning teacher of the class.
 func (a *modelAuthorizer) CanModerate(ctx context.Context, caller domain.Caller, modelType string, modelID uuid.UUID) (bool, error) {

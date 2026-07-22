@@ -67,7 +67,7 @@ func TestIntegration_QuizService_ListMine_States(t *testing.T) {
 		SubmittedAt: &submittedAt,
 	}))
 
-	svc := quizzes.NewService(r.quizzes, r.rules, r.rooms, r.submissions, r.questions, r.classes, r.members, nil, slog.Default())
+	svc := quizzes.NewService(r.quizzes, r.rules, r.rooms, r.submissions, r.questions, r.classes, r.members, nil, nil, nil, slog.Default())
 
 	callerCtx := domain.WithCaller(ctx, domain.Caller{
 		UserID:      f.student.ID,
@@ -134,7 +134,7 @@ func TestIntegration_GradebookService_GetMine(t *testing.T) {
 	require.NoError(t, cellRepo.Upsert(ctx, &domain.GradebookCell{ColumnID: col.ID, StudentID: student.ID, Value: "18"}))
 	require.NoError(t, cellRepo.Upsert(ctx, &domain.GradebookCell{ColumnID: col.ID, StudentID: other.ID, Value: "11"}))
 
-	svc := gradebook.NewService(columnRepo, cellRepo, classRepo, memberRepo, nil, nil, nil, nil, nil, nil, authz.NewResolver(memberRepo), slog.Default())
+	svc := gradebook.NewService(columnRepo, cellRepo, classRepo, memberRepo, nil, nil, nil, nil, nil, nil, authz.NewResolver(memberRepo), nil, nil, slog.Default())
 
 	callerCtx := domain.WithCaller(ctx, domain.Caller{
 		UserID:      student.ID,
@@ -218,7 +218,7 @@ func TestIntegration_Attendance_ListMine(t *testing.T) {
 	assert.Len(t, rows, 2)
 
 	// Service-level summary.
-	svc := attendance.NewService(attRepo, classRepo, sessRepo, nil, nil, nil, nil, nil, nil, authz.NewResolver(nil), slog.Default())
+	svc := attendance.NewService(attRepo, classRepo, sessRepo, nil, nil, nil, nil, nil, nil, authz.NewResolver(nil), nil, nil, slog.Default())
 	callerCtx := domain.WithCaller(ctx, domain.Caller{
 		UserID:      student.ID,
 		Permissions: []string{string(domain.PermAttendanceView)},

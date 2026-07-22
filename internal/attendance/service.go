@@ -28,6 +28,8 @@ type service struct {
 	offlineRooms domain.OfflineRoomRepository
 	orgSettings  domain.OrganizationSettingsProvider
 	resolver     *authz.Resolver
+	tx           domain.Transactor
+	audit        domain.AuditRecorder
 	logger       *slog.Logger
 }
 
@@ -42,6 +44,8 @@ func NewService(
 	offlineRooms domain.OfflineRoomRepository,
 	orgSettings domain.OrganizationSettingsProvider,
 	resolver *authz.Resolver,
+	tx domain.Transactor,
+	audit domain.AuditRecorder,
 	logger *slog.Logger,
 ) domain.AttendanceService {
 	return &service{
@@ -55,6 +59,8 @@ func NewService(
 		offlineRooms: offlineRooms,
 		orgSettings:  orgSettings,
 		resolver:     resolver,
+		tx:           tx,
+		audit:        audit,
 		logger:       logger,
 	}
 }
@@ -71,19 +77,22 @@ func canManageAttendance(caller domain.Caller, class *domain.Class) bool {
 
 // upsertEntry updates an existing attendance row for (session,user) or creates a
 // new one. Mirrors the dedupe used by AutoMark so re-marking never duplicates.
-func (s *service) upsertEntry(ctx context.Context, class *domain.Class, sessionID uuid.UUID, entry domain.CreateAttendanceDTO) (*domain.Attendance, error) {
+// upsertEntry returns the persisted row plus created=true when a new row was
+// inserted (false when an existing row was updated), so callers can record the
+// right audit verb.
+func (s *service) upsertEntry(ctx context.Context, class *domain.Class, sessionID uuid.UUID, entry domain.CreateAttendanceDTO) (*domain.Attendance, bool, error) {
 	existing, err := s.repo.FindBySessionAndUser(ctx, sessionID, entry.UserID)
 	if err != nil && !errors.Is(err, domain.ErrNotFound) {
-		return nil, err
+		return nil, false, err
 	}
 	if existing != nil {
 		existing.Status = entry.Status
 		existing.Remarks = entry.Remarks
 		existing.IsAutoMarked = entry.IsAutoMarked
 		if err := s.repo.Update(ctx, existing); err != nil {
-			return nil, err
+			return nil, false, err
 		}
-		return existing, nil
+		return existing, false, nil
 	}
 	a := &domain.Attendance{
 		OrganizationID: class.OrganizationID,
@@ -95,9 +104,9 @@ func (s *service) upsertEntry(ctx context.Context, class *domain.Class, sessionI
 		Remarks:        entry.Remarks,
 	}
 	if err := s.repo.Create(ctx, a); err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	return a, nil
+	return a, true, nil
 }
 
 func (s *service) Mark(ctx context.Context, classID, sessionID uuid.UUID, dto domain.CreateAttendanceDTO) (*domain.Attendance, error) {
@@ -120,7 +129,31 @@ func (s *service) Mark(ctx context.Context, classID, sessionID uuid.UUID, dto do
 		return nil, domain.ErrNotFound
 	}
 
-	a, err := s.upsertEntry(ctx, class, sessionID, dto)
+	var a *domain.Attendance
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		var created bool
+		a, created, err = s.upsertEntry(ctx, class, sessionID, dto)
+		if err != nil {
+			return err
+		}
+		action := domain.AuditUpdated
+		if created {
+			action = domain.AuditCreated
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      action,
+			TargetType:  domain.AuditTargetAttendance,
+			TargetID:    &a.ID,
+			TargetLabel: class.Name,
+			OrgID:       &class.OrganizationID,
+			Metadata: map[string]any{
+				"class_id":   class.ID.String(),
+				"session_id": sessionID.String(),
+				"user_id":    dto.UserID.String(),
+				"status":     string(dto.Status),
+			},
+		})
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +189,7 @@ func (s *service) BulkMark(ctx context.Context, classID, sessionID uuid.UUID, dt
 
 	var results []domain.Attendance
 	for _, entry := range dto.Entries {
-		a, err := s.upsertEntry(ctx, class, sessionID, entry)
+		a, _, err := s.upsertEntry(ctx, class, sessionID, entry)
 		if err != nil {
 			return nil, err
 		}
@@ -423,13 +456,39 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateAtt
 	if !canManageAttendance(caller, class) {
 		return nil, domain.ErrForbidden
 	}
+	// Shallow changed-fields diff captured before mutating so the audit entry
+	// records exactly what this update altered.
+	changed := map[string]any{}
+	if dto.Status != nil && *dto.Status != a.Status {
+		changed["status"] = map[string]any{"from": string(a.Status), "to": string(*dto.Status)}
+	}
 	if dto.Status != nil {
 		a.Status = *dto.Status
 	}
 	if dto.Remarks != nil {
+		if *dto.Remarks != a.Remarks {
+			changed["remarks"] = map[string]any{"from": a.Remarks, "to": *dto.Remarks}
+		}
 		a.Remarks = *dto.Remarks
 	}
-	if err := s.repo.Update(ctx, a); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Update(ctx, a); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditUpdated,
+			TargetType:  domain.AuditTargetAttendance,
+			TargetID:    &a.ID,
+			TargetLabel: class.Name,
+			OrgID:       &class.OrganizationID,
+			Metadata: map[string]any{
+				"session_id": a.ClassSessionID.String(),
+				"user_id":    a.UserID.String(),
+				"changed":    changed,
+			},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	return a, nil
@@ -451,7 +510,22 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	if !canManageAttendance(caller, class) {
 		return domain.ErrForbidden
 	}
-	return s.repo.Delete(ctx, id)
+	return s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Delete(ctx, id); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditDeleted,
+			TargetType:  domain.AuditTargetAttendance,
+			TargetID:    &a.ID,
+			TargetLabel: class.Name,
+			OrgID:       &class.OrganizationID,
+			Metadata: map[string]any{
+				"session_id": a.ClassSessionID.String(),
+				"user_id":    a.UserID.String(),
+			},
+		})
+	})
 }
 
 func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*domain.Attendance, error) {

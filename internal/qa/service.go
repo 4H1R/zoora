@@ -14,6 +14,8 @@ type service struct {
 	repo   domain.QARepository
 	votes  domain.QAVoteRepository
 	authz  domain.ModelAuthorizer
+	tx     domain.Transactor
+	audit  domain.AuditRecorder
 	logger *slog.Logger
 	// broadcaster pushes realtime events; may be nil (tests/worker) -> no-op.
 	broadcaster *broadcaster
@@ -23,10 +25,38 @@ func NewService(
 	repo domain.QARepository,
 	votes domain.QAVoteRepository,
 	authz domain.ModelAuthorizer,
+	tx domain.Transactor,
+	audit domain.AuditRecorder,
 	logger *slog.Logger,
 	broadcaster *broadcaster,
 ) domain.QAService {
-	return &service{repo: repo, votes: votes, authz: authz, logger: logger, broadcaster: broadcaster}
+	return &service{repo: repo, votes: votes, authz: authz, tx: tx, audit: audit, logger: logger, broadcaster: broadcaster}
+}
+
+// qaLabelMaxRunes bounds the audit target label taken from free-text question
+// bodies. Rune-based so multibyte (Persian) text isn't split mid-character.
+const qaLabelMaxRunes = 80
+
+func qaLabel(text string) string {
+	r := []rune(text)
+	if len(r) <= qaLabelMaxRunes {
+		return text
+	}
+	return string(r[:qaLabelMaxRunes]) + "…"
+}
+
+// orgForModel resolves the org the question's polymorphic owner (live room ->
+// session -> class) belongs to, so the audit entry is filed under the TARGET's
+// org. This matters for a Platform Admin, whose own Caller.OrgID is nil: without
+// a target org the recorder would return ErrValidation and roll the whole
+// mutation back. Returns nil on any resolution error, in which case the recorder
+// falls back to the caller's org (a normal org user is unaffected).
+func (s *service) orgForModel(ctx context.Context, modelType string, modelID uuid.UUID) *uuid.UUID {
+	orgID, err := s.authz.OrgForModel(ctx, modelType, modelID)
+	if err != nil {
+		return nil
+	}
+	return &orgID
 }
 
 func (s *service) Ask(ctx context.Context, dto domain.CreateQAQuestionDTO) (*domain.QAQuestion, error) {
@@ -57,7 +87,23 @@ func (s *service) Ask(ctx context.Context, dto domain.CreateQAQuestionDTO) (*dom
 		Text:      dto.Text,
 		Status:    domain.QAStatusOpen,
 	}
-	if err := s.repo.Create(ctx, q); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Create(ctx, q); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditCreated,
+			TargetType:  domain.AuditTargetQA,
+			TargetID:    &q.ID,
+			TargetLabel: qaLabel(q.Text),
+			OrgID:       s.orgForModel(ctx, q.ModelType, q.ModelID),
+			Metadata: map[string]any{
+				"model_type": q.ModelType,
+				"model_id":   q.ModelID.String(),
+			},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	s.broadcastCreated(ctx, q, caller)
@@ -108,8 +154,24 @@ func (s *service) UpdateText(ctx context.Context, id uuid.UUID, dto domain.Updat
 			"text": "cannot edit a closed question",
 		})
 	}
+	oldText := q.Text
 	q.Text = dto.Text
-	if err := s.repo.Update(ctx, q); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Update(ctx, q); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditUpdated,
+			TargetType:  domain.AuditTargetQA,
+			TargetID:    &q.ID,
+			TargetLabel: qaLabel(q.Text),
+			OrgID:       s.orgForModel(ctx, q.ModelType, q.ModelID),
+			Metadata: map[string]any{
+				"changed": map[string]any{"text": map[string]any{"from": qaLabel(oldText), "to": qaLabel(q.Text)}},
+			},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	return q, nil
@@ -133,7 +195,23 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 			return domain.ErrForbidden
 		}
 	}
-	if err := s.repo.Delete(ctx, id); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Delete(ctx, id); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditDeleted,
+			TargetType:  domain.AuditTargetQA,
+			TargetID:    &id,
+			TargetLabel: qaLabel(q.Text),
+			OrgID:       s.orgForModel(ctx, q.ModelType, q.ModelID),
+			Metadata: map[string]any{
+				"model_type": q.ModelType,
+				"model_id":   q.ModelID.String(),
+			},
+		})
+	})
+	if err != nil {
 		return err
 	}
 	s.broadcastStatus(ctx, q, "deleted")
@@ -206,11 +284,27 @@ func (s *service) close(ctx context.Context, id uuid.UUID, status string) (*doma
 	if !mod {
 		return nil, domain.ErrForbidden
 	}
+	oldStatus := q.Status
 	now := time.Now()
 	q.Status = status
 	q.ClosedAt = &now
 	q.ClosedBy = &caller.UserID
-	if err := s.repo.Update(ctx, q); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Update(ctx, q); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditUpdated,
+			TargetType:  domain.AuditTargetQA,
+			TargetID:    &q.ID,
+			TargetLabel: qaLabel(q.Text),
+			OrgID:       s.orgForModel(ctx, q.ModelType, q.ModelID),
+			Metadata: map[string]any{
+				"changed": map[string]any{"status": map[string]any{"from": oldStatus, "to": status}},
+			},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	s.broadcastStatus(ctx, q, status)
@@ -233,10 +327,26 @@ func (s *service) Reopen(ctx context.Context, id uuid.UUID) (*domain.QAQuestion,
 	if !mod {
 		return nil, domain.ErrForbidden
 	}
+	oldStatus := q.Status
 	q.Status = domain.QAStatusOpen
 	q.ClosedAt = nil
 	q.ClosedBy = nil
-	if err := s.repo.Update(ctx, q); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Update(ctx, q); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditUpdated,
+			TargetType:  domain.AuditTargetQA,
+			TargetID:    &q.ID,
+			TargetLabel: qaLabel(q.Text),
+			OrgID:       s.orgForModel(ctx, q.ModelType, q.ModelID),
+			Metadata: map[string]any{
+				"changed": map[string]any{"status": map[string]any{"from": oldStatus, "to": domain.QAStatusOpen}},
+			},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	s.broadcastStatus(ctx, q, domain.QAStatusOpen)

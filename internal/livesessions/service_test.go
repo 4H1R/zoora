@@ -469,6 +469,16 @@ func (noopTx) RunInTx(ctx context.Context, fn func(context.Context) error) error
 	return fn(ctx)
 }
 
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
+
 // fakeLiveKit is a permissive LiveKitClient fake: every call succeeds. Tests
 // override the function fields to steer or observe specific calls.
 type fakeLiveKit struct {
@@ -543,6 +553,7 @@ type lkFixture struct {
 	chat    *mockChatService
 	poll    *mockPollService
 	lk      *fakeLiveKit
+	audit   *auditSpy
 }
 
 // fakeEntSvc injects canned entitlement-limit results for livesession tests.
@@ -594,6 +605,7 @@ func newTestServiceCfg(t *testing.T, ent entitlements.Service, egressCap int, st
 		chat:    &mockChatService{},
 		poll:    &mockPollService{},
 		lk:      &fakeLiveKit{},
+		audit:   &auditSpy{},
 	}
 	// Room-finish teardown closes polls; allow it without forcing every test to
 	// register the expectation explicitly.
@@ -601,7 +613,7 @@ func newTestServiceCfg(t *testing.T, ent entitlements.Service, egressCap int, st
 	svc := livesessions.NewService(
 		f.rooms, f.parts, f.recs, f.wb,
 		f.sess, f.classes, f.members,
-		f.chat, f.poll, noopTx{},
+		f.chat, f.poll, noopTx{}, f.audit,
 		f.lk,
 		storage,
 		nil, // queue client
@@ -851,6 +863,34 @@ func TestCreateRoom_CreatesChat(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, room)
 	chatSvc.AssertExpectations(t)
+}
+
+func TestCreateRoom_RecordsAudit(t *testing.T) {
+	svc, f := newTestServiceLK(t)
+	session := testSession()
+	session.Name = "Algebra 101"
+	f.sess.On("FindByID", mock.Anything, testSessionID).Return(session, nil)
+	class := testClass()
+	class.OrganizationID = uuid.New()
+	f.classes.On("FindByID", mock.Anything, testClassID).Return(class, nil)
+	f.rooms.On("Create", mock.Anything, mock.AnythingOfType("*domain.LiveRoom")).Return(nil)
+	f.chat.On("CreateChat", mock.Anything, mock.AnythingOfType("domain.CreateChatDTO")).
+		Return(&domain.LiveRoomChat{ID: uuid.New()}, nil)
+
+	room, err := svc.CreateRoom(teacherCtx(), domain.CreateLiveRoomDTO{
+		ClassSessionID: testSessionID,
+		Name:           "Morning session",
+		Config:         domain.DefaultLiveRoomConfig(),
+	})
+	assert.NoError(t, err)
+	assert.Len(t, f.audit.records, 1)
+	assert.Equal(t, domain.AuditCreated, f.audit.records[0].Action)
+	assert.Equal(t, domain.AuditTargetLiveSession, f.audit.records[0].TargetType)
+	assert.Equal(t, "Morning session", f.audit.records[0].TargetLabel)
+	assert.NotNil(t, f.audit.records[0].TargetID)
+	assert.Equal(t, room.ID, *f.audit.records[0].TargetID)
+	assert.NotNil(t, f.audit.records[0].OrgID)
+	assert.Equal(t, class.OrganizationID, *f.audit.records[0].OrgID)
 }
 
 func TestCreateRoom_ChatFailure_RollsBack(t *testing.T) {

@@ -41,6 +41,7 @@ var ManagerPermissions = []PermissionName{
 	PermGradebookUpdate, PermGradebookUpdateAny, PermGradebookDelete, PermGradebookDeleteAny,
 	PermNotificationsSend, PermNotificationsSendAny,
 	PermCustomFieldsManage,
+	PermAuditViewAny,
 }
 
 var TeacherPermissions = []PermissionName{

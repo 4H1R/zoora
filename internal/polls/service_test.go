@@ -100,6 +100,11 @@ type authorizerMock struct {
 	participateErr error
 	moderate       bool
 	moderateErr    error
+	// org is returned by OrgForModel (uuid.Nil by default -> the service treats
+	// it as resolvable and files the entry under it; set it to exercise the
+	// Platform Admin target-org path).
+	org    uuid.UUID
+	orgErr error
 }
 
 func (a authorizerMock) CanParticipate(_ context.Context, _ domain.Caller, _ string, _ uuid.UUID) (bool, error) {
@@ -110,14 +115,40 @@ func (a authorizerMock) CanModerate(_ context.Context, _ domain.Caller, _ string
 	return a.moderate, a.moderateErr
 }
 
+func (a authorizerMock) OrgForModel(_ context.Context, _ string, _ uuid.UUID) (uuid.UUID, error) {
+	return a.org, a.orgErr
+}
+
 func allowAll() authorizerMock { return authorizerMock{participate: true, moderate: true} }
 
+// fakeTransactor runs fn inline with no real DB — unit tests exercise the audit
+// same-tx wiring without a database.
+type fakeTransactor struct{}
+
+func (fakeTransactor) RunInTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
+
 func newPollService(repo *pollRepoMock, answers *pollAnswerRepoMock) domain.PollService {
-	return polls.NewService(repo, answers, allowAll(), slog.Default())
+	return polls.NewService(repo, answers, allowAll(), fakeTransactor{}, &auditSpy{}, slog.Default())
 }
 
 func newPollServiceWithAuth(repo *pollRepoMock, answers *pollAnswerRepoMock, auth authorizerMock) domain.PollService {
-	return polls.NewService(repo, answers, auth, slog.Default())
+	return polls.NewService(repo, answers, auth, fakeTransactor{}, &auditSpy{}, slog.Default())
+}
+
+func newPollServiceWithAudit(repo *pollRepoMock, answers *pollAnswerRepoMock, audit *auditSpy) domain.PollService {
+	return polls.NewService(repo, answers, allowAll(), fakeTransactor{}, audit, slog.Default())
 }
 
 func pollCaller(ctx context.Context, userID uuid.UUID, perms ...string) context.Context {
@@ -156,6 +187,34 @@ func TestPollCreateRequiresCallerAndSetsOwner(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, userID, poll.UserID)
+	repo.AssertExpectations(t)
+}
+
+func TestPollCreateRecordsAudit(t *testing.T) {
+	repo := &pollRepoMock{}
+	audit := &auditSpy{}
+	svc := newPollServiceWithAudit(repo, &pollAnswerRepoMock{}, audit)
+
+	userID := uuid.New()
+	modelID := uuid.New()
+	ctx := pollCaller(context.Background(), userID)
+	repo.On("Create", ctx, mock.AnythingOfType("*domain.Poll")).Return(nil)
+
+	poll, err := svc.Create(ctx, domain.CreatePollDTO{
+		ModelType:           "live_session",
+		ModelID:             modelID,
+		Name:                "Favorite topic?",
+		AllowedAnswersCount: 1,
+		Options:             []domain.PollOption{{Label: "A", Value: "a"}, {Label: "B", Value: "b"}},
+	})
+
+	assert.NoError(t, err)
+	assert.Len(t, audit.records, 1)
+	assert.Equal(t, domain.AuditCreated, audit.records[0].Action)
+	assert.Equal(t, domain.AuditTargetPoll, audit.records[0].TargetType)
+	assert.Equal(t, "Favorite topic?", audit.records[0].TargetLabel)
+	assert.NotNil(t, audit.records[0].TargetID)
+	assert.Equal(t, poll.ID, *audit.records[0].TargetID)
 	repo.AssertExpectations(t)
 }
 

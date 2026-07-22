@@ -161,7 +161,7 @@ func liveRoom(sessionID uuid.UUID, durationSeconds int) domain.LiveRoom {
 }
 
 func newAutoMarkSvc(repo domain.AttendanceRepository, classes domain.ClassRepository, sessions domain.ClassSessionRepository, members domain.ClassMemberRepository, rooms domain.LiveRoomRepository, parts domain.LiveParticipantRepository, percent int) domain.AttendanceService {
-	return attendance.NewService(repo, classes, sessions, members, rooms, parts, nil, nil, fakeSettingsProvider{percent: percent}, authz.NewResolver(nil), slog.Default())
+	return attendance.NewService(repo, classes, sessions, members, rooms, parts, nil, nil, fakeSettingsProvider{percent: percent}, authz.NewResolver(nil), fakeTransactor{}, &auditSpy{}, slog.Default())
 }
 
 func TestAutoMarkSessionLive_MarksPresentAndAbsent(t *testing.T) {

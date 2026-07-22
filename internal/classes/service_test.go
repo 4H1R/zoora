@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/4H1R/zoora/internal/audit"
 	"github.com/4H1R/zoora/internal/classes"
 	"github.com/4H1R/zoora/internal/domain"
 )
@@ -158,8 +159,26 @@ func newClassService(repo *classRepoSvcMock, sessions *classSessionRepoSvcMock, 
 	if len(chat) > 0 {
 		provisioner = chat[0]
 	}
-	return classes.NewService(repo, sessions, members, provisioner, slog.Default())
+	return classes.NewService(repo, sessions, members, provisioner, fakeTransactor{}, &auditSpy{}, slog.Default())
 }
+
+// fakeTransactor runs fn inline with no real DB — unit tests exercise the audit
+// same-tx wiring without a database.
+type fakeTransactor struct{}
+
+func (fakeTransactor) RunInTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
 
 // chatProvisionerMock is a testify mock of domain.ClassChatProvisioner.
 type chatProvisionerMock struct{ mock.Mock }
@@ -227,6 +246,81 @@ func TestClassCreateAnyCanAssignOwner(t *testing.T) {
 	created, err := svc.Create(ctx, domain.CreateClassDTO{Name: "Science", UserID: &teacherID})
 	assert.NoError(t, err)
 	assert.Equal(t, teacherID, created.UserID)
+}
+
+func TestDeleteClassRecordsAudit(t *testing.T) {
+	repo := &classRepoSvcMock{}
+	members := &classMemberRepoSvcMock{}
+	spy := &auditSpy{}
+
+	teacherID := uuid.New()
+	classID := uuid.New()
+	svc := classes.NewService(repo, &classSessionRepoSvcMock{}, members, nil, fakeTransactor{}, spy, slog.Default())
+
+	// Owning teacher may delete their own class (ownership satisfies CanManage).
+	ctx := classCtx(teacherID, nil, false, domain.PermClassesDeleteAny)
+	repo.On("FindByID", ctx, classID).Return(&domain.Class{ID: classID, UserID: teacherID, Name: "Physics 101"}, nil)
+	members.On("CountByClass", ctx, classID).Return(int64(3), nil)
+	repo.On("Delete", ctx, classID).Return(nil)
+
+	err := svc.Delete(ctx, classID)
+	assert.NoError(t, err)
+	assert.Len(t, spy.records, 1)
+	assert.Equal(t, domain.AuditDeleted, spy.records[0].Action)
+	assert.Equal(t, domain.AuditTargetClass, spy.records[0].TargetType)
+	assert.Equal(t, "Physics 101", spy.records[0].TargetLabel)
+	assert.NotNil(t, spy.records[0].TargetID)
+	assert.Equal(t, classID, *spy.records[0].TargetID)
+}
+
+// auditRepoFake captures entries the REAL audit service builds so a test can
+// exercise buildEntry's org-resolution (and its ErrValidation-when-no-org guard)
+// end to end, rather than the pass-through auditSpy.
+type auditRepoFake struct{ entries []*domain.AuditEntry }
+
+func (f *auditRepoFake) Create(_ context.Context, e *domain.AuditEntry) error {
+	f.entries = append(f.entries, e)
+	return nil
+}
+
+func (f *auditRepoFake) List(_ context.Context, _ uuid.UUID, _ domain.AuditListQuery) ([]domain.AuditEntry, int64, error) {
+	return nil, 0, nil
+}
+
+// TestDeleteClassByPlatformAdminDoesNotRollBack is the regression guard for the
+// bug where an org-scoped mutation by a Platform Admin (Caller.OrgID == nil)
+// rolled back: the audit Record ran inside RunInTx, buildEntry found no org to
+// file under, returned domain.ErrValidation, and that error aborted the whole
+// transaction — so the class was never deleted and the admin got a 400. The fix
+// files the entry under the TARGET class's org (OrgID: &class.OrganizationID),
+// so the delete commits and the entry is recorded under the class's org.
+func TestDeleteClassByPlatformAdminDoesNotRollBack(t *testing.T) {
+	repo := &classRepoSvcMock{}
+	members := &classMemberRepoSvcMock{}
+	auditRepo := &auditRepoFake{}
+	realAudit := audit.NewService(auditRepo, slog.Default())
+
+	adminID := uuid.New()
+	classID := uuid.New()
+	classOrgID := uuid.New()
+	svc := classes.NewService(repo, &classSessionRepoSvcMock{}, members, nil, fakeTransactor{}, realAudit, slog.Default())
+
+	// Platform Admin: no org of their own, but CanManage passes via IsAdmin.
+	ctx := classCtx(adminID, nil, true)
+	repo.On("FindByID", ctx, classID).Return(&domain.Class{ID: classID, OrganizationID: classOrgID, UserID: uuid.New(), Name: "Physics 101"}, nil)
+	members.On("CountByClass", ctx, classID).Return(int64(3), nil)
+	repo.On("Delete", ctx, classID).Return(nil)
+
+	err := svc.Delete(ctx, classID)
+
+	// The delete must succeed — the audit layer must not roll the tx back.
+	assert.NoError(t, err)
+	repo.AssertCalled(t, "Delete", ctx, classID)
+	// And the entry is filed under the target class's org, not the (absent) caller org.
+	assert.Len(t, auditRepo.entries, 1)
+	assert.Equal(t, classOrgID, auditRepo.entries[0].OrganizationID)
+	assert.Equal(t, domain.AuditOutcomeSuccess, auditRepo.entries[0].Outcome)
+	assert.Equal(t, domain.AuditDeleted, auditRepo.entries[0].Action)
 }
 
 func TestClassListScopesByRole(t *testing.T) {

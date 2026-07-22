@@ -25,7 +25,7 @@ func TestGetByID_RejectsOtherOrgCustomRole(t *testing.T) {
 	roleRepo := &mockRoleRepo{}
 	roleRepo.On("FindByID", mock.Anything, roleID).Return(&domain.Role{ID: roleID, OrganizationID: &orgB}, nil)
 
-	svc := roles.NewService(roleRepo, &mockPermRepo{}, noopTx{}, nil, slog.Default())
+	svc := roles.NewService(roleRepo, &mockPermRepo{}, noopTx{}, &auditSpy{}, nil, slog.Default())
 	ctx := domain.WithCaller(context.Background(), nonAdminCaller(orgA))
 
 	_, err := svc.GetByID(ctx, roleID)
@@ -39,7 +39,7 @@ func TestGetByID_AllowsPresetRole(t *testing.T) {
 	roleRepo := &mockRoleRepo{}
 	roleRepo.On("FindByID", mock.Anything, roleID).Return(&domain.Role{ID: roleID, IsPreset: true}, nil)
 
-	svc := roles.NewService(roleRepo, &mockPermRepo{}, noopTx{}, nil, slog.Default())
+	svc := roles.NewService(roleRepo, &mockPermRepo{}, noopTx{}, &auditSpy{}, nil, slog.Default())
 	ctx := domain.WithCaller(context.Background(), nonAdminCaller(orgA))
 
 	role, err := svc.GetByID(ctx, roleID)
@@ -54,7 +54,7 @@ func TestGetByID_AllowsOwnOrgCustomRole(t *testing.T) {
 	roleRepo := &mockRoleRepo{}
 	roleRepo.On("FindByID", mock.Anything, roleID).Return(&domain.Role{ID: roleID, OrganizationID: &orgA}, nil)
 
-	svc := roles.NewService(roleRepo, &mockPermRepo{}, noopTx{}, nil, slog.Default())
+	svc := roles.NewService(roleRepo, &mockPermRepo{}, noopTx{}, &auditSpy{}, nil, slog.Default())
 	ctx := domain.WithCaller(context.Background(), nonAdminCaller(orgA))
 
 	role, err := svc.GetByID(ctx, roleID)
@@ -70,7 +70,7 @@ func TestUpdate_RejectsOtherOrgCustomRole(t *testing.T) {
 	roleRepo := &mockRoleRepo{}
 	roleRepo.On("FindByID", mock.Anything, roleID).Return(&domain.Role{ID: roleID, OrganizationID: &orgB}, nil)
 
-	svc := roles.NewService(roleRepo, &mockPermRepo{}, noopTx{}, nil, slog.Default())
+	svc := roles.NewService(roleRepo, &mockPermRepo{}, noopTx{}, &auditSpy{}, nil, slog.Default())
 	ctx := domain.WithCaller(context.Background(), nonAdminCaller(orgA))
 
 	_, err := svc.Update(ctx, roleID, domain.UpdateRoleDTO{Name: "Hacked"})
@@ -86,7 +86,7 @@ func TestDelete_RejectsOtherOrgCustomRole(t *testing.T) {
 	roleRepo := &mockRoleRepo{}
 	roleRepo.On("FindByID", mock.Anything, roleID).Return(&domain.Role{ID: roleID, OrganizationID: &orgB}, nil)
 
-	svc := roles.NewService(roleRepo, &mockPermRepo{}, noopTx{}, nil, slog.Default())
+	svc := roles.NewService(roleRepo, &mockPermRepo{}, noopTx{}, &auditSpy{}, nil, slog.Default())
 	ctx := domain.WithCaller(context.Background(), nonAdminCaller(orgA))
 
 	err := svc.Delete(ctx, roleID)

@@ -55,6 +55,7 @@ type service struct {
 	columns    columnLookup
 	media      mediaLookup // may be nil
 	transactor domain.Transactor
+	audit      domain.AuditRecorder
 	notif      notifier // may be nil
 	logger     *slog.Logger
 }
@@ -69,10 +70,11 @@ func NewService(
 	columns columnLookup,
 	media mediaLookup,
 	transactor domain.Transactor,
+	audit domain.AuditRecorder,
 	notif notifier,
 	logger *slog.Logger,
 ) domain.TicketService {
-	return &service{ticketRepo, msgRepo, classes, members, sessions, quizRooms, columns, media, transactor, notif, logger}
+	return &service{ticketRepo, msgRepo, classes, members, sessions, quizRooms, columns, media, transactor, audit, notif, logger}
 }
 
 func (s *service) caller(ctx context.Context) (domain.Caller, error) {
@@ -220,11 +222,21 @@ func (s *service) Create(ctx context.Context, dto domain.CreateTicketDTO) (*doma
 		if cerr := s.tickets.Create(txCtx, t); cerr != nil {
 			return cerr
 		}
-		return s.messages.Create(txCtx, &domain.TicketMessage{
+		if merr := s.messages.Create(txCtx, &domain.TicketMessage{
 			TicketID: t.ID,
 			UserID:   caller.UserID,
 			Body:     dto.Body,
 			MediaIDs: marshalMediaIDs(dto.MediaIDs),
+		}); merr != nil {
+			return merr
+		}
+		return s.audit.Record(txCtx, domain.AuditRecord{
+			Action:      domain.AuditCreated,
+			TargetType:  domain.AuditTargetTicket,
+			TargetID:    &t.ID,
+			TargetLabel: t.Title,
+			OrgID:       &t.OrganizationID,
+			Metadata:    map[string]any{"type": string(t.Type), "class_id": classID.String()},
 		})
 	})
 	if err != nil {
@@ -349,8 +361,24 @@ func (s *service) Close(ctx context.Context, ticketID uuid.UUID) (*domain.Ticket
 	if t.Status == domain.TicketStatusClosed {
 		return nil, domain.NewValidationError(map[string]string{"ticket": "ticket is already closed"})
 	}
+	fromStatus := t.Status
 	now := time.Now()
-	if err := s.tickets.SetStatus(ctx, ticketID, domain.TicketStatusClosed, &caller.UserID, &now); err != nil {
+	err = s.transactor.RunInTx(ctx, func(txCtx context.Context) error {
+		if err := s.tickets.SetStatus(txCtx, ticketID, domain.TicketStatusClosed, &caller.UserID, &now); err != nil {
+			return err
+		}
+		return s.audit.Record(txCtx, domain.AuditRecord{
+			Action:      domain.AuditUpdated,
+			TargetType:  domain.AuditTargetTicket,
+			TargetID:    &t.ID,
+			TargetLabel: t.Title,
+			OrgID:       &t.OrganizationID,
+			Metadata: map[string]any{
+				"status": map[string]any{"from": string(fromStatus), "to": string(domain.TicketStatusClosed)},
+			},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	t.Status = domain.TicketStatusClosed

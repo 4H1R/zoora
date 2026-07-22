@@ -390,6 +390,24 @@ var _ entitlements.Service = (*fakeEnt)(nil)
 
 // --- test wiring --------------------------------------------------------
 
+// fakeTransactor runs fn inline with no real DB — unit tests exercise the audit
+// same-tx wiring without a database.
+type fakeTransactor struct{}
+
+func (fakeTransactor) RunInTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
+
 type testDeps struct {
 	job     *mockJobRepo
 	users   domain.UserRepository
@@ -401,6 +419,7 @@ type testDeps struct {
 	storage *mockObjectStore
 	queue   *mockEnqueuer
 	results *mockResultStore
+	audit   *auditSpy
 }
 
 func newTestService(t *testing.T, deps testDeps) domain.ImportService {
@@ -440,10 +459,13 @@ func newTestService(t *testing.T, deps testDeps) domain.ImportService {
 	if deps.results == nil {
 		deps.results = &mockResultStore{}
 	}
+	if deps.audit == nil {
+		deps.audit = &auditSpy{}
+	}
 	return imports.NewService(
 		deps.job, deps.users, deps.roles, deps.classes, deps.members,
 		deps.media, deps.ent, deps.storage, deps.queue, deps.results,
-		slog.Default(),
+		fakeTransactor{}, deps.audit, slog.Default(),
 	)
 }
 
@@ -585,6 +607,46 @@ func TestCreateImport_CreatesJobAndEnqueues(t *testing.T) {
 	assert.False(t, payload.IsAdmin)
 	assert.Equal(t, []string{string(domain.PermUsersCreate)}, payload.Permissions)
 	assert.Equal(t, domain.PlanFree, payload.Plan)
+}
+
+func TestCreateImport_RecordsAudit(t *testing.T) {
+	orgID := uuid.New()
+	mediaID := uuid.New()
+	userID := uuid.New()
+
+	media := &mockMediaRepo{}
+	media.On("FindByID", mock.Anything, mediaID).
+		Return(&domain.Media{ID: mediaID, OrganizationID: &orgID, FileName: "roster.xlsx", Size: 1 << 20}, nil)
+
+	job := &mockJobRepo{}
+	job.On("Latest", mock.Anything, orgID, domain.ImportTypeUsers).Return(nil, domain.ErrNotFound)
+	job.On("Create", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		args.Get(1).(*domain.ImportJob).ID = uuid.New()
+	}).Return(nil)
+
+	queue := &mockEnqueuer{}
+	queue.On("Enqueue", mock.Anything, mock.Anything).Return(&asynq.TaskInfo{}, nil)
+
+	spy := &auditSpy{}
+	svc := newTestService(t, testDeps{media: media, job: job, queue: queue, audit: spy})
+
+	ctx := domain.WithCaller(context.Background(), domain.Caller{
+		UserID:      userID,
+		OrgID:       &orgID,
+		Permissions: []string{string(domain.PermUsersCreate)},
+		Ent:         domain.PlanCatalog[domain.PlanFree],
+	})
+
+	created, err := svc.Create(ctx, domain.CreateImportJobDTO{Type: domain.ImportTypeUsers, MediaID: mediaID})
+	require.NoError(t, err)
+	require.Len(t, spy.records, 1)
+	rec := spy.records[0]
+	assert.Equal(t, domain.AuditCreated, rec.Action)
+	assert.Equal(t, domain.AuditTargetImport, rec.TargetType)
+	assert.Equal(t, created.ID, *rec.TargetID)
+	assert.Equal(t, "roster.xlsx", rec.TargetLabel)
+	require.NotNil(t, rec.OrgID)
+	assert.Equal(t, orgID, *rec.OrgID)
 }
 
 // TestCreateImport_RunningJobConflicts covers the one-running-import-per-org

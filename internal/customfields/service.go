@@ -12,14 +12,16 @@ import (
 
 type service struct {
 	repo   domain.CustomFieldRepository
+	tx     domain.Transactor
+	audit  domain.AuditRecorder
 	logger *slog.Logger
 }
 
-func NewService(repo domain.CustomFieldRepository, logger *slog.Logger) domain.CustomFieldService {
+func NewService(repo domain.CustomFieldRepository, tx domain.Transactor, audit domain.AuditRecorder, logger *slog.Logger) domain.CustomFieldService {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &service{repo: repo, logger: logger}
+	return &service{repo: repo, tx: tx, audit: audit, logger: logger}
 }
 
 // callerOrg requires the manage permission (admin bypass) and returns the caller's org.
@@ -71,7 +73,20 @@ func (s *service) CreateDefinition(ctx context.Context, dto domain.CreateCustomF
 	if def.Options == nil {
 		def.Options = []string{}
 	}
-	if err := s.repo.CreateDefinition(ctx, def); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.CreateDefinition(ctx, def); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditCreated,
+			TargetType:  domain.AuditTargetCustomField,
+			TargetID:    &def.ID,
+			TargetLabel: def.Label,
+			OrgID:       &def.OrganizationID,
+			Metadata:    map[string]any{"field_type": string(def.FieldType)},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	return def, nil
@@ -98,19 +113,27 @@ func (s *service) UpdateDefinition(ctx context.Context, id uuid.UUID, dto domain
 		return nil, domain.ErrForbidden
 	}
 
-	if dto.Label != nil {
+	// Shallow changed-fields diff captured as each field is applied so the audit
+	// entry records exactly what this update altered.
+	changed := map[string]any{}
+	if dto.Label != nil && *dto.Label != def.Label {
+		changed["label"] = map[string]any{"from": def.Label, "to": *dto.Label}
 		def.Label = *dto.Label
 	}
-	if dto.IsRequired != nil {
+	if dto.IsRequired != nil && *dto.IsRequired != def.IsRequired {
+		changed["is_required"] = map[string]any{"from": def.IsRequired, "to": *dto.IsRequired}
 		def.IsRequired = *dto.IsRequired
 	}
-	if dto.VisibleToUser != nil {
+	if dto.VisibleToUser != nil && *dto.VisibleToUser != def.VisibleToUser {
+		changed["visible_to_user"] = map[string]any{"from": def.VisibleToUser, "to": *dto.VisibleToUser}
 		def.VisibleToUser = *dto.VisibleToUser
 	}
-	if dto.Position != nil {
+	if dto.Position != nil && *dto.Position != def.Position {
+		changed["position"] = map[string]any{"from": def.Position, "to": *dto.Position}
 		def.Position = *dto.Position
 	}
 	if dto.Description != nil {
+		changed["description"] = true
 		def.Description = dto.Description
 	}
 	if dto.Options != nil {
@@ -123,6 +146,7 @@ func (s *service) UpdateDefinition(ctx context.Context, id uuid.UUID, dto domain
 				return nil, domain.ErrCustomFieldOptionInUse
 			}
 		}
+		changed["options"] = true
 		def.Options = *dto.Options
 	}
 	if dto.IsUnique != nil && *dto.IsUnique && !def.IsUnique {
@@ -133,12 +157,27 @@ func (s *service) UpdateDefinition(ctx context.Context, id uuid.UUID, dto domain
 		if hasDup {
 			return nil, domain.ErrCustomFieldDuplicateValue
 		}
+		changed["is_unique"] = map[string]any{"from": false, "to": true}
 		def.IsUnique = true
-	} else if dto.IsUnique != nil {
+	} else if dto.IsUnique != nil && *dto.IsUnique != def.IsUnique {
+		changed["is_unique"] = map[string]any{"from": def.IsUnique, "to": *dto.IsUnique}
 		def.IsUnique = *dto.IsUnique
 	}
 
-	if err := s.repo.UpdateDefinition(ctx, def); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.UpdateDefinition(ctx, def); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditUpdated,
+			TargetType:  domain.AuditTargetCustomField,
+			TargetID:    &def.ID,
+			TargetLabel: def.Label,
+			OrgID:       &def.OrganizationID,
+			Metadata:    map[string]any{"changed": changed},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	return def, nil
@@ -161,7 +200,19 @@ func (s *service) ArchiveDefinition(ctx context.Context, id uuid.UUID) error {
 	}
 	now := timeNow()
 	def.ArchivedAt = &now
-	return s.repo.UpdateDefinition(ctx, def)
+	return s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.UpdateDefinition(ctx, def); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditDeleted,
+			TargetType:  domain.AuditTargetCustomField,
+			TargetID:    &def.ID,
+			TargetLabel: def.Label,
+			OrgID:       &def.OrganizationID,
+			Metadata:    map[string]any{"archived": true},
+		})
+	})
 }
 
 func (s *service) SetUserValues(ctx context.Context, userID uuid.UUID, dto domain.SetUserCustomFieldsDTO) (map[string]any, error) {

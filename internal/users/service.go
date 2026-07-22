@@ -21,11 +21,13 @@ type service struct {
 	ent      entitlements.Service
 	redis    *redis.Client
 	tokens   domain.SessionTokenService
+	tx       domain.Transactor
+	audit    domain.AuditRecorder
 	logger   *slog.Logger
 }
 
-func NewService(repo domain.UserRepository, roleRepo domain.RoleRepository, ent entitlements.Service, rdb *redis.Client, tokens domain.SessionTokenService, logger *slog.Logger) domain.UserService {
-	return &service{repo: repo, roleRepo: roleRepo, ent: ent, redis: rdb, tokens: tokens, logger: logger}
+func NewService(repo domain.UserRepository, roleRepo domain.RoleRepository, ent entitlements.Service, rdb *redis.Client, tokens domain.SessionTokenService, tx domain.Transactor, audit domain.AuditRecorder, logger *slog.Logger) domain.UserService {
+	return &service{repo: repo, roleRepo: roleRepo, ent: ent, redis: rdb, tokens: tokens, tx: tx, audit: audit, logger: logger}
 }
 
 // bustUser drops the auth-middleware cache for a user after any change to their
@@ -90,7 +92,18 @@ func (s *service) Create(ctx context.Context, dto domain.CreateUserDTO) (*domain
 		RoleID:         dto.RoleID,
 	}
 
-	if err := s.repo.Create(ctx, user); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Create(ctx, user); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditCreated,
+			TargetType:  domain.AuditTargetUser,
+			TargetID:    &user.ID,
+			TargetLabel: user.Username,
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 
@@ -135,20 +148,44 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateUse
 		}
 	}
 
-	if dto.Username != nil {
+	// Build a shallow changed-fields diff (from/to) before mutating so the audit
+	// entry records exactly what this update altered. Never record secrets.
+	changed := map[string]any{}
+	if dto.Username != nil && *dto.Username != user.Username {
+		changed["username"] = map[string]any{"from": user.Username, "to": *dto.Username}
 		user.Username = *dto.Username
 	}
-	if dto.Name != nil {
+	if dto.Name != nil && *dto.Name != user.Name {
+		changed["name"] = map[string]any{"from": user.Name, "to": *dto.Name}
 		user.Name = *dto.Name
 	}
 	if dto.RoleID != nil && (caller.IsAdmin || caller.HasPermission(domain.PermRolesUpdate)) {
 		if !caller.IsAdmin && s.isManagerRole(ctx, *dto.RoleID) {
 			return nil, domain.ErrForbidden
 		}
+		from := ""
+		if user.RoleID != nil {
+			from = user.RoleID.String()
+		}
+		if from != dto.RoleID.String() {
+			changed["role_id"] = map[string]any{"from": from, "to": dto.RoleID.String()}
+		}
 		user.RoleID = dto.RoleID
 	}
 
-	if err := s.repo.Update(ctx, user); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Update(ctx, user); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditUpdated,
+			TargetType:  domain.AuditTargetUser,
+			TargetID:    &user.ID,
+			TargetLabel: user.Username,
+			Metadata:    map[string]any{"changed": changed},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	s.bustUser(ctx, id)
@@ -163,16 +200,29 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	if caller.UserID == id {
 		return domain.ErrForbidden
 	}
+	// Load the user up front so the audit entry has a human label (username),
+	// and so the org-scope guard has the row to check.
+	user, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
 	if !caller.IsAdmin && caller.OrgID != nil {
-		user, err := s.repo.FindByID(ctx, id)
-		if err != nil {
-			return err
-		}
 		if user.OrganizationID == nil || *user.OrganizationID != *caller.OrgID {
 			return domain.ErrForbidden
 		}
 	}
-	if err := s.repo.Delete(ctx, id); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Delete(ctx, id); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditDeleted,
+			TargetType:  domain.AuditTargetUser,
+			TargetID:    &id,
+			TargetLabel: user.Username,
+		})
+	})
+	if err != nil {
 		return err
 	}
 	s.bustUser(ctx, id)
@@ -363,7 +413,23 @@ func (s *service) Disable(ctx context.Context, id uuid.UUID, dto domain.DisableU
 		reason := dto.Reason
 		user.DisabledReason = &reason
 	}
-	if err := s.repo.Update(ctx, user); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Update(ctx, user); err != nil {
+			return err
+		}
+		meta := map[string]any{}
+		if dto.Reason != "" {
+			meta["reason"] = dto.Reason
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditDisabled,
+			TargetType:  domain.AuditTargetUser,
+			TargetID:    &id,
+			TargetLabel: user.Username,
+			Metadata:    meta,
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	s.bustUser(ctx, id)
@@ -379,7 +445,18 @@ func (s *service) Enable(ctx context.Context, id uuid.UUID) (*domain.User, error
 	user.DisabledAt = nil
 	user.DisabledBy = nil
 	user.DisabledReason = nil
-	if err := s.repo.Update(ctx, user); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Update(ctx, user); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditEnabled,
+			TargetType:  domain.AuditTargetUser,
+			TargetID:    &id,
+			TargetLabel: user.Username,
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	s.bustUser(ctx, id)

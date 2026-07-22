@@ -15,6 +15,7 @@ import (
 	_ "github.com/4H1R/zoora/docs"
 	"github.com/4H1R/zoora/internal/admin"
 	"github.com/4H1R/zoora/internal/attendance"
+	"github.com/4H1R/zoora/internal/audit"
 	"github.com/4H1R/zoora/internal/auth"
 	"github.com/4H1R/zoora/internal/billing"
 	"github.com/4H1R/zoora/internal/calendar"
@@ -175,30 +176,37 @@ func main() {
 	entitlementService := entitlements.NewService(entitlementRepo)
 
 	importRepo := imports.NewRepository(db)
-	importService := imports.NewService(
-		importRepo, userRepo, roleRepo, classRepo, classMemberRepo, mediaRepo,
-		entitlementService, storageClient, queueClient,
-		imports.NewRedisResultStore(redisClient), log,
-	)
 
 	authMiddleware := auth.Middleware(jwtService, redisClient, roleRepo, userRepo, entitlementRepo)
 	tenantMiddleware := middleware.Tenant(redisClient, orgRepo, cfg.BaseDomain, cfg.AdminSubdomain)
 
 	authzResolver := authz.NewResolver(classMemberRepo)
 
+	transactor := database.NewTransactor(db)
+	auditRepo := audit.NewRepository(db)
+	auditService := audit.NewService(auditRepo, log)
+
+	importService := imports.NewService(
+		importRepo, userRepo, roleRepo, classRepo, classMemberRepo, mediaRepo,
+		entitlementService, storageClient, queueClient,
+		imports.NewRedisResultStore(redisClient), transactor, auditService, log,
+	)
+
 	orgSettingsRepo := orgsettings.NewRepository(db)
-	orgSettingsService := orgsettings.NewService(orgSettingsRepo, log)
+	orgSettingsService := orgsettings.NewService(orgSettingsRepo, transactor, auditService, log)
 
 	sessionManager := auth.NewSessionManager(jwtService, redisClient)
-	userService := users.NewService(userRepo, roleRepo, entitlementService, redisClient, sessionManager, log)
-	customFieldService := customfields.NewService(customFieldRepo, log)
-	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, queueClient, log)
-	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, queueClient, log)
-	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, queueClient, log)
-	transactor := database.NewTransactor(db)
+	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, queueClient, transactor, auditService, log)
 
 	leadRepo := leads.NewRepository(db)
 	leadService := leads.NewService(leadRepo, orgRepo, orgSettingsRepo, userRepo, roleRepo, transactor, log)
+
+	customFieldService := customfields.NewService(customFieldRepo, transactor, auditService, log)
+
+	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, queueClient, transactor, auditService, log)
+	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, queueClient, transactor, auditService, log)
+
+	userService := users.NewService(userRepo, roleRepo, entitlementService, redisClient, sessionManager, transactor, auditService, log)
 
 	// Reconcile the permissions table + preset-role grants with the code-defined
 	// source of truth so renaming/removing a permission constant takes effect on
@@ -208,9 +216,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	roleService := roles.NewService(roleRepo, permRepo, transactor, redisClient, log)
+	roleService := roles.NewService(roleRepo, permRepo, transactor, auditService, redisClient, log)
 	authBusinessService := auth.NewAuthService(userRepo, jwtService, redisClient, log)
-	mediaService := media.NewService(mediaRepo, storageClient, entitlementService, entitlementRepo, log)
+	mediaService := media.NewService(mediaRepo, storageClient, entitlementService, entitlementRepo, transactor, auditService, log)
 	changelogService := changelog.NewServiceWithMedia(changelogRepo, mediaRepo, storageClient, redisClient, log)
 	tutorialService := tutorials.NewService(tutorialRepo, log)
 	livekitClient := lk.NewClient(cfg, log)
@@ -224,23 +232,23 @@ func main() {
 	go convBridge.Run(context.Background())
 
 	pollModelAuthorizer := polls.NewModelAuthorizer(liveRoomRepo, classSessionRepo, classRepo, classMemberRepo)
-	pollService := polls.NewService(pollRepo, pollAnswerRepo, pollModelAuthorizer, log)
+	pollService := polls.NewService(pollRepo, pollAnswerRepo, pollModelAuthorizer, transactor, auditService, log)
 	qaBroadcaster := qa.NewBroadcaster(livekitClient, liveRoomRepo, log)
-	qaService := qa.NewService(qaRepo, qaVoteRepo, modelAuthorizer, log, qaBroadcaster)
+	qaService := qa.NewService(qaRepo, qaVoteRepo, modelAuthorizer, transactor, auditService, log, qaBroadcaster)
 	liveSessionService := livesessions.NewService(
 		liveRoomRepo, liveParticipantRepo, liveRecordingRepo, liveWhiteboardRepo,
 		classSessionRepo, classRepo, classMemberRepo,
-		chatService, pollService, transactor,
+		chatService, pollService, transactor, auditService,
 		livekitClient, storageClient, queueClient, entitlementService, cfg.LiveRoomHostGracePeriod, cfg.LiveKitEgressMaxConcurrent, log,
 	)
-	offlineService := offlines.NewService(offlineRoomRepo, offlineViewRepo, classSessionRepo, classRepo, classMemberRepo, queueClient, log)
-	practiceService := practices.NewService(practiceRoomRepo, practiceSubRepo, classSessionRepo, classRepo, classMemberRepo, log)
+	offlineService := offlines.NewService(offlineRoomRepo, offlineViewRepo, classSessionRepo, classRepo, classMemberRepo, queueClient, transactor, auditService, log)
+	practiceService := practices.NewService(practiceRoomRepo, practiceSubRepo, classSessionRepo, classRepo, classMemberRepo, transactor, auditService, log)
 
 	attendanceRepo := attendance.NewRepository(db)
 	attendanceService := attendance.NewService(
 		attendanceRepo, classRepo, classSessionRepo, classMemberRepo,
 		liveRoomRepo, liveParticipantRepo, offlineViewRepo, offlineRoomRepo,
-		orgSettingsService, authzResolver, log,
+		orgSettingsService, authzResolver, transactor, auditService, log,
 	)
 
 	healthChecker := health.NewChecker(db, redisClient, storageClient)
@@ -271,7 +279,7 @@ func main() {
 	sentryFlush, sentryHandlers := observability.InitSentry(cfg, log)
 	defer sentryFlush()
 
-	router.Use(middleware.RequestID(), middleware.Recovery(log))
+	router.Use(middleware.RequestID(), middleware.RequestInfo(), middleware.Recovery(log))
 	router.Use(sentryHandlers...)
 	router.Use(
 		middleware.ErrorHandler(log),
@@ -292,7 +300,7 @@ func main() {
 	liveWebhookHandler := livesessions.NewWebhookHandler(livekitClient, liveSessionService, log)
 	liveWebhookHandler.RegisterRoutes(router.Group("/webhooks"))
 
-	v1 := router.Group("/api/v1", tenantMiddleware)
+	v1 := router.Group("/api/v1", tenantMiddleware, middleware.AuditDenied(auditService, log))
 
 	authHandler := auth.NewHandler(authBusinessService)
 	authHandler.RegisterRoutes(v1, middleware.AuthRateLimit(redisClient, rateLimitDisabled))
@@ -353,7 +361,7 @@ func main() {
 	connectorService := connectors.NewService(connectorRepo, userRepo, orgRepo, redisClient, smsSender, connectors.BotLinkConfig{
 		TelegramBotUsername: cfg.TelegramBotUsername,
 		BaleBotUsername:     cfg.BaleBotUsername,
-	}, log)
+	}, transactor, auditService, log)
 	connectorHandler := connectors.NewHandler(connectorService)
 	connectorHandler.RegisterRoutes(v1, authMiddleware)
 
@@ -383,7 +391,7 @@ func main() {
 
 	// classService depends on the conversations service (ClassChatProvisioner) to
 	// provision a class's group/channel chat, so it is constructed after it.
-	classService := classes.NewService(classRepo, classSessionRepo, classMemberRepo, conversationService, log)
+	classService := classes.NewService(classRepo, classSessionRepo, classMemberRepo, conversationService, transactor, auditService, log)
 	classHandler := classes.NewHandler(classService)
 	classHandler.RegisterRoutes(v1, authMiddleware, perm)
 
@@ -416,6 +424,7 @@ func main() {
 		billing.NewQueueEnqueuer(queueClient), // enqueuer
 		notificationService,                   // systemNotifier (SendSystem)
 		billingPDF,
+		auditService,
 		billing.BillingConfig{
 			CallbackBaseURL: cfg.ZarinpalCallbackBaseURL,
 			AppURLTemplate:  cfg.AppURLTemplate,
@@ -458,6 +467,9 @@ func main() {
 	attendanceHandler := attendance.NewHandler(attendanceService)
 	attendanceHandler.RegisterRoutes(v1, authMiddleware, perm)
 
+	auditHandler := audit.NewHandler(auditService)
+	auditHandler.RegisterRoutes(v1, authMiddleware, perm)
+
 	gradebookColRepo := gradebook.NewColumnRepository(db)
 	gradebookCellRepo := gradebook.NewCellRepository(db)
 	gradebookService := gradebook.NewService(
@@ -465,7 +477,7 @@ func main() {
 		classRepo, classMemberRepo,
 		attendanceRepo, practiceSubRepo, quizSubmissionRepo,
 		quizRepo, practiceRoomRepo, classSessionRepo,
-		authzResolver, log,
+		authzResolver, transactor, auditService, log,
 	)
 	gradebookHandler := gradebook.NewHandler(gradebookService)
 	gradebookHandler.RegisterRoutes(v1, authMiddleware, perm)
@@ -481,7 +493,7 @@ func main() {
 		quizRoomRepo,     // quizRoomLookup
 		gradebookColRepo, // columnLookup
 		mediaRepo,        // mediaLookup (attachment validation)
-		transactor, ticketNotifier, log,
+		transactor, auditService, ticketNotifier, log,
 	)
 	ticketHandler := tickets.NewHandler(ticketService)
 	ticketHandler.RegisterRoutes(v1, authMiddleware, perm)

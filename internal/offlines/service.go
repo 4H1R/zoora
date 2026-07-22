@@ -28,6 +28,8 @@ type service struct {
 	classes  domain.ClassRepository
 	members  domain.ClassMemberRepository
 	queue    *queue.Client
+	tx       domain.Transactor
+	audit    domain.AuditRecorder
 	logger   *slog.Logger
 }
 
@@ -38,6 +40,8 @@ func NewService(
 	classes domain.ClassRepository,
 	members domain.ClassMemberRepository,
 	queueClient *queue.Client,
+	tx domain.Transactor,
+	audit domain.AuditRecorder,
 	logger *slog.Logger,
 ) domain.OfflineService {
 	return &service{
@@ -47,6 +51,8 @@ func NewService(
 		classes:  classes,
 		members:  members,
 		queue:    queueClient,
+		tx:       tx,
+		audit:    audit,
 		logger:   logger,
 	}
 }
@@ -140,7 +146,20 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreateOfflineRoomDT
 		Description:    dto.Description,
 		PublishedAt:    dto.PublishedAt,
 	}
-	if err := s.rooms.Create(ctx, room); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.rooms.Create(ctx, room); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditCreated,
+			TargetType:  domain.AuditTargetOffline,
+			TargetID:    &room.ID,
+			TargetLabel: room.Title,
+			OrgID:       &room.OrganizationID,
+			Metadata:    map[string]any{"class_id": room.ClassID.String()},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	s.logger.Info("offline room created",
@@ -187,16 +206,40 @@ func (s *service) UpdateRoom(ctx context.Context, id uuid.UUID, dto domain.Updat
 	if !canManageRoom(caller, room) {
 		return nil, domain.ErrForbidden
 	}
+	// Shallow changed-fields diff (from/to) captured before mutating so the
+	// audit entry records exactly what this update altered.
+	changed := map[string]any{}
+	setChanged := func(key string, from, to any) {
+		if from != to {
+			changed[key] = map[string]any{"from": from, "to": to}
+		}
+	}
 	if dto.Title != nil {
+		setChanged("title", room.Title, *dto.Title)
 		room.Title = *dto.Title
 	}
 	if dto.Description != nil {
+		setChanged("description", room.Description, *dto.Description)
 		room.Description = *dto.Description
 	}
 	if dto.PublishedAt != nil {
 		room.PublishedAt = dto.PublishedAt
+		changed["published_at"] = dto.PublishedAt
 	}
-	if err := s.rooms.Update(ctx, room); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.rooms.Update(ctx, room); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditUpdated,
+			TargetType:  domain.AuditTargetOffline,
+			TargetID:    &room.ID,
+			TargetLabel: room.Title,
+			OrgID:       &room.OrganizationID,
+			Metadata:    map[string]any{"changed": changed},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	return room, nil
@@ -214,7 +257,20 @@ func (s *service) DeleteRoom(ctx context.Context, id uuid.UUID) error {
 	if !canDeleteRoom(caller, room) {
 		return domain.ErrForbidden
 	}
-	if err := s.rooms.Delete(ctx, id); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.rooms.Delete(ctx, id); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditDeleted,
+			TargetType:  domain.AuditTargetOffline,
+			TargetID:    &id,
+			TargetLabel: room.Title,
+			OrgID:       &room.OrganizationID,
+			Metadata:    map[string]any{"class_id": room.ClassID.String()},
+		})
+	})
+	if err != nil {
 		return err
 	}
 	s.logger.Info("offline room deleted",

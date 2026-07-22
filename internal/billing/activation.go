@@ -46,6 +46,26 @@ func (s *service) markPaidAndActivate(ctx context.Context, invoiceID uuid.UUID, 
 			if err := s.activator.UpdatePlan(ctx, org.ID, plan, &expiry); err != nil {
 				return fmt.Errorf("billing.markPaidAndActivate.UpdatePlan: %w", err)
 			}
+			// Plan activation commits worker/callback-side where there may be no
+			// Caller (public gateway callback) — set OrgID explicitly to the
+			// target org so the recorder files a System-actor entry (or the admin
+			// actor on the manual mark-paid path). Runs in the same tx as UpdatePlan.
+			orgID := org.ID
+			if err := s.audit.Record(ctx, domain.AuditRecord{
+				Action:      domain.AuditUpdated,
+				TargetType:  domain.AuditTargetBilling,
+				TargetID:    &inv.ID,
+				TargetLabel: string(plan),
+				OrgID:       &orgID,
+				Metadata: map[string]any{
+					"from_plan":  string(org.Plan),
+					"to_plan":    string(plan),
+					"invoice_id": inv.ID.String(),
+					"expires_at": expiry.Format(time.RFC3339),
+				},
+			}); err != nil {
+				return err
+			}
 		}
 
 		inv.Status = domain.InvoiceStatusPaid

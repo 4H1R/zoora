@@ -93,3 +93,29 @@ _Avoid_: Flag, Toggle
 **Limit**:
 A numeric quota within Entitlements (e.g. max users, storage). Convention: **`0` means unlimited**, not zero. The `entitlements` package enforces only the count-based Limits that need a live DB count.
 _Avoid_: Cap, Quota (bare)
+
+### Audit
+
+**Audit Log**:
+An Organization's append-only, immutable stream of structural mutations, kept for accountability ("who deleted this Class"). Forensic record only — not a user-facing activity feed and not the platform "What's New" (see Changelog). Read by holders of `audit:view_any` (Manager by default); never edited or deleted, not even by a Manager or Platform Admin.
+_Avoid_: Activity Log, Changelog, History, Event Log
+
+**Audit Entry**:
+One record in the Audit Log: an Actor performed an Action on a Target at a time, with an Outcome. Carries denormalized snapshots (`actor_name`, `target_label`) so it survives the deletion of the User or resource it describes. Its `org_id` is always the **target's** Organization, never the actor's — so a Platform Admin's action is filed under the org it touched.
+_Avoid_: Log Line, Audit Record (bare), History Item
+
+**Audit Action**:
+A code-defined, closed-set verb on an Audit Entry — `Created`, `Updated`, `Deleted` (extendable with domain verbs like `Enrolled`, `Graded`). A typed constant, not a free string, so filtering is drift-free.
+_Avoid_: Event Type, Verb (bare)
+
+**Audit Target Type**:
+The code-defined, closed-set kind of resource an Audit Entry concerns (`Class`, `Quiz`, `User`, `Role`, …) — one constant per auditable resource. The choke point that a coverage guard test asserts against.
+_Avoid_: Entity Type, Resource Kind (bare)
+
+**Outcome**:
+Whether an Audit Entry records a committed change (`success`) or a blocked one (`denied`). Success entries are written service-side in the same DB transaction as the change (hard-fail: no entry → the action is rejected). Denied entries are authorization refusals (403) captured centrally in middleware — best-effort, no transaction, route-derived Target.
+_Avoid_: Status, Result (bare)
+
+**System Actor**:
+The reserved Actor for mutations with no human Caller — worker jobs, plan-expiry downgrade, cascades. Recorded with a nil `actor_id` and `actor_name = "System"`. Distinguishes "the platform did this" from any User's action.
+_Avoid_: Automated, Cron, Robot

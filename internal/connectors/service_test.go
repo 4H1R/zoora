@@ -62,11 +62,29 @@ func (m *mockSMS) SendOTP(_ context.Context, phone, code string) error {
 	return nil
 }
 
+// fakeTransactor runs fn inline with no real DB — unit tests exercise the audit
+// same-tx wiring without a database.
+type fakeTransactor struct{}
+
+func (fakeTransactor) RunInTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
+
 func testService(t *testing.T, repo domain.UserConnectorRepository, sms domain.SMSSender) (domain.ConnectorService, *redis.Client) {
 	t.Helper()
 	mr := miniredis.RunT(t)
 	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
-	svc := NewService(repo, nil, nil, rdb, sms, BotLinkConfig{TelegramBotUsername: "zoora_bot", BaleBotUsername: "zoora_bale_bot"}, nil)
+	svc := NewService(repo, nil, nil, rdb, sms, BotLinkConfig{TelegramBotUsername: "zoora_bot", BaleBotUsername: "zoora_bale_bot"}, fakeTransactor{}, &auditSpy{}, nil)
 	return svc, rdb
 }
 
@@ -114,7 +132,8 @@ func TestCompleteLinkReturnsAccountGreeting(t *testing.T) {
 	orgRepo := &mockOrgRepo{org: &domain.Organization{ID: orgID, Name: "Acme"}}
 	mr := miniredis.RunT(t)
 	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
-	svc := NewService(repo, userRepo, orgRepo, rdb, &mockSMS{}, BotLinkConfig{TelegramBotUsername: "zoora_bot"}, nil)
+	audit := &auditSpy{}
+	svc := NewService(repo, userRepo, orgRepo, rdb, &mockSMS{}, BotLinkConfig{TelegramBotUsername: "zoora_bot"}, fakeTransactor{}, audit, nil)
 
 	resp, err := svc.CreateLinkToken(callerCtx(userID), domain.ConnectorTelegram)
 	if err != nil {
@@ -126,6 +145,21 @@ func TestCompleteLinkReturnsAccountGreeting(t *testing.T) {
 	}
 	if res.Username != "ali" || res.Name != "Ali A" || res.OrgName != "Acme" {
 		t.Fatalf("result = %+v, want ali/Ali A/Acme", res)
+	}
+
+	// The link is audited under the user's org, labelled by provider.
+	if len(audit.records) != 1 {
+		t.Fatalf("audit records = %d, want 1", len(audit.records))
+	}
+	rec := audit.records[0]
+	if rec.Action != domain.AuditCreated || rec.TargetType != domain.AuditTargetConnector {
+		t.Fatalf("audit action/type = %s/%s", rec.Action, rec.TargetType)
+	}
+	if rec.TargetLabel != string(domain.ConnectorTelegram) {
+		t.Fatalf("audit label = %q, want telegram", rec.TargetLabel)
+	}
+	if rec.OrgID == nil || *rec.OrgID != orgID {
+		t.Fatalf("audit org = %v, want %v", rec.OrgID, orgID)
 	}
 }
 
