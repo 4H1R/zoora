@@ -134,7 +134,7 @@ func TestIntegration_GradebookService_GetMine(t *testing.T) {
 	require.NoError(t, cellRepo.Upsert(ctx, &domain.GradebookCell{ColumnID: col.ID, StudentID: student.ID, Value: "18"}))
 	require.NoError(t, cellRepo.Upsert(ctx, &domain.GradebookCell{ColumnID: col.ID, StudentID: other.ID, Value: "11"}))
 
-	svc := gradebook.NewService(columnRepo, cellRepo, classRepo, memberRepo, nil, nil, nil, nil, nil, nil, authz.NewResolver(memberRepo), slog.Default())
+	svc := gradebook.NewService(columnRepo, cellRepo, classRepo, memberRepo, nil, nil, nil, nil, nil, nil, authz.NewResolver(memberRepo), nil, nil, slog.Default())
 
 	callerCtx := domain.WithCaller(ctx, domain.Caller{
 		UserID:      student.ID,

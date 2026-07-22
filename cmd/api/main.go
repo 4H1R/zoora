@@ -474,7 +474,7 @@ func main() {
 		classRepo, classMemberRepo,
 		attendanceRepo, practiceSubRepo, quizSubmissionRepo,
 		quizRepo, practiceRoomRepo, classSessionRepo,
-		authzResolver, log,
+		authzResolver, transactor, auditService, log,
 	)
 	gradebookHandler := gradebook.NewHandler(gradebookService)
 	gradebookHandler.RegisterRoutes(v1, authMiddleware, perm)

@@ -470,7 +470,26 @@ type deps struct {
 	quizRepo         *mQuizRepo
 	practiceRoomRepo *mPracticeRoomRepo
 	sessionRepo      *mSessionRepo
+	audit            *auditSpy
 }
+
+// fakeTransactor runs fn inline with no real DB — unit tests exercise the audit
+// same-tx wiring without a database.
+type fakeTransactor struct{}
+
+func (fakeTransactor) RunInTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
 
 func newDeps() deps {
 	return deps{
@@ -484,6 +503,7 @@ func newDeps() deps {
 		quizRepo:         &mQuizRepo{},
 		practiceRoomRepo: &mPracticeRoomRepo{},
 		sessionRepo:      &mSessionRepo{},
+		audit:            &auditSpy{},
 	}
 }
 
@@ -493,6 +513,7 @@ func (d deps) service() domain.GradebookService {
 		d.attendanceRepo, d.practiceRepo, d.quizSubRepo,
 		d.quizRepo, d.practiceRoomRepo, d.sessionRepo,
 		authz.NewResolver(d.memberRepo),
+		fakeTransactor{}, d.audit,
 		slog.Default(),
 	)
 }
@@ -780,6 +801,55 @@ func TestUpsertCell_ManualColumn_Success(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "95", cell.Value)
 	assert.Equal(t, studentID, cell.StudentID)
+}
+
+func TestUpsertCell_RecordsGradedAudit(t *testing.T) {
+	teacherID := uuid.New()
+	classID := uuid.New()
+	colID := uuid.New()
+	studentID := uuid.New()
+	orgID := uuid.New()
+	ctx := teacherCtx(teacherID)
+	d := newDeps()
+
+	d.colRepo.On("FindByID", ctx, colID).
+		Return(&domain.GradebookColumn{ID: colID, ClassID: classID, Title: "Midterm", Type: domain.GradebookColumnManualGrade}, nil)
+	d.classRepo.On("FindByID", ctx, classID).
+		Return(&domain.Class{ID: classID, UserID: teacherID, OrganizationID: orgID}, nil)
+	d.cellRepo.On("Upsert", ctx, mock.AnythingOfType("*domain.GradebookCell")).Return(nil)
+
+	svc := d.service()
+	_, err := svc.UpsertCell(ctx, classID, colID, domain.UpsertGradebookCellDTO{StudentID: studentID, Value: "95"})
+	assert.NoError(t, err)
+	assert.Len(t, d.audit.records, 1)
+	assert.Equal(t, domain.AuditGraded, d.audit.records[0].Action)
+	assert.Equal(t, domain.AuditTargetGradebook, d.audit.records[0].TargetType)
+	assert.Equal(t, "Midterm", d.audit.records[0].TargetLabel)
+	assert.Equal(t, studentID.String(), d.audit.records[0].Metadata["student_id"])
+}
+
+func TestDeleteColumn_RecordsAudit(t *testing.T) {
+	teacherID := uuid.New()
+	classID := uuid.New()
+	colID := uuid.New()
+	ctx := teacherCtx(teacherID)
+	d := newDeps()
+
+	d.colRepo.On("FindByID", ctx, colID).
+		Return(&domain.GradebookColumn{ID: colID, ClassID: classID, Title: "Final"}, nil)
+	d.classRepo.On("FindByID", ctx, classID).
+		Return(&domain.Class{ID: classID, UserID: teacherID}, nil)
+	d.colRepo.On("Delete", ctx, colID).Return(nil)
+
+	svc := d.service()
+	err := svc.DeleteColumn(ctx, colID)
+	assert.NoError(t, err)
+	assert.Len(t, d.audit.records, 1)
+	assert.Equal(t, domain.AuditDeleted, d.audit.records[0].Action)
+	assert.Equal(t, domain.AuditTargetGradebook, d.audit.records[0].TargetType)
+	assert.Equal(t, "Final", d.audit.records[0].TargetLabel)
+	assert.NotNil(t, d.audit.records[0].TargetID)
+	assert.Equal(t, colID, *d.audit.records[0].TargetID)
 }
 
 func TestUpsertCell_AutoColumn_ValidationError(t *testing.T) {
