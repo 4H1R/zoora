@@ -115,7 +115,7 @@ export function GradebookColumnDialog({ open, onOpenChange, classId, column }: G
         order_index: 0,
       })
     }
-  }, [open, column, isEdit])
+  }, [open, column, isEdit, editForm, createForm])
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getGetClassesIdGradebookQueryKey(classId) })

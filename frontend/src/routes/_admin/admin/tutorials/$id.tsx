@@ -168,6 +168,7 @@ function TutorialEditorPage() {
                   key={form.aparat_hash}
                   src={aparatEmbedUrl(form.aparat_hash)}
                   title={t("admin.tutorials.preview")}
+                  sandbox="allow-scripts allow-presentation allow-popups"
                   allow="fullscreen"
                   className="aspect-video w-full border-0"
                 />

@@ -174,6 +174,12 @@ func (m *mSubRepo) ListByQuiz(ctx context.Context, quizID uuid.UUID, q domain.Li
 	return ss, a.Get(1).(int64), a.Error(2)
 }
 
+func (m *mSubRepo) FindByQuizID(ctx context.Context, quizID uuid.UUID) ([]domain.QuizSubmission, error) {
+	a := m.Called(ctx, quizID)
+	ss, _ := a.Get(0).([]domain.QuizSubmission)
+	return ss, a.Error(1)
+}
+
 type mQRepo struct{ mock.Mock }
 
 func (m *mQRepo) Create(ctx context.Context, q *domain.Question) error {
@@ -387,7 +393,7 @@ func newDeps() testDeps {
 func (d testDeps) service() domain.QuizService {
 	return quizzes.NewService(
 		d.quizRepo, d.ruleRepo, d.roomRepo, d.subRepo,
-		d.questionRepo, d.classRepo, d.memberRepo, nil,
+		d.questionRepo, d.classRepo, d.memberRepo, nil, nil, nil,
 		fakeTransactor{}, d.audit, slog.Default(),
 	)
 }

@@ -54,7 +54,7 @@ export function EditClassDialog({ open, onOpenChange, cls }: EditClassDialogProp
         user_id: cls.user_id ?? undefined,
       })
     }
-  }, [open, cls])
+  }, [open, cls, form])
 
   const mutation = usePutClassesId({
     mutation: {

@@ -49,11 +49,6 @@ Run a single integration test: `go test -tags=integration -v -race -count=1 -run
 When adding, modifying, or removing routes/handlers (including swagger annotations):
 1. `make generate` — regenerate OpenAPI spec via swag
 
-## Code search
-**IMPORTANT**
-
-Prefer semble MCP tools (`mcp__semble__search`, `mcp__semble__find_related`) over grep/glob for exploring or locating code. Use grep only when semble is unavailable or for exact literal matches.
-
 ## Key conventions
 
 - Config loaded from env vars into typed struct (`internal/config/config.go`) — no global state
@@ -62,5 +57,5 @@ Prefer semble MCP tools (`mcp__semble__search`, `mcp__semble__find_related`) ove
 - Wrap errors with context: `fmt.Errorf("creating meeting: %w", err)`, use `errors.Is()`/`errors.As()`
 - Never use GORM AutoMigrate in production — use `golang-migrate` SQL files only
 - Integration tests use `testcontainers-go` for real Postgres and Redis
-- Local S3-compatible storage is RustFS (not MinIO) — see `docker-compose.yml`
+- Local S3-compatible storage is RustFS
 - Makefile sources `.env` — ensure it exists for make targets to work

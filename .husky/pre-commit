@@ -8,13 +8,20 @@ make generate
 # (docs/ is gitignored, so the swagger spec is not staged)
 git add frontend/src/api
 
-# 2. Backend checks (lint)
-echo "▶ backend lint"
-make lint
+# Capture already-staged files so auto-fix only re-stages what this commit touches
+# (avoids sweeping unrelated unstaged edits into the commit)
+STAGED_GO=$(git diff --cached --name-only --diff-filter=ACM -- '*.go')
+STAGED_FE=$(git diff --cached --name-only --diff-filter=ACM -- 'frontend/src/**')
 
-# 3. Frontend lint (oxlint) + TypeScript check
+# 2. Backend lint (auto-fix formatting, re-stage fixed files, then fail on anything left)
+echo "▶ backend lint"
+make lint-fix
+[ -n "$STAGED_GO" ] && echo "$STAGED_GO" | xargs git add
+
+# 3. Frontend lint (oxlint auto-fix) + TypeScript check
 cd frontend
 echo "▶ frontend lint"
-bun run lint
+bun run lint:fix
+[ -n "$STAGED_FE" ] && echo "$STAGED_FE" | sed 's#^frontend/##' | xargs git add
 echo "▶ frontend typecheck"
 bun run typecheck

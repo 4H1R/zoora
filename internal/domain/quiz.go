@@ -301,6 +301,13 @@ type SubmissionAnswer struct {
 	// affects EarnedScore/TotalScore and is stripped from student-facing reads —
 	// the teacher uses it only as a hint during manual grading.
 	SimilarityPct *float64 `json:"similarity_pct,omitempty"`
+
+	// --- AI grading (advisory + audit). All live inside the answers jsonb blob,
+	// so no migration is needed. Stripped from student-facing reads. ---
+	SuggestedScore *float64 `json:"suggested_score,omitempty"` // AI-proposed score; nil until scored
+	AIRationale    string   `json:"ai_rationale,omitempty"`    // short Persian justification
+	AIStatus       string   `json:"ai_status,omitempty"`       // "" | pending | scored | failed
+	GradedBy       string   `json:"graded_by,omitempty"`       // "" | ai | manual
 }
 
 // DeviceInfo is an advisory snapshot of the device a student used, captured on
@@ -540,6 +547,9 @@ type QuizSubmissionRepository interface {
 	Update(ctx context.Context, sub *QuizSubmission) error
 	FindByQuizAndUser(ctx context.Context, quizID, userID uuid.UUID) (*QuizSubmission, error)
 	ListByQuiz(ctx context.Context, quizID uuid.UUID, q ListSubmissionsQuery) ([]QuizSubmission, int64, error)
+	// FindByQuizID returns every submission for a quiz, unpaginated. Used by AI
+	// grading fan-out, which must enumerate all submissions (not a page).
+	FindByQuizID(ctx context.Context, quizID uuid.UUID) ([]QuizSubmission, error)
 }
 
 // Anti-cheat review thresholds. Fixed constants: raw values are always stored
@@ -610,6 +620,9 @@ type QuizService interface {
 	ListSubmissions(ctx context.Context, quizID uuid.UUID, q ListSubmissionsQuery) ([]QuizSubmission, int64, error)
 	GradeSubmission(ctx context.Context, id uuid.UUID, dto GradeSubmissionDTO) (*QuizSubmission, error)
 	AntiCheatReport(ctx context.Context, quizID uuid.UUID) ([]SubmissionAntiCheatReport, error)
+
+	StartAIGrading(ctx context.Context, quizID uuid.UUID, dto StartAIGradingDTO) (*AIGradingJob, error)
+	GetAIGradingJob(ctx context.Context, jobID uuid.UUID) (*AIGradingJob, error)
 
 	AdminList(ctx context.Context, q AdminListQuizzesQuery) ([]Quiz, int64, error)
 	AdminHardDelete(ctx context.Context, id uuid.UUID) error

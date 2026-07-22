@@ -28,7 +28,7 @@ const STATUS_BADGE_VARIANT: Record<RoomWindowStatus, "default" | "secondary" | "
 }
 
 function RouteComponent() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { quizId } = Route.useParams()
   // Students never hold quizzes:update — they bounce to the dashboard here.
   const allowed = useOrgGuard(["quizzes:update", "quizzes:update_any"])

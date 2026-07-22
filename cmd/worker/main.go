@@ -8,6 +8,7 @@ import (
 
 	"github.com/hibiken/asynq"
 
+	"github.com/4H1R/zoora/internal/ai"
 	"github.com/4H1R/zoora/internal/attendance"
 	"github.com/4H1R/zoora/internal/audit"
 	"github.com/4H1R/zoora/internal/billing"
@@ -29,6 +30,7 @@ import (
 	"github.com/4H1R/zoora/internal/platform/cache"
 	"github.com/4H1R/zoora/internal/platform/database"
 	lk "github.com/4H1R/zoora/internal/platform/livekit"
+	"github.com/4H1R/zoora/internal/platform/llm"
 	"github.com/4H1R/zoora/internal/platform/logger"
 	"github.com/4H1R/zoora/internal/platform/payment"
 	"github.com/4H1R/zoora/internal/platform/push"
@@ -37,6 +39,7 @@ import (
 	"github.com/4H1R/zoora/internal/platform/storage"
 	"github.com/4H1R/zoora/internal/polls"
 	"github.com/4H1R/zoora/internal/questionbanks"
+	"github.com/4H1R/zoora/internal/quizzes"
 	"github.com/4H1R/zoora/internal/roles"
 	"github.com/4H1R/zoora/internal/users"
 )
@@ -207,6 +210,35 @@ func main() {
 	questionRepo := questionbanks.NewQuestionRepository(db)
 	questionImageRenderer := questionbanks.NewImageRenderer(questionRepo, mediaRepo, storageClient, log)
 	queueServer.HandleFunc(domain.TypeQuestionRenderImages, questionbanks.NewRenderImagesHandler(questionImageRenderer))
+
+	// --- AI quiz grading (worker path): one Asynq task grades one submission's
+	// descriptive answers on the rate-limited `ai` queue. Disabled (no-op) when
+	// LLM_API_KEY is empty — llmClient stays a nil interface. ---
+	quizRepo := quizzes.NewRepository(db)
+	quizRuleRepo := quizzes.NewRuleRepository(db)
+	quizRoomRepo := quizzes.NewRoomRepository(db)
+	quizSubmissionRepo := quizzes.NewSubmissionRepository(db)
+	aiUsageRepo := ai.NewUsageRepository(db)
+	aiJobRepo := ai.NewJobRepository(db)
+	var llmClient domain.LLM
+	if built, err := llm.New(llm.AdapterConfig{
+		APIKey:    cfg.LLMAPIKey,
+		Model:     cfg.LLMModel,
+		BaseURL:   cfg.LLMBaseURL,
+		ProxyURL:  cfg.LLMProxyURL,
+		MaxTokens: cfg.LLMMaxTokens,
+		Timeout:   cfg.LLMTimeout,
+	}, cfg.LLMProvider, aiUsageRepo, cfg.LLMAIQueueConcurrency); err != nil {
+		log.Error("llm init failed", "error", err)
+		os.Exit(1)
+	} else if built != nil {
+		llmClient = built
+	}
+	aiGradingWorker := quizzes.NewAIGradingWorker(
+		quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo,
+		classRepo, classMemberRepo, queueClient, llmClient, aiJobRepo, transactor, auditService, log,
+	)
+	queueServer.HandleFunc(domain.TypeQuizAIGradeSubmission, quizzes.NewAIGradeSubmissionHandler(aiGradingWorker))
 
 	// Share-code redeems: clone a bank (questions + media) into the redeemer's org.
 	questionBankRepo := questionbanks.NewRepository(db)

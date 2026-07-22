@@ -51,8 +51,8 @@ function TutorialsListPage() {
   const [items, setItems] = useState<Tutorial[]>(server)
   const draggingRef = useRef(false)
   useEffect(() => {
-    if (!draggingRef.current) setItems(server)
-  }, [server])
+    if (!draggingRef.current) setItems(((data?.status === 200 && data.data.data) || []) as Tutorial[])
+  }, [data])
 
   const [deleteTarget, setDeleteTarget] = useState<Tutorial | null>(null)
 

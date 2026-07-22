@@ -28,19 +28,20 @@ export interface AudioAttachmentProps {
 }
 
 /**
- * Real peaks for a voice note, decoded from the fetched bytes. Presigned URLs
- * may lack CORS headers and exotic codecs may not decode — both fall back to
- * a deterministic synthetic waveform so the bubble never loses its shape.
+ * Real peaks + exact duration for a voice note, decoded from the fetched bytes.
+ * Presigned URLs may lack CORS headers and exotic codecs may not decode — both
+ * fall back to a deterministic synthetic waveform (and no duration, leaving the
+ * element's own probe to supply it) so the bubble never loses its shape.
  */
 function useVoicePeaks(src: string | undefined, seed: string, enabled: boolean) {
   return useQuery({
     queryKey: ["media", "peaks", seed],
-    queryFn: async () => {
+    queryFn: async (): Promise<{ peaks: number[]; duration: number }> => {
       try {
         const blob = await (await fetch(src!)).blob()
         return await extractPeaks(blob)
       } catch {
-        return syntheticPeaks(seed)
+        return { peaks: syntheticPeaks(seed), duration: 0 }
       }
     },
     enabled: enabled && !!src,
@@ -71,12 +72,13 @@ export function AudioAttachment({
   const voice = isVoiceName(name)
   const tone = isOwn ? "own" : "accent"
 
+  const { data: decoded } = useVoicePeaks(src, seed, voice)
+  const peaks = decoded?.peaks
+
   const audioRef = useRef<HTMLAudioElement>(null)
-  const playback = useMediaPlayback(audioRef, src)
+  const playback = useMediaPlayback(audioRef, src, decoded?.duration)
   const started = playback.playing || playback.currentTime > 0
   const fraction = playback.duration > 0 ? Math.min(1, playback.currentTime / playback.duration) : 0
-
-  const { data: peaks } = useVoicePeaks(src, seed, voice)
 
   const timeLabel = started
     ? `${formatMediaTime(playback.currentTime)} / ${formatMediaTime(playback.duration)}`

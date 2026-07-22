@@ -71,6 +71,30 @@ func TestLoadCORSAllowedOriginsDefaultsToWildcard(t *testing.T) {
 	}
 }
 
+func TestLoadReadsLLMConfig(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv("LLM_PROVIDER", "gemini")
+	t.Setenv("LLM_API_KEY", "secret")
+	t.Setenv("LLM_MODEL", "gemini-2.0-flash")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.LLMProvider != "gemini" || cfg.LLMAPIKey != "secret" || cfg.LLMModel != "gemini-2.0-flash" {
+		t.Fatalf("llm fields not parsed: %+v", cfg)
+	}
+	if cfg.LLMMaxTokens != 512 {
+		t.Fatalf("expected default LLMMaxTokens 512, got %d", cfg.LLMMaxTokens)
+	}
+	if cfg.LLMTimeout != 30*time.Second {
+		t.Fatalf("expected default LLMTimeout 30s, got %s", cfg.LLMTimeout)
+	}
+	if cfg.LLMAIQueueConcurrency != 5 {
+		t.Fatalf("expected default concurrency 5, got %d", cfg.LLMAIQueueConcurrency)
+	}
+}
+
 func setRequiredEnv(t *testing.T) {
 	t.Helper()
 	t.Setenv("DATABASE_URL", "postgres://user:pass@localhost:5432/zoora")

@@ -42,7 +42,7 @@ export function BankCreateModal({ open, onOpenChange, onCreated }: BankCreateMod
 
   useEffect(() => {
     if (open) form.reset({ name: "", description: "" })
-  }, [open])
+  }, [open, form])
 
   const mutation = usePostAdminQuestionBanks({
     mutation: {

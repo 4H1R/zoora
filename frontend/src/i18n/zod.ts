@@ -1,6 +1,6 @@
 import type { $ZodErrorMap, $ZodRawIssue } from "zod/v4/core"
 
-import i18n from "i18next"
+import { exists, t } from "i18next"
 import { z } from "zod"
 import { en as zodEn, fa as zodFa } from "zod/v4/locales"
 
@@ -32,13 +32,13 @@ const bundledLocales: Record<string, () => { localeError: $ZodErrorMap }> = {
 function attribute(path: PropertyKey[] | undefined): string {
   const field = String(path?.[path.length - 1] ?? "")
   const key = `validation.attributes.${field}`
-  if (field && i18n.exists(key)) return i18n.t(key) as unknown as string
+  if (field && exists(key)) return t(key) as unknown as string
   // Fallback: humanize (drop trailing _id, underscores -> spaces).
   return field.replace(/_id$/, "").replace(/_/g, " ")
 }
 
 function tv(key: string, path: PropertyKey[] | undefined, values?: Record<string, unknown>): string {
-  return i18n.t(`validation.${key}`, { attribute: attribute(path), ...values } as never) as unknown as string
+  return t(`validation.${key}`, { attribute: attribute(path), ...values } as never) as unknown as string
 }
 
 /** Map a Zod numeric/collection origin to a Laravel size-rule variant. */
@@ -92,7 +92,7 @@ const customError: $ZodErrorMap = (issue: $ZodRawIssue) => {
     case "custom": {
       // Opt-in translation for `.refine()` / `.superRefine()` checks.
       const key = (issue.params as { i18n?: string } | undefined)?.i18n
-      if (key) return i18n.t(key, { attribute: attribute(path), ...issue.params } as never) as unknown as string
+      if (key) return t(key, { attribute: attribute(path), ...issue.params } as never) as unknown as string
       return undefined
     }
 

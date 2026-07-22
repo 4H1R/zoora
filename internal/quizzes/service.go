@@ -26,6 +26,8 @@ type service struct {
 	classes     domain.ClassRepository
 	members     domain.ClassMemberRepository
 	queue       *queue.Client
+	llm         domain.LLM // may be nil when AI is disabled
+	aiJobs      domain.AIGradingJobRepository
 	tx          domain.Transactor
 	audit       domain.AuditRecorder
 	logger      *slog.Logger
@@ -40,10 +42,50 @@ func NewService(
 	classes domain.ClassRepository,
 	members domain.ClassMemberRepository,
 	queueClient *queue.Client,
+	llmClient domain.LLM,
+	aiJobs domain.AIGradingJobRepository,
 	tx domain.Transactor,
 	audit domain.AuditRecorder,
 	logger *slog.Logger,
 ) domain.QuizService {
+	return newService(repo, rules, rooms, submissions, questions, classes, members, queueClient, llmClient, aiJobs, tx, audit, logger)
+}
+
+// NewAIGradingWorker builds the concrete service for the worker's AI-grade task
+// handler, which needs the concrete *service (NewService returns the interface).
+func NewAIGradingWorker(
+	repo domain.QuizRepository,
+	rules domain.QuizRuleRepository,
+	rooms domain.QuizRoomRepository,
+	submissions domain.QuizSubmissionRepository,
+	questions domain.QuestionRepository,
+	classes domain.ClassRepository,
+	members domain.ClassMemberRepository,
+	queueClient *queue.Client,
+	llmClient domain.LLM,
+	aiJobs domain.AIGradingJobRepository,
+	tx domain.Transactor,
+	audit domain.AuditRecorder,
+	logger *slog.Logger,
+) *service {
+	return newService(repo, rules, rooms, submissions, questions, classes, members, queueClient, llmClient, aiJobs, tx, audit, logger)
+}
+
+func newService(
+	repo domain.QuizRepository,
+	rules domain.QuizRuleRepository,
+	rooms domain.QuizRoomRepository,
+	submissions domain.QuizSubmissionRepository,
+	questions domain.QuestionRepository,
+	classes domain.ClassRepository,
+	members domain.ClassMemberRepository,
+	queueClient *queue.Client,
+	llmClient domain.LLM,
+	aiJobs domain.AIGradingJobRepository,
+	tx domain.Transactor,
+	audit domain.AuditRecorder,
+	logger *slog.Logger,
+) *service {
 	return &service{
 		repo:        repo,
 		rules:       rules,
@@ -53,6 +95,8 @@ func NewService(
 		classes:     classes,
 		members:     members,
 		queue:       queueClient,
+		llm:         llmClient,
+		aiJobs:      aiJobs,
 		tx:          tx,
 		audit:       audit,
 		logger:      logger,

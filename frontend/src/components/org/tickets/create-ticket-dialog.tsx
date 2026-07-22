@@ -68,7 +68,7 @@ export function CreateTicketDialog({
       form.reset(DEFAULTS)
       setAttachments([])
     }
-  }, [open])
+  }, [open, form])
 
   const { data: classesData } = useGetClasses(undefined, { query: { enabled: open } })
   const classes = (classesData?.status === 200 && classesData.data.data?.items) || []

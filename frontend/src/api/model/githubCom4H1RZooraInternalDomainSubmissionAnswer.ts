@@ -7,7 +7,13 @@
  */
 
 export interface GithubCom4H1RZooraInternalDomainSubmissionAnswer {
+  /** short Persian justification */
+  ai_rationale?: string;
+  /** "" | pending | scored | failed */
+  ai_status?: string;
   earned_score?: number;
+  /** "" | ai | manual */
+  graded_by?: string;
   question_id?: string;
   selected_option_ids?: string[];
   /**
@@ -18,5 +24,10 @@ export interface GithubCom4H1RZooraInternalDomainSubmissionAnswer {
      */
   similarity_pct?: number;
   spent_seconds?: number;
+  /**
+     * --- AI grading (advisory + audit). All live inside the answers jsonb blob,
+     * so no migration is needed. Stripped from student-facing reads. ---
+     */
+  suggested_score?: number;
   value?: string;
 }

@@ -14,6 +14,7 @@ import (
 
 	_ "github.com/4H1R/zoora/docs"
 	"github.com/4H1R/zoora/internal/admin"
+	"github.com/4H1R/zoora/internal/ai"
 	"github.com/4H1R/zoora/internal/attendance"
 	"github.com/4H1R/zoora/internal/audit"
 	"github.com/4H1R/zoora/internal/auth"
@@ -45,6 +46,7 @@ import (
 	"github.com/4H1R/zoora/internal/platform/health"
 	"github.com/4H1R/zoora/internal/platform/httpx"
 	lk "github.com/4H1R/zoora/internal/platform/livekit"
+	"github.com/4H1R/zoora/internal/platform/llm"
 	"github.com/4H1R/zoora/internal/platform/logger"
 	"github.com/4H1R/zoora/internal/platform/observability"
 	"github.com/4H1R/zoora/internal/platform/payment"
@@ -198,13 +200,32 @@ func main() {
 	sessionManager := auth.NewSessionManager(jwtService, redisClient)
 	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, queueClient, transactor, auditService, log)
 
+	// AI / LLM (optional; disabled when LLM_API_KEY is empty). Leave llmClient as
+	// a nil interface when AI is off to avoid the typed-nil pitfall.
+	aiUsageRepo := ai.NewUsageRepository(db)
+	aiJobRepo := ai.NewJobRepository(db)
+	var llmClient domain.LLM
+	if built, err := llm.New(llm.AdapterConfig{
+		APIKey:    cfg.LLMAPIKey,
+		Model:     cfg.LLMModel,
+		BaseURL:   cfg.LLMBaseURL,
+		ProxyURL:  cfg.LLMProxyURL,
+		MaxTokens: cfg.LLMMaxTokens,
+		Timeout:   cfg.LLMTimeout,
+	}, cfg.LLMProvider, aiUsageRepo, cfg.LLMAIQueueConcurrency); err != nil {
+		log.Error("llm init failed", "error", err)
+		os.Exit(1)
+	} else if built != nil {
+		llmClient = built
+	}
+
 	leadRepo := leads.NewRepository(db)
 	leadService := leads.NewService(leadRepo, orgRepo, orgSettingsRepo, userRepo, roleRepo, transactor, log)
 
 	customFieldService := customfields.NewService(customFieldRepo, transactor, auditService, log)
 
 	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, queueClient, transactor, auditService, log)
-	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, queueClient, transactor, auditService, log)
+	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, queueClient, llmClient, aiJobRepo, transactor, auditService, log)
 
 	userService := users.NewService(userRepo, roleRepo, entitlementService, redisClient, sessionManager, transactor, auditService, log)
 

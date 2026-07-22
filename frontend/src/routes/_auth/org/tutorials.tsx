@@ -168,6 +168,7 @@ function PlayerDialog({
                 key={tutorial.id}
                 src={aparatEmbedUrl(tutorial.aparat_hash ?? "")}
                 title={view.title}
+                sandbox="allow-scripts allow-presentation allow-popups"
                 allow="autoplay; fullscreen; picture-in-picture"
                 allowFullScreen
                 className="aspect-video w-full border-0"

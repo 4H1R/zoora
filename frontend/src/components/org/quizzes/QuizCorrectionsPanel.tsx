@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next"
 
 import { useGetQuizzesIdSubmissions } from "@/api/quizzes/quizzes"
 import { GradeSubmissionDialog } from "@/components/admin/quizzes/corrections/GradeSubmissionDialog"
+import { AIGradingControl } from "@/components/org/quizzes/ai-grading-control"
 import { SortPicker } from "@/components/data-table/sort-picker"
 import { Eyebrow } from "@/components/eyebrow"
 import { SectionPagination } from "@/components/org/session/section-pagination"
@@ -97,7 +98,10 @@ export function QuizCorrectionsPanel({ quiz }: QuizCorrectionsPanelProps) {
             counts={{ all: total, submitted: pendingCount, graded: gradedCount }}
           />
         </div>
-        <SortPicker options={sortOptions} value={sort} onChange={setSort} label={t("org.session.controls.sort")} />
+        <div className="flex items-end gap-2">
+          <AIGradingControl quizId={quizId} disabled={isLoadingSubs} />
+          <SortPicker options={sortOptions} value={sort} onChange={setSort} label={t("org.session.controls.sort")} />
+        </div>
       </div>
 
       {isLoadingSubs ? (

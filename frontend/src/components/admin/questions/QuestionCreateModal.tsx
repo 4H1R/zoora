@@ -158,7 +158,7 @@ export function QuestionCreateModal({ open, onOpenChange, question, defaultBankI
         metadata: [],
       })
     }
-  }, [open, question, isEdit, defaultBankId])
+  }, [open, question, isEdit, defaultBankId, form])
 
   const invalidate = (bankId?: string) => {
     const id = bankId ?? question?.bank_id ?? form.getValues("bank_id")

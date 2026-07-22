@@ -31,6 +31,7 @@ func NewServer(redisURL string, logger *slog.Logger) (*Server, error) {
 			domain.QueueDefault:       3,
 			domain.QueueMedia:         2,
 			domain.QueueNotifications: 1,
+			domain.QueueAI:            1, // AI grading — low priority, rate-limited in-app by the LLM limiter
 		},
 		Logger: NewAsynqLogger(logger),
 	})

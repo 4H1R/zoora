@@ -3,12 +3,12 @@ import type {
   GithubCom4H1RZooraInternalDomainAttendance as Attendance,
   GithubCom4H1RZooraInternalDomainClassMember as ClassMember,
 } from "@/api/model"
-import type { ColumnDef } from "@tanstack/react-table"
+import type { CellContext, ColumnDef } from "@tanstack/react-table"
 
 import { useQueryClient } from "@tanstack/react-query"
 import { getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table"
 import { CheckCircle2Icon, ClockIcon, SaveIcon, ShieldCheckIcon, XCircleIcon } from "lucide-react"
-import { useState } from "react"
+import { createContext, useContext, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -64,6 +64,75 @@ function RosterTable({ data, columns }: { data: RosterRow[]; columns: ColumnDef<
   return (
     <div className="ring-foreground/10 overflow-hidden rounded-2xl ring-1">
       <DataTable table={table} />
+    </div>
+  )
+}
+
+// Marking affordances the status cell needs but that don't live on a row.
+// Threaded through context so each cell stays a stable module-scope component
+// (flexRender renders `cell`/`header` with only the tanstack context as props).
+const RosterActionsCtx = createContext<{ canMark: boolean; onSelect: (userId: string, status: Status) => void }>({
+  canMark: false,
+  onSelect: () => {},
+})
+
+function RosterNameCell({ row }: CellContext<RosterRow, unknown>) {
+  const { t } = useTranslation()
+  const { name, status, isDirty } = row.original
+  return (
+    <div className="flex items-center gap-3">
+      <Avatar className="size-9 shrink-0">
+        <AvatarFallback className={cn("text-xs font-semibold text-white", getEntityColor(name))}>
+          {getInitials(name)}
+        </AvatarFallback>
+      </Avatar>
+      <div className="flex min-w-0 flex-col">
+        <span className="flex items-center gap-2 truncate text-sm font-medium">
+          {name}
+          {isDirty && <span className="bg-primary inline-block size-1.5 shrink-0 rounded-full" />}
+        </span>
+        {!status && (
+          <span className="text-muted-foreground text-xs">{t("org.session.attendance.roster.unmarked")}</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function RosterStatusHeader() {
+  const { t } = useTranslation()
+  return <div className="text-end">{t("org.session.attendance.roster.status")}</div>
+}
+
+function RosterStatusCell({ row }: CellContext<RosterRow, unknown>) {
+  const { t } = useTranslation()
+  const { canMark, onSelect } = useContext(RosterActionsCtx)
+  const { status, userId } = row.original
+  return (
+    <div className="flex justify-end">
+      <div className="bg-muted/60 flex shrink-0 items-center gap-0.5 rounded-xl p-0.5">
+        {SEGMENTS.map((seg) => {
+          const Icon = seg.icon
+          const isOn = status === seg.value
+          return (
+            <button
+              key={seg.value}
+              type="button"
+              disabled={!canMark}
+              title={t(`common.statuses.attendance.${seg.value}`)}
+              onClick={() => onSelect(userId, seg.value)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition-colors",
+                isOn ? seg.active : "text-muted-foreground hover:text-foreground",
+                !canMark && "cursor-default"
+              )}
+            >
+              <Icon className="size-3.5" />
+              <span className="hidden sm:inline">{t(`common.statuses.attendance.${seg.value}`)}</span>
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -134,64 +203,15 @@ export function AttendanceRoster({ classId, classSessionId, members, records, ca
     {
       accessorKey: "name",
       header: t("org.session.attendance.roster.member"),
-      cell: ({ row }) => {
-        const { name, status, isDirty } = row.original
-        return (
-          <div className="flex items-center gap-3">
-            <Avatar className="size-9 shrink-0">
-              <AvatarFallback className={cn("text-xs font-semibold text-white", getEntityColor(name))}>
-                {getInitials(name)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex min-w-0 flex-col">
-              <span className="flex items-center gap-2 truncate text-sm font-medium">
-                {name}
-                {isDirty && <span className="bg-primary inline-block size-1.5 shrink-0 rounded-full" />}
-              </span>
-              {!status && (
-                <span className="text-muted-foreground text-xs">{t("org.session.attendance.roster.unmarked")}</span>
-              )}
-            </div>
-          </div>
-        )
-      },
+      cell: RosterNameCell,
       enableHiding: false,
     },
     {
       id: "status",
-      header: () => <div className="text-end">{t("org.session.attendance.roster.status")}</div>,
+      header: RosterStatusHeader,
       enableSorting: false,
       enableHiding: false,
-      cell: ({ row }) => {
-        const { status, userId } = row.original
-        return (
-          <div className="flex justify-end">
-            <div className="bg-muted/60 flex shrink-0 items-center gap-0.5 rounded-xl p-0.5">
-              {SEGMENTS.map((seg) => {
-                const Icon = seg.icon
-                const isOn = status === seg.value
-                return (
-                  <button
-                    key={seg.value}
-                    type="button"
-                    disabled={!canMark}
-                    title={t(`common.statuses.attendance.${seg.value}`)}
-                    onClick={() => setOne(userId, seg.value)}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition-colors",
-                      isOn ? seg.active : "text-muted-foreground hover:text-foreground",
-                      !canMark && "cursor-default"
-                    )}
-                  >
-                    <Icon className="size-3.5" />
-                    <span className="hidden sm:inline">{t(`common.statuses.attendance.${seg.value}`)}</span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )
-      },
+      cell: RosterStatusCell,
     },
   ]
 
@@ -229,7 +249,9 @@ export function AttendanceRoster({ classId, classSessionId, members, records, ca
         </div>
       )}
 
-      <RosterTable data={rows} columns={columns} />
+      <RosterActionsCtx.Provider value={{ canMark, onSelect: setOne }}>
+        <RosterTable data={rows} columns={columns} />
+      </RosterActionsCtx.Provider>
     </div>
   )
 }

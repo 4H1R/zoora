@@ -3,9 +3,7 @@ import type { ReactNode } from "react"
 
 import { HotkeysProvider } from "@tanstack/react-hotkeys"
 import { QueryClient } from "@tanstack/react-query"
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router"
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools"
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 
@@ -33,6 +31,12 @@ const OG_DESCRIPTION =
   "Run live online classes, video meetings, and recordings on one secure multi-tenant platform. Built for schools, tutors, and teams."
 const OG_IMAGE = "https://app.zoora.ir/og-image.png"
 const TITLE = "Zoora — Virtual Classrooms & Video Meetings"
+
+const ENABLE_REACT_SCAN = false
+const DEV_SCRIPTS =
+  import.meta.env.DEV && ENABLE_REACT_SCAN
+    ? [{ src: "//unpkg.com/react-scan/dist/auto.global.js", crossOrigin: "anonymous" as const }]
+    : []
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
@@ -82,6 +86,7 @@ export const Route = createRootRouteWithContext<{
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "manifest", href: "/manifest.webmanifest" },
     ],
+    scripts: DEV_SCRIPTS,
   }),
   component: RootComponent,
   shellComponent: RootDocument,

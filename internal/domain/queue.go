@@ -10,6 +10,7 @@ const (
 	QueueDefault       = "default"
 	QueueNotifications = "notifications"
 	QueueMedia         = "media"
+	QueueAI            = "ai"
 )
 
 const (
@@ -32,6 +33,8 @@ const (
 
 	TypeQuestionRenderImages = "question:render-images"
 
+	TypeQuizAIGradeSubmission = "quiz:ai-grade-submission"
+
 	TypeQuestionBankCopy = "questionbank:copy"
 
 	// TypeQueueHealthCheck is a periodic self-inspection task: it scans every
@@ -49,6 +52,16 @@ const (
 // re-enqueue is safe.
 type QuestionRenderImagesPayload struct {
 	QuestionID uuid.UUID `json:"question_id"`
+}
+
+// QuizAIGradeSubmissionPayload drives AI grading of one student's descriptive
+// answers as part of a job. Idempotent per (job, submission).
+type QuizAIGradeSubmissionPayload struct {
+	JobID          uuid.UUID     `json:"job_id"`
+	SubmissionID   uuid.UUID     `json:"submission_id"`
+	OrganizationID uuid.UUID     `json:"organization_id"`
+	Mode           AIGradingMode `json:"mode"`
+	Force          bool          `json:"force"`
 }
 
 // QuestionBankCopyPayload drives the share-code redeem clone: the worker copies

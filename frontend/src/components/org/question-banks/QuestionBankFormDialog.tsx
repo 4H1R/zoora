@@ -46,7 +46,7 @@ export function QuestionBankFormDialog({ open, onOpenChange, bank }: QuestionBan
   useEffect(() => {
     if (!open) return
     form.reset(isEdit && bank ? { name: bank.name ?? "", description: bank.description ?? "" } : emptyDefaults)
-  }, [open, bank, isEdit])
+  }, [open, bank, isEdit, form])
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getGetQuestionBanksQueryKey() })

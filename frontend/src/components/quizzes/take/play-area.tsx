@@ -264,8 +264,8 @@ export function PlayArea({ quiz, room, submission, questions, backHref }: PlayAr
     <div className="relative isolate flex flex-col gap-8 pt-6 pb-32">
       <DecorativeBackground />
 
-      <div className="sticky top-0 z-10 -mx-4 backdrop-blur md:-mx-6">
-        <div className="bg-background/70 supports-[backdrop-filter]:bg-background/55 border-foreground/10 mx-4 flex items-center justify-between gap-4 rounded-2xl border px-3 py-2.5 shadow-sm md:mx-6 md:ps-5 md:pe-4">
+      <div className="sticky top-0 z-10 -mx-4 backdrop-blur">
+        <div className="bg-background/70 supports-[backdrop-filter]:bg-background/55 border-foreground/10 mx-4 flex items-center justify-between gap-4 rounded-2xl border px-3 py-2.5 shadow-sm md:ps-5 md:pe-4">
           <div className="flex items-center gap-3 md:gap-4">
             <div className="flex flex-col gap-1">
               <Eyebrow className="text-[0.6rem] tracking-[0.28em]">

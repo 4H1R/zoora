@@ -57,7 +57,7 @@ export function LiveRoomFormDialog({ open, onOpenChange, classSessionId }: LiveR
       form.reset(DEFAULTS)
       autoNameRef.current = ""
     }
-  }, [open])
+  }, [open, form])
 
   const createMutation = usePostLiveRooms()
   const startMutation = usePostLiveRoomsIdStart()
@@ -77,7 +77,7 @@ export function LiveRoomFormDialog({ open, onOpenChange, classSessionId }: LiveR
     const next = genTitle(base)
     autoNameRef.current = next
     form.setValue("name", next, { shouldValidate: true })
-  }, [open, mode, scheduledTime])
+  }, [open, mode, scheduledTime, form, genTitle])
 
   const pending = createMutation.isPending || startMutation.isPending
 

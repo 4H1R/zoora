@@ -108,7 +108,7 @@ function CreateDialog({ open, onOpenChange, classId, classSessionId, onInvalidat
 
   useEffect(() => {
     if (open) form.reset(createDefaults)
-  }, [open])
+  }, [open, form])
 
   const mutation = usePostQuizzes({
     mutation: {
@@ -187,7 +187,7 @@ function EditDialog({ open, onOpenChange, quiz, onInvalidate, t }: EditDialogPro
 
   useEffect(() => {
     if (open) form.reset(quizToEditValues(quiz))
-  }, [open, quiz])
+  }, [open, quiz, form])
 
   const mutation = usePutQuizzesId({
     mutation: {

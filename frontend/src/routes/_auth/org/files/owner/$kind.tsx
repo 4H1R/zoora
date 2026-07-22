@@ -3,7 +3,8 @@ import type {
   GithubCom4H1RZooraInternalDomainMedia as Media,
   GithubCom4H1RZooraInternalDomainOwnerFile as OwnerFile,
 } from "@/api/model"
-import type { ColumnDef } from "@tanstack/react-table"
+import type { CellContext, ColumnDef } from "@tanstack/react-table"
+import type { TFunction } from "i18next"
 
 import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
@@ -119,6 +120,104 @@ function OwnerFileRowActions({ file, canDelete, onShare, onDelete }: OwnerFileRo
   )
 }
 
+function OwnerFileNameCell({ file, tint }: { file: OwnerFile; tint: string }) {
+  const isRecording = file.source !== "media"
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", tint)}>
+        {isRecording ? <VideoIcon className="size-4" /> : <FileIcon className="size-4" />}
+      </span>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium" dir="auto">
+          {file.name}
+        </p>
+        <p className="text-muted-foreground truncate font-mono text-[11px]" dir="ltr">
+          {file.mime_type || "—"}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function OwnerFileKindCell({ row }: CellContext<OwnerFile, unknown>) {
+  const { t } = useTranslation()
+  return row.original.source !== "media" ? (
+    <Badge variant="secondary" className="gap-1 text-[11px]">
+      <VideoIcon className="size-3" />
+      {t("filesPage.owner.recordingBadge")}
+    </Badge>
+  ) : (
+    <span className="text-muted-foreground text-xs">
+      {t(`filesPage.folders.${row.original.model_type}`, { defaultValue: row.original.model_type })}
+    </span>
+  )
+}
+
+function OwnerFileSizeCell({ row }: CellContext<OwnerFile, unknown>) {
+  return <span className="text-muted-foreground text-xs tabular-nums">{formatBytes(row.original.size ?? 0)}</span>
+}
+
+function OwnerFileCreatedAtCell({ row }: CellContext<OwnerFile, unknown>) {
+  const formatDate = useFormatDate()
+  return <span className="text-muted-foreground text-xs">{formatDate(row.original.created_at)}</span>
+}
+
+interface OwnerFileColumnsDeps {
+  t: TFunction
+  tint: string
+  canDelete: boolean
+  onShare: (file: OwnerFile) => void
+  onDelete: (file: OwnerFile) => void
+}
+
+function buildOwnerFileColumns({
+  t,
+  tint,
+  canDelete,
+  onShare,
+  onDelete,
+}: OwnerFileColumnsDeps): ColumnDef<OwnerFile>[] {
+  return [
+    {
+      accessorKey: "name",
+      header: t("filesPage.owner.fileColumns.name"),
+      cell: ({ row }) => <OwnerFileNameCell file={row.original} tint={tint} />,
+      enableSorting: true,
+      enableHiding: false,
+    },
+    {
+      id: "kind",
+      header: t("filesPage.owner.fileColumns.kind"),
+      cell: OwnerFileKindCell,
+      enableSorting: false,
+      enableHiding: true,
+    },
+    {
+      accessorKey: "size",
+      header: t("filesPage.owner.fileColumns.size"),
+      cell: OwnerFileSizeCell,
+      enableSorting: true,
+      enableHiding: true,
+    },
+    {
+      accessorKey: "created_at",
+      header: t("filesPage.owner.fileColumns.createdAt"),
+      cell: OwnerFileCreatedAtCell,
+      enableSorting: true,
+      enableHiding: true,
+    },
+    {
+      id: "actions",
+      header: "",
+      cell: ({ row }) => (
+        <OwnerFileRowActions file={row.original} canDelete={canDelete} onShare={onShare} onDelete={onDelete} />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+  ]
+}
+
 function OwnerPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -167,80 +266,13 @@ function OwnerPage() {
     },
   })
 
-  const formatDate = useFormatDate()
-  const columns: ColumnDef<OwnerFile>[] = [
-    {
-      accessorKey: "name",
-      header: t("filesPage.owner.fileColumns.name"),
-      cell: ({ row }) => {
-        const isRecording = row.original.source !== "media"
-        return (
-          <div className="flex min-w-0 items-center gap-3">
-            <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", tint)}>
-              {isRecording ? <VideoIcon className="size-4" /> : <FileIcon className="size-4" />}
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium" dir="auto">
-                {row.original.name}
-              </p>
-              <p className="text-muted-foreground truncate font-mono text-[11px]" dir="ltr">
-                {row.original.mime_type || "—"}
-              </p>
-            </div>
-          </div>
-        )
-      },
-      enableSorting: true,
-      enableHiding: false,
-    },
-    {
-      id: "kind",
-      header: t("filesPage.owner.fileColumns.kind"),
-      cell: ({ row }) =>
-        row.original.source !== "media" ? (
-          <Badge variant="secondary" className="gap-1 text-[11px]">
-            <VideoIcon className="size-3" />
-            {t("filesPage.owner.recordingBadge")}
-          </Badge>
-        ) : (
-          <span className="text-muted-foreground text-xs">
-            {t(`filesPage.folders.${row.original.model_type}`, { defaultValue: row.original.model_type })}
-          </span>
-        ),
-      enableSorting: false,
-      enableHiding: true,
-    },
-    {
-      accessorKey: "size",
-      header: t("filesPage.owner.fileColumns.size"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-xs tabular-nums">{formatBytes(row.original.size ?? 0)}</span>
-      ),
-      enableSorting: true,
-      enableHiding: true,
-    },
-    {
-      accessorKey: "created_at",
-      header: t("filesPage.owner.fileColumns.createdAt"),
-      cell: ({ row }) => <span className="text-muted-foreground text-xs">{formatDate(row.original.created_at)}</span>,
-      enableSorting: true,
-      enableHiding: true,
-    },
-    {
-      id: "actions",
-      header: "",
-      cell: ({ row }) => (
-        <OwnerFileRowActions
-          file={row.original}
-          canDelete={canDelete}
-          onShare={setShareTarget}
-          onDelete={setDeleteTarget}
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-  ]
+  const columns = buildOwnerFileColumns({
+    t,
+    tint,
+    canDelete,
+    onShare: setShareTarget,
+    onDelete: setDeleteTarget,
+  })
 
   const table = useAdminTable({ data: files, columns, rowCount: total, sorting })
 

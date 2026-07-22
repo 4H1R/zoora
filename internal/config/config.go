@@ -86,6 +86,16 @@ type Config struct {
 	KavenegarOTPTemplate string `env:"KAVENEGAR_OTP_TEMPLATE"`
 	FCMCredentialsFile   string `env:"FCM_CREDENTIALS_FILE"`
 
+	// --- LLM / AI (optional; empty LLM_API_KEY disables all AI features) ---
+	LLMProvider           string        `env:"LLM_PROVIDER"` // gemini | openai | anthropic
+	LLMAPIKey             string        `env:"LLM_API_KEY"`  // empty ⇒ FeatureAI unusable
+	LLMModel              string        `env:"LLM_MODEL"`    // e.g. gemini-2.0-flash
+	LLMBaseURL            string        `env:"LLM_BASE_URL"`  // optional endpoint override
+	LLMProxyURL           string        `env:"LLM_PROXY_URL"` // optional proxy for LLM calls only (http/https/socks5://); leaves S3/LiveKit direct
+	LLMMaxTokens          int           `env:"LLM_MAX_TOKENS"          envDefault:"512"`
+	LLMTimeout            time.Duration `env:"LLM_TIMEOUT"             envDefault:"30s"`
+	LLMAIQueueConcurrency int           `env:"LLM_AI_QUEUE_CONCURRENCY" envDefault:"5"`
+
 	// --- billing / zarinpal ---
 	ZarinpalMerchantID      string `env:"ZARINPAL_MERCHANT_ID"`
 	ZarinpalSandbox         bool   `env:"ZARINPAL_SANDBOX" envDefault:"true"`
