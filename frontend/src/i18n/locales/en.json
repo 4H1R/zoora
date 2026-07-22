@@ -1066,7 +1066,12 @@
         "secondsShort": "s",
         "similarity": "Similarity to model answer",
         "modelAnswer": "Model answer",
-        "suggestionHint": "Advisory only — a text-similarity hint, never shown to students. You set the score."
+        "suggestionHint": "Advisory only — a text-similarity hint, never shown to students. You set the score.",
+        "aiSuggestion": "AI suggestion",
+        "aiAccept": "Apply",
+        "aiGradedBadge": "AI graded",
+        "aiPending": "AI grading in progress…",
+        "aiFailed": "AI grading failed for this answer"
       },
       "integrity": {
         "column": "Integrity",
@@ -2502,6 +2507,23 @@
           "regrade": "Re-grade",
           "gradeHint": "Open the grading dialog",
           "gradeDisabledHint": "Student has not submitted yet"
+        },
+        "ai": {
+          "trigger": "AI grading",
+          "running": "Grading…",
+          "title": "AI auto-grading",
+          "description": "Only descriptive questions are scored, and manual grades are never overwritten.",
+          "modeLabel": "Mode",
+          "modeApply": "Apply scores",
+          "modeApplyHint": "Writes scores directly",
+          "modeSuggest": "Suggest only",
+          "modeSuggestHint": "Suggests without changing scores",
+          "force": "Re-grade AI-graded",
+          "forceHint": "Re-evaluate answers already graded by AI",
+          "start": "Start grading",
+          "started": "AI grading started",
+          "completed": "AI grading finished ({{done}}/{{total}})",
+          "failed": "AI grading failed"
         }
       },
       "questionBanks": {

@@ -225,6 +225,7 @@ func main() {
 		APIKey:    cfg.LLMAPIKey,
 		Model:     cfg.LLMModel,
 		BaseURL:   cfg.LLMBaseURL,
+		ProxyURL:  cfg.LLMProxyURL,
 		MaxTokens: cfg.LLMMaxTokens,
 		Timeout:   cfg.LLMTimeout,
 	}, cfg.LLMProvider, aiUsageRepo, cfg.LLMAIQueueConcurrency); err != nil {

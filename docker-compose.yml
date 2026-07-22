@@ -22,6 +22,9 @@ services:
         working_dir: /app
         networks:
             - zoora
+        # See worker service note — enables LLM_PROXY_URL via host.docker.internal.
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
         depends_on:
             pgsql:
                 condition: service_healthy
@@ -53,6 +56,11 @@ services:
         working_dir: /app
         networks:
             - zoora
+        # Lets LLM_PROXY_URL=socks5://host.docker.internal:PORT reach a proxy
+        # running on the host (WSL). Proxy must listen on an interface the
+        # container can reach (0.0.0.0), not just 127.0.0.1.
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
         depends_on:
             pgsql:
                 condition: service_healthy

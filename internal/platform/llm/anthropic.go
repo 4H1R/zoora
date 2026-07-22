@@ -23,7 +23,7 @@ func NewAnthropic(cfg AdapterConfig) domain.LLM {
 	if cfg.BaseURL == "" {
 		cfg.BaseURL = anthropicDefaultBase
 	}
-	return &anthropic{cfg: cfg, hc: httpClient(cfg.Timeout)}
+	return &anthropic{cfg: cfg, hc: httpClient(cfg.Timeout, cfg.ProxyURL)}
 }
 
 type anthropicMessage struct {

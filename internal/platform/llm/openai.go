@@ -20,7 +20,7 @@ func NewOpenAI(cfg AdapterConfig) domain.LLM {
 	if cfg.BaseURL == "" {
 		cfg.BaseURL = openaiDefaultBase
 	}
-	return &openai{cfg: cfg, hc: httpClient(cfg.Timeout)}
+	return &openai{cfg: cfg, hc: httpClient(cfg.Timeout, cfg.ProxyURL)}
 }
 
 type openaiMessage struct {

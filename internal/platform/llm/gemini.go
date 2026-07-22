@@ -20,7 +20,7 @@ func NewGemini(cfg AdapterConfig) domain.LLM {
 	if cfg.BaseURL == "" {
 		cfg.BaseURL = geminiDefaultBase
 	}
-	return &gemini{cfg: cfg, hc: httpClient(cfg.Timeout)}
+	return &gemini{cfg: cfg, hc: httpClient(cfg.Timeout, cfg.ProxyURL)}
 }
 
 type geminiPart struct {

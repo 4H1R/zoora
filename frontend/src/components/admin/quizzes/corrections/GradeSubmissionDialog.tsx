@@ -8,7 +8,7 @@ import type {
 } from "@/api/model"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { CheckCircle2, Circle, Lightbulb, Minus, PenLine, Quote, XCircle, Zap } from "lucide-react"
+import { CheckCircle2, Circle, Lightbulb, Minus, PenLine, Quote, Sparkles, XCircle, Zap } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -255,6 +255,15 @@ function AnswerRow({ index, answer, score, onScoreChange, fast }: AnswerRowProps
               {t("admin.corrections.integrity.fastAnswer")}
             </Badge>
           )}
+          {answer.graded_by === "ai" && (
+            <Badge
+              variant="outline"
+              className="border-violet-500/50 bg-violet-500/10 text-violet-700 dark:text-violet-300"
+            >
+              <Sparkles className="me-1 size-3" />
+              {t("admin.corrections.dialog.aiGradedBadge")}
+            </Badge>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <label className="text-muted-foreground text-xs font-medium">{t("admin.corrections.dialog.score")}</label>
@@ -316,6 +325,7 @@ function AnswerRow({ index, answer, score, onScoreChange, fast }: AnswerRowProps
             {questionType === "descriptive" && (
               <DescriptiveInsights answer={answer} modelAnswer={question?.model_answer} />
             )}
+            <AISuggestion answer={answer} maxScore={maxScore} onAccept={onScoreChange} />
           </>
         )}
       </div>
@@ -354,6 +364,74 @@ function DescriptiveInsights({ answer, modelAnswer }: { answer: SubmissionAnswer
           </span>
           <p className="text-muted-foreground mt-1 text-xs">{t("admin.corrections.dialog.suggestionHint")}</p>
         </div>
+      )}
+    </section>
+  )
+}
+
+// AI grading result for a descriptive answer: the model's suggested score +
+// short Persian rationale, with a one-click "apply" that copies the suggestion
+// into the manual score input. Advisory only — the teacher stays in control.
+function AISuggestion({
+  answer,
+  maxScore,
+  onAccept,
+}: {
+  answer: SubmissionAnswer
+  maxScore: number
+  onAccept: (v: number) => void
+}) {
+  const { t } = useTranslation()
+  const status = answer.ai_status
+  const hasScore = answer.suggested_score != null
+
+  if (!hasScore && (!status || status === "")) return null
+
+  if (status === "pending") {
+    return (
+      <div className="flex items-center gap-2 rounded-md border border-violet-500/30 bg-violet-500/5 px-3.5 py-2.5 text-sm text-violet-700 dark:text-violet-300">
+        <Sparkles className="size-4 animate-pulse" />
+        {t("admin.corrections.dialog.aiPending")}
+      </div>
+    )
+  }
+
+  if (status === "failed") {
+    return (
+      <div className="text-muted-foreground flex items-center gap-2 rounded-md border border-dashed px-3.5 py-2.5 text-xs">
+        <Sparkles className="size-3.5" />
+        {t("admin.corrections.dialog.aiFailed")}
+      </div>
+    )
+  }
+
+  if (!hasScore) return null
+  const suggested = answer.suggested_score ?? 0
+
+  return (
+    <section className="rounded-md border border-violet-500/40 bg-violet-500/5 px-3.5 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-violet-700 dark:text-violet-300">
+          <Sparkles className="size-4" />
+          {t("admin.corrections.dialog.aiSuggestion")}
+          <span className="font-mono tabular-nums">
+            {formatScore(suggested)}
+            {maxScore > 0 && <span className="opacity-70"> / {formatScore(maxScore)}</span>}
+          </span>
+        </span>
+        <Button
+          size="xs"
+          variant="outline"
+          onClick={() => onAccept(suggested)}
+          className="border-violet-500/50 bg-violet-500/10 text-violet-700 hover:bg-violet-500/20 dark:text-violet-300"
+        >
+          {t("admin.corrections.dialog.aiAccept")}
+        </Button>
+      </div>
+      {answer.ai_rationale && (
+        <p className="text-muted-foreground mt-2 text-xs leading-relaxed break-words whitespace-pre-wrap">
+          {answer.ai_rationale}
+        </p>
       )}
     </section>
   )

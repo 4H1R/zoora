@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/4H1R/zoora/internal/domain"
@@ -17,15 +18,26 @@ type AdapterConfig struct {
 	APIKey    string
 	Model     string
 	BaseURL   string // optional override; each adapter has a sane default
+	ProxyURL  string // optional proxy for provider calls (http/https/socks5://); empty = direct
 	MaxTokens int
 	Timeout   time.Duration
 }
 
-func httpClient(timeout time.Duration) *http.Client {
+// httpClient builds the provider HTTP client. When proxyURL is set it routes
+// only this client's requests through the proxy (http/https/socks5 schemes are
+// all supported by net/http's Transport) — S3/LiveKit/DB traffic stays direct.
+// An unparseable proxyURL falls back to a direct client rather than failing.
+func httpClient(timeout time.Duration, proxyURL string) *http.Client {
 	if timeout <= 0 {
 		timeout = 30 * time.Second
 	}
-	return &http.Client{Timeout: timeout}
+	hc := &http.Client{Timeout: timeout}
+	if proxyURL != "" {
+		if u, err := url.Parse(proxyURL); err == nil {
+			hc.Transport = &http.Transport{Proxy: http.ProxyURL(u)}
+		}
+	}
+	return hc
 }
 
 // doJSON marshals reqBody, POSTs it, and unmarshals a 2xx JSON response into out.
