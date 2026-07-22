@@ -143,6 +143,13 @@ type AuditRecorder interface {
 	// transaction via TxFromCtx. Callers MUST invoke it inside the same
 	// RunInTx block as the change so the entry commits or rolls back with it.
 	Record(ctx context.Context, r AuditRecord) error
+
+	// RecordDenied writes a best-effort 'denied' entry (soft-fail, no tx). Used
+	// by the central middleware for 403s on mutating requests. Like Record it
+	// derives actor/org from the Caller and IP/UA from RequestInfo, but forces
+	// Outcome=denied and never joins a transaction (the action never ran). The
+	// returned error is for logging only; the middleware never blocks on it.
+	RecordDenied(ctx context.Context, r AuditRecord) error
 }
 
 // AuditListQuery filters the Manager read endpoint. All filters are optional.

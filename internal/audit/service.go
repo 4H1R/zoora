@@ -23,12 +23,40 @@ func NewService(repo domain.AuditRepository, logger *slog.Logger) domain.AuditSe
 // commits or rolls back with the change. Returns an error on failure (hard-fail
 // at the call site).
 func (s *service) Record(ctx context.Context, r domain.AuditRecord) error {
+	entry, err := s.buildEntry(ctx, r, domain.AuditOutcomeSuccess)
+	if err != nil {
+		return err
+	}
+	return s.repo.Create(ctx, entry)
+}
+
+// RecordDenied builds and inserts a 'denied' entry for a blocked (403) mutating
+// request. It is best-effort and soft-fail: on a repo error it logs and returns
+// the error to the caller (the middleware logs it too), but it never joins a
+// transaction because the action never ran.
+func (s *service) RecordDenied(ctx context.Context, r domain.AuditRecord) error {
+	entry, err := s.buildEntry(ctx, r, domain.AuditOutcomeDenied)
+	if err != nil {
+		return err
+	}
+	if err := s.repo.Create(ctx, entry); err != nil {
+		s.logger.WarnContext(ctx, "audit: failed to record denied attempt",
+			"err", err, "action", entry.Action, "target_type", entry.TargetType)
+		return err
+	}
+	return nil
+}
+
+// buildEntry assembles an AuditEntry from the record + ctx (actor/org/IP), with
+// the given outcome. Shared by Record and RecordDenied. Returns an error when no
+// org can be resolved (never file an orphan entry).
+func (s *service) buildEntry(ctx context.Context, r domain.AuditRecord, outcome domain.AuditOutcome) (*domain.AuditEntry, error) {
 	entry := &domain.AuditEntry{
 		Action:      r.Action,
 		TargetType:  r.TargetType,
 		TargetID:    r.TargetID,
 		TargetLabel: r.TargetLabel,
-		Outcome:     domain.AuditOutcomeSuccess,
+		Outcome:     outcome,
 		Metadata:    map[string]any{},
 	}
 	for k, v := range r.Metadata {
@@ -59,7 +87,7 @@ func (s *service) Record(ctx context.Context, r domain.AuditRecord) error {
 		entry.OrganizationID = *orgFromCaller
 	default:
 		// No org resolvable: refuse rather than file an orphan entry.
-		return domain.ErrValidation
+		return nil, domain.ErrValidation
 	}
 
 	if ri, ok := domain.RequestInfoFromCtx(ctx); ok {
@@ -71,7 +99,7 @@ func (s *service) Record(ctx context.Context, r domain.AuditRecord) error {
 		}
 	}
 
-	return s.repo.Create(ctx, entry)
+	return entry, nil
 }
 
 func (s *service) List(ctx context.Context, q domain.AuditListQuery) ([]domain.AuditEntry, int64, error) {
