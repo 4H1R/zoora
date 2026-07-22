@@ -424,6 +424,7 @@ func main() {
 		billing.NewQueueEnqueuer(queueClient), // enqueuer
 		notificationService,                   // systemNotifier (SendSystem)
 		billingPDF,
+		auditService,
 		billing.BillingConfig{
 			CallbackBaseURL: cfg.ZarinpalCallbackBaseURL,
 			AppURLTemplate:  cfg.AppURLTemplate,

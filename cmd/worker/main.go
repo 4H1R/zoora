@@ -250,6 +250,7 @@ func main() {
 		billing.NewQueueEnqueuer(queueClient),
 		notificationService,
 		billingPDF,
+		auditService,
 		billing.BillingConfig{
 			AppURLTemplate: cfg.AppURLTemplate,
 			Issuer:         billingIssuer,
