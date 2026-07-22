@@ -212,15 +212,40 @@ func (m *mockViewRepo) ListDistinctUsersByRoom(ctx context.Context, roomID uuid.
 	return ids, a.Error(1)
 }
 
+// fakeTransactor runs fn inline with no real DB — unit tests exercise the audit
+// same-tx wiring without a database.
+type fakeTransactor struct{}
+
+func (fakeTransactor) RunInTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
+
 func newTestService(t *testing.T) (domain.OfflineService, *mockRoomRepo, *mockViewRepo, *mockSessionRepo, *mockClassRepo, *mockMemberRepo) {
+	t.Helper()
+	svc, roomRepo, viewRepo, sessionRepo, classRepo, memberRepo, _ := newTestServiceWithAudit(t)
+	return svc, roomRepo, viewRepo, sessionRepo, classRepo, memberRepo
+}
+
+func newTestServiceWithAudit(t *testing.T) (domain.OfflineService, *mockRoomRepo, *mockViewRepo, *mockSessionRepo, *mockClassRepo, *mockMemberRepo, *auditSpy) {
 	t.Helper()
 	roomRepo := &mockRoomRepo{}
 	viewRepo := &mockViewRepo{}
 	sessionRepo := &mockSessionRepo{}
 	classRepo := &mockClassRepo{}
 	memberRepo := &mockMemberRepo{}
-	svc := offlines.NewService(roomRepo, viewRepo, sessionRepo, classRepo, memberRepo, nil, slog.Default())
-	return svc, roomRepo, viewRepo, sessionRepo, classRepo, memberRepo
+	audit := &auditSpy{}
+	svc := offlines.NewService(roomRepo, viewRepo, sessionRepo, classRepo, memberRepo, nil, fakeTransactor{}, audit, slog.Default())
+	return svc, roomRepo, viewRepo, sessionRepo, classRepo, memberRepo, audit
 }
 
 func callerCtx(userID uuid.UUID, isAdmin bool, perms ...string) context.Context {
@@ -576,6 +601,31 @@ func TestDeleteRoom_Creator_Success(t *testing.T) {
 
 	err := svc.DeleteRoom(ctx, roomID)
 	assert.NoError(t, err)
+}
+
+func TestDeleteRoom_RecordsAudit(t *testing.T) {
+	svc, roomRepo, _, _, _, _, audit := newTestServiceWithAudit(t)
+
+	userID := uuid.New()
+	roomID := uuid.New()
+	orgID := uuid.New()
+	classID := uuid.New()
+	ctx := callerCtx(userID, false, "offlines:delete")
+
+	roomRepo.On("FindByID", ctx, roomID).
+		Return(&domain.OfflineRoom{ID: roomID, CreatorID: userID, OrganizationID: orgID, ClassID: classID, Title: "Lecture 1"}, nil)
+	roomRepo.On("Delete", ctx, roomID).Return(nil)
+
+	err := svc.DeleteRoom(ctx, roomID)
+	assert.NoError(t, err)
+	assert.Len(t, audit.records, 1)
+	assert.Equal(t, domain.AuditDeleted, audit.records[0].Action)
+	assert.Equal(t, domain.AuditTargetOffline, audit.records[0].TargetType)
+	assert.Equal(t, "Lecture 1", audit.records[0].TargetLabel)
+	assert.NotNil(t, audit.records[0].TargetID)
+	assert.Equal(t, roomID, *audit.records[0].TargetID)
+	assert.NotNil(t, audit.records[0].OrgID)
+	assert.Equal(t, orgID, *audit.records[0].OrgID)
 }
 
 func TestDeleteRoom_NotCreator_Forbidden(t *testing.T) {
