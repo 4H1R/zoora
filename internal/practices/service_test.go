@@ -250,15 +250,40 @@ func (m *mockMemberRepo) ListAllByClass(ctx context.Context, classID uuid.UUID) 
 	return ms, a.Error(1)
 }
 
+// fakeTransactor runs fn inline with no real DB — unit tests exercise the audit
+// same-tx wiring without a database.
+type fakeTransactor struct{}
+
+func (fakeTransactor) RunInTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
+
 func newTestService(t *testing.T) (domain.PracticeService, *mockRoomRepo, *mockSubRepo, *mockSessionRepo, *mockClassRepo, *mockMemberRepo) {
+	t.Helper()
+	svc, roomRepo, subRepo, sessionRepo, classRepo, memberRepo, _ := newTestServiceWithAudit(t)
+	return svc, roomRepo, subRepo, sessionRepo, classRepo, memberRepo
+}
+
+func newTestServiceWithAudit(t *testing.T) (domain.PracticeService, *mockRoomRepo, *mockSubRepo, *mockSessionRepo, *mockClassRepo, *mockMemberRepo, *auditSpy) {
 	t.Helper()
 	roomRepo := &mockRoomRepo{}
 	subRepo := &mockSubRepo{}
 	sessionRepo := &mockSessionRepo{}
 	classRepo := &mockClassRepo{}
 	memberRepo := &mockMemberRepo{}
-	svc := practices.NewService(roomRepo, subRepo, sessionRepo, classRepo, memberRepo, slog.Default())
-	return svc, roomRepo, subRepo, sessionRepo, classRepo, memberRepo
+	audit := &auditSpy{}
+	svc := practices.NewService(roomRepo, subRepo, sessionRepo, classRepo, memberRepo, fakeTransactor{}, audit, slog.Default())
+	return svc, roomRepo, subRepo, sessionRepo, classRepo, memberRepo, audit
 }
 
 func callerCtx(userID uuid.UUID, isAdmin bool, perms ...string) context.Context {
@@ -600,6 +625,36 @@ func TestGrade_RoomOwner_Success(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, &score, sub.Score)
 	assert.Equal(t, "Well done", sub.TeacherComment)
+}
+
+func TestGrade_RecordsAudit(t *testing.T) {
+	svc, roomRepo, subRepo, _, _, _, audit := newTestServiceWithAudit(t)
+
+	teacherID := uuid.New()
+	studentID := uuid.New()
+	roomID := uuid.New()
+	subID := uuid.New()
+	orgID := uuid.New()
+	ctx := callerCtx(teacherID, false, "practices:grade")
+
+	subRepo.On("FindByID", ctx, subID).
+		Return(&domain.PracticeSubmission{ID: subID, PracticeRoomID: roomID, UserID: studentID}, nil)
+	roomRepo.On("FindByID", ctx, roomID).
+		Return(&domain.PracticeRoom{ID: roomID, UserID: teacherID, OrganizationID: orgID, Title: "HW 1", MaxScore: 100}, nil)
+	subRepo.On("Update", ctx, mock.AnythingOfType("*domain.PracticeSubmission")).Return(nil)
+
+	score := 85.0
+	_, err := svc.Grade(ctx, subID, domain.GradePracticeSubmissionDTO{Score: &score})
+	assert.NoError(t, err)
+	assert.Len(t, audit.records, 1)
+	assert.Equal(t, domain.AuditGraded, audit.records[0].Action)
+	assert.Equal(t, domain.AuditTargetPractice, audit.records[0].TargetType)
+	assert.Equal(t, "HW 1", audit.records[0].TargetLabel)
+	assert.NotNil(t, audit.records[0].TargetID)
+	assert.Equal(t, roomID, *audit.records[0].TargetID)
+	assert.Equal(t, studentID.String(), audit.records[0].Metadata["student_id"])
+	assert.NotNil(t, audit.records[0].OrgID)
+	assert.Equal(t, orgID, *audit.records[0].OrgID)
 }
 
 func TestGrade_ScoreExceedsMax_ValidationError(t *testing.T) {

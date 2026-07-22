@@ -240,7 +240,7 @@ func main() {
 		livekitClient, storageClient, queueClient, entitlementService, cfg.LiveRoomHostGracePeriod, cfg.LiveKitEgressMaxConcurrent, log,
 	)
 	offlineService := offlines.NewService(offlineRoomRepo, offlineViewRepo, classSessionRepo, classRepo, classMemberRepo, queueClient, transactor, auditService, log)
-	practiceService := practices.NewService(practiceRoomRepo, practiceSubRepo, classSessionRepo, classRepo, classMemberRepo, log)
+	practiceService := practices.NewService(practiceRoomRepo, practiceSubRepo, classSessionRepo, classRepo, classMemberRepo, transactor, auditService, log)
 
 	attendanceRepo := attendance.NewRepository(db)
 	attendanceService := attendance.NewService(

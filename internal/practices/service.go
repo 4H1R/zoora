@@ -18,6 +18,8 @@ type service struct {
 	sessions domain.ClassSessionRepository
 	classes  domain.ClassRepository
 	members  domain.ClassMemberRepository
+	tx       domain.Transactor
+	audit    domain.AuditRecorder
 	logger   *slog.Logger
 }
 
@@ -27,6 +29,8 @@ func NewService(
 	sessions domain.ClassSessionRepository,
 	classes domain.ClassRepository,
 	members domain.ClassMemberRepository,
+	tx domain.Transactor,
+	audit domain.AuditRecorder,
 	logger *slog.Logger,
 ) domain.PracticeService {
 	return &service{
@@ -35,6 +39,8 @@ func NewService(
 		sessions: sessions,
 		classes:  classes,
 		members:  members,
+		tx:       tx,
+		audit:    audit,
 		logger:   logger,
 	}
 }
@@ -85,7 +91,20 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreatePracticeRoomD
 		EndTime:        dto.EndTime,
 		Attachments:    dto.Attachments,
 	}
-	if err := s.rooms.Create(ctx, room); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.rooms.Create(ctx, room); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditCreated,
+			TargetType:  domain.AuditTargetPractice,
+			TargetID:    &room.ID,
+			TargetLabel: room.Title,
+			OrgID:       &room.OrganizationID,
+			Metadata:    map[string]any{"class_id": room.ClassID.String()},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	s.logger.Info("practice room created",
@@ -127,25 +146,52 @@ func (s *service) UpdateRoom(ctx context.Context, id uuid.UUID, dto domain.Updat
 	if !canManageRoom(caller, room) {
 		return nil, domain.ErrForbidden
 	}
+	// Shallow changed-fields diff captured before mutating so the audit entry
+	// records exactly what this update altered (attachments summarized, not dumped).
+	changed := map[string]any{}
+	setChanged := func(key string, from, to any) {
+		if from != to {
+			changed[key] = map[string]any{"from": from, "to": to}
+		}
+	}
 	if dto.Title != nil {
+		setChanged("title", room.Title, *dto.Title)
 		room.Title = *dto.Title
 	}
 	if dto.Content != nil {
+		setChanged("content_changed", false, true)
 		room.Content = *dto.Content
 	}
 	if dto.MaxScore != nil {
+		setChanged("max_score", room.MaxScore, *dto.MaxScore)
 		room.MaxScore = *dto.MaxScore
 	}
 	if dto.StartTime != nil {
+		setChanged("start_time", room.StartTime, *dto.StartTime)
 		room.StartTime = *dto.StartTime
 	}
 	if dto.EndTime != nil {
+		setChanged("end_time", room.EndTime, *dto.EndTime)
 		room.EndTime = *dto.EndTime
 	}
 	if dto.Attachments != nil {
+		changed["attachments"] = len(*dto.Attachments)
 		room.Attachments = *dto.Attachments
 	}
-	if err := s.rooms.Update(ctx, room); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.rooms.Update(ctx, room); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditUpdated,
+			TargetType:  domain.AuditTargetPractice,
+			TargetID:    &room.ID,
+			TargetLabel: room.Title,
+			OrgID:       &room.OrganizationID,
+			Metadata:    map[string]any{"changed": changed},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	return room, nil
@@ -163,7 +209,20 @@ func (s *service) DeleteRoom(ctx context.Context, id uuid.UUID) error {
 	if !canDeleteRoom(caller, room) {
 		return domain.ErrForbidden
 	}
-	if err := s.rooms.Delete(ctx, id); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.rooms.Delete(ctx, id); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditDeleted,
+			TargetType:  domain.AuditTargetPractice,
+			TargetID:    &id,
+			TargetLabel: room.Title,
+			OrgID:       &room.OrganizationID,
+			Metadata:    map[string]any{"class_id": room.ClassID.String()},
+		})
+	})
+	if err != nil {
 		return err
 	}
 	s.logger.Info("practice room deleted",
@@ -399,7 +458,27 @@ func (s *service) Grade(ctx context.Context, submissionID uuid.UUID, dto domain.
 	if dto.TeacherComment != nil {
 		sub.TeacherComment = *dto.TeacherComment
 	}
-	if err := s.subs.Update(ctx, sub); err != nil {
+	meta := map[string]any{
+		"submission_id": submissionID.String(),
+		"student_id":    sub.UserID.String(),
+	}
+	if sub.Score != nil {
+		meta["score"] = *sub.Score
+	}
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.subs.Update(ctx, sub); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditGraded,
+			TargetType:  domain.AuditTargetPractice,
+			TargetID:    &room.ID,
+			TargetLabel: room.Title,
+			OrgID:       &room.OrganizationID,
+			Metadata:    meta,
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	s.logger.Info("practice submission graded",
