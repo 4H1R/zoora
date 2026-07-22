@@ -1,5 +1,5 @@
 import type { GithubCom4H1RZooraInternalDomainMediaOwner as MediaOwner } from "@/api/model"
-import type { ColumnDef } from "@tanstack/react-table"
+import type { CellContext, ColumnDef } from "@tanstack/react-table"
 
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { ChevronRightIcon, FolderOpenIcon, UploadCloudIcon } from "lucide-react"
@@ -179,6 +179,37 @@ function QuotaHeader({ used, limit, unlimited }: { used: number; limit: number; 
   )
 }
 
+function OwnerNameCell({ row }: CellContext<MediaOwner, unknown>) {
+  const { t } = useTranslation()
+  const kind = row.original.owner_kind ?? "other"
+  const { icon: Icon, tint } = ownerStyle(kind)
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", tint)}>
+        <Icon className="size-4" />
+      </span>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium" dir="auto">
+          {ownerName(t, row.original)}
+        </p>
+        <p className="text-muted-foreground text-xs">{t(`filesPage.owner.kinds.${kind}`, { defaultValue: kind })}</p>
+      </div>
+    </div>
+  )
+}
+
+function OwnerFilesCell({ row }: CellContext<MediaOwner, unknown>) {
+  return <span className="text-muted-foreground text-xs tabular-nums">{row.original.file_count ?? 0}</span>
+}
+
+function OwnerSizeCell({ row }: CellContext<MediaOwner, unknown>) {
+  return <span className="text-sm font-medium tabular-nums">{formatBytes(row.original.total_size ?? 0)}</span>
+}
+
+function OwnerChevronCell() {
+  return <ChevronRightIcon className="text-muted-foreground size-4 rtl:rotate-180" />
+}
+
 function ByOwnerView() {
   const { t } = useTranslation()
   const navigate = Route.useNavigate()
@@ -196,50 +227,28 @@ function ByOwnerView() {
     {
       accessorKey: "name",
       header: t("filesPage.owner.columns.name"),
-      cell: ({ row }) => {
-        const kind = row.original.owner_kind ?? "other"
-        const { icon: Icon, tint } = ownerStyle(kind)
-        return (
-          <div className="flex min-w-0 items-center gap-3">
-            <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", tint)}>
-              <Icon className="size-4" />
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium" dir="auto">
-                {ownerName(t, row.original)}
-              </p>
-              <p className="text-muted-foreground text-xs">
-                {t(`filesPage.owner.kinds.${kind}`, { defaultValue: kind })}
-              </p>
-            </div>
-          </div>
-        )
-      },
+      cell: OwnerNameCell,
       enableSorting: false,
       enableHiding: false,
     },
     {
       accessorKey: "file_count",
       header: t("filesPage.owner.columns.files"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-xs tabular-nums">{row.original.file_count ?? 0}</span>
-      ),
+      cell: OwnerFilesCell,
       enableSorting: false,
       enableHiding: true,
     },
     {
       accessorKey: "total_size",
       header: t("filesPage.owner.columns.size"),
-      cell: ({ row }) => (
-        <span className="text-sm font-medium tabular-nums">{formatBytes(row.original.total_size ?? 0)}</span>
-      ),
+      cell: OwnerSizeCell,
       enableSorting: false,
       enableHiding: false,
     },
     {
       id: "chevron",
       header: "",
-      cell: () => <ChevronRightIcon className="text-muted-foreground size-4 rtl:rotate-180" />,
+      cell: OwnerChevronCell,
       enableSorting: false,
       enableHiding: false,
     },

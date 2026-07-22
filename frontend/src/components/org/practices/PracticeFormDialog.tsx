@@ -76,7 +76,7 @@ export function PracticeFormDialog({ open, onOpenChange, practice, classSessionI
     form.reset(practice ? practiceToValues(practice) : defaults)
     setAttachments((practice?.attachments ?? []).map((id) => ({ media_id: id, name: id, size: 0 })))
     if (!practice) setNewModelId(crypto.randomUUID())
-  }, [open, practice])
+  }, [open, practice, form])
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: getGetPracticesQueryKey() })
 

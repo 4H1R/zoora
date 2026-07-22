@@ -44,7 +44,7 @@ export function PracticeSubmitDialog({ open, onOpenChange, practice }: PracticeS
       form.reset({ content: "" })
       setAttachments([])
     }
-  }, [open])
+  }, [open, form])
 
   const submitMutation = usePostPracticesIdSubmissions({
     mutation: {

@@ -44,7 +44,7 @@ export function CreateClassDialog({ open, onOpenChange }: CreateClassDialogProps
     if (open) {
       form.reset({ name: "", description: "", total_users: 0, user_id: undefined })
     }
-  }, [open])
+  }, [open, form])
 
   const mutation = usePostClasses({
     mutation: {

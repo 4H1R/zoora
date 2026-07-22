@@ -109,17 +109,18 @@ function LiveBars({ levels }: { levels: number[] }) {
 /** Playable preview of the finished take before sending. */
 function VoicePreview({ blob, duration }: { blob: Blob; duration: number }) {
   const audioRef = useRef<HTMLAudioElement>(null)
-  const playback = useMediaPlayback(audioRef)
 
   const [url, setUrl] = useState<string | null>(null)
   const [peaks, setPeaks] = useState<number[] | null>(null)
+
+  const playback = useMediaPlayback(audioRef, url ?? undefined, duration)
 
   useEffect(() => {
     const objectUrl = URL.createObjectURL(blob)
     setUrl(objectUrl)
     let alive = true
     extractPeaks(blob, VOICE_BUCKETS)
-      .then((p) => alive && setPeaks(p))
+      .then((decoded) => alive && setPeaks(decoded.peaks))
       .catch(() => alive && setPeaks(syntheticPeaks("preview")))
     return () => {
       alive = false

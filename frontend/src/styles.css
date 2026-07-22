@@ -341,11 +341,11 @@
   --sidebar-ring: oklch(0.723 0.219 149.579);
 
   --success: oklch(0.723 0.219 149.579);
-  --success-foreground: oklch(0.723 0.219 149.579 / 0.12);
+  --success-foreground: oklch(0.982 0.018 155.826);
   --warning: oklch(0.666 0.179 58.318);
-  --warning-foreground: oklch(0.666 0.179 58.318 / 0.12);
+  --warning-foreground: oklch(0.991 0.015 95.053);
   --info: oklch(0.546 0.245 262.881);
-  --info-foreground: oklch(0.546 0.245 262.881 / 0.12);
+  --info-foreground: oklch(0.97 0.014 254.604);
   --live: oklch(0.577 0.245 27.325);
 
   --brand: oklch(0.723 0.219 149.579);

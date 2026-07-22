@@ -63,7 +63,7 @@ export function LiveRoomCreateModal({
         class_session_id: defaultSessionId ?? "",
       })
     }
-  }, [open, defaultClassId, defaultSessionId])
+  }, [open, defaultClassId, defaultSessionId, form, genTitle])
 
   const createMutation = usePostLiveRooms({
     mutation: {

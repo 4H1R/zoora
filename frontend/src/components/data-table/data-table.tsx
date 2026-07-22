@@ -73,7 +73,7 @@ export function DataTable<TData>({
         {isLoading ? (
           Array.from({ length: skeletonRows }).map((_, i) => (
             <TableRow key={i}>
-              {Array.from({ length: colCount }).map((_, j) => (
+              {Array.from({ length: colCount }).map((_col, j) => (
                 <TableCell key={j}>
                   <Skeleton className="h-5 w-full" />
                 </TableCell>

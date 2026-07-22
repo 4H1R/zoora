@@ -50,7 +50,7 @@ export function EnrollMemberModal({ open, onOpenChange, classId }: EnrollMemberM
       form.reset({ user_ids: [] })
       setSelectedUsers([])
     }
-  }, [open])
+  }, [open, form])
 
   const errors = form.formState.errors
 

@@ -1,3 +1,9 @@
+import type {
+  EmojiPickerListCategoryHeaderProps,
+  EmojiPickerListEmojiProps,
+  EmojiPickerListRowProps,
+} from "frimousse"
+
 import { EmojiPicker } from "frimousse"
 import { FileIcon, SmileIcon, XIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
@@ -155,27 +161,9 @@ export function SendAttachmentsDialog({ files, onSend, onRemove, onAddMore, onCa
                   <EmojiPicker.List
                     className="pb-2 select-none"
                     components={{
-                      CategoryHeader: ({ category, ...props }) => (
-                        <div className="bg-popover text-muted-foreground px-2 pt-2 pb-1 text-xs font-medium" {...props}>
-                          {category.label}
-                        </div>
-                      ),
-                      Row: ({ children, ...props }) => (
-                        <div className="scroll-my-1 px-1" {...props}>
-                          {children}
-                        </div>
-                      ),
-                      Emoji: ({ emoji, ...props }) => (
-                        <button
-                          className={cn(
-                            "flex size-8 items-center justify-center rounded-md text-lg",
-                            emoji.isActive && "bg-accent"
-                          )}
-                          {...props}
-                        >
-                          {emoji.emoji}
-                        </button>
-                      ),
+                      CategoryHeader: EmojiCategoryHeader,
+                      Row: EmojiRow,
+                      Emoji: EmojiButton,
                     }}
                   />
                 </EmojiPicker.Viewport>
@@ -200,6 +188,35 @@ export function SendAttachmentsDialog({ files, onSend, onRemove, onAddMore, onCa
         </div>
       </DialogContent>
     </Dialog>
+  )
+}
+
+// Emoji-picker slot renderers, hoisted to module scope so they aren't redefined
+// per render (frimousse consumes them via the `components` prop).
+function EmojiCategoryHeader({ category, ...props }: EmojiPickerListCategoryHeaderProps) {
+  return (
+    <div className="bg-popover text-muted-foreground px-2 pt-2 pb-1 text-xs font-medium" {...props}>
+      {category.label}
+    </div>
+  )
+}
+
+function EmojiRow({ children, ...props }: EmojiPickerListRowProps) {
+  return (
+    <div className="scroll-my-1 px-1" {...props}>
+      {children}
+    </div>
+  )
+}
+
+function EmojiButton({ emoji, ...props }: EmojiPickerListEmojiProps) {
+  return (
+    <button
+      className={cn("flex size-8 items-center justify-center rounded-md text-lg", emoji.isActive && "bg-accent")}
+      {...props}
+    >
+      {emoji.emoji}
+    </button>
   )
 }
 

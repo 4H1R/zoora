@@ -85,7 +85,7 @@ export function ConversationSettings({ conversation, open, onOpenChange, canMana
 
   useEffect(() => {
     if (open) form.reset({ name: conversation.name ?? "" })
-  }, [open, conversation.id])
+  }, [open, conversation.id, conversation.name, form])
 
   const patchMutation = usePatchConversationsId({
     mutation: {

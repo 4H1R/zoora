@@ -76,7 +76,7 @@ function SidebarProvider({
   }
 
   const toggleSidebar = () => {
-    return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open)
+    return isMobile ? setOpenMobile((prev) => !prev) : setOpen((prev) => !prev)
   }
 
   // Cmd/Ctrl+B toggles the sidebar. `Mod` resolves to ⌘ on macOS and Ctrl

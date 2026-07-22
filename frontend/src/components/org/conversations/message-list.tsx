@@ -36,9 +36,18 @@ interface MessageListProps {
   highlightId: string | null
 }
 
-// Extra context handed to Virtuoso's Header slot so it can render the
-// load-older spinner without a second subscription.
-type ListContext = { isFetchingPreviousPage: boolean }
+// Extra context handed to Virtuoso's slots so they can render without a second
+// subscription. Carries the load-older flag for the Header plus everything the
+// per-item renderer needs (previously closed over in an inline `itemContent`).
+type ListContext = {
+  isFetchingPreviousPage: boolean
+  groups: Group[]
+  convId: string
+  currentUserId: string
+  conversationType?: string
+  showSenderNames: boolean
+  highlightId: string | null
+}
 
 // Top slot: a spinner while older history streams in, otherwise a small spacer
 // so the first day divider breathes.
@@ -47,6 +56,35 @@ function ListHeader({ context }: { context?: ListContext }) {
     <div className="flex h-8 items-center justify-center">
       {context?.isFetchingPreviousPage && <Spinner className="text-muted-foreground size-4" />}
     </div>
+  )
+}
+
+// Per-item renderer, hoisted to module scope so it isn't redefined each render.
+// Everything it needs is threaded through Virtuoso's `context`.
+function renderMessageItem(index: number, group: Group, context: ListContext) {
+  const { groups, convId, currentUserId, conversationType, showSenderNames, highlightId } = context
+  if (group.type === "day") {
+    // Day dividers carry no message; borrow the timestamp of the first
+    // message of the following (same-day) group for an exact date.
+    const date = groups[index + 1]?.messages[0]?.created_at
+    return <DayDivider date={date} />
+  }
+  const isOwn = group.senderId === currentUserId
+  return (
+    <MessageGroup
+      group={group}
+      isOwn={isOwn}
+      showSenderName={showSenderNames && !isOwn}
+      renderBubble={(message) => (
+        <MessageBubble
+          message={message}
+          convId={convId}
+          isOwn={isOwn}
+          conversationType={conversationType}
+          isHighlighted={message.id === highlightId}
+        />
+      )}
+    />
   )
 }
 
@@ -83,7 +121,15 @@ export function MessageList({
     <Virtuoso<Group, ListContext>
       ref={virtuosoRef}
       data={groups}
-      context={{ isFetchingPreviousPage }}
+      context={{
+        isFetchingPreviousPage,
+        groups,
+        convId,
+        currentUserId,
+        conversationType,
+        showSenderNames,
+        highlightId,
+      }}
       className="flex-1"
       computeItemKey={(_index, group) => group.id}
       initialTopMostItemIndex={{ index: "LAST" }}
@@ -99,31 +145,7 @@ export function MessageList({
       atBottomThreshold={100}
       atBottomStateChange={onAtBottomChange}
       components={{ Header: ListHeader }}
-      itemContent={(index, group) => {
-        if (group.type === "day") {
-          // Day dividers carry no message; borrow the timestamp of the first
-          // message of the following (same-day) group for an exact date.
-          const date = groups[index + 1]?.messages[0]?.created_at
-          return <DayDivider date={date} />
-        }
-        const isOwn = group.senderId === currentUserId
-        return (
-          <MessageGroup
-            group={group}
-            isOwn={isOwn}
-            showSenderName={showSenderNames && !isOwn}
-            renderBubble={(message) => (
-              <MessageBubble
-                message={message}
-                convId={convId}
-                isOwn={isOwn}
-                conversationType={conversationType}
-                isHighlighted={message.id === highlightId}
-              />
-            )}
-          />
-        )
-      }}
+      itemContent={renderMessageItem}
     />
   )
 }

@@ -59,7 +59,7 @@ export function OfflineFormDialog({ open, onOpenChange, room, classSessionId }: 
         ? { title: room.title ?? "", description: room.description ?? "", published_at: room.published_at ?? "" }
         : defaults
     )
-  }, [open, room])
+  }, [open, room, form])
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: getGetOfflinesQueryKey() })
 

@@ -64,7 +64,7 @@ export function CreateClassChatDialog({ open, onOpenChange, classId, className }
   // Re-seed the name from the class each time the dialog opens.
   useEffect(() => {
     if (open) form.reset({ type: "group", name: className })
-  }, [open, className])
+  }, [open, className, form])
 
   const type = form.watch("type")
   const errors = form.formState.errors

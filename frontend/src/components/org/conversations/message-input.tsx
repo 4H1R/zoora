@@ -1,6 +1,11 @@
 import type { MentionCandidate, MentionQuery } from "./lib/mentions"
 import type { ChatMessage } from "./lib/messages"
 import type { InfiniteData } from "@tanstack/react-query"
+import type {
+  EmojiPickerListCategoryHeaderProps,
+  EmojiPickerListEmojiProps,
+  EmojiPickerListRowProps,
+} from "frimousse"
 
 import { useQueryClient } from "@tanstack/react-query"
 import { EmojiPicker } from "frimousse"
@@ -38,6 +43,35 @@ const MAX_MENTION_ROWS = 8
 // Leading-edge throttle for outgoing typing signals — at most once per window,
 // fired immediately on the first keystroke of a burst.
 const TYPING_THROTTLE_MS = 3000
+
+// Emoji-picker slot renderers, hoisted to module scope so they aren't redefined
+// per render (frimousse consumes them via the `components` prop).
+function EmojiCategoryHeader({ category, ...props }: EmojiPickerListCategoryHeaderProps) {
+  return (
+    <div className="bg-popover text-muted-foreground px-2 pt-2 pb-1 text-xs font-medium" {...props}>
+      {category.label}
+    </div>
+  )
+}
+
+function EmojiRow({ children, ...props }: EmojiPickerListRowProps) {
+  return (
+    <div className="scroll-my-1 px-1" {...props}>
+      {children}
+    </div>
+  )
+}
+
+function EmojiButton({ emoji, ...props }: EmojiPickerListEmojiProps) {
+  return (
+    <button
+      className={cn("flex size-8 items-center justify-center rounded-md text-lg", emoji.isActive && "bg-accent")}
+      {...props}
+    >
+      {emoji.emoji}
+    </button>
+  )
+}
 
 interface MessageInputProps {
   convId: string
@@ -598,30 +632,9 @@ export function MessageInput({ convId }: MessageInputProps) {
                     <EmojiPicker.List
                       className="pb-2 select-none"
                       components={{
-                        CategoryHeader: ({ category, ...props }) => (
-                          <div
-                            className="bg-popover text-muted-foreground px-2 pt-2 pb-1 text-xs font-medium"
-                            {...props}
-                          >
-                            {category.label}
-                          </div>
-                        ),
-                        Row: ({ children, ...props }) => (
-                          <div className="scroll-my-1 px-1" {...props}>
-                            {children}
-                          </div>
-                        ),
-                        Emoji: ({ emoji, ...props }) => (
-                          <button
-                            className={cn(
-                              "flex size-8 items-center justify-center rounded-md text-lg",
-                              emoji.isActive && "bg-accent"
-                            )}
-                            {...props}
-                          >
-                            {emoji.emoji}
-                          </button>
-                        ),
+                        CategoryHeader: EmojiCategoryHeader,
+                        Row: EmojiRow,
+                        Emoji: EmojiButton,
                       }}
                     />
                   </EmojiPicker.Viewport>

@@ -67,7 +67,7 @@ export function SessionCreateModal({ open, onOpenChange, classId, session }: Ses
     } else {
       form.reset({ name: "", description: "", start_time: "" })
     }
-  }, [open, session, isEdit])
+  }, [open, session, isEdit, form])
 
   const startTime = form.watch("start_time")
 
@@ -82,7 +82,7 @@ export function SessionCreateModal({ open, onOpenChange, classId, session }: Ses
     const next = genTitle(base)
     autoNameRef.current = next
     form.setValue("name", next, { shouldValidate: true })
-  }, [open, isEdit, startTime])
+  }, [open, isEdit, startTime, form, genTitle])
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getGetClassesIdSessionsQueryKey(classId) })

@@ -23,13 +23,24 @@ export function voiceFileName(ext: string): string {
   return `${VOICE_FILE_PREFIX}${Date.now()}.${ext}`
 }
 
+export interface DecodedAudio {
+  /** Normalized RMS peaks (0.12..1) for the waveform. */
+  peaks: number[]
+  /** Exact clip length in seconds, straight from the decoded buffer. */
+  duration: number
+}
+
 /**
- * Decode audio bytes and reduce channel 0 to `buckets` normalized RMS peaks
- * (each 0.12..1 so even silence renders a visible bar). Throws when the
+ * Decode audio bytes into `buckets` normalized RMS peaks (each 0.12..1 so even
+ * silence renders a visible bar) plus the exact duration. Throws when the
  * browser can't decode the container/codec — callers fall back to
  * `syntheticPeaks`.
+ *
+ * The decoded duration is the reliable source for a voice note's length:
+ * MediaRecorder webm/ogg reports `Infinity` on the `<audio>` element until it
+ * is played through, whereas the fully-decoded buffer always knows its length.
  */
-export async function extractPeaks(blob: Blob, buckets = VOICE_BUCKETS): Promise<number[]> {
+export async function extractPeaks(blob: Blob, buckets = VOICE_BUCKETS): Promise<DecodedAudio> {
   const bytes = await blob.arrayBuffer()
   const ctx = new AudioContext()
   try {
@@ -52,7 +63,7 @@ export async function extractPeaks(blob: Blob, buckets = VOICE_BUCKETS): Promise
       peaks.push(Math.sqrt(sum / Math.max(1, n)))
     }
     const max = Math.max(...peaks, 0.001)
-    return peaks.map((p) => Math.max(0.12, p / max))
+    return { peaks: peaks.map((p) => Math.max(0.12, p / max)), duration: decoded.duration }
   } finally {
     void ctx.close()
   }

@@ -48,6 +48,9 @@ test-integration:
 lint:
 	$(EXEC) sh -c 'GOFLAGS=-buildvcs=false golangci-lint run ./...'
 
+lint-fix:
+	$(EXEC) sh -c 'GOFLAGS=-buildvcs=false golangci-lint run --fix ./...'
+
 swagger:
 	$(EXEC) swag init -g cmd/api/main.go -o docs --parseDependency --parseInternal
 

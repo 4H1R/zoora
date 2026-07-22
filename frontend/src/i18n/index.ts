@@ -20,9 +20,11 @@ export type Language = keyof typeof languages
 const isBrowser = typeof window !== "undefined"
 
 if (isBrowser) {
+  // eslint-disable-next-line import/no-named-as-default-member
   i18n.use(LanguageDetector)
 }
 
+// eslint-disable-next-line import/no-named-as-default-member
 i18n.use(initReactI18next).init({
   resources: {
     en: { translation: en },

@@ -66,7 +66,7 @@ export function TableFilter<TData>({
       return
     }
     navigate({ search: (prev) => ({ ...prev, [k.search]: debouncedSearch || undefined, [k.page]: 1 }) })
-  }, [debouncedSearch])
+  }, [debouncedSearch, navigate, k.page, k.search])
 
   const sortValue = order_by ? { id: order_by, desc: order_dir === "desc" } : undefined
 

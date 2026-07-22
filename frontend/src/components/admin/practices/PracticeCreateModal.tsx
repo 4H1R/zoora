@@ -114,7 +114,7 @@ export function PracticeCreateModal({
         end_time: "",
       })
     }
-  }, [open, practice, isEdit, defaultClassId, defaultSessionId])
+  }, [open, practice, isEdit, defaultClassId, defaultSessionId, editForm, createForm])
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getGetAdminPracticesQueryKey() })

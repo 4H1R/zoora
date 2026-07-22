@@ -80,7 +80,7 @@ export function OfflineCreateModal({
         published_at: "",
       })
     }
-  }, [open, room, isEdit, defaultClassId, defaultSessionId])
+  }, [open, room, isEdit, defaultClassId, defaultSessionId, editForm, createForm])
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getGetAdminOfflinesQueryKey() })

@@ -51,7 +51,7 @@ export function GradebookCellDialog({
 
   useEffect(() => {
     if (open) form.reset({ value: initialValue ?? "" })
-  }, [open, initialValue])
+  }, [open, initialValue, form])
 
   const upsertMutation = usePostClassesIdGradebookColumnsColumnIdCells({
     mutation: {

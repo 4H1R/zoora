@@ -72,7 +72,7 @@ export function ClassFormDialog({ open, onOpenChange, cls }: ClassFormDialogProp
         createForm.reset({ name: "", description: "", total_users: 0, organization_id: "", user_id: "" })
       }
     }
-  }, [open, cls, isEdit])
+  }, [open, cls, isEdit, editForm, createForm])
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getGetAdminClassesQueryKey() })

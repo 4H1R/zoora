@@ -20,16 +20,25 @@ export interface MediaPlayback {
  * exclusive-playback slot so starting one player pauses every other.
  *
  * MediaRecorder-produced webm/ogg often reports `duration: Infinity` until the
- * element has sought past the end (a long-standing Chromium quirk). When that
- * happens the hook silently seeks far ahead and back once, which forces the
- * real duration to materialize — voice notes are small, so the extra range
- * fetch is negligible.
+ * element has sought past the end (a long-standing Chromium quirk). Two things
+ * counter it: callers that have decoded the clip (voice notes) pass the exact
+ * length as `knownDuration`, and as a fallback the hook silently seeks far
+ * ahead and back once to force the real duration to materialize — voice notes
+ * are small, so the extra range fetch is negligible.
  */
-export function useMediaPlayback(ref: RefObject<HTMLMediaElement | null>, src?: string): MediaPlayback {
+export function useMediaPlayback(
+  ref: RefObject<HTMLMediaElement | null>,
+  src?: string,
+  knownDuration?: number
+): MediaPlayback {
   const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
+  const [nativeDuration, setNativeDuration] = useState(0)
   const rate = useMediaSettings((s) => s.rate)
+
+  // Prefer the element's own finite duration; fall back to a caller-supplied
+  // decoded length while the element still reports Infinity.
+  const duration = nativeDuration > 0 ? nativeDuration : knownDuration && knownDuration > 0 ? knownDuration : 0
 
   // Live speed change while playing.
   useEffect(() => {
@@ -43,17 +52,24 @@ export function useMediaPlayback(ref: RefObject<HTMLMediaElement | null>, src?: 
 
     const pause = () => el.pause()
 
+    // True only during the seek probe below, so the huge currentTime it
+    // produces never leaks into the progress bar.
+    let probing = false
+
     const syncDuration = () => {
-      if (Number.isFinite(el.duration) && el.duration > 0) setDuration(el.duration)
+      if (Number.isFinite(el.duration) && el.duration > 0) setNativeDuration(el.duration)
     }
-    const fixInfiniteDuration = () => {
+    const probeInfiniteDuration = () => {
       if (Number.isFinite(el.duration)) {
         syncDuration()
         return
       }
+      probing = true
       const restore = () => {
         el.removeEventListener("timeupdate", restore)
+        probing = false
         el.currentTime = 0
+        setCurrentTime(0)
         syncDuration()
       }
       el.addEventListener("timeupdate", restore)
@@ -61,8 +77,10 @@ export function useMediaPlayback(ref: RefObject<HTMLMediaElement | null>, src?: 
     }
 
     const onTime = () => {
-      // Skip the transient jump made by the infinite-duration fix above.
-      if (!Number.isFinite(el.duration)) return
+      // Ignore the transient jump from the infinite-duration probe. Otherwise
+      // report progress even while el.duration is still Infinity — the played
+      // fraction is computed against the decoded knownDuration.
+      if (probing) return
       setCurrentTime(el.currentTime)
     }
     const onPlay = () => {
@@ -75,17 +93,17 @@ export function useMediaPlayback(ref: RefObject<HTMLMediaElement | null>, src?: 
       setPlaying(false)
     }
 
-    el.addEventListener("loadedmetadata", fixInfiniteDuration)
+    el.addEventListener("loadedmetadata", probeInfiniteDuration)
     el.addEventListener("durationchange", syncDuration)
     el.addEventListener("timeupdate", onTime)
     el.addEventListener("play", onPlay)
     el.addEventListener("pause", onStop)
     el.addEventListener("ended", onStop)
     // Metadata may already be in by the time the effect runs.
-    if (el.readyState >= 1) fixInfiniteDuration()
+    if (el.readyState >= 1) probeInfiniteDuration()
 
     return () => {
-      el.removeEventListener("loadedmetadata", fixInfiniteDuration)
+      el.removeEventListener("loadedmetadata", probeInfiniteDuration)
       el.removeEventListener("durationchange", syncDuration)
       el.removeEventListener("timeupdate", onTime)
       el.removeEventListener("play", onPlay)

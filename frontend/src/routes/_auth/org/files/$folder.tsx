@@ -1,5 +1,6 @@
 import type { GetFilesOrderBy, GithubCom4H1RZooraInternalDomainMedia as Media } from "@/api/model"
-import type { ColumnDef } from "@tanstack/react-table"
+import type { CellContext, ColumnDef } from "@tanstack/react-table"
+import type { TFunction } from "i18next"
 
 import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
@@ -93,6 +94,76 @@ function FileRowActions({ media, canDelete, onShare, onDelete }: FileRowActionsP
   )
 }
 
+function FolderNameCell({ media, tint }: { media: Media; tint: string }) {
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", tint)}>
+        <FileIcon className="size-4" />
+      </span>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium" dir="auto">
+          {media.name || media.file_name}
+        </p>
+        <p className="text-muted-foreground truncate font-mono text-[11px]" dir="ltr">
+          {media.mime_type || "—"}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function FolderSizeCell({ row }: CellContext<Media, unknown>) {
+  return <span className="text-muted-foreground text-xs tabular-nums">{formatBytes(row.original.size ?? 0)}</span>
+}
+
+function FolderCreatedAtCell({ row }: CellContext<Media, unknown>) {
+  const formatDate = useFormatDate()
+  return <span className="text-muted-foreground text-xs">{formatDate(row.original.created_at)}</span>
+}
+
+interface FolderColumnsDeps {
+  t: TFunction
+  tint: string
+  canDelete: boolean
+  onShare: (media: Media) => void
+  onDelete: (media: Media) => void
+}
+
+function buildFolderColumns({ t, tint, canDelete, onShare, onDelete }: FolderColumnsDeps): ColumnDef<Media>[] {
+  return [
+    {
+      accessorKey: "name",
+      header: t("filesPage.columns.name"),
+      cell: ({ row }) => <FolderNameCell media={row.original} tint={tint} />,
+      enableSorting: true,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "size",
+      header: t("filesPage.columns.size"),
+      cell: FolderSizeCell,
+      enableSorting: true,
+      enableHiding: true,
+    },
+    {
+      accessorKey: "created_at",
+      header: t("filesPage.columns.createdAt"),
+      cell: FolderCreatedAtCell,
+      enableSorting: true,
+      enableHiding: true,
+    },
+    {
+      id: "actions",
+      header: "",
+      cell: ({ row }) => (
+        <FileRowActions media={row.original} canDelete={canDelete} onShare={onShare} onDelete={onDelete} />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+  ]
+}
+
 function FolderPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -172,60 +243,13 @@ function FolderPage() {
     }
   }
 
-  const formatDate = useFormatDate()
-  const columns: ColumnDef<Media>[] = [
-    {
-      accessorKey: "name",
-      header: t("filesPage.columns.name"),
-      cell: ({ row }) => (
-        <div className="flex min-w-0 items-center gap-3">
-          <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", tint)}>
-            <FileIcon className="size-4" />
-          </span>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium" dir="auto">
-              {row.original.name || row.original.file_name}
-            </p>
-            <p className="text-muted-foreground truncate font-mono text-[11px]" dir="ltr">
-              {row.original.mime_type || "—"}
-            </p>
-          </div>
-        </div>
-      ),
-      enableSorting: true,
-      enableHiding: false,
-    },
-    {
-      accessorKey: "size",
-      header: t("filesPage.columns.size"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-xs tabular-nums">{formatBytes(row.original.size ?? 0)}</span>
-      ),
-      enableSorting: true,
-      enableHiding: true,
-    },
-    {
-      accessorKey: "created_at",
-      header: t("filesPage.columns.createdAt"),
-      cell: ({ row }) => <span className="text-muted-foreground text-xs">{formatDate(row.original.created_at)}</span>,
-      enableSorting: true,
-      enableHiding: true,
-    },
-    {
-      id: "actions",
-      header: "",
-      cell: ({ row }) => (
-        <FileRowActions
-          media={row.original}
-          canDelete={canDelete}
-          onShare={setShareTarget}
-          onDelete={setDeleteTarget}
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-  ]
+  const columns = buildFolderColumns({
+    t,
+    tint,
+    canDelete,
+    onShare: setShareTarget,
+    onDelete: setDeleteTarget,
+  })
 
   const table = useAdminTable({ data: files, columns, rowCount: total, sorting })
 

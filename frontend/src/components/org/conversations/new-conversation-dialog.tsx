@@ -74,7 +74,7 @@ export function NewConversationDialog({ open, onOpenChange, initialType = "group
 
   useEffect(() => {
     if (open) form.reset({ ...DEFAULTS, type: initialType })
-  }, [open, initialType])
+  }, [open, initialType, form])
 
   const type = form.watch("type")
   const memberIds = form.watch("member_ids")
