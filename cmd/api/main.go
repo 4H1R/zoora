@@ -15,6 +15,7 @@ import (
 	_ "github.com/4H1R/zoora/docs"
 	"github.com/4H1R/zoora/internal/admin"
 	"github.com/4H1R/zoora/internal/attendance"
+	"github.com/4H1R/zoora/internal/audit"
 	"github.com/4H1R/zoora/internal/auth"
 	"github.com/4H1R/zoora/internal/billing"
 	"github.com/4H1R/zoora/internal/calendar"
@@ -200,6 +201,9 @@ func main() {
 	leadRepo := leads.NewRepository(db)
 	leadService := leads.NewService(leadRepo, orgRepo, orgSettingsRepo, userRepo, roleRepo, transactor, log)
 
+	auditRepo := audit.NewRepository(db)
+	auditService := audit.NewService(auditRepo, log)
+
 	// Reconcile the permissions table + preset-role grants with the code-defined
 	// source of truth so renaming/removing a permission constant takes effect on
 	// an existing DB without a destructive reseed.
@@ -271,7 +275,7 @@ func main() {
 	sentryFlush, sentryHandlers := observability.InitSentry(cfg, log)
 	defer sentryFlush()
 
-	router.Use(middleware.RequestID(), middleware.Recovery(log))
+	router.Use(middleware.RequestID(), middleware.RequestInfo(), middleware.Recovery(log))
 	router.Use(sentryHandlers...)
 	router.Use(
 		middleware.ErrorHandler(log),
@@ -292,7 +296,7 @@ func main() {
 	liveWebhookHandler := livesessions.NewWebhookHandler(livekitClient, liveSessionService, log)
 	liveWebhookHandler.RegisterRoutes(router.Group("/webhooks"))
 
-	v1 := router.Group("/api/v1", tenantMiddleware)
+	v1 := router.Group("/api/v1", tenantMiddleware, middleware.AuditDenied(auditService, log))
 
 	authHandler := auth.NewHandler(authBusinessService)
 	authHandler.RegisterRoutes(v1, middleware.AuthRateLimit(redisClient, rateLimitDisabled))
@@ -457,6 +461,9 @@ func main() {
 
 	attendanceHandler := attendance.NewHandler(attendanceService)
 	attendanceHandler.RegisterRoutes(v1, authMiddleware, perm)
+
+	auditHandler := audit.NewHandler(auditService)
+	auditHandler.RegisterRoutes(v1, authMiddleware, perm)
 
 	gradebookColRepo := gradebook.NewColumnRepository(db)
 	gradebookCellRepo := gradebook.NewCellRepository(db)
