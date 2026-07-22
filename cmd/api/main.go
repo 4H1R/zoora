@@ -193,7 +193,6 @@ func main() {
 	sessionManager := auth.NewSessionManager(jwtService, redisClient)
 	customFieldService := customfields.NewService(customFieldRepo, log)
 	orgService := organizations.NewService(orgRepo, userRepo, orgSettingsRepo, redisClient, queueClient, log)
-	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, queueClient, log)
 	transactor := database.NewTransactor(db)
 
 	leadRepo := leads.NewRepository(db)
@@ -202,6 +201,7 @@ func main() {
 	auditRepo := audit.NewRepository(db)
 	auditService := audit.NewService(auditRepo, log)
 
+	questionBankService := questionbanks.NewService(questionBankRepo, questionRepo, mediaRepo, queueClient, transactor, auditService, log)
 	quizService := quizzes.NewService(quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo, classRepo, classMemberRepo, queueClient, transactor, auditService, log)
 
 	userService := users.NewService(userRepo, roleRepo, entitlementService, redisClient, sessionManager, transactor, auditService, log)
