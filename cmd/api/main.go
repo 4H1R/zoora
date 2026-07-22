@@ -387,7 +387,7 @@ func main() {
 
 	// classService depends on the conversations service (ClassChatProvisioner) to
 	// provision a class's group/channel chat, so it is constructed after it.
-	classService := classes.NewService(classRepo, classSessionRepo, classMemberRepo, conversationService, log)
+	classService := classes.NewService(classRepo, classSessionRepo, classMemberRepo, conversationService, transactor, auditService, log)
 	classHandler := classes.NewHandler(classService)
 	classHandler.RegisterRoutes(v1, authMiddleware, perm)
 

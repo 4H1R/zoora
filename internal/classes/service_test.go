@@ -158,8 +158,26 @@ func newClassService(repo *classRepoSvcMock, sessions *classSessionRepoSvcMock, 
 	if len(chat) > 0 {
 		provisioner = chat[0]
 	}
-	return classes.NewService(repo, sessions, members, provisioner, slog.Default())
+	return classes.NewService(repo, sessions, members, provisioner, fakeTransactor{}, &auditSpy{}, slog.Default())
 }
+
+// fakeTransactor runs fn inline with no real DB — unit tests exercise the audit
+// same-tx wiring without a database.
+type fakeTransactor struct{}
+
+func (fakeTransactor) RunInTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
 
 // chatProvisionerMock is a testify mock of domain.ClassChatProvisioner.
 type chatProvisionerMock struct{ mock.Mock }
@@ -227,6 +245,31 @@ func TestClassCreateAnyCanAssignOwner(t *testing.T) {
 	created, err := svc.Create(ctx, domain.CreateClassDTO{Name: "Science", UserID: &teacherID})
 	assert.NoError(t, err)
 	assert.Equal(t, teacherID, created.UserID)
+}
+
+func TestDeleteClassRecordsAudit(t *testing.T) {
+	repo := &classRepoSvcMock{}
+	members := &classMemberRepoSvcMock{}
+	spy := &auditSpy{}
+
+	teacherID := uuid.New()
+	classID := uuid.New()
+	svc := classes.NewService(repo, &classSessionRepoSvcMock{}, members, nil, fakeTransactor{}, spy, slog.Default())
+
+	// Owning teacher may delete their own class (ownership satisfies CanManage).
+	ctx := classCtx(teacherID, nil, false, domain.PermClassesDeleteAny)
+	repo.On("FindByID", ctx, classID).Return(&domain.Class{ID: classID, UserID: teacherID, Name: "Physics 101"}, nil)
+	members.On("CountByClass", ctx, classID).Return(int64(3), nil)
+	repo.On("Delete", ctx, classID).Return(nil)
+
+	err := svc.Delete(ctx, classID)
+	assert.NoError(t, err)
+	assert.Len(t, spy.records, 1)
+	assert.Equal(t, domain.AuditDeleted, spy.records[0].Action)
+	assert.Equal(t, domain.AuditTargetClass, spy.records[0].TargetType)
+	assert.Equal(t, "Physics 101", spy.records[0].TargetLabel)
+	assert.NotNil(t, spy.records[0].TargetID)
+	assert.Equal(t, classID, *spy.records[0].TargetID)
 }
 
 func TestClassListScopesByRole(t *testing.T) {
