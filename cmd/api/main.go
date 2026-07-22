@@ -491,7 +491,7 @@ func main() {
 		quizRoomRepo,     // quizRoomLookup
 		gradebookColRepo, // columnLookup
 		mediaRepo,        // mediaLookup (attachment validation)
-		transactor, ticketNotifier, log,
+		transactor, auditService, ticketNotifier, log,
 	)
 	ticketHandler := tickets.NewHandler(ticketService)
 	ticketHandler.RegisterRoutes(v1, authMiddleware, perm)
