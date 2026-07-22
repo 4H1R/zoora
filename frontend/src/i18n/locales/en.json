@@ -1666,7 +1666,8 @@
       "conversations": "Chat",
       "tickets": "Tickets",
       "account": "Account",
-      "customFields": "Custom Fields"
+      "customFields": "Custom Fields",
+      "auditLog": "Audit Log"
     },
     "customFields": {
       "title": "Custom Fields",
@@ -2886,6 +2887,61 @@
         "updateSuccess": "Role updated",
         "deleteSuccess": "Role deleted"
       }
+    },
+    "audit": {
+      "title": "Audit Log",
+      "subtitle": "A newest-first history of administrative actions and changes across your organization.",
+      "system": "System",
+      "empty": "No activity has been recorded yet.",
+      "emptyFiltered": "No entries match these filters.",
+      "showDetails": "Details",
+      "pageOf": "Page {{page}} of {{total}}",
+      "filters": {
+        "action": "Action",
+        "targetType": "Resource",
+        "outcome": "Outcome",
+        "allActions": "All actions",
+        "allTargets": "All resources",
+        "allOutcomes": "All outcomes"
+      },
+      "actions": {
+        "created": "created",
+        "updated": "updated",
+        "deleted": "deleted",
+        "enrolled": "enrolled",
+        "unenrolled": "unenrolled",
+        "graded": "graded",
+        "disabled": "disabled",
+        "enabled": "enabled"
+      },
+      "targets": {
+        "class": "Class",
+        "enrollment": "Enrollment",
+        "user": "User",
+        "role": "Role",
+        "quiz": "Quiz",
+        "question_bank": "Question Bank",
+        "gradebook": "Gradebook",
+        "billing": "Billing",
+        "live_session": "Live Session",
+        "offline_room": "Offline Room",
+        "practice": "Practice",
+        "attendance": "Attendance",
+        "org_settings": "Org Settings",
+        "organization": "Organization",
+        "custom_field": "Custom Field",
+        "connector": "Connector",
+        "ticket": "Ticket",
+        "calendar_event": "Calendar Event",
+        "poll": "Poll",
+        "qa": "Q&A",
+        "import": "Import",
+        "media": "Media"
+      },
+      "outcomes": {
+        "success": "Success",
+        "denied": "Denied"
+      }
     }
   },
   "onlineClassesPage": {
@@ -2947,7 +3003,10 @@
       "capacityPlaceholder": "0 = unlimited",
       "teacher": "Teacher",
       "teacherPlaceholder": "Select teacher…",
-      "createSuccess": "Class created"
+      "createSuccess": "Class created",
+      "editTitle": "Edit class",
+      "editDescription": "Update the class name, description, capacity, and teacher.",
+      "updateSuccess": "Class updated"
     }
   },
   "roles": {

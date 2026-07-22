@@ -14,6 +14,7 @@ import {
   ListPlusIcon,
   MessageCircleIcon,
   NotebookPenIcon,
+  ScrollTextIcon,
   SchoolIcon,
   SettingsIcon,
   ShieldIcon,
@@ -38,6 +39,7 @@ export type OrgRouteKey =
   | "roles"
   | "settings"
   | "custom-fields"
+  | "audit"
   | "billing"
   | "files"
   | "notifications"
@@ -142,6 +144,12 @@ export const ORG_ROUTES: Record<OrgRouteKey, OrgRouteSpec> = {
     icon: <ListPlusIcon />,
     segment: "settings/custom-fields",
     perms: ["custom_fields:manage"],
+  },
+  audit: {
+    i18nKey: "org.nav.auditLog",
+    icon: <ScrollTextIcon />,
+    segment: "settings/audit",
+    perms: ["audit:view_any"],
   },
   billing: {
     i18nKey: "billing.title",

@@ -1635,7 +1635,10 @@
       "capacityPlaceholder": "۰ = نامحدود",
       "teacher": "مدرس",
       "teacherPlaceholder": "انتخاب مدرس…",
-      "createSuccess": "کلاس ایجاد شد"
+      "createSuccess": "کلاس ایجاد شد",
+      "editTitle": "ویرایش کلاس",
+      "editDescription": "نام، توضیحات، ظرفیت و مدرس کلاس را به‌روزرسانی کنید.",
+      "updateSuccess": "کلاس به‌روز شد"
     }
   },
   "login": {
@@ -1728,7 +1731,8 @@
       "conversations": "گفتگو",
       "tickets": "تیکت‌ها",
       "account": "حساب کاربری",
-      "customFields": "فیلدهای سفارشی"
+      "customFields": "فیلدهای سفارشی",
+      "auditLog": "لاگ اقدام‌ها"
     },
     "customFields": {
       "title": "فیلدهای سفارشی",
@@ -2947,6 +2951,61 @@
         "createSuccess": "نقش ایجاد شد",
         "updateSuccess": "نقش به‌روزرسانی شد",
         "deleteSuccess": "نقش حذف شد"
+      }
+    },
+    "audit": {
+      "title": "لاگ اقدام‌ها",
+      "subtitle": "تاریخچهٔ اقدامات و تغییرات مدیریتی سازمان، از جدید به قدیم.",
+      "system": "سیستم",
+      "empty": "هنوز رخدادی ثبت نشده است.",
+      "emptyFiltered": "رخدادی با این فیلترها یافت نشد.",
+      "showDetails": "جزئیات",
+      "pageOf": "صفحهٔ {{page}} از {{total}}",
+      "filters": {
+        "action": "اقدام",
+        "targetType": "نوع مورد",
+        "outcome": "نتیجه",
+        "allActions": "همهٔ اقدام‌ها",
+        "allTargets": "همهٔ موارد",
+        "allOutcomes": "همهٔ نتایج"
+      },
+      "actions": {
+        "created": "ایجاد کرد",
+        "updated": "ویرایش کرد",
+        "deleted": "حذف کرد",
+        "enrolled": "ثبت‌نام کرد",
+        "unenrolled": "لغو ثبت‌نام کرد",
+        "graded": "نمره داد",
+        "disabled": "غیرفعال کرد",
+        "enabled": "فعال کرد"
+      },
+      "targets": {
+        "class": "کلاس",
+        "enrollment": "ثبت‌نام",
+        "user": "کاربر",
+        "role": "نقش",
+        "quiz": "آزمون",
+        "question_bank": "بانک سؤال",
+        "gradebook": "کارنامه",
+        "billing": "صورت‌حساب",
+        "live_session": "جلسه آنلاین",
+        "offline_room": "کلاس آفلاین",
+        "practice": "تمرین",
+        "attendance": "حضور و غیاب",
+        "org_settings": "تنظیمات سازمان",
+        "organization": "سازمان",
+        "custom_field": "فیلد سفارشی",
+        "connector": "اتصال",
+        "ticket": "تیکت",
+        "calendar_event": "رویداد تقویم",
+        "poll": "نظرسنجی",
+        "qa": "پرسش و پاسخ",
+        "import": "درون‌ریزی",
+        "media": "رسانه"
+      },
+      "outcomes": {
+        "success": "موفق",
+        "denied": "رد شده"
       }
     }
   },
