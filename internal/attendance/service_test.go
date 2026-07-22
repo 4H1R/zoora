@@ -206,12 +206,37 @@ func (m *mMemberRepo) ListAllByClass(ctx context.Context, classID uuid.UUID) ([]
 	return res, a.Error(1)
 }
 
+// fakeTransactor runs fn inline with no real DB — unit tests exercise the audit
+// same-tx wiring without a database.
+type fakeTransactor struct{}
+
+func (fakeTransactor) RunInTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
+
 func newSvc(repo domain.AttendanceRepository, classes domain.ClassRepository, sessions domain.ClassSessionRepository) domain.AttendanceService {
-	return attendance.NewService(repo, classes, sessions, nil, nil, nil, nil, nil, nil, authz.NewResolver(nil), slog.Default())
+	svc, _ := newSvcAudit(repo, classes, sessions)
+	return svc
+}
+
+func newSvcAudit(repo domain.AttendanceRepository, classes domain.ClassRepository, sessions domain.ClassSessionRepository) (domain.AttendanceService, *auditSpy) {
+	audit := &auditSpy{}
+	svc := attendance.NewService(repo, classes, sessions, nil, nil, nil, nil, nil, nil, authz.NewResolver(nil), fakeTransactor{}, audit, slog.Default())
+	return svc, audit
 }
 
 func newSvcWithMembers(repo domain.AttendanceRepository, classes domain.ClassRepository, sessions domain.ClassSessionRepository, members domain.ClassMemberRepository) domain.AttendanceService {
-	return attendance.NewService(repo, classes, sessions, members, nil, nil, nil, nil, nil, authz.NewResolver(nil), slog.Default())
+	return attendance.NewService(repo, classes, sessions, members, nil, nil, nil, nil, nil, authz.NewResolver(nil), fakeTransactor{}, &auditSpy{}, slog.Default())
 }
 
 func ownerCtx(userID uuid.UUID) context.Context {
@@ -336,6 +361,38 @@ func TestMark_CreatesWhenMissing(t *testing.T) {
 	assert.NotNil(t, a)
 	repo.AssertCalled(t, "Create", mock.Anything, mock.AnythingOfType("*domain.Attendance"))
 	repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+}
+
+func TestMark_RecordsAudit(t *testing.T) {
+	ownerID := uuid.New()
+	classID := uuid.New()
+	sessionID := uuid.New()
+	userID := uuid.New()
+	orgID := uuid.New()
+
+	repo := &mAttRepo{}
+	classes := &mClassRepo{}
+	sessions := &mSessRepo{}
+
+	classes.On("FindByID", mock.Anything, classID).
+		Return(&domain.Class{ID: classID, OrganizationID: orgID, UserID: ownerID, Name: "Algebra 101"}, nil)
+	sessions.On("FindByID", mock.Anything, sessionID).
+		Return(&domain.ClassSession{ID: sessionID, ClassID: classID}, nil)
+	repo.On("FindBySessionAndUser", mock.Anything, sessionID, userID).Return(nil, domain.ErrNotFound)
+	repo.On("Create", mock.Anything, mock.AnythingOfType("*domain.Attendance")).Return(nil)
+
+	svc, audit := newSvcAudit(repo, classes, sessions)
+	dto := domain.CreateAttendanceDTO{UserID: userID, Status: domain.AttendanceStatusPresent}
+
+	_, err := svc.Mark(ownerCtx(ownerID), classID, sessionID, dto)
+	assert.NoError(t, err)
+	assert.Len(t, audit.records, 1)
+	assert.Equal(t, domain.AuditCreated, audit.records[0].Action)
+	assert.Equal(t, domain.AuditTargetAttendance, audit.records[0].TargetType)
+	assert.Equal(t, "Algebra 101", audit.records[0].TargetLabel)
+	assert.NotNil(t, audit.records[0].OrgID)
+	assert.Equal(t, orgID, *audit.records[0].OrgID)
+	assert.Equal(t, userID.String(), audit.records[0].Metadata["user_id"])
 }
 
 func TestListMine_Summarizes(t *testing.T) {

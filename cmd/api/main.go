@@ -246,7 +246,7 @@ func main() {
 	attendanceService := attendance.NewService(
 		attendanceRepo, classRepo, classSessionRepo, classMemberRepo,
 		liveRoomRepo, liveParticipantRepo, offlineViewRepo, offlineRoomRepo,
-		orgSettingsService, authzResolver, log,
+		orgSettingsService, authzResolver, transactor, auditService, log,
 	)
 
 	healthChecker := health.NewChecker(db, redisClient, storageClient)

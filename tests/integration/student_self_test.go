@@ -218,7 +218,7 @@ func TestIntegration_Attendance_ListMine(t *testing.T) {
 	assert.Len(t, rows, 2)
 
 	// Service-level summary.
-	svc := attendance.NewService(attRepo, classRepo, sessRepo, nil, nil, nil, nil, nil, nil, authz.NewResolver(nil), slog.Default())
+	svc := attendance.NewService(attRepo, classRepo, sessRepo, nil, nil, nil, nil, nil, nil, authz.NewResolver(nil), nil, nil, slog.Default())
 	callerCtx := domain.WithCaller(ctx, domain.Caller{
 		UserID:      student.ID,
 		Permissions: []string{string(domain.PermAttendanceView)},

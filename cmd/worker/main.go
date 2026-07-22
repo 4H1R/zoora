@@ -9,6 +9,7 @@ import (
 	"github.com/hibiken/asynq"
 
 	"github.com/4H1R/zoora/internal/attendance"
+	"github.com/4H1R/zoora/internal/audit"
 	"github.com/4H1R/zoora/internal/billing"
 	"github.com/4H1R/zoora/internal/chat"
 	"github.com/4H1R/zoora/internal/classes"
@@ -75,6 +76,8 @@ func main() {
 	}
 
 	transactor := database.NewTransactor(db)
+	auditRepo := audit.NewRepository(db)
+	auditService := audit.NewService(auditRepo, log)
 	chatRepo := chat.NewChatRepository(db)
 	chatMessageRepo := chat.NewMessageRepository(db)
 	// Worker has no LiveKit client; realtime chat broadcast is API-only (nil deps = no-op).
@@ -112,7 +115,7 @@ func main() {
 	attendanceService := attendance.NewService(
 		attendanceRepo, classRepo, classSessionRepo, classMemberRepo,
 		liveRoomRepo, liveParticipantRepo, offlineViewRepo, offlineRoomRepo,
-		orgSettingsService, authzResolver, log,
+		orgSettingsService, authzResolver, transactor, auditService, log,
 	)
 	queueServer.HandleFunc(domain.TypeAttendanceAutoMark, attendance.NewAutoMarkHandler(attendanceService))
 
