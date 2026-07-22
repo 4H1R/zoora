@@ -60,18 +60,36 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 
 // ListMine returns the caller's own attendance history + summary across classes.
 // @Summary List my attendance
+// @Description Returns the caller's attendance records, paged, with a status summary. The summary is a breakdown by status over the class/session scope and ignores the status filter. Filters: status, class_id, class_session_id. Search matches substrings of: remarks. Orderable fields: created_at, updated_at, status.
 // @Tags Attendance
 // @Produce json
 // @Security BearerAuth
+// @Param status query string false "Filter by status" Enums(present,absent,late,excused)
+// @Param class_id query string false "Filter by class UUID"
+// @Param class_session_id query string false "Filter by class session UUID"
+// @Param search query string false "Substring match on remarks"
 // @Param order_by query string false "One of: created_at, updated_at, status"
 // @Param order_dir query string false "asc or desc"
 // @Param page query int false "1-based page number"
+// @Param page_size query int false "Items per page (max 200)"
 // @Success 200 {object} domain.Response{data=domain.MyAttendance}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Router /attendance/me [get]
 func (h *Handler) ListMine(c *gin.Context) {
-	p := listparams.Bind(c, attendanceListConfig)
-	res, err := h.svc.ListMine(c.Request.Context(), p)
+	var q domain.ListMyAttendanceQuery
+	if err := c.ShouldBindQuery(&q); err != nil {
+		_ = c.Error(domain.NewValidationError(map[string]string{"query": err.Error()}))
+		return
+	}
+	if err := httpx.BindUUIDQueries(c, map[string]**uuid.UUID{
+		"class_id":         &q.ClassID,
+		"class_session_id": &q.ClassSessionID,
+	}); err != nil {
+		_ = c.Error(err)
+		return
+	}
+	q.ListParams = listparams.Bind(c, attendanceListConfig)
+	res, err := h.svc.ListMine(c.Request.Context(), q)
 	if err != nil {
 		_ = c.Error(err)
 		return

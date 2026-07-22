@@ -10,14 +10,13 @@ import {
   CheckSquareIcon,
   ClipboardListIcon,
   ClockIcon,
-  DumbbellIcon,
   HourglassIcon,
   PencilIcon,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 
-import { useGetPractices, useGetPracticesIdSubmissions } from "@/api/practices/practices"
+import { useGetPracticesIdSubmissions } from "@/api/practices/practices"
 import { SortPicker } from "@/components/data-table/sort-picker"
 import { Eyebrow } from "@/components/eyebrow"
 import { SectionPagination } from "@/components/org/session/section-pagination"
@@ -30,7 +29,6 @@ import { formatSessionDate } from "@/lib/session-status"
 import { cn } from "@/lib/utils"
 
 import { PracticeGradeDialog } from "./PracticeGradeDialog"
-import { usePracticePermissions } from "./use-practice-permissions"
 
 const STATUS_FILTERS = ["all", "pending", "graded"] as const
 type StatusFilter = (typeof STATUS_FILTERS)[number]
@@ -43,20 +41,23 @@ function matchesSubmissionStatus(s: PracticeSubmission, status: StatusFilter): b
   return !isGraded(s)
 }
 
-interface PracticeScoresSectionProps {
-  classSessionId: string
+interface PracticeGradingPanelProps {
+  practice: PracticeRoom
 }
 
-export function PracticeScoresSection({ classSessionId }: PracticeScoresSectionProps) {
+// The grading surface for one practice: stat strip, status filter, and the
+// submissions roll. Owns its own paging/sort state — the page around it only
+// decides which practice is being graded.
+export function PracticeGradingPanel({ practice }: PracticeGradingPanelProps) {
   const { t, i18n } = useTranslation()
-  const { canView, canGrade } = usePracticePermissions()
 
-  const [practiceId, setPracticeId] = useState<string | undefined>(undefined)
   const [status, setStatus] = useState<StatusFilter>("all")
   const [sort, setSort] = useState<SectionSort | undefined>(undefined)
   const [page, setPage] = useState(1)
   const [gradeOpen, setGradeOpen] = useState(false)
   const [active, setActive] = useState<PracticeSubmission | null>(null)
+
+  const maxScore = practice.max_score
 
   const sortOptions: SortOption[] = [
     { id: "submitted_at", label: t("org.session.controls.sortFields.submitted_at") },
@@ -66,23 +67,16 @@ export function PracticeScoresSection({ classSessionId }: PracticeScoresSectionP
 
   useEffect(() => {
     setPage(1)
-  }, [practiceId, sort?.id, sort?.desc])
-
-  const practicesQ = useGetPractices({ class_session_id: classSessionId }, { query: { enabled: canView } })
-  const practices: PracticeRoom[] = (practicesQ.data?.status === 200 && practicesQ.data.data.data?.items) || []
-
-  const effectiveId = practiceId ?? practices[0]?.id
-  const selected = practices.find((p) => p.id === effectiveId)
-  const maxScore = selected?.max_score
+  }, [sort?.id, sort?.desc])
 
   const subsQ = useGetPracticesIdSubmissions(
-    effectiveId ?? "",
+    practice.id ?? "",
     {
       order_by: sort?.id,
       order_dir: sort ? (sort.desc ? "desc" : "asc") : undefined,
       page,
     },
-    { query: { enabled: !!effectiveId && canGrade } }
+    { query: { enabled: !!practice.id } }
   )
   const subsData = (subsQ.data?.status === 200 && subsQ.data.data.data) || undefined
   const allSubmissions = subsData?.items ?? []
@@ -94,89 +88,55 @@ export function PracticeScoresSection({ classSessionId }: PracticeScoresSectionP
 
   const submissions = allSubmissions.filter((s) => matchesSubmissionStatus(s, status))
 
-  if (!canView || !canGrade) return null
-
-  const isLoadingPractices = practicesQ.isPending
-  const isLoadingSubs = subsQ.isPending && !!effectiveId
-  const noPractices = !isLoadingPractices && practices.length === 0
+  const isLoadingSubs = subsQ.isPending
 
   return (
-    <section
-      id="practice-scores"
-      className="relative isolate flex scroll-mt-20 flex-col gap-6 overflow-hidden rounded-3xl"
-    >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_bottom_left,var(--color-primary)/8%,transparent_55%)]"
+    <div className="flex flex-col gap-6">
+      <StatStrip
+        total={total}
+        pending={pendingCount}
+        graded={gradedCount}
+        maxScore={maxScore}
+        loading={isLoadingSubs}
       />
 
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-col gap-1.5">
-          <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.practiceScores.title")}</h2>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <StatusFilterBar
+            value={status}
+            onChange={setStatus}
+            counts={{ all: allSubmissions.length, pending: pendingCount, graded: gradedCount }}
+          />
         </div>
-        <span className="text-muted-foreground hidden font-mono text-[11px] tracking-[0.25em] uppercase md:inline">
-          {selected ? `// ${selected.title}` : `// ${t("org.session.practiceScores.noneSelected")}`}
-        </span>
+        <SortPicker options={sortOptions} value={sort} onChange={setSort} label={t("org.session.controls.sort")} />
       </div>
 
-      {noPractices ? (
-        <EmptyState />
+      {isLoadingSubs ? (
+        <div className="flex flex-col gap-3">
+          <SubmissionRowSkeleton />
+          <SubmissionRowSkeleton />
+          <SubmissionRowSkeleton />
+        </div>
+      ) : submissions.length === 0 ? (
+        <NoSubmissions />
       ) : (
         <>
-          <PracticeSelector
-            practices={practices}
-            selectedId={effectiveId}
-            onSelect={setPracticeId}
-            isLoading={isLoadingPractices}
-          />
-
-          <StatStrip
-            total={total}
-            pending={pendingCount}
-            graded={gradedCount}
-            maxScore={maxScore}
-            loading={isLoadingSubs}
-          />
-
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <StatusFilterBar
-                value={status}
-                onChange={setStatus}
-                counts={{ all: allSubmissions.length, pending: pendingCount, graded: gradedCount }}
+          <ul className="flex flex-col gap-3">
+            {submissions.map((s, i) => (
+              <SubmissionRow
+                key={s.id ?? i}
+                submission={s}
+                index={(page - 1) * pageSize + i}
+                lang={i18n.language}
+                maxScore={maxScore}
+                onGrade={() => {
+                  setActive(s)
+                  setGradeOpen(true)
+                }}
               />
-            </div>
-            <SortPicker options={sortOptions} value={sort} onChange={setSort} label={t("org.session.controls.sort")} />
-          </div>
-
-          {isLoadingSubs ? (
-            <div className="flex flex-col gap-3">
-              <SubmissionRowSkeleton />
-              <SubmissionRowSkeleton />
-              <SubmissionRowSkeleton />
-            </div>
-          ) : submissions.length === 0 ? (
-            <NoSubmissions />
-          ) : (
-            <>
-              <ul className="flex flex-col gap-3">
-                {submissions.map((s, i) => (
-                  <SubmissionRow
-                    key={s.id ?? i}
-                    submission={s}
-                    index={(page - 1) * pageSize + i}
-                    lang={i18n.language}
-                    maxScore={maxScore}
-                    onGrade={() => {
-                      setActive(s)
-                      setGradeOpen(true)
-                    }}
-                  />
-                ))}
-              </ul>
-              <SectionPagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
-            </>
-          )}
+            ))}
+          </ul>
+          <SectionPagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
         </>
       )}
 
@@ -187,24 +147,9 @@ export function PracticeScoresSection({ classSessionId }: PracticeScoresSectionP
           if (!open) setActive(null)
         }}
         submission={active}
-        practiceId={effectiveId}
+        practiceId={practice.id}
         maxScore={maxScore}
       />
-    </section>
-  )
-}
-
-function EmptyState() {
-  const { t } = useTranslation()
-  return (
-    <div className="bg-card border-border dark:ring-foreground/10 flex flex-col items-center gap-3 rounded-2xl border px-6 py-16 text-center shadow-sm dark:border-0 dark:shadow-none dark:ring-1">
-      <DumbbellIcon className="text-muted-foreground size-8" />
-      <h3 className="text-foreground text-lg font-semibold tracking-tight">
-        {t("org.session.practiceScores.emptyTitle")}
-      </h3>
-      <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
-        {t("org.session.practiceScores.emptyHint")}
-      </p>
     </div>
   )
 }
@@ -220,63 +165,6 @@ function NoSubmissions() {
       <p className="text-muted-foreground max-w-sm text-xs leading-relaxed">
         {t("org.session.practiceScores.noResultsHint")}
       </p>
-    </div>
-  )
-}
-
-function PracticeSelector({
-  practices,
-  selectedId,
-  onSelect,
-  isLoading,
-}: {
-  practices: PracticeRoom[]
-  selectedId?: string
-  onSelect: (id: string | undefined) => void
-  isLoading: boolean
-}) {
-  const { t } = useTranslation()
-  if (isLoading) {
-    return (
-      <div className="flex flex-wrap gap-2">
-        <Skeleton className="h-9 w-32 rounded-full" />
-        <Skeleton className="h-9 w-40 rounded-full" />
-        <Skeleton className="h-9 w-28 rounded-full" />
-      </div>
-    )
-  }
-  return (
-    <div className="flex flex-col gap-2">
-      <Eyebrow className="text-[10px]">{t("org.session.practiceScores.pick")}</Eyebrow>
-      <div className="flex flex-wrap gap-2">
-        {practices.map((p, i) => {
-          const tile = String(i + 1).padStart(2, "0")
-          const active = p.id === selectedId
-          return (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => onSelect(p.id)}
-              className={cn(
-                "group/pill border-border dark:ring-foreground/10 inline-flex items-center gap-2.5 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all dark:border-0 dark:shadow-none dark:ring-1",
-                active
-                  ? "bg-foreground text-background border-foreground dark:ring-foreground"
-                  : "bg-card text-foreground hover:border-foreground/30 dark:hover:ring-foreground/30 hover:-translate-y-0.5"
-              )}
-            >
-              <span
-                className={cn(
-                  "font-mono text-[10px] tracking-[0.25em]",
-                  active ? "text-background/70" : "text-muted-foreground"
-                )}
-              >
-                /{tile}
-              </span>
-              <span className="line-clamp-1 max-w-[16rem]">{p.title ?? "—"}</span>
-            </button>
-          )
-        })}
-      </div>
     </div>
   )
 }

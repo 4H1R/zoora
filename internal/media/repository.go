@@ -178,7 +178,7 @@ SELECT id, source, model_type, name, mime_type, size, deletable, created_at FROM
            r.owner_id, ` + ownerKindExpr + ` AS owner_kind
     FROM (` + ownerResolverSQL + `) r
   ) z
-  WHERE z.owner_kind = @kind AND (z.owner_id = @owner_id OR (@owner_id IS NULL AND z.owner_id IS NULL))
+  WHERE z.owner_kind = @kind AND (z.owner_id = CAST(@owner_id AS uuid) OR (CAST(@owner_id AS uuid) IS NULL AND z.owner_id IS NULL))
 
   UNION ALL
 
@@ -189,7 +189,7 @@ SELECT id, source, model_type, name, mime_type, size, deletable, created_at FROM
   JOIN live_rooms lr     ON lr.id = rec.live_room_id
   JOIN class_sessions cs ON cs.id = lr.class_session_id
   JOIN classes cls       ON cls.id = cs.class_id
-  WHERE @kind = 'class' AND cls.organization_id = @org AND cls.id = @owner_id
+  WHERE @kind = 'class' AND cls.organization_id = @org AND cls.id = CAST(@owner_id AS uuid)
 ) f
 WHERE (@search = '' OR name ILIKE @like)`
 

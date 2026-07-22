@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"math/big"
@@ -17,9 +18,10 @@ import (
 )
 
 const (
-	linkTokenTTL  = 15 * time.Minute
-	otpTTL        = 5 * time.Minute
-	otpMaxPerHour = 3
+	linkTokenTTL   = 15 * time.Minute
+	otpTTL         = 5 * time.Minute
+	otpMaxPerHour  = 3
+	otpMaxAttempts = 5
 )
 
 type BotLinkConfig struct {
@@ -34,22 +36,62 @@ type service struct {
 	rdb    *redis.Client
 	sms    domain.SMSSender
 	bots   BotLinkConfig
+	tx     domain.Transactor
+	audit  domain.AuditRecorder
 	logger *slog.Logger
 }
 
-func NewService(repo domain.UserConnectorRepository, users domain.UserRepository, orgs domain.OrganizationRepository, rdb *redis.Client, smsSender domain.SMSSender, bots BotLinkConfig, logger *slog.Logger) domain.ConnectorService {
+func NewService(repo domain.UserConnectorRepository, users domain.UserRepository, orgs domain.OrganizationRepository, rdb *redis.Client, smsSender domain.SMSSender, bots BotLinkConfig, tx domain.Transactor, audit domain.AuditRecorder, logger *slog.Logger) domain.ConnectorService {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &service{repo: repo, users: users, orgs: orgs, rdb: rdb, sms: smsSender, bots: bots, logger: logger}
+	return &service{repo: repo, users: users, orgs: orgs, rdb: rdb, sms: smsSender, bots: bots, tx: tx, audit: audit, logger: logger}
+}
+
+// createConnector persists a linked connector and records a Created audit entry
+// in the same transaction. The audit is filed under orgID (the connector owner's
+// org); when orgID is nil the org is unreachable (e.g. a platform-admin user or
+// a failed lookup) so the link is still created but not audited — audit entries
+// must belong to an organization.
+func (s *service) createConnector(ctx context.Context, c *domain.UserConnector, orgID *uuid.UUID) error {
+	return s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Create(ctx, c); err != nil {
+			return err
+		}
+		if orgID == nil {
+			return nil
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditCreated,
+			TargetType:  domain.AuditTargetConnector,
+			TargetID:    &c.ID,
+			TargetLabel: string(c.Type),
+			OrgID:       orgID,
+			Metadata:    map[string]any{"type": string(c.Type)},
+		})
+	})
+}
+
+// userOrg best-effort resolves a user's organization for audit filing. Returns
+// nil when the user repo is absent, the lookup fails, or the user has no org.
+func (s *service) userOrg(ctx context.Context, userID uuid.UUID) *uuid.UUID {
+	if s.users == nil {
+		return nil
+	}
+	u, err := s.users.FindByID(ctx, userID)
+	if err != nil {
+		return nil
+	}
+	return u.OrganizationID
 }
 
 func linkKey(t domain.ConnectorType, token string) string {
 	return fmt.Sprintf("connector:link:%s:%s", t, token)
 }
 
-func otpKey(userID uuid.UUID) string   { return "connector:otp:" + userID.String() }
-func otpRLKey(userID uuid.UUID) string { return "connector:otp-rl:" + userID.String() }
+func otpKey(userID uuid.UUID) string         { return "connector:otp:" + userID.String() }
+func otpRLKey(userID uuid.UUID) string       { return "connector:otp-rl:" + userID.String() }
+func otpAttemptsKey(userID uuid.UUID) string { return "connector:otp-att:" + userID.String() }
 
 func (s *service) CreateLinkToken(ctx context.Context, t domain.ConnectorType) (*domain.LinkTokenResponse, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
@@ -92,7 +134,7 @@ func (s *service) CreateLinkToken(ctx context.Context, t domain.ConnectorType) (
 func (s *service) CompleteLink(ctx context.Context, t domain.ConnectorType, token, chatID string) (*domain.ConnectorLinkResult, error) {
 	key := linkKey(t, token)
 	val, err := s.rdb.GetDel(ctx, key).Result()
-	if err == redis.Nil {
+	if errors.Is(err, redis.Nil) {
 		return nil, domain.ErrNotFound
 	}
 	if err != nil {
@@ -103,13 +145,14 @@ func (s *service) CompleteLink(ctx context.Context, t domain.ConnectorType, toke
 		return nil, fmt.Errorf("connectors.service.CompleteLink: bad stored user id: %w", err)
 	}
 	now := time.Now()
-	if err := s.repo.Create(ctx, &domain.UserConnector{
+	c := &domain.UserConnector{
 		UserID:     userID,
 		Type:       t,
 		Target:     chatID,
 		VerifiedAt: &now,
 		Enabled:    true,
-	}); err != nil {
+	}
+	if err := s.createConnector(ctx, c, s.userOrg(ctx, userID)); err != nil {
 		return nil, err
 	}
 	return s.linkResult(ctx, userID), nil
@@ -175,6 +218,7 @@ func (s *service) RequestSMSOTP(ctx context.Context, dto domain.RequestSMSOTPDTO
 	if err := s.rdb.Set(ctx, otpKey(caller.UserID), rec, otpTTL).Err(); err != nil {
 		return fmt.Errorf("connectors.service.RequestSMSOTP: storing otp: %w", err)
 	}
+	s.rdb.Del(ctx, otpAttemptsKey(caller.UserID))
 	return s.sms.SendOTP(ctx, dto.Phone, code)
 }
 
@@ -192,7 +236,7 @@ func (s *service) VerifySMSOTP(ctx context.Context, dto domain.VerifySMSOTPDTO) 
 		return domain.ErrForbidden
 	}
 	raw, err := s.rdb.Get(ctx, otpKey(caller.UserID)).Result()
-	if err == redis.Nil {
+	if errors.Is(err, redis.Nil) {
 		return domain.NewValidationError(map[string]string{"code": "no pending verification — request a new code"})
 	}
 	if err != nil {
@@ -203,17 +247,26 @@ func (s *service) VerifySMSOTP(ctx context.Context, dto domain.VerifySMSOTPDTO) 
 		return fmt.Errorf("connectors.service.VerifySMSOTP: decoding: %w", err)
 	}
 	if rec.Code != dto.Code {
+		n, _ := s.rdb.Incr(ctx, otpAttemptsKey(caller.UserID)).Result()
+		if n == 1 {
+			s.rdb.Expire(ctx, otpAttemptsKey(caller.UserID), otpTTL)
+		}
+		if n >= otpMaxAttempts {
+			s.rdb.Del(ctx, otpKey(caller.UserID))
+			s.rdb.Del(ctx, otpAttemptsKey(caller.UserID))
+		}
 		return domain.NewValidationError(map[string]string{"code": "incorrect code"})
 	}
 	s.rdb.Del(ctx, otpKey(caller.UserID))
+	s.rdb.Del(ctx, otpAttemptsKey(caller.UserID))
 	now := time.Now()
-	return s.repo.Create(ctx, &domain.UserConnector{
+	return s.createConnector(ctx, &domain.UserConnector{
 		UserID:     caller.UserID,
 		Type:       domain.ConnectorSMS,
 		Target:     rec.Phone,
 		VerifiedAt: &now,
 		Enabled:    true,
-	})
+	}, caller.OrgID)
 }
 
 func (s *service) RegisterPushToken(ctx context.Context, dto domain.RegisterPushTokenDTO) (*domain.UserConnector, error) {
@@ -276,5 +329,20 @@ func (s *service) Unlink(ctx context.Context, id uuid.UUID) error {
 	if c.UserID != caller.UserID {
 		return domain.ErrForbidden
 	}
-	return s.repo.Delete(ctx, id)
+	return s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Delete(ctx, id); err != nil {
+			return err
+		}
+		if caller.OrgID == nil {
+			return nil
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditDeleted,
+			TargetType:  domain.AuditTargetConnector,
+			TargetID:    &c.ID,
+			TargetLabel: string(c.Type),
+			OrgID:       caller.OrgID,
+			Metadata:    map[string]any{"type": string(c.Type)},
+		})
+	})
 }

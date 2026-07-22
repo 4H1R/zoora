@@ -27,6 +27,10 @@ type service struct {
 	// be nil (worker, unit tests) — broadcasts become no-ops in that case.
 	livekit   roomDataSender
 	liveRooms domain.LiveRoomRepository
+	// modelAuth performs object-level authz: a chat's LiveRoomID is a
+	// live_session model_id, so participation/moderation resolve through the
+	// room -> session -> class ownership chain.
+	modelAuth domain.ModelAuthorizer
 }
 
 func NewService(
@@ -36,6 +40,7 @@ func NewService(
 	logger *slog.Logger,
 	livekit roomDataSender,
 	liveRooms domain.LiveRoomRepository,
+	modelAuth domain.ModelAuthorizer,
 ) domain.LiveRoomChatService {
 	return &service{
 		chatRepo:    chatRepo,
@@ -44,7 +49,21 @@ func NewService(
 		logger:      logger,
 		livekit:     livekit,
 		liveRooms:   liveRooms,
+		modelAuth:   modelAuth,
 	}
+}
+
+// canParticipate reports whether the caller may read/send within the chat,
+// resolved via the chat's live room (a live_session model). Read audience of a
+// live-room chat = participants of the owning live session.
+func (s *service) canParticipate(ctx context.Context, caller domain.Caller, chat *domain.LiveRoomChat) (bool, error) {
+	return s.modelAuth.CanParticipate(ctx, caller, domain.QAModelLiveSession, chat.LiveRoomID)
+}
+
+// canModerate reports whether the caller may perform host/teacher actions on the
+// chat (edit/delete the chat, moderate others' messages).
+func (s *service) canModerate(ctx context.Context, caller domain.Caller, chat *domain.LiveRoomChat) (bool, error) {
+	return s.modelAuth.CanModerate(ctx, caller, domain.QAModelLiveSession, chat.LiveRoomID)
 }
 
 const (
@@ -127,13 +146,22 @@ func (s *service) CreateChat(ctx context.Context, dto domain.CreateChatDTO) (*do
 }
 
 func (s *service) GetChat(ctx context.Context, id uuid.UUID) (*domain.LiveRoomChat, error) {
-	if _, ok := domain.CallerFromCtx(ctx); !ok {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
 		return nil, domain.ErrForbidden
 	}
 
 	chat, err := s.chatRepo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+
+	ok, err = s.canParticipate(ctx, caller, chat)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, domain.ErrForbidden
 	}
 	return chat, nil
 }
@@ -150,6 +178,14 @@ func (s *service) UpdateChat(ctx context.Context, id uuid.UUID, dto domain.Updat
 	}
 
 	if !caller.IsAdmin && !caller.HasPermission(domain.PermChatsManage) {
+		return nil, domain.ErrForbidden
+	}
+
+	ok, err = s.canModerate(ctx, caller, chat)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
 		return nil, domain.ErrForbidden
 	}
 
@@ -181,6 +217,19 @@ func (s *service) DeleteChat(ctx context.Context, id uuid.UUID) error {
 		return domain.ErrForbidden
 	}
 
+	chat, err := s.chatRepo.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	allowed, err := s.canModerate(ctx, caller, chat)
+	if err != nil {
+		return err
+	}
+	if !allowed {
+		return domain.ErrForbidden
+	}
+
 	if err := s.chatRepo.Delete(ctx, id); err != nil {
 		return err
 	}
@@ -189,8 +238,21 @@ func (s *service) DeleteChat(ctx context.Context, id uuid.UUID) error {
 }
 
 func (s *service) ListChats(ctx context.Context, q domain.ListChatsQuery) ([]domain.LiveRoomChat, int64, error) {
-	if _, ok := domain.CallerFromCtx(ctx); !ok {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
 		return nil, 0, domain.ErrForbidden
+	}
+	if !caller.IsAdmin {
+		if q.LiveRoomID == nil {
+			return nil, 0, domain.ErrForbidden
+		}
+		allowed, err := s.modelAuth.CanParticipate(ctx, caller, domain.QAModelLiveSession, *q.LiveRoomID)
+		if err != nil {
+			return nil, 0, err
+		}
+		if !allowed {
+			return nil, 0, domain.ErrForbidden
+		}
 	}
 	return s.chatRepo.List(ctx, q)
 }
@@ -208,6 +270,15 @@ func (s *service) SendMessage(ctx context.Context, chatID uuid.UUID, dto domain.
 	if err != nil {
 		return nil, err
 	}
+
+	ok, err = s.canParticipate(ctx, caller, chat)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+
 	if chat.Status != domain.LiveRoomChatStatusActive {
 		return nil, domain.NewValidationError(map[string]string{"chat": "chat is archived"})
 	}
@@ -255,13 +326,27 @@ func (s *service) SendMessage(ctx context.Context, chatID uuid.UUID, dto domain.
 }
 
 func (s *service) GetMessage(ctx context.Context, id uuid.UUID) (*domain.LiveRoomMessage, error) {
-	if _, ok := domain.CallerFromCtx(ctx); !ok {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
 		return nil, domain.ErrForbidden
 	}
 
 	msg, err := s.messageRepo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+
+	chat, err := s.chatRepo.FindByID(ctx, msg.ChatID)
+	if err != nil {
+		return nil, err
+	}
+
+	ok, err = s.canParticipate(ctx, caller, chat)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, domain.ErrForbidden
 	}
 	return msg, nil
 }
@@ -277,8 +362,17 @@ func (s *service) UpdateMessage(ctx context.Context, id uuid.UUID, dto domain.Up
 		return nil, err
 	}
 
-	if msg.SenderID == nil || *msg.SenderID != caller.UserID {
-		if !caller.IsAdmin {
+	isAuthor := msg.SenderID != nil && *msg.SenderID == caller.UserID
+	if !isAuthor {
+		chat, cErr := s.chatRepo.FindByID(ctx, msg.ChatID)
+		if cErr != nil {
+			return nil, cErr
+		}
+		allowed, mErr := s.canModerate(ctx, caller, chat)
+		if mErr != nil {
+			return nil, mErr
+		}
+		if !allowed {
 			return nil, domain.ErrForbidden
 		}
 	}
@@ -303,8 +397,17 @@ func (s *service) DeleteMessage(ctx context.Context, id uuid.UUID) error {
 		return err
 	}
 
-	if msg.SenderID == nil || *msg.SenderID != caller.UserID {
-		if !caller.IsAdmin && !caller.HasPermission(domain.PermChatsManage) {
+	isAuthor := msg.SenderID != nil && *msg.SenderID == caller.UserID
+	if !isAuthor {
+		chat, cErr := s.chatRepo.FindByID(ctx, msg.ChatID)
+		if cErr != nil {
+			return cErr
+		}
+		allowed, mErr := s.canModerate(ctx, caller, chat)
+		if mErr != nil {
+			return mErr
+		}
+		if !allowed {
 			return domain.ErrForbidden
 		}
 	}
@@ -324,12 +427,22 @@ func (s *service) DeleteMessage(ctx context.Context, id uuid.UUID) error {
 }
 
 func (s *service) ListMessages(ctx context.Context, chatID uuid.UUID, q domain.ListMessagesQuery) ([]domain.LiveRoomMessage, int64, error) {
-	if _, ok := domain.CallerFromCtx(ctx); !ok {
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
 		return nil, 0, domain.ErrForbidden
 	}
 
-	if _, err := s.chatRepo.FindByID(ctx, chatID); err != nil {
+	chat, err := s.chatRepo.FindByID(ctx, chatID)
+	if err != nil {
 		return nil, 0, err
+	}
+
+	allowed, err := s.canParticipate(ctx, caller, chat)
+	if err != nil {
+		return nil, 0, err
+	}
+	if !allowed {
+		return nil, 0, domain.ErrForbidden
 	}
 	return s.messageRepo.List(ctx, chatID, q)
 }

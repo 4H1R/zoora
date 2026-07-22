@@ -709,7 +709,7 @@ func parsePresenceIDs(raw string) []uuid.UUID {
 	}
 	seen := make(map[uuid.UUID]bool)
 	ids := make([]uuid.UUID, 0)
-	for _, part := range strings.Split(raw, ",") {
+	for part := range strings.SplitSeq(raw, ",") {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue

@@ -21,16 +21,19 @@ import (
 //	teacher (class.UserID == caller.UserID): manage gradebook of own class
 //	student (enrolled via class_members): view-only
 type service struct {
-	columns      domain.GradebookColumnRepository
-	cells        domain.GradebookCellRepository
-	classes      domain.ClassRepository
-	members      domain.ClassMemberRepository
+	columns       domain.GradebookColumnRepository
+	cells         domain.GradebookCellRepository
+	classes       domain.ClassRepository
+	members       domain.ClassMemberRepository
 	attendance    domain.AttendanceRepository
 	practiceSubs  domain.PracticeSubmissionRepository
 	quizSubs      domain.QuizSubmissionRepository
 	quizzes       domain.QuizRepository
 	practiceRooms domain.PracticeRoomRepository
+	sessions      domain.ClassSessionRepository
 	resolver      *authz.Resolver
+	tx            domain.Transactor
+	audit         domain.AuditRecorder
 	logger        *slog.Logger
 }
 
@@ -44,7 +47,10 @@ func NewService(
 	quizSubs domain.QuizSubmissionRepository,
 	quizzes domain.QuizRepository,
 	practiceRooms domain.PracticeRoomRepository,
+	sessions domain.ClassSessionRepository,
 	resolver *authz.Resolver,
+	tx domain.Transactor,
+	audit domain.AuditRecorder,
 	logger *slog.Logger,
 ) domain.GradebookService {
 	return &service{
@@ -57,7 +63,10 @@ func NewService(
 		quizSubs:      quizSubs,
 		quizzes:       quizzes,
 		practiceRooms: practiceRooms,
+		sessions:      sessions,
 		resolver:      resolver,
+		tx:            tx,
+		audit:         audit,
 		logger:        logger,
 	}
 }
@@ -95,6 +104,11 @@ func (s *service) CreateColumn(ctx context.Context, classID uuid.UUID, dto domai
 	if dto.Type.IsAuto() && dto.SourceID == nil {
 		return nil, domain.NewValidationError(map[string]string{"source_id": "required for auto column types"})
 	}
+	if dto.Type.IsAuto() {
+		if err := s.validateSource(ctx, dto.Type, *dto.SourceID, classID); err != nil {
+			return nil, err
+		}
+	}
 	col := &domain.GradebookColumn{
 		ClassID:    classID,
 		Title:      dto.Title,
@@ -103,7 +117,20 @@ func (s *service) CreateColumn(ctx context.Context, classID uuid.UUID, dto domai
 		MaxScore:   dto.MaxScore,
 		OrderIndex: dto.OrderIndex,
 	}
-	if err := s.columns.Create(ctx, col); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.columns.Create(ctx, col); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditCreated,
+			TargetType:  domain.AuditTargetGradebook,
+			TargetID:    &col.ID,
+			TargetLabel: col.Title,
+			OrgID:       &class.OrganizationID,
+			Metadata:    map[string]any{"class_id": classID.String()},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	s.logger.Info("gradebook column created",
@@ -112,6 +139,40 @@ func (s *service) CreateColumn(ctx context.Context, classID uuid.UUID, dto domai
 		"created_by", caller.UserID.String(),
 	)
 	return col, nil
+}
+
+// validateSource ensures an auto column's SourceID references a quiz, practice
+// room, or class session that belongs to classID. Without this check a teacher
+// could point an auto column at a source in a class they don't own and surface
+// those foreign grades for any student who also appears on their own roster.
+func (s *service) validateSource(ctx context.Context, typ domain.GradebookColumnType, sourceID, classID uuid.UUID) error {
+	var srcClassID uuid.UUID
+	switch typ {
+	case domain.GradebookColumnAutoQuiz:
+		q, err := s.quizzes.FindByID(ctx, sourceID)
+		if err != nil {
+			return err
+		}
+		srcClassID = q.ClassID
+	case domain.GradebookColumnAutoPractice:
+		r, err := s.practiceRooms.FindByID(ctx, sourceID)
+		if err != nil {
+			return err
+		}
+		srcClassID = r.ClassID
+	case domain.GradebookColumnAutoAttendance:
+		sess, err := s.sessions.FindByID(ctx, sourceID)
+		if err != nil {
+			return err
+		}
+		srcClassID = sess.ClassID
+	default:
+		return nil
+	}
+	if srcClassID != classID {
+		return domain.NewValidationError(map[string]string{"source_id": "source does not belong to this class"})
+	}
+	return nil
 }
 
 func (s *service) UpdateColumn(ctx context.Context, columnID uuid.UUID, dto domain.UpdateGradebookColumnDTO) (*domain.GradebookColumn, error) {
@@ -130,16 +191,35 @@ func (s *service) UpdateColumn(ctx context.Context, columnID uuid.UUID, dto doma
 	if !canManageGradebook(caller, class) {
 		return nil, domain.ErrForbidden
 	}
-	if dto.Title != nil {
+	// Build a shallow changed-fields diff (from/to) before mutating so the audit
+	// entry records exactly what this update altered.
+	changed := map[string]any{}
+	if dto.Title != nil && *dto.Title != col.Title {
+		changed["title"] = map[string]any{"from": col.Title, "to": *dto.Title}
 		col.Title = *dto.Title
 	}
 	if dto.MaxScore != nil {
+		changed["max_score"] = map[string]any{"from": col.MaxScore, "to": *dto.MaxScore}
 		col.MaxScore = dto.MaxScore
 	}
-	if dto.OrderIndex != nil {
+	if dto.OrderIndex != nil && *dto.OrderIndex != col.OrderIndex {
+		changed["order_index"] = map[string]any{"from": col.OrderIndex, "to": *dto.OrderIndex}
 		col.OrderIndex = *dto.OrderIndex
 	}
-	if err := s.columns.Update(ctx, col); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.columns.Update(ctx, col); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditUpdated,
+			TargetType:  domain.AuditTargetGradebook,
+			TargetID:    &col.ID,
+			TargetLabel: col.Title,
+			OrgID:       &class.OrganizationID,
+			Metadata:    map[string]any{"changed": changed},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	return col, nil
@@ -161,7 +241,20 @@ func (s *service) DeleteColumn(ctx context.Context, columnID uuid.UUID) error {
 	if !canDeleteGradebook(caller, class) {
 		return domain.ErrForbidden
 	}
-	if err := s.columns.Delete(ctx, columnID); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.columns.Delete(ctx, columnID); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditDeleted,
+			TargetType:  domain.AuditTargetGradebook,
+			TargetID:    &columnID,
+			TargetLabel: col.Title,
+			OrgID:       &class.OrganizationID,
+			Metadata:    map[string]any{"class_id": class.ID.String()},
+		})
+	})
+	if err != nil {
 		return err
 	}
 	s.logger.Info("gradebook column deleted",
@@ -200,7 +293,20 @@ func (s *service) UpsertCell(ctx context.Context, classID, columnID uuid.UUID, d
 		Value:     dto.Value,
 		UpdatedAt: time.Now(),
 	}
-	if err := s.cells.Upsert(ctx, cell); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.cells.Upsert(ctx, cell); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditGraded,
+			TargetType:  domain.AuditTargetGradebook,
+			TargetID:    &col.ID,
+			TargetLabel: col.Title,
+			OrgID:       &class.OrganizationID,
+			Metadata:    map[string]any{"student_id": dto.StudentID.String(), "value": dto.Value},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	return cell, nil

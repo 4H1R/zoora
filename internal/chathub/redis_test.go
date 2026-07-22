@@ -23,7 +23,7 @@ func TestEnqueue_NeverBlocks(t *testing.T) {
 	const n = 5000 // > old cmdBuffer (1024): a bounded channel would block
 	done := make(chan struct{})
 	go func() {
-		for i := 0; i < n; i++ {
+		for i := range n {
 			b.enqueue(convChannelPrefix+uuid.New().String(), i%2 == 0)
 		}
 		close(done)
@@ -63,21 +63,17 @@ func TestEnqueue_ConcurrentAppendsAreRaceClean(t *testing.T) {
 	b := newTestBridge()
 
 	var producers sync.WaitGroup
-	for p := 0; p < 8; p++ {
-		producers.Add(1)
-		go func() {
-			defer producers.Done()
-			for i := 0; i < 500; i++ {
+	for range 8 {
+		producers.Go(func() {
+			for range 500 {
 				b.enqueue(userChannelPrefix+uuid.New().String(), true)
 			}
-		}()
+		})
 	}
 
 	stop := make(chan struct{})
 	var drainer sync.WaitGroup
-	drainer.Add(1)
-	go func() {
-		defer drainer.Done()
+	drainer.Go(func() {
 		for {
 			select {
 			case <-stop:
@@ -87,7 +83,7 @@ func TestEnqueue_ConcurrentAppendsAreRaceClean(t *testing.T) {
 				b.takePending()
 			}
 		}
-	}()
+	})
 
 	producers.Wait()
 	close(stop)

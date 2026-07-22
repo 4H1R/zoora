@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { GithubCom4H1RZooraInternalDomainSubmitAnswerDTO } from './githubCom4H1RZooraInternalDomainSubmitAnswerDTO';
+import type { GithubCom4H1RZooraInternalDomainSubmitDeviceDTO } from './githubCom4H1RZooraInternalDomainSubmitDeviceDTO';
 
 export interface GithubCom4H1RZooraInternalDomainSubmitQuizDTO {
   /**
@@ -13,6 +14,8 @@ export interface GithubCom4H1RZooraInternalDomainSubmitQuizDTO {
      * new answers ("finalize what's saved"). Merged into the saved answers.
      */
   answers?: GithubCom4H1RZooraInternalDomainSubmitAnswerDTO[];
+  /** Device is the client's best-effort device snapshot (optional). */
+  device?: GithubCom4H1RZooraInternalDomainSubmitDeviceDTO;
   /** @minimum 0 */
   tab_hidden_count?: number;
   /** @minimum 0 */

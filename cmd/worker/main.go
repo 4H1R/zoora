@@ -10,6 +10,7 @@ import (
 
 	"github.com/4H1R/zoora/internal/ai"
 	"github.com/4H1R/zoora/internal/attendance"
+	"github.com/4H1R/zoora/internal/audit"
 	"github.com/4H1R/zoora/internal/billing"
 	"github.com/4H1R/zoora/internal/chat"
 	"github.com/4H1R/zoora/internal/classes"
@@ -78,10 +79,14 @@ func main() {
 	}
 
 	transactor := database.NewTransactor(db)
+	auditRepo := audit.NewRepository(db)
+	auditService := audit.NewService(auditRepo, log)
 	chatRepo := chat.NewChatRepository(db)
 	chatMessageRepo := chat.NewMessageRepository(db)
 	// Worker has no LiveKit client; realtime chat broadcast is API-only (nil deps = no-op).
-	chatSvc := chat.NewService(chatRepo, chatMessageRepo, transactor, log, nil, nil)
+	// modelAuth is nil too: the worker only calls FindChatByRoom/ArchiveByRoom on the
+	// chat service (already room-authorized upstream), never the authz-gated methods.
+	chatSvc := chat.NewService(chatRepo, chatMessageRepo, transactor, log, nil, nil, nil)
 
 	liveRoomRepo := livesessions.NewRoomRepository(db)
 	liveParticipantRepo := livesessions.NewParticipantRepository(db)
@@ -93,12 +98,13 @@ func main() {
 	livekitClient := lk.NewClient(cfg, log)
 	pollRepo := polls.NewRepository(db)
 	pollAnswerRepo := polls.NewAnswerRepository(db)
-	pollSvc := polls.NewService(pollRepo, pollAnswerRepo, log)
+	pollModelAuthorizer := polls.NewModelAuthorizer(liveRoomRepo, classSessionRepo, classRepo, classMemberRepo)
+	pollSvc := polls.NewService(pollRepo, pollAnswerRepo, pollModelAuthorizer, transactor, auditService, log)
 	liveSessionService := livesessions.NewService(
 		liveRoomRepo, liveParticipantRepo, liveRecordingRepo, liveWhiteboardRepo,
 		classSessionRepo, classRepo, classMemberRepo,
-		chatSvc, pollSvc, transactor,
-		livekitClient, nil, queueClient, nil, cfg.LiveRoomHostGracePeriod, log,
+		chatSvc, pollSvc, transactor, auditService,
+		livekitClient, nil, queueClient, nil, cfg.LiveRoomHostGracePeriod, 0, log,
 	)
 	queueServer.HandleFunc(domain.TypeLiveSessionAutoClose, livesessions.NewAutoCloseHandler(liveSessionService))
 	queueServer.HandleFunc(domain.TypeLiveSessionCloseIfNoHost, livesessions.NewCloseIfNoHostHandler(liveSessionService))
@@ -107,12 +113,12 @@ func main() {
 	offlineRoomRepo := offlines.NewRoomRepository(db)
 	offlineViewRepo := offlines.NewViewRepository(db)
 	orgSettingsRepo := orgsettings.NewRepository(db)
-	orgSettingsService := orgsettings.NewService(orgSettingsRepo, log)
+	orgSettingsService := orgsettings.NewService(orgSettingsRepo, transactor, auditService, log)
 	authzResolver := authz.NewResolver(classMemberRepo)
 	attendanceService := attendance.NewService(
 		attendanceRepo, classRepo, classSessionRepo, classMemberRepo,
 		liveRoomRepo, liveParticipantRepo, offlineViewRepo, offlineRoomRepo,
-		orgSettingsService, authzResolver, log,
+		orgSettingsService, authzResolver, transactor, auditService, log,
 	)
 	queueServer.HandleFunc(domain.TypeAttendanceAutoMark, attendance.NewAutoMarkHandler(attendanceService))
 
@@ -179,7 +185,7 @@ func main() {
 	connectorService := connectors.NewService(connectorRepo, userRepo, orgRepo, redisClient, smsSender, connectors.BotLinkConfig{
 		TelegramBotUsername: cfg.TelegramBotUsername,
 		BaleBotUsername:     cfg.BaleBotUsername,
-	}, log)
+	}, transactor, auditService, log)
 	pollCtx, pollCancel := context.WithCancel(context.Background())
 	defer pollCancel()
 	if telegramBot != nil {
@@ -196,7 +202,7 @@ func main() {
 	}
 	mediaRepo := media.NewRepository(db)
 	// usage reader is nil — the worker never serves the files "by owner" view.
-	mediaService := media.NewService(mediaRepo, storageClient, nil, nil, log)
+	mediaService := media.NewService(mediaRepo, storageClient, nil, nil, transactor, auditService, log)
 	queueServer.HandleFunc(domain.TypeMediaCleanup, media.NewCleanupHandler(mediaService))
 	queueServer.HandleFunc(domain.TypeOrganizationCleanup, organizations.NewCleanupHandler(storageClient))
 
@@ -229,9 +235,14 @@ func main() {
 	}
 	aiGradingWorker := quizzes.NewAIGradingWorker(
 		quizRepo, quizRuleRepo, quizRoomRepo, quizSubmissionRepo, questionRepo,
-		classRepo, classMemberRepo, queueClient, llmClient, aiJobRepo, log,
+		classRepo, classMemberRepo, queueClient, llmClient, aiJobRepo, transactor, auditService, log,
 	)
 	queueServer.HandleFunc(domain.TypeQuizAIGradeSubmission, quizzes.NewAIGradeSubmissionHandler(aiGradingWorker))
+
+	// Share-code redeems: clone a bank (questions + media) into the redeemer's org.
+	questionBankRepo := questionbanks.NewRepository(db)
+	bankCopier := questionbanks.NewBankCopier(questionBankRepo, questionRepo, mediaRepo, mediaService, storageClient, log)
+	queueServer.HandleFunc(domain.TypeQuestionBankCopy, questionbanks.NewCopyBankHandler(bankCopier))
 
 	// --- bulk imports: service isn't used to enqueue here (only the API does),
 	// but the constructor requires a queue client + result store regardless. ---
@@ -242,7 +253,7 @@ func main() {
 	importService := imports.NewService(
 		importRepo, userRepo, roleRepo, classRepo, classMemberRepo, mediaRepo,
 		entitlementService, storageClient, queueClient,
-		imports.NewRedisResultStore(redisClient), log,
+		imports.NewRedisResultStore(redisClient), transactor, auditService, log,
 	)
 	queueServer.HandleFunc(domain.TypeImportProcess, imports.NewProcessHandler(importService))
 
@@ -270,6 +281,7 @@ func main() {
 		billing.NewQueueEnqueuer(queueClient),
 		notificationService,
 		billingPDF,
+		auditService,
 		billing.BillingConfig{
 			AppURLTemplate: cfg.AppURLTemplate,
 			Issuer:         billingIssuer,

@@ -82,6 +82,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 // @Param order_by query string false "One of: created_at, updated_at, name"
 // @Param order_dir query string false "asc or desc"
 // @Param page query int false "1-based page number"
+// @Param page_size query int false "Items per page"
 // @Success 200 {object} domain.Response{data=domain.PaginatedData{items=[]domain.Class}}
 // @Failure 401 {object} domain.Response{error=domain.ErrorBody}
 // @Failure 403 {object} domain.Response{error=domain.ErrorBody}

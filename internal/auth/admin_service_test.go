@@ -2,13 +2,13 @@ package auth_test
 
 import (
 	"context"
+	"log/slog"
 	"strconv"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"log/slog"
 
 	"github.com/4H1R/zoora/internal/auth"
 	"github.com/4H1R/zoora/internal/config"

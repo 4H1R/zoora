@@ -98,8 +98,30 @@ func (noopSettingsRepo) FindByOrgID(ctx context.Context, orgID uuid.UUID) (*doma
 }
 func (noopSettingsRepo) Update(ctx context.Context, s *domain.OrganizationSettings) error { return nil }
 
+// fakeTransactor runs fn inline with no real DB — unit tests exercise the audit
+// same-tx wiring without a database.
+type fakeTransactor struct{}
+
+func (fakeTransactor) RunInTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
+
 func newOrganizationService(repo *orgRepoMock) domain.OrganizationService {
-	return organizations.NewService(repo, nil, noopSettingsRepo{}, nil, nil, slog.Default())
+	return organizations.NewService(repo, nil, noopSettingsRepo{}, nil, nil, fakeTransactor{}, &auditSpy{}, slog.Default())
+}
+
+func newOrganizationServiceWithAudit(repo *orgRepoMock, audit domain.AuditRecorder) domain.OrganizationService {
+	return organizations.NewService(repo, nil, noopSettingsRepo{}, nil, nil, fakeTransactor{}, audit, slog.Default())
 }
 
 func orgCaller(userID uuid.UUID, orgID *uuid.UUID, isAdmin bool) context.Context {
@@ -109,7 +131,7 @@ func orgCaller(userID uuid.UUID, orgID *uuid.UUID, isAdmin bool) context.Context
 func TestAdminHardDelete_EnqueuesStorageCleanup(t *testing.T) {
 	repo := &orgRepoMock{}
 	q := &fakeEnqueuer{}
-	svc := organizations.NewService(repo, nil, noopSettingsRepo{}, nil, q, slog.Default())
+	svc := organizations.NewService(repo, nil, noopSettingsRepo{}, nil, q, fakeTransactor{}, &auditSpy{}, slog.Default())
 
 	orgID := uuid.New()
 	repo.On("HardDelete", mock.Anything, orgID).Return(nil)
@@ -129,7 +151,7 @@ func TestAdminHardDelete_EnqueuesStorageCleanup(t *testing.T) {
 func TestAdminHardDelete_RepoError_NoCleanupEnqueued(t *testing.T) {
 	repo := &orgRepoMock{}
 	q := &fakeEnqueuer{}
-	svc := organizations.NewService(repo, nil, noopSettingsRepo{}, nil, q, slog.Default())
+	svc := organizations.NewService(repo, nil, noopSettingsRepo{}, nil, q, fakeTransactor{}, &auditSpy{}, slog.Default())
 
 	orgID := uuid.New()
 	repo.On("HardDelete", mock.Anything, orgID).Return(errors.New("boom"))
@@ -207,8 +229,8 @@ func TestOrganizationGetByIDScopesNonAdminsToTheirOrganization(t *testing.T) {
 func TestOrganizationUpdateAppliesOnlyProvidedFields(t *testing.T) {
 	repo := &orgRepoMock{}
 	svc := newOrganizationService(repo)
-	ctx := orgCaller(uuid.New(), nil, false)
 	orgID := uuid.New()
+	ctx := orgCaller(uuid.New(), &orgID, false)
 	org := &domain.Organization{ID: orgID, Name: "Old", Description: "old", Status: domain.OrganizationStatusTrial}
 	newName := "New"
 
@@ -225,6 +247,34 @@ func TestOrganizationUpdateAppliesOnlyProvidedFields(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "New", updated.Name)
 	assert.Equal(t, "old", updated.Description)
+}
+
+func TestOrganizationUpdateRecordsAudit(t *testing.T) {
+	repo := &orgRepoMock{}
+	audit := &auditSpy{}
+	svc := newOrganizationServiceWithAudit(repo, audit)
+	orgID := uuid.New()
+	ctx := orgCaller(uuid.New(), &orgID, false)
+	newName := "New Name"
+
+	repo.On("FindByID", ctx, orgID).Return(&domain.Organization{ID: orgID, Name: "Old Name", Slug: "old", Description: "d"}, nil)
+	repo.On("Update", ctx, mock.AnythingOfType("*domain.Organization")).Return(nil)
+
+	_, err := svc.Update(ctx, orgID, domain.UpdateOrganizationDTO{Name: &newName})
+	require.NoError(t, err)
+
+	require.Len(t, audit.records, 1)
+	rec := audit.records[0]
+	assert.Equal(t, domain.AuditUpdated, rec.Action)
+	assert.Equal(t, domain.AuditTargetOrganization, rec.TargetType)
+	assert.Equal(t, "New Name", rec.TargetLabel)
+	require.NotNil(t, rec.TargetID)
+	assert.Equal(t, orgID, *rec.TargetID)
+	require.NotNil(t, rec.OrgID)
+	assert.Equal(t, orgID, *rec.OrgID)
+	changed, ok := rec.Metadata["changed"].(map[string]any)
+	require.True(t, ok)
+	assert.Contains(t, changed, "name")
 }
 
 func TestOrganizationListAndStatsRequireCallerAndWrapRepositoryErrors(t *testing.T) {

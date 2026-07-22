@@ -31,78 +31,95 @@ func (m *mockUserSvc) Create(ctx context.Context, dto domain.CreateUserDTO) (*do
 	u, _ := a.Get(0).(*domain.User)
 	return u, a.Error(1)
 }
+
 func (m *mockUserSvc) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	a := m.Called(ctx, id)
 	u, _ := a.Get(0).(*domain.User)
 	return u, a.Error(1)
 }
+
 func (m *mockUserSvc) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateUserDTO) (*domain.User, error) {
 	a := m.Called(ctx, id, dto)
 	u, _ := a.Get(0).(*domain.User)
 	return u, a.Error(1)
 }
+
 func (m *mockUserSvc) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockUserSvc) List(ctx context.Context, p domain.ListParams, disabled *bool) ([]domain.User, int64, error) {
 	a := m.Called(ctx, p, disabled)
 	us, _ := a.Get(0).([]domain.User)
 	return us, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockUserSvc) StatusCounts(ctx context.Context) (domain.UserStatusCounts, error) {
 	a := m.Called(ctx)
 	return a.Get(0).(domain.UserStatusCounts), a.Error(1)
 }
+
 func (m *mockUserSvc) GetProfile(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	a := m.Called(ctx, id)
 	u, _ := a.Get(0).(*domain.User)
 	return u, a.Error(1)
 }
+
 func (m *mockUserSvc) ChangePassword(ctx context.Context, id uuid.UUID, dto domain.ChangePasswordDTO) (string, error) {
 	a := m.Called(ctx, id, dto)
 	return a.String(0), a.Error(1)
 }
+
 func (m *mockUserSvc) AdminGetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	a := m.Called(ctx, id)
 	u, _ := a.Get(0).(*domain.User)
 	return u, a.Error(1)
 }
+
 func (m *mockUserSvc) AdminList(ctx context.Context, q domain.AdminListUsersQuery) ([]domain.User, int64, error) {
 	a := m.Called(ctx, q)
 	us, _ := a.Get(0).([]domain.User)
 	return us, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockUserSvc) AdminCreate(ctx context.Context, dto domain.AdminCreateUserDTO) (*domain.User, error) {
 	a := m.Called(ctx, dto)
 	u, _ := a.Get(0).(*domain.User)
 	return u, a.Error(1)
 }
+
 func (m *mockUserSvc) AdminUpdate(ctx context.Context, id uuid.UUID, dto domain.AdminUpdateUserDTO) (*domain.User, error) {
 	a := m.Called(ctx, id, dto)
 	u, _ := a.Get(0).(*domain.User)
 	return u, a.Error(1)
 }
+
 func (m *mockUserSvc) AdminForceResetPassword(ctx context.Context, id uuid.UUID, dto domain.AdminForceResetPasswordDTO) error {
 	return m.Called(ctx, id, dto).Error(0)
 }
+
 func (m *mockUserSvc) AdminHardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockUserSvc) AssignRole(ctx context.Context, userID uuid.UUID, dto domain.AssignRoleDTO) (*domain.User, error) {
 	a := m.Called(ctx, userID, dto)
 	u, _ := a.Get(0).(*domain.User)
 	return u, a.Error(1)
 }
+
 func (m *mockUserSvc) RemoveRole(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
 	a := m.Called(ctx, userID)
 	u, _ := a.Get(0).(*domain.User)
 	return u, a.Error(1)
 }
+
 func (m *mockUserSvc) Disable(ctx context.Context, id uuid.UUID, dto domain.DisableUserDTO) (*domain.User, error) {
 	a := m.Called(ctx, id, dto)
 	u, _ := a.Get(0).(*domain.User)
 	return u, a.Error(1)
 }
+
 func (m *mockUserSvc) Enable(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	a := m.Called(ctx, id)
 	u, _ := a.Get(0).(*domain.User)
@@ -117,6 +134,7 @@ func (m *mockAuthSvc) Login(ctx context.Context, dto domain.LoginDTO, orgID *uui
 	u, _ := a.Get(0).(*domain.User)
 	return u, a.String(1), a.Error(2)
 }
+
 func (m *mockAuthSvc) AdminRevokeSessions(ctx context.Context, userID uuid.UUID) error {
 	return m.Called(ctx, userID).Error(0)
 }

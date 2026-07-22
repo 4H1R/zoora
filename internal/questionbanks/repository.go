@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -117,6 +118,49 @@ func (r *bankRepository) AdminList(ctx context.Context, q domain.AdminListQuesti
 		return nil, 0, fmt.Errorf("questionbanks.repository.AdminList: %w", err)
 	}
 	return banks, total, nil
+}
+
+func (r *bankRepository) CreateShareCode(ctx context.Context, code *domain.QuestionBankShareCode) error {
+	if err := database.DB(ctx, r.db).Create(code).Error; err != nil {
+		if database.IsUniqueViolation(err) {
+			return domain.ErrConflict
+		}
+		return fmt.Errorf("questionbanks.repository.CreateShareCode: %w", err)
+	}
+	return nil
+}
+
+func (r *bankRepository) FindShareCodeByCode(ctx context.Context, code string) (*domain.QuestionBankShareCode, error) {
+	var sc domain.QuestionBankShareCode
+	if err := database.DB(ctx, r.db).First(&sc, "code = ?", code).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("questionbanks.repository.FindShareCodeByCode: %w", err)
+	}
+	return &sc, nil
+}
+
+func (r *bankRepository) FindActiveShareCodeByBank(ctx context.Context, bankID uuid.UUID) (*domain.QuestionBankShareCode, error) {
+	var sc domain.QuestionBankShareCode
+	if err := database.DB(ctx, r.db).First(&sc, "bank_id = ? AND revoked_at IS NULL", bankID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("questionbanks.repository.FindActiveShareCodeByBank: %w", err)
+	}
+	return &sc, nil
+}
+
+func (r *bankRepository) RevokeActiveShareCodesByBank(ctx context.Context, bankID uuid.UUID, at time.Time) error {
+	err := database.DB(ctx, r.db).
+		Model(&domain.QuestionBankShareCode{}).
+		Where("bank_id = ? AND revoked_at IS NULL", bankID).
+		Update("revoked_at", at).Error
+	if err != nil {
+		return fmt.Errorf("questionbanks.repository.RevokeActiveShareCodesByBank: %w", err)
+	}
+	return nil
 }
 
 // questionRepository handles persistence of individual questions within banks.

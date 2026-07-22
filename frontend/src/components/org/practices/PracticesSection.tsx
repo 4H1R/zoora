@@ -1,9 +1,11 @@
-import type { GithubCom4H1RZooraInternalDomainPracticeRoom as PracticeRoom } from "@/api/model"
+import type { GithubCom4H1RZooraInternalDomainPracticeRoomView as PracticeRoom } from "@/api/model"
 import type { SortOption } from "@/components/data-table/sort-picker"
 
 import { useQueryClient } from "@tanstack/react-query"
+import { Link } from "@tanstack/react-router"
 import {
   CalendarClockIcon,
+  CheckSquareIcon,
   ClockIcon,
   DumbbellIcon,
   PencilIcon,
@@ -49,6 +51,11 @@ function PracticeCard({ practice, index, canSubmit, onEdit, onDelete, onSubmit }
   const { t, i18n } = useTranslation()
   const canEdit = useCanSelfOr("practices:update", "practices:update_any", practice.user_id)
   const canDelete = useCanSelfOr("practices:delete", "practices:delete_any", practice.user_id)
+  // Stats only arrive for graders, so a positive pending count doubles as the
+  // "you can grade this" signal on the button badge.
+  const pendingGrades = practice.stats
+    ? Math.max((practice.stats.submitted_count ?? 0) - (practice.stats.graded_count ?? 0), 0)
+    : 0
   const tileNumber = String(index + 1).padStart(2, "0")
   const createdStr = formatSessionDate(practice.created_at, i18n.language, "short")
   const startStr = formatSessionDate(practice.start_time, i18n.language, "short")
@@ -127,6 +134,21 @@ function PracticeCard({ practice, index, canSubmit, onEdit, onDelete, onSubmit }
                 </Button>
               )}
             </div>
+          )}
+          {practice.can_grade && practice.id && (
+            <Button
+              size="sm"
+              variant="outline"
+              render={<Link to="/org/practices/$practiceId/scores" params={{ practiceId: practice.id }} />}
+            >
+              <CheckSquareIcon className="size-3.5" />
+              {t("org.session.practices.actions.scores")}
+              {pendingGrades > 0 && (
+                <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 font-mono text-[10px] text-amber-700 tabular-nums dark:text-amber-300">
+                  {pendingGrades}
+                </span>
+              )}
+            </Button>
           )}
           {canSubmit && (
             <Button size="sm" onClick={() => onSubmit(practice)}>

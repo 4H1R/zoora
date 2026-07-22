@@ -10,5 +10,8 @@ import type { GithubCom4H1RZooraInternalDomainMyAttendanceSummary } from './gith
 
 export interface GithubCom4H1RZooraInternalDomainMyAttendance {
   items?: GithubCom4H1RZooraInternalDomainAttendance[];
+  page?: number;
+  page_size?: number;
   summary?: GithubCom4H1RZooraInternalDomainMyAttendanceSummary;
+  total?: number;
 }

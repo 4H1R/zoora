@@ -22,7 +22,7 @@ func normalizeText(s string) string {
 			r = 'ی'
 		case r == 'ك': // Arabic kaf
 			r = 'ک'
-		case r == 'ة': // teh marbuta
+		case r == 'ة': // the marbuta
 			r = 'ه'
 		case r >= '۰' && r <= '۹': // Extended (Persian) digits
 			r = '0' + (r - '۰')

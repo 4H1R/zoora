@@ -12,13 +12,13 @@ import (
 // TotalUsers stores the maximum enrollment capacity (not the current member
 // count). 0 means unlimited. Current enrollment is derived from class_members.
 type Class struct {
-	ID             uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
-	OrganizationID uuid.UUID      `gorm:"type:uuid;not null;index" json:"organization_id"`
-	UserID         uuid.UUID      `gorm:"type:uuid;not null;index" json:"user_id"`
-	User           *User          `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	Name           string         `gorm:"not null" json:"name"`
-	Description    string         `json:"description"`
-	TotalUsers     int            `gorm:"not null;default:0" json:"total_users"` // capacity; 0 = unlimited
+	ID             uuid.UUID `gorm:"type:uuid;primaryKey;default:uuidv7()" json:"id"`
+	OrganizationID uuid.UUID `gorm:"type:uuid;not null;index" json:"organization_id"`
+	UserID         uuid.UUID `gorm:"type:uuid;not null;index" json:"user_id"`
+	User           *User     `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	Name           string    `gorm:"not null" json:"name"`
+	Description    string    `json:"description"`
+	TotalUsers     int       `gorm:"not null;default:0" json:"total_users"` // capacity; 0 = unlimited
 	// ConversationID links the class to its provisioned group/channel chat. NULL
 	// until a teacher/manager provisions it; drives the create-vs-open UI.
 	ConversationID *uuid.UUID     `gorm:"type:uuid" json:"conversation_id"`
@@ -62,14 +62,14 @@ type CreateClassDTO struct {
 	Name        string     `json:"name" binding:"required,min=2"`
 	Description string     `json:"description"`
 	TotalUsers  int        `json:"total_users" binding:"gte=0"` // capacity; 0 = unlimited
-	UserID      *uuid.UUID `json:"user_id" binding:"omitempty,uuid4"`
+	UserID      *uuid.UUID `json:"user_id" binding:"omitempty,uuid"`
 }
 
 type UpdateClassDTO struct {
 	Name        *string    `json:"name" binding:"omitempty,min=2"`
 	Description *string    `json:"description"`
 	TotalUsers  *int       `json:"total_users" binding:"omitempty,gte=0"`
-	UserID      *uuid.UUID `json:"user_id" binding:"omitempty,uuid4"`
+	UserID      *uuid.UUID `json:"user_id" binding:"omitempty,uuid"`
 }
 
 type CreateClassSessionDTO struct {

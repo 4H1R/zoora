@@ -59,8 +59,8 @@ func originChecker(allowedOrigins []string) func(*http.Request) bool {
 		// into fixed prefix/suffix and match by both ends. Extra "*"s beyond the
 		// first are treated as literal, which cannot match a real Origin — so a
 		// malformed pattern fails closed rather than widening the allow-list.
-		if i := strings.IndexByte(o, '*'); i >= 0 {
-			wildcards = append(wildcards, wildcard{prefix: o[:i], suffix: o[i+1:]})
+		if before, after, ok := strings.Cut(o, "*"); ok {
+			wildcards = append(wildcards, wildcard{prefix: before, suffix: after})
 			continue
 		}
 		exact[o] = true

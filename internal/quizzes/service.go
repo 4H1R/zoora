@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,6 +28,8 @@ type service struct {
 	queue       *queue.Client
 	llm         domain.LLM // may be nil when AI is disabled
 	aiJobs      domain.AIGradingJobRepository
+	tx          domain.Transactor
+	audit       domain.AuditRecorder
 	logger      *slog.Logger
 }
 
@@ -41,9 +44,11 @@ func NewService(
 	queueClient *queue.Client,
 	llmClient domain.LLM,
 	aiJobs domain.AIGradingJobRepository,
+	tx domain.Transactor,
+	audit domain.AuditRecorder,
 	logger *slog.Logger,
 ) domain.QuizService {
-	return newService(repo, rules, rooms, submissions, questions, classes, members, queueClient, llmClient, aiJobs, logger)
+	return newService(repo, rules, rooms, submissions, questions, classes, members, queueClient, llmClient, aiJobs, tx, audit, logger)
 }
 
 // NewAIGradingWorker builds the concrete service for the worker's AI-grade task
@@ -59,9 +64,11 @@ func NewAIGradingWorker(
 	queueClient *queue.Client,
 	llmClient domain.LLM,
 	aiJobs domain.AIGradingJobRepository,
+	tx domain.Transactor,
+	audit domain.AuditRecorder,
 	logger *slog.Logger,
 ) *service {
-	return newService(repo, rules, rooms, submissions, questions, classes, members, queueClient, llmClient, aiJobs, logger)
+	return newService(repo, rules, rooms, submissions, questions, classes, members, queueClient, llmClient, aiJobs, tx, audit, logger)
 }
 
 func newService(
@@ -75,6 +82,8 @@ func newService(
 	queueClient *queue.Client,
 	llmClient domain.LLM,
 	aiJobs domain.AIGradingJobRepository,
+	tx domain.Transactor,
+	audit domain.AuditRecorder,
 	logger *slog.Logger,
 ) *service {
 	return &service{
@@ -88,6 +97,8 @@ func newService(
 		queue:       queueClient,
 		llm:         llmClient,
 		aiJobs:      aiJobs,
+		tx:          tx,
+		audit:       audit,
 		logger:      logger,
 	}
 }
@@ -278,7 +289,20 @@ func (s *service) Create(ctx context.Context, dto domain.CreateQuizDTO) (*domain
 		NegativeValue:              val,
 		WrongsPerPoint:             wpp,
 	}
-	if err := s.repo.Create(ctx, quiz); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Create(ctx, quiz); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditCreated,
+			TargetType:  domain.AuditTargetQuiz,
+			TargetID:    &quiz.ID,
+			TargetLabel: quiz.Title,
+			OrgID:       &quiz.OrganizationID,
+			Metadata:    map[string]any{"class_id": quiz.ClassID.String()},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	s.logger.Info("quiz created",
@@ -329,40 +353,60 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateQui
 	if (wantsTab || wantsGPS) && !caller.HasFeature(domain.FeatureAdvancedAntiCheat) {
 		return nil, domain.NewFeatureError(caller.Ent.Plan, domain.FeatureAdvancedAntiCheat)
 	}
+	// Build a shallow changed-fields diff (from/to) before mutating so the audit
+	// entry records exactly what this update altered.
+	changed := map[string]any{}
+	setChanged := func(key string, from, to any) {
+		if from != to {
+			changed[key] = map[string]any{"from": from, "to": to}
+		}
+	}
 	if dto.Title != nil {
+		setChanged("title", quiz.Title, *dto.Title)
 		quiz.Title = *dto.Title
 	}
 	if dto.Description != nil {
+		setChanged("description", quiz.Description, *dto.Description)
 		quiz.Description = *dto.Description
 	}
 	if dto.DurationMinutes != nil {
+		setChanged("duration_minutes", quiz.DurationMinutes, *dto.DurationMinutes)
 		quiz.DurationMinutes = *dto.DurationMinutes
 	}
 	if dto.NoBackNavigation != nil {
+		setChanged("no_back_navigation", quiz.NoBackNavigation, *dto.NoBackNavigation)
 		quiz.NoBackNavigation = *dto.NoBackNavigation
 	}
 	if dto.ShuffleQuestions != nil {
+		setChanged("shuffle_questions", quiz.ShuffleQuestions, *dto.ShuffleQuestions)
 		quiz.ShuffleQuestions = *dto.ShuffleQuestions
 	}
 	if dto.ShuffleOptions != nil {
+		setChanged("shuffle_options", quiz.ShuffleOptions, *dto.ShuffleOptions)
 		quiz.ShuffleOptions = *dto.ShuffleOptions
 	}
 	if dto.TrackTabSwitches != nil {
+		setChanged("track_tab_switches", quiz.TrackTabSwitches, *dto.TrackTabSwitches)
 		quiz.TrackTabSwitches = *dto.TrackTabSwitches
 	}
 	if dto.RequireGPS != nil {
+		setChanged("require_gps", quiz.RequireGPS, *dto.RequireGPS)
 		quiz.RequireGPS = *dto.RequireGPS
 	}
 	if dto.DisableCopyPaste != nil {
+		setChanged("disable_copy_paste", quiz.DisableCopyPaste, *dto.DisableCopyPaste)
 		quiz.DisableCopyPaste = *dto.DisableCopyPaste
 	}
 	if dto.DisableRightClickShortcuts != nil {
+		setChanged("disable_right_click_shortcuts", quiz.DisableRightClickShortcuts, *dto.DisableRightClickShortcuts)
 		quiz.DisableRightClickShortcuts = *dto.DisableRightClickShortcuts
 	}
 	if dto.ShowResults != nil {
+		setChanged("show_results", quiz.ShowResults, *dto.ShowResults)
 		quiz.ShowResults = *dto.ShowResults
 	}
 	if dto.RenderAsImage != nil {
+		setChanged("render_as_image", quiz.RenderAsImage, *dto.RenderAsImage)
 		quiz.RenderAsImage = *dto.RenderAsImage
 	}
 	if dto.NegativeMarkMode != nil {
@@ -379,7 +423,20 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateQui
 		return nil, err
 	}
 	quiz.NegativeMarkMode, quiz.NegativeValue, quiz.WrongsPerPoint = mode, val, wpp
-	if err := s.repo.Update(ctx, quiz); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Update(ctx, quiz); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditUpdated,
+			TargetType:  domain.AuditTargetQuiz,
+			TargetID:    &quiz.ID,
+			TargetLabel: quiz.Title,
+			OrgID:       &quiz.OrganizationID,
+			Metadata:    map[string]any{"changed": changed},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	// If the quiz renders as image (newly turned on, or already on), make sure
@@ -400,7 +457,20 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	if !canDeleteQuiz(caller, quiz) {
 		return domain.ErrForbidden
 	}
-	if err := s.repo.Delete(ctx, id); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Delete(ctx, id); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditDeleted,
+			TargetType:  domain.AuditTargetQuiz,
+			TargetID:    &id,
+			TargetLabel: quiz.Title,
+			OrgID:       &quiz.OrganizationID,
+			Metadata:    map[string]any{"class_id": quiz.ClassID.String()},
+		})
+	})
+	if err != nil {
 		return err
 	}
 	s.logger.Info("quiz deleted",
@@ -421,16 +491,49 @@ func (s *service) List(ctx context.Context, q domain.ListQuizzesQuery) ([]domain
 	if canManage(caller) {
 		scope.IncludeDeleted = q.IncludeDeleted
 	}
-	return s.repo.List(ctx, scope, q.ListParams)
+	quizzes, total, err := s.repo.List(ctx, scope, q.ListParams)
+	if err != nil {
+		return nil, 0, err
+	}
+	if err := s.fillPendingSubmissionCounts(ctx, caller, quizzes); err != nil {
+		return nil, 0, err
+	}
+	return quizzes, total, nil
 }
 
-func (s *service) ListMine(ctx context.Context, p domain.ListParams) ([]domain.MyExam, int64, error) {
+// fillPendingSubmissionCounts populates the grader-only pending aggregate on
+// the quizzes the caller can manage; other quizzes keep the field omitted.
+func (s *service) fillPendingSubmissionCounts(ctx context.Context, caller domain.Caller, quizzes []domain.Quiz) error {
+	ids := make([]uuid.UUID, 0, len(quizzes))
+	for i := range quizzes {
+		if canManageQuiz(caller, &quizzes[i]) {
+			ids = append(ids, quizzes[i].ID)
+		}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	counts, err := s.repo.CountPendingSubmissionsByQuizIDs(ctx, ids)
+	if err != nil {
+		return fmt.Errorf("counting pending submissions: %w", err)
+	}
+	for i := range quizzes {
+		if !canManageQuiz(caller, &quizzes[i]) {
+			continue
+		}
+		n := counts[quizzes[i].ID]
+		quizzes[i].PendingSubmissionsCount = &n
+	}
+	return nil
+}
+
+func (s *service) ListMine(ctx context.Context, q domain.ListMyExamsQuery) ([]domain.MyExam, int64, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, 0, domain.ErrForbidden
 	}
 
-	quizzes, total, err := s.repo.ListByMemberWithRooms(ctx, caller.UserID, p)
+	quizzes, err := s.repo.ListByMemberWithRooms(ctx, caller.UserID, q.ClassID, q.ListParams)
 	if err != nil {
 		return nil, 0, fmt.Errorf("listing my exams: %w", err)
 	}
@@ -438,23 +541,23 @@ func (s *service) ListMine(ctx context.Context, p domain.ListParams) ([]domain.M
 	now := time.Now()
 	exams := make([]domain.MyExam, 0, len(quizzes))
 	for i := range quizzes {
-		q := quizzes[i]
+		quiz := quizzes[i]
 
 		ex := domain.MyExam{
-			QuizID:          q.ID,
-			Title:           q.Title,
-			ClassID:         q.ClassID,
-			DurationMinutes: q.DurationMinutes,
-			TotalScore:      q.TotalScore,
+			QuizID:          quiz.ID,
+			Title:           quiz.Title,
+			ClassID:         quiz.ClassID,
+			DurationMinutes: quiz.DurationMinutes,
+			TotalScore:      quiz.TotalScore,
 		}
-		if q.Class != nil {
-			ex.ClassName = q.Class.Name
+		if quiz.Class != nil {
+			ex.ClassName = quiz.Class.Name
 		}
 
 		// Pick the room to surface: prefer an open room, else the next upcoming.
-		rooms, _, err := s.rooms.ListByQuiz(ctx, q.ID, domain.ListParams{Page: 1, PageSize: 10000})
+		rooms, _, err := s.rooms.ListByQuiz(ctx, quiz.ID, domain.ListParams{Page: 1, PageSize: 10000})
 		if err != nil {
-			return nil, 0, fmt.Errorf("listing rooms for exam %s: %w", q.ID, err)
+			return nil, 0, fmt.Errorf("listing rooms for exam %s: %w", quiz.ID, err)
 		}
 		var open *domain.QuizRoom
 		var nextUpcoming *domain.QuizRoom
@@ -487,13 +590,13 @@ func (s *service) ListMine(ctx context.Context, p domain.ListParams) ([]domain.M
 		}
 
 		// Caller's own submission decides submitted/graded.
-		sub, err := s.submissions.FindByQuizAndUser(ctx, q.ID, caller.UserID)
+		sub, err := s.submissions.FindByQuizAndUser(ctx, quiz.ID, caller.UserID)
 		switch {
 		case err == nil && sub != nil:
 			switch sub.Status {
 			case domain.SubmissionStatusGraded:
 				ex.State = domain.MyExamStateGraded
-				if s.resultsRevealed(ctx, &q, sub, now) {
+				if s.resultsRevealed(ctx, &quiz, sub, now) {
 					score := sub.TotalScore
 					ex.Score = &score
 				}
@@ -508,13 +611,68 @@ func (s *service) ListMine(ctx context.Context, p domain.ListParams) ([]domain.M
 				ex.State = domain.MyExamStateUpcoming
 			}
 		default:
-			return nil, 0, fmt.Errorf("loading submission for exam %s: %w", q.ID, err)
+			return nil, 0, fmt.Errorf("loading submission for exam %s: %w", quiz.ID, err)
 		}
 
+		if q.State != nil && ex.State != *q.State {
+			continue
+		}
 		exams = append(exams, ex)
 	}
 
-	return exams, total, nil
+	if !q.ExplicitOrder {
+		sortMyExamsByUrgency(exams)
+	}
+
+	total := int64(len(exams))
+	start := min(q.ListParams.Offset(), len(exams))
+	end := min(start+q.ListParams.Limit(), len(exams))
+	return exams[start:end], total, nil
+}
+
+// myExamStateRank orders states by how urgently they need the student's
+// attention in the default exam list.
+func myExamStateRank(st domain.MyExamState) int {
+	switch st {
+	case domain.MyExamStateOpen:
+		return 0
+	case domain.MyExamStateUpcoming:
+		return 1
+	case domain.MyExamStateSubmitted:
+		return 2
+	default:
+		return 3
+	}
+}
+
+// sortMyExamsByUrgency: open exams first, then upcoming (soonest start first),
+// then submitted, then graded. Ties keep the repository order.
+func sortMyExamsByUrgency(exams []domain.MyExam) {
+	sort.SliceStable(exams, func(i, j int) bool {
+		ri, rj := myExamStateRank(exams[i].State), myExamStateRank(exams[j].State)
+		if ri != rj {
+			return ri < rj
+		}
+		if exams[i].State == domain.MyExamStateUpcoming {
+			si, sj := upcomingStart(exams[i]), upcomingStart(exams[j])
+			switch {
+			case si != nil && sj != nil && !si.Equal(*sj):
+				return si.Before(*sj)
+			case si != nil && sj == nil:
+				return true
+			case si == nil && sj != nil:
+				return false
+			}
+		}
+		return false
+	})
+}
+
+func upcomingStart(ex domain.MyExam) *time.Time {
+	if ex.Room == nil {
+		return nil
+	}
+	return ex.Room.StartedAt
 }
 
 func (s *service) resolveListScope(caller domain.Caller) domain.QuizListScope {

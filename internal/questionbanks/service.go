@@ -20,6 +20,8 @@ type service struct {
 	questions domain.QuestionRepository
 	media     domain.MediaRepository
 	queue     *queue.Client
+	tx        domain.Transactor
+	audit     domain.AuditRecorder
 	logger    *slog.Logger
 }
 
@@ -28,9 +30,22 @@ func NewService(
 	questions domain.QuestionRepository,
 	media domain.MediaRepository,
 	queueClient *queue.Client,
+	tx domain.Transactor,
+	audit domain.AuditRecorder,
 	logger *slog.Logger,
 ) domain.QuestionBankService {
-	return &service{repo: repo, questions: questions, media: media, queue: queueClient, logger: logger}
+	return &service{repo: repo, questions: questions, media: media, queue: queueClient, tx: tx, audit: audit, logger: logger}
+}
+
+// bankOrg returns the bank's organization as a pointer, or nil when the bank has
+// no org (a platform-admin global bank). The audit log is org-scoped, so entries
+// are filed under the bank's org; global banks are left unaudited.
+func bankOrg(bank *domain.QuestionBank) *uuid.UUID {
+	if bank.OrganizationID == uuid.Nil {
+		return nil
+	}
+	id := bank.OrganizationID
+	return &id
 }
 
 // enqueueRenderImages schedules anti-cheat image (re)generation for a question.
@@ -185,7 +200,22 @@ func (s *service) Create(ctx context.Context, dto domain.CreateQuestionBankDTO) 
 	if caller.OrgID != nil {
 		bank.OrganizationID = *caller.OrgID
 	}
-	if err := s.repo.Create(ctx, bank); err != nil {
+	err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Create(ctx, bank); err != nil {
+			return err
+		}
+		if org := bankOrg(bank); org != nil {
+			return s.audit.Record(ctx, domain.AuditRecord{
+				Action:      domain.AuditCreated,
+				TargetType:  domain.AuditTargetQuestionBank,
+				TargetID:    &bank.ID,
+				TargetLabel: bank.Name,
+				OrgID:       org,
+			})
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
 	s.logger.Info("question bank created",
@@ -222,13 +252,34 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateQue
 	if !canManageBank(caller, bank) {
 		return nil, domain.ErrForbidden
 	}
-	if dto.Name != nil {
+	// Build a shallow changed-fields diff (from/to) before mutating so the audit
+	// entry records exactly what this update altered.
+	changed := map[string]any{}
+	if dto.Name != nil && *dto.Name != bank.Name {
+		changed["name"] = map[string]any{"from": bank.Name, "to": *dto.Name}
 		bank.Name = *dto.Name
 	}
-	if dto.Description != nil {
+	if dto.Description != nil && *dto.Description != bank.Description {
+		changed["description"] = map[string]any{"from": bank.Description, "to": *dto.Description}
 		bank.Description = *dto.Description
 	}
-	if err := s.repo.Update(ctx, bank); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Update(ctx, bank); err != nil {
+			return err
+		}
+		if org := bankOrg(bank); org != nil {
+			return s.audit.Record(ctx, domain.AuditRecord{
+				Action:      domain.AuditUpdated,
+				TargetType:  domain.AuditTargetQuestionBank,
+				TargetID:    &bank.ID,
+				TargetLabel: bank.Name,
+				OrgID:       org,
+				Metadata:    map[string]any{"changed": changed},
+			})
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
 	return bank, nil
@@ -253,7 +304,23 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if err := s.repo.Delete(ctx, id); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Delete(ctx, id); err != nil {
+			return err
+		}
+		if org := bankOrg(bank); org != nil {
+			return s.audit.Record(ctx, domain.AuditRecord{
+				Action:      domain.AuditDeleted,
+				TargetType:  domain.AuditTargetQuestionBank,
+				TargetID:    &id,
+				TargetLabel: bank.Name,
+				OrgID:       org,
+				Metadata:    map[string]any{"cascaded": map[string]any{"questions": len(questions)}},
+			})
+		}
+		return nil
+	})
+	if err != nil {
 		return err
 	}
 	for i := range questions {
@@ -331,7 +398,23 @@ func (s *service) CreateQuestion(ctx context.Context, bankID uuid.UUID, dto doma
 	// A new question starts as 'none'; when a quiz that renders as image uses it
 	// (or is saved), the quiz service enqueues the render. The take gate is the
 	// safety net for questions added to a bank after the quiz was saved.
-	if err := s.questions.Create(ctx, question); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.questions.Create(ctx, question); err != nil {
+			return err
+		}
+		if org := bankOrg(bank); org != nil {
+			return s.audit.Record(ctx, domain.AuditRecord{
+				Action:      domain.AuditCreated,
+				TargetType:  domain.AuditTargetQuestionBank,
+				TargetID:    &bank.ID,
+				TargetLabel: bank.Name,
+				OrgID:       org,
+				Metadata:    map[string]any{"question_id": question.ID.String()},
+			})
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
 	return question, nil
@@ -431,7 +514,23 @@ func (s *service) UpdateQuestion(ctx context.Context, id uuid.UUID, dto domain.U
 		clearSystemImages(question)
 	}
 
-	if err := s.questions.Update(ctx, question); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.questions.Update(ctx, question); err != nil {
+			return err
+		}
+		if org := bankOrg(bank); org != nil {
+			return s.audit.Record(ctx, domain.AuditRecord{
+				Action:      domain.AuditUpdated,
+				TargetType:  domain.AuditTargetQuestionBank,
+				TargetID:    &bank.ID,
+				TargetLabel: bank.Name,
+				OrgID:       org,
+				Metadata:    map[string]any{"question_id": question.ID.String()},
+			})
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
 	if enqueueRender {
@@ -479,7 +578,23 @@ func (s *service) DeleteQuestion(ctx context.Context, id uuid.UUID) error {
 	if !canDeleteBank(caller, bank) {
 		return domain.ErrForbidden
 	}
-	if err := s.questions.Delete(ctx, id); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.questions.Delete(ctx, id); err != nil {
+			return err
+		}
+		if org := bankOrg(bank); org != nil {
+			return s.audit.Record(ctx, domain.AuditRecord{
+				Action:      domain.AuditDeleted,
+				TargetType:  domain.AuditTargetQuestionBank,
+				TargetID:    &bank.ID,
+				TargetLabel: bank.Name,
+				OrgID:       org,
+				Metadata:    map[string]any{"question_id": id.String()},
+			})
+		}
+		return nil
+	})
+	if err != nil {
 		return err
 	}
 	s.enqueueMediaCleanup(ctx, id)

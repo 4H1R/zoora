@@ -43,11 +43,13 @@ type service struct {
 	storage objectStorage
 	ent     entitlements.Service
 	usage   storageUsageReader
+	tx      domain.Transactor
+	audit   domain.AuditRecorder
 	logger  *slog.Logger
 }
 
-func NewService(repo domain.MediaRepository, storage objectStorage, ent entitlements.Service, usage storageUsageReader, logger *slog.Logger) domain.MediaService {
-	return &service{repo: repo, storage: storage, ent: ent, usage: usage, logger: logger}
+func NewService(repo domain.MediaRepository, storage objectStorage, ent entitlements.Service, usage storageUsageReader, tx domain.Transactor, audit domain.AuditRecorder, logger *slog.Logger) domain.MediaService {
+	return &service{repo: repo, storage: storage, ent: ent, usage: usage, tx: tx, audit: audit, logger: logger}
 }
 
 func (s *service) PresignUpload(ctx context.Context, dto domain.PresignUploadDTO) (*domain.PresignUploadResponse, error) {
@@ -188,10 +190,32 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	// Drop the object first; if the row delete then fails the object is already
 	// gone (idempotent) and a retry re-deletes harmlessly. Object removal is
 	// best-effort so a storage hiccup never strands the DB row.
-	if err := s.storage.DeleteObject(ctx, m.S3Key()); err != nil {
-		s.logger.Error("media delete: remove object", "media_id", id.String(), "key", m.S3Key(), "error", err)
-	}
-	return s.repo.Delete(ctx, id)
+	return s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.storage.DeleteObject(ctx, m.S3Key()); err != nil {
+			s.logger.Error("media delete: remove object", "media_id", id.String(), "key", m.S3Key(), "error", err)
+		}
+		if err := s.repo.Delete(ctx, id); err != nil {
+			return err
+		}
+		// Platform-global assets (nil org) belong to no tenant log; skip audit
+		// rather than file an orphan entry (the recorder would reject it).
+		if m.OrganizationID == nil {
+			return nil
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditDeleted,
+			TargetType:  domain.AuditTargetMedia,
+			TargetID:    &m.ID,
+			TargetLabel: m.Name,
+			OrgID:       m.OrganizationID,
+			Metadata: map[string]any{
+				"model_type": m.ModelType,
+				"collection": m.CollectionName,
+				"file_name":  m.FileName,
+				"size":       m.Size,
+			},
+		})
+	})
 }
 
 // CleanupByModel deletes every media row in a collection together with its S3

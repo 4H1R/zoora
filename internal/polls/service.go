@@ -10,29 +10,57 @@ import (
 )
 
 type service struct {
-	repo    domain.PollRepository
-	answers domain.PollAnswerRepository
-	logger  *slog.Logger
+	repo      domain.PollRepository
+	answers   domain.PollAnswerRepository
+	modelAuth domain.ModelAuthorizer
+	tx        domain.Transactor
+	audit     domain.AuditRecorder
+	logger    *slog.Logger
 }
 
 func NewService(
 	repo domain.PollRepository,
 	answers domain.PollAnswerRepository,
+	modelAuth domain.ModelAuthorizer,
+	tx domain.Transactor,
+	audit domain.AuditRecorder,
 	logger *slog.Logger,
 ) domain.PollService {
 	return &service{
-		repo:    repo,
-		answers: answers,
-		logger:  logger,
+		repo:      repo,
+		answers:   answers,
+		modelAuth: modelAuth,
+		tx:        tx,
+		audit:     audit,
+		logger:    logger,
 	}
 }
 
-func canManagePoll(caller domain.Caller, poll *domain.Poll) bool {
-	return caller.CanManage(poll.UserID, domain.PermPollsUpdateAny)
+// orgForModel resolves the org the poll's polymorphic owner (class, or live
+// room -> session -> class) belongs to, so the audit entry is filed under the
+// TARGET's org. This matters for a Platform Admin, whose own Caller.OrgID is
+// nil: without a target org the recorder would return ErrValidation and roll the
+// whole mutation back. Every mutation path here first authorizes via CanModerate
+// (which resolves the same owner), so resolution succeeds whenever we reach a
+// Record call. On the off chance it errors, nil is returned and the recorder
+// falls back to the caller's org (a normal org user is unaffected).
+func (s *service) orgForModel(ctx context.Context, modelType string, modelID uuid.UUID) *uuid.UUID {
+	orgID, err := s.modelAuth.OrgForModel(ctx, modelType, modelID)
+	if err != nil {
+		return nil
+	}
+	return &orgID
 }
 
 func (s *service) Create(ctx context.Context, dto domain.CreatePollDTO) (*domain.Poll, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	ok, err := s.modelAuth.CanModerate(ctx, caller, dto.ModelType, dto.ModelID)
+	if err != nil {
+		return nil, err
+	}
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
@@ -44,7 +72,23 @@ func (s *service) Create(ctx context.Context, dto domain.CreatePollDTO) (*domain
 		AllowedAnswersCount: dto.AllowedAnswersCount,
 		Options:             dto.Options,
 	}
-	if err := s.repo.Create(ctx, poll); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Create(ctx, poll); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditCreated,
+			TargetType:  domain.AuditTargetPoll,
+			TargetID:    &poll.ID,
+			TargetLabel: poll.Name,
+			OrgID:       s.orgForModel(ctx, poll.ModelType, poll.ModelID),
+			Metadata: map[string]any{
+				"model_type": poll.ModelType,
+				"model_id":   poll.ModelID.String(),
+			},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	s.logger.Info("poll created",
@@ -57,11 +101,22 @@ func (s *service) Create(ctx context.Context, dto domain.CreatePollDTO) (*domain
 }
 
 func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*domain.Poll, error) {
-	_, ok := domain.CallerFromCtx(ctx)
+	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	return s.repo.FindByID(ctx, id)
+	poll, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	allowed, err := s.modelAuth.CanParticipate(ctx, caller, poll.ModelType, poll.ModelID)
+	if err != nil {
+		return nil, err
+	}
+	if !allowed {
+		return nil, domain.ErrForbidden
+	}
+	return poll, nil
 }
 
 func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdatePollDTO) (*domain.Poll, error) {
@@ -73,19 +128,42 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdatePol
 	if err != nil {
 		return nil, err
 	}
-	if !canManagePoll(caller, poll) {
+	ok, err = s.modelAuth.CanModerate(ctx, caller, poll.ModelType, poll.ModelID)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	if dto.Name != nil {
+	// Shallow changed-fields diff captured before mutating so the audit entry
+	// records exactly what this update altered.
+	changed := map[string]any{}
+	if dto.Name != nil && *dto.Name != poll.Name {
+		changed["name"] = map[string]any{"from": poll.Name, "to": *dto.Name}
 		poll.Name = *dto.Name
 	}
-	if dto.AllowedAnswersCount != nil {
+	if dto.AllowedAnswersCount != nil && *dto.AllowedAnswersCount != poll.AllowedAnswersCount {
+		changed["allowed_answers_count"] = map[string]any{"from": poll.AllowedAnswersCount, "to": *dto.AllowedAnswersCount}
 		poll.AllowedAnswersCount = *dto.AllowedAnswersCount
 	}
 	if dto.Options != nil {
+		changed["options"] = true
 		poll.Options = dto.Options
 	}
-	if err := s.repo.Update(ctx, poll); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Update(ctx, poll); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditUpdated,
+			TargetType:  domain.AuditTargetPoll,
+			TargetID:    &poll.ID,
+			TargetLabel: poll.Name,
+			OrgID:       s.orgForModel(ctx, poll.ModelType, poll.ModelID),
+			Metadata:    map[string]any{"changed": changed},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	return poll, nil
@@ -100,10 +178,30 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if !canManagePoll(caller, poll) {
+	ok, err = s.modelAuth.CanModerate(ctx, caller, poll.ModelType, poll.ModelID)
+	if err != nil {
+		return err
+	}
+	if !ok {
 		return domain.ErrForbidden
 	}
-	if err := s.repo.Delete(ctx, id); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Delete(ctx, id); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditDeleted,
+			TargetType:  domain.AuditTargetPoll,
+			TargetID:    &id,
+			TargetLabel: poll.Name,
+			OrgID:       s.orgForModel(ctx, poll.ModelType, poll.ModelID),
+			Metadata: map[string]any{
+				"model_type": poll.ModelType,
+				"model_id":   poll.ModelID.String(),
+			},
+		})
+	})
+	if err != nil {
 		return err
 	}
 	s.logger.Info("poll deleted",
@@ -117,6 +215,21 @@ func (s *service) List(ctx context.Context, q domain.ListPollsQuery) ([]domain.P
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, 0, domain.ErrForbidden
+	}
+	// Non-admins must scope the listing to a single model they can access. This
+	// keeps the empty (all-org) scope for update_any holders unreachable without
+	// an authorized per-model filter.
+	if !caller.IsAdmin {
+		if q.ModelType == nil || q.ModelID == nil {
+			return nil, 0, domain.ErrForbidden
+		}
+		allowed, err := s.modelAuth.CanParticipate(ctx, caller, *q.ModelType, *q.ModelID)
+		if err != nil {
+			return nil, 0, err
+		}
+		if !allowed {
+			return nil, 0, domain.ErrForbidden
+		}
 	}
 	scope := s.resolveListScope(caller)
 	scope.ModelType = q.ModelType
@@ -148,6 +261,13 @@ func (s *service) Answer(ctx context.Context, pollID uuid.UUID, dto domain.Answe
 	poll, err := s.repo.FindByID(ctx, pollID)
 	if err != nil {
 		return nil, err
+	}
+	allowed, err := s.modelAuth.CanParticipate(ctx, caller, poll.ModelType, poll.ModelID)
+	if err != nil {
+		return nil, err
+	}
+	if !allowed {
+		return nil, domain.ErrForbidden
 	}
 	if poll.IsClosed() {
 		return nil, domain.ErrPollClosed
@@ -191,20 +311,41 @@ func (s *service) CloseByModel(ctx context.Context, modelType string, modelID uu
 }
 
 func (s *service) ListAnswers(ctx context.Context, pollID uuid.UUID, q domain.ListPollAnswersQuery) ([]domain.PollAnswer, int64, error) {
-	_, ok := domain.CallerFromCtx(ctx)
+	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
+		return nil, 0, domain.ErrForbidden
+	}
+	poll, err := s.repo.FindByID(ctx, pollID)
+	if err != nil {
+		return nil, 0, err
+	}
+	// Per-voter disclosure is a privacy boundary: require moderation, not just
+	// participation.
+	allowed, err := s.modelAuth.CanModerate(ctx, caller, poll.ModelType, poll.ModelID)
+	if err != nil {
+		return nil, 0, err
+	}
+	if !allowed {
 		return nil, 0, domain.ErrForbidden
 	}
 	return s.answers.ListByPoll(ctx, pollID, q)
 }
 
 func (s *service) Results(ctx context.Context, pollID uuid.UUID) (*domain.PollResults, error) {
-	_, ok := domain.CallerFromCtx(ctx)
+	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
 		return nil, domain.ErrForbidden
 	}
-	if _, err := s.repo.FindByID(ctx, pollID); err != nil {
+	poll, err := s.repo.FindByID(ctx, pollID)
+	if err != nil {
 		return nil, err
+	}
+	allowed, err := s.modelAuth.CanParticipate(ctx, caller, poll.ModelType, poll.ModelID)
+	if err != nil {
+		return nil, err
+	}
+	if !allowed {
+		return nil, domain.ErrForbidden
 	}
 	counts, total, err := s.answers.CountByOption(ctx, pollID)
 	if err != nil {

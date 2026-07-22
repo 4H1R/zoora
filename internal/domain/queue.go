@@ -35,6 +35,8 @@ const (
 
 	TypeQuizAIGradeSubmission = "quiz:ai-grade-submission"
 
+	TypeQuestionBankCopy = "questionbank:copy"
+
 	// TypeQueueHealthCheck is a periodic self-inspection task: it scans every
 	// queue and warns when tasks have piled up in the archived (dead-letter) or
 	// retry sets, so exhausted-retry failures don't sit unnoticed.
@@ -60,6 +62,17 @@ type QuizAIGradeSubmissionPayload struct {
 	OrganizationID uuid.UUID     `json:"organization_id"`
 	Mode           AIGradingMode `json:"mode"`
 	Force          bool          `json:"force"`
+}
+
+// QuestionBankCopyPayload drives the share-code redeem clone: the worker copies
+// every question of the source bank (plus its uploaded media rows and S3
+// objects) into the pre-created target bank, then flips the target's status
+// from 'copying' to 'ready' (or 'failed'). Idempotent: each run purges the
+// target's existing questions first, so retries are safe. Runs on the media
+// queue (S3-bound).
+type QuestionBankCopyPayload struct {
+	SourceBankID uuid.UUID `json:"source_bank_id"`
+	TargetBankID uuid.UUID `json:"target_bank_id"`
 }
 
 // NotificationFanoutPayload resolves a notification's audience to user IDs

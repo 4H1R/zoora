@@ -12,6 +12,9 @@ git add frontend/src/api
 echo "▶ backend lint"
 make lint
 
-# 3. Frontend TypeScript check
+# 3. Frontend lint (oxlint) + TypeScript check
+cd frontend
+echo "▶ frontend lint"
+bun run lint
 echo "▶ frontend typecheck"
-cd frontend && bun run typecheck
+bun run typecheck

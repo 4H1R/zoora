@@ -59,6 +59,17 @@ func (a *modelAuthorizer) CanModerate(ctx context.Context, caller domain.Caller,
 	return caller.CanManageOwned(class.UserID, domain.PermLiveSessionsManage, domain.PermLiveSessionsManageAny), nil
 }
 
+// OrgForModel resolves the owning class and returns its organization, so a Q&A
+// mutation can be filed under the target's org even when the caller has none
+// (Platform Admin).
+func (a *modelAuthorizer) OrgForModel(ctx context.Context, modelType string, modelID uuid.UUID) (uuid.UUID, error) {
+	class, err := a.classForModel(ctx, modelType, modelID)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return class.OrganizationID, nil
+}
+
 func (a *modelAuthorizer) CanParticipate(ctx context.Context, caller domain.Caller, modelType string, modelID uuid.UUID) (bool, error) {
 	class, err := a.classForModel(ctx, modelType, modelID)
 	if err != nil {

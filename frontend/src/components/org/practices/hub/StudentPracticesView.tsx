@@ -9,6 +9,7 @@ import { useGetPractices } from "@/api/practices/practices"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { TableFilter } from "@/components/data-table/table-filter"
+import { ClassFilterSelect, SessionFilterSelect } from "@/components/org/class-session-filters"
 import { PracticeSubmitDialog } from "@/components/org/practices/PracticeSubmitDialog"
 import { usePracticePermissions } from "@/components/org/practices/use-practice-permissions"
 import { PageHeader } from "@/components/page-header"
@@ -29,7 +30,7 @@ const STATUS_FILTERS = ["all", "to_submit", "submitted", "graded", "upcoming", "
 export function StudentPracticesView() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const { search, status, order_by, order_dir, page } = Route.useSearch()
+  const { search, status, class_id, class_session_id, order_by, order_dir, page, page_size } = Route.useSearch()
   const { canSubmit } = usePracticePermissions()
 
   const activeStatus = status ?? "to_submit"
@@ -42,9 +43,12 @@ export function StudentPracticesView() {
   const { data, isLoading } = useGetPractices({
     search: search || undefined,
     status: activeStatus === "all" ? undefined : activeStatus,
+    class_id: class_id || undefined,
+    class_session_id: class_session_id || undefined,
     order_by: order_by || undefined,
     order_dir: order_dir || undefined,
     page: currentPage,
+    page_size: page_size ?? 20,
   })
 
   const listData = (data?.status === 200 && data.data.data) || undefined
@@ -56,6 +60,14 @@ export function StudentPracticesView() {
 
   const setStatus = (value: string) =>
     navigate({ to: ".", search: (prev) => ({ ...prev, status: value === "all" ? undefined : value, page: 1 }) })
+  // Changing class invalidates any chosen session — sessions belong to one class.
+  const setClass = (classId?: string) =>
+    navigate({
+      to: ".",
+      search: (prev) => ({ ...prev, class_id: classId, class_session_id: undefined, page: 1 }),
+    })
+  const setSession = (sessionId?: string) =>
+    navigate({ to: ".", search: (prev) => ({ ...prev, class_session_id: sessionId, page: 1 }) })
 
   const renderContent = () => {
     if (isTable) {
@@ -174,6 +186,8 @@ export function StudentPracticesView() {
                 </Button>
               ))}
             </div>
+            <ClassFilterSelect value={class_id} onChange={setClass} />
+            <SessionFilterSelect classId={class_id} value={class_session_id} onChange={setSession} />
           </TableFilter>
         </div>
         <ViewModeToggle value={viewMode} onChange={setViewMode} />

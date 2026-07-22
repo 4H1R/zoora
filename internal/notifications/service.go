@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"time"
 
 	"github.com/google/uuid"
@@ -83,6 +84,23 @@ func NewService(
 	}
 }
 
+// validateActionURL rejects action URLs whose scheme is not http/https. A
+// relative path (no scheme, e.g. "/org/quizzes/123") is allowed. Nil/empty is
+// allowed (no link).
+func validateActionURL(raw *string) error {
+	if raw == nil || *raw == "" {
+		return nil
+	}
+	u, err := url.Parse(*raw)
+	if err != nil {
+		return domain.NewValidationError(map[string]string{"action_url": "invalid URL"})
+	}
+	if u.Scheme != "" && u.Scheme != "http" && u.Scheme != "https" {
+		return domain.NewValidationError(map[string]string{"action_url": "must be an http(s) or relative URL"})
+	}
+	return nil
+}
+
 func (s *service) Send(ctx context.Context, dto domain.SendNotificationDTO) (*domain.Notification, error) {
 	caller, ok := domain.CallerFromCtx(ctx)
 	if !ok {
@@ -107,6 +125,10 @@ func (s *service) Send(ctx context.Context, dto domain.SendNotificationDTO) (*do
 	}
 
 	if err := s.authorizeAudience(ctx, caller, &audience); err != nil {
+		return nil, err
+	}
+
+	if err := validateActionURL(dto.ActionURL); err != nil {
 		return nil, err
 	}
 
@@ -147,6 +169,9 @@ func (s *service) SendSystem(ctx context.Context, in domain.SystemNotificationIn
 	category := in.Category
 	if category == "" {
 		category = domain.NotificationCategoryReminder
+	}
+	if err := validateActionURL(in.ActionURL); err != nil {
+		return err
 	}
 	n := &domain.Notification{
 		SenderID:       nil, // system

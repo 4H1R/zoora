@@ -11,7 +11,7 @@ func TestNormalizeText(t *testing.T) {
 		{"english lowercase trim collapse", "  Hello   World ", "hello world"},
 		{"arabic yeh folded to persian", "عربي", "عربی"},
 		{"arabic kaf folded to persian", "كتاب", "کتاب"},
-		{"teh marbuta folded to heh", "مدرسة", "مدرسه"},
+		{"the marbuta folded to heh", "مدرسة", "مدرسه"},
 		{"persian digits to latin", "۱۲۳", "123"},
 		{"arabic-indic digits to latin", "١٢٣", "123"},
 		{"diacritics stripped", "مَدْرَسَه", "مدرسه"},

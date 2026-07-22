@@ -28,118 +28,145 @@ func (m *mockLiveSessionSvc) CreateRoom(ctx context.Context, dto domain.CreateLi
 	r, _ := a.Get(0).(*domain.LiveRoom)
 	return r, a.Error(1)
 }
+
 func (m *mockLiveSessionSvc) GetRoom(ctx context.Context, id uuid.UUID) (*domain.LiveRoom, error) {
 	a := m.Called(ctx, id)
 	r, _ := a.Get(0).(*domain.LiveRoom)
 	return r, a.Error(1)
 }
+
 func (m *mockLiveSessionSvc) JoinRoom(ctx context.Context, id uuid.UUID) (*domain.JoinLiveRoomResponse, error) {
 	a := m.Called(ctx, id)
 	r, _ := a.Get(0).(*domain.JoinLiveRoomResponse)
 	return r, a.Error(1)
 }
+
 func (m *mockLiveSessionSvc) LeaveRoom(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockLiveSessionSvc) StartRoom(ctx context.Context, id uuid.UUID) (*domain.LiveRoom, error) {
 	a := m.Called(ctx, id)
 	r, _ := a.Get(0).(*domain.LiveRoom)
 	return r, a.Error(1)
 }
+
 func (m *mockLiveSessionSvc) EndRoom(ctx context.Context, id uuid.UUID) (*domain.LiveRoom, error) {
 	a := m.Called(ctx, id)
 	r, _ := a.Get(0).(*domain.LiveRoom)
 	return r, a.Error(1)
 }
+
 func (m *mockLiveSessionSvc) UpdateRoomConfig(ctx context.Context, id uuid.UUID, dto domain.UpdateLiveRoomConfigDTO) (*domain.LiveRoom, error) {
 	a := m.Called(ctx, id, dto)
 	r, _ := a.Get(0).(*domain.LiveRoom)
 	return r, a.Error(1)
 }
+
 func (m *mockLiveSessionSvc) Heartbeat(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockLiveSessionSvc) List(ctx context.Context, q domain.ListLiveRoomsQuery) ([]domain.LiveRoom, int64, error) {
 	a := m.Called(ctx, q)
 	rooms, _ := a.Get(0).([]domain.LiveRoom)
 	return rooms, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockLiveSessionSvc) StartRecording(ctx context.Context, id uuid.UUID) (*domain.LiveRecording, error) {
 	a := m.Called(ctx, id)
 	r, _ := a.Get(0).(*domain.LiveRecording)
 	return r, a.Error(1)
 }
+
 func (m *mockLiveSessionSvc) StopRecording(ctx context.Context, id uuid.UUID) (*domain.LiveRecording, error) {
 	a := m.Called(ctx, id)
 	r, _ := a.Get(0).(*domain.LiveRecording)
 	return r, a.Error(1)
 }
+
 func (m *mockLiveSessionSvc) ListRecordings(ctx context.Context, id uuid.UUID, q domain.ListLiveRecordingsQuery) ([]domain.LiveRecording, int64, error) {
 	a := m.Called(ctx, id, q)
 	recs, _ := a.Get(0).([]domain.LiveRecording)
 	return recs, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockLiveSessionSvc) ListParticipants(ctx context.Context, id uuid.UUID, q domain.ListLiveParticipantsQuery) ([]domain.LiveParticipant, int64, error) {
 	a := m.Called(ctx, id, q)
 	ps, _ := a.Get(0).([]domain.LiveParticipant)
 	return ps, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockLiveSessionSvc) AdminList(ctx context.Context, q domain.AdminListLiveRoomsQuery) ([]domain.LiveRoom, int64, error) {
 	a := m.Called(ctx, q)
 	rooms, _ := a.Get(0).([]domain.LiveRoom)
 	return rooms, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockLiveSessionSvc) AdminEndRoom(ctx context.Context, id uuid.UUID) (*domain.LiveRoom, error) {
 	a := m.Called(ctx, id)
 	r, _ := a.Get(0).(*domain.LiveRoom)
 	return r, a.Error(1)
 }
+
 func (m *mockLiveSessionSvc) AdminHardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockLiveSessionSvc) AutoCloseStaleRooms(ctx context.Context) error {
 	return m.Called(ctx).Error(0)
 }
+
 func (m *mockLiveSessionSvc) OnLiveKitEvent(ctx context.Context, eventType, livekitRoomName, participantIdentity string) error {
 	return m.Called(ctx, eventType, livekitRoomName, participantIdentity).Error(0)
 }
+
 func (m *mockLiveSessionSvc) OnEgressEnded(ctx context.Context, result domain.EgressResult) error {
 	return m.Called(ctx, result).Error(0)
 }
+
 func (m *mockLiveSessionSvc) CloseRoomIfNoHost(ctx context.Context, roomID uuid.UUID) error {
 	return m.Called(ctx, roomID).Error(0)
 }
+
 func (m *mockLiveSessionSvc) SetParticipantRole(ctx context.Context, roomID uuid.UUID, identity string, dto domain.SetParticipantRoleDTO) (*domain.LiveParticipant, error) {
 	a := m.Called(ctx, roomID, identity, dto)
 	p, _ := a.Get(0).(*domain.LiveParticipant)
 	return p, a.Error(1)
 }
+
 func (m *mockLiveSessionSvc) MuteParticipant(ctx context.Context, roomID uuid.UUID, identity string, dto domain.MuteParticipantDTO) error {
 	return m.Called(ctx, roomID, identity, dto).Error(0)
 }
+
 func (m *mockLiveSessionSvc) RemoveParticipant(ctx context.Context, roomID uuid.UUID, identity string) error {
 	return m.Called(ctx, roomID, identity).Error(0)
 }
+
 func (m *mockLiveSessionSvc) SetHand(ctx context.Context, roomID uuid.UUID, dto domain.SetHandDTO) (*domain.LiveParticipant, error) {
 	a := m.Called(ctx, roomID, dto)
 	p, _ := a.Get(0).(*domain.LiveParticipant)
 	return p, a.Error(1)
 }
+
 func (m *mockLiveSessionSvc) SetParticipantHand(ctx context.Context, roomID uuid.UUID, identity string, dto domain.SetHandDTO) (*domain.LiveParticipant, error) {
 	a := m.Called(ctx, roomID, identity, dto)
 	p, _ := a.Get(0).(*domain.LiveParticipant)
 	return p, a.Error(1)
 }
+
 func (m *mockLiveSessionSvc) GetWhiteboard(ctx context.Context, roomID uuid.UUID) (*domain.LiveWhiteboard, error) {
 	a := m.Called(ctx, roomID)
 	wb, _ := a.Get(0).(*domain.LiveWhiteboard)
 	return wb, a.Error(1)
 }
+
 func (m *mockLiveSessionSvc) SaveWhiteboard(ctx context.Context, roomID uuid.UUID, dto domain.SaveWhiteboardDTO) (*domain.LiveWhiteboard, error) {
 	a := m.Called(ctx, roomID, dto)
 	wb, _ := a.Get(0).(*domain.LiveWhiteboard)
 	return wb, a.Error(1)
 }
+
 func (m *mockLiveSessionSvc) PresignWhiteboardMedia(ctx context.Context, roomID uuid.UUID, dto domain.WhiteboardMediaPresignDTO) (*domain.WhiteboardMediaPresignResponse, error) {
 	a := m.Called(ctx, roomID, dto)
 	res, _ := a.Get(0).(*domain.WhiteboardMediaPresignResponse)

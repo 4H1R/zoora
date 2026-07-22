@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,8 +15,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"log/slog"
 
+	"github.com/4H1R/zoora/internal/audit"
 	"github.com/4H1R/zoora/internal/auth"
 	"github.com/4H1R/zoora/internal/config"
 	"github.com/4H1R/zoora/internal/domain"
@@ -58,7 +59,8 @@ func TestRoleCreationAndAssignment(t *testing.T) {
 	permRepo := roles.NewPermissionRepository(db)
 
 	transactor := database.NewTransactor(db)
-	roleSvc := roles.NewService(roleRepo, permRepo, transactor, nil, logger)
+	auditSvc := audit.NewService(audit.NewRepository(db), logger)
+	roleSvc := roles.NewService(roleRepo, permRepo, transactor, auditSvc, nil, logger)
 	roleHandler := roles.NewHandler(roleSvc, permRepo)
 
 	gin.SetMode(gin.TestMode)

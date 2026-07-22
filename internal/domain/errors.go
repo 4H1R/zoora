@@ -25,6 +25,10 @@ var (
 	ErrCannotRemoveSelf       = errors.New("cannot remove yourself from the room")
 	ErrWhiteboardNotFound     = errors.New("whiteboard not found")
 	ErrPollClosed             = errors.New("poll is closed")
+	// ErrRecordingCapacityFull reports that the concurrent-egress cap is reached,
+	// so a new recording cannot start right now. Mapped to 503 so the client can
+	// tell the host to retry shortly (the class continues un-recorded meanwhile).
+	ErrRecordingCapacityFull = errors.New("recording capacity full")
 
 	// Plan / entitlement gates (mapped to HTTP 402 Payment Required).
 	ErrFeatureNotInPlan = errors.New("feature not available on current plan")
@@ -39,6 +43,12 @@ var (
 	ErrAmountMismatch      = errors.New("payment amount does not match invoice")
 	ErrInvoiceNotDraft     = errors.New("invoice is not a draft")
 	ErrGatewayNotFound     = errors.New("payment gateway not supported")
+
+	// Custom fields.
+	ErrCustomFieldTypeImmutable  = errors.New("custom field type cannot be changed")
+	ErrCustomFieldLimitReached   = errors.New("custom field limit reached")
+	ErrCustomFieldOptionInUse    = errors.New("cannot remove an option that is in use")
+	ErrCustomFieldDuplicateValue = errors.New("custom field value must be unique")
 )
 
 // PlanError carries machine-readable context for a plan/entitlement gate so the
@@ -130,6 +140,8 @@ func MapError(err error) (int, string) {
 		return http.StatusNotFound, "WHITEBOARD_NOT_FOUND"
 	case errors.Is(err, ErrPollClosed):
 		return http.StatusConflict, "POLL_CLOSED"
+	case errors.Is(err, ErrRecordingCapacityFull):
+		return http.StatusServiceUnavailable, "RECORDING_CAPACITY_FULL"
 	case errors.Is(err, ErrFeatureNotInPlan):
 		return http.StatusPaymentRequired, "FEATURE_NOT_IN_PLAN"
 	case errors.Is(err, ErrPlanLimitReached):
@@ -148,6 +160,14 @@ func MapError(err error) (int, string) {
 		return http.StatusBadRequest, "GATEWAY_NOT_SUPPORTED"
 	case errors.Is(err, ErrRateLimited):
 		return http.StatusTooManyRequests, "RATE_LIMITED"
+	case errors.Is(err, ErrCustomFieldLimitReached):
+		return http.StatusUnprocessableEntity, "CUSTOM_FIELD_LIMIT_REACHED"
+	case errors.Is(err, ErrCustomFieldTypeImmutable):
+		return http.StatusConflict, "CUSTOM_FIELD_TYPE_IMMUTABLE"
+	case errors.Is(err, ErrCustomFieldOptionInUse):
+		return http.StatusConflict, "CUSTOM_FIELD_OPTION_IN_USE"
+	case errors.Is(err, ErrCustomFieldDuplicateValue):
+		return http.StatusConflict, "CUSTOM_FIELD_DUPLICATE_VALUE"
 	case errors.Is(err, ErrValidation):
 		return http.StatusBadRequest, "VALIDATION_ERROR"
 	default:

@@ -95,9 +95,11 @@ func (m *mockMediaRepo) ListFiles(ctx context.Context, orgID uuid.UUID, modelTyp
 func (m *mockMediaRepo) ListOwnerMedia(context.Context, uuid.UUID) ([]domain.MediaOwner, error) {
 	return nil, nil
 }
+
 func (m *mockMediaRepo) ListOwnerRecordings(context.Context, uuid.UUID) ([]domain.MediaOwner, error) {
 	return nil, nil
 }
+
 func (m *mockMediaRepo) ListOwnerFiles(context.Context, uuid.UUID, string, *uuid.UUID, domain.ListParams) ([]domain.OwnerFile, int64, error) {
 	return nil, 0, nil
 }
@@ -142,21 +144,27 @@ func (stubUserRepo) Create(ctx context.Context, user *domain.User) error { retur
 func (stubUserRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	return nil, nil
 }
+
 func (stubUserRepo) FindByIDWithPermissions(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	return nil, nil
 }
+
 func (stubUserRepo) FindByUsernameAndOrg(ctx context.Context, username string, orgID uuid.UUID) (*domain.User, error) {
 	return nil, nil
 }
+
 func (stubUserRepo) FindByUsernames(ctx context.Context, orgID uuid.UUID, usernames []string) ([]domain.User, error) {
 	return nil, nil
 }
+
 func (stubUserRepo) SearchActiveInOrg(ctx context.Context, orgID uuid.UUID, query string, limit int) ([]domain.User, error) {
 	return nil, nil
 }
+
 func (stubUserRepo) FilterIDsInOrg(ctx context.Context, orgID uuid.UUID, ids []uuid.UUID) ([]uuid.UUID, error) {
 	return nil, nil
 }
+
 func (stubUserRepo) FindAdminByUsername(ctx context.Context, username string) (*domain.User, error) {
 	return nil, nil
 }
@@ -165,6 +173,7 @@ func (stubUserRepo) Delete(ctx context.Context, id uuid.UUID) error      { retur
 func (stubUserRepo) List(ctx context.Context, scope domain.UserListScope, p domain.ListParams) ([]domain.User, int64, error) {
 	return nil, 0, nil
 }
+
 func (stubUserRepo) StatusCounts(ctx context.Context, scope domain.UserListScope) (domain.UserStatusCounts, error) {
 	return domain.UserStatusCounts{}, nil
 }
@@ -172,6 +181,7 @@ func (stubUserRepo) HardDelete(ctx context.Context, id uuid.UUID) error { return
 func (stubUserRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	return nil, nil
 }
+
 func (stubUserRepo) AdminList(ctx context.Context, q domain.AdminListUsersQuery) ([]domain.User, int64, error) {
 	return nil, 0, nil
 }
@@ -183,6 +193,7 @@ func (stubRoleRepo) Create(ctx context.Context, role *domain.Role) error { retur
 func (stubRoleRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Role, error) {
 	return nil, nil
 }
+
 func (stubRoleRepo) FindPresetByName(ctx context.Context, name string) (*domain.Role, error) {
 	return nil, nil
 }
@@ -191,15 +202,19 @@ func (stubRoleRepo) Delete(ctx context.Context, id uuid.UUID) error      { retur
 func (stubRoleRepo) List(ctx context.Context, f domain.RoleFilter) ([]domain.Role, error) {
 	return nil, nil
 }
+
 func (stubRoleRepo) AdminList(ctx context.Context, f domain.AdminRoleFilter) ([]domain.Role, int64, error) {
 	return nil, 0, nil
 }
+
 func (stubRoleRepo) SetPermissions(ctx context.Context, roleID uuid.UUID, permissionIDs []uuid.UUID) error {
 	return nil
 }
+
 func (stubRoleRepo) Stats(ctx context.Context, orgID *uuid.UUID) (*domain.RoleStats, error) {
 	return nil, nil
 }
+
 func (stubRoleRepo) GetPermissionNames(ctx context.Context, roleID uuid.UUID) ([]string, error) {
 	return nil, nil
 }
@@ -215,6 +230,7 @@ func (stubClassRepo) Delete(ctx context.Context, id uuid.UUID) error        { re
 func (stubClassRepo) List(ctx context.Context, scope domain.ClassListScope, p domain.ListParams) ([]domain.Class, int64, error) {
 	return nil, 0, nil
 }
+
 func (stubClassRepo) ListByNames(ctx context.Context, orgID uuid.UUID, names []string) ([]domain.Class, error) {
 	return nil, nil
 }
@@ -222,6 +238,7 @@ func (stubClassRepo) HardDelete(ctx context.Context, id uuid.UUID) error { retur
 func (stubClassRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.Class, error) {
 	return nil, nil
 }
+
 func (stubClassRepo) AdminList(ctx context.Context, q domain.AdminListClassesQuery) ([]domain.Class, int64, error) {
 	return nil, 0, nil
 }
@@ -232,15 +249,19 @@ func (stubClassMemberRepo) Create(ctx context.Context, m *domain.ClassMember) er
 func (stubClassMemberRepo) Delete(ctx context.Context, classID, userID uuid.UUID) error {
 	return nil
 }
+
 func (stubClassMemberRepo) Exists(ctx context.Context, classID, userID uuid.UUID) (bool, error) {
 	return false, nil
 }
+
 func (stubClassMemberRepo) CountByClass(ctx context.Context, classID uuid.UUID) (int64, error) {
 	return 0, nil
 }
+
 func (stubClassMemberRepo) ListByClass(ctx context.Context, classID uuid.UUID, p domain.ListParams) ([]domain.ClassMember, int64, error) {
 	return nil, 0, nil
 }
+
 func (stubClassMemberRepo) ListAllByClass(ctx context.Context, classID uuid.UUID) ([]domain.ClassMember, error) {
 	return nil, nil
 }
@@ -254,26 +275,33 @@ type mockUserRepo struct{ mock.Mock }
 func (m *mockUserRepo) Create(ctx context.Context, user *domain.User) error {
 	return m.Called(ctx, user).Error(0)
 }
+
 func (m *mockUserRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	return nil, nil
 }
+
 func (m *mockUserRepo) FindByIDWithPermissions(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	return nil, nil
 }
+
 func (m *mockUserRepo) FindByUsernameAndOrg(ctx context.Context, username string, orgID uuid.UUID) (*domain.User, error) {
 	return nil, nil
 }
+
 func (m *mockUserRepo) FindByUsernames(ctx context.Context, orgID uuid.UUID, usernames []string) ([]domain.User, error) {
 	args := m.Called(ctx, orgID, usernames)
 	items, _ := args.Get(0).([]domain.User)
 	return items, args.Error(1)
 }
+
 func (m *mockUserRepo) SearchActiveInOrg(ctx context.Context, orgID uuid.UUID, query string, limit int) ([]domain.User, error) {
 	return nil, nil
 }
+
 func (m *mockUserRepo) FilterIDsInOrg(ctx context.Context, orgID uuid.UUID, ids []uuid.UUID) ([]uuid.UUID, error) {
 	return nil, nil
 }
+
 func (m *mockUserRepo) FindAdminByUsername(ctx context.Context, username string) (*domain.User, error) {
 	return nil, nil
 }
@@ -282,6 +310,7 @@ func (m *mockUserRepo) Delete(ctx context.Context, id uuid.UUID) error      { re
 func (m *mockUserRepo) List(ctx context.Context, scope domain.UserListScope, p domain.ListParams) ([]domain.User, int64, error) {
 	return nil, 0, nil
 }
+
 func (m *mockUserRepo) StatusCounts(ctx context.Context, scope domain.UserListScope) (domain.UserStatusCounts, error) {
 	return domain.UserStatusCounts{}, nil
 }
@@ -289,6 +318,7 @@ func (m *mockUserRepo) HardDelete(ctx context.Context, id uuid.UUID) error { ret
 func (m *mockUserRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	return nil, nil
 }
+
 func (m *mockUserRepo) AdminList(ctx context.Context, q domain.AdminListUsersQuery) ([]domain.User, int64, error) {
 	return nil, 0, nil
 }
@@ -302,6 +332,7 @@ func (m *mockRoleRepo) Create(ctx context.Context, role *domain.Role) error { re
 func (m *mockRoleRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Role, error) {
 	return nil, nil
 }
+
 func (m *mockRoleRepo) FindPresetByName(ctx context.Context, name string) (*domain.Role, error) {
 	return nil, nil
 }
@@ -312,15 +343,19 @@ func (m *mockRoleRepo) List(ctx context.Context, f domain.RoleFilter) ([]domain.
 	items, _ := args.Get(0).([]domain.Role)
 	return items, args.Error(1)
 }
+
 func (m *mockRoleRepo) AdminList(ctx context.Context, f domain.AdminRoleFilter) ([]domain.Role, int64, error) {
 	return nil, 0, nil
 }
+
 func (m *mockRoleRepo) SetPermissions(ctx context.Context, roleID uuid.UUID, permissionIDs []uuid.UUID) error {
 	return nil
 }
+
 func (m *mockRoleRepo) Stats(ctx context.Context, orgID *uuid.UUID) (*domain.RoleStats, error) {
 	return nil, nil
 }
+
 func (m *mockRoleRepo) GetPermissionNames(ctx context.Context, roleID uuid.UUID) ([]string, error) {
 	return nil, nil
 }
@@ -355,6 +390,24 @@ var _ entitlements.Service = (*fakeEnt)(nil)
 
 // --- test wiring --------------------------------------------------------
 
+// fakeTransactor runs fn inline with no real DB — unit tests exercise the audit
+// same-tx wiring without a database.
+type fakeTransactor struct{}
+
+func (fakeTransactor) RunInTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
+
 type testDeps struct {
 	job     *mockJobRepo
 	users   domain.UserRepository
@@ -366,6 +419,7 @@ type testDeps struct {
 	storage *mockObjectStore
 	queue   *mockEnqueuer
 	results *mockResultStore
+	audit   *auditSpy
 }
 
 func newTestService(t *testing.T, deps testDeps) domain.ImportService {
@@ -405,10 +459,13 @@ func newTestService(t *testing.T, deps testDeps) domain.ImportService {
 	if deps.results == nil {
 		deps.results = &mockResultStore{}
 	}
+	if deps.audit == nil {
+		deps.audit = &auditSpy{}
+	}
 	return imports.NewService(
 		deps.job, deps.users, deps.roles, deps.classes, deps.members,
 		deps.media, deps.ent, deps.storage, deps.queue, deps.results,
-		slog.Default(),
+		fakeTransactor{}, deps.audit, slog.Default(),
 	)
 }
 
@@ -550,6 +607,46 @@ func TestCreateImport_CreatesJobAndEnqueues(t *testing.T) {
 	assert.False(t, payload.IsAdmin)
 	assert.Equal(t, []string{string(domain.PermUsersCreate)}, payload.Permissions)
 	assert.Equal(t, domain.PlanFree, payload.Plan)
+}
+
+func TestCreateImport_RecordsAudit(t *testing.T) {
+	orgID := uuid.New()
+	mediaID := uuid.New()
+	userID := uuid.New()
+
+	media := &mockMediaRepo{}
+	media.On("FindByID", mock.Anything, mediaID).
+		Return(&domain.Media{ID: mediaID, OrganizationID: &orgID, FileName: "roster.xlsx", Size: 1 << 20}, nil)
+
+	job := &mockJobRepo{}
+	job.On("Latest", mock.Anything, orgID, domain.ImportTypeUsers).Return(nil, domain.ErrNotFound)
+	job.On("Create", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		args.Get(1).(*domain.ImportJob).ID = uuid.New()
+	}).Return(nil)
+
+	queue := &mockEnqueuer{}
+	queue.On("Enqueue", mock.Anything, mock.Anything).Return(&asynq.TaskInfo{}, nil)
+
+	spy := &auditSpy{}
+	svc := newTestService(t, testDeps{media: media, job: job, queue: queue, audit: spy})
+
+	ctx := domain.WithCaller(context.Background(), domain.Caller{
+		UserID:      userID,
+		OrgID:       &orgID,
+		Permissions: []string{string(domain.PermUsersCreate)},
+		Ent:         domain.PlanCatalog[domain.PlanFree],
+	})
+
+	created, err := svc.Create(ctx, domain.CreateImportJobDTO{Type: domain.ImportTypeUsers, MediaID: mediaID})
+	require.NoError(t, err)
+	require.Len(t, spy.records, 1)
+	rec := spy.records[0]
+	assert.Equal(t, domain.AuditCreated, rec.Action)
+	assert.Equal(t, domain.AuditTargetImport, rec.TargetType)
+	assert.Equal(t, created.ID, *rec.TargetID)
+	assert.Equal(t, "roster.xlsx", rec.TargetLabel)
+	require.NotNil(t, rec.OrgID)
+	assert.Equal(t, orgID, *rec.OrgID)
 }
 
 // TestCreateImport_RunningJobConflicts covers the one-running-import-per-org
@@ -770,10 +867,14 @@ func newUsersProcessDeps(t *testing.T) usersProcessDeps {
 
 func usersJobAndPayload(orgID uuid.UUID, perms []string) (*domain.ImportJob, domain.ImportProcessPayload) {
 	jobID, userID, mediaID := uuid.New(), uuid.New(), uuid.New()
-	job := &domain.ImportJob{ID: jobID, OrganizationID: orgID, UserID: userID,
-		MediaID: mediaID, Type: domain.ImportTypeUsers, Status: domain.ImportStatusPending}
-	payload := domain.ImportProcessPayload{JobID: jobID, UserID: userID, OrgID: orgID,
-		Permissions: perms, Plan: domain.PlanFree}
+	job := &domain.ImportJob{
+		ID: jobID, OrganizationID: orgID, UserID: userID,
+		MediaID: mediaID, Type: domain.ImportTypeUsers, Status: domain.ImportStatusPending,
+	}
+	payload := domain.ImportProcessPayload{
+		JobID: jobID, UserID: userID, OrgID: orgID,
+		Permissions: perms, Plan: domain.PlanFree,
+	}
 	return job, payload
 }
 
@@ -788,6 +889,7 @@ type mockClassRepo struct{ mock.Mock }
 func (m *mockClassRepo) Create(ctx context.Context, class *domain.Class) error {
 	return m.Called(ctx, class).Error(0)
 }
+
 func (m *mockClassRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Class, error) {
 	return nil, nil
 }
@@ -796,6 +898,7 @@ func (m *mockClassRepo) Delete(ctx context.Context, id uuid.UUID) error        {
 func (m *mockClassRepo) List(ctx context.Context, scope domain.ClassListScope, p domain.ListParams) ([]domain.Class, int64, error) {
 	return nil, 0, nil
 }
+
 func (m *mockClassRepo) ListByNames(ctx context.Context, orgID uuid.UUID, names []string) ([]domain.Class, error) {
 	args := m.Called(ctx, orgID, names)
 	items, _ := args.Get(0).([]domain.Class)
@@ -805,6 +908,7 @@ func (m *mockClassRepo) HardDelete(ctx context.Context, id uuid.UUID) error { re
 func (m *mockClassRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.Class, error) {
 	return nil, nil
 }
+
 func (m *mockClassRepo) AdminList(ctx context.Context, q domain.AdminListClassesQuery) ([]domain.Class, int64, error) {
 	return nil, 0, nil
 }
@@ -818,19 +922,24 @@ type mockClassMemberRepo struct{ mock.Mock }
 func (m *mockClassMemberRepo) Create(ctx context.Context, cm *domain.ClassMember) error {
 	return m.Called(ctx, cm).Error(0)
 }
+
 func (m *mockClassMemberRepo) Delete(ctx context.Context, classID, userID uuid.UUID) error {
 	return nil
 }
+
 func (m *mockClassMemberRepo) Exists(ctx context.Context, classID, userID uuid.UUID) (bool, error) {
 	return false, nil
 }
+
 func (m *mockClassMemberRepo) CountByClass(ctx context.Context, classID uuid.UUID) (int64, error) {
 	args := m.Called(ctx, classID)
 	return args.Get(0).(int64), args.Error(1)
 }
+
 func (m *mockClassMemberRepo) ListByClass(ctx context.Context, classID uuid.UUID, p domain.ListParams) ([]domain.ClassMember, int64, error) {
 	return nil, 0, nil
 }
+
 func (m *mockClassMemberRepo) ListAllByClass(ctx context.Context, classID uuid.UUID) ([]domain.ClassMember, error) {
 	return nil, nil
 }
@@ -879,10 +988,14 @@ func newClassesProcessDeps(t *testing.T) classesProcessDeps {
 
 func classesJobAndPayload(orgID uuid.UUID, perms []string) (*domain.ImportJob, domain.ImportProcessPayload) {
 	jobID, userID, mediaID := uuid.New(), uuid.New(), uuid.New()
-	job := &domain.ImportJob{ID: jobID, OrganizationID: orgID, UserID: userID,
-		MediaID: mediaID, Type: domain.ImportTypeClasses, Status: domain.ImportStatusPending}
-	payload := domain.ImportProcessPayload{JobID: jobID, UserID: userID, OrgID: orgID,
-		Permissions: perms, Plan: domain.PlanFree}
+	job := &domain.ImportJob{
+		ID: jobID, OrganizationID: orgID, UserID: userID,
+		MediaID: mediaID, Type: domain.ImportTypeClasses, Status: domain.ImportStatusPending,
+	}
+	payload := domain.ImportProcessPayload{
+		JobID: jobID, UserID: userID, OrgID: orgID,
+		Permissions: perms, Plan: domain.PlanFree,
+	}
 	return job, payload
 }
 
@@ -1122,7 +1235,7 @@ func TestProcessUsers_ProgressUpdatesEvery25Creates(t *testing.T) {
 	orgID := uuid.New()
 
 	rows := [][]string{{"name", "username", "password", "role"}}
-	for i := 0; i < 30; i++ {
+	for i := range 30 {
 		rows = append(rows, []string{fmt.Sprintf("User %d", i), fmt.Sprintf("user%d", i), "password9", "-"})
 	}
 	file := usersXLSX(t, rows)
@@ -1525,10 +1638,14 @@ func TestCreateImport_ClassMembersTypeNeedsUpdateAny(t *testing.T) {
 
 func classMembersJobAndPayload(orgID uuid.UUID, perms []string) (*domain.ImportJob, domain.ImportProcessPayload) {
 	jobID, userID, mediaID := uuid.New(), uuid.New(), uuid.New()
-	job := &domain.ImportJob{ID: jobID, OrganizationID: orgID, UserID: userID,
-		MediaID: mediaID, Type: domain.ImportTypeClassMembers, Status: domain.ImportStatusPending}
-	payload := domain.ImportProcessPayload{JobID: jobID, UserID: userID, OrgID: orgID,
-		Permissions: perms, Plan: domain.PlanFree}
+	job := &domain.ImportJob{
+		ID: jobID, OrganizationID: orgID, UserID: userID,
+		MediaID: mediaID, Type: domain.ImportTypeClassMembers, Status: domain.ImportStatusPending,
+	}
+	payload := domain.ImportProcessPayload{
+		JobID: jobID, UserID: userID, OrgID: orgID,
+		Permissions: perms, Plan: domain.PlanFree,
+	}
 	return job, payload
 }
 

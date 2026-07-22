@@ -2,6 +2,7 @@ package calendar
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -31,7 +32,7 @@ func rng() domain.CalendarRange {
 func TestListEvents_NoCaller_Forbidden(t *testing.T) {
 	svc := NewService(&fakeRepo{}, nil, nil)
 	_, err := svc.ListEvents(context.Background(), rng())
-	if err != domain.ErrForbidden {
+	if !errors.Is(err, domain.ErrForbidden) {
 		t.Fatalf("want ErrForbidden, got %v", err)
 	}
 }

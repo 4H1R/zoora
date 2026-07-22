@@ -16,7 +16,7 @@ func NewFanoutHandler(svc domain.NotificationService) func(ctx context.Context, 
 	return func(ctx context.Context, task *asynq.Task) error {
 		var p domain.NotificationFanoutPayload
 		if err := json.Unmarshal(task.Payload(), &p); err != nil {
-			return fmt.Errorf("unmarshaling fanout payload: %v: %w", err, asynq.SkipRetry)
+			return fmt.Errorf("unmarshaling fanout payload: %w: %w", err, asynq.SkipRetry)
 		}
 		return svc.Fanout(ctx, p.NotificationID)
 	}
@@ -28,7 +28,7 @@ func NewDeliverBotHandler(svc domain.NotificationService) func(ctx context.Conte
 	return func(ctx context.Context, task *asynq.Task) error {
 		var p domain.NotificationDeliverBotPayload
 		if err := json.Unmarshal(task.Payload(), &p); err != nil {
-			return fmt.Errorf("unmarshaling deliver-bot payload: %v: %w", err, asynq.SkipRetry)
+			return fmt.Errorf("unmarshaling deliver-bot payload: %w: %w", err, asynq.SkipRetry)
 		}
 		return svc.DeliverBot(ctx, p.DeliveryID)
 	}
@@ -40,7 +40,7 @@ func NewDeliverSMSHandler(svc domain.NotificationService) func(ctx context.Conte
 	return func(ctx context.Context, task *asynq.Task) error {
 		var p domain.NotificationDeliverBatchPayload
 		if err := json.Unmarshal(task.Payload(), &p); err != nil {
-			return fmt.Errorf("unmarshaling deliver-sms payload: %v: %w", err, asynq.SkipRetry)
+			return fmt.Errorf("unmarshaling deliver-sms payload: %w: %w", err, asynq.SkipRetry)
 		}
 		return svc.DeliverSMS(ctx, p.NotificationID, p.DeliveryIDs)
 	}
@@ -52,7 +52,7 @@ func NewDeliverPushHandler(svc domain.NotificationService) func(ctx context.Cont
 	return func(ctx context.Context, task *asynq.Task) error {
 		var p domain.NotificationDeliverBatchPayload
 		if err := json.Unmarshal(task.Payload(), &p); err != nil {
-			return fmt.Errorf("unmarshaling deliver-push payload: %v: %w", err, asynq.SkipRetry)
+			return fmt.Errorf("unmarshaling deliver-push payload: %w: %w", err, asynq.SkipRetry)
 		}
 		return svc.DeliverPush(ctx, p.NotificationID, p.DeliveryIDs)
 	}

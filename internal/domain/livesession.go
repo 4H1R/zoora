@@ -233,6 +233,10 @@ type LiveRecordingRepository interface {
 	FindByEgressID(ctx context.Context, egressID string) (*LiveRecording, error)
 	Update(ctx context.Context, r *LiveRecording) error
 	ListByRoom(ctx context.Context, roomID uuid.UUID, q ListLiveRecordingsQuery) ([]LiveRecording, int64, error)
+	// CountActive returns how many recordings are currently in the started state
+	// across all rooms — the live egress-job count used to enforce the concurrent
+	// recording cap.
+	CountActive(ctx context.Context) (int64, error)
 }
 
 // LiveWhiteboard persists the tldraw snapshot for a live room so that

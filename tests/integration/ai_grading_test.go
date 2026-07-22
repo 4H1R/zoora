@@ -16,9 +16,11 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/4H1R/zoora/internal/ai"
+	"github.com/4H1R/zoora/internal/audit"
 	"github.com/4H1R/zoora/internal/classes"
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/organizations"
+	"github.com/4H1R/zoora/internal/platform/database"
 	"github.com/4H1R/zoora/internal/platform/llm"
 	"github.com/4H1R/zoora/internal/platform/queue"
 	"github.com/4H1R/zoora/internal/questionbanks"
@@ -116,9 +118,11 @@ func TestAIGradingEndToEnd(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = qc.Close() })
 
+	transactor := database.NewTransactor(db)
+	auditSvc := audit.NewService(audit.NewRepository(db), logger)
 	svc := quizzes.NewAIGradingWorker(
 		r.quizzes, r.rules, r.rooms, r.submissions, r.questions,
-		r.classes, r.members, qc, llmClient, jobRepo, logger,
+		r.classes, r.members, qc, llmClient, jobRepo, transactor, auditSvc, logger,
 	)
 
 	// Act 1: teacher on the Pro plan (grants FeatureAI) triggers an apply-mode run.

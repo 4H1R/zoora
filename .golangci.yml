@@ -1,0 +1,60 @@
+version: "2"
+
+run:
+  build-tags:
+    - integration
+
+linters:
+  # Start from the default set (errcheck, govet, ineffassign, staticcheck, unused)
+  # and add high-signal bug/security/leak catchers on top.
+  default: standard
+  enable:
+    - bodyclose      # HTTP response bodies must be closed (leak catcher)
+    - contextcheck   # ctx must be propagated, not dropped (matches project convention)
+    - errorlint      # enforce errors.Is/As + %w wrapping (matches project convention)
+    - gosec          # security issues
+    - misspell       # typos in comments/strings
+    - nilerr         # returning nil after a non-nil error check
+    - noctx          # HTTP requests should carry a context
+    - revive         # golint successor: style + correctness
+    - rowserrcheck   # sql.Rows.Err() must be checked
+    - sqlclosecheck  # sql.Rows / sql.Stmt must be closed
+    - unconvert      # unnecessary type conversions
+
+  settings:
+    staticcheck:
+      checks:
+        - all
+        - -ST1018 # Persian ZWNJ (U+200C / نیم‌فاصله) is valid, required typography
+    revive:
+      rules:
+        - name: unused-parameter
+          disabled: true # noisy; the compiler already covers the useful cases
+    gosec:
+      excludes:
+        - G104 # unhandled errors — already covered by errcheck, avoid double-report
+        - G404 # math/rand — fine for non-crypto use (ids, jitter)
+        - G115 # integer-conversion overflow — too many false positives
+
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - std-error-handling
+    rules:
+      # Test files: relax security + error-close checks (fixtures, throwaway conns)
+      - path: _test\.go
+        linters:
+          - gosec
+          - bodyclose
+          - noctx
+          - errcheck
+
+formatters:
+  enable:
+    - gofumpt   # stricter gofmt
+    - goimports # group + sort imports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/4H1R/zoora

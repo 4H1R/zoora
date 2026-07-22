@@ -75,17 +75,61 @@ func (r *repository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (r *repository) ListByUser(ctx context.Context, userID uuid.UUID, p domain.ListParams) ([]domain.Attendance, int64, error) {
-	base := r.baseQuery(ctx).
+// byUserScope applies the class/session scoping shared by ListByUser and
+// SummarizeByUser so both always agree on the scoped set. The status filter
+// is deliberately NOT applied here: the summary is a breakdown BY status, so
+// it must ignore any active status filter.
+func (r *repository) byUserScope(ctx context.Context, userID uuid.UUID, q domain.ListMyAttendanceQuery) *gorm.DB {
+	base := r.baseQuery(ctx).Where("user_id = ?", userID)
+	if q.ClassID != nil {
+		base = base.Where("class_id = ?", *q.ClassID)
+	}
+	if q.ClassSessionID != nil {
+		base = base.Where("class_session_id = ?", *q.ClassSessionID)
+	}
+	return base
+}
+
+func (r *repository) ListByUser(ctx context.Context, userID uuid.UUID, q domain.ListMyAttendanceQuery) ([]domain.Attendance, int64, error) {
+	base := r.byUserScope(ctx, userID, q).
 		Preload("Class").
-		Preload("ClassSession").
-		Where("user_id = ?", userID)
+		Preload("ClassSession")
+	if q.Status != nil {
+		base = base.Where("status = ?", *q.Status)
+	}
 	var items []domain.Attendance
-	total, err := listparams.Paginate(base, p, &items)
+	total, err := listparams.Paginate(base, q.ListParams, &items)
 	if err != nil {
 		return nil, 0, fmt.Errorf("attendance.repository.ListByUser: %w", err)
 	}
 	return items, total, nil
+}
+
+func (r *repository) SummarizeByUser(ctx context.Context, userID uuid.UUID, q domain.ListMyAttendanceQuery) (domain.MyAttendanceSummary, error) {
+	var rows []struct {
+		Status domain.AttendanceStatus
+		Count  int
+	}
+	if err := r.byUserScope(ctx, userID, q).
+		Select("status, COUNT(*) AS count").
+		Group("status").
+		Scan(&rows).Error; err != nil {
+		return domain.MyAttendanceSummary{}, fmt.Errorf("attendance.repository.SummarizeByUser: %w", err)
+	}
+	var s domain.MyAttendanceSummary
+	for _, row := range rows {
+		switch row.Status {
+		case domain.AttendanceStatusPresent:
+			s.Present = row.Count
+		case domain.AttendanceStatusAbsent:
+			s.Absent = row.Count
+		case domain.AttendanceStatusLate:
+			s.Late = row.Count
+		case domain.AttendanceStatusExcused:
+			s.Excused = row.Count
+		}
+	}
+	return s, nil
 }
 
 func (r *repository) ListBySession(ctx context.Context, sessionID uuid.UUID, q domain.ListAttendanceQuery) ([]domain.Attendance, int64, error) {

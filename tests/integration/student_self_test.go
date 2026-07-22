@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/4H1R/zoora/internal/attendance"
-	"github.com/4H1R/zoora/internal/platform/authz"
 	"github.com/4H1R/zoora/internal/classes"
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/gradebook"
 	"github.com/4H1R/zoora/internal/organizations"
+	"github.com/4H1R/zoora/internal/platform/authz"
 	"github.com/4H1R/zoora/internal/quizzes"
 	"github.com/4H1R/zoora/internal/users"
 	"github.com/4H1R/zoora/tests/testutil"
@@ -34,9 +34,8 @@ func TestIntegration_QuizRepo_ListByMemberWithRooms(t *testing.T) {
 	otherQuiz := &domain.Quiz{OrganizationID: f.org.ID, UserID: otherTeacher.ID, ClassID: otherClass.ID, Title: "Other", DurationMinutes: 30}
 	require.NoError(t, r.quizzes.Create(ctx, otherQuiz))
 
-	got, total, err := r.quizzes.ListByMemberWithRooms(ctx, f.student.ID, domain.ListParams{Page: 1, PageSize: 50})
+	got, err := r.quizzes.ListByMemberWithRooms(ctx, f.student.ID, nil, domain.ListParams{Page: 1, PageSize: 50})
 	require.NoError(t, err)
-	assert.Equal(t, int64(1), total)
 	require.Len(t, got, 1)
 	assert.Equal(t, f.quiz.ID, got[0].ID)
 	require.NotNil(t, got[0].Class)
@@ -68,14 +67,14 @@ func TestIntegration_QuizService_ListMine_States(t *testing.T) {
 		SubmittedAt: &submittedAt,
 	}))
 
-	svc := quizzes.NewService(r.quizzes, r.rules, r.rooms, r.submissions, r.questions, r.classes, r.members, nil, nil, nil, slog.Default())
+	svc := quizzes.NewService(r.quizzes, r.rules, r.rooms, r.submissions, r.questions, r.classes, r.members, nil, nil, nil, nil, nil, slog.Default())
 
 	callerCtx := domain.WithCaller(ctx, domain.Caller{
 		UserID:      f.student.ID,
 		Permissions: []string{string(domain.PermQuizzesTake)},
 	})
 
-	exams, total, err := svc.ListMine(callerCtx, domain.ListParams{Page: 1, PageSize: 50})
+	exams, total, err := svc.ListMine(callerCtx, domain.ListMyExamsQuery{ListParams: domain.ListParams{Page: 1, PageSize: 50}})
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), total)
 	require.Len(t, exams, 2)
@@ -135,7 +134,7 @@ func TestIntegration_GradebookService_GetMine(t *testing.T) {
 	require.NoError(t, cellRepo.Upsert(ctx, &domain.GradebookCell{ColumnID: col.ID, StudentID: student.ID, Value: "18"}))
 	require.NoError(t, cellRepo.Upsert(ctx, &domain.GradebookCell{ColumnID: col.ID, StudentID: other.ID, Value: "11"}))
 
-	svc := gradebook.NewService(columnRepo, cellRepo, classRepo, memberRepo, nil, nil, nil, nil, nil, authz.NewResolver(memberRepo), slog.Default())
+	svc := gradebook.NewService(columnRepo, cellRepo, classRepo, memberRepo, nil, nil, nil, nil, nil, nil, authz.NewResolver(memberRepo), nil, nil, slog.Default())
 
 	callerCtx := domain.WithCaller(ctx, domain.Caller{
 		UserID:      student.ID,
@@ -201,22 +200,61 @@ func TestIntegration_Attendance_ListMine(t *testing.T) {
 	}))
 
 	// Repo-level scoping.
-	rows, total, err := attRepo.ListByUser(ctx, student.ID, domain.ListParams{Page: 1, PageSize: 50})
+	rows, total, err := attRepo.ListByUser(ctx, student.ID, domain.ListMyAttendanceQuery{
+		ListParams: domain.ListParams{Page: 1, PageSize: 50},
+	})
 	require.NoError(t, err)
 	assert.Equal(t, int64(4), total)
 	assert.Len(t, rows, 4)
 
+	// Status filter narrows the set.
+	present := domain.AttendanceStatusPresent
+	rows, total, err = attRepo.ListByUser(ctx, student.ID, domain.ListMyAttendanceQuery{
+		Status:     &present,
+		ListParams: domain.ListParams{Page: 1, PageSize: 50},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), total)
+	assert.Len(t, rows, 2)
+
 	// Service-level summary.
-	svc := attendance.NewService(attRepo, classRepo, sessRepo, nil, nil, nil, nil, nil, nil, authz.NewResolver(nil), slog.Default())
+	svc := attendance.NewService(attRepo, classRepo, sessRepo, nil, nil, nil, nil, nil, nil, authz.NewResolver(nil), nil, nil, slog.Default())
 	callerCtx := domain.WithCaller(ctx, domain.Caller{
 		UserID:      student.ID,
 		Permissions: []string{string(domain.PermAttendanceView)},
 	})
-	res, err := svc.ListMine(callerCtx, domain.ListParams{Page: 1, PageSize: 50})
+	res, err := svc.ListMine(callerCtx, domain.ListMyAttendanceQuery{
+		ListParams: domain.ListParams{Page: 1, PageSize: 50},
+	})
 	require.NoError(t, err)
 	assert.Equal(t, 2, res.Summary.Present)
 	assert.Equal(t, 1, res.Summary.Absent)
 	assert.Equal(t, 1, res.Summary.Late)
 	assert.Equal(t, 0, res.Summary.Excused)
 	assert.Len(t, res.Items, 4)
+	assert.Equal(t, int64(4), res.Total)
+
+	// Summary must aggregate the FULL filtered set even when the page is
+	// smaller than the result set.
+	res, err = svc.ListMine(callerCtx, domain.ListMyAttendanceQuery{
+		ListParams: domain.ListParams{Page: 1, PageSize: 2},
+	})
+	require.NoError(t, err)
+	assert.Len(t, res.Items, 2)
+	assert.Equal(t, int64(4), res.Total)
+	assert.Equal(t, 2, res.Summary.Present)
+	assert.Equal(t, 1, res.Summary.Absent)
+	assert.Equal(t, 1, res.Summary.Late)
+
+	// Status filter narrows items/total, but the summary stays a full
+	// breakdown by status over the class/session scope.
+	res, err = svc.ListMine(callerCtx, domain.ListMyAttendanceQuery{
+		Status:     &present,
+		ListParams: domain.ListParams{Page: 1, PageSize: 50},
+	})
+	require.NoError(t, err)
+	assert.Len(t, res.Items, 2)
+	assert.Equal(t, int64(2), res.Total)
+	assert.Equal(t, 2, res.Summary.Present)
+	assert.Equal(t, 1, res.Summary.Absent)
 }

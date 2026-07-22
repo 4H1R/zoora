@@ -26,6 +26,7 @@ func (f *fakeStorage) PutObject(_ context.Context, _ string, _ []byte, _ string)
 	f.mu.Unlock()
 	return nil
 }
+
 func (f *fakeStorage) DeleteObject(_ context.Context, _ string) error {
 	f.mu.Lock()
 	f.deletes++
@@ -50,9 +51,11 @@ func (f *fakeQuestions) Delete(_ context.Context, _ uuid.UUID) error        { re
 func (f *fakeQuestions) ListByBank(_ context.Context, _ uuid.UUID, _ domain.ListQuestionsQuery) ([]domain.Question, int64, error) {
 	return nil, 0, nil
 }
+
 func (f *fakeQuestions) ListAllByBank(_ context.Context, _ uuid.UUID) ([]domain.Question, error) {
 	return nil, nil
 }
+
 func (f *fakeQuestions) FindByIDs(_ context.Context, _ []uuid.UUID) ([]domain.Question, error) {
 	return nil, nil
 }
@@ -75,30 +78,38 @@ func (f *fakeMedia) Create(_ context.Context, m *domain.Media) error {
 	m.ID = uuid.New()
 	return nil
 }
+
 func (f *fakeMedia) FindByID(_ context.Context, _ uuid.UUID) (*domain.Media, error) {
 	return nil, domain.ErrNotFound
 }
+
 func (f *fakeMedia) Delete(_ context.Context, id uuid.UUID) error {
 	f.mu.Lock()
 	f.deleted = append(f.deleted, id)
 	f.mu.Unlock()
 	return nil
 }
+
 func (f *fakeMedia) ListByModel(_ context.Context, _ string, _ uuid.UUID, collection string) ([]domain.Media, error) {
 	return f.byCollection[collection], nil
 }
+
 func (f *fakeMedia) ListFolders(_ context.Context, _ uuid.UUID) ([]domain.MediaFolder, error) {
 	return nil, nil
 }
+
 func (f *fakeMedia) ListFiles(_ context.Context, _ uuid.UUID, _ string, _ domain.ListParams) ([]domain.Media, int64, error) {
 	return nil, 0, nil
 }
+
 func (f *fakeMedia) ListOwnerMedia(_ context.Context, _ uuid.UUID) ([]domain.MediaOwner, error) {
 	return nil, nil
 }
+
 func (f *fakeMedia) ListOwnerRecordings(_ context.Context, _ uuid.UUID) ([]domain.MediaOwner, error) {
 	return nil, nil
 }
+
 func (f *fakeMedia) ListOwnerFiles(_ context.Context, _ uuid.UUID, _ string, _ *uuid.UUID, _ domain.ListParams) ([]domain.OwnerFile, int64, error) {
 	return nil, 0, nil
 }

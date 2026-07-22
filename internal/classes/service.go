@@ -24,6 +24,8 @@ type service struct {
 	sessions domain.ClassSessionRepository
 	members  domain.ClassMemberRepository
 	chat     domain.ClassChatProvisioner // may be nil (chat provisioning disabled)
+	tx       domain.Transactor
+	audit    domain.AuditRecorder
 	logger   *slog.Logger
 }
 
@@ -32,9 +34,11 @@ func NewService(
 	sessions domain.ClassSessionRepository,
 	members domain.ClassMemberRepository,
 	chat domain.ClassChatProvisioner,
+	tx domain.Transactor,
+	audit domain.AuditRecorder,
 	logger *slog.Logger,
 ) domain.ClassService {
-	return &service{repo: repo, sessions: sessions, members: members, chat: chat, logger: logger}
+	return &service{repo: repo, sessions: sessions, members: members, chat: chat, tx: tx, audit: audit, logger: logger}
 }
 
 // canManageClass returns true if caller can mutate the given class (update,
@@ -85,7 +89,19 @@ func (s *service) Create(ctx context.Context, dto domain.CreateClassDTO) (*domai
 		Description:    dto.Description,
 		TotalUsers:     dto.TotalUsers,
 	}
-	if err := s.repo.Create(ctx, class); err != nil {
+	err := s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Create(ctx, class); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditCreated,
+			TargetType:  domain.AuditTargetClass,
+			TargetID:    &class.ID,
+			TargetLabel: class.Name,
+			OrgID:       &class.OrganizationID,
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	s.logger.Info("class created",
@@ -126,19 +142,39 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateCla
 	if !canManageClass(caller, class) {
 		return nil, domain.ErrForbidden
 	}
-	if dto.Name != nil {
+	// Build a shallow changed-fields diff (from/to) before mutating so the audit
+	// entry records exactly what this update altered.
+	changed := map[string]any{}
+	if dto.Name != nil && *dto.Name != class.Name {
+		changed["name"] = map[string]any{"from": class.Name, "to": *dto.Name}
 		class.Name = *dto.Name
 	}
-	if dto.Description != nil {
+	if dto.Description != nil && *dto.Description != class.Description {
+		changed["description"] = map[string]any{"from": class.Description, "to": *dto.Description}
 		class.Description = *dto.Description
 	}
-	if dto.TotalUsers != nil {
+	if dto.TotalUsers != nil && *dto.TotalUsers != class.TotalUsers {
+		changed["total_users"] = map[string]any{"from": class.TotalUsers, "to": *dto.TotalUsers}
 		class.TotalUsers = *dto.TotalUsers
 	}
-	if dto.UserID != nil && (caller.IsAdmin || caller.HasPermission(domain.PermClassesUpdateAny)) {
+	if dto.UserID != nil && (caller.IsAdmin || caller.HasPermission(domain.PermClassesUpdateAny)) && *dto.UserID != class.UserID {
+		changed["user_id"] = map[string]any{"from": class.UserID.String(), "to": dto.UserID.String()}
 		class.UserID = *dto.UserID
 	}
-	if err := s.repo.Update(ctx, class); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.repo.Update(ctx, class); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditUpdated,
+			TargetType:  domain.AuditTargetClass,
+			TargetID:    &class.ID,
+			TargetLabel: class.Name,
+			OrgID:       &class.OrganizationID,
+			Metadata:    map[string]any{"changed": changed},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	return class, nil
@@ -156,7 +192,24 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 	if !canDeleteClass(caller, class) {
 		return domain.ErrForbidden
 	}
-	if err := s.repo.Delete(ctx, id); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		// Cheap cascade count for forensic metadata: how many enrollments the
+		// delete takes down with it. Best-effort — a count error must not block
+		// the delete, so it degrades to zero.
+		memberCount, _ := s.members.CountByClass(ctx, id)
+		if err := s.repo.Delete(ctx, id); err != nil {
+			return err
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditDeleted,
+			TargetType:  domain.AuditTargetClass,
+			TargetID:    &id,
+			TargetLabel: class.Name,
+			OrgID:       &class.OrganizationID,
+			Metadata:    map[string]any{"cascaded": map[string]any{"enrollments": memberCount}},
+		})
+	})
+	if err != nil {
 		return err
 	}
 	s.logger.Info("class deleted",
@@ -311,6 +364,14 @@ func (s *service) Enroll(ctx context.Context, classID uuid.UUID, dto domain.Enro
 	if err != nil {
 		return nil, err
 	}
+	// Tenant boundary: a non-admin may only enroll into a class that belongs to
+	// their own org. This runs before both the manage and self-enroll branches,
+	// so neither can cross tenants. Admins may enroll into any org.
+	if !caller.IsAdmin {
+		if caller.OrgID == nil || class.OrganizationID != *caller.OrgID {
+			return nil, domain.ErrForbidden
+		}
+	}
 	// Authorization: teacher/staff/admin may enroll any user. A student may
 	// only self-enroll.
 	if !canManageClass(caller, class) && dto.UserID != caller.UserID {
@@ -328,7 +389,22 @@ func (s *service) Enroll(ctx context.Context, classID uuid.UUID, dto domain.Enro
 		}
 	}
 	m := &domain.ClassMember{ClassID: classID, UserID: dto.UserID}
-	if err := s.members.Create(ctx, m); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.members.Create(ctx, m); err != nil {
+			return err
+		}
+		// No user repo here, so the class name stands in as the human label; the
+		// enrolled user is captured in metadata.
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditEnrolled,
+			TargetType:  domain.AuditTargetEnrollment,
+			TargetID:    &m.ID,
+			TargetLabel: class.Name,
+			OrgID:       &class.OrganizationID,
+			Metadata:    map[string]any{"class_id": classID.String(), "user_id": dto.UserID.String()},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	s.logger.Info("class enrollment",
@@ -352,7 +428,20 @@ func (s *service) Leave(ctx context.Context, classID, userID uuid.UUID) error {
 	if userID != caller.UserID && !canManageClass(caller, class) {
 		return domain.ErrForbidden
 	}
-	return s.members.Delete(ctx, classID, userID)
+	return s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.members.Delete(ctx, classID, userID); err != nil {
+			return err
+		}
+		// No membership row is loaded (delete is by class+user), so the class name
+		// is the label and the unenrolled user is captured in metadata.
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditUnenrolled,
+			TargetType:  domain.AuditTargetEnrollment,
+			TargetLabel: class.Name,
+			OrgID:       &class.OrganizationID,
+			Metadata:    map[string]any{"class_id": classID.String(), "user_id": userID.String()},
+		})
+	})
 }
 
 func (s *service) ListMembers(ctx context.Context, classID uuid.UUID, q domain.ListClassMembersQuery) ([]domain.ClassMember, int64, error) {

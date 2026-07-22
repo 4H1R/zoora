@@ -7,6 +7,7 @@ import { useGetLiveRooms } from "@/api/live-sessions/live-sessions"
 import { ColumnsToggle } from "@/components/data-table/columns-toggle"
 import { DataTable } from "@/components/data-table/data-table"
 import { LiveRoomCard, LiveRoomCardSkeleton } from "@/components/live-room-card"
+import { ClassFilterSelect, SessionFilterSelect } from "@/components/org/class-session-filters"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -29,6 +30,8 @@ type StatusTab = (typeof STATUS_TABS)[number]
 
 const onlineClassesSearchSchema = z.object({
   status: z.enum(STATUS_TABS).optional().default("active"),
+  class_id: z.string().optional(),
+  class_session_id: z.string().optional(),
   order_by: z.string().optional(),
   order_dir: z.enum(["asc", "desc"]).optional(),
   page: z.number().int().positive().optional().default(1),
@@ -42,7 +45,7 @@ export const Route = createFileRoute("/_auth/org/online-classes/")({
 
 function RouteComponent() {
   const { t } = useTranslation()
-  const { status, order_by, order_dir, page } = Route.useSearch()
+  const { status, class_id, class_session_id, order_by, order_dir, page } = Route.useSearch()
   const navigate = Route.useNavigate()
   const allowed = useOrgGuard(["live_sessions:view", "live_sessions:view_any"])
 
@@ -52,6 +55,8 @@ function RouteComponent() {
   const { data, isPending } = useGetLiveRooms(
     {
       status: activeTab === "all" ? undefined : activeTab,
+      class_id: class_id || undefined,
+      class_session_id: class_session_id || undefined,
       // URL drives sort; default to the soonest-scheduled-first ordering.
       order_by: order_by || "scheduled_start_time",
       order_dir: order_dir || "desc",
@@ -70,6 +75,12 @@ function RouteComponent() {
   const roomsData = (data?.status === 200 && data.data.data) || undefined
   const rooms = roomsData?.items ?? []
   const total = roomsData?.total ?? 0
+
+  // Changing class invalidates any chosen session — sessions belong to one class.
+  const setClass = (classId?: string) =>
+    navigate({ search: (prev) => ({ ...prev, class_id: classId, class_session_id: undefined, page: 1 }) })
+  const setSession = (sessionId?: string) =>
+    navigate({ search: (prev) => ({ ...prev, class_session_id: sessionId, page: 1 }) })
 
   const { viewMode, setViewMode, isTable } = useViewMode()
   const sorting = order_by ? [{ id: order_by, desc: order_dir === "desc" }] : []
@@ -127,28 +138,33 @@ function RouteComponent() {
     <div className="flex flex-col gap-6">
       <PageHeader title={t("onlineClassesPage.title")} />
 
-      <div className="flex flex-row items-center justify-between gap-3">
-        <ToggleGroup
-          value={[activeTab]}
-          onValueChange={(values) => {
-            const next = values.find((v) => v !== activeTab) as StatusTab | undefined
-            if (next) navigate({ search: (prev) => ({ ...prev, status: next, page: 1 }) })
-          }}
-          className="border-border rounded-lg border"
-        >
-          <ToggleGroupItem value="all" className="px-3 text-xs">
-            {t("onlineClassesPage.tabs.all")}
-          </ToggleGroupItem>
-          <ToggleGroupItem value="active" className="px-3 text-xs">
-            {t("onlineClassesPage.tabs.live")}
-          </ToggleGroupItem>
-          <ToggleGroupItem value="created" className="px-3 text-xs">
-            {t("onlineClassesPage.tabs.notStarted")}
-          </ToggleGroupItem>
-          <ToggleGroupItem value="finished" className="px-3 text-xs">
-            {t("onlineClassesPage.tabs.finished")}
-          </ToggleGroupItem>
-        </ToggleGroup>
+      <div className="flex flex-row flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <ToggleGroup
+            value={[activeTab]}
+            onValueChange={(values) => {
+              const next = values.find((v) => v !== activeTab) as StatusTab | undefined
+              if (next) navigate({ search: (prev) => ({ ...prev, status: next, page: 1 }) })
+            }}
+            className="border-border rounded-lg border"
+          >
+            <ToggleGroupItem value="all" className="px-3 text-xs">
+              {t("onlineClassesPage.tabs.all")}
+            </ToggleGroupItem>
+            <ToggleGroupItem value="active" className="px-3 text-xs">
+              {t("onlineClassesPage.tabs.live")}
+            </ToggleGroupItem>
+            <ToggleGroupItem value="created" className="px-3 text-xs">
+              {t("onlineClassesPage.tabs.notStarted")}
+            </ToggleGroupItem>
+            <ToggleGroupItem value="finished" className="px-3 text-xs">
+              {t("onlineClassesPage.tabs.finished")}
+            </ToggleGroupItem>
+          </ToggleGroup>
+
+          <ClassFilterSelect value={class_id} onChange={setClass} />
+          <SessionFilterSelect classId={class_id} value={class_session_id} onChange={setSession} />
+        </div>
 
         <div className="flex items-center gap-2">
           {isTable && (

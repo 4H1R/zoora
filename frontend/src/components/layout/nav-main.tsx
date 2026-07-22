@@ -27,6 +27,14 @@ export interface NavGroup {
 export function NavMain({ groups }: { groups: NavGroup[] }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
 
+  // Only the most-specific match is active. A nested route like
+  // /org/settings/custom-fields matches both its own url and the parent
+  // /org/settings, so pick the longest matching prefix and light up only that.
+  const activeUrl = groups
+    .flatMap((g) => g.items.map((i) => i.url))
+    .filter((url) => pathname === url || pathname.startsWith(url + "/"))
+    .sort((a, b) => b.length - a.length)[0]
+
   return (
     <>
       {groups.map((group) => (
@@ -37,7 +45,7 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
                   tooltip={item.title}
-                  isActive={pathname.startsWith(item.url)}
+                  isActive={item.url === activeUrl}
                   render={<Link to={item.url} />}
                   className={cn(
                     "data-active:[&_svg]:text-primary gap-2.5 px-2.5 py-1.5 text-sm [&_svg]:size-4 [&_svg]:[stroke-width:1.75]",

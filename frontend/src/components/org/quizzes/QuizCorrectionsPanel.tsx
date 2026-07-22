@@ -9,7 +9,7 @@ import { CheckCheckIcon, CheckSquareIcon, ClipboardListIcon, ClockIcon, Hourglas
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 
-import { useGetQuizzes, useGetQuizzesIdSubmissions } from "@/api/quizzes/quizzes"
+import { useGetQuizzesIdSubmissions } from "@/api/quizzes/quizzes"
 import { GradeSubmissionDialog } from "@/components/admin/quizzes/corrections/GradeSubmissionDialog"
 import { SortPicker } from "@/components/data-table/sort-picker"
 import { Eyebrow } from "@/components/eyebrow"
@@ -28,20 +28,25 @@ import { useQuizPermissions } from "./use-quiz-permissions"
 const STATUS_FILTERS = ["all", "submitted", "graded", "in_progress"] as const
 type StatusFilter = (typeof STATUS_FILTERS)[number]
 
-interface QuizCorrectionsSectionProps {
-  classSessionId: string
+interface QuizCorrectionsPanelProps {
+  quiz?: Quiz
 }
 
-export function QuizCorrectionsSection({ classSessionId }: QuizCorrectionsSectionProps) {
+// Per-quiz corrections workbench: stat strip, status filter, sort, submission
+// rows and the grade dialog. Shared by the session corrections section (which
+// adds a quiz picker) and the /org/exams/$quizId/corrections page.
+export function QuizCorrectionsPanel({ quiz }: QuizCorrectionsPanelProps) {
   const { t, i18n } = useTranslation()
-  const { canView, canEdit } = useQuizPermissions()
+  const { canEdit } = useQuizPermissions()
 
-  const [quizId, setQuizId] = useState<string | undefined>(undefined)
   const [status, setStatus] = useState<StatusFilter>("all")
   const [sort, setSort] = useState<SectionSort | undefined>(undefined)
   const [page, setPage] = useState(1)
   const [gradeOpen, setGradeOpen] = useState(false)
   const [active, setActive] = useState<QuizSubmission | null>(null)
+
+  const quizId = quiz?.id
+  const quizMaxScore = quiz?.total_score
 
   const sortOptions: SortOption[] = [
     { id: "submitted_at", label: t("org.session.controls.sortFields.submitted_at") },
@@ -54,22 +59,15 @@ export function QuizCorrectionsSection({ classSessionId }: QuizCorrectionsSectio
     setPage(1)
   }, [quizId, status, sort?.id, sort?.desc])
 
-  const quizzesQ = useGetQuizzes({ class_session_id: classSessionId }, { query: { enabled: canView } })
-  const quizzes: Quiz[] = (quizzesQ.data?.status === 200 && quizzesQ.data.data.data?.items) || []
-
-  const effectiveQuizId = quizId ?? quizzes[0]?.id
-  const selectedQuiz = quizzes.find((q) => q.id === effectiveQuizId)
-  const quizMaxScore = selectedQuiz?.total_score
-
   const subsQ = useGetQuizzesIdSubmissions(
-    effectiveQuizId ?? "",
+    quizId ?? "",
     {
       status: status === "all" ? undefined : status,
       order_by: sort?.id,
       order_dir: sort ? (sort.desc ? "desc" : "asc") : undefined,
       page,
     },
-    { query: { enabled: !!effectiveQuizId && canEdit } }
+    { query: { enabled: !!quizId && canEdit } }
   )
   const subsData = (subsQ.data?.status === 200 && subsQ.data.data.data) || undefined
   const submissions = subsData?.items ?? []
@@ -79,94 +77,59 @@ export function QuizCorrectionsSection({ classSessionId }: QuizCorrectionsSectio
   const pendingCount = submissions.filter((s) => s.status === "submitted").length
   const gradedCount = submissions.filter((s) => s.status === "graded").length
 
-  if (!canView || !canEdit) return null
-
-  const isLoadingQuizzes = quizzesQ.isPending
-  const isLoadingSubs = subsQ.isPending && !!effectiveQuizId
-  const noQuizzes = !isLoadingQuizzes && quizzes.length === 0
+  const isLoadingSubs = subsQ.isPending && !!quizId
 
   return (
-    <section id="corrections" className="relative isolate flex scroll-mt-20 flex-col gap-6 overflow-hidden rounded-3xl">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_bottom_left,var(--color-primary)/8%,transparent_55%)]"
+    <>
+      <StatStrip
+        total={total}
+        pending={pendingCount}
+        graded={gradedCount}
+        maxScore={quizMaxScore}
+        loading={isLoadingSubs}
       />
 
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-col gap-1.5">
-          <h2 className="text-2xl font-semibold tracking-tight">{t("org.session.corrections.title")}</h2>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <StatusFilterBar
+            value={status}
+            onChange={setStatus}
+            counts={{ all: total, submitted: pendingCount, graded: gradedCount }}
+          />
         </div>
-        <span className="text-muted-foreground hidden font-mono text-[11px] tracking-[0.25em] uppercase md:inline">
-          {selectedQuiz ? `// ${selectedQuiz.title}` : `// ${t("org.session.corrections.noQuizSelected")}`}
-        </span>
+        <SortPicker options={sortOptions} value={sort} onChange={setSort} label={t("org.session.controls.sort")} />
       </div>
 
-      {noQuizzes ? (
+      {isLoadingSubs ? (
+        <div className="flex flex-col gap-3">
+          <SubmissionRowSkeleton />
+          <SubmissionRowSkeleton />
+          <SubmissionRowSkeleton />
+        </div>
+      ) : submissions.length === 0 ? (
         <EmptyState
-          icon={ClipboardListIcon}
-          title={t("org.session.corrections.emptyTitle")}
-          description={t("org.session.corrections.emptyHint")}
+          icon={CheckSquareIcon}
+          title={t("org.session.corrections.noResults")}
+          description={t("org.session.corrections.noResultsHint")}
         />
       ) : (
         <>
-          <QuizSelector
-            quizzes={quizzes}
-            selectedId={effectiveQuizId}
-            onSelect={setQuizId}
-            isLoading={isLoadingQuizzes}
-          />
-
-          <StatStrip
-            total={total}
-            pending={pendingCount}
-            graded={gradedCount}
-            maxScore={quizMaxScore}
-            loading={isLoadingSubs}
-          />
-
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <StatusFilterBar
-                value={status}
-                onChange={setStatus}
-                counts={{ all: total, submitted: pendingCount, graded: gradedCount }}
+          <ul className="flex flex-col gap-3">
+            {submissions.map((s, i) => (
+              <SubmissionRow
+                key={s.id ?? i}
+                submission={s}
+                index={(page - 1) * pageSize + i}
+                lang={i18n.language}
+                maxScore={quizMaxScore}
+                onGrade={() => {
+                  setActive(s)
+                  setGradeOpen(true)
+                }}
               />
-            </div>
-            <SortPicker options={sortOptions} value={sort} onChange={setSort} label={t("org.session.controls.sort")} />
-          </div>
-
-          {isLoadingSubs ? (
-            <div className="flex flex-col gap-3">
-              <SubmissionRowSkeleton />
-              <SubmissionRowSkeleton />
-              <SubmissionRowSkeleton />
-            </div>
-          ) : submissions.length === 0 ? (
-            <EmptyState
-              icon={CheckSquareIcon}
-              title={t("org.session.corrections.noResults")}
-              description={t("org.session.corrections.noResultsHint")}
-            />
-          ) : (
-            <>
-              <ul className="flex flex-col gap-3">
-                {submissions.map((s, i) => (
-                  <SubmissionRow
-                    key={s.id ?? i}
-                    submission={s}
-                    index={(page - 1) * pageSize + i}
-                    lang={i18n.language}
-                    maxScore={quizMaxScore}
-                    onGrade={() => {
-                      setActive(s)
-                      setGradeOpen(true)
-                    }}
-                  />
-                ))}
-              </ul>
-              <SectionPagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
-            </>
-          )}
+            ))}
+          </ul>
+          <SectionPagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
         </>
       )}
 
@@ -177,67 +140,10 @@ export function QuizCorrectionsSection({ classSessionId }: QuizCorrectionsSectio
           if (!open) setActive(null)
         }}
         submission={active}
-        quizId={effectiveQuizId}
+        quizId={quizId}
         quizMaxScore={quizMaxScore}
       />
-    </section>
-  )
-}
-
-function QuizSelector({
-  quizzes,
-  selectedId,
-  onSelect,
-  isLoading,
-}: {
-  quizzes: Quiz[]
-  selectedId?: string
-  onSelect: (id: string | undefined) => void
-  isLoading: boolean
-}) {
-  const { t } = useTranslation()
-  if (isLoading) {
-    return (
-      <div className="flex flex-wrap gap-2">
-        <Skeleton className="h-9 w-32 rounded-full" />
-        <Skeleton className="h-9 w-40 rounded-full" />
-        <Skeleton className="h-9 w-28 rounded-full" />
-      </div>
-    )
-  }
-  return (
-    <div className="flex flex-col gap-2">
-      <Eyebrow className="text-[10px]">{t("org.session.corrections.pickQuiz")}</Eyebrow>
-      <div className="flex flex-wrap gap-2">
-        {quizzes.map((q, i) => {
-          const tile = String(i + 1).padStart(2, "0")
-          const active = q.id === selectedId
-          return (
-            <button
-              key={q.id}
-              type="button"
-              onClick={() => onSelect(q.id)}
-              className={cn(
-                "group/pill border-border dark:ring-foreground/10 inline-flex items-center gap-2.5 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all dark:border-0 dark:shadow-none dark:ring-1",
-                active
-                  ? "bg-foreground text-background border-foreground dark:ring-foreground"
-                  : "bg-card text-foreground hover:border-foreground/30 dark:hover:ring-foreground/30 hover:-translate-y-0.5"
-              )}
-            >
-              <span
-                className={cn(
-                  "font-mono text-[10px] tracking-[0.25em]",
-                  active ? "text-background/70" : "text-muted-foreground"
-                )}
-              >
-                /{tile}
-              </span>
-              <span className="line-clamp-1 max-w-[16rem]">{q.title ?? "—"}</span>
-            </button>
-          )
-        })}
-      </div>
-    </div>
+    </>
   )
 }
 

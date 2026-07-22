@@ -60,6 +60,11 @@ type Quiz struct {
 	// ready. Only populated on reads that resolve the question set.
 	ImageRenderStatus ImageRenderStatus `gorm:"-" json:"image_render_status,omitempty"`
 
+	// PendingSubmissionsCount is a transient, grader-only aggregate: submissions
+	// with status "submitted" that still await manual grading. Populated on list
+	// reads for callers who can manage the quiz; omitted for everyone else.
+	PendingSubmissionsCount *int64 `gorm:"-" json:"pending_submissions_count,omitempty"`
+
 	// ShowResults opts the quiz into revealing each student's score and earned
 	// marks back to them. Reveal is deferred until the student's room window has
 	// closed (see resultsRevealed) so early finishers cannot leak answers to
@@ -71,6 +76,10 @@ type Quiz struct {
 	NegativeMarkMode NegativeMarkMode `gorm:"type:varchar(20);not null;default:'none'" json:"negative_mark_mode"`
 	NegativeValue    float64          `gorm:"not null;default:0" json:"negative_value"`
 	WrongsPerPoint   int              `gorm:"not null;default:0" json:"wrongs_per_point"`
+
+	// Rooms are the scheduled windows of this quiz across class sessions.
+	// Preloaded only on list reads that surface schedule columns.
+	Rooms []QuizRoom `gorm:"foreignKey:QuizID" json:"rooms,omitempty"`
 
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
@@ -237,6 +246,16 @@ type ListQuizzesQuery struct {
 	ListParams     ListParams `form:"-"`
 }
 
+// ListMyExamsQuery filters the caller's own exam list (/quizzes/me).
+type ListMyExamsQuery struct {
+	ClassID *uuid.UUID   `form:"-"`
+	State   *MyExamState `form:"-"`
+	// ExplicitOrder is set when the client supplied a valid order_by; it
+	// disables the default state-priority sort in favor of the SQL ordering.
+	ExplicitOrder bool       `form:"-"`
+	ListParams    ListParams `form:"-"`
+}
+
 type AdminListQuizzesQuery struct {
 	ClassID        *uuid.UUID `form:"-"`
 	ClassSessionID *uuid.UUID `form:"-"`
@@ -291,6 +310,18 @@ type SubmissionAnswer struct {
 	GradedBy       string   `json:"graded_by,omitempty"`       // "" | ai | manual
 }
 
+// DeviceInfo is an advisory snapshot of the device a student used, captured on
+// final submit. Device/OS/Browser are the client's own best-effort parse of its
+// user-agent (same detector the live room uses); UserAgent is the raw header the
+// server reads directly and is the non-spoofable anchor. Teacher-facing only —
+// stripped from student reads. Stored as jsonb on the submission.
+type DeviceInfo struct {
+	Device    string `json:"device"` // "mobile" | "tablet" | "desktop"
+	OS        string `json:"os"`     // e.g. "Android 14", "iOS 17.2"
+	Browser   string `json:"browser"`
+	UserAgent string `json:"user_agent,omitempty"`
+}
+
 // SubmissionQuestion is one frozen question in a student's submission: the
 // question id plus the shuffled display order of its option ids. Built once at
 // StartSubmission so reloads/resume are deterministic.
@@ -320,6 +351,10 @@ type QuizSubmission struct {
 	GPSLng           *float64             `gorm:"column:gps_lng" json:"gps_lng,omitempty"`
 	GPSAccuracy      *float64             `gorm:"column:gps_accuracy" json:"gps_accuracy,omitempty"`
 	GPSDenied        bool                 `gorm:"not null;default:false" json:"gps_denied"`
+
+	// SubmitDevice is the advisory device snapshot captured at final submit.
+	// Teacher-facing; stripped from student reads by redactForStudent.
+	SubmitDevice *DeviceInfo `gorm:"type:jsonb;serializer:json" json:"submit_device,omitempty"`
 
 	TotalScore  float64    `gorm:"not null;default:0" json:"total_score"`
 	StartedAt   time.Time  `gorm:"not null" json:"started_at"`
@@ -378,12 +413,25 @@ type SubmitAnswerDTO struct {
 	SpentSeconds      int       `json:"spent_seconds" binding:"gte=0"`
 }
 
+// SubmitDeviceDTO is the client's own device/OS/browser parse, sent on submit.
+// Advisory and spoofable; the server pairs it with the raw user-agent header.
+type SubmitDeviceDTO struct {
+	Device  string `json:"device"`
+	OS      string `json:"os"`
+	Browser string `json:"browser"`
+}
+
 type SubmitQuizDTO struct {
 	// Answers is optional: with incremental save the final submit may carry zero
 	// new answers ("finalize what's saved"). Merged into the saved answers.
 	Answers          []SubmitAnswerDTO `json:"answers" binding:"omitempty,dive"`
 	TabHiddenCount   int               `json:"tab_hidden_count" binding:"gte=0"`
 	TabHiddenSeconds int               `json:"tab_hidden_seconds" binding:"gte=0"`
+	// Device is the client's best-effort device snapshot (optional).
+	Device *SubmitDeviceDTO `json:"device" binding:"omitempty"`
+	// UserAgent is stamped by the handler from the request header, never bound
+	// from client JSON — the non-spoofable anchor for Device.
+	UserAgent string `json:"-"`
 }
 
 type GradeAnswerDTO struct {
@@ -461,9 +509,14 @@ type QuizRepository interface {
 	Update(ctx context.Context, quiz *Quiz) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, scope QuizListScope, p ListParams) ([]Quiz, int64, error)
-	// ListByMemberWithRooms returns quizzes whose class the given user is a
-	// member of, with Class preloaded, ordered by created_at desc.
-	ListByMemberWithRooms(ctx context.Context, userID uuid.UUID, p ListParams) ([]Quiz, int64, error)
+	// CountPendingSubmissionsByQuizIDs returns, per quiz id, how many
+	// submissions sit in status "submitted" (awaiting manual grading).
+	CountPendingSubmissionsByQuizIDs(ctx context.Context, quizIDs []uuid.UUID) (map[uuid.UUID]int64, error)
+	// ListByMemberWithRooms returns ALL quizzes whose class the given user is
+	// a member of (optionally narrowed to one class), with Class preloaded.
+	// p is applied for search/ordering only — pagination happens in the
+	// service after derived-state filtering.
+	ListByMemberWithRooms(ctx context.Context, userID uuid.UUID, classID *uuid.UUID, p ListParams) ([]Quiz, error)
 
 	HardDelete(ctx context.Context, id uuid.UUID) error
 	FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*Quiz, error)
@@ -544,7 +597,7 @@ type QuizService interface {
 	Update(ctx context.Context, id uuid.UUID, dto UpdateQuizDTO) (*Quiz, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, q ListQuizzesQuery) ([]Quiz, int64, error)
-	ListMine(ctx context.Context, p ListParams) ([]MyExam, int64, error)
+	ListMine(ctx context.Context, q ListMyExamsQuery) ([]MyExam, int64, error)
 
 	CreateRule(ctx context.Context, quizID uuid.UUID, dto CreateQuizRuleDTO) (*QuizRule, error)
 	GetRule(ctx context.Context, id uuid.UUID) (*QuizRule, error)

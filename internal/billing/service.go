@@ -58,6 +58,7 @@ type service struct {
 	queue     enqueuer
 	notifier  systemNotifier
 	pdf       pdfRenderer
+	audit     domain.AuditRecorder
 	cfg       BillingConfig
 	logger    *slog.Logger
 }
@@ -91,6 +92,7 @@ func NewService(
 	queue enqueuer,
 	notifier systemNotifier,
 	pdf pdfRenderer,
+	audit domain.AuditRecorder,
 	cfg BillingConfig,
 	logger *slog.Logger,
 ) domain.BillingService {
@@ -100,7 +102,7 @@ func NewService(
 	return &service{
 		repo: repo, orgRepo: orgRepo, activator: activator, cache: cache,
 		gateways: gateways, storage: storage, queue: queue, notifier: notifier,
-		pdf: pdf, cfg: cfg, logger: logger,
+		pdf: pdf, audit: audit, cfg: cfg, logger: logger,
 	}
 }
 

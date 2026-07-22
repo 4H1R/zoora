@@ -95,7 +95,7 @@ type Invoice struct {
 }
 
 func (Invoice) TableName() string { return "invoices" }
-func (i Invoice) Money() Money     { return Money{Amount: i.Total, Currency: i.Currency} }
+func (i Invoice) Money() Money    { return Money{Amount: i.Total, Currency: i.Currency} }
 
 // ---- invoice_items ----
 

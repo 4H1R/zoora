@@ -112,6 +112,8 @@ const (
 	PermBillingManage          PermissionName = "billing:manage"
 	PermNotificationsSend      PermissionName = "notifications:send"
 	PermNotificationsSendAny   PermissionName = "notifications:send_any"
+	PermCustomFieldsManage     PermissionName = "custom_fields:manage"
+	PermAuditViewAny           PermissionName = "audit:view_any"
 )
 
 // AllPermissions is the authoritative list of every permission in the system.
@@ -150,4 +152,6 @@ var AllPermissions = []PermissionName{
 	PermAttendanceUpdate, PermAttendanceUpdateAny, PermAttendanceDelete,
 	PermBillingManage,
 	PermNotificationsSend, PermNotificationsSendAny,
+	PermCustomFieldsManage,
+	PermAuditViewAny,
 }

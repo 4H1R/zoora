@@ -33,12 +33,15 @@ export function useAttendanceColumns(): ColumnDef<Attendance>[] {
       id: "class",
       accessorFn: (a) => a.class?.name ?? "",
       header: t("org.attendance.table.class"),
+      // Server-side list only orders by created_at/updated_at/status.
+      enableSorting: false,
       cell: ({ getValue }) => <span className="text-sm font-medium">{(getValue() as string) || "—"}</span>,
     },
     {
       id: "session",
       accessorFn: (a) => a.class_session?.name ?? a.class_session?.description ?? "",
       header: t("org.attendance.table.session"),
+      enableSorting: false,
       cell: ({ getValue }) => <span className="text-muted-foreground text-sm">{(getValue() as string) || "—"}</span>,
     },
     {

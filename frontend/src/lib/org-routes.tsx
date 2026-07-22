@@ -10,8 +10,11 @@ import {
   FileIcon,
   GraduationCapIcon,
   LayoutDashboardIcon,
+  LibraryIcon,
+  ListPlusIcon,
   MessageCircleIcon,
   NotebookPenIcon,
+  ScrollTextIcon,
   SchoolIcon,
   SettingsIcon,
   ShieldIcon,
@@ -28,12 +31,15 @@ export type OrgRouteKey =
   | "classes"
   | "online-classes"
   | "exams"
+  | "question-banks"
   | "practices"
   | "grades"
   | "attendance"
   | "users"
   | "roles"
   | "settings"
+  | "custom-fields"
+  | "audit"
   | "billing"
   | "files"
   | "notifications"
@@ -91,6 +97,12 @@ export const ORG_ROUTES: Record<OrgRouteKey, OrgRouteSpec> = {
     segment: "exams",
     perms: ["quizzes:view", "quizzes:take"],
   },
+  "question-banks": {
+    i18nKey: "org.nav.questionBanks",
+    icon: <LibraryIcon />,
+    segment: "question-banks",
+    perms: ["question_banks:view", "question_banks:view_any"],
+  },
   practices: {
     i18nKey: "org.nav.practices",
     icon: <NotebookPenIcon />,
@@ -101,13 +113,13 @@ export const ORG_ROUTES: Record<OrgRouteKey, OrgRouteSpec> = {
     i18nKey: "org.nav.grades",
     icon: <GraduationCapIcon />,
     segment: "grades",
-    perms: ["gradebook:view"],
+    perms: ["gradebook:view", "gradebook:view_any", "gradebook:create"],
   },
   attendance: {
     i18nKey: "org.nav.attendance",
     icon: <CalendarCheckIcon />,
     segment: "attendance",
-    perms: ["attendance:view"],
+    perms: ["attendance:view", "attendance:view_any", "attendance:create"],
   },
   users: {
     i18nKey: "org.nav.users",
@@ -126,6 +138,18 @@ export const ORG_ROUTES: Record<OrgRouteKey, OrgRouteSpec> = {
     icon: <SettingsIcon />,
     segment: "settings",
     perms: ["organizations:update"],
+  },
+  "custom-fields": {
+    i18nKey: "org.nav.customFields",
+    icon: <ListPlusIcon />,
+    segment: "settings/custom-fields",
+    perms: ["custom_fields:manage"],
+  },
+  audit: {
+    i18nKey: "org.nav.auditLog",
+    icon: <ScrollTextIcon />,
+    segment: "settings/audit",
+    perms: ["audit:view_any"],
   },
   billing: {
     i18nKey: "billing.title",

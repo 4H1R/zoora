@@ -5,6 +5,7 @@
  * REST API for the Zoora education platform.
  * OpenAPI spec version: 1.0
  */
+import type { GithubCom4H1RZooraInternalDomainDeviceInfo } from './githubCom4H1RZooraInternalDomainDeviceInfo';
 import type { GithubCom4H1RZooraInternalDomainQuiz } from './githubCom4H1RZooraInternalDomainQuiz';
 import type { GithubCom4H1RZooraInternalDomainSubmissionAnswer } from './githubCom4H1RZooraInternalDomainSubmissionAnswer';
 import type { GithubCom4H1RZooraInternalDomainSubmissionQuestion } from './githubCom4H1RZooraInternalDomainSubmissionQuestion';
@@ -38,6 +39,11 @@ export interface GithubCom4H1RZooraInternalDomainQuizSubmission {
   results_revealed?: boolean;
   started_at?: string;
   status?: GithubCom4H1RZooraInternalDomainSubmissionStatus;
+  /**
+     * SubmitDevice is the advisory device snapshot captured at final submit.
+     * Teacher-facing; stripped from student reads by redactForStudent.
+     */
+  submit_device?: GithubCom4H1RZooraInternalDomainDeviceInfo;
   submitted_at?: string;
   tab_hidden_count?: number;
   tab_hidden_seconds?: number;

@@ -21,6 +21,7 @@ type mAttRepo struct{ mock.Mock }
 func (m *mAttRepo) Create(ctx context.Context, a *domain.Attendance) error {
 	return m.Called(ctx, a).Error(0)
 }
+
 func (m *mAttRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Attendance, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -28,17 +29,21 @@ func (m *mAttRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Attendan
 	}
 	return a.Get(0).(*domain.Attendance), a.Error(1)
 }
+
 func (m *mAttRepo) Update(ctx context.Context, a *domain.Attendance) error {
 	return m.Called(ctx, a).Error(0)
 }
+
 func (m *mAttRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mAttRepo) ListBySession(ctx context.Context, sessionID uuid.UUID, q domain.ListAttendanceQuery) ([]domain.Attendance, int64, error) {
 	a := m.Called(ctx, sessionID, q)
 	res, _ := a.Get(0).([]domain.Attendance)
 	return res, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mAttRepo) FindBySessionAndUser(ctx context.Context, sessionID, userID uuid.UUID) (*domain.Attendance, error) {
 	a := m.Called(ctx, sessionID, userID)
 	if a.Get(0) == nil {
@@ -46,16 +51,25 @@ func (m *mAttRepo) FindBySessionAndUser(ctx context.Context, sessionID, userID u
 	}
 	return a.Get(0).(*domain.Attendance), a.Error(1)
 }
-func (m *mAttRepo) ListByUser(ctx context.Context, userID uuid.UUID, p domain.ListParams) ([]domain.Attendance, int64, error) {
-	a := m.Called(ctx, userID, p)
+
+func (m *mAttRepo) ListByUser(ctx context.Context, userID uuid.UUID, q domain.ListMyAttendanceQuery) ([]domain.Attendance, int64, error) {
+	a := m.Called(ctx, userID, q)
 	res, _ := a.Get(0).([]domain.Attendance)
 	return res, a.Get(1).(int64), a.Error(2)
 }
+
+func (m *mAttRepo) SummarizeByUser(ctx context.Context, userID uuid.UUID, q domain.ListMyAttendanceQuery) (domain.MyAttendanceSummary, error) {
+	a := m.Called(ctx, userID, q)
+	res, _ := a.Get(0).(domain.MyAttendanceSummary)
+	return res, a.Error(1)
+}
+
 func (m *mAttRepo) AdminList(ctx context.Context, q domain.AdminListAttendanceQuery) ([]domain.Attendance, int64, error) {
 	a := m.Called(ctx, q)
 	res, _ := a.Get(0).([]domain.Attendance)
 	return res, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mAttRepo) ListByClassAndUsers(ctx context.Context, classID uuid.UUID, userIDs []uuid.UUID) ([]domain.Attendance, error) {
 	a := m.Called(ctx, classID, userIDs)
 	res, _ := a.Get(0).([]domain.Attendance)
@@ -67,6 +81,7 @@ type mClassRepo struct{ mock.Mock }
 func (m *mClassRepo) Create(ctx context.Context, c *domain.Class) error {
 	return m.Called(ctx, c).Error(0)
 }
+
 func (m *mClassRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Class, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -74,25 +89,31 @@ func (m *mClassRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Class,
 	}
 	return a.Get(0).(*domain.Class), a.Error(1)
 }
+
 func (m *mClassRepo) Update(ctx context.Context, c *domain.Class) error {
 	return m.Called(ctx, c).Error(0)
 }
+
 func (m *mClassRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mClassRepo) List(ctx context.Context, scope domain.ClassListScope, p domain.ListParams) ([]domain.Class, int64, error) {
 	a := m.Called(ctx, scope, p)
 	res, _ := a.Get(0).([]domain.Class)
 	return res, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mClassRepo) ListByNames(ctx context.Context, orgID uuid.UUID, names []string) ([]domain.Class, error) {
 	a := m.Called(ctx, orgID, names)
 	res, _ := a.Get(0).([]domain.Class)
 	return res, a.Error(1)
 }
+
 func (m *mClassRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mClassRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.Class, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -100,6 +121,7 @@ func (m *mClassRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID)
 	}
 	return a.Get(0).(*domain.Class), a.Error(1)
 }
+
 func (m *mClassRepo) AdminList(ctx context.Context, q domain.AdminListClassesQuery) ([]domain.Class, int64, error) {
 	a := m.Called(ctx, q)
 	res, _ := a.Get(0).([]domain.Class)
@@ -111,6 +133,7 @@ type mSessRepo struct{ mock.Mock }
 func (m *mSessRepo) Create(ctx context.Context, s *domain.ClassSession) error {
 	return m.Called(ctx, s).Error(0)
 }
+
 func (m *mSessRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.ClassSession, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -118,20 +141,25 @@ func (m *mSessRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.ClassSe
 	}
 	return a.Get(0).(*domain.ClassSession), a.Error(1)
 }
+
 func (m *mSessRepo) Update(ctx context.Context, s *domain.ClassSession) error {
 	return m.Called(ctx, s).Error(0)
 }
+
 func (m *mSessRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mSessRepo) ListByClass(ctx context.Context, classID uuid.UUID, q domain.ListClassSessionsQuery) ([]domain.ClassSession, int64, error) {
 	a := m.Called(ctx, classID, q)
 	res, _ := a.Get(0).([]domain.ClassSession)
 	return res, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mSessRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mSessRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.ClassSession, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -139,6 +167,7 @@ func (m *mSessRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) 
 	}
 	return a.Get(0).(*domain.ClassSession), a.Error(1)
 }
+
 func (m *mSessRepo) AdminList(ctx context.Context, q domain.AdminListClassSessionsQuery) ([]domain.ClassSession, int64, error) {
 	a := m.Called(ctx, q)
 	res, _ := a.Get(0).([]domain.ClassSession)
@@ -150,34 +179,64 @@ type mMemberRepo struct{ mock.Mock }
 func (m *mMemberRepo) Create(ctx context.Context, mem *domain.ClassMember) error {
 	return m.Called(ctx, mem).Error(0)
 }
+
 func (m *mMemberRepo) Delete(ctx context.Context, classID, userID uuid.UUID) error {
 	return m.Called(ctx, classID, userID).Error(0)
 }
+
 func (m *mMemberRepo) Exists(ctx context.Context, classID, userID uuid.UUID) (bool, error) {
 	a := m.Called(ctx, classID, userID)
 	return a.Bool(0), a.Error(1)
 }
+
 func (m *mMemberRepo) CountByClass(ctx context.Context, classID uuid.UUID) (int64, error) {
 	a := m.Called(ctx, classID)
 	return a.Get(0).(int64), a.Error(1)
 }
+
 func (m *mMemberRepo) ListByClass(ctx context.Context, classID uuid.UUID, p domain.ListParams) ([]domain.ClassMember, int64, error) {
 	a := m.Called(ctx, classID, p)
 	res, _ := a.Get(0).([]domain.ClassMember)
 	return res, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mMemberRepo) ListAllByClass(ctx context.Context, classID uuid.UUID) ([]domain.ClassMember, error) {
 	a := m.Called(ctx, classID)
 	res, _ := a.Get(0).([]domain.ClassMember)
 	return res, a.Error(1)
 }
 
+// fakeTransactor runs fn inline with no real DB — unit tests exercise the audit
+// same-tx wiring without a database.
+type fakeTransactor struct{}
+
+func (fakeTransactor) RunInTx(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
+
 func newSvc(repo domain.AttendanceRepository, classes domain.ClassRepository, sessions domain.ClassSessionRepository) domain.AttendanceService {
-	return attendance.NewService(repo, classes, sessions, nil, nil, nil, nil, nil, nil, authz.NewResolver(nil), slog.Default())
+	svc, _ := newSvcAudit(repo, classes, sessions)
+	return svc
+}
+
+func newSvcAudit(repo domain.AttendanceRepository, classes domain.ClassRepository, sessions domain.ClassSessionRepository) (domain.AttendanceService, *auditSpy) {
+	audit := &auditSpy{}
+	svc := attendance.NewService(repo, classes, sessions, nil, nil, nil, nil, nil, nil, authz.NewResolver(nil), fakeTransactor{}, audit, slog.Default())
+	return svc, audit
 }
 
 func newSvcWithMembers(repo domain.AttendanceRepository, classes domain.ClassRepository, sessions domain.ClassSessionRepository, members domain.ClassMemberRepository) domain.AttendanceService {
-	return attendance.NewService(repo, classes, sessions, members, nil, nil, nil, nil, nil, authz.NewResolver(nil), slog.Default())
+	return attendance.NewService(repo, classes, sessions, members, nil, nil, nil, nil, nil, authz.NewResolver(nil), fakeTransactor{}, &auditSpy{}, slog.Default())
 }
 
 func ownerCtx(userID uuid.UUID) context.Context {
@@ -304,6 +363,38 @@ func TestMark_CreatesWhenMissing(t *testing.T) {
 	repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
 }
 
+func TestMark_RecordsAudit(t *testing.T) {
+	ownerID := uuid.New()
+	classID := uuid.New()
+	sessionID := uuid.New()
+	userID := uuid.New()
+	orgID := uuid.New()
+
+	repo := &mAttRepo{}
+	classes := &mClassRepo{}
+	sessions := &mSessRepo{}
+
+	classes.On("FindByID", mock.Anything, classID).
+		Return(&domain.Class{ID: classID, OrganizationID: orgID, UserID: ownerID, Name: "Algebra 101"}, nil)
+	sessions.On("FindByID", mock.Anything, sessionID).
+		Return(&domain.ClassSession{ID: sessionID, ClassID: classID}, nil)
+	repo.On("FindBySessionAndUser", mock.Anything, sessionID, userID).Return(nil, domain.ErrNotFound)
+	repo.On("Create", mock.Anything, mock.AnythingOfType("*domain.Attendance")).Return(nil)
+
+	svc, audit := newSvcAudit(repo, classes, sessions)
+	dto := domain.CreateAttendanceDTO{UserID: userID, Status: domain.AttendanceStatusPresent}
+
+	_, err := svc.Mark(ownerCtx(ownerID), classID, sessionID, dto)
+	assert.NoError(t, err)
+	assert.Len(t, audit.records, 1)
+	assert.Equal(t, domain.AuditCreated, audit.records[0].Action)
+	assert.Equal(t, domain.AuditTargetAttendance, audit.records[0].TargetType)
+	assert.Equal(t, "Algebra 101", audit.records[0].TargetLabel)
+	assert.NotNil(t, audit.records[0].OrgID)
+	assert.Equal(t, orgID, *audit.records[0].OrgID)
+	assert.Equal(t, userID.String(), audit.records[0].Metadata["user_id"])
+}
+
 func TestListMine_Summarizes(t *testing.T) {
 	studentID := uuid.New()
 	repo := &mAttRepo{}
@@ -317,9 +408,13 @@ func TestListMine_Summarizes(t *testing.T) {
 			{Status: domain.AttendanceStatusAbsent},
 			{Status: domain.AttendanceStatusLate},
 		}, int64(4), nil)
+	repo.On("SummarizeByUser", mock.Anything, studentID, mock.Anything).
+		Return(domain.MyAttendanceSummary{Present: 2, Absent: 1, Late: 1}, nil)
 
 	svc := newSvc(repo, classes, sessions)
-	res, err := svc.ListMine(ownerCtx(studentID), domain.ListParams{Page: 1, PageSize: 50})
+	res, err := svc.ListMine(ownerCtx(studentID), domain.ListMyAttendanceQuery{
+		ListParams: domain.ListParams{Page: 1, PageSize: 50},
+	})
 
 	assert.NoError(t, err)
 	assert.Equal(t, 2, res.Summary.Present)
@@ -327,11 +422,16 @@ func TestListMine_Summarizes(t *testing.T) {
 	assert.Equal(t, 1, res.Summary.Late)
 	assert.Equal(t, 0, res.Summary.Excused)
 	assert.Len(t, res.Items, 4)
+	assert.Equal(t, int64(4), res.Total)
+	assert.Equal(t, 1, res.Page)
+	assert.Equal(t, 50, res.PageSize)
 }
 
 func TestListMine_NoCaller_Forbidden(t *testing.T) {
 	svc := newSvc(&mAttRepo{}, &mClassRepo{}, &mSessRepo{})
-	_, err := svc.ListMine(context.Background(), domain.ListParams{Page: 1, PageSize: 50})
+	_, err := svc.ListMine(context.Background(), domain.ListMyAttendanceQuery{
+		ListParams: domain.ListParams{Page: 1, PageSize: 50},
+	})
 	assert.ErrorIs(t, err, domain.ErrForbidden)
 }
 

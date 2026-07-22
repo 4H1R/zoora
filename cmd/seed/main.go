@@ -301,59 +301,40 @@ func seedAll(db *gorm.DB, ctx context.Context) (*seedCounts, error) {
 	for i, org := range orgs {
 		ou := &orgUsers{}
 
-		// First org: manager1 = manager (acts as teacher).
+		// First org: manager1..6 (Manager preset, act as teachers) and
+		// user1..6 (Student preset) — fixed debug logins in Zoora Demo org.
 		if i == 0 {
-			staff := factory.NewUser(org.ID, func(u *domain.User) {
-				u.OrganizationID = &org.ID
-				u.Username = "manager1"
-				u.Name = factory.T("Manager User", "کاربر مدیر")
-				u.RoleID = &presetRoles[domain.PresetRoleManager].ID
-			})
-			if err := db.WithContext(ctx).Create(staff).Error; err != nil {
-				return nil, fmt.Errorf("creating manager1: %w", err)
+			managerRoleID := presetRoles[domain.PresetRoleManager].ID
+			for n := 1; n <= 6; n++ {
+				username := fmt.Sprintf("manager%d", n)
+				staff := factory.NewUser(org.ID, func(u *domain.User) {
+					u.OrganizationID = &org.ID
+					u.Username = username
+					u.Name = factory.T(fmt.Sprintf("Manager %d", n), fmt.Sprintf("کاربر مدیر %d", n))
+					u.RoleID = &managerRoleID
+				})
+				if err := db.WithContext(ctx).Create(staff).Error; err != nil {
+					return nil, fmt.Errorf("creating %s: %w", username, err)
+				}
+				ou.teachers = append(ou.teachers, staff)
+				counts.Users++
 			}
-			ou.teachers = append(ou.teachers, staff)
-			counts.Users++
 
-			// Second manager — manager2 (Manager preset) in acme org.
-			staff2 := factory.NewUser(org.ID, func(u *domain.User) {
-				u.OrganizationID = &org.ID
-				u.Username = "manager2"
-				u.Name = factory.T("Manager Two", "کاربر مدیر دو")
-				u.RoleID = &presetRoles[domain.PresetRoleManager].ID
-			})
-			if err := db.WithContext(ctx).Create(staff2).Error; err != nil {
-				return nil, fmt.Errorf("creating manager2: %w", err)
+			studentRoleID := presetRoles[domain.PresetRoleStudent].ID
+			for n := 1; n <= 6; n++ {
+				username := fmt.Sprintf("user%d", n)
+				st := factory.NewUser(org.ID, func(u *domain.User) {
+					u.OrganizationID = &org.ID
+					u.Username = username
+					u.Name = factory.T(fmt.Sprintf("User %d", n), fmt.Sprintf("کاربر %d", n))
+					u.RoleID = &studentRoleID
+				})
+				if err := db.WithContext(ctx).Create(st).Error; err != nil {
+					return nil, fmt.Errorf("creating %s: %w", username, err)
+				}
+				ou.students = append(ou.students, st)
+				counts.Users++
 			}
-			ou.teachers = append(ou.teachers, staff2)
-			counts.Users++
-
-			// Fixed user1 — debug student in Zoora Demo org
-			studentRole := presetRoles[domain.PresetRoleStudent]
-			user1 := factory.NewUser(org.ID, func(u *domain.User) {
-				u.OrganizationID = &org.ID
-				u.Username = "user1"
-				u.Name = factory.T("User One", "کاربر یک")
-				u.RoleID = &studentRole.ID
-			})
-			if err := db.WithContext(ctx).Create(user1).Error; err != nil {
-				return nil, fmt.Errorf("creating user1: %w", err)
-			}
-			ou.students = append(ou.students, user1)
-			counts.Users++
-
-			// Fixed user2 — second debug student in Zoora Demo org
-			user2 := factory.NewUser(org.ID, func(u *domain.User) {
-				u.OrganizationID = &org.ID
-				u.Username = "user2"
-				u.Name = factory.T("User Two", "کاربر دو")
-				u.RoleID = &studentRole.ID
-			})
-			if err := db.WithContext(ctx).Create(user2).Error; err != nil {
-				return nil, fmt.Errorf("creating user2: %w", err)
-			}
-			ou.students = append(ou.students, user2)
-			counts.Users++
 		}
 
 		teacher := factory.NewUser(org.ID, func(u *domain.User) {
@@ -802,9 +783,7 @@ func printSummary(c *seedCounts) {
 	fmt.Printf("  GradebookCells:       %d\n", c.GradebookCells)
 	fmt.Printf("  PlanPrices:           %d\n", c.PlanPrices)
 	fmt.Println("\nLogins:")
-	fmt.Println("  admin1 / password   (super admin)")
-	fmt.Println("  manager1 / password (Manager preset in Zoora Demo org)")
-	fmt.Println("  manager2 / password (Manager preset in Zoora Demo org)")
-	fmt.Println("  user1 / password    (Student in Zoora Demo org)")
-	fmt.Println("  user2 / password    (Student in Zoora Demo org)")
+	fmt.Println("  admin1 / password        (super admin)")
+	fmt.Println("  manager1..6 / password   (Manager preset in Zoora Demo org)")
+	fmt.Println("  user1..6 / password      (Student in Zoora Demo org)")
 }

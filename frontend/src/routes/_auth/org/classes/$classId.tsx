@@ -8,6 +8,7 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import {
   CalendarClockIcon,
   MessagesSquareIcon,
+  PencilIcon,
   PlusIcon,
   RefreshCwIcon,
   TrophyIcon,
@@ -37,6 +38,7 @@ import { DeleteConfirmDialog } from "@/components/form/delete-confirm-dialog"
 import { useBreadcrumb } from "@/components/layout/breadcrumb-context"
 import { AttendanceMatrixView } from "@/components/org/classes/AttendanceMatrixView"
 import { CreateClassChatDialog } from "@/components/org/classes/create-class-chat-dialog"
+import { EditClassDialog } from "@/routes/_auth/org/classes/-edit-class-dialog"
 import { EnrollMemberModal } from "@/components/org/classes/EnrollMemberModal"
 import { useClassPermissions } from "@/components/org/classes/use-class-permissions"
 import { useAttendancePermissions } from "@/components/org/livesessions/use-attendance-permissions"
@@ -52,6 +54,8 @@ import { useOrgGuard } from "@/lib/access"
 import { useAdminTable } from "@/lib/data-table"
 import { FEATURE, useHasFeature } from "@/lib/entitlements"
 import { orgHead } from "@/lib/org-head"
+import type { SessionStatus } from "@/lib/session-status"
+
 import { formatRelativeTime, formatSessionDate, getSessionStatus, useNow } from "@/lib/session-status"
 import { cn } from "@/lib/utils"
 
@@ -79,6 +83,52 @@ export const Route = createFileRoute("/_auth/org/classes/$classId")({
   component: RouteComponent,
 })
 
+// Status drives a single accent so the eye lands on what's actionable:
+// live = destructive, the upcoming "next" = primary, the rest stays neutral.
+function sessionAccentRing(status: SessionStatus, isNext: boolean) {
+  if (status === "ended") return "ring-foreground/10 hover:ring-foreground/25"
+  if (status === "live") return "ring-destructive/40 hover:ring-destructive/60"
+  if (isNext) return "ring-primary/45 hover:ring-primary/65"
+  return "ring-foreground/10 hover:ring-foreground/30"
+}
+
+function sessionRailColor(status: SessionStatus, isNext: boolean) {
+  if (status === "live") return "bg-destructive"
+  if (isNext) return "bg-primary"
+  if (status === "ended") return "bg-foreground/15"
+  return "bg-foreground/20"
+}
+
+function SessionStatusIndicator({
+  status,
+  isNext,
+  relativeStr,
+}: {
+  status: SessionStatus
+  isNext: boolean
+  relativeStr: string
+}) {
+  const { t } = useTranslation()
+
+  if (status === "live") return <SessionStatusPill status="live" size="sm" />
+  if (status === "ended") return <SessionStatusPill status="ended" size="sm" />
+  if (isNext)
+    return (
+      <span className="text-primary inline-flex items-center gap-1.5 font-mono text-[0.7rem] font-medium tracking-[0.2em] uppercase">
+        <span className="bg-primary size-1.5 rounded-full" />
+        {t("org.class.sessions.nextUp")}
+      </span>
+    )
+  if (relativeStr)
+    return (
+      <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[0.7rem] font-medium">
+        <CalendarClockIcon className="size-3" />
+        {relativeStr}
+      </span>
+    )
+  return null
+}
+
 function SessionCard({
   session,
   index,
@@ -97,17 +147,8 @@ function SessionCard({
   const relativeStr = formatRelativeTime(session.start_time, now, i18n.language)
   const isEnded = status === "ended"
 
-  // Status drives a single accent so the eye lands on what's actionable:
-  // live = destructive, the upcoming "next" = primary, the rest stays neutral.
-  const accent = isEnded
-    ? "ring-foreground/10 hover:ring-foreground/25"
-    : status === "live"
-      ? "ring-destructive/40 hover:ring-destructive/60"
-      : isNext
-        ? "ring-primary/45 hover:ring-primary/65"
-        : "ring-foreground/10 hover:ring-foreground/30"
-  const rail =
-    status === "live" ? "bg-destructive" : isNext ? "bg-primary" : isEnded ? "bg-foreground/15" : "bg-foreground/20"
+  const accent = sessionAccentRing(status, isNext)
+  const rail = sessionRailColor(status, isNext)
 
   return (
     <Link
@@ -137,21 +178,7 @@ function SessionCard({
       </span>
 
       <div className="flex min-h-6 items-center gap-2">
-        {status === "live" ? (
-          <SessionStatusPill status="live" size="sm" />
-        ) : isEnded ? (
-          <SessionStatusPill status="ended" size="sm" />
-        ) : isNext ? (
-          <span className="text-primary inline-flex items-center gap-1.5 font-mono text-[0.7rem] font-medium tracking-[0.2em] uppercase">
-            <span className="bg-primary size-1.5 rounded-full" />
-            {t("org.class.sessions.nextUp")}
-          </span>
-        ) : relativeStr ? (
-          <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[0.7rem] font-medium">
-            <CalendarClockIcon className="size-3" />
-            {relativeStr}
-          </span>
-        ) : null}
+        <SessionStatusIndicator status={status} isNext={isNext} relativeStr={relativeStr} />
       </div>
 
       <div className="flex flex-col gap-1">
@@ -219,6 +246,7 @@ function RouteComponent() {
   const { can, user: accessUser } = useAccess()
 
   const [formOpen, setFormOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
   const [enrollOpen, setEnrollOpen] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
   const [removeTarget, setRemoveTarget] = useState<ClassMember | null>(null)
@@ -371,6 +399,12 @@ function RouteComponent() {
   const canManageChat = !!cls && canCreateSession && chatEnabled
   const conversationId = cls?.conversation_id
 
+  // Edit gating mirrors backend canManageClass: update_any (admin/org-wide) OR the
+  // owning teacher holding the base update permission.
+  const canEditClass =
+    !!cls &&
+    (can("classes:update_any") || (can("classes:update") && !!cls.user_id && cls.user_id === accessUser.id))
+
   return (
     <div className="relative isolate flex flex-col gap-6 pb-10">
       <DecorativeBackground />
@@ -439,8 +473,17 @@ function RouteComponent() {
             <TrophyIcon className="size-4" />
             {t("org.class.gradebook.open")}
           </Button>
+
+          {canEditClass && (
+            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+              <PencilIcon className="size-4" />
+              {t("common.edit")}
+            </Button>
+          )}
         </div>
       </header>
+
+      {cls && <EditClassDialog open={editOpen} onOpenChange={setEditOpen} cls={cls} />}
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList variant="line">

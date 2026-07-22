@@ -5,8 +5,10 @@ import "context"
 // Correlation identifiers carried on the request/task context so the logger can
 // tag every line without callers threading them through each log call.
 
-type requestIDKey struct{}
-type taskIDKey struct{}
+type (
+	requestIDKey struct{}
+	taskIDKey    struct{}
+)
 
 // WithRequestID stores an HTTP request correlation id on the context.
 func WithRequestID(ctx context.Context, id string) context.Context {

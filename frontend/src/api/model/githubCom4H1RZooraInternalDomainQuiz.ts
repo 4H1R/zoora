@@ -8,6 +8,7 @@
 import type { GithubCom4H1RZooraInternalDomainClass } from './githubCom4H1RZooraInternalDomainClass';
 import type { GithubCom4H1RZooraInternalDomainImageRenderStatus } from './githubCom4H1RZooraInternalDomainImageRenderStatus';
 import type { GithubCom4H1RZooraInternalDomainNegativeMarkMode } from './githubCom4H1RZooraInternalDomainNegativeMarkMode';
+import type { GithubCom4H1RZooraInternalDomainQuizRoom } from './githubCom4H1RZooraInternalDomainQuizRoom';
 import type { GithubCom4H1RZooraInternalDomainUser } from './githubCom4H1RZooraInternalDomainUser';
 
 export interface GithubCom4H1RZooraInternalDomainQuiz {
@@ -35,6 +36,12 @@ export interface GithubCom4H1RZooraInternalDomainQuiz {
   no_back_navigation?: boolean;
   organization_id?: string;
   /**
+     * PendingSubmissionsCount is a transient, grader-only aggregate: submissions
+     * with status "submitted" that still await manual grading. Populated on list
+     * reads for callers who can manage the quiz; omitted for everyone else.
+     */
+  pending_submissions_count?: number;
+  /**
      * RenderAsImage turns on anti-cheat image rendering for the whole quiz: every
      * question the quiz can draw (manual rules' explicit questions plus every
      * question in a random rule's bank) is rendered to distorted PNGs by the
@@ -44,6 +51,11 @@ export interface GithubCom4H1RZooraInternalDomainQuiz {
      */
   render_as_image?: boolean;
   require_gps?: boolean;
+  /**
+     * Rooms are the scheduled windows of this quiz across class sessions.
+     * Preloaded only on list reads that surface schedule columns.
+     */
+  rooms?: GithubCom4H1RZooraInternalDomainQuizRoom[];
   /**
      * ShowResults opts the quiz into revealing each student's score and earned
      * marks back to them. Reveal is deferred until the student's room window has

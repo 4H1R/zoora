@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,12 +14,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"log/slog"
 
+	"github.com/4H1R/zoora/internal/audit"
 	"github.com/4H1R/zoora/internal/auth"
 	"github.com/4H1R/zoora/internal/config"
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/organizations"
+	"github.com/4H1R/zoora/internal/platform/database"
 	"github.com/4H1R/zoora/internal/roles"
 	"github.com/4H1R/zoora/internal/users"
 	"github.com/4H1R/zoora/tests/testutil"
@@ -32,6 +34,7 @@ func TestAdminCreatesUser(t *testing.T) {
 		&domain.Permission{},
 		&domain.Role{},
 		&domain.RolePermission{},
+		&domain.AuditEntry{},
 	))
 
 	logger := slog.Default()
@@ -47,7 +50,9 @@ func TestAdminCreatesUser(t *testing.T) {
 	roleRepo := roles.NewRoleRepository(db)
 	admin := seedUser(t, userRepo, &org.ID, "users-admin", true)
 
-	userSvc := users.NewService(userRepo, roleRepo, nil, nil, nil, logger)
+	transactor := database.NewTransactor(db)
+	auditSvc := audit.NewService(audit.NewRepository(db), logger)
+	userSvc := users.NewService(userRepo, roleRepo, nil, nil, nil, transactor, auditSvc, logger)
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()

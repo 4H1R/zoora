@@ -22,6 +22,7 @@ type mLiveRoomRepo struct{ mock.Mock }
 func (m *mLiveRoomRepo) Create(ctx context.Context, r *domain.LiveRoom) error {
 	return m.Called(ctx, r).Error(0)
 }
+
 func (m *mLiveRoomRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.LiveRoom, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -29,46 +30,57 @@ func (m *mLiveRoomRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Liv
 	}
 	return a.Get(0).(*domain.LiveRoom), a.Error(1)
 }
+
 func (m *mLiveRoomRepo) Transition(ctx context.Context, r *domain.LiveRoom, from domain.LiveRoomStatus) error {
 	return m.Called(ctx, r, from).Error(0)
 }
+
 func (m *mLiveRoomRepo) TouchHostLastSeen(ctx context.Context, roomID uuid.UUID, seenAt time.Time) error {
 	return m.Called(ctx, roomID, seenAt).Error(0)
 }
+
 func (m *mLiveRoomRepo) UpdateConfig(ctx context.Context, roomID uuid.UUID, cfg domain.LiveRoomConfig) error {
 	return m.Called(ctx, roomID, cfg).Error(0)
 }
+
 func (m *mLiveRoomRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mLiveRoomRepo) List(ctx context.Context, scope domain.LiveRoomListScope, p domain.ListParams) ([]domain.LiveRoom, int64, error) {
 	a := m.Called(ctx, scope, p)
 	res, _ := a.Get(0).([]domain.LiveRoom)
 	return res, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mLiveRoomRepo) FindActiveRoomsWithStaleHost(ctx context.Context, d time.Duration) ([]domain.LiveRoom, error) {
 	a := m.Called(ctx, d)
 	res, _ := a.Get(0).([]domain.LiveRoom)
 	return res, a.Error(1)
 }
+
 func (m *mLiveRoomRepo) ListByClassSession(ctx context.Context, sessionID uuid.UUID) ([]domain.LiveRoom, error) {
 	a := m.Called(ctx, sessionID)
 	res, _ := a.Get(0).([]domain.LiveRoom)
 	return res, a.Error(1)
 }
+
 func (m *mLiveRoomRepo) FindByLiveKitRoomName(ctx context.Context, name string) (*domain.LiveRoom, error) {
 	a := m.Called(ctx, name)
 	res, _ := a.Get(0).(*domain.LiveRoom)
 	return res, a.Error(1)
 }
+
 func (m *mLiveRoomRepo) AdminList(ctx context.Context, q domain.AdminListLiveRoomsQuery) ([]domain.LiveRoom, int64, error) {
 	a := m.Called(ctx, q)
 	res, _ := a.Get(0).([]domain.LiveRoom)
 	return res, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mLiveRoomRepo) HardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mLiveRoomRepo) FindByIDIncludingDeleted(ctx context.Context, id uuid.UUID) (*domain.LiveRoom, error) {
 	a := m.Called(ctx, id)
 	if a.Get(0) == nil {
@@ -82,6 +94,7 @@ type mParticipantRepo struct{ mock.Mock }
 func (m *mParticipantRepo) Create(ctx context.Context, p *domain.LiveParticipant) error {
 	return m.Called(ctx, p).Error(0)
 }
+
 func (m *mParticipantRepo) FindActiveByRoomAndUser(ctx context.Context, roomID, userID uuid.UUID) (*domain.LiveParticipant, error) {
 	a := m.Called(ctx, roomID, userID)
 	if a.Get(0) == nil {
@@ -89,19 +102,23 @@ func (m *mParticipantRepo) FindActiveByRoomAndUser(ctx context.Context, roomID, 
 	}
 	return a.Get(0).(*domain.LiveParticipant), a.Error(1)
 }
+
 func (m *mParticipantRepo) Update(ctx context.Context, p *domain.LiveParticipant) error {
 	return m.Called(ctx, p).Error(0)
 }
+
 func (m *mParticipantRepo) ListByRoom(ctx context.Context, roomID uuid.UUID, q domain.ListLiveParticipantsQuery) ([]domain.LiveParticipant, int64, error) {
 	a := m.Called(ctx, roomID, q)
 	res, _ := a.Get(0).([]domain.LiveParticipant)
 	return res, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mParticipantRepo) ListAllByRoom(ctx context.Context, roomID uuid.UUID) ([]domain.LiveParticipant, error) {
 	a := m.Called(ctx, roomID)
 	res, _ := a.Get(0).([]domain.LiveParticipant)
 	return res, a.Error(1)
 }
+
 func (m *mParticipantRepo) GetActiveParticipant(ctx context.Context, roomID uuid.UUID, identity string) (*domain.LiveParticipant, error) {
 	a := m.Called(ctx, roomID, identity)
 	if a.Get(0) == nil {
@@ -109,15 +126,19 @@ func (m *mParticipantRepo) GetActiveParticipant(ctx context.Context, roomID uuid
 	}
 	return a.Get(0).(*domain.LiveParticipant), a.Error(1)
 }
+
 func (m *mParticipantRepo) UpdateParticipantRole(ctx context.Context, roomID uuid.UUID, identity string, role domain.ParticipantRole) error {
 	return m.Called(ctx, roomID, identity, role).Error(0)
 }
+
 func (m *mParticipantRepo) SetHandRaised(ctx context.Context, roomID uuid.UUID, identity string, raised bool) error {
 	return m.Called(ctx, roomID, identity, raised).Error(0)
 }
+
 func (m *mParticipantRepo) MarkAllLeft(ctx context.Context, roomID uuid.UUID, leftAt time.Time) error {
 	return m.Called(ctx, roomID, leftAt).Error(0)
 }
+
 func (m *mParticipantRepo) MarkLeftByIdentity(ctx context.Context, roomID uuid.UUID, identity string, leftAt time.Time) error {
 	return m.Called(ctx, roomID, identity, leftAt).Error(0)
 }
@@ -140,7 +161,7 @@ func liveRoom(sessionID uuid.UUID, durationSeconds int) domain.LiveRoom {
 }
 
 func newAutoMarkSvc(repo domain.AttendanceRepository, classes domain.ClassRepository, sessions domain.ClassSessionRepository, members domain.ClassMemberRepository, rooms domain.LiveRoomRepository, parts domain.LiveParticipantRepository, percent int) domain.AttendanceService {
-	return attendance.NewService(repo, classes, sessions, members, rooms, parts, nil, nil, fakeSettingsProvider{percent: percent}, authz.NewResolver(nil), slog.Default())
+	return attendance.NewService(repo, classes, sessions, members, rooms, parts, nil, nil, fakeSettingsProvider{percent: percent}, authz.NewResolver(nil), fakeTransactor{}, &auditSpy{}, slog.Default())
 }
 
 func TestAutoMarkSessionLive_MarksPresentAndAbsent(t *testing.T) {
@@ -238,6 +259,85 @@ func TestAutoMarkSessionLive_OverwritesAutoPreservesManual(t *testing.T) {
 	require.Equal(t, userA, updated[0].UserID)
 	require.Equal(t, domain.AttendanceStatusPresent, updated[0].Status)
 	repo.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+}
+
+func TestAutoMark_LiveRoomScopedCountsOnlyThatRoom(t *testing.T) {
+	ownerID := uuid.New()
+	classID := uuid.New()
+	sessionID := uuid.New()
+	orgID := uuid.New()
+	userA := uuid.New() // 80% in target room -> present
+	userB := uuid.New() // only in the other room -> absent
+
+	repo := &mAttRepo{}
+	classes := &mClassRepo{}
+	sessions := &mSessRepo{}
+	members := &mMemberRepo{}
+	rooms := &mLiveRoomRepo{}
+	parts := &mParticipantRepo{}
+
+	target := liveRoom(sessionID, 1000)
+	other := liveRoom(sessionID, 1000)
+	classes.On("FindByID", mock.Anything, classID).Return(&domain.Class{ID: classID, OrganizationID: orgID, UserID: ownerID}, nil)
+	sessions.On("FindByID", mock.Anything, sessionID).Return(&domain.ClassSession{ID: sessionID, ClassID: classID}, nil)
+	rooms.On("FindByID", mock.Anything, target.ID).Return(&target, nil)
+	parts.On("ListAllByRoom", mock.Anything, target.ID).Return([]domain.LiveParticipant{
+		{UserID: userA, TotalDurationSeconds: 800},
+	}, nil)
+	members.On("ListAllByClass", mock.Anything, classID).Return([]domain.ClassMember{
+		{ClassID: classID, UserID: userA},
+		{ClassID: classID, UserID: userB},
+	}, nil)
+	repo.On("FindBySessionAndUser", mock.Anything, sessionID, mock.Anything).Return(nil, domain.ErrNotFound)
+
+	created := map[uuid.UUID]domain.AttendanceStatus{}
+	repo.On("Create", mock.Anything, mock.AnythingOfType("*domain.Attendance")).
+		Run(func(args mock.Arguments) {
+			a := args.Get(1).(*domain.Attendance)
+			created[a.UserID] = a.Status
+		}).Return(nil)
+
+	svc := newAutoMarkSvc(repo, classes, sessions, members, rooms, parts, 75)
+	res, err := svc.AutoMark(ownerCtx(ownerID), classID, sessionID, domain.AutoMarkAttendanceDTO{
+		Source: domain.AutoMarkSourceLive,
+		RoomID: target.ID,
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, 2, res.Marked)
+	require.Equal(t, domain.AttendanceStatusPresent, created[userA])
+	require.Equal(t, domain.AttendanceStatusAbsent, created[userB])
+	rooms.AssertNotCalled(t, "ListByClassSession", mock.Anything, mock.Anything)
+	parts.AssertNotCalled(t, "ListAllByRoom", mock.Anything, other.ID)
+}
+
+func TestAutoMark_LiveRoomWrongSessionNotFound(t *testing.T) {
+	ownerID := uuid.New()
+	classID := uuid.New()
+	sessionID := uuid.New()
+	orgID := uuid.New()
+
+	repo := &mAttRepo{}
+	classes := &mClassRepo{}
+	sessions := &mSessRepo{}
+	members := &mMemberRepo{}
+	rooms := &mLiveRoomRepo{}
+	parts := &mParticipantRepo{}
+
+	foreign := liveRoom(uuid.New(), 1000) // belongs to another session
+	classes.On("FindByID", mock.Anything, classID).Return(&domain.Class{ID: classID, OrganizationID: orgID, UserID: ownerID}, nil)
+	sessions.On("FindByID", mock.Anything, sessionID).Return(&domain.ClassSession{ID: sessionID, ClassID: classID}, nil)
+	rooms.On("FindByID", mock.Anything, foreign.ID).Return(&foreign, nil)
+
+	svc := newAutoMarkSvc(repo, classes, sessions, members, rooms, parts, 75)
+	_, err := svc.AutoMark(ownerCtx(ownerID), classID, sessionID, domain.AutoMarkAttendanceDTO{
+		Source: domain.AutoMarkSourceLive,
+		RoomID: foreign.ID,
+	})
+
+	require.ErrorIs(t, err, domain.ErrNotFound)
+	repo.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+	repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
 }
 
 func TestAutoMarkSessionLive_ZeroDurationSkips(t *testing.T) {

@@ -28,125 +28,151 @@ func (m *mockQuizSvc) Create(ctx context.Context, dto domain.CreateQuizDTO) (*do
 	q, _ := a.Get(0).(*domain.Quiz)
 	return q, a.Error(1)
 }
+
 func (m *mockQuizSvc) GetByID(ctx context.Context, id uuid.UUID) (*domain.Quiz, error) {
 	a := m.Called(ctx, id)
 	q, _ := a.Get(0).(*domain.Quiz)
 	return q, a.Error(1)
 }
+
 func (m *mockQuizSvc) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateQuizDTO) (*domain.Quiz, error) {
 	a := m.Called(ctx, id, dto)
 	q, _ := a.Get(0).(*domain.Quiz)
 	return q, a.Error(1)
 }
+
 func (m *mockQuizSvc) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockQuizSvc) List(ctx context.Context, q domain.ListQuizzesQuery) ([]domain.Quiz, int64, error) {
 	a := m.Called(ctx, q)
 	qs, _ := a.Get(0).([]domain.Quiz)
 	return qs, a.Get(1).(int64), a.Error(2)
 }
-func (m *mockQuizSvc) ListMine(ctx context.Context, p domain.ListParams) ([]domain.MyExam, int64, error) {
-	a := m.Called(ctx, p)
+
+func (m *mockQuizSvc) ListMine(ctx context.Context, q domain.ListMyExamsQuery) ([]domain.MyExam, int64, error) {
+	a := m.Called(ctx, q)
 	es, _ := a.Get(0).([]domain.MyExam)
 	return es, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockQuizSvc) CreateRule(ctx context.Context, quizID uuid.UUID, dto domain.CreateQuizRuleDTO) (*domain.QuizRule, error) {
 	a := m.Called(ctx, quizID, dto)
 	r, _ := a.Get(0).(*domain.QuizRule)
 	return r, a.Error(1)
 }
+
 func (m *mockQuizSvc) GetRule(ctx context.Context, id uuid.UUID) (*domain.QuizRule, error) {
 	a := m.Called(ctx, id)
 	r, _ := a.Get(0).(*domain.QuizRule)
 	return r, a.Error(1)
 }
+
 func (m *mockQuizSvc) UpdateRule(ctx context.Context, id uuid.UUID, dto domain.UpdateQuizRuleDTO) (*domain.QuizRule, error) {
 	a := m.Called(ctx, id, dto)
 	r, _ := a.Get(0).(*domain.QuizRule)
 	return r, a.Error(1)
 }
+
 func (m *mockQuizSvc) DeleteRule(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockQuizSvc) ListRules(ctx context.Context, quizID uuid.UUID, q domain.ListQuizRulesQuery) ([]domain.QuizRule, int64, error) {
 	a := m.Called(ctx, quizID, q)
 	rs, _ := a.Get(0).([]domain.QuizRule)
 	return rs, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockQuizSvc) CreateRoom(ctx context.Context, quizID uuid.UUID, dto domain.CreateQuizRoomDTO) (*domain.QuizRoom, error) {
 	a := m.Called(ctx, quizID, dto)
 	r, _ := a.Get(0).(*domain.QuizRoom)
 	return r, a.Error(1)
 }
+
 func (m *mockQuizSvc) GetRoom(ctx context.Context, id uuid.UUID) (*domain.QuizRoom, error) {
 	a := m.Called(ctx, id)
 	r, _ := a.Get(0).(*domain.QuizRoom)
 	return r, a.Error(1)
 }
+
 func (m *mockQuizSvc) StartRoom(ctx context.Context, id uuid.UUID) (*domain.QuizRoom, error) {
 	a := m.Called(ctx, id)
 	r, _ := a.Get(0).(*domain.QuizRoom)
 	return r, a.Error(1)
 }
+
 func (m *mockQuizSvc) EndRoom(ctx context.Context, id uuid.UUID) (*domain.QuizRoom, error) {
 	a := m.Called(ctx, id)
 	r, _ := a.Get(0).(*domain.QuizRoom)
 	return r, a.Error(1)
 }
+
 func (m *mockQuizSvc) ListRooms(ctx context.Context, quizID uuid.UUID, q domain.ListQuizRoomsQuery) ([]domain.QuizRoom, int64, error) {
 	a := m.Called(ctx, quizID, q)
 	rs, _ := a.Get(0).([]domain.QuizRoom)
 	return rs, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockQuizSvc) ListQuestionsForTaking(ctx context.Context, quizID uuid.UUID) ([]domain.Question, error) {
 	a := m.Called(ctx, quizID)
 	qs, _ := a.Get(0).([]domain.Question)
 	return qs, a.Error(1)
 }
+
 func (m *mockQuizSvc) TakePreview(ctx context.Context, quizID uuid.UUID) (*domain.QuizTakePreview, error) {
 	a := m.Called(ctx, quizID)
 	p, _ := a.Get(0).(*domain.QuizTakePreview)
 	return p, a.Error(1)
 }
+
 func (m *mockQuizSvc) StartSubmission(ctx context.Context, quizID uuid.UUID, dto domain.StartQuizSubmissionDTO) (*domain.QuizSubmission, error) {
 	a := m.Called(ctx, quizID, dto)
 	s, _ := a.Get(0).(*domain.QuizSubmission)
 	return s, a.Error(1)
 }
+
 func (m *mockQuizSvc) SaveAnswer(ctx context.Context, submissionID uuid.UUID, dto domain.SaveAnswerDTO) error {
 	return m.Called(ctx, submissionID, dto).Error(0)
 }
+
 func (m *mockQuizSvc) SubmitQuiz(ctx context.Context, submissionID uuid.UUID, dto domain.SubmitQuizDTO) (*domain.QuizSubmission, error) {
 	a := m.Called(ctx, submissionID, dto)
 	s, _ := a.Get(0).(*domain.QuizSubmission)
 	return s, a.Error(1)
 }
+
 func (m *mockQuizSvc) GetSubmission(ctx context.Context, id uuid.UUID) (*domain.QuizSubmission, error) {
 	a := m.Called(ctx, id)
 	s, _ := a.Get(0).(*domain.QuizSubmission)
 	return s, a.Error(1)
 }
+
 func (m *mockQuizSvc) ListSubmissions(ctx context.Context, quizID uuid.UUID, q domain.ListSubmissionsQuery) ([]domain.QuizSubmission, int64, error) {
 	a := m.Called(ctx, quizID, q)
 	ss, _ := a.Get(0).([]domain.QuizSubmission)
 	return ss, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockQuizSvc) GradeSubmission(ctx context.Context, id uuid.UUID, dto domain.GradeSubmissionDTO) (*domain.QuizSubmission, error) {
 	a := m.Called(ctx, id, dto)
 	s, _ := a.Get(0).(*domain.QuizSubmission)
 	return s, a.Error(1)
 }
+
 func (m *mockQuizSvc) AdminList(ctx context.Context, q domain.AdminListQuizzesQuery) ([]domain.Quiz, int64, error) {
 	a := m.Called(ctx, q)
 	qs, _ := a.Get(0).([]domain.Quiz)
 	return qs, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockQuizSvc) AntiCheatReport(ctx context.Context, quizID uuid.UUID) ([]domain.SubmissionAntiCheatReport, error) {
 	a := m.Called(ctx, quizID)
 	r, _ := a.Get(0).([]domain.SubmissionAntiCheatReport)
 	return r, a.Error(1)
 }
+
 func (m *mockQuizSvc) AdminHardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }

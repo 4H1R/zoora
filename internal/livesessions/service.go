@@ -37,11 +37,16 @@ type LiveKitClient interface {
 	PublicURL() string
 }
 
-// WhiteboardStorage is the object-storage surface for whiteboard image uploads.
-// *storage.Client satisfies it. Nil on the worker (no HTTP presign there).
-type WhiteboardStorage interface {
+// SessionStorage is the object-storage surface the service needs: public presign
+// for whiteboard images and private presign for recording downloads.
+// *storage.Client satisfies it. Nil on the worker (no HTTP presign there — the
+// worker only finalizes recordings, it never lists or presigns them).
+type SessionStorage interface {
 	PublicPresignUpload(ctx context.Context, key string, expiry time.Duration) (string, error)
 	PublicURL(key string) string
+	// GeneratePresignedDownloadURL signs a short-lived GET for a private-bucket
+	// object (recording MP4s) so a browser can download it without public access.
+	GeneratePresignedDownloadURL(ctx context.Context, key string, expiry time.Duration) (string, error)
 }
 
 type service struct {
@@ -49,20 +54,24 @@ type service struct {
 	participants domain.LiveParticipantRepository
 	recordings   domain.LiveRecordingRepository
 	whiteboards  domain.LiveWhiteboardRepository
-	storage      WhiteboardStorage
+	storage      SessionStorage
 	sessions     domain.ClassSessionRepository
 	classes      domain.ClassRepository
 	members      domain.ClassMemberRepository
 	chatSvc      domain.LiveRoomChatService
 	pollSvc      domain.PollService
 	tx           domain.Transactor
+	audit        domain.AuditRecorder
 	livekit      LiveKitClient
 	queue        *queue.Client
 	ent          entitlements.Service
 	// hostGracePeriod is how long a room may stay open after its last host
 	// leaves before the delayed close task (and the safety-net sweep) closes it.
 	hostGracePeriod time.Duration
-	logger          *slog.Logger
+	// egressMaxConcurrent caps simultaneous recordings across the deployment. 0
+	// disables the cap (worker path, which never starts recordings).
+	egressMaxConcurrent int
+	logger              *slog.Logger
 }
 
 func NewService(
@@ -76,11 +85,13 @@ func NewService(
 	chatSvc domain.LiveRoomChatService,
 	pollSvc domain.PollService,
 	tx domain.Transactor,
+	audit domain.AuditRecorder,
 	livekit LiveKitClient,
-	whiteboardStorage WhiteboardStorage,
+	sessionStorage SessionStorage,
 	queueClient *queue.Client,
 	ent entitlements.Service,
 	hostGracePeriod time.Duration,
+	egressMaxConcurrent int,
 	logger *slog.Logger,
 ) domain.LiveSessionService {
 	// Guard against a zero/unset grace period closing rooms the instant their
@@ -92,22 +103,24 @@ func NewService(
 		panic("livesessions.NewService: livekit client is required")
 	}
 	return &service{
-		rooms:           rooms,
-		participants:    participants,
-		recordings:      recordings,
-		whiteboards:     whiteboards,
-		sessions:        sessions,
-		classes:         classes,
-		members:         members,
-		chatSvc:         chatSvc,
-		pollSvc:         pollSvc,
-		tx:              tx,
-		livekit:         livekit,
-		storage:         whiteboardStorage,
-		queue:           queueClient,
-		ent:             ent,
-		hostGracePeriod: hostGracePeriod,
-		logger:          logger,
+		rooms:               rooms,
+		participants:        participants,
+		recordings:          recordings,
+		whiteboards:         whiteboards,
+		sessions:            sessions,
+		classes:             classes,
+		members:             members,
+		chatSvc:             chatSvc,
+		pollSvc:             pollSvc,
+		tx:                  tx,
+		audit:               audit,
+		livekit:             livekit,
+		storage:             sessionStorage,
+		queue:               queueClient,
+		ent:                 ent,
+		hostGracePeriod:     hostGracePeriod,
+		egressMaxConcurrent: egressMaxConcurrent,
+		logger:              logger,
 	}
 }
 
@@ -208,11 +221,23 @@ func (s *service) CreateRoom(ctx context.Context, dto domain.CreateLiveRoomDTO) 
 		}
 
 		chatName := fmt.Sprintf("Chat – %s", session.Name)
-		_, cErr := s.chatSvc.CreateChat(txCtx, domain.CreateChatDTO{
+		if _, cErr := s.chatSvc.CreateChat(txCtx, domain.CreateChatDTO{
 			Name:       chatName,
 			LiveRoomID: room.ID.String(),
+		}); cErr != nil {
+			return cErr
+		}
+		return s.audit.Record(txCtx, domain.AuditRecord{
+			Action:      domain.AuditCreated,
+			TargetType:  domain.AuditTargetLiveSession,
+			TargetID:    &room.ID,
+			TargetLabel: room.Name,
+			OrgID:       &class.OrganizationID,
+			Metadata: map[string]any{
+				"class_id":         class.ID.String(),
+				"class_session_id": dto.ClassSessionID.String(),
+			},
 		})
-		return cErr
 	})
 	if err != nil {
 		return nil, err
@@ -609,7 +634,20 @@ func (s *service) UpdateRoomConfig(ctx context.Context, roomID uuid.UUID, dto do
 		return nil, domain.NewValidationError(map[string]string{"status": "cannot update finished room"})
 	}
 	room.Config = normalizeRoomConfig(*dto.Config, int(caller.Ent.Limit(domain.LimitMaxParticipants)))
-	if err := s.rooms.UpdateConfig(ctx, room.ID, room.Config); err != nil {
+	err = s.tx.RunInTx(ctx, func(txCtx context.Context) error {
+		if err := s.rooms.UpdateConfig(txCtx, room.ID, room.Config); err != nil {
+			return err
+		}
+		return s.audit.Record(txCtx, domain.AuditRecord{
+			Action:      domain.AuditUpdated,
+			TargetType:  domain.AuditTargetLiveSession,
+			TargetID:    &room.ID,
+			TargetLabel: room.Name,
+			OrgID:       &class.OrganizationID,
+			Metadata:    map[string]any{"class_id": class.ID.String(), "config": true},
+		})
+	})
+	if err != nil {
 		return nil, err
 	}
 	return room, nil
@@ -665,61 +703,71 @@ func (s *service) List(ctx context.Context, q domain.ListLiveRoomsQuery) ([]doma
 }
 
 func (s *service) StartRecording(ctx context.Context, roomID uuid.UUID) (*domain.LiveRecording, error) {
-	// Live-room recording (LiveKit egress) is disabled for now — return Forbidden.
-	// The original flow is preserved below (commented) for easy re-enable.
-	return nil, domain.ErrForbidden
+	caller, ok := domain.CallerFromCtx(ctx)
+	if !ok {
+		return nil, domain.ErrForbidden
+	}
+	room, _, class, err := s.loadRoomWithClass(ctx, roomID)
+	if err != nil {
+		return nil, err
+	}
+	if !s.canManageRoom(caller, class) {
+		return nil, domain.ErrForbidden
+	}
+	if !caller.HasFeature(domain.FeatureRecording) {
+		return nil, domain.NewFeatureError(caller.Ent.Plan, domain.FeatureRecording)
+	}
+	if room.Status != domain.LiveRoomStatusActive {
+		return nil, domain.NewValidationError(map[string]string{"status": "room must be active to record"})
+	}
 
-	// caller, ok := domain.CallerFromCtx(ctx)
-	// if !ok {
-	// 	return nil, domain.ErrForbidden
-	// }
-	// room, _, class, err := s.loadRoomWithClass(ctx, roomID)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// if !s.canManageRoom(caller, class) {
-	// 	return nil, domain.ErrForbidden
-	// }
-	// if !caller.HasFeature(domain.FeatureRecording) {
-	// 	return nil, domain.NewFeatureError(caller.Ent.Plan, domain.FeatureRecording)
-	// }
-	// if room.Status != domain.LiveRoomStatusActive {
-	// 	return nil, domain.NewValidationError(map[string]string{"status": "room must be active to record"})
-	// }
-	//
-	// // One active egress per room: a double-start would record (and bill) twice
-	// // and orphan the loser, since teardown only stops one active recording.
-	// if _, err := s.recordings.FindActiveByRoom(ctx, room.ID); err == nil {
-	// 	return nil, domain.ErrConflict
-	// } else if !errors.Is(err, domain.ErrNotFound) {
-	// 	return nil, err
-	// }
-	//
-	// // Namespace recording objects per tenant (orgs/{org_id}/…) so a single
-	// // bucket isolates each organization's files by key prefix, matching the
-	// // media object layout.
-	// s3Path := fmt.Sprintf("orgs/%s/recordings/%s/%s.mp4", class.OrganizationID.String(), room.ID.String(), uuid.New().String())
-	// // Bound the egress start: if no egress worker is available the LiveKit RPC
-	// // blocks until the client gives up, which surfaces to the browser as a 502.
-	// // A deadline turns that into a clean, fast error instead.
-	// startCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-	// defer cancel()
-	// egressID, err := s.livekit.StartRecording(startCtx, room.LiveKitRoomName, s3Path)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("livesessions.service.StartRecording: %w", err)
-	// }
-	//
-	// rec := &domain.LiveRecording{
-	// 	LiveRoomID: room.ID,
-	// 	EgressID:   egressID,
-	// 	Status:     domain.LiveRecordingStatusStarted,
-	// 	FileURL:    s3Path,
-	// 	StartedAt:  time.Now(),
-	// }
-	// if err := s.recordings.Create(ctx, rec); err != nil {
-	// 	return nil, err
-	// }
-	// return rec, nil
+	// One active egress per room: a double-start would record (and bill) twice
+	// and orphan the loser, since teardown only stops one active recording.
+	if _, err := s.recordings.FindActiveByRoom(ctx, room.ID); err == nil {
+		return nil, domain.ErrConflict
+	} else if !errors.Is(err, domain.ErrNotFound) {
+		return nil, err
+	}
+
+	// Concurrency cap: each Room Composite egress runs a headless Chrome + encoder
+	// (2-6 CPU) on the self-hosted egress workers. Bound the fleet-wide count so a
+	// spike of classes can't exhaust the egress node; reject (don't queue) so the
+	// host knows immediately and can retry rather than silently miss the start.
+	if s.egressMaxConcurrent > 0 {
+		active, err := s.recordings.CountActive(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("livesessions.service.StartRecording: %w", err)
+		}
+		if active >= int64(s.egressMaxConcurrent) {
+			return nil, domain.ErrRecordingCapacityFull
+		}
+	}
+
+	// Namespace recording objects per tenant (orgs/{org_id}/…) so a single
+	// bucket isolates each organization's files by key prefix, matching the
+	// media object layout.
+	s3Path := fmt.Sprintf("orgs/%s/recordings/%s/%s.mp4", class.OrganizationID.String(), room.ID.String(), uuid.New().String())
+	// Bound the egress start: if no egress worker is available the LiveKit RPC
+	// blocks until the client gives up, which surfaces to the browser as a 502.
+	// A deadline turns that into a clean, fast error instead.
+	startCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	egressID, err := s.livekit.StartRecording(startCtx, room.LiveKitRoomName, s3Path)
+	if err != nil {
+		return nil, fmt.Errorf("livesessions.service.StartRecording: %w", err)
+	}
+
+	rec := &domain.LiveRecording{
+		LiveRoomID: room.ID,
+		EgressID:   egressID,
+		Status:     domain.LiveRecordingStatusStarted,
+		FileURL:    s3Path,
+		StartedAt:  time.Now(),
+	}
+	if err := s.recordings.Create(ctx, rec); err != nil {
+		return nil, err
+	}
+	return rec, nil
 }
 
 func (s *service) StopRecording(ctx context.Context, recordingID uuid.UUID) (*domain.LiveRecording, error) {
@@ -781,7 +829,31 @@ func (s *service) ListRecordings(ctx context.Context, roomID uuid.UUID, q domain
 	if !ok {
 		return nil, 0, domain.ErrForbidden
 	}
-	return s.recordings.ListByRoom(ctx, roomID, q)
+	recs, total, err := s.recordings.ListByRoom(ctx, roomID, q)
+	if err != nil {
+		return nil, 0, err
+	}
+	// FileURL is stored as the raw S3 key; the private bucket isn't publicly
+	// readable, so hand the browser a short-lived presigned GET instead. Presign
+	// only completed recordings (a started/failed row has no downloadable object).
+	// A presign failure degrades to an empty URL rather than failing the whole
+	// list — the row still shows with its status.
+	if s.storage != nil {
+		for i := range recs {
+			if recs[i].Status != domain.LiveRecordingStatusCompleted || recs[i].FileURL == "" {
+				continue
+			}
+			url, err := s.storage.GeneratePresignedDownloadURL(ctx, recs[i].FileURL, 1*time.Hour)
+			if err != nil {
+				s.logger.Warn("presign recording download failed",
+					"recording_id", recs[i].ID.String(), "error", err)
+				recs[i].FileURL = ""
+				continue
+			}
+			recs[i].FileURL = url
+		}
+	}
+	return recs, total, nil
 }
 
 func (s *service) ListParticipants(ctx context.Context, roomID uuid.UUID, q domain.ListLiveParticipantsQuery) ([]domain.LiveParticipant, int64, error) {

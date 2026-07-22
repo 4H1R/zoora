@@ -2,6 +2,7 @@ package chathub
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -129,7 +130,7 @@ func (p *Presence) Get(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]Stat
 		existsCmds[id] = pipe.Exists(ctx, onlineKey(id))
 		seenCmds[id] = pipe.Get(ctx, seenKey(id))
 	}
-	if _, err := pipe.Exec(ctx); err != nil && err != redis.Nil {
+	if _, err := pipe.Exec(ctx); err != nil && !errors.Is(err, redis.Nil) {
 		return nil, fmt.Errorf("presence.Get: %w", err)
 	}
 

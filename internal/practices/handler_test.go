@@ -28,49 +28,59 @@ func (m *mockPracticeSvc) CreateRoom(ctx context.Context, dto domain.CreatePract
 	r, _ := a.Get(0).(*domain.PracticeRoom)
 	return r, a.Error(1)
 }
+
 func (m *mockPracticeSvc) GetRoom(ctx context.Context, id uuid.UUID) (*domain.PracticeRoom, error) {
 	a := m.Called(ctx, id)
 	r, _ := a.Get(0).(*domain.PracticeRoom)
 	return r, a.Error(1)
 }
+
 func (m *mockPracticeSvc) UpdateRoom(ctx context.Context, id uuid.UUID, dto domain.UpdatePracticeRoomDTO) (*domain.PracticeRoom, error) {
 	a := m.Called(ctx, id, dto)
 	r, _ := a.Get(0).(*domain.PracticeRoom)
 	return r, a.Error(1)
 }
+
 func (m *mockPracticeSvc) DeleteRoom(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }
+
 func (m *mockPracticeSvc) ListRooms(ctx context.Context, q domain.ListPracticeRoomsQuery) ([]domain.PracticeRoomView, int64, error) {
 	a := m.Called(ctx, q)
 	rs, _ := a.Get(0).([]domain.PracticeRoomView)
 	return rs, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockPracticeSvc) Submit(ctx context.Context, roomID uuid.UUID, dto domain.CreatePracticeSubmissionDTO) (*domain.PracticeSubmission, error) {
 	a := m.Called(ctx, roomID, dto)
 	s, _ := a.Get(0).(*domain.PracticeSubmission)
 	return s, a.Error(1)
 }
+
 func (m *mockPracticeSvc) GetSubmission(ctx context.Context, id uuid.UUID) (*domain.PracticeSubmission, error) {
 	a := m.Called(ctx, id)
 	s, _ := a.Get(0).(*domain.PracticeSubmission)
 	return s, a.Error(1)
 }
+
 func (m *mockPracticeSvc) ListSubmissions(ctx context.Context, roomID uuid.UUID, q domain.ListPracticeSubmissionsQuery) ([]domain.PracticeSubmission, int64, error) {
 	a := m.Called(ctx, roomID, q)
 	ss, _ := a.Get(0).([]domain.PracticeSubmission)
 	return ss, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockPracticeSvc) Grade(ctx context.Context, subID uuid.UUID, dto domain.GradePracticeSubmissionDTO) (*domain.PracticeSubmission, error) {
 	a := m.Called(ctx, subID, dto)
 	s, _ := a.Get(0).(*domain.PracticeSubmission)
 	return s, a.Error(1)
 }
+
 func (m *mockPracticeSvc) AdminList(ctx context.Context, q domain.AdminListPracticeRoomsQuery) ([]domain.PracticeRoom, int64, error) {
 	a := m.Called(ctx, q)
 	rs, _ := a.Get(0).([]domain.PracticeRoom)
 	return rs, a.Get(1).(int64), a.Error(2)
 }
+
 func (m *mockPracticeSvc) AdminHardDelete(ctx context.Context, id uuid.UUID) error {
 	return m.Called(ctx, id).Error(0)
 }

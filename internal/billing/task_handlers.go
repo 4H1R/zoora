@@ -18,7 +18,7 @@ func NewGeneratePDFHandler(svc domain.BillingService) func(ctx context.Context, 
 		var p domain.InvoiceGeneratePDFPayload
 		if err := json.Unmarshal(task.Payload(), &p); err != nil {
 			// Malformed payload is unrecoverable — don't retry.
-			return fmt.Errorf("billing generate-pdf: unmarshal: %v: %w", err, asynq.SkipRetry)
+			return fmt.Errorf("billing generate-pdf: unmarshal: %w: %w", err, asynq.SkipRetry)
 		}
 		return svc.GeneratePDF(ctx, p.InvoiceID)
 	}

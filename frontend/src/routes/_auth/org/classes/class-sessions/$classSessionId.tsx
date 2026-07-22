@@ -5,16 +5,19 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import {
   ArrowLeftIcon,
   CalendarClockIcon,
+  CheckCircle2Icon,
   CheckSquareIcon,
   ClipboardListIcon,
+  ClockIcon,
   DumbbellIcon,
   FilmIcon,
-  LibraryIcon,
   RadioIcon,
+  ShieldCheckIcon,
   SparklesIcon,
   UserCheckIcon,
-  VideoIcon,
+  XCircleIcon,
 } from "lucide-react"
+import { useAccess } from "react-access-engine"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
@@ -23,22 +26,16 @@ import { useGetClassesId, useGetClassesSessionsSessionId } from "@/api/classes/c
 import { useGetLiveRooms } from "@/api/live-sessions/live-sessions"
 import { useGetOfflines } from "@/api/offlines/offlines"
 import { useGetPractices } from "@/api/practices/practices"
-import { useGetQuestionBanks } from "@/api/question-banks/question-banks"
 import { useGetQuizzes } from "@/api/quizzes/quizzes"
 import { Eyebrow } from "@/components/eyebrow"
 import { useBreadcrumb } from "@/components/layout/breadcrumb-context"
-import { AttendanceSection } from "@/components/org/livesessions/AttendanceSection"
 import { LiveRoomsSection } from "@/components/org/livesessions/LiveRoomsSection"
 import { useAttendancePermissions } from "@/components/org/livesessions/use-attendance-permissions"
 import { useLivesessionPermissions } from "@/components/org/livesessions/use-livesession-permissions"
 import { OfflinesSection } from "@/components/org/offlines/OfflinesSection"
 import { useOfflinePermissions } from "@/components/org/offlines/use-offline-permissions"
-import { PracticeScoresSection } from "@/components/org/practices/PracticeScoresSection"
 import { PracticesSection } from "@/components/org/practices/PracticesSection"
 import { usePracticePermissions } from "@/components/org/practices/use-practice-permissions"
-import { QuestionBanksSection } from "@/components/org/question-banks/QuestionBanksSection"
-import { useBankPermissions } from "@/components/org/question-banks/use-bank-permissions"
-import { QuizCorrectionsSection } from "@/components/org/quizzes/QuizCorrectionsSection"
 import { QuizzesSection } from "@/components/org/quizzes/QuizzesSection"
 import { useQuizPermissions } from "@/components/org/quizzes/use-quiz-permissions"
 import { SessionStatusPill } from "@/components/session/status-pill"
@@ -50,13 +47,12 @@ import { orgHead } from "@/lib/org-head"
 import { formatRelativeTime, formatSessionDate, useNow, useSessionStatus } from "@/lib/session-status"
 import { cn } from "@/lib/utils"
 
-// Surface and leaf selection live in the URL (mirrors the class detail page's
-// ?tab= idiom) so a session view is shareable and survives reload. Keys are
-// permission-gated and computed at render, so both params stay loose strings;
-// invalid/stale keys fall back to the first available surface/leaf.
+// The tab selection lives in the URL (mirrors the class detail page's ?tab=
+// idiom) so a session view is shareable and survives reload. Keys are
+// permission-gated and computed at render, so the param stays a loose string;
+// invalid/stale keys fall back to the first available surface.
 const sessionDetailSearchSchema = z.object({
   tab: z.string().optional(),
-  subtab: z.string().optional(),
 })
 
 export const Route = createFileRoute("/_auth/org/classes/class-sessions/$classSessionId")({
@@ -79,29 +75,45 @@ function itemsCount(payload: unknown): number {
   return p.data?.data?.total ?? p.data?.data?.items?.length ?? 0
 }
 
-// One surface drives a single top-level tab. Surfaces with more than one leaf
-// section expose them as light line sub-tabs — mirrors the class detail page's
-// flat tab idiom rather than the old overview-dashboard detour.
-type SubTab = { key: string; label: string; count: number; loading: boolean; icon: ReactNode; content: ReactNode }
-
+// Every surface is a single leaf now — attendance, corrections, banks, and
+// practice grading all moved to dedicated pages reachable from the header and
+// the cards, so the page never stacks two tab tiers or long inline panels.
 type Surface = {
   key: string
   navLabel: string
   icon: ReactNode
   count: number
   loading: boolean
-  subTabs: SubTab[]
+  // Grader tabs surface "needs review" counts instead of inventory counts —
+  // amber, because the number is a to-do, not a tally.
+  pending?: boolean
+  content: ReactNode
 }
 
 // Trailing count for a tab: a status-keyed dot + number when the surface holds
 // something, nothing at all when it's empty. A "0" with a dot is noise, not
 // signal, so empty surfaces fall back to their bare label.
-function CountBadge({ count, loading, status }: { count: number; loading: boolean; status: SessionStatus }) {
+function CountBadge({
+  count,
+  loading,
+  status,
+  pending = false,
+}: {
+  count: number
+  loading: boolean
+  status: SessionStatus
+  pending?: boolean
+}) {
   if (loading) return <Skeleton className="h-3 w-4" />
   if (count <= 0) return null
   return (
-    <span className="text-muted-foreground inline-flex items-center gap-1 font-mono text-xs tabular-nums">
-      <span className={cn("size-1.5 rounded-full", STATUS_DOT[status])} />
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 font-mono text-xs tabular-nums",
+        pending ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"
+      )}
+    >
+      <span className={cn("size-1.5 rounded-full", pending ? "bg-amber-500" : STATUS_DOT[status])} />
       {count}
     </span>
   )
@@ -119,40 +131,6 @@ function DecorativeBackground() {
         className="pointer-events-none absolute inset-0 -z-10 [background-image:linear-gradient(var(--color-foreground)_1px,transparent_1px),linear-gradient(90deg,var(--color-foreground)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)] [background-size:48px_48px] opacity-[0.04]"
       />
     </>
-  )
-}
-
-// Light line sub-tabs, rendered as the second tier of the unified nav group.
-// Presentational only — selection state is lifted to the route so both tiers
-// share one bordered surface instead of floating as two detached bars.
-function SubTabsBar({
-  tabs,
-  value,
-  onValueChange,
-  status,
-}: {
-  tabs: SubTab[]
-  value: string
-  onValueChange: (key: string) => void
-  status: SessionStatus
-}) {
-  return (
-    <Tabs value={value} onValueChange={onValueChange}>
-      {/* Scrolls horizontally on narrow viewports rather than wrapping into a
-          jumbled stack. The -mb/pb pair reserves room for the active underline
-          (bottom-[-5px]) so the overflow clip doesn't shave it off. */}
-      <div className="-mb-1.5 max-w-full [scrollbar-width:none] overflow-x-auto pb-1.5 [&::-webkit-scrollbar]:hidden">
-        <TabsList variant="line">
-          {tabs.map((tab) => (
-            <TabsTrigger key={tab.key} value={tab.key} className="shrink-0 gap-2">
-              {tab.icon}
-              <span>{tab.label}</span>
-              <CountBadge count={tab.count} loading={tab.loading} status={status} />
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </div>
-    </Tabs>
   )
 }
 
@@ -174,17 +152,70 @@ function SessionRelativeTime({ startIso, status }: { startIso: string | undefine
   )
 }
 
+// Amber to-do chip in the header: "N submissions await grading". Clicking it
+// lands on the tab where the work lives. Rendered only when the count is
+// positive — a zero would congratulate nobody.
+function PendingChip({ icon, label, onClick }: { icon: ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-700 ring-1 ring-amber-500/30 transition-colors hover:bg-amber-500/20 dark:text-amber-300"
+    >
+      {icon}
+      {label}
+    </button>
+  )
+}
+
+const ATTENDANCE_PILL_META: Record<string, { style: string; icon: typeof CheckCircle2Icon }> = {
+  present: { style: "bg-emerald-500/10 text-emerald-600 ring-emerald-500/30 dark:text-emerald-400", icon: CheckCircle2Icon },
+  absent: { style: "bg-destructive/10 text-destructive ring-destructive/30", icon: XCircleIcon },
+  late: { style: "bg-amber-500/10 text-amber-600 ring-amber-500/30 dark:text-amber-400", icon: ClockIcon },
+  excused: { style: "bg-primary/10 text-primary ring-primary/30", icon: ShieldCheckIcon },
+}
+
+// The student's one attendance fact, surfaced where they land instead of
+// buried behind a tab: a status pill in the session header.
+function MyAttendancePill({ status, isAuto }: { status: string; isAuto: boolean }) {
+  const { t } = useTranslation()
+  const meta = ATTENDANCE_PILL_META[status] ?? ATTENDANCE_PILL_META.absent
+  const StatusIcon = meta.icon
+  return (
+    <span className="inline-flex items-center gap-2">
+      <Eyebrow className="text-[10px]">{t("org.session.header.myAttendance")}</Eyebrow>
+      <span
+        className={cn(
+          "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[10px] tracking-[0.2em] uppercase ring-1",
+          meta.style
+        )}
+      >
+        <StatusIcon className="size-3" />
+        {t(`common.statuses.attendance.${status}`)}
+      </span>
+      <span className="text-muted-foreground font-mono text-[10px] tracking-[0.2em] uppercase">
+        {t(isAuto ? "org.session.attendance.auto" : "org.session.attendance.manual")}
+      </span>
+    </span>
+  )
+}
+
 function RouteComponent() {
   const { t, i18n } = useTranslation()
   const { classSessionId } = Route.useParams()
   const allowed = useOrgGuard(["classes:view", "classes:view_any"])
-  const { canView: canViewBanks } = useBankPermissions()
+  const { user: accessUser } = useAccess()
   const { canView: canViewQuizzes, canEdit: canGradeQuizzes } = useQuizPermissions()
   const { canView: canViewLive, canJoin: canJoinLive } = useLivesessionPermissions()
   const { canView: canViewPractices, canGrade: canGradePractices } = usePracticePermissions()
   const { canView: canViewOfflines } = useOfflinePermissions()
-  const { canView: canViewAttendance } = useAttendancePermissions()
+  const {
+    canView: canViewAttendance,
+    canCreate: canCreateAttendance,
+    canEdit: canEditAttendance,
+  } = useAttendancePermissions()
   const canViewLiveAny = canViewLive || canJoinLive
+  const canMarkAttendance = canCreateAttendance || canEditAttendance
 
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
@@ -225,12 +256,14 @@ function RouteComponent() {
     { class_session_id: classSessionId },
     { query: { enabled: enabled && canViewOfflines } }
   )
-  const banksQ = useGetQuestionBanks(undefined, { query: { enabled: enabled && canViewBanks } })
+  // Markers manage attendance on its own page now; this fetch only feeds the
+  // student's header pill.
+  const showMyAttendance = canViewAttendance && !canMarkAttendance && !!classId
   const attendanceQ = useGetClassesIdSessionsSessionIdAttendance(
     classId ?? "",
     classSessionId,
-    { order_by: "status", order_dir: "asc" },
-    { query: { enabled: enabled && canViewAttendance && !!classId } }
+    undefined,
+    { query: { enabled: enabled && showMyAttendance } }
   )
 
   if (!allowed) return null
@@ -267,110 +300,59 @@ function RouteComponent() {
 
   const startStr = formatSessionDate(session.start_time, i18n.language, "long")
 
-  // Build each surface once; the top tabs and their content both derive from it.
+  const quizzes = (quizQ.data?.status === 200 && quizQ.data.data.data?.items) || []
+  const practices = (practiceQ.data?.status === 200 && practiceQ.data.data.data?.items) || []
+
+  // Grader-only to-do totals. The quiz field only arrives for callers who can
+  // manage the quiz; practice stats only arrive for graders — so a plain sum
+  // is already permission-scoped.
+  const pendingCorrections = quizzes.reduce((sum, q) => sum + (q.pending_submissions_count ?? 0), 0)
+  const pendingPracticeGrades = practices.reduce((sum, p) => {
+    if (!p.can_grade || !p.stats) return sum
+    return sum + Math.max((p.stats.submitted_count ?? 0) - (p.stats.graded_count ?? 0), 0)
+  }, 0)
+
+  const myAttendance = showMyAttendance
+    ? ((attendanceQ.data?.status === 200 && attendanceQ.data.data.data?.items) || []).find(
+        (a) => !a.user || a.user.id === accessUser.id
+      )
+    : undefined
+
+  // Build each surface once; the tabs and their content both derive from it.
   const surfaces: Surface[] = []
 
   if (canViewLiveAny) {
-    const subTabs: SubTab[] = [
-      {
-        key: "rooms",
-        label: t("org.session.liveWorkspace.tabs.rooms"),
-        count: itemsCount(liveQ.data),
-        loading: liveQ.isPending,
-        icon: <VideoIcon className="size-4" />,
-        content: <LiveRoomsSection classSessionId={classSessionId} />,
-      },
-    ]
-    if (canViewAttendance && classId) {
-      subTabs.push({
-        key: "presence",
-        label: t("org.session.liveWorkspace.tabs.presence"),
-        count: itemsCount(attendanceQ.data),
-        loading: attendanceQ.isPending,
-        icon: <UserCheckIcon className="size-4" />,
-        content: <AttendanceSection classId={classId} classSessionId={classSessionId} />,
-      })
-    }
     surfaces.push({
       key: "live",
       navLabel: t("org.session.nav.live"),
       icon: <RadioIcon className="size-4" />,
       count: itemsCount(liveQ.data),
       loading: liveQ.isPending,
-      subTabs,
+      content: <LiveRoomsSection classSessionId={classSessionId} />,
     })
   }
 
-  if (canViewQuizzes) {
-    const subTabs: SubTab[] = []
-    if (classId) {
-      subTabs.push({
-        key: "quizzes",
-        label: t("org.session.workspace.tabs.quizzes"),
-        count: itemsCount(quizQ.data),
-        loading: quizQ.isPending,
-        icon: <ClipboardListIcon className="size-4" />,
-        content: <QuizzesSection classId={classId} classSessionId={classSessionId} />,
-      })
-    }
-    if (canGradeQuizzes) {
-      subTabs.push({
-        key: "corrections",
-        label: t("org.session.workspace.tabs.corrections"),
-        count: itemsCount(quizQ.data),
-        loading: quizQ.isPending,
-        icon: <CheckSquareIcon className="size-4" />,
-        content: <QuizCorrectionsSection classSessionId={classSessionId} />,
-      })
-    }
-    if (canViewBanks) {
-      subTabs.push({
-        key: "banks",
-        label: t("org.session.workspace.tabs.banks"),
-        count: itemsCount(banksQ.data),
-        loading: banksQ.isPending,
-        icon: <LibraryIcon className="size-4" />,
-        content: <QuestionBanksSection />,
-      })
-    }
+  if (canViewQuizzes && classId) {
     surfaces.push({
       key: "quizzes",
       navLabel: t("org.session.nav.quizzes"),
       icon: <ClipboardListIcon className="size-4" />,
-      count: itemsCount(quizQ.data),
+      count: canGradeQuizzes ? pendingCorrections : itemsCount(quizQ.data),
       loading: quizQ.isPending,
-      subTabs,
+      pending: canGradeQuizzes,
+      content: <QuizzesSection classId={classId} classSessionId={classSessionId} />,
     })
   }
 
   if (canViewPractices) {
-    const subTabs: SubTab[] = [
-      {
-        key: "practices",
-        label: t("org.session.practiceWorkspace.tabs.practices"),
-        count: itemsCount(practiceQ.data),
-        loading: practiceQ.isPending,
-        icon: <DumbbellIcon className="size-4" />,
-        content: <PracticesSection classSessionId={classSessionId} />,
-      },
-    ]
-    if (canGradePractices) {
-      subTabs.push({
-        key: "practiceScores",
-        label: t("org.session.practiceWorkspace.tabs.practiceScores"),
-        count: itemsCount(practiceQ.data),
-        loading: practiceQ.isPending,
-        icon: <CheckSquareIcon className="size-4" />,
-        content: <PracticeScoresSection classSessionId={classSessionId} />,
-      })
-    }
     surfaces.push({
       key: "practices",
       navLabel: t("org.session.nav.practices"),
       icon: <DumbbellIcon className="size-4" />,
-      count: itemsCount(practiceQ.data),
+      count: canGradePractices ? pendingPracticeGrades : itemsCount(practiceQ.data),
       loading: practiceQ.isPending,
-      subTabs,
+      pending: canGradePractices,
+      content: <PracticesSection classSessionId={classSessionId} />,
     })
   }
 
@@ -381,83 +363,109 @@ function RouteComponent() {
       icon: <FilmIcon className="size-4" />,
       count: itemsCount(offlineQ.data),
       loading: offlineQ.isPending,
-      subTabs: [
-        {
-          key: "offlines",
-          label: t("org.session.offlineWorkspace.tabs.offlines"),
-          count: itemsCount(offlineQ.data),
-          loading: offlineQ.isPending,
-          icon: <FilmIcon className="size-4" />,
-          content: <OfflinesSection classSessionId={classSessionId} />,
-        },
-      ],
+      content: <OfflinesSection classSessionId={classSessionId} />,
     })
   }
 
   const activeSurface = surfaces.find((s) => s.key === search.tab) ?? surfaces[0]
-  // A stored sub-tab only applies while its parent surface is active; switching
-  // surfaces falls back to the new surface's first leaf so a stale key never
-  // renders a blank panel.
-  const activeSub = activeSurface?.subTabs.find((s) => s.key === search.subtab) ?? activeSurface?.subTabs[0]
 
   const handleSurfaceChange = (key: string) => {
     navigate({ search: { tab: key } })
   }
 
-  const handleSubChange = (key: string) => {
-    navigate({ search: { ...search, subtab: key } })
-  }
+  const showAttendanceButton = canMarkAttendance && canViewAttendance && !!classId
+  const showChips =
+    (canGradeQuizzes && pendingCorrections > 0) || (canGradePractices && pendingPracticeGrades > 0)
+  const showHeaderStrip = showChips || !!myAttendance
 
   return (
     <div className="relative isolate flex flex-col gap-6 pb-10">
       <DecorativeBackground />
 
-      <header className="border-foreground/10 bg-card/50 relative mt-5 flex flex-col gap-5 overflow-hidden rounded-2xl border p-4 backdrop-blur-sm md:p-5">
-        <div className="flex min-w-0 flex-col gap-2.5">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <Eyebrow>{t("org.session.eyebrow")}</Eyebrow>
-            <SessionStatusPill status={status} size="sm" />
+      <header className="border-foreground/10 bg-card/50 relative mt-5 flex flex-col gap-4 overflow-hidden rounded-2xl border p-4 backdrop-blur-sm md:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-col gap-2.5">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <Eyebrow>{t("org.session.eyebrow")}</Eyebrow>
+              <SessionStatusPill status={status} size="sm" />
+            </div>
+
+            <h1 className="max-w-2xl text-2xl leading-tight font-semibold tracking-tight text-balance md:text-3xl">
+              {session.name}
+            </h1>
+
+            {session.description && (
+              <p className="text-muted-foreground line-clamp-2 max-w-xl text-sm leading-relaxed">
+                {session.description}
+              </p>
+            )}
+
+            <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-sm">
+              <span className="inline-flex items-center gap-1.5">
+                <CalendarClockIcon className="size-3.5 opacity-70" />
+                {startStr}
+              </span>
+              <SessionRelativeTime startIso={session.start_time} status={status} />
+              {cls?.name && (
+                <>
+                  <span className="text-muted-foreground/40">·</span>
+                  <Link
+                    to="/org/classes/$classId"
+                    params={{ classId: classId ?? "" }}
+                    className="hover:text-foreground inline-flex max-w-[22ch] items-center gap-1.5 truncate transition-colors"
+                  >
+                    <SparklesIcon className="size-3.5 opacity-70" />
+                    {cls.name}
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
 
-          <h1 className="max-w-2xl text-2xl leading-tight font-semibold tracking-tight text-balance md:text-3xl">
-            {session.name}
-          </h1>
-
-          {session.description && (
-            <p className="text-muted-foreground line-clamp-2 max-w-xl text-sm leading-relaxed">{session.description}</p>
-          )}
-
-          <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-sm">
-            <span className="inline-flex items-center gap-1.5">
-              <CalendarClockIcon className="size-3.5 opacity-70" />
-              {startStr}
-            </span>
-            <SessionRelativeTime startIso={session.start_time} status={status} />
-            {cls?.name && (
-              <>
-                <span className="text-muted-foreground/40">·</span>
+          {showAttendanceButton && (
+            <Button
+              variant="outline"
+              render={
                 <Link
-                  to="/org/classes/$classId"
-                  params={{ classId: classId ?? "" }}
-                  className="hover:text-foreground inline-flex max-w-[22ch] items-center gap-1.5 truncate transition-colors"
-                >
-                  <SparklesIcon className="size-3.5 opacity-70" />
-                  {cls.name}
-                </Link>
-              </>
+                  to="/org/classes/class-sessions/$classSessionId/attendance"
+                  params={{ classSessionId }}
+                />
+              }
+            >
+              <UserCheckIcon className="size-4" />
+              {t("org.session.attendance.title")}
+            </Button>
+          )}
+        </div>
+
+        {/* Role-keyed summary strip: graders see amber to-do chips, students
+            see their own attendance pill. One place, two readings. */}
+        {showHeaderStrip && (
+          <div className="border-foreground/10 flex flex-wrap items-center gap-2 border-t border-dashed pt-3.5">
+            {canGradeQuizzes && pendingCorrections > 0 && (
+              <PendingChip
+                icon={<CheckSquareIcon className="size-3.5" />}
+                label={t("org.session.header.pendingCorrections", { count: pendingCorrections })}
+                onClick={() => handleSurfaceChange("quizzes")}
+              />
+            )}
+            {canGradePractices && pendingPracticeGrades > 0 && (
+              <PendingChip
+                icon={<DumbbellIcon className="size-3.5" />}
+                label={t("org.session.header.pendingPracticeGrades", { count: pendingPracticeGrades })}
+                onClick={() => handleSurfaceChange("practices")}
+              />
+            )}
+            {myAttendance && (
+              <MyAttendancePill status={myAttendance.status ?? "absent"} isAuto={!!myAttendance.is_auto_marked} />
             )}
           </div>
-        </div>
+        )}
       </header>
 
-      {surfaces.length > 0 && activeSurface && activeSub && (
+      {surfaces.length > 0 && activeSurface && (
         <div className="flex flex-col gap-6">
-          {/* Both tab tiers share one bordered surface so they read as a single
-              nav group rather than two detached, right-ragged bars. The dashed
-              underline echoes the section dividers used across the app. */}
-          <nav className="border-foreground/10 flex flex-col gap-3 border-b border-dashed pb-4">
-            {/* Tier 1 — primary surfaces as a filled segmented control. The
-                filled treatment sets it apart from the line sub-tabs below. */}
+          <nav className="border-foreground/10 border-b border-dashed pb-4">
             <Tabs value={activeSurface.key} onValueChange={handleSurfaceChange}>
               <TabsList
                 variant="default"
@@ -467,26 +475,19 @@ function RouteComponent() {
                   <TabsTrigger key={surface.key} value={surface.key} className="shrink-0 gap-2 px-3 py-1.5">
                     {surface.icon}
                     <span>{surface.navLabel}</span>
-                    <CountBadge count={surface.count} loading={surface.loading} status={status} />
+                    <CountBadge
+                      count={surface.count}
+                      loading={surface.loading}
+                      status={status}
+                      pending={surface.pending}
+                    />
                   </TabsTrigger>
                 ))}
               </TabsList>
             </Tabs>
-
-            {/* Tier 2 — leaf sections of the active surface. Hidden when the
-                surface has a single leaf, so a lone underlined tab never sits
-                orphaned beneath the primary control. */}
-            {activeSurface.subTabs.length > 1 && (
-              <SubTabsBar
-                tabs={activeSurface.subTabs}
-                value={activeSub.key}
-                onValueChange={handleSubChange}
-                status={status}
-              />
-            )}
           </nav>
 
-          <div className="flex flex-col gap-6">{activeSub.content}</div>
+          <div className="flex flex-col gap-6">{activeSurface.content}</div>
         </div>
       )}
     </div>

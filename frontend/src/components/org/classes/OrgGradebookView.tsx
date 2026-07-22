@@ -176,12 +176,18 @@ export function OrgGradebookView({ classId, cls }: OrgGradebookViewProps) {
                   {columns.map((col) => (
                     <TableHead key={col.id} className="min-w-28 sm:min-w-36">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex min-w-0 flex-col gap-1">
-                          <span className="flex items-baseline gap-1 text-sm font-medium">
-                            <span className="truncate">{col.title}</span>
+                        <div className="flex min-w-0 flex-col gap-1.5">
+                          <span className="flex min-w-0 items-center gap-1.5 text-sm font-medium">
+                            <span className="truncate" title={col.title}>
+                              {col.title}
+                            </span>
                             {col.max_score != null && (
-                              <span dir="ltr" className="text-muted-foreground shrink-0 font-normal tabular-nums">
-                                / {col.max_score}
+                              <span
+                                dir="ltr"
+                                title={t("org.class.gradebook.outOf", { max: col.max_score })}
+                                className="bg-primary/10 text-primary shrink-0 rounded-md px-1.5 py-0.5 text-[11px] leading-none font-semibold tabular-nums"
+                              >
+                                {col.max_score}
                               </span>
                             )}
                           </span>

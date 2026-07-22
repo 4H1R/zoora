@@ -25,4 +25,10 @@ type ModelAuthorizer interface {
 	// CanModerate reports whether the caller may perform host/teacher actions on
 	// the model (e.g. resolve/dismiss questions in their own live room).
 	CanModerate(ctx context.Context, caller Caller, modelType string, modelID uuid.UUID) (bool, error)
+	// OrgForModel resolves the organization that owns the model (e.g. live room
+	// -> session -> class -> org). It lets a polymorphic feature file an audit
+	// entry under the target's org even when the caller has no org of their own
+	// (a Platform Admin acting cross-tenant). Unknown model_type ->
+	// ErrUnsupportedModelType.
+	OrgForModel(ctx context.Context, modelType string, modelID uuid.UUID) (uuid.UUID, error)
 }

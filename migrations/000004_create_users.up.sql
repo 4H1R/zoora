@@ -15,9 +15,13 @@ CREATE TABLE users (
     -- Per-user changelog "seen" marker. Defaults to row creation time so a fresh
     -- signup is considered caught-up on everything before they joined.
     changelog_last_seen_at TIMESTAMPTZ DEFAULT NOW(),
+    -- Manager-defined profile values, keyed by user_custom_field_definitions UUID.
+    custom_fields JSONB NOT NULL DEFAULT '{}',
     CONSTRAINT fk_users_organization_id FOREIGN KEY (organization_id) REFERENCES organizations (id) ON DELETE SET NULL,
     CONSTRAINT fk_users_role_id FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE SET NULL
 );
+
+CREATE INDEX idx_users_custom_fields_gin ON users USING GIN (custom_fields);
 
 CREATE INDEX idx_users_deleted_at ON users (deleted_at);
 

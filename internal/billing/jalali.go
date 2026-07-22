@@ -21,7 +21,7 @@ func toJalali(gy, gm, gd int) (jy, jm, jd int) {
 	gm2 := gm - 1
 	gd2 := gd - 1
 	gDayNo := 365*gy2 + (gy2+3)/4 - (gy2+99)/100 + (gy2+399)/400
-	for i := 0; i < gm2; i++ {
+	for i := range gm2 {
 		gDayNo += gDaysInMonth[i]
 	}
 	if gm2 > 1 && ((gy%4 == 0 && gy%100 != 0) || gy%400 == 0) {

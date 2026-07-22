@@ -329,34 +329,37 @@ services:
         #   - traefik.http.routers.livekit.tls.certresolver=le
         #   - traefik.http.services.livekit.loadbalancer.server.port=7880
 
-    # Egress (recording) disabled for now — live-room recording is turned off.
-    # egress:
-    #     image: livekit/egress:latest
-    #     restart: unless-stopped
-    #     cap_add:
-    #         - CAP_SYS_ADMIN
-    #     security_opt:
-    #         - seccomp:unconfined
-    #     shm_size: "1gb"
-    #     environment:
-    #         EGRESS_CONFIG_BODY: |
-    #             redis:
-    #               address: redis:6379
-    #             api_key: "${LIVEKIT_API_KEY}"
-    #             api_secret: "${LIVEKIT_API_SECRET}"
-    #             ws_url: ws://livekit:7880
-    #             insecure: true
-    #             s3:
-    #               access_key: "${S3_ACCESS_KEY}"
-    #               secret: "${S3_SECRET_KEY}"
-    #               region: "${S3_REGION:-us-east-1}"
-    #               endpoint: http://rustfs:9000
-    #               bucket: "${S3_BUCKET}"
-    #               force_path_style: true
-    #     depends_on:
-    #         redis: { condition: service_healthy }
-    #         livekit: { condition: service_started }
-    #     networks: [zoora]
+    # Egress (recording) worker — records Room Composite egress to S3/RustFS.
+    # Room Composite runs headless Chrome + an encoder (2-6 CPU per job) and is
+    # bursty; for heavier loads move this to its own node off the SFU host. The
+    # API passes per-request S3 creds; the s3 block below is a fallback.
+    egress:
+        image: livekit/egress:latest
+        restart: unless-stopped
+        cap_add:
+            - CAP_SYS_ADMIN
+        security_opt:
+            - seccomp:unconfined
+        shm_size: "1gb"
+        environment:
+            EGRESS_CONFIG_BODY: |
+                redis:
+                  address: redis:6379
+                api_key: "${LIVEKIT_API_KEY}"
+                api_secret: "${LIVEKIT_API_SECRET}"
+                ws_url: ws://livekit:7880
+                insecure: true
+                s3:
+                  access_key: "${S3_ACCESS_KEY}"
+                  secret: "${S3_SECRET_KEY}"
+                  region: "${S3_REGION:-us-east-1}"
+                  endpoint: http://rustfs:9000
+                  bucket: "${S3_BUCKET}"
+                  force_path_style: true
+        depends_on:
+            redis: { condition: service_healthy }
+            livekit: { condition: service_started }
+        networks: [zoora]
 
 networks:
     zoora:

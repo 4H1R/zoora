@@ -90,8 +90,11 @@ import type {
   PostLiveRoomsIdRecordings201,
   PostLiveRoomsIdRecordings400,
   PostLiveRoomsIdRecordings401,
+  PostLiveRoomsIdRecordings402,
   PostLiveRoomsIdRecordings403,
   PostLiveRoomsIdRecordings404,
+  PostLiveRoomsIdRecordings409,
+  PostLiveRoomsIdRecordings503,
   PostLiveRoomsIdRecordingsRecordingIdStop200,
   PostLiveRoomsIdRecordingsRecordingIdStop400,
   PostLiveRoomsIdRecordingsRecordingIdStop401,
@@ -1856,6 +1859,11 @@ export type postLiveRoomsIdRecordingsResponse401 = {
   status: 401
 }
 
+export type postLiveRoomsIdRecordingsResponse402 = {
+  data: PostLiveRoomsIdRecordings402
+  status: 402
+}
+
 export type postLiveRoomsIdRecordingsResponse403 = {
   data: PostLiveRoomsIdRecordings403
   status: 403
@@ -1866,10 +1874,20 @@ export type postLiveRoomsIdRecordingsResponse404 = {
   status: 404
 }
 
+export type postLiveRoomsIdRecordingsResponse409 = {
+  data: PostLiveRoomsIdRecordings409
+  status: 409
+}
+
+export type postLiveRoomsIdRecordingsResponse503 = {
+  data: PostLiveRoomsIdRecordings503
+  status: 503
+}
+
 export type postLiveRoomsIdRecordingsResponseSuccess = (postLiveRoomsIdRecordingsResponse201) & {
   headers: Headers;
 };
-export type postLiveRoomsIdRecordingsResponseError = (postLiveRoomsIdRecordingsResponse400 | postLiveRoomsIdRecordingsResponse401 | postLiveRoomsIdRecordingsResponse403 | postLiveRoomsIdRecordingsResponse404) & {
+export type postLiveRoomsIdRecordingsResponseError = (postLiveRoomsIdRecordingsResponse400 | postLiveRoomsIdRecordingsResponse401 | postLiveRoomsIdRecordingsResponse402 | postLiveRoomsIdRecordingsResponse403 | postLiveRoomsIdRecordingsResponse404 | postLiveRoomsIdRecordingsResponse409 | postLiveRoomsIdRecordingsResponse503) & {
   headers: Headers;
 };
 
@@ -1901,7 +1919,7 @@ export const postLiveRoomsIdRecordings = async (id: string, options?: RequestIni
 
 
 
-export const getPostLiveRoomsIdRecordingsMutationOptions = <TError = ErrorType<PostLiveRoomsIdRecordings400 | PostLiveRoomsIdRecordings401 | PostLiveRoomsIdRecordings403 | PostLiveRoomsIdRecordings404>,
+export const getPostLiveRoomsIdRecordingsMutationOptions = <TError = ErrorType<PostLiveRoomsIdRecordings400 | PostLiveRoomsIdRecordings401 | PostLiveRoomsIdRecordings402 | PostLiveRoomsIdRecordings403 | PostLiveRoomsIdRecordings404 | PostLiveRoomsIdRecordings409 | PostLiveRoomsIdRecordings503>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdRecordings>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdRecordings>>, TError,{id: string}, TContext> => {
 
@@ -1930,12 +1948,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type PostLiveRoomsIdRecordingsMutationResult = NonNullable<Awaited<ReturnType<typeof postLiveRoomsIdRecordings>>>
 
-    export type PostLiveRoomsIdRecordingsMutationError = ErrorType<PostLiveRoomsIdRecordings400 | PostLiveRoomsIdRecordings401 | PostLiveRoomsIdRecordings403 | PostLiveRoomsIdRecordings404>
+    export type PostLiveRoomsIdRecordingsMutationError = ErrorType<PostLiveRoomsIdRecordings400 | PostLiveRoomsIdRecordings401 | PostLiveRoomsIdRecordings402 | PostLiveRoomsIdRecordings403 | PostLiveRoomsIdRecordings404 | PostLiveRoomsIdRecordings409 | PostLiveRoomsIdRecordings503>
 
     /**
  * @summary Start recording
  */
-export const usePostLiveRoomsIdRecordings = <TError = ErrorType<PostLiveRoomsIdRecordings400 | PostLiveRoomsIdRecordings401 | PostLiveRoomsIdRecordings403 | PostLiveRoomsIdRecordings404>,
+export const usePostLiveRoomsIdRecordings = <TError = ErrorType<PostLiveRoomsIdRecordings400 | PostLiveRoomsIdRecordings401 | PostLiveRoomsIdRecordings402 | PostLiveRoomsIdRecordings403 | PostLiveRoomsIdRecordings404 | PostLiveRoomsIdRecordings409 | PostLiveRoomsIdRecordings503>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postLiveRoomsIdRecordings>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postLiveRoomsIdRecordings>>,

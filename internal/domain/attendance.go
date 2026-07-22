@@ -65,8 +65,9 @@ const (
 
 type AutoMarkAttendanceDTO struct {
 	Source AutoMarkSource `json:"source" binding:"required,oneof=live_room offline_room"`
-	// RoomID is required only for the offline source; live auto-mark is
-	// session-scoped and ignores it.
+	// RoomID is required for the offline source. For the live source it is
+	// optional: when set, presence is computed from that room alone; when
+	// empty, the session's rooms are aggregated.
 	RoomID uuid.UUID `json:"room_id" binding:"omitempty"`
 }
 
@@ -80,6 +81,15 @@ type ListAttendanceQuery struct {
 	IsAutoMarked *bool             `form:"is_auto_marked"`
 	UserID       *uuid.UUID        `form:"-"`
 	ListParams   ListParams        `form:"-"`
+}
+
+// ListMyAttendanceQuery filters the caller's own attendance history on
+// GET /attendance/me.
+type ListMyAttendanceQuery struct {
+	Status         *AttendanceStatus `form:"status" binding:"omitempty,oneof=present absent late excused"`
+	ClassID        *uuid.UUID        `form:"-"`
+	ClassSessionID *uuid.UUID        `form:"-"`
+	ListParams     ListParams        `form:"-"`
 }
 
 // ListAttendanceMatrixQuery pages/searches/orders the STUDENT (row) axis of
@@ -150,7 +160,8 @@ type AdminUpdateAttendanceDTO struct {
 	Remarks *string           `json:"remarks"`
 }
 
-// MyAttendanceSummary counts the caller's records by status.
+// MyAttendanceSummary counts the caller's records by status over the FULL
+// filtered set, not just the returned page.
 type MyAttendanceSummary struct {
 	Present int `json:"present"`
 	Absent  int `json:"absent"`
@@ -159,9 +170,13 @@ type MyAttendanceSummary struct {
 }
 
 // MyAttendance is the caller's attendance history + summary across classes.
+// Total/Page/PageSize describe the paged Items slice.
 type MyAttendance struct {
-	Summary MyAttendanceSummary `json:"summary"`
-	Items   []Attendance        `json:"items"`
+	Summary  MyAttendanceSummary `json:"summary"`
+	Items    []Attendance        `json:"items"`
+	Total    int64               `json:"total"`
+	Page     int                 `json:"page"`
+	PageSize int                 `json:"page_size"`
 }
 
 type AttendanceRepository interface {
@@ -171,9 +186,13 @@ type AttendanceRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	ListBySession(ctx context.Context, sessionID uuid.UUID, q ListAttendanceQuery) ([]Attendance, int64, error)
 	FindBySessionAndUser(ctx context.Context, sessionID, userID uuid.UUID) (*Attendance, error)
-	// ListByUser returns all attendance records for a user across classes,
-	// with Class + ClassSession preloaded, newest first.
-	ListByUser(ctx context.Context, userID uuid.UUID, p ListParams) ([]Attendance, int64, error)
+	// ListByUser returns the user's attendance records across classes,
+	// filtered by q, with Class + ClassSession preloaded, newest first.
+	ListByUser(ctx context.Context, userID uuid.UUID, q ListMyAttendanceQuery) ([]Attendance, int64, error)
+	// SummarizeByUser counts the user's records by status over the same
+	// class/session scope as ListByUser, ignoring pagination AND the status
+	// filter — the summary is a breakdown by status.
+	SummarizeByUser(ctx context.Context, userID uuid.UUID, q ListMyAttendanceQuery) (MyAttendanceSummary, error)
 	// ListByClassAndUsers returns every attendance row for the class that
 	// belongs to one of userIDs. No pagination — caller has already paged the
 	// user set. Returns an empty slice when userIDs is empty.
@@ -195,7 +214,7 @@ type AttendanceService interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*Attendance, error)
 	ListBySession(ctx context.Context, classID, sessionID uuid.UUID, q ListAttendanceQuery) ([]Attendance, int64, error)
 	Matrix(ctx context.Context, classID uuid.UUID, q ListAttendanceMatrixQuery) (*AttendanceMatrixResult, error)
-	ListMine(ctx context.Context, p ListParams) (*MyAttendance, error)
+	ListMine(ctx context.Context, q ListMyAttendanceQuery) (*MyAttendance, error)
 
 	// Admin surface. Require caller.IsAdmin.
 	AdminList(ctx context.Context, q AdminListAttendanceQuery) ([]Attendance, int64, error)

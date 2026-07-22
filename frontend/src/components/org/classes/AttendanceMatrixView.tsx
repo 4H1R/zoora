@@ -1,6 +1,7 @@
 import type { GithubCom4H1RZooraInternalDomainAttendanceMatrixResult as AttendanceMatrix } from "@/api/model"
 import type { AttendanceStatus } from "@/components/org/classes/AttendanceCellPopover"
 
+import { Link } from "@tanstack/react-router"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
@@ -122,9 +123,20 @@ export function AttendanceMatrixView({
                     key={sess.id}
                     className={cn("min-w-24 text-center", sess.future && "text-muted-foreground")}
                   >
-                    <span className="block truncate" title={sess.name}>
-                      {sess.name}
-                    </span>
+                    {sess.id ? (
+                      <Link
+                        to="/org/classes/class-sessions/$classSessionId"
+                        params={{ classSessionId: sess.id }}
+                        className="block truncate hover:underline"
+                        title={sess.name}
+                      >
+                        {sess.name}
+                      </Link>
+                    ) : (
+                      <span className="block truncate" title={sess.name}>
+                        {sess.name}
+                      </span>
+                    )}
                   </TableHead>
                 ))}
                 <TableHead className="bg-card z-10 min-w-36 text-center md:sticky md:end-0">

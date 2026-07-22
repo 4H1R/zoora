@@ -2,13 +2,14 @@ package httpx
 
 import (
 	"errors"
+	"regexp"
+	"strconv"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"regexp"
-	"strconv"
-	"strings"
 
 	"github.com/4H1R/zoora/internal/domain"
 )

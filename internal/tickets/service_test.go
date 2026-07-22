@@ -192,6 +192,27 @@ func (fakeTransactor) RunInTx(ctx context.Context, fn func(context.Context) erro
 	return fn(ctx)
 }
 
+// auditSpy captures the records the service emits so tests can assert on them.
+type auditSpy struct {
+	mu      sync.Mutex
+	records []domain.AuditRecord
+}
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
+
+func (a *auditSpy) all() []domain.AuditRecord {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return append([]domain.AuditRecord{}, a.records...)
+}
+
 type notifyCall struct {
 	kind      string // "created" | "replied"
 	ticketID  uuid.UUID
@@ -222,6 +243,7 @@ func (n *fakeNotifier) TicketReplied(_ context.Context, t *domain.Ticket, _ *dom
 type env struct {
 	store    *fakeStore
 	notifier *fakeNotifier
+	audit    *auditSpy
 	svc      domain.TicketService
 
 	orgID   uuid.UUID
@@ -234,8 +256,9 @@ func newEnv(t *testing.T) *env {
 	t.Helper()
 	s := newFakeStore()
 	n := &fakeNotifier{}
+	a := &auditSpy{}
 	e := &env{
-		store: s, notifier: n,
+		store: s, notifier: n, audit: a,
 		orgID: uuid.New(), classID: uuid.New(),
 		teacher: uuid.New(), student: uuid.New(),
 	}
@@ -246,7 +269,7 @@ func newEnv(t *testing.T) *env {
 		fakeClassLookup{s}, fakeMemberLookup{s},
 		fakeSessionLookup{s}, fakeRoomLookup{s}, fakeColumnLookup{s},
 		nil, // media lookup: nil skips attachment validation in unit tests
-		fakeTransactor{}, n,
+		fakeTransactor{}, a, n,
 		slog.New(slog.DiscardHandler),
 	)
 	return e
@@ -299,6 +322,42 @@ func TestCreate_HappyPath(t *testing.T) {
 	require.Len(t, e.notifier.calls, 1)
 	assert.Equal(t, "created", e.notifier.calls[0].kind)
 	assert.Equal(t, e.teacher, e.notifier.calls[0].recipient)
+}
+
+func TestCreate_RecordsAudit(t *testing.T) {
+	e := newEnv(t)
+	tk, err := e.svc.Create(e.studentCtx(), validCreate(e))
+	require.NoError(t, err)
+
+	recs := e.audit.all()
+	require.Len(t, recs, 1)
+	assert.Equal(t, domain.AuditCreated, recs[0].Action)
+	assert.Equal(t, domain.AuditTargetTicket, recs[0].TargetType)
+	assert.Equal(t, tk.Title, recs[0].TargetLabel)
+	require.NotNil(t, recs[0].TargetID)
+	assert.Equal(t, tk.ID, *recs[0].TargetID)
+	require.NotNil(t, recs[0].OrgID)
+	assert.Equal(t, e.orgID, *recs[0].OrgID)
+}
+
+func TestClose_RecordsAuditWithStatusTransition(t *testing.T) {
+	e := newEnv(t)
+	tk := mustCreate(t, e) // resets notifier; audit still holds the create record
+	before := len(e.audit.all())
+
+	_, err := e.svc.Close(e.teacherCtx(), tk.ID)
+	require.NoError(t, err)
+
+	recs := e.audit.all()
+	require.Len(t, recs, before+1)
+	last := recs[len(recs)-1]
+	assert.Equal(t, domain.AuditUpdated, last.Action)
+	assert.Equal(t, domain.AuditTargetTicket, last.TargetType)
+	require.NotNil(t, last.OrgID)
+	assert.Equal(t, e.orgID, *last.OrgID)
+	status, ok := last.Metadata["status"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, string(domain.TicketStatusClosed), status["to"])
 }
 
 func TestCreate_RequiresMembership(t *testing.T) {

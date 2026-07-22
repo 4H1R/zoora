@@ -5,6 +5,7 @@ package integration
 import (
 	"bytes"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,21 +13,22 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"log/slog"
 
+	"github.com/4H1R/zoora/internal/audit"
 	"github.com/4H1R/zoora/internal/auth"
 	"github.com/4H1R/zoora/internal/config"
 	"github.com/4H1R/zoora/internal/domain"
 	"github.com/4H1R/zoora/internal/middleware"
 	"github.com/4H1R/zoora/internal/organizations"
 	"github.com/4H1R/zoora/internal/orgsettings"
+	"github.com/4H1R/zoora/internal/platform/database"
 	"github.com/4H1R/zoora/internal/users"
 	"github.com/4H1R/zoora/tests/testutil"
 )
 
 func TestOrganizationCRUD(t *testing.T) {
 	db := testutil.SetupPostgres(t)
-	require.NoError(t, db.AutoMigrate(&domain.Organization{}, &domain.User{}, &domain.OrganizationSettings{}))
+	require.NoError(t, db.AutoMigrate(&domain.Organization{}, &domain.User{}, &domain.OrganizationSettings{}, &domain.AuditEntry{}))
 
 	logger := slog.Default()
 	cfg := &config.Config{JWTSecret: "test-secret", JWTExpiry: 3600_000_000_000}
@@ -34,7 +36,9 @@ func TestOrganizationCRUD(t *testing.T) {
 	jwtService := auth.NewJWTService(cfg)
 	orgRepo := organizations.NewRepository(db)
 	userRepo := users.NewRepository(db)
-	orgSvc := organizations.NewService(orgRepo, userRepo, orgsettings.NewRepository(db), nil, nil, logger)
+	transactor := database.NewTransactor(db)
+	auditSvc := audit.NewService(audit.NewRepository(db), logger)
+	orgSvc := organizations.NewService(orgRepo, userRepo, orgsettings.NewRepository(db), nil, nil, transactor, auditSvc, logger)
 	handler := organizations.NewHandler(orgSvc)
 
 	org := &domain.Organization{Name: "Test University", Description: "A test organization"}

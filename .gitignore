@@ -46,4 +46,8 @@ frontend/.tanstack/
 node_modules/
 
 # Generated docs (regenerate with `make docs`)
-docs/
+docs/*
+# ...but keep hand-written Architecture Decision Records
+!docs/adr/
+# ...and the hand-maintained audit coverage matrix
+!docs/audit-coverage.md

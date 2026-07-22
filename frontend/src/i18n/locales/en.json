@@ -262,6 +262,11 @@
   },
   "common": {
     "brandName": "Zoora",
+    "filter": {
+      "allClasses": "All classes",
+      "allSessions": "All sessions",
+      "chooseClassFirst": "Choose a class first"
+    },
     "apiError": {
       "generic": "Something went wrong. Please try again.",
       "serverGeneric": "Something went wrong on our end. Please try again in a moment.",
@@ -299,6 +304,7 @@
     "publish": "Publish",
     "create": "Create",
     "edit": "Edit",
+    "openClass": "Open class page",
     "delete": "Delete",
     "deleteConfirm": {
       "title": "Are you sure?",
@@ -937,18 +943,48 @@
       "questions": {
         "title": "Manage questions",
         "description": "Pick questions manually or generate randomly from a bank.",
-        "currentRules": "Current selection",
+        "currentRules": "Quiz questions",
+        "rulesSummary": "{{questions}} questions · {{rules}} selections",
         "questions": "questions",
         "selected": "selected",
         "selectQuestions": "Select questions",
         "bank": "Question bank",
         "count": "Number of questions",
-        "empty": "No selection yet.",
+        "empty": "No questions added yet.",
+        "emptyHint": "Choose a question bank below and add questions manually or randomly.",
         "ruleAdded": "Selection saved",
         "ruleDeleted": "Selection removed",
         "addManual": "Add selected",
+        "addManualCount_one": "Add {{count}} selected question",
+        "addManualCount_other": "Add {{count}} selected questions",
         "addRandom": "Add random rule",
+        "addRandomCount_one": "Add {{count}} random question",
+        "addRandomCount_other": "Add {{count}} random questions",
         "randomHint": "At runtime, the system picks this many random questions from the bank.",
+        "summaryManual_one": "{{count}} question picked manually from “{{bank}}”",
+        "summaryManual_other": "{{count}} questions picked manually from “{{bank}}”",
+        "summaryRandom_one": "{{count}} random question from “{{bank}}”",
+        "summaryRandom_other": "{{count}} random questions from “{{bank}}”",
+        "deletedBank": "Deleted bank",
+        "manualNote": "Fixed set — the same for every student",
+        "randomNote": "Drawn randomly on every attempt",
+        "neg": {
+          "none": "No negative marking",
+          "perWrong": "−{{value}} points per wrong answer",
+          "perWrongAuto": "Negative marking based on each question's option count",
+          "accumulative_one": "Lose 1 point per {{count}} wrong answer",
+          "accumulative_other": "Lose 1 point per {{count}} wrong answers"
+        },
+        "addSection": "Add questions",
+        "stepBank": "Question bank",
+        "stepMethod": "Selection method",
+        "bankCount_one": "{{count}} question in this bank",
+        "bankCount_other": "{{count}} questions in this bank",
+        "selectBankFirst": "Pick a question bank first to see its questions.",
+        "randomMax_one": "This bank only has {{count}} question.",
+        "randomMax_other": "This bank only has {{count}} questions.",
+        "manualTabHint": "You pick the exact questions yourself.",
+        "advancedToggle": "Default negative marking (optional)",
         "tabs": {
           "manual": "Manual",
           "random": "Random"
@@ -1047,6 +1083,10 @@
         "fastValue": "{{count}}",
         "fastDetail": "{{count}} answered faster than allowed",
         "fastAnswer": "Too fast"
+      },
+      "device": {
+        "title": "Submitted from",
+        "unknown": "Unknown"
       }
     },
     "questionBanks": {
@@ -1617,6 +1657,7 @@
       "files": "Files",
       "learning": "Learning",
       "exams": "Exams",
+      "questionBanks": "Question Banks",
       "practices": "Practices",
       "grades": "Grades",
       "attendance": "Attendance",
@@ -1624,7 +1665,46 @@
       "zoora": "Zoora",
       "conversations": "Chat",
       "tickets": "Tickets",
-      "account": "Account"
+      "account": "Account",
+      "customFields": "Custom Fields",
+      "auditLog": "Audit Log"
+    },
+    "customFields": {
+      "title": "Custom Fields",
+      "subtitle": "Define extra profile fields for your members",
+      "empty": "No custom fields yet. Add one to start collecting extra data.",
+      "add": "Add field",
+      "limitReached": "You've reached the maximum of 10 fields.",
+      "label": "Label",
+      "type": "Type",
+      "types": {
+        "text": "Text",
+        "number": "Number",
+        "date": "Date",
+        "boolean": "Yes / No",
+        "select": "Dropdown"
+      },
+      "options": "Options",
+      "optionsHint": "One choice per line",
+      "required": "Required",
+      "unique": "Unique",
+      "visibleToUser": "Visible to the member",
+      "description": "Help text",
+      "typeLocked": "Type can't be changed after creation",
+      "createTitle": "New custom field",
+      "editTitle": "Edit custom field",
+      "createSuccess": "Field created",
+      "updateSuccess": "Field updated",
+      "archiveConfirm": "Archive this field? Existing values are kept but hidden.",
+      "archive": "Archive",
+      "archiveSuccess": "Field archived",
+      "valuesTitle": "Custom fields",
+      "errors": {
+        "duplicateValue": "This value is already used by another member",
+        "optionInUse": "That option is still in use and can't be removed",
+        "typeImmutable": "Field type can't be changed",
+        "generic": "Something went wrong"
+      }
     },
     "practices": {
       "title": "Practices",
@@ -1659,24 +1739,31 @@
       "manager": {
         "class": "Class",
         "teacher": "Teacher",
+        "start": "Starts",
         "submitted": "Submitted",
-        "graded": "Graded",
-        "completion": "Completion",
-        "submissions": "{{submitted}} / {{members}}",
-        "submissionsTitle": "Submissions",
-        "noSubmissions": "No submissions yet"
+        "submissions": "{{submitted}} / {{members}}"
       },
       "actions": {
         "submit": "Submit",
         "grade": "Grade",
         "view": "View",
-        "viewSubmissions": "View submissions"
+        "enterScores": "Enter scores"
       },
       "table": {
         "class": "Class",
         "due": "Due",
         "status": "Status",
-        "score": "Score"
+        "score": "Score",
+        "maxScore": "Max score",
+        "start": "Starts",
+        "end": "Ends"
+      },
+      "scores": {
+        "title": "Practice grading",
+        "back": "Back to practices",
+        "backToSession": "Back to session",
+        "openSession": "Open session",
+        "notFound": "Practice not found"
       }
     },
     "portal": {
@@ -1697,7 +1784,10 @@
     },
     "exams": {
       "title": "My Exams",
+      "subtitle": "Open and upcoming exams come first",
       "empty": "You have no exams yet.",
+      "noResults": "No exams match the filters",
+      "noResultsHint": "Try changing the search or filters.",
       "duration": "{{count}} min",
       "state": {
         "upcoming": "Upcoming",
@@ -1710,11 +1800,35 @@
       "score": "Score: {{score}} / {{total}}",
       "opensAt": "Opens {{date}}",
       "searchPlaceholder": "Search exams…",
+      "filter": {
+        "all": "All"
+      },
+      "manage": {
+        "title": "Manage exams",
+        "subtitle": "Exams across all classes — open a class session to create or run an exam"
+      },
+      "roomStatus": {
+        "not_scheduled": "Not scheduled",
+        "not_started": "Not started",
+        "in_progress": "In progress",
+        "ended": "Completed"
+      },
       "table": {
         "title": "Exam",
         "class": "Class",
         "state": "Status",
-        "duration": "Duration"
+        "duration": "Duration",
+        "totalScore": "Total score",
+        "start": "Start",
+        "end": "End",
+        "corrections": "Corrections"
+      },
+      "corrections": {
+        "title": "Corrections",
+        "back": "Back to exams",
+        "notFound": "Exam not found",
+        "openSession": "Open session",
+        "backToSession": "Back to session"
       }
     },
     "calendar": {
@@ -1739,9 +1853,17 @@
     },
     "grades": {
       "title": "Report Card",
+      "subtitle": "Your grades across all classes",
       "empty": "No grades recorded yet.",
+      "noResults": "No grades match the filters",
+      "noResultsHint": "Try changing the search or filters.",
       "noColumns": "No graded items in this class yet.",
       "searchPlaceholder": "Search grades…",
+      "manager": {
+        "subtitle": "View and edit gradebooks for the classes you manage",
+        "noClasses": "No classes to grade",
+        "noClassesHint": "Create a class or get assigned to one to manage its gradebook."
+      },
       "table": {
         "class": "Class",
         "item": "Item",
@@ -1750,8 +1872,19 @@
     },
     "attendance": {
       "title": "My Attendance",
+      "subtitle": "Your attendance record across all classes",
       "empty": "No attendance records yet.",
+      "noResults": "No attendance matches the filters",
+      "noResultsHint": "Try changing the search or filters.",
       "searchPlaceholder": "Search attendance…",
+      "manager": {
+        "subtitle": "Track and mark attendance for the classes you manage",
+        "noClasses": "No classes to track",
+        "noClassesHint": "Create a class or get assigned to one to manage its attendance."
+      },
+      "tabs": {
+        "all": "All"
+      },
       "table": {
         "class": "Class",
         "session": "Session",
@@ -1897,8 +2030,16 @@
           }
         },
         "features": {
-          "free": ["Core virtual classrooms", "Exams, homework & gradebook", "Offline rooms & notifications"],
-          "plus": ["Everything in Free", "More storage & live capacity", "Ticketing & file sharing"],
+          "free": [
+            "Core virtual classrooms",
+            "Exams, homework & gradebook",
+            "Offline rooms & notifications"
+          ],
+          "plus": [
+            "Everything in Free",
+            "More storage & live capacity",
+            "Ticketing & file sharing"
+          ],
           "pro": [
             "Everything in Plus",
             "Whiteboard & chat",
@@ -1906,7 +2047,12 @@
             "Messenger & email connectors",
             "AI assistance"
           ],
-          "max": ["Everything in Pro", "Cloud recordings", "Auto grading", "Single sign-on (SSO)"]
+          "max": [
+            "Everything in Pro",
+            "Cloud recordings",
+            "Auto grading",
+            "Single sign-on (SSO)"
+          ]
         }
       },
       "members": "Members",
@@ -2020,6 +2166,7 @@
         "backToClass": "Back to class",
         "newColumn": "New column",
         "student": "Student",
+        "outOf": "out of {{max}} points",
         "stats": {
           "columns": "Columns",
           "students": "Students"
@@ -2187,7 +2334,8 @@
           "edit": "Edit quiz",
           "delete": "Delete quiz",
           "manageQuestions": "Manage questions",
-          "take": "Take quiz"
+          "take": "Take quiz",
+          "corrections": "Corrections"
         },
         "flags": {
           "noBackNavigation": "Back navigation locked",
@@ -2320,7 +2468,9 @@
             "tabWarning": "Leaving the exam tab is recorded — {{count}} time(s).",
             "blocked": "This action is disabled during the exam."
           }
-        }
+        },
+        "banksLink": "Question banks",
+        "emptyBankCta": "Build from a question bank"
       },
       "corrections": {
         "eyebrow": "Corrections",
@@ -2364,7 +2514,44 @@
         "actions": {
           "manage": "Manage questions",
           "edit": "Edit bank",
-          "delete": "Delete bank"
+          "delete": "Delete bank",
+          "share": "Share bank"
+        },
+        "status": {
+          "copying": "Copying…",
+          "failed": "Copy failed"
+        },
+        "share": {
+          "title": "Share question bank",
+          "description": "Anyone with this code can import an independent copy of this bank into their organization.",
+          "noCodeHint": "Generate a code to let other teachers import this bank.",
+          "expiryLabel": "Code validity",
+          "expiry": {
+            "7d": "7 days",
+            "30d": "30 days",
+            "never": "No expiry"
+          },
+          "generate": "Generate code",
+          "regenerate": "Regenerate",
+          "regenerateHint": "Generating a new code disables the previous one.",
+          "codeLabel": "Share code",
+          "copied": "Code copied",
+          "generateSuccess": "Share code generated",
+          "revoke": "Revoke code",
+          "revokeSuccess": "Share code revoked",
+          "expiresAt": "Expires {{date}}",
+          "neverExpires": "Never expires"
+        },
+        "redeem": {
+          "button": "Import via code",
+          "title": "Import question bank",
+          "description": "Enter a share code to copy a bank into your organization.",
+          "codePlaceholder": "e.g. AB2CD3EF4G",
+          "check": "Check",
+          "invalid": "Invalid or expired code",
+          "questionCount": "{{count}} questions",
+          "import": "Import bank",
+          "success": "Import started — the bank will be ready shortly"
         },
         "form": {
           "createTitle": "New question bank",
@@ -2402,7 +2589,8 @@
         "actions": {
           "edit": "Edit practice",
           "delete": "Delete practice",
-          "submit": "Submit"
+          "submit": "Submit",
+          "scores": "Grade"
         },
         "form": {
           "createTitle": "New practice",
@@ -2619,7 +2807,9 @@
           "roomPlaceholder": "Select a room",
           "minMinutes": "Min minutes",
           "run": "Auto-mark",
-          "success": "Marked {{marked}}, skipped {{skipped}}"
+          "success": "Marked {{marked}}, skipped {{skipped}}",
+          "roomAll": "All rooms",
+          "roomLabel": "Source room"
         },
         "form": {
           "editTitle": "Edit attendance",
@@ -2644,6 +2834,14 @@
           "title": "Class roster",
           "hint": "Tap a status for each student, then save."
         }
+      },
+      "header": {
+        "myAttendance": "My attendance",
+        "pendingCorrections": "{{count}} submissions awaiting correction",
+        "pendingPracticeGrades": "{{count}} practice submissions awaiting grades"
+      },
+      "attendancePage": {
+        "back": "Back to session"
       }
     },
     "offline": {
@@ -2688,6 +2886,61 @@
         "createSuccess": "Role created",
         "updateSuccess": "Role updated",
         "deleteSuccess": "Role deleted"
+      }
+    },
+    "audit": {
+      "title": "Audit Log",
+      "subtitle": "A newest-first history of administrative actions and changes across your organization.",
+      "system": "System",
+      "empty": "No activity has been recorded yet.",
+      "emptyFiltered": "No entries match these filters.",
+      "showDetails": "Details",
+      "pageOf": "Page {{page}} of {{total}}",
+      "filters": {
+        "action": "Action",
+        "targetType": "Resource",
+        "outcome": "Outcome",
+        "allActions": "All actions",
+        "allTargets": "All resources",
+        "allOutcomes": "All outcomes"
+      },
+      "actions": {
+        "created": "created",
+        "updated": "updated",
+        "deleted": "deleted",
+        "enrolled": "enrolled",
+        "unenrolled": "unenrolled",
+        "graded": "graded",
+        "disabled": "disabled",
+        "enabled": "enabled"
+      },
+      "targets": {
+        "class": "Class",
+        "enrollment": "Enrollment",
+        "user": "User",
+        "role": "Role",
+        "quiz": "Quiz",
+        "question_bank": "Question Bank",
+        "gradebook": "Gradebook",
+        "billing": "Billing",
+        "live_session": "Live Session",
+        "offline_room": "Offline Room",
+        "practice": "Practice",
+        "attendance": "Attendance",
+        "org_settings": "Org Settings",
+        "organization": "Organization",
+        "custom_field": "Custom Field",
+        "connector": "Connector",
+        "ticket": "Ticket",
+        "calendar_event": "Calendar Event",
+        "poll": "Poll",
+        "qa": "Q&A",
+        "import": "Import",
+        "media": "Media"
+      },
+      "outcomes": {
+        "success": "Success",
+        "denied": "Denied"
       }
     }
   },
@@ -2750,7 +3003,10 @@
       "capacityPlaceholder": "0 = unlimited",
       "teacher": "Teacher",
       "teacherPlaceholder": "Select teacher…",
-      "createSuccess": "Class created"
+      "createSuccess": "Class created",
+      "editTitle": "Edit class",
+      "editDescription": "Update the class name, description, capacity, and teacher.",
+      "updateSuccess": "Class updated"
     }
   },
   "roles": {
@@ -2877,6 +3133,7 @@
       "started": "Recording started",
       "stopped": "Recording stopped",
       "startError": "Couldn't start recording",
+      "capacityFull": "Recording capacity is full right now. Please try again in a few minutes.",
       "upgradeRequired": "Recording isn't available on your current plan. Upgrade to record live rooms.",
       "stopError": "Couldn't stop recording",
       "startDialog": {
