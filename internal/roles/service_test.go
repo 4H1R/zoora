@@ -89,6 +89,16 @@ func (noopTx) RunInTx(ctx context.Context, fn func(context.Context) error) error
 	return fn(ctx)
 }
 
+// auditSpy captures the records a service emits so tests can assert on them.
+type auditSpy struct{ records []domain.AuditRecord }
+
+func (a *auditSpy) Record(_ context.Context, r domain.AuditRecord) error {
+	a.records = append(a.records, r)
+	return nil
+}
+
+func (a *auditSpy) RecordDenied(_ context.Context, _ domain.AuditRecord) error { return nil }
+
 func TestCreateRole(t *testing.T) {
 	logger := slog.Default()
 	roleRepo := &mockRoleRepo{}
@@ -108,7 +118,7 @@ func TestCreateRole(t *testing.T) {
 	roleRepo.On("Create", ctx, mock.AnythingOfType("*domain.Role")).Return(nil)
 	roleRepo.On("SetPermissions", ctx, mock.AnythingOfType("uuid.UUID"), []uuid.UUID{permID}).Return(nil)
 
-	svc := roles.NewService(roleRepo, permRepo, noopTx{}, nil, logger)
+	svc := roles.NewService(roleRepo, permRepo, noopTx{}, &auditSpy{}, nil, logger)
 
 	orgID := uuid.New()
 	role, err := svc.Create(ctx, domain.CreateRoleDTO{
@@ -122,7 +132,7 @@ func TestCreateRole(t *testing.T) {
 }
 
 func TestCreateRole_FreePlanRejectsCustomRole(t *testing.T) {
-	svc := roles.NewService(&mockRoleRepo{}, &mockPermRepo{}, noopTx{}, nil, slog.Default())
+	svc := roles.NewService(&mockRoleRepo{}, &mockPermRepo{}, noopTx{}, &auditSpy{}, nil, slog.Default())
 	caller := domain.Caller{UserID: uuid.New(), Ent: domain.PlanCatalog[domain.PlanFree]}
 	ctx := domain.WithCaller(context.Background(), caller)
 
@@ -149,7 +159,7 @@ func TestCreateRole_AdminBypassesFeatureGateForPresets(t *testing.T) {
 	roleRepo.On("Create", ctx, mock.AnythingOfType("*domain.Role")).Return(nil)
 	roleRepo.On("SetPermissions", ctx, mock.AnythingOfType("uuid.UUID"), []uuid.UUID{permID}).Return(nil)
 
-	svc := roles.NewService(roleRepo, permRepo, noopTx{}, nil, logger)
+	svc := roles.NewService(roleRepo, permRepo, noopTx{}, &auditSpy{}, nil, logger)
 	role, err := svc.Create(ctx, domain.CreateRoleDTO{
 		IsPreset:      true,
 		Name:          "Manager",
@@ -179,7 +189,7 @@ func TestCreateRole_RejectsGrantingUnheldPermission(t *testing.T) {
 	}
 	permRepo.On("FindByIDs", ctx, []uuid.UUID{permA, permC}).Return(perms, nil)
 
-	svc := roles.NewService(roleRepo, permRepo, noopTx{}, nil, slog.Default())
+	svc := roles.NewService(roleRepo, permRepo, noopTx{}, &auditSpy{}, nil, slog.Default())
 
 	orgID := uuid.New()
 	_, err := svc.Create(ctx, domain.CreateRoleDTO{
@@ -205,7 +215,7 @@ func TestCreateRole_AdminBypassesSubsetCheck(t *testing.T) {
 	roleRepo.On("Create", ctx, mock.AnythingOfType("*domain.Role")).Return(nil)
 	roleRepo.On("SetPermissions", ctx, mock.AnythingOfType("uuid.UUID"), []uuid.UUID{permID}).Return(nil)
 
-	svc := roles.NewService(roleRepo, permRepo, noopTx{}, nil, slog.Default())
+	svc := roles.NewService(roleRepo, permRepo, noopTx{}, &auditSpy{}, nil, slog.Default())
 
 	orgID := uuid.New()
 	role, err := svc.Create(ctx, domain.CreateRoleDTO{
@@ -235,7 +245,7 @@ func TestUpdateRole_RejectsGrantingUnheldPermission(t *testing.T) {
 	roleRepo.On("FindByID", ctx, roleID).Return(&domain.Role{ID: roleID, OrganizationID: &orgID}, nil)
 	permRepo.On("FindByIDs", ctx, []uuid.UUID{permID}).Return([]domain.Permission{{ID: permID, Name: "users:delete_any"}}, nil)
 
-	svc := roles.NewService(roleRepo, permRepo, noopTx{}, nil, slog.Default())
+	svc := roles.NewService(roleRepo, permRepo, noopTx{}, &auditSpy{}, nil, slog.Default())
 
 	_, err := svc.Update(ctx, roleID, domain.UpdateRoleDTO{PermissionIDs: []uuid.UUID{permID}})
 	assert.ErrorIs(t, err, domain.ErrForbidden)
@@ -262,7 +272,7 @@ func TestUpdateRole_AllowsGrantingHeldPermission(t *testing.T) {
 	roleRepo.On("Update", ctx, mock.AnythingOfType("*domain.Role")).Return(nil)
 	roleRepo.On("SetPermissions", ctx, roleID, []uuid.UUID{permID}).Return(nil)
 
-	svc := roles.NewService(roleRepo, permRepo, noopTx{}, nil, slog.Default())
+	svc := roles.NewService(roleRepo, permRepo, noopTx{}, &auditSpy{}, nil, slog.Default())
 
 	role, err := svc.Update(ctx, roleID, domain.UpdateRoleDTO{PermissionIDs: []uuid.UUID{permID}})
 	assert.NoError(t, err)
@@ -272,7 +282,7 @@ func TestUpdateRole_AllowsGrantingHeldPermission(t *testing.T) {
 
 func TestAdminList_ForcesIncludePreset(t *testing.T) {
 	roleRepo := &mockRoleRepo{}
-	svc := roles.NewService(roleRepo, &mockPermRepo{}, noopTx{}, nil, slog.Default())
+	svc := roles.NewService(roleRepo, &mockPermRepo{}, noopTx{}, &auditSpy{}, nil, slog.Default())
 
 	orgID := uuid.New()
 	ctx := context.Background()
@@ -285,4 +295,28 @@ func TestAdminList_ForcesIncludePreset(t *testing.T) {
 	assert.Equal(t, int64(1), total)
 	assert.Len(t, list, 1)
 	roleRepo.AssertExpectations(t)
+}
+
+func TestDeleteRole_RecordsAudit(t *testing.T) {
+	roleRepo := &mockRoleRepo{}
+	spy := &auditSpy{}
+	orgID := uuid.New()
+	roleID := uuid.New()
+
+	caller := domain.Caller{UserID: uuid.New(), OrgID: &orgID, Permissions: []string{"roles:delete"}}
+	ctx := domain.WithCaller(context.Background(), caller)
+
+	roleRepo.On("FindByID", ctx, roleID).Return(&domain.Role{ID: roleID, OrganizationID: &orgID, Name: "Grader"}, nil)
+	roleRepo.On("Delete", ctx, roleID).Return(nil)
+
+	svc := roles.NewService(roleRepo, &mockPermRepo{}, noopTx{}, spy, nil, slog.Default())
+
+	err := svc.Delete(ctx, roleID)
+	assert.NoError(t, err)
+	assert.Len(t, spy.records, 1)
+	assert.Equal(t, domain.AuditDeleted, spy.records[0].Action)
+	assert.Equal(t, domain.AuditTargetRole, spy.records[0].TargetType)
+	assert.Equal(t, "Grader", spy.records[0].TargetLabel)
+	assert.NotNil(t, spy.records[0].TargetID)
+	assert.Equal(t, roleID, *spy.records[0].TargetID)
 }

@@ -18,6 +18,7 @@ type service struct {
 	roleRepo domain.RoleRepository
 	permRepo domain.PermissionRepository
 	tx       domain.Transactor
+	audit    domain.AuditRecorder
 	redis    *redis.Client
 	logger   *slog.Logger
 }
@@ -26,6 +27,7 @@ func NewService(
 	roleRepo domain.RoleRepository,
 	permRepo domain.PermissionRepository,
 	tx domain.Transactor,
+	audit domain.AuditRecorder,
 	rdb *redis.Client,
 	logger *slog.Logger,
 ) domain.RoleService {
@@ -33,6 +35,7 @@ func NewService(
 		roleRepo: roleRepo,
 		permRepo: permRepo,
 		tx:       tx,
+		audit:    audit,
 		redis:    rdb,
 		logger:   logger,
 	}
@@ -87,7 +90,21 @@ func (s *service) Create(ctx context.Context, dto domain.CreateRoleDTO) (*domain
 		if err := s.roleRepo.Create(ctx, role); err != nil {
 			return err
 		}
-		return s.roleRepo.SetPermissions(ctx, role.ID, dto.PermissionIDs)
+		if err := s.roleRepo.SetPermissions(ctx, role.ID, dto.PermissionIDs); err != nil {
+			return err
+		}
+		// Preset roles are platform-level config created by admins with no org;
+		// the org-scoped audit log only records custom (org) role mutations.
+		if role.IsPreset {
+			return nil
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditCreated,
+			TargetType:  domain.AuditTargetRole,
+			TargetID:    &role.ID,
+			TargetLabel: role.Name,
+			Metadata:    map[string]any{"permissions": len(dto.PermissionIDs)},
+		})
 	})
 	if err != nil {
 		return nil, err
@@ -142,15 +159,21 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateRol
 		return nil, domain.ErrForbidden
 	}
 
-	if dto.Name != "" {
+	// Build a shallow changed-fields diff (from/to) before mutating so the audit
+	// entry records exactly what this update altered.
+	changed := map[string]any{}
+	if dto.Name != "" && dto.Name != role.Name {
+		changed["name"] = map[string]any{"from": role.Name, "to": dto.Name}
 		role.Name = dto.Name
 	}
-	if dto.IsPreset != nil {
+	if dto.IsPreset != nil && *dto.IsPreset != role.IsPreset {
+		changed["is_preset"] = map[string]any{"from": role.IsPreset, "to": *dto.IsPreset}
 		role.IsPreset = *dto.IsPreset
 	}
 
 	var newPerms []domain.Permission
 	if dto.PermissionIDs != nil {
+		changed["permissions"] = len(dto.PermissionIDs)
 		newPerms, err = s.permRepo.FindByIDs(ctx, dto.PermissionIDs)
 		if err != nil {
 			return nil, fmt.Errorf("roles.service.Update find permissions: %w", err)
@@ -174,9 +197,21 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, dto domain.UpdateRol
 			return err
 		}
 		if dto.PermissionIDs != nil {
-			return s.roleRepo.SetPermissions(ctx, id, dto.PermissionIDs)
+			if err := s.roleRepo.SetPermissions(ctx, id, dto.PermissionIDs); err != nil {
+				return err
+			}
 		}
-		return nil
+		// Preset roles are platform-level config with no org; audit only custom.
+		if role.IsPreset {
+			return nil
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditUpdated,
+			TargetType:  domain.AuditTargetRole,
+			TargetID:    &role.ID,
+			TargetLabel: role.Name,
+			Metadata:    map[string]any{"changed": changed},
+		})
 	})
 	if err != nil {
 		return nil, err
@@ -212,7 +247,22 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 		}
 	}
 
-	if err := s.roleRepo.Delete(ctx, id); err != nil {
+	err = s.tx.RunInTx(ctx, func(ctx context.Context) error {
+		if err := s.roleRepo.Delete(ctx, id); err != nil {
+			return err
+		}
+		// Preset roles are platform-level config with no org; audit only custom.
+		if role.IsPreset {
+			return nil
+		}
+		return s.audit.Record(ctx, domain.AuditRecord{
+			Action:      domain.AuditDeleted,
+			TargetType:  domain.AuditTargetRole,
+			TargetID:    &id,
+			TargetLabel: role.Name,
+		})
+	})
+	if err != nil {
 		return err
 	}
 	if s.redis != nil {

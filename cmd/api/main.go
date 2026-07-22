@@ -213,7 +213,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	roleService := roles.NewService(roleRepo, permRepo, transactor, redisClient, log)
+	roleService := roles.NewService(roleRepo, permRepo, transactor, auditService, redisClient, log)
 	authBusinessService := auth.NewAuthService(userRepo, jwtService, redisClient, log)
 	mediaService := media.NewService(mediaRepo, storageClient, entitlementService, entitlementRepo, log)
 	changelogService := changelog.NewServiceWithMedia(changelogRepo, mediaRepo, storageClient, redisClient, log)
