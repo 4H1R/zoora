@@ -360,7 +360,7 @@ func main() {
 	connectorService := connectors.NewService(connectorRepo, userRepo, orgRepo, redisClient, smsSender, connectors.BotLinkConfig{
 		TelegramBotUsername: cfg.TelegramBotUsername,
 		BaleBotUsername:     cfg.BaleBotUsername,
-	}, log)
+	}, transactor, auditService, log)
 	connectorHandler := connectors.NewHandler(connectorService)
 	connectorHandler.RegisterRoutes(v1, authMiddleware)
 

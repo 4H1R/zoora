@@ -182,7 +182,7 @@ func main() {
 	connectorService := connectors.NewService(connectorRepo, userRepo, orgRepo, redisClient, smsSender, connectors.BotLinkConfig{
 		TelegramBotUsername: cfg.TelegramBotUsername,
 		BaleBotUsername:     cfg.BaleBotUsername,
-	}, log)
+	}, transactor, auditService, log)
 	pollCtx, pollCancel := context.WithCancel(context.Background())
 	defer pollCancel()
 	if telegramBot != nil {
